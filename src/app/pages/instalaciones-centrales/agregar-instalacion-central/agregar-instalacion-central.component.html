@@ -1,0 +1,80 @@
+<div [@routeAnimation] class="modal-agregar card card--panel perm-wrapper">
+    <header class="perm-head perm-head--left" role="region" aria-label="Sección: Permisos">
+        <div class="perm-head__icon" aria-hidden="true">
+            <mat-icon>view_module</mat-icon>
+        </div>
+        <div class="perm-head__text">
+            <span class="eyebrow">Sección</span>
+            <h2>Instalaciones Centrales</h2>
+        </div>
+        <nav class="perm-head__crumbs" aria-label="Ruta">
+            <span class="crumb">Administración</span>
+            <span class="sep">/</span>
+            <span class="crumb active"> Agregar Instalación </span>
+        </nav>
+    </header>
+    <div class="surface">
+        <section class="perm-form-nc container-fluid py-4">
+            <form [formGroup]="instForm" class="perm-form-body">
+                <div class="row g-0">
+                    <div class="col-12 col-md-4 mt-3">
+                        <label for="idCliente" class="form-label perm-label">Clientes</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">account_tree</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 perm-select-floating">
+                                <select class="form-select" id="idCliente" formControlName="idCliente">
+                                    <!-- <option [ngValue]="null" disabled>Selecciona un cliente</option> -->
+                                    <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
+                                        {{ cliente.nombre }}
+                                        {{ cliente.apellidoPaterno }}
+                                        {{ cliente.apellidoMaterno }}
+                                    </option>
+                                </select>
+                                <label for="idCliente">Selecciona un cliente</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4 mt-3">
+                        <label for="permNombre" class="form-label perm-label">Nombre</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">title</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="nombre" class="form-control" id="permNombre"
+                                    placeholder="Ej.: Administración" required>
+                                <label for="permNombre">Instalación Lomas</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4 mt-3">
+                        <label for="nroPisos" class="form-label perm-label">Número de Pisos</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">layers</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="number" formControlName="nroPisos" class="form-control" id="nroPisos"
+                                    placeholder="Ej.: 5" min="0">
+                                <label for="nroPisos">Número de pisos</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-3">
+                        <div id="map"></div>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 justify-content-start mt-4">
+                    <button (click)="submit()" class="button-success" role="button">
+                        <i class="fa fa-check"></i>&nbsp;&nbsp;{{submitButton}}
+                    </button>&nbsp;&nbsp;
+                    <button type="button" class="button-danger" (click)="regresar()">
+                        <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>

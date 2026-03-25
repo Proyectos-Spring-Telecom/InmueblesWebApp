@@ -1,0 +1,288 @@
+@import url("https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700");
+
+$font-family: "Poppins", sans-serif;
+
+$sidenav-desktop: 260px !default;
+$sidenav-mini: 72px !default;
+$header-height: 60px !default;
+
+$borderColor: var(--mat-sys-outline-variant);
+$borderformColor: var(--mat-sys-outline-variant);
+
+$primary:   #60a5fa;
+$secondary: #681330;
+$accent:    #f43f5e;
+$error:     #dc2626;
+$warning:   #f59e0b;
+$success:   #37a316;
+$white:     #ffffff;
+
+$light: var(--mat-sys-surface-bright);
+
+@function contrast-color($color, $dark:#0f172a, $light:#ffffff) {
+  @if (lightness($color) > 55%) { @return $dark; }
+  @return $light;
+}
+
+$primary-fixed:        color-mix(in srgb, #{$primary} 88%, white);
+$primary-fixed-dim:    color-mix(in srgb, #{$primary} 15%, white);
+$secondary-fixed:      color-mix(in srgb, #{$secondary} 88%, white);
+$secondary-fixed-dim:  color-mix(in srgb, #{$secondary} 15%, white);
+$error-fixed:          color-mix(in srgb, #{$error} 88%, white);
+$error-fixed-dim:      color-mix(in srgb, #{$error} 15%, white);
+
+$warning-light: color-mix(in srgb, #{$warning} 15%, white);
+$success-light: color-mix(in srgb, #{$success} 15%, white);
+
+:root {
+  --mat-sys-primary:            #{$primary};
+  --mat-sys-on-primary:         #{contrast-color($primary)};
+  --mat-sys-primary-fixed:      #{$primary-fixed};
+  --mat-sys-primary-fixed-dim:  #{$primary-fixed-dim};
+
+  --mat-sys-secondary:          #{$secondary};
+  --mat-sys-on-secondary:       #{contrast-color($secondary)};
+  --mat-sys-secondary-fixed:    #{$secondary-fixed};
+  --mat-sys-secondary-fixed-dim:#{$secondary-fixed-dim};
+
+  --mat-sys-error:              #{$error};
+  --mat-sys-on-error:           #{contrast-color($error)};
+  --mat-sys-error-fixed:        #{$error-fixed};
+  --mat-sys-error-fixed-dim:    #{$error-fixed-dim};
+
+  --app-success:                #{$success};
+  --app-on-success:             #{contrast-color($success)};
+  --app-success-light:          #{$success-light};
+
+  --app-warning:                #{$warning};
+  --app-on-warning:             #{contrast-color($warning, #111, #111)};
+  --app-warning-light:          #{$warning-light};
+
+  --app-surface-bright:         #{$light};
+}
+
+$light-primary:   var(--mat-sys-primary-fixed-dim);
+$light-secondary: var(--mat-sys-secondary-fixed-dim);
+$light-accent:    var(--mat-sys-secondary-fixed-dim);
+$light-error:     var(--mat-sys-error-fixed-dim);
+$light-warning:   var(--app-warning-light);
+$light-success:   var(--app-success-light);
+
+$boxedWidth: 1800px;
+$border-radius: 10px;
+$card-spacer: 30px;
+$text-color: var(--mat-sys-on-background);
+$dark-text-secondary: rgba(255, 255, 255, 0.67);
+$dark-body-bg: #141a21;
+
+.bg-primary   { background-color: var(--mat-sys-primary) !important;   color: var(--mat-sys-on-primary, #fff) !important; }
+.bg-secondary { background-color: var(--mat-sys-secondary) !important; color: var(--mat-sys-on-secondary, #fff) !important; }
+.bg-success   { background-color: var(--app-success) !important;       color: var(--app-on-success, #fff) !important; }
+.bg-warning   { background-color: var(--app-warning) !important;       color: var(--app-on-warning, #111) !important; }
+.bg-error     { background-color: var(--mat-sys-error) !important;     color: var(--mat-sys-on-error, #fff) !important; }
+
+.bg-primary:hover,
+.bg-secondary:hover,
+.bg-success:hover,
+.bg-warning:hover,
+.bg-error:hover { filter: brightness(.95); }
+
+.bg-light-primary   { background: var(--mat-sys-primary-fixed-dim) !important; }
+.bg-light-secondary { background: var(--mat-sys-secondary-fixed-dim) !important; }
+.bg-light-success   { background: var(--app-success-light) !important; }
+.bg-light-warning   { background: var(--app-warning-light) !important; }
+.bg-light-error     { background: var(--mat-sys-error-fixed-dim) !important; }
+
+.text-primary   { color: var(--mat-sys-primary) !important; }
+.text-secondary { color: var(--mat-sys-secondary) !important; }
+.text-success   { color: var(--app-success) !important; }
+.text-warning   { color: var(--app-warning) !important; }
+.text-error     { color: var(--mat-sys-error) !important; }
+
+.mat-mdc-unelevated-button.bg-primary   { --mdc-filled-button-container-color: var(--mat-sys-primary);   --mdc-filled-button-label-text-color: var(--mat-sys-on-primary, #fff); }
+.mat-mdc-unelevated-button.bg-secondary { --mdc-filled-button-container-color: var(--mat-sys-secondary); --mdc-filled-button-label-text-color: var(--mat-sys-on-secondary, #fff); }
+.mat-mdc-unelevated-button.bg-success   { --mdc-filled-button-container-color: var(--app-success);       --mdc-filled-button-label-text-color: var(--app-on-success, #fff); }
+.mat-mdc-unelevated-button.bg-warning   { --mdc-filled-button-container-color: var(--app-warning);       --mdc-filled-button-label-text-color: var(--app-on-warning, #111); }
+.mat-mdc-unelevated-button.bg-error     { --mdc-filled-button-container-color: var(--mat-sys-error);     --mdc-filled-button-label-text-color: var(--mat-sys-on-error, #fff); }
+
+.mat-mdc-raised-button.bg-primary   { --mdc-filled-button-container-color: var(--mat-sys-primary);   --mdc-filled-button-label-text-color: var(--mat-sys-on-primary, #fff); }
+.mat-mdc-raised-button.bg-secondary { --mdc-filled-button-container-color: var(--mat-sys-secondary); --mdc-filled-button-label-text-color: var(--mat-sys-on-secondary, #fff); }
+.mat-mdc-raised-button.bg-success   { --mdc-filled-button-container-color: var(--app-success);       --mdc-filled-button-label-text-color: var(--app-on-success, #fff); }
+.mat-mdc-raised-button.bg-warning   { --mdc-filled-button-container-color: var(--app-warning);       --mdc-filled-button-label-text-color: var(--app-on-warning, #111); }
+.mat-mdc-raised-button.bg-error     { --mdc-filled-button-container-color: var(--mat-sys-error);     --mdc-filled-button-label-text-color: var(--mat-sys-on-error, #fff); }
+
+.mat-mdc-fab.bg-primary,
+.mat-mdc-mini-fab.bg-primary { --mdc-fab-container-color: var(--mat-sys-primary);   --mdc-fab-icon-color: var(--mat-sys-on-primary, #fff); }
+.mat-mdc-fab.bg-secondary,
+.mat-mdc-mini-fab.bg-secondary { --mdc-fab-container-color: var(--mat-sys-secondary); --mdc-fab-icon-color: var(--mat-sys-on-secondary, #fff); }
+.mat-mdc-fab.bg-error,
+.mat-mdc-mini-fab.bg-error { --mdc-fab-container-color: var(--mat-sys-error); --mdc-fab-icon-color: var(--mat-sys-on-error, #fff); }
+.mat-mdc-fab.bg-success,
+.mat-mdc-mini-fab.bg-success { --mdc-fab-container-color: var(--app-success); --mdc-fab-icon-color: var(--app-on-success, #fff); }
+.mat-mdc-fab.bg-warning,
+.mat-mdc-mini-fab.bg-warning { --mdc-fab-container-color: var(--app-warning); --mdc-fab-icon-color: var(--app-on-warning, #111); }
+
+.mat-mdc-outlined-button.text-primary   { --mdc-outlined-button-label-text-color: var(--mat-sys-primary);   --mdc-outlined-button-outline-color: var(--mat-sys-primary); }
+.mat-mdc-outlined-button.text-secondary { --mdc-outlined-button-label-text-color: var(--mat-sys-secondary); --mdc-outlined-button-outline-color: var(--mat-sys-secondary); }
+.mat-mdc-outlined-button.text-success   { --mdc-outlined-button-label-text-color: var(--app-success);       --mdc-outlined-button-outline-color: var(--app-success); }
+.mat-mdc-outlined-button.text-warning   { --mdc-outlined-button-label-text-color: var(--app-warning);       --mdc-outlined-button-outline-color: var(--app-warning); }
+.mat-mdc-outlined-button.text-error     { --mdc-outlined-button-label-text-color: var(--mat-sys-error);     --mdc-outlined-button-outline-color: var(--mat-sys-error); }
+
+.mat-mdc-button.text-primary   { --mdc-text-button-label-text-color: var(--mat-sys-primary); }
+.mat-mdc-button.text-secondary { --mdc-text-button-label-text-color: var(--mat-sys-secondary); }
+.mat-mdc-button.text-success   { --mdc-text-button-label-text-color: var(--app-success); }
+.mat-mdc-button.text-warning   { --mdc-text-button-label-text-color: var(--app-warning); }
+.mat-mdc-button.text-error     { --mdc-text-button-label-text-color: var(--mat-sys-error); }
+
+.mat-mdc-icon-button.text-primary   { --mdc-icon-button-icon-color: var(--mat-sys-primary); }
+.mat-mdc-icon-button.text-secondary { --mdc-icon-button-icon-color: var(--mat-sys-secondary); }
+.mat-mdc-icon-button.text-success   { --mdc-icon-button-icon-color: var(--app-success); }
+.mat-mdc-icon-button.text-warning   { --mdc-icon-button-icon-color: var(--app-warning); }
+.mat-mdc-icon-button.text-error     { --mdc-icon-button-icon-color: var(--mat-sys-error); }
+
+.mat-mdc-nav-list {
+  --mdc-list-list-item-hover-state-layer-color:   transparent;
+  --mdc-list-list-item-focus-state-layer-color:   transparent;
+  --mdc-list-list-item-pressed-state-layer-color: transparent;
+}
+
+.mat-mdc-nav-list .mdc-list-item--activated,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu,
+.mat-mdc-nav-list .mdc-list-item--activated:hover,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu:hover,
+.mat-mdc-nav-list .mdc-list-item--activated:focus,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu:focus {
+  --mdc-list-list-item-container-color: var(--mat-sys-secondary);
+  background-color: var(--mdc-list-list-item-container-color) !important;
+  .mdc-list-item__primary-text,
+  .mdc-list-item__secondary-text,
+  .hide-menu,
+  [matListItemIcon],
+  .routeIcon,
+  i-tabler.routeIcon {
+    color: var(--mat-sys-on-secondary, #fff) !important;
+    fill: var(--mat-sys-on-secondary, #fff) !important;
+  }
+}
+
+.mat-mdc-nav-list .mat-mdc-list-item.mdc-list-item--activated,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu {
+  cursor: default;
+  &:hover,
+  &:focus,
+  &:active {
+    --mdc-list-list-item-container-color: var(--mat-sys-secondary);
+    background-color: var(--mdc-list-list-item-container-color) !important;
+    .mdc-list-item__primary-text,
+    .mdc-list-item__secondary-text,
+    .hide-menu,
+    [matListItemIcon],
+    .routeIcon,
+    i-tabler.routeIcon {
+      color: var(--mat-sys-on-secondary, #fff) !important;
+      fill: var(--mat-sys-on-secondary, #fff) !important;
+    }
+    .mdc-list-item__ripple::before,
+    .mdc-list-item__ripple::after {
+      opacity: 0 !important;
+    }
+  }
+}
+
+.mat-mdc-nav-list 
+  .mat-mdc-list-item:not(.mdc-list-item--activated):not(.activeMenu):hover {
+  --mdc-list-list-item-container-color: var(--mat-sys-secondary);
+  background-color: var(--mdc-list-list-item-container-color) !important;
+  .mdc-list-item__primary-text,
+  .mdc-list-item__secondary-text,
+  .hide-menu,
+  [matListItemIcon],
+  .routeIcon,
+  i-tabler.routeIcon {
+    color: var(--mat-sys-on-secondary, #fff) !important;
+    fill: var(--mat-sys-on-secondary, #fff) !important;
+  }
+}
+
+.mat-mdc-nav-list .menu-list-item.expanded,
+.mat-mdc-nav-list .menu-list-item.activemenu,
+.mat-mdc-nav-list .menu-list-item.activeMenu,
+.mat-mdc-nav-list .mat-mdc-list-item.expanded,
+.mat-mdc-nav-list .mat-mdc-list-item.activemenu,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu {
+  --mdc-list-list-item-container-color: var(--mat-sys-secondary);
+  background-color: var(--mdc-list-list-item-container-color) !important;
+  .mdc-list-item__primary-text,
+  .mdc-list-item__secondary-text,
+  .hide-menu,
+  [matListItemIcon],
+  .routeIcon,
+  i-tabler,
+  i-tabler.routeIcon {
+    color: var(--mat-sys-on-secondary, #fff) !important;
+    fill: var(--mat-sys-on-secondary, #fff) !important;
+    opacity: 1 !important;
+  }
+}
+
+.mat-mdc-nav-list .menu-list-item.expanded:hover,
+.mat-mdc-nav-list .menu-list-item.activemenu:hover,
+.mat-mdc-nav-list .menu-list-item.activeMenu:hover,
+.mat-mdc-nav-list .mat-mdc-list-item.expanded:hover,
+.mat-mdc-nav-list .mat-mdc-list-item.activemenu:hover,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu:hover,
+.mat-mdc-nav-list .menu-list-item.expanded:focus,
+.mat-mdc-nav-list .menu-list-item.activemenu:focus,
+.mat-mdc-nav-list .menu-list-item.activeMenu:focus,
+.mat-mdc-nav-list .mat-mdc-list-item.expanded:focus,
+.mat-mdc-nav-list .mat-mdc-list-item.activemenu:focus,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu:focus {
+  --mdc-list-list-item-container-color: var(--mat-sys-secondary);
+  background-color: var(--mdc-list-list-item-container-color) !important;
+  .mdc-list-item__primary-text,
+  .mdc-list-item__secondary-text,
+  .hide-menu,
+  [matListItemIcon],
+  .routeIcon,
+  i-tabler,
+  i-tabler.routeIcon {
+    color: var(--mat-sys-on-secondary, #fff) !important;
+    fill: var(--mat-sys-on-secondary, #fff) !important;
+    opacity: 1 !important;
+  }
+}
+
+
+/* === FIX: Tabler nunca se rellena en el sidebar === */
+
+/* 1) Por defecto: los <i-tabler> y svg de icono trabajan con stroke y sin fill */
+.mat-mdc-nav-list i-tabler,
+.mat-mdc-nav-list i-tabler.routeIcon,
+.mat-mdc-nav-list .routeIcon,
+.mat-mdc-nav-list [matListItemIcon] svg {
+  fill: none !important;           /* evita relleno */
+  stroke: currentColor !important;  /* Tabler usa currentColor para el trazo */
+}
+
+/* 2) En estados activo/hover del item, mantenemos SIN fill (solo cambia el color por herencia) */
+.mat-mdc-nav-list .mdc-list-item--activated i-tabler,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu i-tabler,
+.mat-mdc-nav-list .mdc-list-item--activated i-tabler.routeIcon,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu i-tabler.routeIcon,
+.mat-mdc-nav-list .mdc-list-item--activated [matListItemIcon] svg,
+.mat-mdc-nav-list .mat-mdc-list-item.activeMenu [matListItemIcon] svg,
+.mat-mdc-nav-list .mat-mdc-list-item:not(.mdc-list-item--activated):not(.activeMenu):hover i-tabler,
+.mat-mdc-nav-list .mat-mdc-list-item:not(.mdc-list-item--activated):not(.activeMenu):hover i-tabler.routeIcon,
+.mat-mdc-nav-list .mat-mdc-list-item:not(.mdc-list-item--activated):not(.activeMenu):hover [matListItemIcon] svg,
+.mat-mdc-nav-list .menu-list-item.expanded i-tabler,
+.mat-mdc-nav-list .menu-list-item.expanded i-tabler.routeIcon,
+.mat-mdc-nav-list .menu-list-item.expanded [matListItemIcon] svg {
+  fill: none !important;           /* prioridad sobre tus reglas previas que ponen fill */
+  stroke: currentColor !important; /* usa el color que ya pintas en el padre */
+}
+
+/* 3) Si en algún sitio forzaste fill por clase, lo anulamos igual */
+i-tabler[filled],
+i-tabler.routeIcon[filled] {
+  fill: none !important;
+}

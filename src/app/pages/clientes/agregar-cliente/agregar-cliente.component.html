@@ -1,0 +1,485 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+    <header class="perm-head perm-head--left" role="region" aria-label="Sección: Permisos">
+        <div class="perm-head__icon" aria-hidden="true">
+            <mat-icon>supervisor_account</mat-icon>
+        </div>
+        <div class="perm-head__text">
+            <span class="eyebrow">Sección</span>
+            <h2>{{title}}</h2>
+        </div>
+        <nav class="perm-head__crumbs" aria-label="Ruta">
+            <span class="crumb">Administración</span>
+            <span class="sep">/</span>
+            <span class="crumb active">Clientes</span>
+        </nav>
+    </header>
+    <div class="surface">
+        <section class="perm-form-nc container-fluid py-4">
+            <form [formGroup]="clienteForm" class="perm-form-body">
+                <div class="row g-4">
+
+                    <div class="col-12 col-md-4">
+                        <label for="cuentaPadre" class="form-label perm-label">Cuenta Padre</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">account_tree</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 perm-select-floating">
+                                <select class="form-select" id="cuentaPadre" required formControlName="idPadre">
+                                    <!-- <option [ngValue]="null" disabled>Selecciona una cuenta padre </option> -->
+                                    <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
+                                        {{ cliente.nombre }}
+                                        {{ cliente.apellidoPaterno }}
+                                        {{ cliente.apellidoMaterno }}
+                                    </option>
+                                </select>
+                                <label for="cuentaPadre">Selecciona cuenta padre</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="rfc" class="form-label perm-label">RFC</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">badge</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="rfc" class="form-control" id="rfc"
+                                    placeholder="Ej.: ABCD800101XX0" required>
+                                <label for="rfc">Ej.: ABCD800101XX0</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="tipoPersona" class="form-label perm-label">Tipo Persona</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">person</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 perm-select-floating">
+                                <select class="form-select" id="tipoPersona" formControlName="tipoPersona" required>
+                                    <!-- <option [ngValue]="null"></option> -->
+                                    <option [ngValue]="1">Física</option>
+                                    <option [ngValue]="2">Moral</option>
+                                </select>
+                                <label for="tipoPersona">Selecciona tipo de persona</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nombre / Razón social -->
+                    <div class="col-12 col-md-4">
+                        <label for="nombre" class="form-label perm-label">
+                            {{ clienteForm.value.tipoPersona == 2 ? 'Razón Social' : 'Nombre' }}
+                        </label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">{{ clienteForm.value.tipoPersona == 2 ? 'business' :
+                                    'person' }}</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" class="form-control" id="nombre" formControlName="nombre"
+                                    [placeholder]="clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de C.V.' : 'Ej: Juan'"
+                                    required />
+                                <label for="nombre">
+                                    {{ clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de C.V.'
+                                    : 'Ej: Juan' }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Apellidos (solo si Física) -->
+                    <ng-container *ngIf="clienteForm.value.tipoPersona != 2">
+                        <div class="col-12 col-md-4">
+                            <label for="apellidoPaterno" class="form-label perm-label">Apellido Paterno</label>
+                            <div class="input-group input-group-lg perm-ig">
+                                <span class="input-group-text fw-bold">
+                                    <mat-icon aria-hidden="true">badge</mat-icon>
+                                </span>
+                                <div class="form-floating flex-grow-1">
+                                    <input type="text" class="form-control" id="apellidoPaterno"
+                                        formControlName="apellidoPaterno" placeholder="Ej: Rodríguez" />
+                                    <label for="apellidoPaterno">Ej: Rodríguez</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="apellidoMaterno" class="form-label perm-label">Apellido Materno</label>
+                            <div class="input-group input-group-lg perm-ig">
+                                <span class="input-group-text fw-bold">
+                                    <mat-icon aria-hidden="true">badge</mat-icon>
+                                </span>
+                                <div class="form-floating flex-grow-1">
+                                    <input type="text" class="form-control" id="apellidoMaterno"
+                                        formControlName="apellidoMaterno" placeholder="Ej: Santos" />
+                                    <label for="apellidoMaterno">Ej: Santos</label>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <div class="col-12 col-md-4">
+                        <label for="telefono" class="form-label perm-label">Teléfono</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">call</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input maxlength="10" (keypress)="allowOnlyNumbers($event)" formControlName="telefono"
+                                    class="form-control" id="telefono" placeholder="Ej.: 55 1234 5678" required>
+                                <label for="telefono">Ej.: 55 1234 5678</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="correo" class="form-label perm-label">Correo Electrónico</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">mail</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="email" formControlName="correo" class="form-control" id="correo"
+                                    placeholder="Ej.: cliente@empresa.com" required>
+                                <label for="correo">Ej.: cliente&#64;empresa.com</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="estado" class="form-label perm-label">Estado</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">map</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="estado" class="form-control" id="estado"
+                                    placeholder="Ej.: CDMX" required>
+                                <label for="estado">Ej.: CDMX</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="municipio" class="form-label perm-label">Municipio</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">location_city</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="municipio" class="form-control" id="municipio"
+                                    placeholder="Ej.: Benito Juárez" required>
+                                <label for="municipio">Ej.: Benito Juárez</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="colonia" class="form-label perm-label">Colonia</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">home</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="colonia" class="form-control" id="colonia"
+                                    placeholder="Ej.: Del Valle" required>
+                                <label for="colonia">Ej.: Del Valle</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="calle" class="form-label perm-label">Calle</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">signpost</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="calle" class="form-control" id="calle"
+                                    placeholder="Ej.: Insurgentes Sur" required>
+                                <label for="calle">Ej.: Insurgentes Sur</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="entreCalles" class="form-label perm-label">Entre Calles</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">alt_route</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="entreCalles" class="form-control" id="entreCalles"
+                                    placeholder="Ej.: Xola y Eugenia">
+                                <label for="entreCalles">Ej.: Xola y Eugenia</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="cp" class="form-label perm-label">Código Postal</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">local_post_office</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input maxlength="5" (keypress)="allowOnlyNumbers($event)" formControlName="cp"
+                                    class="form-control" id="cp" placeholder="Ej.: 03100" required>
+                                <label for="cp">Ej.: 03100</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="numeroExterior" class="form-label perm-label">Número Exterior</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">tag</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="numeroExterior" class="form-control"
+                                    id="numeroExterior" placeholder="Ej.: 123" required>
+                                <label for="numeroExterior">Ej.: 123</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="numeroInterior" class="form-label perm-label">Número Interior</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">tag</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="numeroInterior" class="form-control"
+                                    id="numeroInterior" placeholder="Ej.: 4B">
+                                <label for="numeroInterior">Ej.: 4B</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="nombreEncargado" class="form-label perm-label">Nombre Encargado</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">supervisor_account</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="nombreEncargado" class="form-control"
+                                    id="nombreEncargado" placeholder="Ej.: María López" required>
+                                <label for="nombreEncargado">Ej.: María López</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="telefonoEncargado" class="form-label perm-label">Teléfono Encargado</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">call</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input maxlength="10" (keypress)="allowOnlyNumbers($event)"
+                                    formControlName="telefonoEncargado" class="form-control" id="telefonoEncargado"
+                                    placeholder="Ej.: 55 9876 5432" required>
+                                <label for="telefonoEncargado">Ej.: 55 9876 5432</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="correoEncargado" class="form-label perm-label">Correo Electrónico Encargado</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">alternate_email</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="email" formControlName="correoEncargado" class="form-control"
+                                    id="correoEncargado" placeholder="Ej.: encargado@empresa.com" required>
+                                <label for="correoEncargado">Ej.: encargado&#64;empresa.com</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="sitioWeb" class="form-label perm-label">Sitio Web</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">language</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="sitioWeb" class="form-control" id="sitioWeb"
+                                    placeholder="Ej.: https://empresa.com">
+                                <label for="sitioWeb">Ej.: https://empresa.com</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-4 mt-3 uploader-wrap">
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <label class="form-label perm-label d-block mb-2">Logotipo</label>
+                            <div class="uploader-hero">
+                                <div class="uploader" [class.dragging]="logoDragging"
+                                    (dragover)="onLogoDragOver($event)" (dragleave)="onLogoDragLeave($event)"
+                                    (drop)="onLogoDrop($event)">
+                                    <div class="uploader__glow"></div>
+                                    <div class="uploader__body">
+                                        <div class="uploader__icon"><mat-icon>cloud_upload</mat-icon></div>
+                                        <h6 class="uploader__title">Sube tu imagen</h6>
+                                        <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <div class="uploader__cta">
+                                            <button mat-flat-button color="primary" type="button"
+                                                (click)="openLogoFilePicker()">Seleccionar</button>
+                                            <span class="uploader__badge">PNG · JPG · JPEG</span>
+                                        </div>
+
+                                        <div class="uploader__status" *ngIf="clienteForm.get('logotipo')?.value">
+                                            <div class="uploader__filename"
+                                                *ngIf="clienteForm.get('logotipo')?.value?.name">
+                                                {{ clienteForm.get('logotipo')?.value?.name }}
+                                            </div>
+                                            <a class="uploader__filename uploader__filename--link"
+                                                *ngIf="!clienteForm.get('logotipo')?.value?.name"
+                                                [href]="clienteForm.get('logotipo')?.value" target="_blank"
+                                                rel="noopener noreferrer">
+                                                {{ clienteForm.get('logotipo')?.value }}
+                                            </a>
+                                        </div>
+
+                                        <input #logoFileInput type="file" accept="image/png,image/jpeg,image/jpg"
+                                            (change)="onLogoFileSelected($event)" class="uploader__input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <label class="form-label perm-label d-block mb-2">Constancia de Situación Fiscal</label>
+                            <div class="uploader-hero">
+                                <div class="uploader" [class.dragging]="csfDragging" (dragover)="onCsfDragOver($event)"
+                                    (dragleave)="onCsfDragLeave($event)" (drop)="onCsfDrop($event)">
+                                    <div class="uploader__glow"></div>
+                                    <div class="uploader__body">
+                                        <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                                        <h6 class="uploader__title">Sube tu PDF</h6>
+                                        <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <div class="uploader__cta">
+                                            <button mat-flat-button color="primary" type="button"
+                                                (click)="openCsfFilePicker()">Seleccionar</button>
+                                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
+                                        </div>
+
+                                        <div class="uploader__status"
+                                            *ngIf="csfFileName || clienteForm.get('constanciaSituacionFiscal')?.value">
+                                            <div class="uploader__filename"
+                                                *ngIf="csfFileName || clienteForm.get('constanciaSituacionFiscal')?.value?.name">
+                                                {{ csfFileName
+                                                || clienteForm.get('constanciaSituacionFiscal')?.value?.name }}
+                                            </div>
+                                            <a class="uploader__filename uploader__filename--link"
+                                                *ngIf="!csfFileName && !clienteForm.get('constanciaSituacionFiscal')?.value?.name"
+                                                [href]="clienteForm.get('constanciaSituacionFiscal')?.value"
+                                                target="_blank" rel="noopener noreferrer">
+                                                {{ clienteForm.get('constanciaSituacionFiscal')?.value }}
+                                            </a>
+                                        </div>
+
+                                        <input #csfFileInput type="file" accept="application/pdf"
+                                            (change)="onCsfFileSelected($event)" class="uploader__input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <label class="form-label perm-label d-block mb-2">Comprobante de Domicilio</label>
+                            <div class="uploader-hero">
+                                <div class="uploader" [class.dragging]="compDomDragging"
+                                    (dragover)="onCompDomDragOver($event)" (dragleave)="onCompDomDragLeave($event)"
+                                    (drop)="onCompDomDrop($event)">
+                                    <div class="uploader__glow"></div>
+                                    <div class="uploader__body">
+                                        <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                                        <h6 class="uploader__title">Sube tu PDF</h6>
+                                        <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <div class="uploader__cta">
+                                            <button mat-flat-button color="primary" type="button"
+                                                (click)="openCompDomFilePicker()">Seleccionar</button>
+                                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
+                                        </div>
+
+                                        <div class="uploader__status"
+                                            *ngIf="compDomFileName || clienteForm.get('comprobanteDomicilio')?.value">
+                                            <div class="uploader__filename"
+                                                *ngIf="compDomFileName || clienteForm.get('comprobanteDomicilio')?.value?.name">
+                                                {{ compDomFileName
+                                                || clienteForm.get('comprobanteDomicilio')?.value?.name }}
+                                            </div>
+                                            <a class="uploader__filename uploader__filename--link"
+                                                *ngIf="!compDomFileName && !clienteForm.get('comprobanteDomicilio')?.value?.name"
+                                                [href]="clienteForm.get('comprobanteDomicilio')?.value" target="_blank"
+                                                rel="noopener noreferrer">
+                                                {{ clienteForm.get('comprobanteDomicilio')?.value }}
+                                            </a>
+                                        </div>
+                                        <input #compDomFileInput type="file" accept="application/pdf"
+                                            (change)="onCompDomFileSelected($event)" class="uploader__input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <label class="form-label perm-label d-block mb-2">Acta Constitutiva</label>
+                            <div class="uploader-hero">
+                                <div class="uploader" [class.dragging]="actaDragging"
+                                    (dragover)="onActaDragOver($event)" (dragleave)="onActaDragLeave($event)"
+                                    (drop)="onActaDrop($event)">
+                                    <div class="uploader__glow"></div>
+                                    <div class="uploader__body">
+                                        <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                                        <h6 class="uploader__title">Sube tu PDF</h6>
+                                        <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <div class="uploader__cta">
+                                            <button mat-flat-button color="primary" type="button"
+                                                (click)="openActaFilePicker()">Seleccionar</button>
+                                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
+                                        </div>
+
+                                        <div class="uploader__status"
+                                            *ngIf="actaFileName || clienteForm.get('actaConstitutiva')?.value">
+                                            <div class="uploader__filename"
+                                                *ngIf="actaFileName || clienteForm.get('actaConstitutiva')?.value?.name">
+                                                {{ actaFileName
+                                                || clienteForm.get('actaConstitutiva')?.value?.name }}
+                                            </div>
+                                            <a class="uploader__filename uploader__filename--link"
+                                                *ngIf="!actaFileName && !clienteForm.get('actaConstitutiva')?.value?.name"
+                                                [href]="clienteForm.get('actaConstitutiva')?.value" target="_blank"
+                                                rel="noopener noreferrer">
+                                                {{ clienteForm.get('actaConstitutiva')?.value }}
+                                            </a>
+                                        </div>
+
+                                        <input #actaFileInput type="file" accept="application/pdf"
+                                            (change)="onActaFileSelected($event)" class="uploader__input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
+                    <button class="button-success" role="button" (click)="submit()"><i
+                            class="fa fa-check"></i>&nbsp;&nbsp;{{submitButton}}</button>
+                    <button type="button" class="button-danger" (click)="regresar()"><i
+                            class="fa fa-times">&nbsp;&nbsp;</i>Cancelar</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>

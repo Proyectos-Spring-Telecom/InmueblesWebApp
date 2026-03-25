@@ -1,0 +1,141 @@
+<div autosize autoFocus [ngClass]="{
+  'sidebarNav-mini': options.sidenavCollapsed && options.navPos !== 'top' &&  !resView,
+  'sidebarNav-horizontal': options.horizontal,
+  cardBorder: options.cardBorder,
+}" class="page-container" [dir]="options.dir!">
+  <!-- ============================================================== -->
+  <!-- VerticalHeader -->
+  <!-- ============================================================== -->
+  @if(!options.horizontal) {
+  <app-header [showToggle]="!isOver" (toggleCollapsed)="toggleCollapsed()" (toggleMobileNav)="sidenav.toggle()"
+    (toggleMobileFilterNav)="filterNavRight.toggle()" (optionsChange)="receiveOptions($event)"></app-header>
+  } @else {
+  <!-- horizontal header -->
+  <app-horizontal-header (toggleMobileNav)="sidenav.toggle()" (toggleMobileFilterNav)="filterNavRight.toggle()"
+    (optionsChange)="receiveOptions($event)"></app-horizontal-header>
+  }
+
+  <mat-sidenav-container class="mainWrapper">
+    <!-- ============================================================== -->
+    <!-- Vertical Sidebar -->
+    <!-- ============================================================== -->
+    @if(!options.horizontal) {
+    <mat-sidenav align="start" #leftsidenav [mode]="isOver ? 'over' : 'side'" [opened]="
+        options.navPos === 'side' &&
+        options.sidenavOpened &&
+        !isOver &&
+        !resView
+      " (openedChange)="onSidenavOpenedChange($event)" (closedStart)="onSidenavClosedStart()" class="sidebarNav">
+      <app-sidebar> </app-sidebar>
+      <ng-scrollbar class="position-relative mini-scroll" style="height: calc(100vh - 230px)">
+        <mat-nav-list class="sidebar-list">
+          @for(item of navItems; track item) {
+          <app-nav-item [item]="item" (notify)="sidenav.toggle()" class="top-parent">
+          </app-nav-item>
+          }
+        </mat-nav-list>
+      </ng-scrollbar>
+    </mat-sidenav>
+    }
+
+    <!-- ============================================================== -->
+    <!-- horizontal Sidebar -->
+    <!-- ============================================================== -->
+    @if(resView && options.horizontal) {
+    <mat-sidenav #leftsidenav [mode]="'over'" [opened]="options.sidenavOpened && !isTablet"
+      (openedChange)="onSidenavOpenedChange($event)" (closedStart)="onSidenavClosedStart()" class="sidebarNav">
+      <app-sidebar> </app-sidebar>
+      <ng-scrollbar class="position-relative mini-scroll" style="height: calc(100vh - 230px)">
+        <mat-nav-list class="sidebar-list">
+          @for(item of navItems; track item) {
+          <app-nav-item [item]="item" (notify)="sidenav.toggle()">
+          </app-nav-item>
+          }
+        </mat-nav-list>
+      </ng-scrollbar>
+    </mat-sidenav>
+    }
+
+    <!-- ============================================================== -->
+    <!-- Main Content -->
+    <!-- ============================================================== -->
+    <mat-sidenav-content class="contentWrapper">
+      @if(options.horizontal) {
+      <app-horizontal-sidebar></app-horizontal-sidebar>
+      }
+
+      <main class="pageWrapper" [ngClass]="{
+          maxWidth: options.boxed
+        }">
+        <!-- ============================================================== -->
+        <!-- Outlet -->
+        <!-- ============================================================== -->
+        <router-outlet></router-outlet>
+        <!-- <div class="customizerBtn">
+          <button mat-fab class="bg-primary text-white" (click)="customizerRight.toggle()">
+            <mat-icon>settings</mat-icon>
+          </button>
+        </div> -->
+      </main>
+    </mat-sidenav-content>
+    <!-- ============================================================== -->
+    <!-- Customizer -->
+    <!-- ============================================================== -->
+    <mat-sidenav #customizerRight mode="over" position="end" class="customizer-fixed">
+      <div class="p-x-16 p-y-10 d-flex align-items-center justify-content-between b-b-1">
+        <h3 class="f-s-21 f-w-600">Settings</h3>
+
+        <a mat-icon-button class="d-lg-none" (click)="customizerRight.toggle()" class="d-flex justify-content-center">
+          <mat-icon>close</mat-icon>
+        </a>
+      </div>
+
+      <app-customizer (optionsChange)="receiveOptions($event)"></app-customizer>
+    </mat-sidenav>
+
+  </mat-sidenav-container>
+  <!-- ------------------------------------------------------------------
+  Mobile Apps Sidebar
+  ------------------------------------------------------------------ -->
+  <mat-drawer #filterNavRight mode="over" position="end" class="filter-sidebar">
+    <div>
+      <div class="d-flex justify-content-between align-items-center p-16">
+        <app-auth-branding></app-auth-branding>
+        <button mat-icon-button (click)="filterNavRight.toggle()" class="d-flex justify-content-center">
+          <i-tabler name="x" class="icon-18 d-flex"></i-tabler>
+        </button>
+      </div>
+      <div class="p-x-16">
+        <div class="row">
+          @for(appdd of apps; track appdd.title) {
+          <div class="col-12 text-hover-primary">
+            <a [routerLink]="[appdd.link]" class="d-flex align-items-center text-decoration-none m-b-20">
+              <span class="text-{{ appdd.color }} bg-light-{{
+                  appdd.color
+                }} rounded-circle icon-40 d-flex align-items-center justify-content-center">
+                <i-tabler class="icon-20 d-flex" name="{{ appdd.icon }}"></i-tabler>
+              </span>
+
+              <div class="m-l-16">
+                <h5 class="f-s-14 f-w-500 m-0 textprimary hover-text lh-sm">
+                  {{ appdd.title }}
+                </h5>
+                <span class=" f-s-12">{{ appdd.subtitle }}</span>
+              </div>
+            </a>
+          </div>
+          }
+          <div class="position-relative p-x-16 p-b-16 w-100">
+            <h4 class="f-s-18 f-w-500 m-b-20">Quick Links</h4>
+            @for(quicklink of quicklinks; track quicklink.title) {
+            <div class="text-hover-primary m-b-16">
+              <a [routerLink]="[quicklink.link]"
+                class="primary-hover-text text-decoration-none f-s-14 f-w-500 d-block">{{ quicklink.title }}</a>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-drawer>
+</div>

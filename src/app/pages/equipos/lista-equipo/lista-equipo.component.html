@@ -1,0 +1,122 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+  <header class="perm-head" role="region" aria-label="Sección: Equipos">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>memory</mat-icon>
+    </div>
+
+    <div class="perm-head__text">
+      <span class="eyebrow">Sección</span>
+      <h2>Equipos</h2>
+    </div>
+
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Administración</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Equipos</span>
+    </nav>
+  </header>
+
+  <div class="surface">
+        <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
+      <div *appHasPermission="'25'">
+        <button (click)="agregarEquipo()" mat-flat-button class="bg-secondary">
+          <i class="fa fa-plus"></i> Agregar</button>
+      </div>
+      <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
+      <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+        {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+      </button>
+    </div>
+    <div class="mt-3">
+      <dx-data-grid #gridContainer id="gridContainer" [columnHidingEnabled]="true" [showBorders]="true"
+        [showColumnLines]="true" [showRowLines]="true" [rowAlternationEnabled]="true" [dataSource]="listaEquipos"
+        [keyExpr]="'id'" [width]="'100%'" [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'" [pager]="{ 
+                    showPageSizeSelector: true, 
+                    allowedPageSizes: [50], 
+                    showInfo: true,
+                    infoText: 'Página {0} de {1}', 
+                    visible: true 
+                }" (onPageIndexChanged)=" onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
+        <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+        <!-- <dxo-paging [pageSize]="20"></dxo-paging> -->
+        <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+        <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+        <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+        <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+        <dxi-column caption="Acciones" cellTemplate="Acciones" alignment="center" *appHasPermission="['26', '28']" dataType="string"
+          [width]="180"></dxi-column>
+        <dxi-column caption="Cliente" alignment="center" dataType="string" cellTemplate="tplCliente"></dxi-column>
+        <div *dxTemplate="let r of 'tplCliente'">
+          {{ r.data?.cliente?.nombre }}
+          <ng-container *ngIf="r.data?.cliente?.apellidoPaterno"> {{ ' ' + r.data.cliente.apellidoPaterno
+            }}</ng-container>
+          <ng-container *ngIf="r.data?.cliente?.apellidoMaterno"> {{ ' ' + r.data.cliente.apellidoMaterno
+            }}</ng-container>
+        </div>
+        <dxi-column dataField="idEstadoEquipo" caption="Estado Equipo" alignment="center" cellTemplate="tplEstadoEquipo"
+          dataType="number">
+        </dxi-column>
+
+        <div *dxTemplate="let e of 'tplEstadoEquipo'">
+          @if (e.data.idEstadoEquipo === 1) {
+          <span class="estatus estatus-disponible">Disponible</span>
+          } @else if (e.data.idEstadoEquipo === 2) {
+          <span class="estatus estatus-instalado">Instalado</span>
+          } @else if (e.data.idEstadoEquipo === 3) {
+          <span class="estatus estatus-reparacion">En reparación</span>
+          } @else if (e.data.idEstadoEquipo === 4) {
+          <span class="estatus estatus-descompuesto">Descompuesto</span>
+          } @else {
+          <span class="estatus">Sin estado</span>
+          }
+        </div>
+
+        <dxi-column dataField="modelo.nombre" caption="Modelo" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="numeroSerie" caption="N° Serie" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="fechaCreacion" caption="Fecha de Registro" alignment="center" dataType="string"
+          cellTemplate="tplFechaCreacion"></dxi-column>
+        <div *dxTemplate="let c of 'tplFechaCreacion'">
+          {{ c.data?.fechaCreacion | date:'dd/MM/yyyy HH:mm':'UTC' }}
+        </div>
+
+
+
+        <!-- <dxi-column dataField="ip" caption="IP" alignment="center" dataType="string"></dxi-column> -->
+        <!-- <dxi-column dataField="idEstadoEquipo" caption="Estado Equipo" alignment="center" dataType="string"></dxi-column> -->
+        <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="est" dataType="string">
+          <div *dxTemplate="let f of 'est'">
+            @if (f.data.estatus === 1) {
+            <span class="estatus estatus-activo">Activo</span>
+            } @else {
+            <span class="estatus estatus-inactivo">Inactivo</span>
+            }
+          </div>
+        </dxi-column>
+        <div *dxTemplate="let row of 'Acciones'" class="d-flex gap-3 justify-content-center">
+          <div *appHasPermission="'26'">
+            <button valueExpr="id" id="actualizarButton" class="btnAcciones" (click)="actualizarEquipo(row.data.id)">
+              <i class="fa fa-edit"></i>
+            </button>
+          </div>
+          <div *appHasPermission="'28'">
+            @if (row.data.estatus === 0) {
+            <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
+              <i class="fa fa-arrow-up"></i>
+            </button>
+            } @else {
+            <button id="deleteButton" class="btnAcciones" (click)="desactivar(row.data)">
+              <i class="fa fa-arrow-down"></i>
+            </button>
+            }
+          </div>
+        </div>
+        <dxo-export [enabled]="false" [allowExportSelectedData]="true"
+          [texts]="{ exportAll: 'Exportar todos los datos a Excel', exportSelectedRows: 'Exportar filas seleccionadas a Excel' }">
+        </dxo-export>
+      </dx-data-grid>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,808 @@
+/* ====== Responsive Section ====== */
+.responsive-section {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ====== Hero Header Styles ====== */
+.hero-header {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1rem !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  isolation: isolate;
+  width: 100%;
+}
+
+.hero-header__background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+  z-index: 0;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 50%, rgba(248, 113, 113, 0.12) 0%, transparent 50%);
+    opacity: 0.6;
+  }
+}
+
+.hero-header__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.75rem;
+  gap: 1.5rem;
+}
+
+.hero-header__left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hero-header__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  border-radius: 50px;
+  width: fit-content;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #0ea5e9;
+  backdrop-filter: blur(10px);
+  
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+  }
+}
+
+.hero-header__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.01em;
+}
+
+.hero-header__right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hero-header__back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.hero-header__filters {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+}
+
+.hero-header__filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 150px;
+}
+
+.hero-header__filter-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+  margin: 0;
+}
+
+.hero-header__filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: #0ea5e9;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: fit-content;
+  
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+  }
+  
+  &:hover {
+    background: #0d94d8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.hero-header__accent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0ea5e9 0%, #f87171 50%, #0ea5e9 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+  z-index: 2;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 0%;
+  }
+}
+
+/* ====== Responsive Styles ====== */
+
+/* Tablets (768px - 1024px) */
+@media (max-width: 1024px) {
+  section.container-fluid {
+    padding: 1.5rem !important;
+  }
+
+  .hero-header__content {
+    padding: 1rem 1.5rem;
+    gap: 1rem;
+  }
+
+  .hero-header__title {
+    font-size: 1.35rem;
+  }
+
+  .hero-header__filters {
+    gap: 0.5rem;
+  }
+
+  .hero-header__filter-item {
+    min-width: 130px;
+  }
+
+  .panel {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+    margin-top: 10%;
+  }
+
+  .panel .text-end {
+    width: 100%;
+    text-align: left !important;
+  }
+
+  ::ng-deep #pie {
+    height: 350px !important;
+  }
+}
+
+/* Tablets pequeñas y móviles grandes (576px - 768px) */
+@media (max-width: 768px) {
+  section.container-fluid {
+    padding: 1rem !important;
+  }
+
+  .hero-header {
+    margin-bottom: 1rem !important;
+  }
+
+  .hero-header__content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .hero-header__left {
+    width: 100%;
+  }
+
+  .hero-header__title {
+    font-size: 1.25rem;
+  }
+
+  .hero-header__badge {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .hero-header__right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .hero-header__filters {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .hero-header__filter-item {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .hero-header__filter-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-header__back-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Panel Hit Actual */
+  .panel {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+    padding: 1rem !important;
+  }
+
+  .panel .avatar {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .panel .title {
+    font-size: 16px;
+  }
+
+  .panel .chip {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .panel .text-end {
+    width: 100%;
+    text-align: left !important;
+  }
+
+  /* Gráficos */
+  ::ng-deep #pie {
+    height: 300px !important;
+  }
+
+  .box {
+    padding: 1rem !important;
+  }
+
+  .box .title {
+    font-size: 15px;
+  }
+
+  .box .subtitle {
+    font-size: 11px;
+  }
+
+  /* Data Grid */
+  .box .dx-data-grid {
+    font-size: 0.875rem;
+  }
+
+  .box .dx-data-grid {
+    height: 400px !important;
+  }
+}
+
+/* Móviles pequeños (hasta 576px) */
+@media (max-width: 576px) {
+  section.container-fluid {
+    padding: 0.75rem !important;
+    margin-top: 0 !important;
+  }
+
+  .hero-header {
+    border-radius: 8px;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .hero-header__content {
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .hero-header__title {
+    font-size: 1.1rem;
+  }
+
+  .hero-header__badge {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+    
+    span {
+      display: none;
+    }
+  }
+
+  .hero-header__filter-label {
+    font-size: 0.7rem;
+  }
+
+  .hero-header__filter-btn,
+  .hero-header__back-btn {
+    font-size: 0.8rem;
+    padding: 0.45rem 0.9rem;
+  }
+
+  /* Panel Hit Actual */
+  .panel {
+    padding: 0.75rem !important;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .panel .d-flex.align-items-center {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.75rem;
+  }
+
+  .panel .avatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .panel .title {
+    font-size: 14px;
+  }
+
+  .panel .chip {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .panel .id-badge,
+  .panel .time-pill {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  /* Gráficos */
+  ::ng-deep #pie {
+    height: 250px !important;
+  }
+
+  .box {
+    padding: 0.75rem !important;
+  }
+
+  .box .title {
+    font-size: 14px;
+  }
+
+  .box .subtitle {
+    font-size: 10px;
+  }
+
+  .box .d-flex.justify-content-around {
+    font-size: 10px;
+  }
+
+  /* Gráfico de barras */
+  .box .dx-chart {
+    min-height: 250px;
+  }
+
+  /* Data Grid */
+  .box .dx-data-grid {
+    font-size: 0.8rem;
+    height: 350px !important;
+  }
+
+  .box .dx-data-grid .dx-datagrid-headers {
+    font-size: 0.75rem;
+  }
+
+  .text-total {
+    font-size: 0.875rem;
+  }
+
+  /* Gráfico de barras responsive */
+  .box .dx-chart {
+    min-height: 200px;
+  }
+}
+
+/* Móviles muy pequeños (hasta 400px) */
+@media (max-width: 400px) {
+  section.container-fluid {
+    padding: 0.5rem !important;
+  }
+
+  .hero-header__content {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .hero-header__title {
+    font-size: 1rem;
+  }
+
+  .hero-header__filter-item {
+    gap: 0.25rem;
+  }
+
+  .hero-header__filter-label {
+    font-size: 0.65rem;
+  }
+
+  ::ng-deep #pie {
+    height: 200px !important;
+  }
+
+  .box {
+    padding: 0.5rem !important;
+  }
+
+  .box .title {
+    font-size: 13px;
+  }
+
+  .box .dx-data-grid {
+    height: 300px !important;
+    font-size: 0.75rem;
+  }
+
+  .box .dx-chart {
+    min-height: 180px;
+  }
+}
+
+::ng-deep #pie {
+  height: 440px;
+  max-width: 100%;
+}
+
+::ng-deep #pie * {
+  margin: 0 auto;
+}
+
+/* Responsive para gráficos pie */
+@media (max-width: 1024px) {
+  ::ng-deep #pie {
+    height: 350px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  ::ng-deep #pie {
+    height: 300px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  ::ng-deep #pie {
+    height: 250px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  ::ng-deep #pie {
+    height: 200px !important;
+  }
+}
+
+.grafico-mini { width: 100%; min-height: 260px; display: block; }
+
+
+:host ::ng-deep .dxc-title text {
+  fill: var(--mat-sys-on-background, #e6f1ff) !important;
+}
+:host ::ng-deep .dxc-subtitle text {
+  fill: rgba(230,241,255,.70) !important;
+}
+
+.text-total{
+  color: #06b6d4;
+}
+
+/* Panel superior (banner) */
+.panel {
+  background: #2b303b;
+  border-radius: 10px;
+  border-left: 6px solid #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  width: 100%;
+  overflow-x: auto;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 22px;
+}
+
+.title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.subtitle {
+  color: #c8cbd1;
+  font-size: 12px;
+}
+
+.chip {
+  background: rgba(255,255,255,0.08);
+  color: #e6e8ee;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.time-pill {
+  background: #fff;
+  color: #000;
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: inline-block;
+  font-weight: 600;
+}
+
+/* Tarjetas de gráficas */
+.box {
+  background: #2b303b;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  width: 100%;
+  overflow-x: auto;
+}
+
+.box .title {
+  font-size: 17px;
+}
+
+.box .subtitle {
+  font-size: 12px;
+}
+
+/* Ajustes pequeños para el ícono de material */
+.mat-18 {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  line-height: 18px;
+}
+
+/* Caja contenedora del grid (mismo estilo que el resto) */
+.box {
+  background: #2b303b;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+
+.title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Color del “Total” como en la captura */
+.text-success {
+  color: #71ff00 !important;
+}
+
+/* Opcional: contraste leve de filas alternas si ya no lo da tu tema */
+.dx-datagrid-rowsview .dx-row-alt {
+  background-color: rgba(255,255,255,0.03);
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+}
+
+/* Género */
+.genero.hombre { background: #0ea5e9; } /* azul cielo hombres */
+.genero.mujer  { background: #f87171; } /* rosa coral mujeres */
+
+/* Estado de ánimo (enum: feliz, neutral, sorprendido, triste, molesto, disgustado, asustado, despectivo) */
+.estado.feliz       { background: #22c55e; } /* verde */
+.estado.neutral     { background: #94a3b8; } /* gris */
+.estado.sorprendido { background: #eab308; } /* amarillo */
+.estado.triste      { background: #c0392b; } /* rojo */
+.estado.molesto     { background: #f97316; } /* naranja */
+.estado.disgustado  { background: #78716c; } /* piedra */
+.estado.asustado    { background: #a855f7; } /* violeta */
+.estado.despectivo  { background: #64748b; } /* gris azulado */
+
+
+
+
+
+
+
+/* ====== Colores base ====== */
+$azul: #06b6d4;   /* hombre  */
+$rosa: #fb7185;   /* mujer   */
+$darkText: #0f172a;
+
+/* ====== Panel ====== */
+.panel {
+  position: relative;
+  transition: border-color .25s ease, box-shadow .25s ease, background-color .25s ease;
+  margin-top: 2.5rem !important;
+}
+
+/* Borde/halo cuando hay highlight (5s) */
+.highlight-hombre { border-color: $azul !important; box-shadow: inset 5px 0 0 0 rgba(6, 182, 212, .12); }
+.highlight-mujer  { border-color: $rosa !important; box-shadow: inset 5px 0 0 0 rgba(251, 113, 133,  .12); }
+
+/* ====== Avatar ====== */
+/* Base: círculo blanco con ícono oscuro */
+.panel .avatar-white {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+.panel .avatar-white .avatar-icon,
+.panel .avatar-white mat-icon {
+  color: $darkText;
+}
+
+/* Quitar la línea blanca debajo del avatar (si existía) */
+.panel .avatar-white::after { content: none !important; }
+
+/* Durante highlight: pinta el círculo del color del género y el ícono en blanco */
+.highlight-hombre .avatar-white {
+  background: $azul !important;
+  border-color: transparent !important;
+}
+.highlight-hombre .avatar-white .avatar-icon,
+.highlight-hombre .avatar-white mat-icon {
+  color: #ffffff !important;
+}
+
+.highlight-mujer .avatar-white {
+  background: $rosa !important;
+  border-color: transparent !important;
+}
+.highlight-mujer .avatar-white .avatar-icon,
+.highlight-mujer .avatar-white mat-icon {
+  color: #ffffff !important;
+}
+
+/* ====== Chips / título (tema oscuro) ====== */
+.panel .chip,
+.panel .chip mat-icon { color: #ffffff !important; }
+
+/* ====== Pills: ID y Fecha ====== */
+/* Base: deben verse SIEMPRE blancas con texto negro */
+.panel .id-badge,
+.panel .time-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: $darkText;
+  border: 1px solid #e5e7eb;
+  line-height: 1.2;
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+
+/* Durante highlight: también cambian de color */
+.highlight-hombre .id-badge,
+.highlight-hombre .time-pill {
+  background: $azul !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+.highlight-mujer .id-badge,
+.highlight-mujer .time-pill {
+  background: $rosa !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+/* ====== Filtros dentro del grid ====== */
+.box {
+  .d-flex.align-items-center.justify-content-between {
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+      
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        line-height: 18px;
+      }
+    }
+    
+    .form-label {
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    dx-date-box {
+      min-width: 150px;
+    }
+  }
+}

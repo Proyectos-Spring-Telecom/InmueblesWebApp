@@ -1,0 +1,134 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+  <header class="perm-head" role="region" aria-label="Sección: Monitoreo">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>map_icon</mat-icon>
+
+    </div>
+
+    <div class="perm-head__text">
+      <span class="eyebrow">Sección</span>
+      <h2>Monitoreo</h2>
+    </div>
+
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Administración</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Monitoreo</span>
+    </nav>
+  </header>
+
+  <div class="surface">
+    <div class="row g-3">
+      <div class="col-lg-4 col-md-5 col-12">
+        <div class="h-100 d-flex flex-column">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div>
+              <ng-container *ngIf="viewMode === 'centrales'; else headerInstalaciones">
+                Clientes
+              </ng-container>
+              <ng-template #headerInstalaciones>
+                Instalaciones del cliente: {{ selectedCentral?.nombreCliente }}
+              </ng-template>
+            </div>
+            <button *ngIf="isRol1 && viewMode === 'instalaciones'" type="button" class="btn btn-sm" (click)="goToCentrales()">
+              Centrales
+            </button>
+          </div>
+          <div class="card-body insta-body">
+            <ng-container *ngIf="listaVisible.length > 0; else noInstalacionesTpl">
+              <div class="insta-item" *ngFor="let item of listaVisible; let i = index"
+                [class.central]="viewMode === 'centrales'" [class.instalacion]="viewMode === 'instalaciones'"
+                [class.active]="viewMode === 'centrales' && item.id === selectedId"
+                (click)="selectInstalacion(item, i)">
+
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <div>
+                    <div class="insta-title">
+                      <ng-container *ngIf="viewMode === 'centrales'; else tituloInstalacion">
+                        <strong>Oficina Central:</strong> {{ item.nombreInstalacion || item.nombre || 'Instalación' }}
+                      </ng-container>
+                      <ng-template #tituloInstalacion>
+                        <strong>Equipo:</strong>
+                        {{ item.equipo?.numeroSerie || item.numeroSerie || '—' }}
+                      </ng-template>
+                    </div>
+
+
+                    <div class="small encar" *ngIf="viewMode === 'centrales'">
+                      <strong>Cliente:</strong> {{ item.nombreCliente }}
+                    </div>
+
+
+                    <div class="small encar" *ngIf="viewMode === 'centrales'">
+                      <strong>Encargado:</strong> {{ item.nombreEncargado }}
+                    </div>
+                    <div class="small encar" *ngIf="viewMode === 'instalaciones' && item.nroPiso !== null && item.nroPiso !== undefined">
+                      <strong>Número de Piso:</strong> {{ item.nroPiso }}
+                    </div>
+                    <div class="small encar" *ngIf="viewMode === 'instalaciones' && item.nombreDepartamento">
+                      <strong>Departamento:</strong> {{ item.nombreDepartamento }}
+                    </div>
+                    <div class="small encar" *ngIf="viewMode === 'instalaciones'">
+                      <strong>Encargado:</strong> {{ selectedCentral?.nombreEncargado }}
+                    </div>
+                  </div>
+                  <div class="insta-dot ok"></div>
+                </div>
+
+                <div class="insta-address mt-1">
+                  <mat-icon>place</mat-icon>
+                  <span>
+                    <strong>Dirección:</strong>
+                    {{ viewMode === 'centrales'
+                    ? item.direccion
+                    : (selectedCentral?.direccion || item.direccion) }}
+                  </span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-2">
+                  <ng-container *ngIf="viewMode === 'centrales'; else botonesInstalaciones">
+                    <!-- <button type="button" class="btn btn-sm" (click)="goToCentrales(); $event.stopPropagation()">
+                          Centrales
+                        </button> -->
+                    <button type="button" class="btn btn-sm"
+                      (click)="verInstalacionesDeCentral(item); $event.stopPropagation()">
+                      Ver Instalaciones
+                    </button>
+                  </ng-container>
+                  <ng-template #botonesInstalaciones>
+                    <button type="button" class="btn btn-sm"
+                      (click)="selectInstalacion(item, i); $event.stopPropagation()">
+                      Centrar
+                    </button>
+                    <button type="button" class="btn btn-sm"
+                      (click)="onInfoAction({ central: selectedCentral, instalacion: item }); $event.stopPropagation()">
+                      Incidencias
+                    </button>
+                  </ng-template>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #noInstalacionesTpl>
+              <div class="insta-empty" *ngIf="viewMode === 'instalaciones'">
+                <div class="insta-empty-icon">
+                  <mat-icon>location_off</mat-icon>
+                </div>
+                <div class="insta-empty-text">
+                  <h6 *ngIf="!isRol1 && !selectedCentral">Sin oficina central asignada</h6>
+                  <h6 *ngIf="isRol1 || selectedCentral">Sin instalaciones registradas</h6>
+                  <p *ngIf="!isRol1 && !selectedCentral">No tiene asignada una oficina central para ver sus instalaciones.</p>
+                  <p *ngIf="selectedCentral">Este cliente aún no tiene instalaciones registradas.</p>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-8 col-md-7 col-12">
+        <div class="map-wrapper">
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

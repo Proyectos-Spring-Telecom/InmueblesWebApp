@@ -1,0 +1,215 @@
+::ng-deep #pie {
+  height: 440px;
+}
+
+::ng-deep #pie * {
+  margin: 0 auto;
+}
+
+.grafico-mini { width: 100%; min-height: 260px; display: block; }
+
+
+:host ::ng-deep .dxc-title text {
+  fill: var(--mat-sys-on-background, #e6f1ff) !important;
+}
+:host ::ng-deep .dxc-subtitle text {
+  fill: rgba(230,241,255,.70) !important;
+}
+
+
+/* Panel superior (banner) */
+.panel {
+  background: #2b303b;
+  border-radius: 10px;
+  border-left: 6px solid #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 22px;
+}
+
+.title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.subtitle {
+  color: #c8cbd1;
+  font-size: 12px;
+}
+
+.chip {
+  background: rgba(255,255,255,0.08);
+  color: #e6e8ee;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.time-pill {
+  background: #fff;
+  color: #000;
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: inline-block;
+  font-weight: 600;
+}
+
+/* Tarjetas de gráficas */
+.box {
+  background: #2b303b;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+
+.box .title {
+  font-size: 17px;
+}
+
+.box .subtitle {
+  font-size: 12px;
+}
+
+/* Ajustes pequeños para el ícono de material */
+.mat-18 {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  line-height: 18px;
+}
+
+/* Caja contenedora del grid (mismo estilo que el resto) */
+.box {
+  background: #2b303b;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+
+.title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Color del “Total” como en la captura */
+.text-success {
+  color: #71ff00 !important;
+}
+
+/* Opcional: contraste leve de filas alternas si ya no lo da tu tema */
+.dx-datagrid-rowsview .dx-row-alt {
+  background-color: rgba(255,255,255,0.03);
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+}
+
+/* Género */
+.genero.hombre { background: #4a90e2; } /* azul hombres */
+.genero.mujer  { background: #ff69b4; } /* rosa mujeres */
+
+/* Estado de ánimo */
+.estado.feliz   { background: #22c55e; }  /* verde */
+.estado.neutral { background: #94a3b8; }  /* gris */
+.estado.triste  { background: #c0392b; }  /* rojo */
+
+
+
+
+
+
+
+/* ====== Colores base ====== */
+$azul: #1e40af;   /* hombre  */
+$rosa: #f43f5e;   /* mujer   */
+$darkText: #0f172a;
+
+/* ====== Panel ====== */
+.panel {
+  position: relative;
+  transition: border-color .25s ease, box-shadow .25s ease, background-color .25s ease;
+}
+
+/* Borde/halo cuando hay highlight (5s) */
+.highlight-hombre { border-color: $azul !important; box-shadow: inset 5px 0 0 0 rgba(30, 64, 175, .12); }
+.highlight-mujer  { border-color: $rosa !important; box-shadow: inset 5px 0 0 0 rgba(244, 63, 94,  .12); }
+
+/* ====== Avatar ====== */
+/* Base: círculo blanco con ícono oscuro */
+.panel .avatar-white {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+.panel .avatar-white .avatar-icon,
+.panel .avatar-white mat-icon {
+  color: $darkText;
+}
+
+/* Quitar la línea blanca debajo del avatar (si existía) */
+.panel .avatar-white::after { content: none !important; }
+
+/* Durante highlight: pinta el círculo del color del género y el ícono en blanco */
+.highlight-hombre .avatar-white {
+  background: $azul !important;
+  border-color: transparent !important;
+}
+.highlight-hombre .avatar-white .avatar-icon,
+.highlight-hombre .avatar-white mat-icon {
+  color: #ffffff !important;
+}
+
+.highlight-mujer .avatar-white {
+  background: $rosa !important;
+  border-color: transparent !important;
+}
+.highlight-mujer .avatar-white .avatar-icon,
+.highlight-mujer .avatar-white mat-icon {
+  color: #ffffff !important;
+}
+
+/* ====== Chips / título (tema oscuro) ====== */
+.panel .chip,
+.panel .chip mat-icon { color: #ffffff !important; }
+
+/* ====== Pills: ID y Fecha ====== */
+/* Base: deben verse SIEMPRE blancas con texto negro */
+.panel .id-badge,
+.panel .time-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: $darkText;
+  border: 1px solid #e5e7eb;
+  line-height: 1.2;
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+
+/* Durante highlight: también cambian de color */
+.highlight-hombre .id-badge,
+.highlight-hombre .time-pill {
+  background: $azul !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+.highlight-mujer .id-badge,
+.highlight-mujer .time-pill {
+  background: $rosa !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}

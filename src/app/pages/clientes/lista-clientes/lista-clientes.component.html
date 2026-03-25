@@ -1,0 +1,189 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+    <header class="perm-head" role="region" aria-label="Sección: Clientes">
+        <div class="perm-head__icon" aria-hidden="true">
+            <mat-icon>contacts</mat-icon>
+        </div>
+
+        <div class="perm-head__text">
+            <span class="eyebrow">Sección</span>
+            <h2>Clientes</h2>
+        </div>
+
+        <nav class="perm-head__crumbs" aria-label="Ruta">
+            <span class="crumb">Administración</span>
+            <span class="sep">/</span>
+            <span class="crumb active">Clientes</span>
+        </nav>
+    </header>
+
+    <div class="surface">
+        <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
+            <div *appHasPermission="'3'">
+                <button (click)="agregarCliente()" mat-flat-button class="bg-secondary">
+                    <i class="fa fa-plus"></i> Agregar
+                </button>
+            </div>
+            <button (click)="limpiarCampos()" mat-flat-button class="bg-success">
+                <i class="fa fa-eraser"></i>
+                Limpiar
+            </button>
+            <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+                <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+                {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+            </button>
+        </div>
+
+        <div class="mt-3">
+            <dx-data-grid #gridContainer id="gridContainer" [columnHidingEnabled]="true" [showBorders]="true"
+                [showColumnLines]="true" [showRowLines]="true" [rowAlternationEnabled]="true"
+                [dataSource]="listaClientes" [keyExpr]="'id'" [width]="'100%'" [remoteOperations]="{ paging: true }"
+                [paging]="{ pageSize: pageSize }" [pager]="{
+          showPageSizeSelector: true,
+          allowedPageSizes: [50],
+          showInfo: true,
+          infoText: 'Página {0} de {1}',
+          visible: true
+        }" (onPageIndexChanged)=" onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
+                <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+                <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+                <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+                <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+                <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+                <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
+
+                <!-- <dxi-column dataField="Logotipo" caption="Logotipo" alignment="center" cellTemplate="cellTemplate">
+          <ng-template *dxTemplate="let d of 'cellTemplate'">
+            <img [src]="d.data.Logotipo" alt="Logo" width="50">
+          </ng-template>
+        </dxi-column> -->
+                <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" *appHasPermission="['2', '4']" [width]="150"></dxi-column>
+                <dxi-column dataField="logotipo" caption="Imagen" cellTemplate="imagen" [width]="200"
+                    alignment="center">
+                    <dxo-header-filter [allowSearch]="true"></dxo-header-filter>
+                </dxi-column>
+                <div *dxTemplate="let data of 'imagen'" style="text-align: center;">
+                    <img *ngIf="data.value" style="max-width: 100px;" [src]="data.value" />
+                    <img *ngIf="data.value == null" style="max-width: 100px;"
+                        src="https://analiticadevideo.s3.us-east-1.amazonaws.com/Usuarios/d9ad9d73-b046-43a2-a4a0-d5fc2f3e3597.png" />
+                </div>
+                <dxi-column caption="Acta Constitutiva" [width]="150" alignment="center" [allowSorting]="false"
+                    [allowFiltering]="false" cellTemplate="actConts">
+                </dxi-column>
+                <div *dxTemplate="let f of 'actConts'">
+                    <button type="button" class="btn btn-primary btn-sm" style="border-radius: 5px;"
+                        (click)="previsualizar(f?.data?.actaConstitutiva, 'Acta Constitutiva', f?.data)">
+                        <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
+                    </button>
+                </div>
+                <dxi-column caption="Comprobante de Domicilio" [width]="150" alignment="center" [allowSorting]="false"
+                    [allowFiltering]="false" cellTemplate="poliz">
+                </dxi-column>
+                <div *dxTemplate="let f of 'poliz'">
+                    <button type="button" class="btn btn-success btn-sm" style="border-radius: 5px;"
+                        (click)="previsualizar(f?.data?.comprobanteDomicilio, 'Comprobante de Domicilio', f?.data)">
+                        <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
+                    </button>
+                </div>
+                <dxi-column caption="Constancia Situación Fiscal" [width]="150" alignment="center"
+                    [allowSorting]="false" [allowFiltering]="false" cellTemplate="concesip">
+                </dxi-column>
+                <div *dxTemplate="let f of 'concesip'">
+                    <button type="button" class="btn btn-warning btn-sm" style="border-radius: 5px;"
+                        (click)="previsualizar(f?.data?.constanciaSituacionFiscal, 'Constancia Situación Fiscal', f?.data)">
+                        <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
+                    </button>
+                </div>
+                <dxi-column dataField="NombreCompleto" caption="Nombre" alignment="center"
+                    dataType="string"></dxi-column>
+                <dxi-column dataField="telefono" caption="Teléfono" alignment="center" dataType="string"></dxi-column>
+                <dxi-column dataField="rfc" caption="RFC" alignment="center" dataType="string"></dxi-column>
+                <dxi-column dataField="correo" caption="Correo" alignment="center" dataType="string"></dxi-column>
+                <dxi-column dataField="tipoPersona" caption="Tipo Persona" alignment="center"
+                    dataType="string"></dxi-column>
+                <dxi-column dataField="nombreEncargado" caption="Nombre Encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="telefonoEncargado" caption="Teléfono Encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="correoEncargado" caption="Email Encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="direccionCompleta" caption="Dirección"></dxi-column>
+                <dxo-export [enabled]="false" [allowExportSelectedData]="true" [texts]="{
+            exportAll: 'Exportar todos los datos a Excel',
+            exportSelectedRows: 'Exportar filas seleccionadas a Excel'
+          }">
+                </dxo-export>
+                <dxi-column dataField="estatusCliente" caption="Estatus" alignment="center" cellTemplate="est"
+                    dataType="string">
+                    <div *dxTemplate="let f of 'est'">
+                        @if (f.data.estatusCliente === 1) {
+                        <span class="estatus estatus-activo">Activo</span>
+                        } @else {
+                        <span class="estatus estatus-inactivo">Inactivo</span>
+                        }
+                    </div>
+                </dxi-column>
+                <div *dxTemplate="let row of 'acciones'" class="d-flex gap-3 justify-content-center">
+                    <div *appHasPermission="'2'">
+                        <button valueExpr="id" id="actualizarButton" class="btnAcciones"
+                            (click)="actualizarCliente(row.data.id)">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                    </div>
+                    <div *appHasPermission="'4'">
+                        @if (row.data.estatus === 0) {
+                        <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
+                            <i class="fa fa-arrow-up"></i>
+                        </button>
+                        } @else {
+                        <button id="deleteButton" class="btnAcciones" (click)="desactivar(row.data)">
+                            <i class="fa fa-arrow-down"></i>
+                        </button>
+                        }
+                    </div>
+                </div>
+            </dx-data-grid>
+        </div>
+
+        <div class="docs-backdrop" *ngIf="mostrarModalDoc" (click)="cerrarModalDoc()">
+            <div class="docs-modal" (click)="$event.stopPropagation()">
+                <div class="row docs-modal__header">
+                    <div class="col-10 col-md-11">
+                        <span class="docs-modal__eyebrow">Documento del cliente</span>
+                        <h3 class="docs-modal__title">
+                            {{ docTitulo }}
+                        </h3>
+                        <!-- <p class="docs-modal__subtitle">
+              {{ docCliente?.NombreCompleto || docCliente?.nombre || '' }}
+            </p> -->
+                    </div>
+                    <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
+                        <button type="button" class="docs-modal__close" (click)="cerrarModalDoc()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row docs-modal__body">
+                    <div class="col-12">
+                        <div class="docs-modal__viewer" *ngIf="docSafeUrl">
+                            <iframe [src]="docSafeUrl" frameborder="0"></iframe>
+                        </div>
+                        <div class="docs-modal__fallback" *ngIf="!docSafeUrl">
+                            <p>No se pudo cargar el archivo.</p>
+                            <a [href]="docUrl" target="_blank" rel="noopener noreferrer">
+                                Abrir en otra pestaña
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row docs-modal__footer">
+                    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <a class="docs-modal__link" [href]="docUrl" target="_blank" rel="noopener noreferrer">
+                            <i class="fa fa-external-link"></i>
+                            <span>Abrir en nueva pestaña</span>
+                        </a>
+                        <button type="button" class="docs-modal__btn" (click)="cerrarModalDoc()">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

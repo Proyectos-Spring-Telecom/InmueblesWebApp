@@ -1,0 +1,510 @@
+/* ===========================
+   SURFACE — Dark, sin $vars
+   Acento: #681330 (granate)
+   =========================== */
+
+.surface {
+  /* Cambiamos el primario SOLO dentro de surface */
+  --mat-sys-primary: #681330;
+  /* granate */
+  --mat-sys-surface: var(--mat-sys-surface, #0f172a);
+  --mat-sys-on-surface: var(--mat-sys-on-surface, #e5e7eb);
+  --mat-sys-on-surface-variant: var(--mat-sys-on-surface-variant, #94a3b8);
+  --mat-sys-outline-variant: var(--mat-sys-outline-variant, #2a3345);
+
+  padding: 2rem;
+  border-radius: 18px;
+}
+
+/* =========== Contenedor =========== */
+.surface .card {
+  background: color-mix(in srgb, var(--mat-sys-surface) 96%, #000);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
+}
+
+/* =========== Lista / Card izquierda =========== */
+.surface .insta-card {
+  background: color-mix(in srgb, var(--mat-sys-surface) 96%, #000);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .5);
+  overflow: hidden;
+  backdrop-filter: blur(6px) saturate(1.05);
+  transition: transform .2s ease, box-shadow .25s ease, border-color .2s ease, background .2s ease;
+}
+
+.surface .insta-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, .55);
+}
+
+/* Header "Clientes" sólido azul (sin difuminado) */
+.surface .insta-card .card-header {
+  background: #001c6a !important;
+  /* azul sólido */
+  color: #fff !important;
+  border-bottom: 1px solid #001c6a !important;
+  box-shadow: none !important;
+}
+
+
+/* Badge */
+.surface .insta-badge {
+  background: color-mix(in srgb, var(--mat-sys-primary) 18%, transparent);
+  color: var(--mat-sys-on-surface);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 32%, transparent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .04) inset, 0 0 20px color-mix(in srgb, var(--mat-sys-primary) 22%, transparent);
+}
+
+/* =========== Ítems =========== */
+.surface .insta-item {
+  cursor: pointer;
+  position: relative;
+  background: color-mix(in srgb, var(--mat-sys-surface) 96%, #000);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 22%, var(--mat-sys-outline-variant));
+  border-radius: 12px;
+  margin: .4rem 0;
+  padding: .9rem 1rem;
+  color: var(--mat-sys-on-surface);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255, 255, 255, .03) inset;
+  transition: transform .18s ease, box-shadow .22s ease, background .22s ease, border-color .22s ease;
+  outline: none;
+}
+
+.surface .insta-item:hover {
+  background: #0d1116;
+  border-color: color-mix(in srgb, var(--mat-sys-primary) 36%, var(--mat-sys-outline-variant));
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .04) inset;
+}
+
+.surface .insta-item.active {
+  background: color-mix(in srgb, var(--mat-sys-primary) 12%, var(--mat-sys-surface));
+  border-color: color-mix(in srgb, var(--mat-sys-primary) 36%, var(--mat-sys-outline-variant));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mat-sys-primary) 48%, var(--mat-sys-outline-variant)),
+    0 16px 36px rgba(0, 0, 0, .48);
+}
+
+/* Barra/acento lateral */
+.surface .insta-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: transparent;
+  transition: background .18s ease, width .18s ease;
+}
+
+.surface .insta-item:hover::before {
+  background: color-mix(in srgb, var(--mat-sys-primary) 70%, transparent);
+}
+
+.surface .insta-item.active::before {
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--mat-sys-primary) 80%, transparent),
+      color-mix(in srgb, var(--mat-sys-primary) 50%, transparent));
+  width: 4px;
+}
+
+.surface .insta-title {
+  color: var(--mat-sys-on-surface);
+  letter-spacing: .2px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .35);
+}
+
+.surface .insta-address {
+  display: flex;
+  align-items: flex-start;
+  font-size: .875rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.surface .insta-address mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  margin-top: 2px;
+  opacity: .9;
+}
+
+/* Estado (dot) */
+.surface .insta-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #9ca3af;
+  position: relative;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .08) inset;
+}
+
+.surface .insta-dot.ok {
+  background: #22c55e;
+  box-shadow: 0 0 16px rgba(34, 197, 94, .45);
+}
+
+.surface .insta-dot.off {
+  background: #ef4444;
+  box-shadow: 0 0 16px rgba(239, 68, 68, .45);
+}
+
+.surface .insta-dot.ok::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, .32);
+  animation: pulseDot 1.8s ease-out infinite;
+}
+
+@keyframes pulseDot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, .32);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* =========== Botones =========== */
+.surface .btn,
+.surface .btn-sm {
+  background: #300715;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 48%, transparent);
+  color: #e8efff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  transition: transform .08s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .35);
+}
+
+.surface .btn:hover,
+.surface .btn-sm:hover {
+  background: color-mix(in srgb, var(--mat-sys-primary) 28%, transparent);
+  border-color: color-mix(in srgb, var(--mat-sys-primary) 66%, transparent);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .45);
+  transform: translateY(-1px);
+}
+
+.surface .btn-outline-primary {
+  background: color-mix(in srgb, var(--mat-sys-surface) 92%, #000);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 40%, transparent);
+  color: #f3e8ee;
+  /* leve tinte acorde al granate */
+}
+
+/* =========== Mapa (capas y z-index garantizados) =========== */
+.surface .map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 60vh;
+  min-height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: color-mix(in srgb, var(--mat-sys-surface) 80%, transparent);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+  z-index: 0;
+  /* capa base */
+}
+
+.surface .map-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* debajo del mapa */
+  background:
+    linear-gradient(transparent 0 48%, rgba(255, 255, 255, .03) 48% 52%, transparent 52% 100%),
+    linear-gradient(90deg, transparent 0 48%, rgba(255, 255, 255, .03) 48% 52%, transparent 52% 100%);
+  background-size: 100% 38px, 38px 100%;
+  opacity: .25;
+  pointer-events: none;
+}
+
+.surface #map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+  /* mapa al centro */
+}
+
+.surface .map-wrapper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  /* viñeta arriba, sin bloquear */
+  pointer-events: none;
+  background:
+    radial-gradient(80% 80% at 50% 50%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, .10) 100%),
+    radial-gradient(120% 80% at 10% 0%, color-mix(in srgb, var(--mat-sys-primary) 10%, transparent), transparent 60%);
+}
+
+/* =========== Scrollbar lista =========== */
+.surface .insta-body {
+  scroll-behavior: smooth;
+}
+
+.surface .insta-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.surface .insta-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--mat-sys-primary) 35%, #0b1220);
+  border-radius: 10px;
+}
+
+.surface .insta-body::-webkit-scrollbar-track {
+  background: #0b1220;
+  border-radius: 10px;
+}
+
+/* =========== Responsive =========== */
+@media (max-width: 991.98px) {
+  .surface .insta-body {
+    max-height: 46vh;
+    overflow-y: auto;
+  }
+
+  .surface .map-wrapper {
+    height: 46vh;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .surface {
+    padding: 1.25rem 1rem;
+  }
+
+  .surface .map-wrapper {
+    margin-top: 1rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .surface .insta-body {
+    max-height: calc(60vh - 64px);
+    min-height: calc(420px - 64px);
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 1400px) {
+  .surface .map-wrapper {
+    height: 65vh;
+  }
+
+  .surface .insta-body {
+    max-height: calc(65vh - 64px);
+  }
+}
+
+/* Botones "Centrales" e "Instalaciones" en rojo sólido, sin difuminado */
+.perm-wrapper .surface .insta-card .btn.btn-sm,
+.perm-wrapper .surface .insta-card .btn-outline-primary.btn-sm,
+.perm-wrapper .surface .insta-card .btn-primary.btn-sm {
+  background: #681330 !important;
+  /* rojo sólido */
+  border-color: #681330 !important;
+  color: #fff !important;
+  margin-left: 5px;
+  box-shadow: none !important;
+  /* sin glow ni difuminado */
+}
+
+.perm-wrapper .surface .insta-card .btn.btn-sm:hover,
+.perm-wrapper .surface .insta-card .btn-outline-primary.btn-sm:hover,
+.perm-wrapper .surface .insta-card .btn-primary.btn-sm:hover {
+  background: #470c20 !important;
+  /* rojo más oscuro al hover */
+  border-color: #470c20 !important;
+}
+
+.toast-top-right {
+  z-index: 99999999 !important;
+}
+
+.small {
+  color: white;
+}
+
+.encar {
+  color: var(--mat-sys-on-surface-variant)
+}
+
+@media (min-width: 992px) {
+  .surface .insta-body {
+    max-height: calc(60vh - 64px);
+    min-height: calc(420px - 64px);
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 1400px) {
+  .surface .insta-body {
+    max-height: calc(65vh - 64px);
+  }
+}
+
+.surface .insta-body::-webkit-scrollbar {
+  width: 12px;
+}
+
+.surface .insta-body::-webkit-scrollbar-thumb {
+  background: #681330;
+  border-radius: 10px;
+  border: 2px solid #020617;
+  box-shadow: 0 0 6px rgba(0, 0, 0, .6);
+}
+
+.surface .insta-body::-webkit-scrollbar-track {
+  background: #020617;
+  border-radius: 10px;
+}
+
+.perm-wrapper .surface .insta-card .card-header {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.perm-wrapper .surface .insta-badge {
+  padding: 0 0.45rem;
+  font-size: 0.7rem;
+  min-width: 1.4rem;
+  text-align: center;
+}
+
+.perm-wrapper .surface .insta-card .card-body {
+  padding: 0.75rem 0.9rem 0.85rem;
+}
+
+.perm-wrapper .surface .insta-item {
+  margin: 0.25rem 0;
+  padding: 0.65rem 0.8rem;
+}
+
+.perm-wrapper .surface .insta-title {
+  font-size: 0.95rem;
+}
+
+.perm-wrapper .surface .insta-address {
+  font-size: 0.8rem;
+}
+
+.perm-wrapper .surface .insta-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.perm-wrapper .surface .insta-card .btn.btn-sm,
+.perm-wrapper .surface .insta-card .btn-outline-primary.btn-sm,
+.perm-wrapper .surface .insta-card .btn-primary.btn-sm {
+  padding: 3px 9px;
+  font-size: 0.75rem;
+}
+
+/* Scroll interno de la lista en escritorio para igualar altura del mapa */
+@media (min-width: 992px) {
+  .perm-wrapper .surface .insta-body {
+    max-height: calc(60vh - 64px);
+    min-height: calc(420px - 64px);
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 1400px) {
+  .perm-wrapper .surface .insta-body {
+    max-height: calc(65vh - 64px);
+  }
+}
+
+.surface .insta-empty {
+  margin-top: 0.6rem;
+  padding: 1.1rem 1rem;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--mat-sys-primary) 40%, var(--mat-sys-outline-variant));
+  background: color-mix(in srgb, var(--mat-sys-surface) 94%, #020617);
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .45);
+}
+
+.surface .insta-empty-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--mat-sys-primary) 32%, transparent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .06) inset,
+    0 10px 22px rgba(0, 0, 0, .65);
+}
+
+.surface .insta-empty-icon mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #e5e7eb;
+}
+
+.surface .insta-empty-text h6 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface);
+}
+
+.surface .insta-empty-text p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.surface .insta-item.central {
+  background: #08233f;
+  border-color: #08233f;
+}
+
+.surface .insta-item.central:hover {
+  background: #071c33;
+  border-color: #071c33;
+}
+
+.surface .insta-item.central.active {
+  background: #071c33;
+  border-color: #071c33;
+}
+
+.surface .insta-item.instalacion {
+  background: #520f25;
+  border-color: #520f25;
+}
+
+.surface .insta-item.instalacion:hover {
+  background: #4f0e26;
+  border-color: #4f0e26;
+}
+
+.surface .insta-item.instalacion.active {
+  background: #3c0a1c;
+  border-color: #3c0a1c;
+}

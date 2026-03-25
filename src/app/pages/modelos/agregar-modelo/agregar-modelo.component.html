@@ -1,0 +1,75 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+    <header class="perm-head perm-head--left" role="region" aria-label="Sección: Modelos">
+        <div class="perm-head__icon" aria-hidden="true">
+            <mat-icon>lock</mat-icon>
+        </div>
+        <div class="perm-head__text">
+            <span class="eyebrow">Sección</span>
+            <h2>{{title}}</h2>
+        </div>
+        <nav class="perm-head__crumbs" aria-label="Ruta">
+            <span class="crumb">Administración</span>
+            <span class="sep">/</span>
+            <span class="crumb active">Modelos</span>
+        </nav>
+    </header>
+    <div class="surface">
+        <section class="perm-form-nc container-fluid py-4">
+            <form [formGroup]="modeloForm" class="perm-form-body">
+                <div class="row g-4">
+                    <div class="col-12 col-md-4">
+                        <label for="permNivel" class="form-label perm-label">Marca</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">view_module</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 perm-select-floating">
+                                <select  for="permNombres" class="form-control" formControlName="idMarca">
+                                    <option [ngValue]="null" selected disabled hidden></option>
+                                    <option *ngFor="let producto of listaMarcas" [ngValue]="producto.id">
+                                        {{ producto.nombre }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="permNivel" class="form-label perm-label">Productos</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">view_module</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 perm-select-floating">
+                                <select  for="permNombres" class="form-control" formControlName="idProducto">
+                                    <option [ngValue]="null" selected disabled hidden></option>
+                                    <option *ngFor="let producto of listaProductos" [ngValue]="producto.id">
+                                        {{ producto.nombre }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="permNombre" class="form-label perm-label">Nombre</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">title</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="nombre" class="form-control" id="permNombre"
+                                    placeholder="Ej.: Mark" required>
+                                <label for="permNombre">Ej.: Mark</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
+                    <button class="button-success" role="button" (click)="submit()"><i
+                            class="fa fa-check"></i>&nbsp;&nbsp;{{submitButton}}</button>
+                    <button type="button" class="button-danger" (click)="regresar()"><i
+                            class="fa fa-times">&nbsp;&nbsp;</i>Cancelar</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>

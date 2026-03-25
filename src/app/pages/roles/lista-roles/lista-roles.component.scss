@@ -1,0 +1,31 @@
+::ng-deep div:where(.swal2-container) h2:where(.swal2-title) {
+  position: relative;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--swal2-title-padding);
+  color: inherit;
+  font-size: 1.875em;
+  font-weight: 600;
+  text-align: center;
+  text-transform: none;
+  overflow-wrap: break-word;
+  cursor: initial;
+  color: white;
+}
+
+::ng-deep div:where(.swal2-container) div:where(.swal2-html-container) {
+  z-index: 1;
+  justify-content: center;
+  margin: 0;
+  padding: var(--swal2-html-container-padding);
+  overflow: auto;
+  color: inherit;
+  font-size: 1.125em;
+  font-weight: normal;
+  line-height: normal;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  cursor: initial;
+  color: #d9d9d9;
+}

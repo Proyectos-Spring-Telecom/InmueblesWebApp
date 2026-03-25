@@ -1,0 +1,223 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+    <header class="perm-head" role="region" aria-label="Sección: Oficinas Centrales">
+        <div class="perm-head__icon" aria-hidden="true">
+            <mat-icon>hub</mat-icon>
+        </div>
+
+        <div class="perm-head__text">
+            <span class="eyebrow">Sección</span>
+            <h2>Oficinas Centrales</h2>
+        </div>
+
+        <nav class="perm-head__crumbs" aria-label="Ruta">
+            <span class="crumb">Administración</span>
+            <span class="sep">/</span>
+            <span class="crumb active">Oficinas Centrales</span>
+        </nav>
+    </header>
+
+    <div class="surface">
+        <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
+            <div *appHasPermission="'35'">
+                <button mat-flat-button class="bg-secondary" (click)="agregarInsCentral()">
+                    <i class="fa fa-plus"></i> Agregar
+                </button>
+            </div>
+            <button (click)="limpiarCampos()" mat-flat-button class="bg-success">
+                <i class="fa fa-eraser"></i>
+                Limpiar
+            </button>
+            <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+                <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+                {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+            </button>
+        </div>
+        <div class="mt-3">
+            <dx-data-grid #gridContainer id="gridContainer" [columnHidingEnabled]="true" [showBorders]="true"
+                [showColumnLines]="true" [showRowLines]="true" [rowAlternationEnabled]="true"
+                [dataSource]="listaInstalaciones" [keyExpr]="'id'" [width]="'100%'"
+                [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+                [noDataText]="'Sin registros para mostrar'" [pager]="{ 
+                    showPageSizeSelector: true, 
+                    allowedPageSizes: [50], 
+                    showInfo: true,
+                    infoText: 'Página {0} de {1}', 
+                    visible: true 
+                }" (onPageIndexChanged)=" onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
+
+                <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+                <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
+                <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+                <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+                <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+                <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+
+                <dxi-column caption="Acciones" cellTemplate="Acciones" alignment="center" *appHasPermission="['36', '38']" dataType="string"
+                    [width]="220"></dxi-column>
+
+                <dxi-column dataField="nombreCliente" caption="Cliente" alignment="center"
+                    dataType="number"></dxi-column>
+
+                <dxi-column dataField="nombre" caption="Nombre Instalación" alignment="center" dataType="string"
+                    cellTemplate="nomInstalacion">
+                    <div *dxTemplate="let f of 'nomInstalacion' ">
+                        <div *ngIf="f.data.nombre">{{ f.data.nombre }}</div>
+                        <div *ngIf="f.data.nombre == null">Sin registro</div>
+                    </div>
+                </dxi-column>
+
+                <dxi-column dataField="nroPisos" caption="Número de Pisos" alignment="center" dataType="number"
+                    cellTemplate="nroPisosTemplate">
+                    <div *dxTemplate="let f of 'nroPisosTemplate'">
+                        <div *ngIf="f.data.nroPisos !== null && f.data.nroPisos !== undefined">{{ f.data.nroPisos }}</div>
+                        <div *ngIf="f.data.nroPisos === null || f.data.nroPisos === undefined">Sin Información</div>
+                    </div>
+                </dxi-column>
+
+                <dxi-column dataField="direccion" caption="Dirección" alignment="center" dataType="string"></dxi-column>
+                <dxi-column dataField="nombreEncargado" caption="Nombre Encargado" alignment="center"
+                    dataType="string"></dxi-column>
+
+                <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="est"
+                    dataType="string">
+                    <div *dxTemplate="let f of 'est'">
+                        @if (f.data.estatus === 1) {
+                        <span class="estatus estatus-activo">Activo</span>
+                        } @else {
+                        <span class="estatus estatus-inactivo">Inactivo</span>
+                        }
+                    </div>
+                </dxi-column>
+
+                <div *dxTemplate="let row of 'detail'" class="p-2">
+                    <dx-data-grid [dataSource]="row?.data?.instalaciones || []" [keyExpr]="'idEquipo'"
+                        [showBorders]="true" [columnHidingEnabled]="true" [rowAlternationEnabled]="true"
+                        [noDataText]="'Sin instalaciones para mostrar'">
+                        <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+                        <dxo-paging [pageSize]="10"></dxo-paging>
+                        <dxo-pager [showInfo]="true"></dxo-pager>
+                        <dxi-column dataField="equipo.numeroSerie" caption="N° Serie Equipo" alignment="center"
+                            dataType="number"></dxi-column>
+                        <dxi-column dataField="estadoEquipo.nombre" caption="Estado Equipo" alignment="center"
+                            cellTemplate="tplEstadoEquipo" dataType="string">
+                        </dxi-column>
+
+                        <div *dxTemplate="let e of 'tplEstadoEquipo'">
+                            @if (e.data.equipo.estadoEquipo?.id === 1) {
+                            <span class="estatus estatus-disponible">
+                                {{ e.data.equipo.estadoEquipo?.nombre || 'Sin estado' }}
+                            </span>
+                            } @else if (e.data.equipo.estadoEquipo?.id === 2) {
+                            <span class="estatus estatus-instalado">
+                                {{ e.data.equipo.estadoEquipo?.nombre || 'Sin estado' }}
+                            </span>
+                            } @else if (e.data.equipo.estadoEquipo?.id === 3) {
+                            <span class="estatus estatus-reparacion">
+                                {{ e.data.equipo.estadoEquipo?.nombre || 'Sin estado' }}
+                            </span>
+                            } @else if (e.data.equipo.estadoEquipo?.id === 4) {
+                            <span class="estatus estatus-descompuesto">
+                                {{ e.data.equipo.estadoEquipo?.nombre || 'Sin estado' }}
+                            </span>
+                            } @else {
+                            <span class="estatus">Sin estado</span>
+                            }
+                        </div>
+
+                        <dxi-column dataField="fhRegistro" caption="Fecha Registro" alignment="center"
+                            cellTemplate="tplFhRegistro"></dxi-column>
+                        <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="est"
+                            dataType="string">
+                            <div *dxTemplate="let f of 'est'">
+                                @if (f.data.estatus === 1) {
+                                <span class="estatus estatus-activo">Activo</span>
+                                } @else {
+                                <span class="estatus estatus-inactivo">Inactivo</span>
+                                }
+                            </div>
+                        </dxi-column>
+                        <div *dxTemplate="let c of 'tplFechaActualizacion'">
+                            {{ c.data?.fechaActualizacion | date:'dd/MM/yyyy HH:mm' }}
+                        </div>
+                        <div *dxTemplate="let c of 'tplFhRegistro'">
+                            {{ c.data?.fhRegistro | date:'dd/MM/yyyy HH:mm' }}
+                        </div>
+                    </dx-data-grid>
+                </div>
+
+                <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
+
+                <div *dxTemplate="let row of 'Acciones'" class="d-flex gap-3 justify-content-center">
+                    <div *appHasPermission="'36'">
+                        <button valueExpr="id" id="actualizarButton" class="btnAcciones"
+                            (click)="actualizarCede(row.data.id)">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                    </div>
+                    <div *appHasPermission="'38'">
+                        @if (row.data.estatus === 0) {
+                        <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
+                            <i class="fa fa-arrow-up"></i>
+                        </button>
+                        } @else {
+                        <button id="deleteButton" class="btnAcciones" (click)="desactivar(row.data)">
+                            <i class="fa fa-arrow-down"></i>
+                        </button>
+                        }
+                    </div>
+                    <div>
+                        <button id="pinButton" class="btnAcciones" (click)="verMapaInstalacionCentral(row.data)">
+                            <i class="fa fa-map-marker"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <dxo-export [enabled]="false" [allowExportSelectedData]="true"
+                    [texts]="{ exportAll: 'Exportar todos los datos a Excel', exportSelectedRows: 'Exportar filas seleccionadas a Excel' }">
+                </dxo-export>
+            </dx-data-grid>
+        </div>
+
+        <!-- Modal mapa instalación central -->
+        <div class="docs-backdrop" *ngIf="mostrarModalMapa" (click)="cerrarModalMapa()">
+            <div class="docs-modal" (click)="$event.stopPropagation()" [@modalAnimation]>
+                <div class="row docs-modal__header">
+                    <div class="col-10 col-md-11">
+                        <span class="docs-modal__eyebrow">Mapa de la instalación central</span>
+                        <h3 class="docs-modal__title">
+                            {{ instalacionSeleccionada?.nombre || 'Ubicación de la instalación central' }}
+                        </h3>
+                        <p class="docs-modal__subtitle">
+                            {{ instalacionSeleccionada?.nombreCliente || '' }}
+                        </p>
+                    </div>
+                    <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
+                        <button type="button" class="docs-modal__close" (click)="cerrarModalMapa()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row docs-modal__body">
+                    <div class="col-12">
+                        <div class="docs-modal__viewer docs-modal__viewer--map"
+                            *ngIf="instalacionSeleccionada?.lat && instalacionSeleccionada?.lng">
+                            <div id="map"></div>
+                        </div>
+                        <div class="docs-modal__fallback"
+                            *ngIf="!instalacionSeleccionada?.lat || !instalacionSeleccionada?.lng">
+                            <p>No se encontró la ubicación de esta instalación central.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row docs-modal__footer">
+                    <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
+                        <button type="button" class="docs-modal__btn" (click)="cerrarModalMapa()">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

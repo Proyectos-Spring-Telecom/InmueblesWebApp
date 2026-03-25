@@ -1,0 +1,332 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+    <header class="perm-head perm-head--left" role="region" aria-label="Sección: Permisos">
+        <div class="perm-head__icon" aria-hidden="true">
+            <mat-icon>supervisor_account</mat-icon>
+        </div>
+        <div class="perm-head__text">
+            <span class="eyebrow">Sección</span>
+            <h2>{{title}}</h2>
+        </div>
+        <nav class="perm-head__crumbs" aria-label="Ruta">
+            <span class="crumb">Administración</span>
+            <span class="sep">/</span>
+            <span class="crumb active">Usuarios</span>
+        </nav>
+    </header>
+    <div class="surface">
+        <section class="perm-form-nc container-fluid py-4">
+            <form [formGroup]="usuarioForm" class="perm-form-body" autocomplete="off" novalidate>
+                <div class="row g-4">
+                    <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+                        style="position:absolute;left:-10000px;opacity:0;width:1px;height:1px;">
+                    <input type="password" autocomplete="new-password" tabindex="-1" aria-hidden="true"
+                        style="position:absolute;left:-10000px;opacity:0;width:1px;height:1px;">
+                    <div class="col-12 col-md-4">
+                        <label for="cliente" class="form-label perm-label">Cliente</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">business</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 perm-select-floating">
+                                <select class="form-select" id="cliente" formControlName="idCliente" required>
+                                    <!-- <option [ngValue]="null"></option> -->
+                                    <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
+                                        {{ cliente.nombre }}
+                                        <ng-container *ngIf="cliente.apellidoPaterno">
+                                            {{ ' ' + cliente.apellidoPaterno }}
+                                        </ng-container>
+                                        <ng-container *ngIf="cliente.apellidoMaterno">
+                                            {{ ' ' + cliente.apellidoMaterno }}
+                                        </ng-container>
+                                    </option>
+                                </select>
+                                <label for="cliente">Selecciona un cliente</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="permNombre" class="form-label perm-label">Nombre</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">person</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="nombre" class="form-control" id="permNombre"
+                                    placeholder="Ej.: Juan" required>
+                                <label for="permNombre">Ej.: Juan</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="permClave" class="form-label perm-label">Apellido Paterno</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">badge</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="apellidoPaterno" class="form-control" id="permClave"
+                                    placeholder="Ej.: Pérez" required>
+                                <label for="permClave">Ej.: Pérez</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="permClave" class="form-label perm-label">Apellido Materno</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">badge</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="apellidoMaterno" class="form-control" id="permClave"
+                                    placeholder="Ej.: García">
+                                <label for="permClave">Ej.: García</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4" *ngIf="showInputsId">
+                        <label for="permClave" class="form-label perm-label">Correo Electrónico</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">mail</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" formControlName="userName" class="form-control" id="permClave"
+                                    placeholder="Ej.: juan.perez@empresa.com" required>
+                                <label for="permClave">Ej.: juan.perez&#64;empresa.com</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="permClave" class="form-label perm-label">Teléfono</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">phone</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="text" maxlength="10" (keypress)="allowOnlyNumbers($event)"
+                                    formControlName="telefono" class="form-control" id="permClave"
+                                    placeholder="Ej.: 55 1234 5678" required>
+                                <label for="permClave">Ej.: 55 1234 5678</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="permClave" class="form-label perm-label">Rol</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 perm-select-floating">
+                                <select class="form-select" id="permClave" formControlName="idRol" required>
+                                    <option [ngValue]="null"></option>
+                                    <option *ngFor="let rol of listaRoles" [ngValue]="rol.id">
+                                        {{ rol.nombre }}
+                                    </option>
+                                </select>
+                                <label for="permClave">Selecciona un rol</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4" *ngIf="showInputsId">
+                        <label for="permClave" class="form-label perm-label">Contraseña</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">lock</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 position-relative">
+                                <input [type]="hidePass ? 'password' : 'text'" formControlName="passwordHash"
+                                    class="form-control pr-5" id="permClave" placeholder="Mín. 8 caracteres" required
+                                    autocomplete="new-password" name="new-password" autocapitalize="off"
+                                    autocorrect="off" spellcheck="false" (focus)="onPwdFocus()" (blur)="onPwdBlur()"
+                                    (input)="onPwdInput($event)" />
+                                <label for="permClave">Ej.: ********</label>
+                                <button type="button" class="btn btn-link p-0 password-eye"
+                                    (mousedown)="$event.preventDefault()" (click)="hidePass = !hidePass"
+                                    [attr.aria-label]="hidePass ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+                                    <i class="fa" [ngClass]="hidePass ? 'fa-eye' : 'fa-eye-slash'"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-3 password-requirements" *ngIf="showPwdHints">
+                            <ng-container [ngSwitch]="currentRuleKey">
+                                <p *ngSwitchCase="'case'" class="pwd-hint text-danger" [@fadeIn]>
+                                    <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                                    <span class="ms-2">Al menos una mayúscula y minúsculas.</span>
+                                </p>
+                                <p *ngSwitchCase="'special'" class="pwd-hint text-danger" [@fadeIn]>
+                                    <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                                    <span class="ms-2">Un caracter no alfanumérico (ejemplo: #?!&).</span>
+                                </p>
+                                <p *ngSwitchCase="'number'" class="pwd-hint text-danger" [@fadeIn]>
+                                    <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                                    <span class="ms-2">Un número.</span>
+                                </p>
+                                <p *ngSwitchCase="'length'" class="pwd-hint text-danger" [@fadeIn]>
+                                    <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                                    <span class="ms-2">La contraseña debe tener más de 6 caracteres y menos de
+                                        16.</span>
+                                </p>
+                                <p *ngSwitchCase="'ok'" class="pwd-hint text-success" [@fadeIn]>
+                                    <i class="fa fa-check-circle" aria-hidden="true"></i>
+                                    <span class="ms-2">Contraseña válida y segura.</span>
+                                </p>
+                            </ng-container>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4" *ngIf="showInputsId">
+                        <label for="permConfirm" class="form-label perm-label">Confirmar Contraseña</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">lock_reset</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1 position-relative">
+                                <input [type]="hideConfirm ? 'password' : 'text'" class="form-control pr-5"
+                                    id="permConfirm" placeholder="Confirmar Contraseña"
+                                    formControlName="confirmPassword" [attr.name]="confirmName"
+                                    autocomplete="new-password" autocapitalize="off" spellcheck="false"
+                                    (input)="onConfirmInput($event)" (blur)="onConfirmBlur()" />
+                                <label for="permConfirm">Confirmar Contraseña</label>
+                                <button type="button" class="btn btn-link p-0 password-eye"
+                                    (mousedown)="$event.preventDefault()" (click)="hideConfirm = !hideConfirm"
+                                    [attr.aria-label]="hideConfirm ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+                                    <i class="fa" [ngClass]="hideConfirm ? 'fa-eye' : 'fa-eye-slash'"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-2" *ngIf="confirmHintVisible">
+                            <p class="pwd-hint" [ngClass]="confirmMatch ? 'text-success' : 'text-danger'" [@fadeIn]>
+                                <i class="fa"
+                                    [ngClass]="confirmMatch ? 'fa-check-circle' : 'fa-exclamation-circle'"></i>
+                                <span class="ms-2">{{ confirmMatch ? 'Las contraseñas son iguales.' : 'Las contraseñas no coinciden.' }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4 uploader-wrap">
+                        <label for="permConfirm" class="form-label perm-label">Imagen Perfil</label>
+                        <div class="uploader-hero">
+                            <div class="uploader" [class.dragging]="logoDragging" (dragover)="onLogoDragOver($event)"
+                                (dragleave)="onLogoDragLeave($event)" (drop)="onLogoDrop($event)">
+                                <div class="uploader__glow"></div>
+                                <div class="uploader__body">
+                                    <div class="uploader__icon">
+                                        <mat-icon>cloud_upload</mat-icon>
+                                    </div>
+                                    <h5 class="uploader__title">Sube tu imagen</h5>
+                                    <p class="uploader__subtitle">Arrastra y suelta aquí o</p>
+                                    <div class="uploader__cta">
+                                        <button mat-flat-button color="primary" type="button"
+                                            (click)="openLogoFilePicker()">Seleccionar archivo</button>
+                                        <span class="uploader__badge">PNG · JPG · WEBP · Máx. 3 MB</span>
+                                    </div>
+
+                                    <div class="uploader__status"
+                                        *ngIf="logoFileName || usuarioForm.get('fotoPerfil')?.value">
+                                        <div class="uploader__filename" *ngIf="logoFileName">
+                                            {{ logoFileName }}
+                                        </div>
+                                        <a class="uploader__filename uploader__filename--link"
+                                            *ngIf="!logoFileName && usuarioForm.get('fotoPerfil')?.value"
+                                            [href]="usuarioForm.get('fotoPerfil')?.value" target="_blank"
+                                            rel="noopener noreferrer">
+                                            {{ usuarioForm.get('fotoPerfil')?.value }}
+                                        </a>
+                                    </div>
+
+                                    <input #logoFileInput type="file" accept="image/png,image/jpeg,image/webp"
+                                        (change)="onLogoFileSelected($event)" class="uploader__input" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección Permisos -->
+                    <!-- Sección Permisos -->
+                    <div class="perm-perms-section mt-5">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <h3 class="perm-perms-title mb-1">Permisos</h3>
+                                <p class="perm-perms-subtitle mb-0">
+                                    Revisa los módulos y los permisos disponibles para este usuario.
+                                </p>
+                            </div>
+                            <span class="badge rounded-pill perm-perms-badge">
+                                {{ listaModulos.length || 0 }} módulos
+                            </span>
+                        </div>
+
+                        <div class="perm-modules-scroll">
+                            <div class="row g-4">
+                                <div class="col-12 col-lg-6" *ngFor="let modulo of listaModulos">
+                                    <section class="perm-module-card h-100">
+                                        <header class="perm-module-card__head">
+                                            <div class="perm-module-card__icon">
+                                                <mat-icon aria-hidden="true">folder_shared</mat-icon>
+                                            </div>
+
+                                            <div class="perm-module-card__text">
+                                                <h4 class="perm-module-card__title mb-0">
+                                                    {{ modulo.nombre }}
+                                                </h4>
+                                                <p class="perm-module-card__desc mb-0">
+                                                    {{ modulo.descripcion || 'Sin descripción' }}
+                                                </p>
+                                            </div>
+
+                                            <div class="perm-module-card__bulk">
+                                                <span class="perm-module-card__bulk-label">Todos</span>
+                                                <label class="perm-module-card__bulk-toggle">
+                                                    <input type="checkbox" [checked]="isModuleFullyAssigned(modulo)"
+                                                        (change)="onModuleToggle(modulo, $event)" />
+                                                    <span class="perm-switch perm-switch--sm"></span>
+                                                </label>
+                                            </div>
+                                        </header>
+
+                                        <div class="perm-module-card__body">
+                                            <div class="perm-pill" *ngFor="let permiso of modulo.permisos"
+                                                [class.perm-pill--active]="permiso.asignado">
+                                                <div class="perm-pill__icon">
+                                                    <mat-icon aria-hidden="true">verified_user</mat-icon>
+                                                </div>
+
+                                                <div class="perm-pill__content">
+                                                    <span class="perm-pill__name">
+                                                        {{ permiso.nombre }}
+                                                    </span>
+                                                    <span class="perm-pill__desc">
+                                                        {{ permiso.descripcion || 'Sin descripción' }}
+                                                    </span>
+                                                </div>
+
+                                                <label class="perm-pill__toggle">
+                                                    <input type="checkbox" [checked]="permiso.asignado"
+                                                        (change)="onPermChange(modulo, permiso, $event)" />
+                                                    <span class="perm-switch"></span>
+                                                </label>
+                                            </div>
+
+                                            <div class="perm-module-card__empty text-muted"
+                                                *ngIf="!modulo.permisos || modulo.permisos.length === 0">
+                                                Sin permisos configurados para este módulo.
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
+                    <button class="button-success" role="button" (click)="submit()"><i
+                            class="fa fa-check"></i>&nbsp;&nbsp;{{submitButton}}</button>
+                    <button type="button" class="button-danger" (click)="regresar()"><i
+                            class="fa fa-times">&nbsp;&nbsp;</i>Cancelar</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>

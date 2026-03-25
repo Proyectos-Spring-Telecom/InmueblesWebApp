@@ -1,0 +1,527 @@
+@use "../variables" as *;
+
+.blank-layout-container {
+  height: 100vh;
+  max-height: 100vh;
+  display: flex;
+  background-size: cover;
+  align-items: center;
+}
+
+.blank-layout-container .row {
+  max-height: 100%;
+}
+
+@media (min-width: 992px) {
+  .blank-layout-container {
+    overflow: hidden;
+  }
+}
+
+/* Responsive: de 1280px hacia abajo — contenedor con scroll y formulario que no se rompe */
+@media (max-width: 1279.98px) {
+  .blank-layout-container {
+    min-height: 100vh;
+    height: auto;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    align-items: flex-start;
+  }
+
+  .blank-layout-container .row {
+    min-height: min-content;
+    max-height: none;
+    height: auto;
+  }
+
+  /* Columna del formulario: padding menor y contenido que no desborde */
+  .blank-layout-container .row > .bg-white {
+    min-height: 0;
+    overflow-x: hidden;
+  }
+
+  .blank-layout-container .row > .bg-white > div {
+    padding: 1.25rem 1rem !important;
+    min-height: 0;
+    height: auto !important;
+    overflow-y: visible;
+  }
+
+  .blank-layout-container .max-width-form {
+    max-width: 480px;
+    width: 100%;
+  }
+}
+
+/* Por debajo de 992px: columnas apiladas, ajustes para móvil */
+@media (max-width: 991.98px) {
+  .blank-layout-container .row > .bg-white > div {
+    padding: 1rem 0.75rem !important;
+  }
+
+  .blank-layout-container .row > .bg-gredient {
+    min-height: 0;
+  }
+
+  .blank-layout-container .max-width-form {
+    max-width: 100%;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+.auth-title {
+  font-size: 36px;
+  line-height: 44px;
+}
+
+.bg-gredient {
+  overflow: hidden;
+  &::before {
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background: #E8CBC0;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to right, #636FA4, #E8CBC0);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to right, #636FA4, #E8CBC0); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+    animation: 15s ease 0s infinite normal none running gradient;
+    z-index: -1;
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 50% 0%;
+  }
+}
+
+.img-height {
+  max-height: calc(100vh - 100px);
+  height: 100%;
+  min-height: 0;
+}
+
+.login-img {
+  max-width: 420px;
+  max-height: 60vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* En pantallas pequeñas: imagen más pequeña para evitar scroll; arriba form abajo */
+@media (max-width: 991.98px) {
+  .img-height-mobile {
+    height: 22vh;
+    min-height: 120px;
+    padding: 0.5rem 0;
+  }
+  .login-img {
+    max-width: min(220px, 65vw);
+    max-height: 18vh;
+  }
+}
+
+/* 990px – 1280px: tamaños intermedios para la imagen */
+@media (min-width: 990px) and (max-width: 1280px) {
+  .img-height {
+    max-height: calc(100vh - 120px);
+  }
+  .login-img {
+    max-width: 300px;
+    max-height: 50vh;
+  }
+}
+
+.custom-row {
+  &.row {
+    margin-right: -8px;
+    margin-left: -8px;
+    .col-2,
+    .col-12 {
+      padding-right: 8px;
+      padding-left: 8px;
+    }
+  }
+}
+
+.or-border {
+  position: relative;
+  text-align: center;
+  &:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 100px;
+    top: 50%;
+    height: 1px;
+    background: $borderColor;
+  }
+  &:after {
+    content: "";
+    position: absolute;
+    right: 0;
+    width: 100px;
+    top: 50%;
+    height: 1px;
+    background: $borderColor;
+  }
+}
+
+.boxed-auth {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.max-width-form {
+  max-width: 540px;
+  width: 100%;
+}
+
+.mat-mdc-form-field.mat-form-field-invalid {
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: $error !important;
+  }
+}
+
+.error-msg {
+  position: absolute;
+  top: -19px;
+  right: 3px;
+}
+
+/* Solicitud cambio de contraseña: icono + título en fila, tip, botón y footer (contraste en fondo oscuro) */
+.solicitud-password-icon {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #636fa4 0%, #8b9dcf 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(99, 111, 164, 0.35);
+}
+
+.solicitud-password-icon--animate {
+  animation: reqBlockIn 0.35s ease-out;
+}
+
+.solicitud-password-icon mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.solicitud-password-icon-title {
+  color: #fff;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.solicitud-password-subtitle {
+  display: block;
+  margin-top: 1rem;
+  padding: 10px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: #1e293b;
+  background: #eef2ff;
+  border-left: 4px solid #636fa4;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 1px 3px rgba(99, 111, 164, 0.12);
+}
+
+.solicitud-password-subtitle--animate {
+  animation: reqBlockIn 0.35s ease-out;
+}
+
+.solicitud-password-subtitle--highlight {
+  margin-top: 1rem;
+  padding: 14px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #0f172a;
+  background: #e0e7ff;
+  border-left: 4px solid #636fa4;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 1px 3px rgba(99, 111, 164, 0.15);
+  transition: box-shadow 0.25s ease, background 0.25s ease;
+  
+  > div:first-child {
+    margin-bottom: 12px;
+  }
+}
+
+.solicitud-password-tip-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(99, 111, 164, 0.2);
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+  
+  .tip-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: #636fa4;
+    margin-top: 2px;
+  }
+}
+
+.solicitud-password-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(99, 111, 164, 0.15);
+  border: 1px solid rgba(99, 111, 164, 0.35);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+/* Mismo lenguaje visual que cambio-password-requirements: recuadro con borde izquierdo */
+.solicitud-password-tip--box {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 0 10px 10px 0;
+  border: none;
+  border-left: 4px solid #636fa4;
+  background: rgba(99, 111, 164, 0.08);
+  box-shadow: 0 1px 3px rgba(99, 111, 164, 0.12);
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+  
+  .tip-icon {
+    color: #636fa4;
+  }
+}
+
+.solicitud-password-tip--animate {
+  animation: reqBlockIn 0.35s ease-out;
+}
+
+.solicitud-password-tip--success {
+  margin-top: 48px;
+}
+
+.solicitud-password-tip.is-ok {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #14532d;
+}
+
+.solicitud-password-tip.is-ok .tip-icon {
+  color: #15803d;
+}
+
+.solicitud-password-tip .tip-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.solicitud-password-btn {
+  background: linear-gradient(135deg, #636fa4 0%, #7b8bc4 100%) !important;
+  color: #fff !important;
+}
+
+.solicitud-password-btn:not(:disabled):hover {
+  background: linear-gradient(135deg, #5563a0 0%, #6d7dba 100%) !important;
+  color: #fff !important;
+}
+
+.solicitud-password-btn:disabled {
+  background: rgba(99, 111, 164, 0.4) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.solicitud-password-footer {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+.solicitud-password-link {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.solicitud-password-link:hover {
+  color: #93c5fd;
+}
+
+/* Solo en solicitud-cambio-password: estilo pill con colores 136, 154, 184 (RGB) = #889AB8 */
+.solicitud-password-link--pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  border-radius: 999px !important;
+  padding: 12px 22px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  border: 2px solid rgb(136, 154, 184) !important;
+  background: #1a1a1a !important;
+  color: rgb(136, 154, 184) !important;
+  transition: all 0.2s ease !important;
+}
+
+.solicitud-password-link--pill:hover {
+  background: #252525 !important;
+  border-color: rgb(160, 178, 208) !important;
+  color: rgb(160, 178, 208) !important;
+  box-shadow: 0 0 0 1px rgb(136, 154, 184), 0 2px 12px rgba(136, 154, 184, 0.3) !important;
+}
+
+/* Cambio contraseña: mismos estilos que solicitud; espacio entre campos igual (mt-4 = 16px) */
+.cambio-password-field {
+  margin-top: 16px;
+}
+
+.cambio-password-field:first-child {
+  margin-top: 0;
+}
+
+/* Tip de requisitos pegada al input, un poco más arriba (pegada) */
+.solicitud-password-tip--pegada {
+  margin-top: 0;
+}
+
+/* Animaciones: aparición de bloques y cambios verde/rojo */
+@keyframes reqBlockIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iconChecked {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes mismatchShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+/* Lista de requisitos de contraseña: cada línea con icono que se marca al cumplir */
+.cambio-password-requirements {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 0 10px 10px 0;
+  border-left: 4px solid #636fa4;
+  background: rgba(99, 111, 164, 0.08);
+  box-shadow: 0 1px 3px rgba(99, 111, 164, 0.12);
+  animation: reqBlockIn 0.3s ease-out;
+}
+
+.cambio-password-requirement {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #475569;
+  transition: color 0.25s ease;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.cambio-password-requirement__icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: rgba(99, 111, 164, 0.5);
+  transition: color 0.25s ease;
+  
+  &.checked {
+    color: #15803d;
+    animation: iconChecked 0.35s ease-out;
+  }
+}
+
+/* Confirmar contraseña: estilos en rojo cuando no coinciden */
+.cambio-password-requirements--mismatch {
+  border-left-color: $error;
+  background: rgba(220, 38, 38, 0.08);
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.15);
+  animation: mismatchShake 0.45s ease-out;
+  
+  .cambio-password-requirement {
+    color: $error;
+    transition: color 0.25s ease;
+  }
+  
+  .cambio-password-requirement__icon:not(.checked) {
+    color: $error;
+  }
+}
+
+/* Mensajes de error debajo del input: misma posición, tamaño y alineación en los tres campos */
+.cambio-password-mat-error {
+  display: block;
+  margin: 4px 0 0 0;
+  padding: 0;
+  font-size: 12px !important;
+  color: $error;
+  line-height: 1.3;
+}
+

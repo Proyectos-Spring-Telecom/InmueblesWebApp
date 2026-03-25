@@ -1,0 +1,85 @@
+<div class="d-flex">
+  <div
+    class="user-profile profile-bar w-100"
+    style="background: url(https://media.istockphoto.com/id/1393340461/it/vettoriale/sfondo-rosso-astratto-motivo-geometrico-sfondo-scuro-con-spazio-per-il-design-moderno.jpg?s=612x612&w=0&k=20&c=tj1SlBVH3fN51nCAU0a8dOXVuHkrex_rKh-ILQdNYvU=) no-repeat"
+  >
+    <!-- User profile image -->
+    <div class="profile-img">
+      <img
+        [src]="showImage"
+        alt="user"
+        width="50"
+        class="rounded-circle"
+      />
+    </div>
+    <!-- User profile text-->
+    <!-- ============================================================== -->
+    <!-- Profile - style you can find in header.scss -->
+    <!-- ============================================================== -->
+    <div class="profile-text p-t-4">
+      <a
+        href="javascript:void(0)"
+        class="text-decoration-none d-flex align-items-center text-white w-100 f-s-16"
+      >
+        {{showNombre+ ' ' + showApellidoPaterno + ' ' + showApellidoMaterno}}
+        <!-- <i-tabler name="chevron-down" class="icon-18 m-l-auto"></i-tabler> -->
+      </a>
+    </div>
+
+    <!-- <mat-menu
+      #sdprofile="matMenu"
+      yPosition="below"
+      class="cardWithShadow profile-dd"
+    >
+      <button
+        class="d-flex align-items-center gap-8 p-x-16 p-y-10"
+        mat-menu-item
+      >
+        <mat-icon class="m-r-0 d-flex align-items-center">
+          <i-tabler class="icon-20" name="user-circle"></i-tabler>
+        </mat-icon>
+        <span>My Profile</span>
+      </button>
+      <button
+        class="d-flex align-items-center gap-8 p-x-16 p-y-10"
+        mat-menu-item
+      >
+        <mat-icon class="m-r-0 d-flex align-items-center"> <i-tabler class="icon-20 d-flex align-items-center" name="note"></i-tabler></mat-icon>
+        <span>My Notes</span>
+      </button>
+      <button
+        class="d-flex align-items-center gap-8 p-x-16 p-y-10"
+        mat-menu-item
+      >
+        <mat-icon class="m-r-0 d-flex align-items-center"><i-tabler class="icon-20 d-flex align-items-center" name="mail"></i-tabler></mat-icon>
+        <span>Inbox</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button
+        class="d-flex align-items-center gap-8 p-x-16 p-y-10"
+        mat-menu-item
+      >
+        <mat-icon class="m-r-0 d-flex align-items-center"><i-tabler class="icon-20 d-flex align-items-center" name="settings"></i-tabler></mat-icon>
+        <span>Account Setting</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button
+        class="d-flex align-items-center gap-8 p-x-16 p-y-10"
+        mat-menu-item
+      >
+        <mat-icon class="m-r-0 d-flex align-items-center"><i-tabler name="login"></i-tabler></mat-icon>
+        <span>Logout</span>
+      </button>
+      <mat-divider></mat-divider>
+      <div class="p-8">
+        <button
+          mat-flat-button
+          color="primary"
+          class="rounded-pill w-100 shadow-none"
+        >
+          View Profile
+        </button>
+      </div>
+    </mat-menu> -->
+  </div>
+</div>

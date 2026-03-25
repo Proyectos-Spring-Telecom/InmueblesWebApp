@@ -1,0 +1,226 @@
+<div [@routeAnimation] class="perfil-wrap">
+  <div class="perfil-shell">
+    <header class="perm-head" role="region" aria-label="Sección: Usuario">
+      <div class="perm-head__icon" aria-hidden="true">
+        <mat-icon class="mi mi--lg">admin_panel_settings</mat-icon>
+      </div>
+      <div class="perm-head__text">
+        <span class="eyebrow">Sección</span>
+        <h2>Perfil Usuario</h2>
+      </div>
+      <nav class="perm-head__crumbs" aria-label="Ruta">
+        <span class="crumb">Administración</span>
+        <span class="sep">/</span>
+        <span class="crumb active">Usuario</span>
+      </nav>
+    </header>
+    <div class="perfil-grid">
+      <aside class="card-side">
+        <div class="card-side__cut"></div>
+        <div class="avatar-wrap">
+          <div class="avatar-ring">
+            <div class="avatar">
+              <img [src]="showImage" alt="Avatar" (error)="onAvatarError()" />
+            </div>
+          </div>
+          <div class="chip-status is-on">
+            <span class="dot"></span>
+            Activo
+          </div>
+        </div>
+        <div class="side-meta">
+          <div class="side-meta__name">
+            {{ showNombreCompleto }}
+          </div>
+          <div class="side-pills">
+            <div class="pill">
+              <i class="fa fa-envelope"></i>
+              <span>{{ valueOrSinRegistro(user?.userName) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="side-footer">
+          <div class="mini-line"></div>
+          <div class="side-footer__hint">
+            Último Acceso:
+            <span class="fecha-capitalize">{{ formatUltimoLogin(user?.ultimoLogin) }}</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="card-main">
+        <div class="card-main__bg"></div>
+        <div class="main-header">
+          <div class="main-header__left">
+            <div class="badge-section">
+              <mat-icon class="mi mi--sm">badge</mat-icon>
+              Información del perfil
+            </div>
+            <div class="subtitle">
+              Administra tus datos y seguridad sin salir del panel.
+            </div>
+          </div>
+          <div class="main-header__right">
+            <div class="mini-chip">
+              <mat-icon class="mi mi--sm">shield</mat-icon>
+              Seguridad
+            </div>
+          </div>
+        </div>
+        <div class="main-content">
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-card__head">
+                <div class="info-card__icon">
+                  <mat-icon class="mi mi--md">account_circle</mat-icon>
+                </div>
+                <div class="info-card__title">Datos generales</div>
+              </div>
+              <div class="kv">
+                <div class="kv__row">
+                  <div class="kv__k">Teléfono</div>
+                  <div class="kv__v">{{ valueOrSinRegistro(user?.telefono) }}</div>
+                </div>
+                <div class="kv__row">
+                  <div class="kv__k">Cliente</div>
+                  <div class="kv__v">{{ nombreClienteDisplay }}</div>
+                </div>
+                <div class="kv__row">
+                  <div class="kv__k">Teléfono Cliente</div>
+                  <div class="kv__v">{{ valueOrSinRegistro(user?.telefonoCliente) }}</div>
+                </div>
+                <div class="kv__row">
+                  <div class="kv__k">Correo Cliente</div>
+                  <div class="kv__v">{{ valueOrSinRegistro(user?.emailCliente) }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="info-card info-card--accent">
+              <div class="info-card__head">
+                <div class="info-card__icon">
+                  <mat-icon class="mi mi--md">flash_on</mat-icon>
+                </div>
+                <div class="info-card__title">Acciones rápidas</div>
+              </div>
+              <div class="action-grid">
+                <button class="action-tile action-tile--blue" type="button" (click)="onCambiarPassword()">
+                  <div class="action-tile__icon">
+                    <mat-icon class="mi mi--md">key</mat-icon>
+                  </div>
+                  <div class="action-tile__txt">
+                    <div class="action-tile__t">Cambiar Contraseña</div>
+                    <div class="action-tile__d">Actualiza tu acceso</div>
+                  </div>
+                  <mat-icon class="action-tile__arrow mi mi--md">chevron_right</mat-icon>
+                </button>
+                <button class="action-tile action-tile--wine" type="button" (click)="onCerrarSesion()">
+                  <div class="action-tile__icon">
+                    <mat-icon class="mi mi--md">logout</mat-icon>
+                  </div>
+                  <div class="action-tile__txt">
+                    <div class="action-tile__t">Cerrar Sesión</div>
+                    <div class="action-tile__d">Salir del sistema</div>
+                  </div>
+                  <mat-icon class="action-tile__arrow mi mi--md">chevron_right</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div
+  class="neo-modal"
+  [class.is-open]="showPasswordModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="neoModalTitle"
+>
+  <div class="neo-modal__panel" (click)="$event.stopPropagation()">
+    <div class="neo-modal__bg"></div>
+    <header class="neo-modal__head">
+      <div class="neo-modal__title">
+        <div class="neo-modal__icon">
+          <mat-icon class="mi mi--md">key</mat-icon>
+        </div>
+        <div class="neo-modal__titles">
+          <div class="neo-modal__eyebrow">Seguridad</div>
+          <h3 id="neoModalTitle">Cambiar Contraseña</h3>
+        </div>
+      </div>
+      <!-- <button type="button" class="neo-modal__close" (click)="onCancelPasswordChange()" aria-label="Cerrar">
+        <mat-icon class="mi mi--md">close</mat-icon>
+      </button> -->
+    </header>
+    <div class="neo-modal__body">
+      <div class="neo-form">
+        <div class="neo-field">
+          <label class="neo-label">Contraseña Actual</label>
+          <div class="neo-input neo-input--with-toggle">
+            <mat-icon class="neo-input__icon mi mi--sm">lock</mat-icon>
+            <input [type]="hidePasswordActual ? 'password' : 'text'" placeholder="Escribe tu contraseña actual"
+              [(ngModel)]="passwordActual" autocomplete="current-password" />
+            <button type="button" class="neo-input__toggle" (click)="hidePasswordActual = !hidePasswordActual"
+              [attr.aria-label]="hidePasswordActual ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+              <mat-icon class="mi mi--sm">{{ hidePasswordActual ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+        </div>
+        <div class="neo-field">
+          <label class="neo-label">Nueva Contraseña</label>
+          <div class="neo-input neo-input--with-toggle">
+            <mat-icon class="neo-input__icon mi mi--sm">lock_reset</mat-icon>
+            <input [type]="hidePasswordNueva ? 'password' : 'text'" placeholder="Crea tu nueva contraseña"
+              [(ngModel)]="passwordNueva" (input)="onNuevaPasswordInput()" autocomplete="new-password" />
+            <button type="button" class="neo-input__toggle" (click)="hidePasswordNueva = !hidePasswordNueva"
+              [attr.aria-label]="hidePasswordNueva ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+              <mat-icon class="mi mi--sm">{{ hidePasswordNueva ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          <div class="neo-hint" *ngIf="passwordNueva?.length" [class.is-ok]="isPasswordStrong">
+            <ng-container *ngIf="!isPasswordStrong; else passOk">
+              Falta (al cumplir se quitan):
+              <ng-container *ngFor="let it of missingRules; let i = index">
+                <span class="neo-hint__bad" [attr.data-anim]="it">{{ it }}</span><span
+                  *ngIf="i < missingRules.length - 1">, </span>
+              </ng-container>
+            </ng-container>
+            <ng-template #passOk>
+              <span class="neo-hint__ok">Contraseña Segura</span>
+            </ng-template>
+          </div>
+        </div>
+        <div class="neo-field">
+          <label class="neo-label">Confirmar Nueva Contraseña</label>
+          <div class="neo-input neo-input--with-toggle">
+            <mat-icon class="neo-input__icon mi mi--sm">verified</mat-icon>
+            <input [type]="hidePasswordConfirmar ? 'password' : 'text'" placeholder="Repite la nueva contraseña"
+              [(ngModel)]="passwordConfirmar" (focus)="onConfirmFocus()" (blur)="onConfirmBlur()"
+              autocomplete="new-password" />
+            <button type="button" class="neo-input__toggle" (click)="hidePasswordConfirmar = !hidePasswordConfirmar"
+              [attr.aria-label]="hidePasswordConfirmar ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+              <mat-icon class="mi mi--sm">{{ hidePasswordConfirmar ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          <div class="neo-hint" *ngIf="showConfirmHint" [class.is-ok]="isConfirmMatch" [class.is-bad]="!isConfirmMatch">
+            <span *ngIf="isConfirmMatch" class="neo-hint__ok">Contraseñas Iguales</span>
+            <span *ngIf="!isConfirmMatch" class="neo-hint__bad">Las contraseñas No Coinciden</span>
+          </div>
+        </div>
+        <div class="neo-actions">
+          <button type="button" class="neo-btn neo-btn--ghost" (click)="closePasswordModal()"
+            [disabled]="loadingPassword">
+            Cancelar
+          </button>
+          <button type="button" class="neo-btn neo-btn--primary" (click)="confirmChangePassword()"
+            [disabled]="loadingPassword">
+            {{ loadingPassword ? 'Guardando…' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

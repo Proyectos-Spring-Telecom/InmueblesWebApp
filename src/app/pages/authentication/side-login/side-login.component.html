@@ -1,0 +1,85 @@
+<div class="blank-layout-container justify-content-center">
+  <div class="position-relative row w-100 h-100">
+    <div class="col-lg-7 col-xl-8 bg-gredient p-0">
+      <div class="p-24 h-100">
+        <!-- <app-auth-branding></app-auth-branding> -->
+
+        <div class="d-flex align-items-center justify-content-center img-height img-height-mobile">
+          <img src="/assets/images/logos/SPRING-VERTICAL.webp" alt="login" class="login-img" />
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5 col-xl-4 p-0 bg-white">
+      <div class="p-32 d-flex align-items-start align-items-lg-center justify-content-center h-100">
+        <div class="row justify-content-center w-100">
+          <div class="col-lg-9 max-width-form">
+            <h4 class="f-w-700 f-s-24 m-0">Bienvenido a Inmuebles</h4>
+            <span class="f-s-14 d-block f-s-14 m-t-8">Sistema de Gestión</span>
+
+            <form class="m-t-20" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Usuario</mat-label>
+              <mat-form-field appearance="outline" class="w-100" color="primary">
+                <input matInput formControlName="userName" />
+              </mat-form-field>
+
+              <!-- password -->
+              <!-- password -->
+              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Contraseña</mat-label>
+              <mat-form-field appearance="outline" class="w-100" color="primary">
+                <input matInput [type]="hidePass ? 'password' : 'text'" formControlName="password"
+                  autocomplete="current-password" />
+
+                <!-- Botón fijo a la derecha dentro del input -->
+                <button mat-icon-button matSuffix type="button" (click)="hidePass = !hidePass"
+                  [attr.aria-label]="hidePass ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+                  [attr.aria-pressed]="!hidePass">
+                  <mat-icon>{{ hidePass ? 'visibility' : 'visibility_off' }}</mat-icon>
+                </button>
+              </mat-form-field>
+
+
+              <div class="d-flex align-items-center m-b-12">
+                <a [routerLink]="['/solicitud-cambio-password']" class="solicitud-password-link text-decoration-none f-w-500 f-s-14 m-l-auto">
+                  ¿Olvidó su Contraseña?</a>
+              </div>
+              <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="isDisabled" class="w-100">
+                {{textLogin}}
+              </button>
+              <!-- input -->
+            </form>
+
+            <div class="or-border mt-5">Síguenos y conoce más</div>
+            <div class="row mt-4">
+              <div class="col-12 col-sm-6">
+                <button mat-stroked-button class="w-100" (click)="openInstagram()">
+                  <div class="d-flex align-items-center" style="color:#C13584;">
+                    <img src="/assets/images/svgs/Instagram_logo.png" alt="instagram" width="18" class="m-r-8" />
+                    Visítanos
+                  </div>
+                </button>
+              </div>
+              <div class="col-12 col-sm-6">
+                <button mat-stroked-button class="w-100 d-flex align-items-center" (click)="openFacebook()">
+                  <div class="d-flex align-items-center" style="color:#1877F2;">
+                    <img src="/assets/images/svgs/facebook-icon.svg" alt="facebook" width="40" class="m-r-4" />
+                    Visítanos
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- <span class="d-block f-w-500 d-block m-t-24"
+              >New to MaterialPro?
+              <a
+                [routerLink]="['/authentication/side-register']"
+                class="text-decoration-none text-primary f-w-500 f-s-14"
+              >
+                Create an account</a
+              >
+            </span> -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

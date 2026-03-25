@@ -1,0 +1,169 @@
+@use "../variables" as *;
+
+html .topbar {
+  background-color: var(--mat-sys-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  height: $header-height;
+  box-shadow: var(--mat-sys-level2);
+
+  .mat-mdc-icon-button {
+    color: $white;
+  }
+}
+
+.topbar-dd {
+  min-width: 360px !important;
+}
+
+.apps-dd {
+  min-width: 830px !important;
+  overflow: unset !important;
+
+  .mat-mdc-menu-content {
+    padding: 0;
+  }
+}
+
+.text-hover-primary:hover {
+  .hover-text {
+    color: $primary;
+  }
+}
+
+.upgrade-bg {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  height: 100%;
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
+.branding {
+  width: $sidenav-desktop;
+}
+
+.sidebarNav-mini {
+  .branding {
+    width: $sidenav-mini - 15px;
+    overflow: hidden;
+  }
+}
+
+.header-badge.mat-badge-medium .mat-badge-content {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  line-height: 18px;
+  left: 18px;
+}
+
+@media (min-width: 768px) {
+  .search-dialog {
+    width: 560px;
+  }
+}
+
+.profile-dd {
+  margin-left: -5px !important;
+  margin-top: -5px;
+}
+
+.dd-notifications {
+  .mat-mdc-menu-content {
+    padding: 0;
+  }
+}
+
+.notify {
+  position: relative;
+  top: -20px;
+  right: -8px;
+
+  .heartbit {
+    position: absolute;
+    top: -5px;
+    right: -2px;
+    height: 18px;
+    width: 18px;
+    z-index: 10;
+    border: 2px solid $error;
+    border-radius: 70px;
+    animation: heartbit 1s ease-out;
+    -moz-animation: heartbit 1s ease-out;
+    -moz-animation-iteration-count: infinite;
+    -o-animation: heartbit 1s ease-out;
+    -o-animation-iteration-count: infinite;
+    -webkit-animation: heartbit 1s ease-out;
+    -webkit-animation-iteration-count: infinite;
+    animation-iteration-count: infinite;
+  }
+
+  .point {
+    width: 4px;
+    height: 4px;
+    border-radius: 30px;
+    position: absolute;
+    right: 5px;
+    top: 2px;
+    background-color: $error;
+    position: absolute;
+  }
+}
+
+@keyframes heartbit {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  25% {
+    transform: scale(0.1);
+    opacity: 0.1;
+  }
+
+  50% {
+    transform: scale(0.5);
+    opacity: 0.3;
+  }
+
+  75% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.inbox-badge {
+  position: absolute !important;
+  top: 0;
+  right: 0;
+}
+
+.dark-theme {
+  .topbar {
+    .mat-mdc-icon-button {
+      color: $dark-text-secondary !important;
+    }
+    .mdc-button {
+      --mat-button-text-label-text-color: $dark-text-secondary !important;
+    }
+  }
+}
+
+.header-collpase {
+  position: absolute;
+  top: $header-height;
+  background: var(--mat-sys-surface);
+  width: 100%;
+  left: 0;
+  box-shadow: var(--mat-sys-level2);
+}

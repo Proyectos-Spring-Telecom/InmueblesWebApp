@@ -1,0 +1,10 @@
+@use "sass:map";
+@use "@angular/material" as mat;
+
+html.orange_theme {
+  --mat-sys-primary: rgb(250, 137, 107);
+  --mat-sys-primary-fixed-dim: rgb(250, 137, 107, 0.10);
+  --mat-sys-secondary: rgb(0, 116, 186);
+  --mat-sys-secondary-fixed-dim: rgb(0, 116, 186, 0.10);
+  --mat-sys-error-fixed-dim: rgb(rgb(255, 240, 244););
+}

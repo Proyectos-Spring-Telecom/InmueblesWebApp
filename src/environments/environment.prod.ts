@@ -1,0 +1,6 @@
+export const environment = {
+  production: true,
+  API_SECURITY: 'https://springtelecom.mx/analiticaVideoAPI/api',
+  dxLicenseKey: 'ewogICJmb3JtYXQiOiAxLAogICJjdXN0b21lcklkIjogImEwODE3YzBkLTNmNzYtNDJjYS1hZDE5LTllYmMyYzVmMWI5ZSIsCiAgIm1heFZlcnNpb25BbGxvd2VkIjogMjQxCn0=.jDVYl8D2frZn/DKgp33IHvycOBynlH7eg3YIyIo4TFkrIsKibx4k5SKn0UGtuM6pUwB+ZaG+v/qxpM20xJN8PNfFqZAd5oX6ZnRHVjGWrSy/8lRcq+6WwmuHDNwRU22lnRi/lQ==',
+  googleMapsApiKey: 'AIzaSyCViGKafQxsHPmgGtlPsUDIaOdttLKJLk4'
+};

@@ -1,0 +1,297 @@
+.perm-head__icon {
+  position: relative;
+  z-index: 1;
+}
+
+.password-eye { position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); text-decoration: none; color: inherit; }
+.form-control.pr-5 { padding-right: 2.25rem; }
+.password-requirements i { width: 1.25rem; text-align: center; }
+.password-requirements .ms-2 { margin-left: .5rem; }
+.password-requirements .text-danger { color: #dc3545; }
+.password-requirements .text-success { color: #198754; }
+
+.pwd-hint { font-size: 0.85rem; line-height: 1.2; margin-bottom: 0; display: flex; align-items: center; }
+.pwd-hint i { width: 1rem; text-align: center; font-size: 0.9rem; }
+.pwd-hint .ms-2 { margin-left: .5rem; }
+
+
+
+.perm-wrapper {
+  .perm-perms-section {
+    margin-top: 2rem;
+    padding-top: 0.5rem;        // antes 1.5
+    border-top: none;           // quitamos ese borde que daba sensación de card aparte
+  }
+
+  .perm-perms-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .perm-perms-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  .perm-perms-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(177, 19, 63, 0.1);
+    border: 1px solid rgba(177, 19, 63, 0.7);
+    color: #ffcedd;
+    padding: 0.35rem 0.9rem;
+  }
+
+  .perm-modules-scroll {
+    max-height: 360px;
+    min-height: 180px;
+    overflow-y: auto;
+    overflow-x: hidden;        // quitamos scroll horizontal
+    margin-top: 1rem;
+    padding-right: 0;          // evitamos desbordes con el .row
+  }
+
+  .perm-modules-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .perm-modules-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .perm-modules-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+  }
+
+  .perm-modules-scroll > .row {
+    margin-right: 0;           // anulamos márgenes negativos de bootstrap
+    margin-left: 0;
+  }
+
+  .perm-modules-scroll > .row > [class*='col-'] {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    background-color: transparent;
+  }
+
+  .perm-module-card {
+    background: transparent;
+    border-radius: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 1.1rem 1.2rem 1rem;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .perm-module-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .perm-module-card__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #681330;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+
+  .perm-module-card__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .perm-module-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .perm-module-card__desc {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .perm-module-card__bulk {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+  }
+
+  .perm-module-card__bulk-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .perm-module-card__bulk-toggle {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .perm-module-card__bulk-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  .perm-module-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+  }
+
+  .perm-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.02);
+    transition:
+      background 0.18s ease,
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+    position: relative;
+  }
+
+  .perm-pill:hover {
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+  }
+
+  .perm-pill__icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(104, 19, 48, 0.22);
+    color: #f7c3d4;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .perm-pill__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .perm-pill__name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #ffffff;
+  }
+
+  .perm-pill__desc {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .perm-pill__toggle {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .perm-pill__toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  .perm-switch {
+    width: 34px;
+    height: 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    position: relative;
+    transition:
+      background 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .perm-switch::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    left: 2px;
+    top: 2px;
+    background: #9ca3af;
+    transition:
+      transform 0.2s ease,
+      background 0.2s ease;
+  }
+
+  .perm-switch--sm {
+    width: 30px;
+    height: 16px;
+  }
+
+  .perm-switch--sm::before {
+    width: 12px;
+    height: 12px;
+  }
+
+  .perm-pill__toggle input:checked + .perm-switch,
+  .perm-module-card__bulk-toggle input:checked + .perm-switch {
+    background: #681330;
+    box-shadow: 0 0 0 3px rgba(104, 19, 48, 0.45);
+  }
+
+  .perm-pill__toggle input:checked + .perm-switch::before,
+  .perm-module-card__bulk-toggle input:checked + .perm-switch::before {
+    transform: translateX(16px);
+    background: #ffffff;
+  }
+
+  .perm-pill--active {
+    background: radial-gradient(circle at top left, rgba(104, 19, 48, 0.32), rgba(0, 0, 0, 0.24));
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+    border-left: 3px solid #681330;
+  }
+
+  .perm-pill--active .perm-pill__icon {
+    background: rgba(104, 19, 48, 0.35);
+    color: #ffe1ec;
+  }
+
+  .perm-module-card__empty {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.2rem;
+  }
+
+  @media (max-width: 991.98px) {
+    .perm-module-card {
+      margin-bottom: 0.5rem;
+    }
+  }
+}
