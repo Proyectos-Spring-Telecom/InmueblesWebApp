@@ -91,7 +91,7 @@ export class HeaderComponent {
     language: 'English',
     code: 'en',
     type: 'US',
-    icon: '/assets/images/flag/icon-flag-en.svg',
+    icon: 'assets/images/flag/icon-flag-en.svg',
   };
 
   public languages: any[] = [
@@ -99,22 +99,22 @@ export class HeaderComponent {
       language: 'English',
       code: 'en',
       type: 'US',
-      icon: '/assets/images/flag/icon-flag-en.svg',
+      icon: 'assets/images/flag/icon-flag-en.svg',
     },
     {
       language: 'Español',
       code: 'es',
-      icon: '/assets/images/flag/icon-flag-es.svg',
+      icon: 'assets/images/flag/icon-flag-es.svg',
     },
     {
       language: 'Français',
       code: 'fr',
-      icon: '/assets/images/flag/icon-flag-fr.svg',
+      icon: 'assets/images/flag/icon-flag-fr.svg',
     },
     {
       language: 'German',
       code: 'de',
-      icon: '/assets/images/flag/icon-flag-de.svg',
+      icon: 'assets/images/flag/icon-flag-de.svg',
     },
   ];
   public showNombre: any;

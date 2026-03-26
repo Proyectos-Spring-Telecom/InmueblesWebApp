@@ -447,7 +447,7 @@ export class AgregarInstalacionComponent implements OnInit, AfterViewInit {
   }
 
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
-  private readonly PIN_URL = '/assets/images/logos/marker_spring.webp';
+  private readonly PIN_URL = 'assets/images/logos/marker_spring.webp';
 
   map: any = null;
   marker: any = null;

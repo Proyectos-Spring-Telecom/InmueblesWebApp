@@ -58,7 +58,7 @@ export class ListaInstalacionesCentralesComponent implements OnInit {
   marker: any = null;
 
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
-  private readonly PIN_URL = '/assets/images/logos/marker_blue.webp';
+  private readonly PIN_URL = 'assets/images/logos/marker_blue.webp';
 
   constructor(
     private router: Router,

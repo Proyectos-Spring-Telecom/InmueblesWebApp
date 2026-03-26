@@ -26,7 +26,7 @@ export class BrandingComponent {
   constructor(private settings: CoreService, private users: AuthenticationService,) {
     const user = this.users.getUser();
     if(user?.logo == 'null' || user?.logo == null){
-      this.showImage = '/assets/images/logos/spring_white.png'
+      this.showImage = 'assets/images/logos/spring_white.png'
     } else{
       this.showImage = user?.logo
     }

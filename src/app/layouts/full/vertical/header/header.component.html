@@ -35,7 +35,7 @@
     <i-tabler name="search" class="icon-20 d-flex"></i-tabler>
   </button>
 
-  <div class="d-none d-lg-flex">
+  <div class="d-none d-xl-flex">
     <!-- --------------------------------------------------------------- -->
     <!--  Links -->
     <!-- --------------------------------------------------------------- -->
@@ -172,92 +172,28 @@
   </button>
   } -->
 
-  <!-- Mobile Menu -->
-  <button
-    mat-icon-button
-    (click)="toggleMobileFilterNav.emit()"
-    class="d-flex d-lg-none justify-content-center align-items-center"
-  >
-    <i-tabler name="grid-dots" class="icon-20 d-flex"></i-tabler>
-  </button>
-
   <!-- --------------------------------------------------------------- -->
-  <!-- Collpase bar -->
+  <!-- Mobile Profile Trigger -->
   <!-- --------------------------------------------------------------- -->
   <button
     mat-icon-button
-    (click)="toggleCollpase()"
-    class="d-flex d-lg-none justify-content-center"
+    extended
+    [matMenuTriggerFor]="profilemenu"
+    aria-label="Perfil"
+    class="position-relative d-flex d-xl-none align-items-center justify-content-center profile-btn-dd"
   >
-    <i-tabler name="dots" class="icon-20 d-flex"></i-tabler>
+    <img
+      src="assets/images/logos/logout.webp"
+      class="rounded-circle icon-30 object-cover profile-dd d-flex align-items-center justify-content-center m-l-2 m-t-2"
+      width="30"
+      height="30"
+    />
   </button>
-  @if(isCollapse){
-  <div class="header-collpase p-y-10 p-x-15">
-    <div class="d-flex justify-content-center gap-10">
-      <!-- --------------------------------------------------------------- -->
-      <!-- Notification Dropdown -->
-      <!-- --------------------------------------------------------------- -->
-      <!-- <button
-        class="position-relative d-flex align-items-center justify-content-center"
-        mat-icon-button
-        [matMenuTriggerFor]="notificationmenu"
-        aria-label="Notifications"
-      >
-        <i-tabler name="bell" class="icon-22 d-flex text-body"></i-tabler>
-        <div class="notify">
-          <span class="heartbit"></span> <span class="point"></span>
-        </div>
-      </button> -->
-      <!-- --------------------------------------------------------------- -->
-      <!-- langugage Dropdown -->
-      <!-- --------------------------------------------------------------- -->
-      <!-- <button [matMenuTriggerFor]="flags" mat-icon-button class="m-r-5">
-        <img
-          [src]="selectedLanguage.icon"
-          class="rounded-circle object-cover icon-20"
-        />
-      </button> -->
-
-      <!-- --------------------------------------------------------------- -->
-      <!-- Messages Dropdown -->
-      <!-- --------------------------------------------------------------- -->
-      <!-- <button
-        mat-icon-button
-        [matMenuTriggerFor]="inboxmenu"
-        aria-label="Inbox"
-        class="position-relative d-flex align-items-center justify-content-center"
-      >
-        <i-tabler name="message" class="icon-22 d-flex text-body"></i-tabler>
-        <div class="notify">
-          <span class="heartbit"></span> <span class="point"></span>
-        </div>
-      </button> -->
-
-      <!-- --------------------------------------------------------------- -->
-      <!-- Profile Dropdown -->
-      <!-- --------------------------------------------------------------- -->
-      <!-- <button
-        mat-icon-button
-        extended
-        [matMenuTriggerFor]="profilemenu"
-        aria-label="Notifications"
-        class="position-relative d-flex align-items-center justify-content-center profile-btn-dd"
-      >
-        <img
-          src="/assets/images/profile/user-1.jpg"
-          class="rounded-circle icon-30 object-cover profile-dd d-flex align-items-center justify-content-center"
-          width="30"
-          height="30"
-        />
-      </button> -->
-    </div>
-  </div>
-  }
   <!-- --------------------------------------------------------------- -->
   <!-- Notification Dropdown -->
   <!-- --------------------------------------------------------------- -->
   <!-- <button
-    class="position-relative align-items-center justify-content-center d-none d-lg-flex"
+    class="position-relative align-items-center justify-content-center d-none d-xl-flex"
     mat-icon-button
     [matMenuTriggerFor]="notificationmenu"
     aria-label="Notifications"
@@ -324,7 +260,7 @@
     mat-icon-button
     [matMenuTriggerFor]="inboxmenu"
     aria-label="Inbox"
-    class="position-relative align-items-center justify-content-center d-none d-lg-flex"
+    class="position-relative align-items-center justify-content-center d-none d-xl-flex"
   >
     <i-tabler name="message" class="icon-22 d-flex"></i-tabler>
     <div class="notify">
@@ -400,10 +336,10 @@
     extended
     [matMenuTriggerFor]="profilemenu"
     aria-label="Notifications"
-    class="position-relative align-items-center justify-content-center profile-btn-dd d-none d-lg-flex"
+    class="position-relative align-items-center justify-content-center profile-btn-dd d-none d-xl-flex"
   >
     <img
-      src="/assets/images/logos/logout.webp"
+      src="assets/images/logos/logout.webp"
       class="rounded-circle icon-30 object-cover profile-dd d-flex align-items-center justify-content-center m-l-2 m-t-2"
       width="30"
       height="30"

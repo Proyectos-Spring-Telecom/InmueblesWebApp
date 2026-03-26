@@ -317,7 +317,7 @@ export class MonitoreoInstalacionComponent implements OnInit {
 
   private playNewHitSound(): void {
     try {
-      const a = new Audio('/assets/images/notificacaion.mp3');
+      const a = new Audio('assets/images/notificacaion.mp3');
       a.volume = 0.8;
       a.play().catch(() => { });
     } catch { }

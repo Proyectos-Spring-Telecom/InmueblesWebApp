@@ -14,11 +14,11 @@ export class TicketService {
   }
 
   public users = [
-    { id: 1, name: 'Alice', photo: '/assets/images/profile/user-1.jpg' },
-    { id: 2, name: 'Jonathan', photo: '/assets/images/profile/user-2.jpg' },
-    { id: 3, name: 'Smith', photo: '/assets/images/profile/user-3.jpg' },
-    { id: 4, name: 'Vincent', photo: '/assets/images/profile/user-4.jpg' },
-    { id: 5, name: 'Chris', photo: '/assets/images/profile/user-5.jpg' },
+    { id: 1, name: 'Alice', photo: 'assets/images/profile/user-1.jpg' },
+    { id: 2, name: 'Jonathan', photo: 'assets/images/profile/user-2.jpg' },
+    { id: 3, name: 'Smith', photo: 'assets/images/profile/user-3.jpg' },
+    { id: 4, name: 'Vincent', photo: 'assets/images/profile/user-4.jpg' },
+    { id: 5, name: 'Chris', photo: 'assets/images/profile/user-5.jpg' },
   ];
 
   getUsers(): any[] {
@@ -44,7 +44,7 @@ export class TicketService {
       title: ticket.title,
       subtext: ticket.subtext,
       assignee: ticket.assignee,
-      imgSrc: '/assets/images/profile/user-1.jpg',
+      imgSrc: 'assets/images/profile/user-1.jpg',
       status: 'open',
       date: today.toISOString().split('T')[0],
     };

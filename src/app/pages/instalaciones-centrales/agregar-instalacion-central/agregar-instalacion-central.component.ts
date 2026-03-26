@@ -219,7 +219,7 @@ export class AgregarInstalacionCentralComponent implements OnInit, AfterViewInit
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
   modalAgregarVisible = false;
 
-  private readonly PIN_URL = '/assets/images/logos/marker_blue.webp';
+  private readonly PIN_URL = 'assets/images/logos/marker_blue.webp';
 
   latSeleccionada: number | null = null;
   lngSeleccionada: number | null = null;

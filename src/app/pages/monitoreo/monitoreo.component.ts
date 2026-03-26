@@ -39,8 +39,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
 
   private readonly MAP_ID?: string = undefined;
-  private readonly PIN_URL = '/assets/images/logos/markerInstalacion.png';
-  private readonly CENTRAL_PIN_URL = '/assets/images/logos/markerCliente.png';
+  private readonly PIN_URL = 'assets/images/logos/markerInstalacion.png';
+  private readonly CENTRAL_PIN_URL = 'assets/images/logos/markerCliente.png';
 
   get listaVisible(): any[] {
     if (this.viewMode === 'centrales') {
