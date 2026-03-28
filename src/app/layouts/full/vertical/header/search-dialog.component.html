@@ -25,17 +25,30 @@
   <mat-divider></mat-divider>
 
   <div class="mt-3">
-  @for(item of navItemsData; track item.displayName) {
-      <a
-        [routerLink]="[item.route]"
-        mat-dialog-close
-        class="p-y-12 text-decoration-none d-block"
-      >
-        <h5 class="f-s-15 f-w-500 d-block  m-0">
-          {{ item.displayName }}
-        </h5>
-        <span class="f-s-14 text-body">{{ item.route }}</span>
-      </a>
+    @for (item of navItemsData; track item.displayName) {
+      @if (isLogoutItem(item)) {
+        <a
+          href="#"
+          class="p-y-12 text-decoration-none d-block"
+          (click)="onLogoutClick($event)"
+        >
+          <h5 class="f-s-15 f-w-500 d-block m-0">
+            {{ item.displayName }}
+          </h5>
+          <span class="f-s-14 search-dialog-route d-block">{{ item.route }}</span>
+        </a>
+      } @else {
+        <a
+          [routerLink]="[item.route]"
+          mat-dialog-close
+          class="p-y-12 text-decoration-none d-block"
+        >
+          <h5 class="f-s-15 f-w-500 d-block m-0">
+            {{ item.displayName }}
+          </h5>
+          <span class="f-s-14 search-dialog-route d-block">{{ item.route }}</span>
+        </a>
+      }
     }
   </div>
 </mat-dialog-content>

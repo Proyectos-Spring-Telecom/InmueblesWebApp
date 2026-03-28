@@ -1,15 +1,19 @@
 @use "../variables" as *;
 
 .blank-layout-container {
-  height: 100vh;
-  max-height: 100vh;
+  /* Altura respecto al shell (app-blank + mat-sidenav), evita 100vh + barra de scroll fantasma */
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
   display: flex;
   background-size: cover;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .blank-layout-container .row {
   max-height: 100%;
+  min-height: 0;
 }
 
 @media (min-width: 992px) {
@@ -18,14 +22,54 @@
   }
 }
 
-/* Responsive: de 1280px hacia abajo — contenedor con scroll y formulario que no se rompe */
-@media (max-width: 1279.98px) {
+/* Tablet landscape / laptop estrecho: sin scroll en el body; solo la columna blanca hace scroll */
+@media (max-width: 1279.98px) and (min-width: 992px) {
   .blank-layout-container {
-    min-height: 100vh;
+    align-items: stretch;
+  }
+
+  .blank-layout-container .row {
+    flex: 1 1 auto;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  .blank-layout-container .row > .bg-white {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .blank-layout-container .row > .bg-white > div {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1.25rem 1rem !important;
+    height: auto !important;
+  }
+
+  .blank-layout-container .row > .bg-gredient {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .blank-layout-container .max-width-form {
+    max-width: 480px;
+    width: 100%;
+  }
+}
+
+/* Por debajo de 992px: scroll lo maneja el shell (.mat-drawer-content) */
+@media (max-width: 991.98px) {
+  .blank-layout-container {
     height: auto;
     max-height: none;
+    min-height: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: visible;
     align-items: flex-start;
   }
 
@@ -35,29 +79,9 @@
     height: auto;
   }
 
-  /* Columna del formulario: padding menor y contenido que no desborde */
-  .blank-layout-container .row > .bg-white {
-    min-height: 0;
-    overflow-x: hidden;
-  }
-
-  .blank-layout-container .row > .bg-white > div {
-    padding: 1.25rem 1rem !important;
-    min-height: 0;
-    height: auto !important;
-    overflow-y: visible;
-  }
-
-  .blank-layout-container .max-width-form {
-    max-width: 480px;
-    width: 100%;
-  }
-}
-
-/* Por debajo de 992px: columnas apiladas, ajustes para móvil */
-@media (max-width: 991.98px) {
   .blank-layout-container .row > .bg-white > div {
     padding: 1rem 0.75rem !important;
+    overflow-y: visible;
   }
 
   .blank-layout-container .row > .bg-gredient {
@@ -69,6 +93,18 @@
     padding-left: 0.5rem;
     padding-right: 0.5rem;
   }
+}
+
+/* Animación auth: perspectiva para rotateY del panel */
+.auth-anim-root {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+.auth-anim-hero,
+.auth-anim-panel {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
 }
 
 .auth-title {

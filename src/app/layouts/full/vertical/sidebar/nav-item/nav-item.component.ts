@@ -13,6 +13,9 @@ import { Router, NavigationEnd } from '@angular/router';
 import { NavService } from '../../../../../services/nav.service';
 import {
   animate,
+  group,
+  query,
+  stagger,
   state,
   style,
   transition,
@@ -23,6 +26,7 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { MaterialModule } from 'src/app/material.module';
 import { CommonModule } from '@angular/common';
 import { filter, Subscription } from 'rxjs';
+import { AuthenticationService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-nav-item',
@@ -34,6 +38,40 @@ import { filter, Subscription } from 'rxjs';
       state('collapsed', style({ transform: 'rotate(0deg)' })),
       state('expanded', style({ transform: 'rotate(180deg)' })),
       transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4,0.0,0.2,1)')),
+    ]),
+    trigger('submenuExpand', [
+      transition(':enter', [
+        style({ height: '0', overflow: 'hidden', opacity: 0 }),
+        query(
+          'app-nav-item',
+          [style({ opacity: 0, transform: 'translateY(-6px)' })],
+          { optional: true }
+        ),
+        group([
+          animate(
+            '280ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+            style({ height: '*', opacity: 1 })
+          ),
+          query(
+            'app-nav-item',
+            stagger(
+              '36ms',
+              animate(
+                '200ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+                style({ opacity: 1, transform: 'translateY(0)' })
+              )
+            ),
+            { optional: true }
+          ),
+        ]),
+      ]),
+      transition(':leave', [
+        style({ height: '*', overflow: 'hidden', opacity: 1 }),
+        animate(
+          '220ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+          style({ height: '0', opacity: 0 })
+        ),
+      ]),
     ]),
   ],
   standalone: true,
@@ -56,7 +94,11 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
 
   private sub?: Subscription;
 
-  constructor(public navService: NavService, public router: Router) {}
+  constructor(
+    public navService: NavService,
+    public router: Router,
+    private authService: AuthenticationService
+  ) {}
 
   // -------- Utils ----------
   private numericDepth(): number {
@@ -123,6 +165,12 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
 
   // -------- Interacciones ----------
   onItemSelected(item: NavItem) {
+    const isLogoutItem = item?.route === '/login' && /cerrar sesi[oó]n|sign out/i.test(item?.displayName || '');
+    if (isLogoutItem) {
+      this.authService.logout().subscribe();
+      return;
+    }
+
     // Si NO tiene hijos: navega normal
     if (!item.children || !item.children.length) {
       this.router.navigate([item.route]);

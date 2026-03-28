@@ -6,7 +6,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import { CoreService } from 'src/app/services/core.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { navItems } from '../sidebar/sidebar-data';
 import { TranslateService } from '@ngx-translate/core';
 import { TablerIconsModule } from 'angular-tabler-icons';
@@ -18,6 +18,37 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 import { BrandingComponent } from '../sidebar/branding.component';
 import { AppSettings } from 'src/app/config';
 import { AuthenticationService } from 'src/app/services/auth.service';
+import { NavItem } from '../sidebar/nav-item/nav-item';
+
+/** Rutas mostradas en Panel de accesos para ítems que en sidebar usan `/menu-level`. */
+const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
+  Administración: '/modulos',
+  Clientes: '/clientes',
+  Usuarios: '/usuarios',
+  Roles: '/roles',
+};
+
+function resolvePanelAccessRoute(item: NavItem): string | undefined {
+  if (!item.displayName || item.external) return undefined;
+  const r = item.route;
+  if (!r) return undefined;
+  if (r !== '/menu-level') return r;
+  const mapped = PANEL_ROUTE_FOR_MENU_LEVEL[item.displayName];
+  if (mapped) return mapped;
+  const first = item.children?.find((c) => c.route && !c.external);
+  return first?.route;
+}
+
+function buildPanelAccessItems(items: NavItem[]): NavItem[] {
+  const out: NavItem[] = [];
+  for (const item of items) {
+    if (!item.displayName) continue;
+    const route = resolvePanelAccessRoute(item);
+    if (!route) continue;
+    out.push({ ...item, route });
+  }
+  return out;
+}
 
 interface notifications {
   id: number;
@@ -163,6 +194,16 @@ export class HeaderComponent {
 
   private emitOptions() {
     this.optionsChange.emit(this.options);
+  }
+
+  isLogoutProfile(profile: profiledd): boolean {
+    return profile?.link === '/login' && /cerrar sesi[oó]n|sign out/i.test(profile?.title || '');
+  }
+
+  onProfileAction(profile: profiledd, event: Event): void {
+    if (!this.isLogoutProfile(profile)) return;
+    event.preventDefault();
+    this.users.logout().subscribe();
   }
 
   notifications: notifications[] = [
@@ -399,5 +440,23 @@ export class AppSearchDialogComponent {
   searchText: string = '';
   navItems = navItems;
 
-  navItemsData = navItems.filter((navitem) => navitem.displayName);
+  readonly navItemsData: NavItem[] = buildPanelAccessItems(navItems);
+
+  constructor(
+    private auth: AuthenticationService,
+    private dialogRef: MatDialogRef<AppSearchDialogComponent>,
+  ) {}
+
+  isLogoutItem(item: NavItem): boolean {
+    return (
+      item?.route === '/login' &&
+      /cerrar sesi[oó]n|sign out/i.test(item?.displayName || '')
+    );
+  }
+
+  onLogoutClick(event: Event): void {
+    event.preventDefault();
+    this.dialogRef.close();
+    this.auth.logout().subscribe();
+  }
 }

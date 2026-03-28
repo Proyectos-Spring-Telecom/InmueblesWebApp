@@ -363,8 +363,9 @@
     <div class="p-16">
       @for(profile of profiledd; track profile.title) {
       <a
-        class="p-8 text-decoration-none d-block"
-        [routerLink]="[profile.link]"
+        class="p-8 d-block text-header" style="text-decoration: none; cursor: pointer;"
+        [routerLink]="isLogoutProfile(profile) ? null : [profile.link]"
+        (click)="onProfileAction(profile, $event)"
       >
         <div class="d-flex align-items-center">
           <h5 class="f-s-14 f-w-500 m-0 hover-text">

@@ -11,11 +11,13 @@ import { MaterialModule } from '../../../material.module';
 import { UsuariosService } from 'src/app/services/moduleService/usuario.service';
 import { catchError, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import { authViewAnimation } from '../auth-view.animation';
 
 @Component({
   selector: 'app-solicitud-cambio-password',
   imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule],
   templateUrl: './solicitud-cambio-password.component.html',
+  animations: [authViewAnimation],
 })
 export class SolicitudCambioPasswordComponent {
   form: FormGroup;

@@ -59,24 +59,32 @@
     <!-- ============================================================== -->
     <!-- Main Content -->
     <!-- ============================================================== -->
-    <mat-sidenav-content class="contentWrapper">
-      @if(options.horizontal) {
-      <app-horizontal-sidebar></app-horizontal-sidebar>
-      }
+    <mat-sidenav-content class="contentWrapper layout-content-column">
+      <div #mainScroll class="layout-content-scroll">
+        @if(options.horizontal) {
+        <app-horizontal-sidebar></app-horizontal-sidebar>
+        }
 
-      <main class="pageWrapper" [ngClass]="{
-          maxWidth: options.boxed
-        }">
-        <!-- ============================================================== -->
-        <!-- Outlet -->
-        <!-- ============================================================== -->
-        <router-outlet></router-outlet>
-        <!-- <div class="customizerBtn">
+        <main class="pageWrapper" [ngClass]="{
+            maxWidth: options.boxed
+          }">
+          <!-- ============================================================== -->
+          <!-- Outlet -->
+          <!-- ============================================================== -->
+          <router-outlet></router-outlet>
+          <!-- <div class="customizerBtn">
           <button mat-fab class="bg-primary text-white" (click)="customizerRight.toggle()">
             <mat-icon>settings</mat-icon>
           </button>
         </div> -->
-      </main>
+        </main>
+      </div>
+      <footer
+        class="layout-app-footer w-100 d-flex align-items-center justify-content-center p-x-24 p-y-12"
+        role="contentinfo"
+      >
+        <span class="f-s-14">Spring Telecom — Todos los derechos reservados</span>
+      </footer>
     </mat-sidenav-content>
     <!-- ============================================================== -->
     <!-- Customizer -->

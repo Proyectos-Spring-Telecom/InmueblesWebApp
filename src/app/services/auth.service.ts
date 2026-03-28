@@ -1,202 +1,228 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { Observable, Subject, of, switchMap, tap, map, catchError } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { User } from '../entities/User';
 import { Credentials } from '../entities/Credentials';
-import { environment } from '../../environments/environment';
-import { HttpClient } from '@angular/common/http';
-import { catchError, map, Observable, retry, Subject, throwError } from 'rxjs';
-import { Router } from '@angular/router';
 import { BaseServicesService } from './base.service';
 
+interface LoginResponse {
+  token?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  [key: string]: any;
+}
+
+/**
+ * Refresh del JWT: no hay temporizadores ni refresh proactivo.
+ * `refreshToken()` solo debe llamarse desde `AuthInterceptor` cuando una petición recibe 401.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService extends BaseServicesService {
   private authenticationChanged = new Subject<boolean>();
-  private user: User | null = new User();
+  private user: User | null = null;
+  private readonly baseUrl = environment.API_SECURITY;
 
-  constructor(private http: HttpClient,
-    private router: Router,) {
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+  ) {
     super();
   }
 
-  public isAuthenticated(): boolean {
-    return !(
-      sessionStorage.getItem('token') === undefined ||
-      sessionStorage.getItem('token') === null ||
-      sessionStorage.getItem('token') === 'null' ||
-      sessionStorage.getItem('token') === 'undefined' ||
-      sessionStorage.getItem('token') === ''
+  public login(body: { userName: string; password: string }): Observable<User> {
+    return this.http.post<LoginResponse>(`${this.baseUrl}/login`, body).pipe(
+      tap((resp) => this.persistTokens(resp)),
+      switchMap(() => this.getMe()),
     );
   }
 
-  public isAuthenticationChanged(): any {
+  public getMe(): Observable<User> {
+    return this.http.get<User>(`${this.baseUrl}/login/me`).pipe(
+      tap((user) => {
+        this.user = user;
+        this.setStorageUser(user);
+        this.setStoragePermissions(user?.permisos || []);
+        this.authenticationChanged.next(this.isAuthenticated());
+      })
+    );
+  }
+
+  /** Únicamente por 401 → interceptor. Sin `setTimeout` / timers. */
+  public refreshToken(): Observable<LoginResponse> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return of({}).pipe(
+        switchMap(() => {
+          throw new Error('No refreshToken available');
+        })
+      );
+    }
+
+    return this.http
+      .post<LoginResponse>(`${this.baseUrl}/login/refresh`, { refreshToken })
+      .pipe(tap((resp) => this.persistTokens(resp)));
+  }
+
+  public logout(): Observable<void> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      this.clearSessionAndRedirect();
+      return of(void 0);
+    }
+
+    return this.http
+      .post(`${this.baseUrl}/login/logout`, { refreshToken })
+      .pipe(
+        map(() => void 0),
+        catchError(() => of(void 0)),
+        tap(() => this.clearSessionAndRedirect())
+      );
+  }
+
+  public clearSessionAndRedirect(): void {
+    this.cleanSession();
+    localStorage.clear();
+    this.authenticationChanged.next(false);
+    this.router.navigate(['/login']);
+  }
+
+  public isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
+
+  public isAuthenticationChanged(): Observable<boolean> {
     return this.authenticationChanged.asObservable();
   }
 
-  clearUserData() {
+  public clearUserData(): void {
     this.user = null;
-    sessionStorage.clear();
-
-    // Emitir cambio en la autenticación
+    this.cleanSession();
     this.authenticationChanged.next(false);
   }
 
-  public getToken(): any {
-    if (
-      sessionStorage.getItem("token") === undefined ||
-      sessionStorage.getItem("token") === null ||
-      sessionStorage.getItem("token") === "null" ||
-      sessionStorage.getItem("token") === "undefined" ||
-      sessionStorage.getItem("token") === ""
-    ) {
-      return "";
-    }
+  public getToken(): string {
+    const raw = sessionStorage.getItem('token');
+    return this.normalizeStorageValue(raw);
+  }
 
-    const token = sessionStorage.getItem("token");
-    if (token === null) {
-      return null;
-    }
-    return JSON.parse(token);
+  public getRefreshToken(): string {
+    const raw = sessionStorage.getItem('refreshToken');
+    return this.normalizeStorageValue(raw);
   }
 
   public setData(data: User): void {
-    this.setStorageToken(data.token);
+    this.persistTokens(data);
     this.setStorageUser(data);
-    this.setStoragePermissions(data.permisos);
+    this.setStoragePermissions(data?.permisos || []);
   }
 
   public failToken(): void {
     this.cleanSession();
   }
 
-  public async logout(): Promise<void> {
-    try {
-      window.location.reload();
-        // Verificar datos antes de limpiar
-        console.log('Datos en sessionStorage antes de limpiar:', sessionStorage);
-        console.log('Datos en localStorage antes de limpiar:', localStorage);
-
-        // Limpiar todos los datos de sessionStorage y localStorage
-        sessionStorage.clear();
-        localStorage.clear();
-        
-        // Verificar datos después de limpiar
-        console.log('Datos en sessionStorage después de limpiar:', sessionStorage);
-        console.log('Datos en localStorage después de limpiar:', localStorage);
-
-        // Emitir cambio en la autenticación
-        this.authenticationChanged.next(false);
-    } catch (error) {
-        console.error('Error during logout:', error);
-    }
-}
-
-
-  
-
-  private setStorageToken(value: any): void {
-    let _value = JSON.stringify(value);
-    sessionStorage.setItem("token", _value);
-    this.authenticationChanged.next(this.isAuthenticated());
-  }
-
-  private setStorageUser(value: any): void {
-    let _value = JSON.stringify(value);
-    sessionStorage.setItem("user", _value);
-    this.authenticationChanged.next(this.isAuthenticated());
-  }
-
   public setStorageCoordinate(coordinates: any): void {
-    let coords = JSON.stringify(coordinates);
-    sessionStorage.setItem("coordinates", coords);
+    sessionStorage.setItem('coordinates', JSON.stringify(coordinates));
   }
 
-  updateUsuario(id: string, form: any): Observable<any> {
-    return this.http.put<any>(
-      `${environment.API_SECURITY}/api/controlusuarios/${id}`,
-      form
-    );
+  public updateUsuario(id: string, form: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/api/controlusuarios/${id}`, form);
   }
 
-  getUsuarioControl(id: string): Observable<any> {
-    return this.http.get<any>(
-      `${environment.API_SECURITY}/api/controlusuarios/${id}`
-    );
-  }
-  private setStoragePermissions(permissions: any[]): void {
-    // Extraer los idPermiso del array de objetos {idPermiso: number}
-    // y convertirlos a strings para facilitar la comparación
-    const permissionIds = (permissions || []).map((perm: any) => {
-      // Si es un objeto con idPermiso, extraer el ID
-      if (perm && typeof perm === 'object' && 'idPermiso' in perm) {
-        return String(perm.idPermiso);
-      }
-      // Si ya es un string o number, convertirlo a string
-      return String(perm);
-    });
-    
-    let _value = JSON.stringify(permissionIds);
-    sessionStorage.setItem("permissions", _value);
-    //this.permissionsService.loadPermissions(permissions);
-    this.authenticationChanged.next(this.isAuthenticated());
+  public getUsuarioControl(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/controlusuarios/${id}`);
   }
 
-  public cleanSession() {
+  public cleanSession(): void {
     sessionStorage.clear();
   }
 
   public getUser(): User | null {
-    //console.log(JSON.parse(sessionStorage.getItem('user')));
-    const user = sessionStorage.getItem("user");
-    if (user === null) {
-      return null;
-    }
+    const user = sessionStorage.getItem('user');
+    if (!user) return null;
     return JSON.parse(user);
   }
 
   public getCoordinates(): any {
-    const coordinates = sessionStorage.getItem("coordinates");
-    if (coordinates === null) {
-      return null;
-    }
+    const coordinates = sessionStorage.getItem('coordinates');
+    if (!coordinates) return null;
     return JSON.parse(coordinates);
   }
 
   public getPermissions(): string[] {
-    const permissions = sessionStorage.getItem("permissions");
-    if (permissions === null) {
-      return [];
-    }
+    const permissions = sessionStorage.getItem('permissions');
+    if (!permissions) return [];
     return JSON.parse(permissions);
   }
 
+  // Compatibilidad con código existente
   public authenticate(body: Credentials): Observable<User> {
-    return this.http.post<User>(environment.API_SECURITY + "/login", body);
+    const userName = (body as any).userName ?? body.username ?? '';
+    return this.login({ userName, password: body.password });
   }
 
-  recuperarAcceso(data: { userName: string }) {
+  public recuperarAcceso(data: { userName: string }): Observable<string> {
     return this.http.post<string>(
-      environment.API_SECURITY + '/login/recuperar/confirmacion',
+      `${this.baseUrl}/login/recuperar/confirmacion`,
       data,
       { responseType: 'text' as 'json' }
     );
   }
 
-  reenviarCodigo(payload: { codigo: string }) {
+  public reenviarCodigo(payload: { codigo: string }): Observable<string> {
     return this.http.patch<string>(
-      environment.API_SECURITY + '/login/verify',
+      `${this.baseUrl}/login/verify`,
       payload,
       { responseType: 'text' as 'json' }
     );
   }
 
-  /**
-   * Restablecer contraseña con el token recibido por correo (enlace).
-   * El token suele llegar por query: /cambio-password?token=...
-   */
-  cambiarPasswordConToken(token: string, nuevaPassword: string): Observable<any> {
-    return this.http.post<any>(
-      environment.API_SECURITY + '/login/restablecer-password',
-      { token, nuevaPassword },
-      { responseType: 'json' }
-    );
+  public cambiarPasswordConToken(token: string, nuevaPassword: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/login/restablecer-password`, {
+      token,
+      nuevaPassword,
+    });
+  }
+
+  private persistTokens(payload: LoginResponse | User): void {
+    const token = this.extractToken(payload);
+    const refreshToken = this.extractRefreshToken(payload);
+    if (token) sessionStorage.setItem('token', token);
+    if (refreshToken) sessionStorage.setItem('refreshToken', refreshToken);
+    this.authenticationChanged.next(this.isAuthenticated());
+  }
+
+  private extractToken(payload: any): string {
+    return payload?.token || payload?.accessToken || '';
+  }
+
+  private extractRefreshToken(payload: any): string {
+    return payload?.refreshToken || '';
+  }
+
+  private setStorageUser(value: any): void {
+    sessionStorage.setItem('user', JSON.stringify(value));
+  }
+
+  private setStoragePermissions(permissions: any[]): void {
+    const permissionIds = (permissions || []).map((perm: any) => {
+      if (perm && typeof perm === 'object' && 'idPermiso' in perm) {
+        return String(perm.idPermiso);
+      }
+      return String(perm);
+    });
+
+    sessionStorage.setItem('permissions', JSON.stringify(permissionIds));
+  }
+
+  private normalizeStorageValue(raw: string | null): string {
+    if (!raw || raw === 'null' || raw === 'undefined') return '';
+    try {
+      const parsed = JSON.parse(raw);
+      return typeof parsed === 'string' ? parsed : raw;
+    } catch {
+      return raw;
+    }
   }
 }

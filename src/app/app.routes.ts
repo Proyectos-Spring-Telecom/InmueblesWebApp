@@ -3,7 +3,7 @@ import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
 
 export const routes: Routes = [
-  // 👇 Redirección inicial: siempre caer en /authentication/login
+  // Redirección inicial al login
   { path: '', pathMatch: 'full', redirectTo: '/login' },
 
   {
@@ -112,5 +112,6 @@ export const routes: Routes = [
     ],
   },
 
-  { path: '**', redirectTo: 'authentication/error' },
+  // Cualquier ruta no encontrada debe volver al login
+  { path: '**', redirectTo: '/login' },
 ];
