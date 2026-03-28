@@ -68,6 +68,11 @@ html .topbar {
   }
 }
 
+/* Panel de accesos: solo la línea de ruta en blanco (sin fondos en los ítems) */
+.search-dialog .search-dialog-route {
+  color: #c75c80 !important;
+}
+
 .profile-dd {
   margin-left: -5px !important;
   margin-top: -5px;

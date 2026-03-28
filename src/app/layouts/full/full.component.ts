@@ -1,7 +1,7 @@
 import { BreakpointObserver, MediaMatcher } from '@angular/cdk/layout';
-import { Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
+import { MatSidenav } from '@angular/material/sidenav';
 import { CoreService } from 'src/app/services/core.service';
 import { AppSettings } from 'src/app/config';
 import { filter } from 'rxjs/operators';
@@ -71,7 +71,7 @@ export class FullComponent implements OnInit {
   @ViewChild('leftsidenav')
   public sidenav: MatSidenav;
   resView = false;
-  @ViewChild('content', { static: true }) content!: MatSidenavContent;
+  @ViewChild('mainScroll') private mainScroll?: ElementRef<HTMLDivElement>;
   //get options from service
   options = this.settings.getOptions();
   private layoutChangesSubscription = Subscription.EMPTY;
@@ -227,9 +227,12 @@ export class FullComponent implements OnInit {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
-        if (this.content) {
-          this.content.scrollTo({ top: 0 });
-        }
+        queueMicrotask(() => {
+          const el = this.mainScroll?.nativeElement;
+          if (el) {
+            el.scrollTo({ top: 0, left: 0 });
+          }
+        });
       });
   }
 

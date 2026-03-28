@@ -14,6 +14,7 @@ import { MaterialModule } from '../../../material.module';
 import { UsuariosService } from 'src/app/services/moduleService/usuario.service';
 import { catchError, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import { authViewAnimation } from '../auth-view.animation';
 
 function confirmarPasswordValidator(controlName: string): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -55,6 +56,7 @@ function emailFromJwt(token: string): string | null {
   selector: 'app-cambio-password',
   imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule],
   templateUrl: './cambio-password.component.html',
+  animations: [authViewAnimation],
 })
 export class CambioPasswordComponent implements OnInit {
   form: FormGroup;

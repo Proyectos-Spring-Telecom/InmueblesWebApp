@@ -102,7 +102,7 @@ export class PerfilUsuarioComponent {
   }
 
   onCerrarSesion() {
-    this.router.navigate(['/login']);
+    this.users.logout().subscribe();
   }
 
   formatUltimoLogin(value?: string): string {

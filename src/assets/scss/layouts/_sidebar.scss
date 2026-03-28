@@ -249,9 +249,15 @@
 
     }
 
-    .menu-list-item {
+    .nav-submenu-children {
+      display: block;
+      width: 100%;
+    }
 
-      height: 47px;
+    .menu-list-item {
+      transition: 0.2s ease-in-out all;
+      margin-top: 3px;
+      height: 42px;
       display: flex;
       font-size: 15px;
       white-space: nowrap;
@@ -265,11 +271,12 @@
       gap: 12px;
 
       &:hover::before {
+        transition: 0.2s ease-in-out all;
         background-color: transparent !important;
       }
 
       &:hover {
-
+        transition: 0.2s ease-in-out all;
         .mdc-list-item__start,
         .mdc-list-item__primary-text {
           color: $secondary;
@@ -342,6 +349,7 @@
 }
 
 .sidebar-list .top-parent .menu-list-item.activemenu {
+  transition: 0.2s ease-in-out all;
   background-color: color-mix(in srgb, var(--mat-sys-secondary) 10%, transparent);
  
   .mdc-list-item__primary-text {

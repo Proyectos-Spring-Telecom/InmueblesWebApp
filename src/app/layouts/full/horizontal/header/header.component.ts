@@ -9,6 +9,7 @@ import { MaterialModule } from 'src/app/material.module';
 import { BrandingComponent } from '../../vertical/sidebar/branding.component';
 import { FormsModule } from '@angular/forms';
 import { AppSettings } from 'src/app/config';
+import { AuthenticationService } from 'src/app/services/auth.service';
 
 interface notifications {
   id: number;
@@ -111,7 +112,8 @@ export class AppHorizontalHeaderComponent {
       private vsidenav: CoreService,
       public dialog: MatDialog,
       private translate: TranslateService,
-      private router: Router
+      private router: Router,
+      private authService: AuthenticationService
     ) {
       translate.setDefaultLang('en');
     }
@@ -139,23 +141,17 @@ export class AppHorizontalHeaderComponent {
     }
 
     handleLogin() {
-      // Limpiar cache del navegador
-      if ('caches' in window) {
-        caches.keys().then((cacheNames) => {
-          cacheNames.forEach((cacheName) => {
-            caches.delete(cacheName);
-          });
-        });
-      }
+      this.authService.logout().subscribe();
+    }
 
-      // Limpiar sessionStorage
-      sessionStorage.clear();
+    isLogoutProfile(profile: profiledd): boolean {
+      return profile?.link === '/login' && /cerrar sesi[oó]n|sign out/i.test(profile?.title || '');
+    }
 
-      // Limpiar localStorage
-      localStorage.clear();
-
-      // Navegar a login
-      this.router.navigate(['/login']);
+    onProfileAction(profile: profiledd, event: Event): void {
+      if (!this.isLogoutProfile(profile)) return;
+      event.preventDefault();
+      this.authService.logout().subscribe();
     }
 
   notifications: notifications[] = [

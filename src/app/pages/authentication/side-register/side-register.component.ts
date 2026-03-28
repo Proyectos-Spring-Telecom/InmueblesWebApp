@@ -4,11 +4,13 @@ import { FormGroup, FormControl, Validators, FormsModule, ReactiveFormsModule } 
 import { Router, RouterModule } from '@angular/router';
 import { MaterialModule } from '../../../material.module';
 import { AppAuthBrandingComponent } from '../../../layouts/full/vertical/sidebar/auth-branding.component';
+import { authViewAnimation } from '../auth-view.animation';
 
 @Component({
     selector: 'app-side-register',
     imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule, AppAuthBrandingComponent],
-    templateUrl: './side-register.component.html'
+    templateUrl: './side-register.component.html',
+    animations: [authViewAnimation]
 })
 export class AppSideRegisterComponent {
   options = this.settings.getOptions();

@@ -19,11 +19,13 @@ import { catchError, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
 import { Permiso } from 'src/app/entities/permiso.enum';
+import { authViewAnimation } from '../auth-view.animation';
 
 @Component({
   selector: 'app-side-login',
   imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule],
   templateUrl: './side-login.component.html',
+  animations: [authViewAnimation],
 })
 export class AppSideLoginComponent implements OnInit {
   options = this.settings.getOptions();
@@ -75,6 +77,9 @@ export class AppSideLoginComponent implements OnInit {
   public textLogin: string = 'Iniciar Sesión';
   public loading: boolean = false;
   onSubmit() {
+    if (this.isDisabled || this.loginForm.invalid) {
+      return;
+    }
     this.isDisabled = true;
     this.loading = true;
     this.textLogin = 'Cargando...';
@@ -85,8 +90,11 @@ export class AppSideLoginComponent implements OnInit {
     // this.loading = true;
     this.credentials = this.loginForm.value;
 
-    this.auth
-      .authenticate(this.credentials)
+    this.authService
+      .login({
+        userName: this.credentials.userName,
+        password: this.credentials.password,
+      })
       .pipe(
         catchError((error: any) => {
           this.loading = false;
@@ -100,9 +108,8 @@ export class AppSideLoginComponent implements OnInit {
       )
       .subscribe((result: User) => {
         this.isDisabled = false;
-        this.auth.setData(result);
 
-        const perms = this.auth.getPermissions() || [];
+        const perms = this.authService.getPermissions() || [];
         const hasMonitoreo = perms.includes(String(Permiso.CONSULTAR_MONITOREO));
         this.router.navigate(hasMonitoreo ? ['/monitoreo'] : ['/usuarios/perfil-usuario']);
 
