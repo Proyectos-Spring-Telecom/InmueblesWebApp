@@ -243,6 +243,10 @@ export class FullComponent implements OnInit {
   toggleCollapsed() {
     this.isContentWidthFixed = false;
     this.options.sidenavCollapsed = !this.options.sidenavCollapsed;
+    // Si se contrae el sidebar, cerrar submenús para evitar huecos visuales.
+    if (this.options.sidenavCollapsed) {
+      AppNavItemComponent.collapseAll();
+    }
     this.resetCollapsedState();
   }
 

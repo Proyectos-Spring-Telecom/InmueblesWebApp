@@ -116,6 +116,14 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  // Colapsa todos los submenús (util para modo sidebar mini)
+  static collapseAll(): void {
+    for (const inst of AppNavItemComponent.instances) {
+      inst.expanded = false;
+      inst.ariaExpanded = false;
+    }
+  }
+
   // Abre solo esta instancia en su nivel (colapsa las demás)
   private openExclusivelyAtMyDepth() {
     const d = this.numericDepth();
