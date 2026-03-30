@@ -75,6 +75,8 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  /* Espacio para que el contenido no quede detrás del footer fijo */
+  padding-bottom: 74px;
 }
 
 .layout-app-footer {
@@ -83,7 +85,252 @@ body {
   color: #fff;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
   border-top: 1px solid rgba(255, 255, 255, 0.14);
-  z-index: 4;
+  z-index: 12;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: $sidenav-desktop;
+  overflow: visible;
+
+  .layout-app-footer__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .layout-app-footer__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    line-height: 1.2;
+    min-width: 0;
+    flex: 1 1 220px;
+    white-space: normal;
+    word-break: break-word;
+
+    strong {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+    }
+  }
+
+  .layout-app-footer__tag {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
+  }
+
+  .layout-app-footer__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    opacity: 0.92;
+    flex-wrap: wrap;
+    line-height: 1.35;
+    min-width: 0;
+    flex: 1 1 240px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .layout-app-footer__dot {
+    opacity: 0.65;
+  }
+
+  .layout-app-footer__links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start;
+    min-width: 0;
+    flex: 0 1 auto;
+
+    a {
+      color: #fff;
+      font-size: 12px;
+      opacity: 0.92;
+      text-decoration: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+
+      &:hover {
+        color: #fff;
+        opacity: 1;
+        transform: translateY(-1px);
+      }
+    }
+
+    .layout-app-footer__main-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.08) 100%
+      );
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      opacity: 1;
+      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+
+      &:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+        border-color: rgba(255, 255, 255, 0.52);
+      }
+    }
+
+    .layout-app-footer__main-link-label {
+      color: #fff;
+      font-size: 12px;
+      line-height: 1;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .layout-app-footer__main-link-arrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 11px;
+      line-height: 1;
+      transition: transform 0.22s ease, background-color 0.22s ease;
+    }
+
+    .layout-app-footer__main-link:hover .layout-app-footer__main-link-arrow {
+      transform: translateX(2px);
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .layout-app-footer__copy {
+    display: flex;
+    justify-content: flex-start;
+    font-size: 12px;
+    opacity: 0.88;
+    text-align: left;
+    line-height: 1.35;
+    min-width: 0;
+    flex: 1 1 260px;
+    white-space: normal;
+    word-break: break-word;
+
+    .layout-app-footer__copy-main {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      color: #fff !important;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.48);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+      }
+    }
+
+    .layout-app-footer__copy-sep {
+      margin: 0 6px 0 2px;
+      opacity: 0.72;
+    }
+  }
+}
+
+@media (max-width: 1200px) {
+  .layout-app-footer {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-app-footer .layout-app-footer__meta,
+  .layout-app-footer .layout-app-footer__links,
+  .layout-app-footer .layout-app-footer__copy {
+    justify-content: flex-start;
+    text-align: left;
+    flex-wrap: wrap;
+  }
+
+  .layout-app-footer .layout-app-footer__dot {
+    display: none;
+  }
+
+  .layout-app-footer .layout-app-footer__brand,
+  .layout-app-footer .layout-app-footer__meta,
+  .layout-app-footer .layout-app-footer__copy {
+    font-size: 11px;
+  }
+
+  .layout-app-footer .layout-app-footer__brand strong {
+    font-size: 12px;
+    padding: 3px 9px;
+  }
+
+  .layout-app-footer .layout-app-footer__copy-main {
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+}
+
+/* Sidebar mini: footer arranca después del menú colapsado */
+.page-container.sidebarNav-mini .layout-app-footer {
+  left: $sidenav-mini;
+}
+
+/* Horizontal o móvil/tablet: footer a todo el ancho */
+.page-container.sidebarNav-horizontal .layout-app-footer {
+  left: 0;
+}
+
+@media (max-width: 1023px) {
+  .layout-app-footer {
+    left: 0;
+  }
+
+  .layout-content-scroll {
+    padding-bottom: 88px;
+  }
 }
 
 h1,

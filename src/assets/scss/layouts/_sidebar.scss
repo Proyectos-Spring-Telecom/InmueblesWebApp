@@ -128,6 +128,13 @@
         }
 
       }
+
+      // En mini y sin hover, no mostrar submenús para evitar hueco vacío.
+      .nav-submenu-children {
+        display: none !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
     }
 
     &:hover {
@@ -157,6 +164,7 @@
       .sidebar-list {
         .menu-list-item {
           padding: 8px 10px;
+          animation: sidebarItemReveal 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 
           .mdc-list-item__content {
             display: inline-block;
@@ -182,6 +190,14 @@
               display: inline-block;
             }
           }
+        }
+
+        // Al pasar hover en mini, permitir mostrar submenús del item expandido.
+        .nav-submenu-children {
+          display: block !important;
+          height: auto !important;
+          overflow: visible !important;
+          animation: sidebarSubmenuReveal 0.2s ease-out;
         }
       }
     }
@@ -387,5 +403,26 @@
     opacity: 0;
     -webkit-transform: scale3d(1, 1, 0.5);
     transform: scale3d(1, 1, 0.5);
+  }
+}
+@keyframes sidebarItemReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes sidebarSubmenuReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

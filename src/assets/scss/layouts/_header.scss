@@ -84,6 +84,71 @@ html .topbar {
   }
 }
 
+/* Menú de perfil vertical: más personalidad sin agregar texto */
+.profile-menu-custom {
+  border-radius: 14px !important;
+  overflow: hidden;
+
+  .mat-mdc-menu-content {
+    padding: 0 !important;
+    background: linear-gradient(180deg, rgba(8, 17, 30, 0.98) 0%, rgba(10, 23, 39, 0.98) 100%);
+  }
+}
+
+.profile-menu-custom__head {
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--mat-sys-secondary) 88%, #000 12%) 0%,
+    color-mix(in srgb, var(--mat-sys-secondary) 64%, #1b2c45 36%) 100%
+  );
+  border-bottom-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.profile-menu-custom__name {
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+}
+
+.profile-menu-custom__role {
+  color: #9ef2bd !important;
+}
+
+.profile-menu-custom__email {
+  display: inline-block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+}
+
+.profile-menu-custom__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-menu-custom__item {
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.94);
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-secondary) 28%, transparent);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    transform: translateX(2px);
+  }
+
+  .hover-text {
+    color: inherit;
+    transition: color 0.2s ease;
+  }
+
+  &:hover .hover-text {
+    color: #fff;
+  }
+}
+
 .notify {
   position: relative;
   top: -20px;

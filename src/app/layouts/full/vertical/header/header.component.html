@@ -347,23 +347,23 @@
   </button>
   <mat-menu
     #profilemenu="matMenu"
-    class="topbar-dd cardWithShadow dd-notifications"
+    class="topbar-dd cardWithShadow dd-notifications profile-menu-custom"
   >
-    <div class="p-x-16 p-y-20 b-b-1">
+    <div class="p-x-16 p-y-20 b-b-1 profile-menu-custom__head">
       <div class="d-flex align-items-center">
         <div class="m-l-16">
-          <h6 class="f-s-14 f-w-600 m-0 d-flex align-items-center">
+          <h6 class="f-s-14 f-w-600 m-0 d-flex align-items-center profile-menu-custom__name">
             {{showNombre+ ' ' + showApellidoPaterno + ' ' + showApellidoMaterno}} - 
-            <span class="f-s-14 d-block text-success m-l-4"> {{showRol}} </span>
+            <span class="f-s-14 d-block text-success m-l-4 profile-menu-custom__role"> {{showRol}} </span>
           </h6>
-          <span> {{showEmail}} </span>
+          <span class="profile-menu-custom__email"> {{showEmail}} </span>
         </div>
       </div>
     </div>
-    <div class="p-16">
+    <div class="p-16 profile-menu-custom__list">
       @for(profile of profiledd; track profile.title) {
       <a
-        class="p-8 d-block text-header" style="text-decoration: none; cursor: pointer;"
+        class="p-8 d-block text-header profile-menu-custom__item"
         [routerLink]="isLogoutProfile(profile) ? null : [profile.link]"
         (click)="onProfileAction(profile, $event)"
       >
