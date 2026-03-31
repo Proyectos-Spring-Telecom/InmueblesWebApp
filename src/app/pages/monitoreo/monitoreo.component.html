@@ -18,94 +18,144 @@
   </header>
 
   <div class="surface">
-    <div class="row g-3">
-      <div class="col-lg-4 col-md-5 col-12">
+    <div class="row g-2 g-md-3">
+      <div class="col-12 col-lg-5">
         <div class="h-100 d-flex flex-column">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div>
-              <ng-container *ngIf="viewMode === 'centrales'; else headerInstalaciones">
-                Clientes
-              </ng-container>
-              <ng-template #headerInstalaciones>
-                Instalaciones del cliente: {{ selectedCentral?.nombreCliente }}
-              </ng-template>
+          <div class="card-header monitor-card-header">
+            <div class="row g-2 align-items-center">
+              <div class="col-10">
+                <div class="monitor-head-wrap w-100" [@monitorModeHeader]="viewMode">
+                  <div class="monitor-head-icon" aria-hidden="true">
+                    <mat-icon>home_work</mat-icon>
+                  </div>
+                  <div class="monitor-head-title">
+                    <ng-container *ngIf="viewMode === 'centrales'; else headerInstalaciones">
+                      <h6 class="monitor-head-text m-0">Predios</h6>
+                    </ng-container>
+                    <ng-template #headerInstalaciones>
+                      <h6 class="monitor-head-text m-0">
+                        <span class="d-block">Inmuebles:</span>
+                        <span class="monitor-head-client d-block">{{ selectedCentral?.nombreCliente }}</span>
+                      </h6>
+                    </ng-template>
+                  </div>
+                </div>
+              </div>
+              <div class="col-2 d-flex justify-content-end">
+                <button
+                  *ngIf="isRol1 && viewMode === 'instalaciones'"
+                  type="button"
+                  class="btn btn-sm"
+                  (click)="goToCentrales()"
+                >
+                  Predios
+                </button>
+              </div>
             </div>
-            <button *ngIf="isRol1 && viewMode === 'instalaciones'" type="button" class="btn btn-sm" (click)="goToCentrales()">
-              Centrales
-            </button>
           </div>
-          <div class="card-body insta-body">
+          <div class="card-body insta-body" [@monitorListSwap]="viewMode">
             <ng-container *ngIf="listaVisible.length > 0; else noInstalacionesTpl">
               <div class="insta-item" *ngFor="let item of listaVisible; let i = index"
+                [@monitorItemIn]
                 [class.central]="viewMode === 'centrales'" [class.instalacion]="viewMode === 'instalaciones'"
                 [class.active]="viewMode === 'centrales' && item.id === selectedId"
                 (click)="selectInstalacion(item, i)">
-
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                  <div>
-                    <div class="insta-title">
-                      <ng-container *ngIf="viewMode === 'centrales'; else tituloInstalacion">
+                <ng-container *ngIf="viewMode === 'centrales'; else inmuebleCardTpl">
+                  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2 mb-1">
+                    <div class="flex-grow-1 min-w-0">
+                      <div class="insta-title">
                         <strong>Oficina Central:</strong> {{ item.nombreInstalacion || item.nombre || 'Instalación' }}
-                      </ng-container>
-                      <ng-template #tituloInstalacion>
-                        <strong>Equipo:</strong>
-                        {{ item.equipo?.numeroSerie || item.numeroSerie || '—' }}
-                      </ng-template>
+                      </div>
+                      <div class="small encar" *ngIf="viewMode === 'centrales'">
+                        <strong>Cliente:</strong> {{ item.nombreCliente }}
+                      </div>
+                    </div>
+                    <div class="insta-dot ok align-self-sm-start align-self-end"></div>
+                  </div>
+
+                  <div class="insta-address mt-1">
+                    <mat-icon>place</mat-icon>
+                    <span class="text-break">
+                      <strong>Dirección:</strong>
+                      {{ viewMode === 'centrales'
+                      ? item.direccion
+                      : (selectedCentral?.direccion || item.direccion) }}
+                    </span>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center gap-2 mt-2 flex-wrap">
+                    <div class="d-flex gap-2 flex-wrap">
+                      <button type="button" class="btn btn-sm"
+                        (click)="verInstalacionesDeCentral(item); $event.stopPropagation()">
+                        Inmuebles
+                      </button>
+                      <button type="button" class="btn btn-sm"
+                        (click)="onPredioDetalleAction(item); $event.stopPropagation()">
+                        Información
+                      </button>
+                    </div>
+                    <span class="small encar text-end">
+                      <strong>Superficie Total:</strong> 5,000 m²
+                    </span>
+                  </div>
+                </ng-container>
+
+                <ng-template #inmuebleCardTpl>
+                  <div class="inmueble-card-shell">
+                    <div class="inmueble-content-grid">
+                      <div class="inmueble-media">
+                        <img
+                          src="https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=900&q=80"
+                          alt="Imagen del inmueble"
+                        />
+                        <span class="inmueble-status">RENTADO</span>
+                      </div>
+
+                      <div class="inmueble-info">
+                        <div class="inmueble-top">
+                          <div class="inmueble-name">
+                            {{ selectedCentral?.nombreCliente || item.nombreCliente || 'Inmueble' }}
+                          </div>
+                          <div class="inmueble-renta">
+                            <span>Renta</span>
+                            <strong>$25,729.73 MXN</strong>
+                          </div>
+                        </div>
+                        <div class="inmueble-line mt-1">
+                          <strong>Dirección del inmueble:</strong>
+                          {{ selectedCentral?.direccion || item.direccion || 'Sin dirección' }}
+                        </div>
+                        <div class="inmueble-line">
+                          <strong>Vigencia:</strong> 0 años
+                        </div>
+                        <div class="inmueble-line">
+                          <strong>Inicio:</strong> 02/01/2017
+                          <span class="m-x-8">|</span>
+                          <strong>Fin:</strong> 01/01/2019
+                        </div>
+                        <div class="inmueble-line">
+                          <mat-icon>person</mat-icon>
+                          <span>Arrendador: Desarrollo Inmobiliario BHV SA de CV</span>
+                        </div>
+                        <div class="inmueble-line">
+                          <mat-icon>calendar_today</mat-icon>
+                          <span>Tiempo de renta: 2 años</span>
+                        </div>
+                      </div>
                     </div>
 
-
-                    <div class="small encar" *ngIf="viewMode === 'centrales'">
-                      <strong>Cliente:</strong> {{ item.nombreCliente }}
-                    </div>
-
-
-                    <div class="small encar" *ngIf="viewMode === 'centrales'">
-                      <strong>Encargado:</strong> {{ item.nombreEncargado }}
-                    </div>
-                    <div class="small encar" *ngIf="viewMode === 'instalaciones' && item.nroPiso !== null && item.nroPiso !== undefined">
-                      <strong>Número de Piso:</strong> {{ item.nroPiso }}
-                    </div>
-                    <div class="small encar" *ngIf="viewMode === 'instalaciones' && item.nombreDepartamento">
-                      <strong>Departamento:</strong> {{ item.nombreDepartamento }}
-                    </div>
-                    <div class="small encar" *ngIf="viewMode === 'instalaciones'">
-                      <strong>Encargado:</strong> {{ selectedCentral?.nombreEncargado }}
+                    <div class="inmueble-footer d-flex gap-2 ms-auto">
+                      <button type="button" class="btn btn-sm"
+                        (click)="selectInstalacion(item, i); $event.stopPropagation()">
+                        Centrar
+                      </button>
+                      <button type="button" class="btn btn-sm"
+                        (click)="onInfoAction({ central: selectedCentral, instalacion: item }); $event.stopPropagation()">
+                        Información
+                      </button>
                     </div>
                   </div>
-                  <div class="insta-dot ok"></div>
-                </div>
-
-                <div class="insta-address mt-1">
-                  <mat-icon>place</mat-icon>
-                  <span>
-                    <strong>Dirección:</strong>
-                    {{ viewMode === 'centrales'
-                    ? item.direccion
-                    : (selectedCentral?.direccion || item.direccion) }}
-                  </span>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 mt-2">
-                  <ng-container *ngIf="viewMode === 'centrales'; else botonesInstalaciones">
-                    <!-- <button type="button" class="btn btn-sm" (click)="goToCentrales(); $event.stopPropagation()">
-                          Centrales
-                        </button> -->
-                    <button type="button" class="btn btn-sm"
-                      (click)="verInstalacionesDeCentral(item); $event.stopPropagation()">
-                      Ver Instalaciones
-                    </button>
-                  </ng-container>
-                  <ng-template #botonesInstalaciones>
-                    <button type="button" class="btn btn-sm"
-                      (click)="selectInstalacion(item, i); $event.stopPropagation()">
-                      Centrar
-                    </button>
-                    <button type="button" class="btn btn-sm"
-                      (click)="onInfoAction({ central: selectedCentral, instalacion: item }); $event.stopPropagation()">
-                      Incidencias
-                    </button>
-                  </ng-template>
-                </div>
+                </ng-template>
               </div>
             </ng-container>
             <ng-template #noInstalacionesTpl>
@@ -115,16 +165,16 @@
                 </div>
                 <div class="insta-empty-text">
                   <h6 *ngIf="!isRol1 && !selectedCentral">Sin oficina central asignada</h6>
-                  <h6 *ngIf="isRol1 || selectedCentral">Sin instalaciones registradas</h6>
-                  <p *ngIf="!isRol1 && !selectedCentral">No tiene asignada una oficina central para ver sus instalaciones.</p>
-                  <p *ngIf="selectedCentral">Este cliente aún no tiene instalaciones registradas.</p>
+                  <h6 *ngIf="isRol1 || selectedCentral">Sin inmuebles registrados</h6>
+                  <p *ngIf="!isRol1 && !selectedCentral">No tiene asignada una oficina central para ver sus inmuebles.</p>
+                  <p *ngIf="selectedCentral">Este cliente aún no tiene inmuebles registrados.</p>
                 </div>
               </div>
             </ng-template>
           </div>
         </div>
       </div>
-      <div class="col-lg-8 col-md-7 col-12">
+      <div class="col-12 col-lg-7">
         <div class="map-wrapper">
           <div id="map"></div>
         </div>

@@ -1,3 +1,24 @@
+/* Tipografia Monitoreo: Poppins sin romper iconos */
+:host,
+:host *:not(button):not(.btn):not(.btn-sm):not(.mat-mdc-button-base):not(.mdc-button__label):not(mat-icon):not(.mat-icon):not(.material-icons):not(.material-symbols-outlined) {
+  font-family: "Poppins", sans-serif;
+}
+
+:host button,
+:host .btn,
+:host .btn-sm,
+:host .mat-mdc-button-base,
+:host .mdc-button__label {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+:host mat-icon,
+:host .mat-icon,
+:host .material-icons,
+:host .material-symbols-outlined {
+  font-family: "Material Icons", "Material Symbols Outlined" !important;
+}
+
 /* ===========================
    SURFACE — Dark, sin $vars
    Acento: #681330 (granate)
@@ -12,7 +33,7 @@
   --mat-sys-on-surface-variant: var(--mat-sys-on-surface-variant, #94a3b8);
   --mat-sys-outline-variant: var(--mat-sys-outline-variant, #2a3345);
 
-  padding: 2rem;
+  padding: 1rem;
   border-radius: 18px;
 }
 
@@ -42,11 +63,84 @@
 
 /* Header "Clientes" sólido azul (sin difuminado) */
 .surface .insta-card .card-header {
-  background: #001c6a !important;
-  /* azul sólido */
+  background: #2f343b !important;
   color: #fff !important;
-  border-bottom: 1px solid #001c6a !important;
+  border-bottom: 1px solid #454c56 !important;
   box-shadow: none !important;
+}
+
+.surface .monitor-card-header {
+  background: #2f343b !important;
+  border-bottom: 1px solid rgba(83, 91, 102, 0.7) !important;
+  padding: 0.55rem 0.8rem !important;
+}
+
+.surface .monitor-head-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(38, 44, 52, 0.85);
+  border: 1px solid rgba(89, 96, 106, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 6px 14px rgba(0, 0, 0, 0.22);
+}
+
+.surface .monitor-head-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: rgba(94, 102, 113, 0.45);
+  border: 1px solid rgba(113, 121, 132, 0.8);
+}
+
+.surface .monitor-head-icon mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.surface .monitor-head-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.surface .monitor-head-text {
+  color: #f4f7ff;
+  font-size: 0.92rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.34);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.surface .monitor-head-client {
+  display: inline-block;
+  margin-left: 0;
+  margin-top: 3px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  max-width: 220px;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #d5dde8;
+  background: rgba(59, 66, 76, 0.72);
+  border: 1px solid rgba(75, 84, 96, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 
@@ -122,6 +216,8 @@
   align-items: flex-start;
   font-size: .875rem;
   color: var(--mat-sys-on-surface-variant);
+  gap: .35rem;
+  word-break: break-word;
 }
 
 .surface .insta-address mat-icon {
@@ -208,6 +304,7 @@
   width: 100%;
   height: 60vh;
   min-height: 420px;
+  padding: 0.5rem;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--mat-sys-outline-variant);
@@ -281,6 +378,7 @@
 
   .surface .map-wrapper {
     height: 46vh;
+    min-height: 340px;
   }
 }
 
@@ -289,8 +387,71 @@
     padding: 1.25rem 1rem;
   }
 
+  .surface .monitor-card-header {
+    padding: 0.55rem 0.6rem !important;
+  }
+
+  .surface .monitor-head-wrap {
+    padding: 6px 8px;
+    border-radius: 10px;
+  }
+
+  .surface .monitor-head-text {
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+  }
+
+  .surface .monitor-head-client {
+    max-width: 160px;
+    font-size: 0.76rem;
+  }
+
+  .surface .insta-item {
+    padding: 0.62rem 0.72rem;
+  }
+
+  .surface .insta-title {
+    font-size: 0.88rem;
+  }
+
+  .surface .insta-address {
+    font-size: 0.76rem;
+  }
+
+  .surface .insta-dot {
+    width: 8px;
+    height: 8px;
+  }
+
   .surface .map-wrapper {
-    margin-top: 1rem;
+    margin-top: 0.25rem;
+    min-height: 300px;
+    height: 42vh;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .surface .insta-body {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .surface .map-wrapper {
+    min-height: 260px;
+    height: 38vh;
+    padding: 0.35rem;
+  }
+
+  .surface .monitor-head-icon {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
+  }
+
+  .surface .monitor-head-icon mat-icon {
+    width: 15px;
+    height: 15px;
+    font-size: 15px;
   }
 }
 
@@ -320,7 +481,7 @@
   /* rojo sólido */
   border-color: #681330 !important;
   color: #fff !important;
-  margin-left: 5px;
+  margin-left: 0;
   box-shadow: none !important;
   /* sin glow ni difuminado */
 }
@@ -469,7 +630,6 @@
 .surface .insta-empty-text h6 {
   margin: 0;
   font-size: 0.9rem;
-  font-weight: 600;
   color: var(--mat-sys-on-surface);
 }
 
@@ -480,31 +640,163 @@
 }
 
 .surface .insta-item.central {
-  background: #08233f;
-  border-color: #08233f;
+  background: #242a33;
+  border-color: #323945;
 }
 
 .surface .insta-item.central:hover {
-  background: #071c33;
-  border-color: #071c33;
+  background: #212730;
+  border-color: #3a4350;
 }
 
 .surface .insta-item.central.active {
-  background: #071c33;
-  border-color: #071c33;
+  background: #1e242d;
+  border-color: #4a5463;
 }
 
 .surface .insta-item.instalacion {
-  background: #520f25;
-  border-color: #520f25;
+  background: #242a33;
+  border-color: #323945;
 }
 
 .surface .insta-item.instalacion:hover {
-  background: #4f0e26;
-  border-color: #4f0e26;
+  background: #212730;
+  border-color: #3a4350;
 }
 
 .surface .insta-item.instalacion.active {
-  background: #3c0a1c;
-  border-color: #3c0a1c;
+  background: #1e242d;
+  border-color: #4a5463;
+}
+
+.surface .inmueble-card-shell {
+  border-radius: 12px;
+  padding: 0.35rem;
+  background: #1b212a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface .inmueble-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.surface .inmueble-media {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.surface .inmueble-media img {
+  width: 100%;
+  height: 148px;
+  object-fit: cover;
+  display: block;
+}
+
+.surface .inmueble-status {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(220, 38, 38, 0.88);
+}
+
+.surface .inmueble-info {
+  padding: 2px 4px;
+  color: #d9e2ee;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.surface .inmueble-name {
+  margin-top: 0;
+  font-size: 15px;
+  line-height: 1.15;
+  color: #9ca6b3;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.surface .inmueble-content-grid {
+  margin-top: 2px;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.surface .inmueble-renta {
+  text-align: right;
+  line-height: 1.05;
+  color: #e8edf6;
+  flex-shrink: 0;
+}
+
+.surface .inmueble-renta span {
+  display: block;
+  font-size: 11px;
+  opacity: 0.86;
+}
+
+.surface .inmueble-renta strong {
+  display: block;
+  font-size: 18px;
+}
+
+.surface .inmueble-line {
+  font-size: 11px;
+  line-height: 1.22;
+  margin-top: 3px;
+  color: #d9e2ee;
+  word-break: break-word;
+  text-align: left;
+}
+
+.surface .inmueble-footer {
+  margin-top: 8px;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.surface .inmueble-line mat-icon {
+  width: 13px;
+  height: 13px;
+  font-size: 13px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  color: #b4becc;
+}
+
+@media (max-width: 991.98px) {
+  .surface .inmueble-media img {
+    height: 132px;
+  }
+
+  .surface .inmueble-name {
+    font-size: 14px;
+  }
+
+  .surface .inmueble-content-grid {
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .surface .inmueble-content-grid {
+    grid-template-columns: 1fr;
+  }
 }
