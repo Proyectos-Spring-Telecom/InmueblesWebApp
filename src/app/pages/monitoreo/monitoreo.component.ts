@@ -1,5 +1,13 @@
 // monitoreo.component.ts
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  animate,
+  query,
+  stagger,
+  style,
+  transition,
+  trigger,
+} from '@angular/animations';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
@@ -15,9 +23,48 @@ type ViewMode = 'centrales' | 'instalaciones';
   templateUrl: './monitoreo.component.html',
   styleUrls: ['./monitoreo.component.scss'],
   standalone: false,
-  animations: [routeAnimation],
+  animations: [
+    routeAnimation,
+    trigger('monitorModeHeader', [
+      transition('* <=> *', [
+        style({ opacity: 0.6, transform: 'translateY(-4px) scale(0.98)' }),
+        animate(
+          '180ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+          style({ opacity: 1, transform: 'translateY(0) scale(1)' })
+        ),
+      ]),
+    ]),
+    trigger('monitorListSwap', [
+      transition('* <=> *', [
+        query(
+          '.insta-item',
+          [
+            style({ opacity: 0, transform: 'translateY(10px) scale(0.98)' }),
+            stagger(
+              40,
+              animate(
+                '170ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+                style({ opacity: 1, transform: 'translateY(0) scale(1)' })
+              )
+            ),
+          ],
+          { optional: true }
+        ),
+      ]),
+    ]),
+    trigger('monitorItemIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(8px) scale(0.98)' }),
+        animate(
+          '160ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+          style({ opacity: 1, transform: 'translateY(0) scale(1)' })
+        ),
+      ]),
+    ]),
+  ],
 })
 export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly PREVIEW_SERIE = 'preview-demo';
   listaInstalaciones: any[] = [];
   selectedId?: number;
   viewMode: ViewMode = 'centrales';
@@ -35,6 +82,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   private currentInfoMarker?: any;
   private pinnedMarker?: any;
   private mapClickUnpinListener?: any;
+  private hoverCloseTimer?: ReturnType<typeof setTimeout>;
+  private isHoveringInfoWindow = false;
+  private closingInfoForMarker?: any;
 
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
 
@@ -74,6 +124,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
+    this.cancelHoverClose();
     if (this.mapClickUnpinListener) {
       google.maps.event.removeListener(this.mapClickUnpinListener);
       this.mapClickUnpinListener = null;
@@ -136,6 +187,12 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       gestureHandling: 'greedy',
       fullscreenControl: true,
       streetViewControl: true,
+      styles: [
+        { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi.park', stylers: [{ visibility: 'off' }] },
+        { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+      ],
     };
     if (this.MAP_ID) mapOptions.mapId = this.MAP_ID;
 
@@ -188,9 +245,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         icon: this.pinIcon(this.CENTRAL_PIN_URL, 40, 60),
       });
 
-      marker.addListener('mouseover', () =>
-        this.showHover(marker, this.buildInfoHtml(c))
-      );
+      marker.addListener('mouseover', () => {
+        this.cancelHoverClose();
+        this.showHover(marker, this.buildInfoHtml(c));
+      });
       marker.addListener('mouseout', () => this.hideHover(marker));
       marker.addListener('click', () =>
         this.togglePin(marker, this.buildInfoHtml(c), { central: c })
@@ -229,9 +287,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         icon: this.pinIcon(this.PIN_URL, 40, 60),
       });
 
-      marker.addListener('mouseover', () =>
-        this.showHover(marker, this.buildInfoHtmlInstalacion(c, ins))
-      );
+      marker.addListener('mouseover', () => {
+        this.cancelHoverClose();
+        this.showHover(marker, this.buildInfoHtmlInstalacion(c, ins));
+      });
       marker.addListener('mouseout', () => this.hideHover(marker));
       marker.addListener('click', () =>
         this.togglePin(marker, this.buildInfoHtmlInstalacion(c, ins), {
@@ -271,15 +330,13 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private showHover(marker: any, html: string) {
     if (this.pinnedMarker) return;
+    this.cancelHoverClose();
     this.openInfo(marker, html, undefined, false);
   }
 
   private hideHover(marker: any) {
     if (this.pinnedMarker) return;
-    if (this.currentInfoMarker === marker) {
-      this.infoWindow?.close();
-      this.currentInfoMarker = undefined;
-    }
+    this.scheduleHoverClose(marker);
   }
 
   private togglePin(marker: any, html: string, payload?: any) {
@@ -301,8 +358,50 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       this.mapClickUnpinListener = null;
     }
     this.pinnedMarker = null;
-    this.infoWindow?.close();
-    this.currentInfoMarker = undefined;
+    this.cancelHoverClose();
+    this.isHoveringInfoWindow = false;
+    this.animateInfoClose(this.currentInfoMarker, true);
+  }
+
+  private scheduleHoverClose(marker: any): void {
+    this.cancelHoverClose();
+    this.hoverCloseTimer = setTimeout(() => {
+      if (this.pinnedMarker || this.isHoveringInfoWindow) return;
+      this.animateInfoClose(marker, false);
+    }, 180);
+  }
+
+  private cancelHoverClose(): void {
+    if (!this.hoverCloseTimer) return;
+    clearTimeout(this.hoverCloseTimer);
+    this.hoverCloseTimer = undefined;
+  }
+
+  private animateInfoClose(marker: any, force = false): void {
+    if (!marker || this.currentInfoMarker !== marker) return;
+    if (this.closingInfoForMarker === marker) return;
+
+    const root: HTMLElement | null = document.querySelector('.gm-style-iw');
+    const infoCard: HTMLElement | null = root?.querySelector('.iw-card') as HTMLElement;
+
+    if (!infoCard || force) {
+      this.infoWindow?.close();
+      this.currentInfoMarker = undefined;
+      this.closingInfoForMarker = undefined;
+      return;
+    }
+
+    this.closingInfoForMarker = marker;
+    infoCard.classList.remove('iw-enter');
+    infoCard.classList.add('iw-leave');
+
+    setTimeout(() => {
+      if (this.currentInfoMarker === marker) {
+        this.infoWindow?.close();
+        this.currentInfoMarker = undefined;
+      }
+      this.closingInfoForMarker = undefined;
+    }, 120);
   }
 
   private fitBoundsNice(bounds: any) {
@@ -365,21 +464,42 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.infoWindow?.setContent(html);
     this.infoWindow?.open(this.map, marker);
     this.currentInfoMarker = marker;
+    this.isHoveringInfoWindow = false;
 
     google.maps.event.addListenerOnce(this.infoWindow, 'domready', () => {
       const root: HTMLElement | null = document.querySelector('.gm-style-iw');
+      const infoCard: HTMLElement | null = root?.querySelector(
+        '.iw-card'
+      ) as HTMLElement;
       const btnClose: HTMLElement | null = root?.querySelector(
         '.iw-close'
       ) as HTMLElement;
       const btnAction: HTMLElement | null = root?.querySelector(
         '.iw-action'
       ) as HTMLElement;
+      const btnDetailAction: HTMLElement | null = root?.querySelector(
+        '.iw-detail-action'
+      ) as HTMLElement;
+
+      if (!pinned) {
+        infoCard?.addEventListener('mouseenter', () => {
+          this.isHoveringInfoWindow = true;
+          this.cancelHoverClose();
+        });
+        infoCard?.addEventListener('mouseleave', () => {
+          this.isHoveringInfoWindow = false;
+          this.scheduleHoverClose(marker);
+        });
+      }
 
       btnClose?.addEventListener('click', () => {
         if (pinned) this.clearPin();
         else this.hideHover(marker);
       });
       btnAction?.addEventListener('click', () => this.onInfoAction(payload));
+      btnDetailAction?.addEventListener('click', () =>
+        this.onPredioDetalleAction(payload?.central)
+      );
     });
   }
 
@@ -387,12 +507,35 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const numeroSerie =
       payload?.instalacion?.equipo?.numeroSerie ??
       payload?.instalacion?.numeroSerie;
+    this.router.navigate([
+      '/monitoreo',
+      'instalacion',
+      numeroSerie || this.PREVIEW_SERIE,
+    ], {
+      queryParams: { origen: 'inmueble' },
+    });
+  }
 
-    if (!numeroSerie) {
-      return;
+  onPredioDetalleAction(central: any) {
+    const numeroSerie = this.getFirstNumeroSerieFromCentral(central);
+    this.router.navigate([
+      '/monitoreo',
+      'instalacion',
+      numeroSerie || this.PREVIEW_SERIE,
+    ], {
+      queryParams: { origen: 'predio' },
+    });
+  }
+
+  private getFirstNumeroSerieFromCentral(central: any): string | null {
+    const instalaciones = Array.isArray(central?.instalaciones)
+      ? central.instalaciones
+      : [];
+    for (const ins of instalaciones) {
+      const numeroSerie = ins?.equipo?.numeroSerie ?? ins?.numeroSerie;
+      if (numeroSerie) return String(numeroSerie);
     }
-
-    this.router.navigate(['/monitoreo', 'instalacion', numeroSerie]);
+    return null;
   }
 
   private static iwStylesInstalled = false;
@@ -421,6 +564,25 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       .gm-style .gm-style-iw-t::after { background: transparent !important; box-shadow: none !important; }
       .gm-style-iw-tc { padding: 0 !important; margin: 0 !important; }
       .gm-ui-hover-effect { display: none !important; }
+
+      .iw-card {
+        transform-origin: 50% 100%;
+        will-change: transform, opacity, filter;
+      }
+      .iw-card.iw-enter {
+        animation: iwEnter 140ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+      .iw-card.iw-leave {
+        animation: iwLeave 120ms ease-in both;
+      }
+      @keyframes iwEnter {
+        0% { opacity: 0; transform: translateY(8px) scale(0.94); filter: blur(2px); }
+        100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+      }
+      @keyframes iwLeave {
+        0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        100% { opacity: 0; transform: translateY(6px) scale(0.95); filter: blur(1.5px); }
+      }
     `;
     const style = document.createElement('style');
     style.setAttribute('data-iw-skin', 'true');
@@ -431,26 +593,30 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private buildInfoHtml(item: any): string {
     const name = item?.nombre ?? item?.nombreInstalacion ?? 'Instalación';
-    const enc = item?.nombreEncargado ?? '';
     const dir = item?.direccion ?? '';
 
     return `
-    <div style="
+    <div class="iw-card iw-enter" style="
       background:#151f35; color:#e5e7eb;
       padding:0px 18px 16px;
       border-radius:12px; min-width:260px; max-width:320px; line-height:1.25rem;
       box-shadow:0 12px 28px rgba(0,0,0,.20);
     ">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;">
-        <h6 style="margin:0;font-size:1rem;font-weight:700;color:#fff;">${name}</h6>
+        <h6 style="margin:0;font-size:1rem;color:#fff;">${name}</h6>
         <button class="iw-close" aria-label="Cerrar" style="background:transparent;border:0;cursor:pointer;color:#fff;font-size:18px;line-height:1;width:28px;height:28px;border-radius:8px;">✕</button>
-      </div>
-      <div style="color:#c6cfde;margin:0 0 4px;font-size:.875rem;">
-        Encargado: <strong>${enc}</strong>
       </div>
       <div style="display:flex;gap:.5rem;align-items:flex-start;color:#c6cfde;">
         <span style="margin-top:4px;width:8px;height:8px;border-radius:999px;background:var(--mat-sys-primary,#681330);display:inline-block;flex:0 0 8px;"></span>
         <span>${dir}</span>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+        <button class="iw-detail-action" style="
+          background:#681330; color:#fff; border:0; cursor:pointer;
+          border-radius:10px; padding:8px 12px; font-size:.85rem;
+        ">
+          Detalle
+        </button>
       </div>
     </div>
   `;
@@ -473,27 +639,26 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       : '';
 
     return `
-    <div style="
+    <div class="iw-card iw-enter" style="
       background:#151f35; color:#e5e7eb;
       padding:0px 18px 16px;
       border-radius:12px; min-width:260px; max-width:320px; line-height:1.25rem;
       box-shadow:0 12px 28px rgba(0,0,0,.20);
     ">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;">
-        <h6 style="margin:0;font-size:1rem;font-weight:700;color:#fff;">Equipo: ${numeroSerie}</h6>
+        <h6 style="margin:0;font-size:1rem;color:#fff;">Equipo: ${numeroSerie}</h6>
         <button class="iw-close" aria-label="Cerrar" style="background:transparent;border:0;cursor:pointer;color:#fff;font-size:18px;line-height:1;width:28px;height:28px;border-radius:8px;">✕</button>
       </div>
       <hr style="border:none;height:1px;background:rgba(255,255,255,.10);margin:6px 0;" />
       <div style="display:grid;grid-template-columns:1fr;gap:4px;font-size:.85rem;color:#c6cfde;">
         ${nroPisoHtml}
         ${nombreDepartamentoHtml}
-        <div><strong>Encargado:</strong> ${c?.nombreEncargado ?? '—'}</div>
         <div><strong>Cliente:</strong> ${c?.nombreCliente ?? '—'}</div>
         <div>
           <strong>Estatus:</strong>
           <span style="
             display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;
-            background:${estatusOk ? '#16a34a' : '#ef4444'}; color:#fff; font-weight:600; font-size:.78rem;">
+            background:${estatusOk ? '#16a34a' : '#ef4444'}; color:#fff; font-size:.78rem;">
             ${estatusOk ? 'Activo' : 'Inactivo'}
           </span>
         </div>
@@ -507,7 +672,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       <div style="display:flex;justify-content:flex-end;margin-top:10px;">
         <button class="iw-action" style="
           background:#681330; color:#fff; border:0; cursor:pointer;
-          border-radius:10px; padding:8px 12px; font-size:.85rem; font-weight:600;
+          border-radius:10px; padding:8px 12px; font-size:.85rem;
         ">
           Incidencias
         </button>

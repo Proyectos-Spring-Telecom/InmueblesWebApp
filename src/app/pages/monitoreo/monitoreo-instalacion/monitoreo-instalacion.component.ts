@@ -5,6 +5,7 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { animate, style, transition, trigger } from '@angular/animations';
 import { DxDataGridComponent } from 'devextreme-angular';
 import { io, Socket } from 'socket.io-client';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,10 +20,58 @@ import { environment } from 'src/environments/environment.prod';
   templateUrl: './monitoreo-instalacion.component.html',
   styleUrl: './monitoreo-instalacion.component.scss',
   standalone: false,
-  animations: [routeAnimation],
+  animations: [
+    routeAnimation,
+    trigger('gallerySwap', [
+      transition('* => *', [
+        style({ opacity: 0, transform: 'scale(1.03)' }),
+        animate(
+          '220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          style({ opacity: 1, transform: 'scale(1)' })
+        ),
+      ]),
+    ]),
+  ],
 })
 export class MonitoreoInstalacionComponent implements OnInit {
+  private readonly PREVIEW_SERIE = 'preview-demo';
+  isPreviewMode = false;
+  showInmuebleExtras = false;
   now = new Date();
+  readonly ubicacionLat = 18.9242;
+  readonly ubicacionLng = -99.2216;
+  galleryIndex = 0;
+  readonly galleryImages: string[] = [
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1483366774565-c783b9f70e2c?auto=format&fit=crop&w=1200&q=80',
+  ];
+  readonly documentos = [
+    {
+      grupo: 'Escrituras',
+      archivos: ['Escritura 235,444 Constitucion BHV.pdf'],
+    },
+  ];
+  readonly servicios = [
+    { concepto: 'Agua', contrato: '54035' },
+    { concepto: 'Luz', contrato: '348150305391' },
+    { concepto: 'Predial', contrato: '110009829001' },
+  ];
+  readonly zonas = [
+    { zona: 'Planta Baja Corporativo Piramide', superficie: '2,598.31 m²' },
+    { zona: '1er. Piso Corporativo Piramide', superficie: '2,003.35 m²' },
+    { zona: '2do Piso Corporativo Piramide', superficie: '1,191.07 m²' },
+  ];
+  readonly pagosData = [
+    { concepto: 'Mantenimiento', fechaPago: '2026-03-05', monto: 12850.5, metodo: 'Transferencia', estatus: 'Pagado' },
+    { concepto: 'Vigilancia', fechaPago: '2026-03-12', monto: 7600, metodo: 'Tarjeta', estatus: 'Pagado' },
+    { concepto: 'Limpieza', fechaPago: '2026-03-18', monto: 5400, metodo: 'Transferencia', estatus: 'Pendiente' },
+  ];
+  readonly vigenciasData = [
+    { documento: 'Contrato de Arrendamiento', fechaInicio: '2025-01-01', fechaFin: '2027-01-01', diasRestantes: 276, estatus: 'Vigente' },
+    { documento: 'Póliza de Seguro', fechaInicio: '2025-07-15', fechaFin: '2026-07-15', diasRestantes: 106, estatus: 'Vigente' },
+    { documento: 'Licencia de Funcionamiento', fechaInicio: '2024-09-10', fechaFin: '2026-09-10', diasRestantes: 163, estatus: 'Por vencer' },
+  ];
 
   numeroSerie: string = '';
 
@@ -97,13 +146,27 @@ export class MonitoreoInstalacionComponent implements OnInit {
     window.history.back();
   }
 
+  prevGallery(): void {
+    if (!this.galleryImages.length) return;
+    this.galleryIndex =
+      (this.galleryIndex - 1 + this.galleryImages.length) %
+      this.galleryImages.length;
+  }
+
+  nextGallery(): void {
+    if (!this.galleryImages.length) return;
+    this.galleryIndex = (this.galleryIndex + 1) % this.galleryImages.length;
+  }
+
+  goToGallery(index: number): void {
+    if (index < 0 || index >= this.galleryImages.length) return;
+    this.galleryIndex = index;
+  }
+
   ngOnInit(): void {
     this.numeroSerie = this.route.snapshot.paramMap.get('numeroSerie') ?? '';
-
-    if (!this.numeroSerie) {
-      console.error('No se recibió numeroSerie en la ruta');
-      return;
-    }
+    const origen = this.route.snapshot.queryParamMap.get('origen') ?? '';
+    this.showInmuebleExtras = origen === 'inmueble';
 
     // Fecha fin: hoy a la hora actual
     this.fechaFin = new Date();
@@ -111,6 +174,12 @@ export class MonitoreoInstalacionComponent implements OnInit {
     // Fecha inicio: hoy a las 00:00:00
     this.fechaInicio = new Date();
     this.fechaInicio.setHours(0, 0, 0, 0);
+
+    // Temporal: modo demo para mostrar la vista sin numeroSerie real.
+    if (!this.numeroSerie || this.numeroSerie === this.PREVIEW_SERIE) {
+      this.isPreviewMode = true;
+      return;
+    }
 
     this.socket = io('https://springtelecom.mx/api/incidencias', {
       path: '/analiticaVideoAPI/socket.io',
