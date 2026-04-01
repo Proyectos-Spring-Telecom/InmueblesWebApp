@@ -639,19 +639,20 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+/* Misma cápsula visual que .inmueble-card-shell (lista de inmuebles) */
 .surface .insta-item.central {
-  background: #242a33;
-  border-color: #323945;
+  background: #1b212a;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .surface .insta-item.central:hover {
   background: #212730;
-  border-color: #3a4350;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .surface .insta-item.central.active {
   background: #1e242d;
-  border-color: #4a5463;
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .surface .insta-item.instalacion {

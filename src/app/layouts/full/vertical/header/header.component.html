@@ -126,6 +126,64 @@
   <span class="flex-1-auto"></span>
 
   <!-- --------------------------------------------------------------- -->
+  <!-- Centro de notificaciones (Avisos · Inmuebles · Predios) -->
+  <!-- --------------------------------------------------------------- -->
+  <div
+    class="notify-hub row flex-nowrap align-items-center justify-content-end g-3 g-sm-4 flex-shrink-0 px-0 px-sm-1 w-auto ms-0 mx-0"
+    role="navigation"
+    aria-label="Centro de notificaciones"
+  >
+    <div class="col-auto p-0 d-flex align-items-center">
+    <button
+      type="button"
+      mat-icon-button
+      class="notify-hub__trigger d-flex align-items-center justify-content-center"
+      [matMenuTriggerFor]="menuAvisos"
+      aria-label="Avisos y mensajes"
+    >
+      <span class="notify-hub__icon-wrap">
+        <i-tabler name="mail" class="notify-hub__tabler d-flex"></i-tabler>
+        @if (avisosCount > 0) {
+        <span class="notify-hub__badge" aria-hidden="true">{{ avisosCount }}</span>
+        }
+      </span>
+    </button>
+    </div>
+    <div class="col-auto p-0 d-flex align-items-center">
+    <button
+      type="button"
+      mat-icon-button
+      class="notify-hub__trigger d-flex align-items-center justify-content-center"
+      [matMenuTriggerFor]="menuNotifInmuebles"
+      aria-label="Notificaciones de inmuebles"
+    >
+      <span class="notify-hub__icon-wrap">
+        <i-tabler name="bell-ringing" class="notify-hub__tabler d-flex"></i-tabler>
+        @if (inmueblesNotifCount > 0) {
+        <span class="notify-hub__badge" aria-hidden="true">{{ inmueblesNotifCount }}</span>
+        }
+      </span>
+    </button>
+    </div>
+    <div class="col-auto p-0 d-flex align-items-center">
+    <button
+      type="button"
+      mat-icon-button
+      class="notify-hub__trigger d-flex align-items-center justify-content-center"
+      [matMenuTriggerFor]="menuNotifPredios"
+      aria-label="Notificaciones de predios"
+    >
+      <span class="notify-hub__icon-wrap">
+        <i-tabler name="bell" class="notify-hub__tabler d-flex"></i-tabler>
+        @if (prediosNotifCount > 0) {
+        <span class="notify-hub__badge" aria-hidden="true">{{ prediosNotifCount }}</span>
+        }
+      </span>
+    </button>
+    </div>
+  </div>
+
+  <!-- --------------------------------------------------------------- -->
   <!-- langugage Dropdown -->
   <!-- --------------------------------------------------------------- -->
   <!-- <button
@@ -189,141 +247,118 @@
       height="30"
     />
   </button>
-  <!-- --------------------------------------------------------------- -->
-  <!-- Notification Dropdown -->
-  <!-- --------------------------------------------------------------- -->
-  <!-- <button
-    class="position-relative align-items-center justify-content-center d-none d-xl-flex"
-    mat-icon-button
-    [matMenuTriggerFor]="notificationmenu"
-    aria-label="Notifications"
-  >
-    <i-tabler name="bell" class="icon-22 d-flex"></i-tabler>
-    <div class="notify">
-      <span class="heartbit"></span> <span class="point"></span>
-    </div>
-  </button> -->
   <mat-menu
-    #notificationmenu="matMenu"
-    class="topbar-dd cardWithShadow dd-notifications"
+    #menuAvisos="matMenu"
+    class="notify-hub-panel notify-hub-panel--avisos dd-notifications"
+    xPosition="before"
   >
-    <div class="p-x-24 p-y-16 bg-primary">
-      <h6 class="f-s-18 m-b-2 text-white f-w-500">Notifications</h6>
-      <p class="m-0 text-white f-s-12 f-w-400">You have 4 Notifications</p>
-    </div>
-
-    @for(notification of notifications; track notification.title) {
-    <button mat-menu-item class="p-16">
-      <div class="d-flex align-items-center">
-        <span
-          class="flex-shrink-0 text-{{ notification.color }} bg-light-{{
-            notification.color
-          }} rounded-circle icon-40 d-flex align-items-center justify-content-center"
-        >
-          <i-tabler
-            class="icon-20 d-flex"
-            name="{{ notification.icon }}"
-          ></i-tabler>
-        </span>
-        <div class="m-l-16 w-100">
-          <div class="d-flex align-items-center justify-content-between w-100">
-            <h5 class="f-s-14 m-0 lh-sm f-w-500">
-              {{ notification.title }}
-            </h5>
-            <span class="d-block f-s-12 m-l-auto lh-sm text-body f-w-400">
-              {{ notification.time }}</span
-            >
-          </div>
-          <span
-            class="d-block text-truncate f-s-12 w-75 lh-sm text-body f-w-400"
-            >{{ notification.subtitle }}</span
-          >
-        </div>
+    <div class="notify-hub-panel__header">
+      <div class="notify-hub-panel__header-text">
+        <span class="notify-hub-panel__eyebrow">Bandeja</span>
+        <h6 class="notify-hub-panel__title m-0">Avisos</h6>
       </div>
-    </button>
-    }
-
-    <div class="p-y-12 p-x-32">
-      <button mat-flat-button color="primary" class="w-100 rounded-pill">
-        <div class="d-flex align-items-center gap-8">
-          Check all Notifications
-          <i-tabler class="icon-16 d-flex" name="chevron-right"></i-tabler>
+      <span class="notify-hub-panel__count">{{ avisosCount }}</span>
+    </div>
+    <div class="notify-hub-panel__body notify-hub-panel__body--scroll">
+      @for (a of avisosLista; track a.id) {
+      <button
+        type="button"
+        mat-menu-item
+        class="notify-hub-aviso"
+        [class.notify-hub-aviso--urgent]="a.urgent"
+        (click)="onAvisoContratoClick(a, $event)"
+      >
+        <div class="notify-hub-aviso__inner">
+          <span class="notify-hub-aviso__title">{{ a.title }}</span>
+          <span class="notify-hub-aviso__sub">{{ a.subtitle }}</span>
         </div>
+      </button>
+      }
+    </div>
+    <div class="notify-hub-panel__footer">
+      <button type="button" mat-stroked-button class="notify-hub-panel__cta w-100">
+        Ver todos los avisos
+        <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
       </button>
     </div>
   </mat-menu>
 
-  <!-- --------------------------------------------------------------- -->
-  <!-- Messages Dropdown -->
-  <!-- --------------------------------------------------------------- -->
-  <!-- <button
-    mat-icon-button
-    [matMenuTriggerFor]="inboxmenu"
-    aria-label="Inbox"
-    class="position-relative align-items-center justify-content-center d-none d-xl-flex"
-  >
-    <i-tabler name="message" class="icon-22 d-flex"></i-tabler>
-    <div class="notify">
-      <span class="heartbit"></span> <span class="point"></span>
-    </div>
-  </button> -->
   <mat-menu
-    #inboxmenu="matMenu"
-    class="topbar-dd cardWithShadow dd-notifications"
+    #menuNotifInmuebles="matMenu"
+    class="notify-hub-panel notify-hub-panel--inmuebles dd-notifications"
+    xPosition="before"
   >
-    <div class="p-x-24 p-y-16 bg-secondary">
-      <h6 class="m-b-2 text-white f-s-18 f-w-500">Messages</h6>
-      <p class="m-0 text-white f-s-12 f-w-400">You have 5 new messages</p>
-    </div>
-
-    @for(inbox of inbox; track inbox.title) {
-    <button mat-menu-item class="p-16">
-      <div class="d-flex align-items-center">
-        <span
-          class="position-relative flex-shrink-0 rounded-circle icon-40 d-flex align-items-center justify-content-center"
-        >
-          <img
-            class="rounded-circle"
-            [src]="inbox.imagePath"
-            width="40"
-            height="40"
-            alt="users"
-          />
-          <div
-            matBadge=""
-            matBadgeOverlap="false"
-            class="{{
-              inbox.bgcolor
-            }} demo-section inbox-badge icon-8 border-white rounded-circle"
-          ></div>
-        </span>
-        <div class="m-l-16 w-100">
-          <div class="d-flex align-items-center justify-content-between w-100">
-            <h5 class="f-s-14 m-0 lh-sm f-w-500">
-              {{ inbox.title }}
-            </h5>
-            <span class="d-block text-body f-s-12 m-l-auto f-w-400">
-              {{ inbox.time }}</span
-            >
-          </div>
-          <span class="d-block text-truncate f-s-12 text-body w-75 f-w-400">{{
-            inbox.subtitle
-          }}</span>
-        </div>
+    <div class="notify-hub-panel__header">
+      <div class="notify-hub-panel__header-text">
+        <span class="notify-hub-panel__eyebrow">Recibos</span>
+        <h6 class="notify-hub-panel__title m-0">Notificaciones de inmuebles</h6>
       </div>
-    </button>
-    }
-
-    <div class="p-y-12 p-x-32">
+      <span class="notify-hub-panel__count">{{ inmueblesNotifCount }}</span>
+    </div>
+    <div class="notify-hub-panel__body">
+      @for (r of recibosInmuebles; track r.id) {
       <button
-        mat-flat-button
-        color="secondary"
-        class="w-100 rounded-pill bg-secondary"
+        type="button"
+        mat-menu-item
+        class="notify-hub-recibo d-flex align-items-center text-start w-100 flex-row"
+        (click)="onReciboContratoClick(r, $event)"
       >
-        <div class="d-flex align-items-center gap-8">
-          Check all Messages
-          <i-tabler class="icon-16 d-flex" name="chevron-right"></i-tabler>
-        </div>
+        <span class="notify-hub-recibo__mark flex-shrink-0 notify-hub-recibo__mark--{{ r.tone }}">
+          <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
+        </span>
+        <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
+          <span class="notify-hub-recibo__label d-block text-start">{{ r.label }}</span>
+          @if (r.detail) {
+          <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
+          }
+        </span>
+      </button>
+      }
+    </div>
+    <div class="notify-hub-panel__footer">
+      <button type="button" mat-stroked-button class="notify-hub-panel__cta w-100">
+        Ir a detalle de inmuebles
+        <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
+      </button>
+    </div>
+  </mat-menu>
+
+  <mat-menu
+    #menuNotifPredios="matMenu"
+    class="notify-hub-panel notify-hub-panel--predios dd-notifications"
+    xPosition="before"
+  >
+    <div class="notify-hub-panel__header">
+      <div class="notify-hub-panel__header-text">
+        <span class="notify-hub-panel__eyebrow">Recibos</span>
+        <h6 class="notify-hub-panel__title m-0">Notificaciones de predios</h6>
+      </div>
+      <span class="notify-hub-panel__count">{{ prediosNotifCount }}</span>
+    </div>
+    <div class="notify-hub-panel__body">
+      @for (r of recibosPredios; track r.id) {
+      <button
+        type="button"
+        mat-menu-item
+        class="notify-hub-recibo d-flex align-items-center text-start w-100 flex-row"
+        (click)="onReciboContratoClick(r, $event)"
+      >
+        <span class="notify-hub-recibo__mark flex-shrink-0 notify-hub-recibo__mark--{{ r.tone }}">
+          <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
+        </span>
+        <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
+          <span class="notify-hub-recibo__label d-block text-start">{{ r.label }}</span>
+          @if (r.detail) {
+          <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
+          }
+        </span>
+      </button>
+      }
+    </div>
+    <div class="notify-hub-panel__footer">
+      <button type="button" mat-stroked-button class="notify-hub-panel__cta w-100">
+        Ir a detalle de predios
+        <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
       </button>
     </div>
   </mat-menu>
