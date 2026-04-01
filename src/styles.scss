@@ -759,3 +759,15 @@ body {
   border-color: rgba(160, 190, 255, 0.95);
   color: #ffffff;
 }
+
+/* Modal Detalles de Contrato (header / notificaciones) */
+.contrato-detalle-dialog-shell .mat-mdc-dialog-container {
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  max-width: 95vw;
+}
+
+.contrato-detalle-dialog-shell .mdc-dialog__surface {
+  border-radius: 14px;
+}

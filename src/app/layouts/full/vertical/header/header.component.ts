@@ -19,6 +19,10 @@ import { BrandingComponent } from '../sidebar/branding.component';
 import { AppSettings } from 'src/app/config';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { NavItem } from '../sidebar/nav-item/nav-item';
+import {
+  ContratoDetalleDialogComponent,
+  ContratoDetalleDialogData,
+} from './contrato-detalle-dialog/contrato-detalle-dialog.component';
 
 /** Rutas mostradas en Panel de accesos para ítems que en sidebar usan `/menu-level`. */
 const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
@@ -50,22 +54,22 @@ function buildPanelAccessItems(items: NavItem[]): NavItem[] {
   return out;
 }
 
-interface notifications {
+/** Mensajes / avisos (contratos, alertas generales) */
+interface AvisoNotificacion {
   id: number;
-  icon: string;
-  color: string;
   title: string;
-  time: string;
   subtitle: string;
+  urgent?: boolean;
+  detalle?: Partial<ContratoDetalleDialogData>;
 }
 
-interface inbox {
-  id: number;
-  bgcolor: string;
-  imagePath: string;
-  title: string;
-  time: string;
-  subtitle: string;
+/** Categorías de estado de recibos (inmuebles / predios) */
+interface ReciboEstadoItem {
+  id: string;
+  tone: 'danger' | 'warning' | 'amber' | 'success' | 'info';
+  icon: string;
+  label: string;
+  detail?: string;
 }
 
 interface profiledd {
@@ -206,91 +210,160 @@ export class HeaderComponent {
     this.users.logout().subscribe();
   }
 
-  notifications: notifications[] = [
+  onAvisoContratoClick(a: AvisoNotificacion, event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.openContratoDetalleDialog(this.buildDetalleFromAviso(a));
+  }
+
+  onReciboContratoClick(r: ReciboEstadoItem, event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.openContratoDetalleDialog(this.buildDetalleFromRecibo(r));
+  }
+
+  private openContratoDetalleDialog(data: ContratoDetalleDialogData): void {
+    this.dialog.open(ContratoDetalleDialogComponent, {
+      data,
+      panelClass: 'contrato-detalle-dialog-shell',
+      autoFocus: false,
+      maxWidth: '95vw',
+      width: 'min(600px, 95vw)',
+    });
+  }
+
+  private defaultContratoDetalle(): ContratoDetalleDialogData {
+    return {
+      predio: 'Desarrollo Inmobiliario BHV SA de CV',
+      inmueble: 'Oficinas corporativas — Torre B, Piso 4',
+      arrendatario: 'Prestalana SA de CV',
+      arrendador: 'Desarrollo Inmobiliario BHV SA de CV',
+      contrato: 'PC-0001',
+      fechaInicio: '02/01/2017',
+      fechaTermino: '01/01/2019',
+    };
+  }
+
+  private buildDetalleFromAviso(a: AvisoNotificacion): ContratoDetalleDialogData {
+    const base = this.defaultContratoDetalle();
+    const parsed = this.parseSubtitleContrato(a.subtitle);
+    return {
+      titulo: 'Detalles de Contrato',
+      ...base,
+      ...a.detalle,
+      contrato: a.detalle?.contrato ?? parsed.codigo ?? base.contrato,
+      arrendatario: a.detalle?.arrendatario ?? parsed.razonSocial ?? base.arrendatario,
+    };
+  }
+
+  private buildDetalleFromRecibo(r: ReciboEstadoItem): ContratoDetalleDialogData {
+    const base = this.defaultContratoDetalle();
+    const codigo = r.detail?.match(/Contrato\s*:\s*([\w-]+)/i)?.[1];
+    const servicio = r.detail?.split(/[—\-]/)[0]?.trim();
+    return {
+      titulo: 'Detalles de Contrato',
+      ...base,
+      contrato: codigo ?? base.contrato,
+      inmueble: servicio && servicio !== codigo ? servicio : base.inmueble,
+    };
+  }
+
+  private parseSubtitleContrato(subtitle: string): { codigo?: string; razonSocial?: string } {
+    const m = subtitle.match(/Contrato\s*:\s*([^\s-]+)\s*[-\u2014]\s*(.+)/i);
+    if (m) {
+      return { codigo: m[1].trim(), razonSocial: m[2].trim() };
+    }
+    const m2 = subtitle.match(/Contrato\s*:\s*(\S+)/i);
+    if (m2) {
+      return { codigo: m2[1].trim() };
+    }
+    return {};
+  }
+
+  /** Contador sobre el ícono de sobre (demo; enlazar a API cuando exista) */
+  avisosCount = 13;
+  inmueblesNotifCount = 1;
+  prediosNotifCount = 0;
+
+  avisosLista: AvisoNotificacion[] = [
     {
       id: 1,
-      icon: 'layout-grid',
-      color: 'primary',
-      time: '8:30 AM',
-      title: 'Launch Admin',
-      subtitle: 'Just see the my new admin!',
+      title: 'Contratos próximos a vencer',
+      subtitle: 'Contrato : PC-0001 - Prestalana SA de CV',
+      urgent: true,
     },
     {
       id: 2,
-      icon: 'calendar',
-      color: 'secondary',
-      time: '8:21 AM',
-      title: 'Event today',
-      subtitle: 'Just a reminder that you have event',
+      title: 'Contrato : PC-0006 - Estilos QIU Home SA de CV',
+      subtitle: 'Revisión de documentación pendiente',
+      detalle: {
+        contrato: 'PC-0006',
+        arrendatario: 'Estilos QIU Home SA de CV',
+        inmueble: 'Showroom y bodega — Zona industrial',
+      },
     },
     {
       id: 3,
-      icon: 'settings',
-      color: 'warning',
-      time: '8:05 AM',
-      title: 'Settings',
-      subtitle: 'You can customize this template',
+      title: 'Contrato : PC-0012 - Logística Norte SA de CV',
+      subtitle: 'Vigencia actualizada en el sistema',
+      detalle: {
+        contrato: 'PC-0012',
+        arrendatario: 'Logística Norte SA de CV',
+        fechaInicio: '15/03/2018',
+        fechaTermino: '14/03/2023',
+      },
     },
     {
       id: 4,
-      icon: 'circles-relation',
-      color: 'success',
-      time: '7:30 AM',
-      title: 'Launch Templates',
-      subtitle: 'Just see the my new admin!',
-    },
-    {
-      id: 5,
-      icon: 'list-check',
-      color: 'error',
-      time: '7:03 AM',
-      title: 'Event tomorrow',
-      subtitle: 'Just a reminder that you have event',
+      title: 'Contrato : PC-0020 - Inmobiliaria del Valle',
+      subtitle: 'Recordatorio de pago programado',
+      detalle: {
+        contrato: 'PC-0020',
+        arrendatario: 'Inmobiliaria del Valle',
+        predio: 'Parque logístico Valle — Lote 12',
+      },
     },
   ];
 
-  inbox: inbox[] = [
+  /** Misma estructura de categorías para inmuebles y predios (datos demo) */
+  private readonly recibosCategoriasPlantilla: ReciboEstadoItem[] = [
     {
-      id: 1,
-      bgcolor: 'bg-success',
-      imagePath: 'assets/images/profile/user-6.jpg',
-      time: 'just now',
-      title: 'Michell Flintoff',
-      subtitle: 'You: Yesterdy was great...',
+      id: 'vencidos',
+      tone: 'danger',
+      icon: 'x',
+      label: 'Recibos vencidos',
+      detail: 'Agua — Contrato : 54035',
     },
     {
-      id: 2,
-      bgcolor: 'bg-success',
-      imagePath: 'assets/images/profile/user-2.jpg',
-      time: '5 mins ago',
-      title: 'Bianca Anderson',
-      subtitle: 'Nice looking dress you...',
+      id: 'proximos',
+      tone: 'warning',
+      icon: 'alert-circle',
+      label: 'Recibos próximos a vencer',
     },
     {
-      id: 3,
-      bgcolor: 'bg-success',
-      imagePath: 'assets/images/profile/user-3.jpg',
-      time: '10 mins ago',
-      title: 'Andrew Johnson',
-      subtitle: 'Sent a photo',
+      id: 'cinco-dias',
+      tone: 'amber',
+      icon: 'thumb-up',
+      label: 'Recibos con más de 5 días hábiles para pagar',
     },
     {
-      id: 4,
-      bgcolor: 'bg-success',
-      imagePath: 'assets/images/profile/user-4.jpg',
-      time: 'days ago',
-      title: 'Marry Strokes',
-      subtitle: 'If I don’t like something',
+      id: 'pagados',
+      tone: 'success',
+      icon: 'check',
+      label: 'Recibos pagados este mes',
     },
     {
-      id: 5,
-      bgcolor: 'bg-success',
-      imagePath: 'assets/images/profile/user-5.jpg',
-      time: 'year ago',
-      title: 'Josh Anderson',
-      subtitle: '$230 deducted from account',
+      id: 'fuera-tiempo',
+      tone: 'info',
+      icon: 'info-circle',
+      label: 'Recibos pagados fuera de tiempo este mes',
     },
   ];
+
+  recibosInmuebles: ReciboEstadoItem[] = [...this.recibosCategoriasPlantilla];
+  recibosPredios: ReciboEstadoItem[] = this.recibosCategoriasPlantilla.map((c) =>
+    c.id === 'vencidos' ? { ...c, detail: undefined } : { ...c },
+  );
 
   profiledd: profiledd[] = [
     {

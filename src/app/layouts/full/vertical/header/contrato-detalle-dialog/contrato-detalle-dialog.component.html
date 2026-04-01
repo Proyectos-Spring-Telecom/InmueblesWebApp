@@ -1,0 +1,48 @@
+<div class="cdd" role="dialog" aria-labelledby="cdd-title">
+  <header class="cdd__head">
+    <div class="cdd__head-main">
+      <span class="cdd__head-eyebrow">Vista previa</span>
+      <h2 id="cdd-title" class="cdd__title m-0">{{ titulo }}</h2>
+    </div>
+    <button type="button" mat-icon-button class="cdd__close" (click)="cerrar()" aria-label="Cerrar ventana">
+      <i-tabler name="x" class="cdd__close-icon d-flex"></i-tabler>
+    </button>
+  </header>
+
+  <div class="cdd__body">
+    <div class="cdd__body-inner">
+      @for (row of filas; track row.k) {
+      <div class="cdd__row">
+        <div class="cdd__label">{{ row.k }}</div>
+        <div class="cdd__value">{{ row.v }}</div>
+      </div>
+      }
+    </div>
+  </div>
+
+  <footer class="cdd__foot">
+    <div class="cdd__foot-inner">
+      <p class="cdd__foot-hint m-0 d-none d-sm-block">Acciones sobre este contrato</p>
+      <div class="cdd__actions">
+        <button type="button" mat-stroked-button class="cdd__btn cdd__btn--ghost" (click)="cerrar()">
+          <span class="cdd__btn-inner">
+            <i-tabler name="x" class="cdd__btn-icon d-flex" aria-hidden="true"></i-tabler>
+            <span>Cerrar</span>
+          </span>
+        </button>
+        <button type="button" mat-flat-button class="cdd__btn cdd__btn--accent" (click)="renovar()">
+          <span class="cdd__btn-inner">
+            <i-tabler name="refresh" class="cdd__btn-icon d-flex" aria-hidden="true"></i-tabler>
+            <span>Renovar</span>
+          </span>
+        </button>
+        <button type="button" mat-flat-button class="cdd__btn cdd__btn--danger" (click)="cancelarContrato()">
+          <span class="cdd__btn-inner">
+            <i-tabler name="ban" class="cdd__btn-icon d-flex" aria-hidden="true"></i-tabler>
+            <span>Cancelar contrato</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </footer>
+</div>
