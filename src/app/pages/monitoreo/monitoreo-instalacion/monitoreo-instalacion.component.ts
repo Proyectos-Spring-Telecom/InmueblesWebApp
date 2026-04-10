@@ -63,14 +63,14 @@ export class MonitoreoInstalacionComponent implements OnInit {
     { zona: '2do Piso Corporativo Piramide', superficie: '1,191.07 m²' },
   ];
   readonly pagosData = [
-    { concepto: 'Mantenimiento', fechaPago: '2026-03-05', monto: 12850.5, metodo: 'Transferencia', estatus: 'Pagado' },
-    { concepto: 'Vigilancia', fechaPago: '2026-03-12', monto: 7600, metodo: 'Tarjeta', estatus: 'Pagado' },
-    { concepto: 'Limpieza', fechaPago: '2026-03-18', monto: 5400, metodo: 'Transferencia', estatus: 'Pendiente' },
+    { concepto: 'Mantenimiento', fechaPago: '2026-04-02', monto: 12850.5, metodo: 'Transferencia', estatus: 'Pagado' },
+    { concepto: 'Vigilancia', fechaPago: '2026-04-06', monto: 7600, metodo: 'Tarjeta', estatus: 'Pagado' },
+    { concepto: 'Limpieza', fechaPago: '2026-04-10', monto: 5400, metodo: 'Transferencia', estatus: 'Pendiente' },
   ];
   readonly vigenciasData = [
-    { documento: 'Contrato de Arrendamiento', fechaInicio: '2025-01-01', fechaFin: '2027-01-01', diasRestantes: 276, estatus: 'Vigente' },
-    { documento: 'Póliza de Seguro', fechaInicio: '2025-07-15', fechaFin: '2026-07-15', diasRestantes: 106, estatus: 'Vigente' },
-    { documento: 'Licencia de Funcionamiento', fechaInicio: '2024-09-10', fechaFin: '2026-09-10', diasRestantes: 163, estatus: 'Por vencer' },
+    { documento: 'Contrato de Arrendamiento', fechaInicio: '2025-01-01', fechaFin: '2027-01-01', diasRestantes: 266, estatus: 'Vigente' },
+    { documento: 'Póliza de Seguro', fechaInicio: '2025-07-15', fechaFin: '2026-07-15', diasRestantes: 96, estatus: 'Vigente' },
+    { documento: 'Licencia de Funcionamiento', fechaInicio: '2024-09-10', fechaFin: '2026-09-10', diasRestantes: 153, estatus: 'Por vencer' },
   ];
 
   numeroSerie: string = '';

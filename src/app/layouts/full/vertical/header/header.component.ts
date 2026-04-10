@@ -239,8 +239,8 @@ export class HeaderComponent {
       arrendatario: 'Prestalana SA de CV',
       arrendador: 'Desarrollo Inmobiliario BHV SA de CV',
       contrato: 'PC-0001',
-      fechaInicio: '02/01/2017',
-      fechaTermino: '01/01/2019',
+      fechaInicio: '01/01/2025',
+      fechaTermino: '31/12/2027',
     };
   }
 
@@ -309,8 +309,8 @@ export class HeaderComponent {
       detalle: {
         contrato: 'PC-0012',
         arrendatario: 'Logística Norte SA de CV',
-        fechaInicio: '15/03/2018',
-        fechaTermino: '14/03/2023',
+        fechaInicio: '01/03/2025',
+        fechaTermino: '28/02/2028',
       },
     },
     {

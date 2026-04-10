@@ -2,7 +2,6 @@
   <header class="perm-head" role="region" aria-label="Sección: Monitoreo">
     <div class="perm-head__icon" aria-hidden="true">
       <mat-icon>map_icon</mat-icon>
-
     </div>
 
     <div class="perm-head__text">
@@ -18,171 +17,278 @@
   </header>
 
   <div class="surface">
-    <div class="row g-2 g-md-3">
-      <div class="col-12 col-lg-5">
-        <div class="h-100 d-flex flex-column">
+    <div class="row g-2 g-md-3 align-items-stretch">
+      <!-- Izquierda: clientes + predios del cliente -->
+      <div class="col-12 col-lg-4">
+        <div class="h-100 d-flex flex-column monitor-left-stack">
           <div class="card-header monitor-card-header">
             <div class="row g-2 align-items-center">
-              <div class="col-10">
-                <div class="monitor-head-wrap w-100" [@monitorModeHeader]="viewMode">
+              <div class="col">
+                <div class="monitor-head-wrap w-100">
                   <div class="monitor-head-icon" aria-hidden="true">
-                    <mat-icon>home_work</mat-icon>
+                    <mat-icon>groups</mat-icon>
                   </div>
                   <div class="monitor-head-title">
-                    <ng-container *ngIf="viewMode === 'centrales'; else headerInstalaciones">
-                      <h6 class="monitor-head-text m-0">Predios</h6>
-                    </ng-container>
-                    <ng-template #headerInstalaciones>
-                      <h6 class="monitor-head-text m-0">
-                        <span class="d-block">Inmuebles:</span>
-                        <span class="monitor-head-client d-block">{{ selectedCentral?.nombreCliente }}</span>
-                      </h6>
-                    </ng-template>
+                    <h6 class="monitor-head-text m-0">Clientes</h6>
+                    <span
+                      class="monitor-head-client d-block"
+                      *ngIf="selectedClienteGrupo as g"
+                      >{{ g.nombreCliente }}</span
+                    >
                   </div>
                 </div>
               </div>
-              <div class="col-2 d-flex justify-content-end">
-                <button
-                  *ngIf="isRol1 && viewMode === 'instalaciones'"
-                  type="button"
-                  class="btn btn-sm"
-                  (click)="goToCentrales()"
-                >
-                  Predios
+              <div class="col-auto" *ngIf="isRol1 && selectedClienteGrupo">
+                <button type="button" class="btn btn-sm" (click)="goToCentrales()">
+                  Ver todos
                 </button>
               </div>
             </div>
           </div>
-          <div class="card-body insta-body" [@monitorListSwap]="viewMode">
-            <ng-container *ngIf="listaVisible.length > 0; else noInstalacionesTpl">
-              <div class="insta-item" *ngFor="let item of listaVisible; let i = index"
-                [@monitorItemIn]
-                [class.central]="viewMode === 'centrales'" [class.instalacion]="viewMode === 'instalaciones'"
-                [class.active]="viewMode === 'centrales' && item.id === selectedId"
-                (click)="selectInstalacion(item, i)">
-                <ng-container *ngIf="viewMode === 'centrales'; else inmuebleCardTpl">
-                  <div class="inmueble-card-shell">
-                    <div class="inmueble-content-grid">
-                      <div class="inmueble-media">
-                        <img
-                          src="https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=900&q=80"
-                          alt="Imagen del predio"
-                        />
-                        <span class="inmueble-status">RENTADO</span>
-                      </div>
 
-                      <div class="inmueble-info">
-                        <div class="inmueble-top">
-                          <div class="inmueble-name">
-                            {{ item.nombreInstalacion || item.nombre || 'Instalación' }}
-                          </div>
-                          <div class="inmueble-renta">
-                            <span>Superficie total</span>
-                            <strong>5,000 m²</strong>
-                          </div>
+          <div class="card-body insta-body flex-grow-1 monitor-scroll">
+            <ng-container *ngIf="listaClientes.length > 0; else noClientesTpl">
+              <div
+                class="insta-item"
+                *ngFor="let g of listaClientes"
+                [class.active]="selectedClienteGrupo === g"
+                (click)="selectCliente(g)"
+              >
+                <div class="inmueble-line">
+                  <strong>{{ g.nombreCliente }}</strong>
+                </div>
+                <div class="inmueble-line text-muted small">
+                  {{ g.centrales.length }} predio(s)
+                </div>
+              </div>
+
+              <ng-container *ngIf="selectedClienteGrupo as sg">
+                <div class="monitor-subblock-title mt-3 mb-2">Predios</div>
+                <ng-container *ngIf="sg.centrales.length > 0; else noPrediosTpl">
+                  <div
+                    class="insta-item central"
+                    *ngFor="let predio of sg.centrales"
+                    [class.active]="selectedId === predio.id"
+                    (click)="selectPredioCard(predio)"
+                  >
+                    <div class="inmueble-card-shell">
+                      <div class="inmueble-content-grid">
+                        <div class="inmueble-media">
+                          <img
+                            src="https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=900&q=80"
+                            alt="Imagen del predio"
+                          />
+                          <span class="inmueble-status">RENTADO</span>
                         </div>
-                        <div class="inmueble-line mt-1">
-                          <strong>Cliente:</strong> {{ item.nombreCliente }}
-                        </div>
-                        <div class="inmueble-line">
-                          <mat-icon>place</mat-icon>
-                          <span>
-                            <strong>Dirección:</strong>
-                            {{ item.direccion }}
-                          </span>
+                        <div class="inmueble-info">
+                          <div class="inmueble-top">
+                            <div class="inmueble-name">
+                              {{ predio.nombreInstalacion || predio.nombre || 'Predio' }}
+                            </div>
+                            <div class="inmueble-renta">
+                              <span>Superficie total</span>
+                              <strong>5,000 m²</strong>
+                            </div>
+                          </div>
+                          <div class="inmueble-line mt-1">
+                            <strong>Cliente:</strong> {{ predio.nombreCliente }}
+                          </div>
+                          <div class="inmueble-line">
+                            <mat-icon>place</mat-icon>
+                            <span><strong>Dirección:</strong> {{ predio.direccion }}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    <div class="inmueble-footer d-flex gap-2 ms-auto">
-                      <button type="button" class="btn btn-sm"
-                        (click)="verInstalacionesDeCentral(item); $event.stopPropagation()">
-                        Inmuebles
-                      </button>
-                      <button type="button" class="btn btn-sm"
-                        (click)="onPredioDetalleAction(item); $event.stopPropagation()">
-                        Información
-                      </button>
+                      <div class="inmueble-footer d-flex gap-2 ms-auto flex-wrap">
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          (click)="verInmueblesEnMapa(predio, $event)"
+                        >
+                          Inmuebles
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          (click)="onPredioDetalleAction(predio); $event.stopPropagation()"
+                        >
+                          Información
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </ng-container>
-
-                <ng-template #inmuebleCardTpl>
-                  <div class="inmueble-card-shell">
-                    <div class="inmueble-content-grid">
-                      <div class="inmueble-media">
-                        <img
-                          src="https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=900&q=80"
-                          alt="Imagen del inmueble"
-                        />
-                        <span class="inmueble-status">RENTADO</span>
-                      </div>
-
-                      <div class="inmueble-info">
-                        <div class="inmueble-top">
-                          <div class="inmueble-name">
-                            {{ selectedCentral?.nombreCliente || item.nombreCliente || 'Inmueble' }}
-                          </div>
-                          <div class="inmueble-renta">
-                            <span>Renta</span>
-                            <strong>$25,729.73 MXN</strong>
-                          </div>
-                        </div>
-                        <div class="inmueble-line mt-1">
-                          <strong>Dirección del inmueble:</strong>
-                          {{ selectedCentral?.direccion || item.direccion || 'Sin dirección' }}
-                        </div>
-                        <div class="inmueble-line">
-                          <strong>Vigencia:</strong> 0 años
-                        </div>
-                        <div class="inmueble-line">
-                          <strong>Inicio:</strong> 02/01/2017
-                          <span class="m-x-8">|</span>
-                          <strong>Fin:</strong> 01/01/2019
-                        </div>
-                        <div class="inmueble-line">
-                          <mat-icon>person</mat-icon>
-                          <span>Arrendador: Desarrollo Inmobiliario BHV SA de CV</span>
-                        </div>
-                        <div class="inmueble-line">
-                          <mat-icon>calendar_today</mat-icon>
-                          <span>Tiempo de renta: 2 años</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="inmueble-footer d-flex gap-2 ms-auto">
-                      <button type="button" class="btn btn-sm"
-                        (click)="selectInstalacion(item, i); $event.stopPropagation()">
-                        Centrar
-                      </button>
-                      <button type="button" class="btn btn-sm"
-                        (click)="onInfoAction({ central: selectedCentral, instalacion: item }); $event.stopPropagation()">
-                        Información
-                      </button>
-                    </div>
+                <ng-template #noPrediosTpl>
+                  <div class="insta-empty">
+                    <p class="m-0 small">Sin predios para este cliente.</p>
                   </div>
                 </ng-template>
-              </div>
+              </ng-container>
             </ng-container>
-            <ng-template #noInstalacionesTpl>
-              <div class="insta-empty" *ngIf="viewMode === 'instalaciones'">
+            <ng-template #noClientesTpl>
+              <div class="insta-empty">
                 <div class="insta-empty-icon">
-                  <mat-icon>location_off</mat-icon>
+                  <mat-icon>person_off</mat-icon>
                 </div>
                 <div class="insta-empty-text">
-                  <h6 *ngIf="!isRol1 && !selectedCentral">Sin oficina central asignada</h6>
-                  <h6 *ngIf="isRol1 || selectedCentral">Sin inmuebles registrados</h6>
-                  <p *ngIf="!isRol1 && !selectedCentral">No tiene asignada una oficina central para ver sus inmuebles.</p>
-                  <p *ngIf="selectedCentral">Este cliente aún no tiene inmuebles registrados.</p>
+                  <h6>Sin clientes</h6>
+                  <p>No hay datos de clientes / predios para mostrar.</p>
                 </div>
               </div>
             </ng-template>
           </div>
         </div>
       </div>
-      <div class="col-12 col-lg-7">
-        <div class="map-wrapper">
+
+      <!-- Derecha: inmuebles + mapa, o vista plano de locales (mapa sigue en DOM) -->
+      <div class="col-12 col-lg-8 monitor-right-stack d-flex flex-column">
+        <ng-container *ngIf="vistaLocalesActiva && localesPlanoContext; else monitorInmueblesColumn">
+          <div class="card-header monitor-card-header flex-shrink-0">
+            <div class="monitor-head-wrap w-100">
+              <div class="monitor-head-icon" aria-hidden="true">
+                <mat-icon>storefront</mat-icon>
+              </div>
+              <div class="monitor-head-title">
+                <h6 class="monitor-head-text m-0">Plano de locales</h6>
+                <span class="monitor-head-client d-block text-truncate">{{
+                  localesPlanoContext.nombreSucursal
+                }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm ms-auto"
+                (click)="cerrarVistaLocalesYMostrarMapa()"
+              >
+                Mostrar mapa
+              </button>
+            </div>
+          </div>
+          <div
+            class="card-body insta-body p-2 flex-grow-1 monitor-locales-plano-host d-flex flex-column"
+          >
+            <app-monitoreo-locales-plano
+              class="flex-grow-1 d-flex flex-column locales-plano-flex-min"
+              [context]="localesPlanoContext"
+              (cerrar)="cerrarVistaLocalesYMostrarMapa()"
+              (pedirComanda)="onPedirComandaDesdeLocales($event)"
+            />
+          </div>
+        </ng-container>
+        <ng-template #monitorInmueblesColumn>
+          <div class="card-header monitor-card-header flex-shrink-0">
+            <div class="monitor-head-wrap w-100">
+              <div class="monitor-head-icon" aria-hidden="true">
+                <mat-icon>home_work</mat-icon>
+              </div>
+              <div class="monitor-head-title">
+                <h6 class="monitor-head-text m-0">Inmuebles</h6>
+                <span class="monitor-head-client d-block" *ngIf="!selectedClienteGrupo"
+                  >Seleccione un cliente</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="card-body insta-body monitor-inmuebles-body"
+            *ngIf="selectedClienteGrupo; else sinClienteInmuebles"
+          >
+            <ng-container *ngIf="inmueblesDelCliente.length > 0; else noInmueblesTpl">
+              <div
+                class="insta-item instalacion"
+                *ngFor="let row of inmueblesDelCliente; let i = index"
+              >
+                <div class="inmueble-card-shell">
+                  <div class="inmueble-content-grid">
+                    <div class="inmueble-media">
+                      <img
+                        src="https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=900&q=80"
+                        alt="Imagen del inmueble"
+                      />
+                      <span class="inmueble-status">RENTADO</span>
+                    </div>
+                    <div class="inmueble-info">
+                      <div class="inmueble-top">
+                        <div class="inmueble-name">
+                          {{ row.central?.nombreCliente || row.instalacion?.nombreCliente || 'Local' }}
+                        </div>
+                        <div class="inmueble-renta">
+                          <span>Renta</span>
+                          <strong>$25,729.73 MXN</strong>
+                        </div>
+                      </div>
+                      <div class="inmueble-line mt-1">
+                        <strong>Predio:</strong>
+                        {{ row.central?.nombreInstalacion || row.central?.nombre || '—' }}
+                      </div>
+                      <div class="inmueble-line">
+                        <strong>Dirección del local:</strong>
+                        {{ row.central?.direccion || row.instalacion?.direccion || 'Sin dirección' }}
+                      </div>
+                      <div class="inmueble-line">
+                        <strong>Vigencia:</strong> 0 años
+                      </div>
+                      <div class="inmueble-line">
+                        <strong>Inicio:</strong> 02/01/2017
+                        <span class="m-x-8">|</span>
+                        <strong>Fin:</strong> 01/01/2019
+                      </div>
+                      <div class="inmueble-line">
+                        <mat-icon>person</mat-icon>
+                        <span>Arrendador: Desarrollo Inmobiliario BHV SA de CV</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="inmueble-footer d-flex gap-2 ms-auto flex-wrap">
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      (click)="abrirVistaLocales(row.instalacion, row.central, $event)"
+                    >
+                      Locales
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      (click)="onCentrarInmueble(row, $event)"
+                    >
+                      Centrar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      (click)="
+                        onInfoAction({ central: row.central, instalacion: row.instalacion });
+                        $event.stopPropagation()
+                      "
+                    >
+                      Información
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #noInmueblesTpl>
+              <div class="insta-empty">
+                <h6 class="m-0">Sin inmuebles</h6>
+                <p class="m-0 small">Este cliente no tiene locales registrados.</p>
+              </div>
+            </ng-template>
+          </div>
+          <ng-template #sinClienteInmuebles>
+            <div class="card-body insta-body">
+              <div class="insta-empty">
+                <h6 class="m-0">Seleccione un cliente</h6>
+                <p class="m-0 small">Aquí se listarán los inmuebles del cliente elegido.</p>
+              </div>
+            </div>
+          </ng-template>
+        </ng-template>
+
+        <div
+          class="map-wrapper flex-shrink-0"
+          [class.map-wrapper--hidden]="!mapVisible"
+        >
           <div id="map"></div>
         </div>
       </div>

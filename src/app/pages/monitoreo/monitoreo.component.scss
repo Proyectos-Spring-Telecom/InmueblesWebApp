@@ -299,6 +299,86 @@
 }
 
 /* =========== Mapa (capas y z-index garantizados) =========== */
+.monitor-left-stack,
+.monitor-right-stack {
+  min-height: 0;
+}
+
+.monitor-scroll {
+  min-height: 200px;
+}
+
+.monitor-subblock-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  padding-bottom: 0.35rem;
+}
+
+.monitor-right-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.monitor-right-stack .monitor-head-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.monitor-right-stack .monitor-head-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.monitor-inmuebles-body {
+  max-height: 32vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 992px) {
+  .monitor-inmuebles-body {
+    max-height: calc(60vh - 220px);
+    min-height: 120px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .monitor-inmuebles-body {
+    max-height: calc(65vh - 240px);
+  }
+}
+
+.map-wrapper--hidden {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+
+.monitor-locales-plano-host {
+  min-height: 0;
+  overflow: auto;
+}
+
+.monitor-locales-plano-host .locales-plano-flex-min {
+  min-height: 0;
+}
+
+@media (min-width: 992px) {
+  .monitor-locales-plano-host {
+    max-height: calc(72vh - 80px);
+    min-height: 360px;
+  }
+}
+
 .surface .map-wrapper {
   position: relative;
   width: 100%;
