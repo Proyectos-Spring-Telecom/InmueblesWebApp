@@ -1,0 +1,216 @@
+<div class="pos-shell pos-principal" *ngIf="context">
+  <div class="pos-principal-grid">
+    <!-- Card 1: lista locales / “mesas” -->
+    <section class="pos-card pos-card-lista" aria-label="Lista de locales">
+      <header class="pos-card-head">
+        <mat-icon>storefront</mat-icon>
+        <span>Locales</span>
+      </header>
+
+      <div class="zona-tabs" role="tablist">
+        <button
+          type="button"
+          class="zona-tab"
+          *ngFor="let t of getZonaTabList()"
+          [class.active]="tabZonaActiva === t.key"
+          (click)="tabZonaActiva = t.key"
+        >
+          {{ t.label }}
+        </button>
+      </div>
+
+      <div class="estado-tabs" role="tablist">
+        <button
+          type="button"
+          class="estado-tab"
+          *ngFor="let f of ['TODOS', 'VACIOS', 'OCUPADOS', 'EN_PAGO']"
+          [class.active]="filtroEstado === f"
+          (click)="filtroEstado = $any(f)"
+        >
+          {{ f === 'TODOS' ? 'Todos' : f === 'VACIOS' ? 'Vacíos' : f === 'OCUPADOS' ? 'Ocupados' : 'En pago' }}
+        </button>
+      </div>
+
+      <div class="mesa-grid" *ngIf="!loading; else cargandoTpl">
+        <div
+          *ngFor="let m of mesasListaFiltradas"
+          class="mesa-list-card"
+          [id]="'mesa-card-' + m.id"
+          [class.mesa-no-select]="!puedeSeleccionar(m)"
+          [class.mesa-selected]="isSelected(m.id)"
+          draggable="true"
+          (click)="toggleSeleccionMesa(m, $event)"
+          (dragstart)="onMesaDragStart($event, m)"
+        >
+          <div class="mesa-list-media">
+            <img
+              [src]="m.logoUrl || 'assets/images/logos/markerInstalacion.png'"
+              alt=""
+            />
+            <span class="mesa-estado-badge" [attr.data-estado]="m.estado">{{
+              m.estado === 'vacío' ? 'Libre' : m.estado === 'ocupado' ? 'Ocupado' : 'Pago'
+            }}</span>
+          </div>
+          <div class="mesa-list-text">
+            <strong>{{ m.nombre }}</strong>
+            <span class="mesa-num">#{{ m.numero }}</span>
+            <span class="mesa-seleccionada-pill" *ngIf="isSelected(m.id)">Seleccionada</span>
+            <div class="mesa-mesero-line">Mesero: {{ mesaLineaMesero(m) }}</div>
+          </div>
+        </div>
+      </div>
+      <ng-template #cargandoTpl>
+        <p class="pos-muted p-3 m-0">Cargando mesas…</p>
+      </ng-template>
+    </section>
+
+    <!-- Card 2: plano -->
+    <section class="pos-card pos-card-plano" aria-label="Plano">
+      <header class="pos-card-head pos-card-head--row">
+        <mat-icon>map</mat-icon>
+        <span>Plano</span>
+        <div class="pos-zoom-bar">
+          <button type="button" class="btn btn-sm" (click)="zoomOut()">−</button>
+          <button type="button" class="btn btn-sm" (click)="zoomIn()">+</button>
+          <button type="button" class="btn btn-sm" (click)="nuevaZona()">Nueva zona</button>
+        </div>
+      </header>
+
+      <div
+        #planoScroll
+        class="plano-scroll-area"
+        (dragover)="onPlanoDragOver($event)"
+        (pointerdown)="onFondoPointerDown($event)"
+      >
+        <div
+          class="plano-scaled-wrap"
+          [style.width.px]="contenidoAncho * planoZoom"
+          [style.height.px]="contenidoAlto * planoZoom"
+        >
+          <div
+            class="plano-stage edificio-fondo"
+            [style.width.px]="contenidoAncho"
+            [style.height.px]="contenidoAlto"
+            [style.transform]="'scale(' + planoZoom + ')'"
+          >
+            <div class="plano-hint" *ngIf="zonas.length === 0 && mesasSinZona.length === 0 && !loading">
+              Arrastra locales aquí desde la lista o desde «sin zona».
+            </div>
+
+            <div
+              class="zona-diagrama"
+              *ngFor="let z of zonas; trackBy: trackZona"
+              [style.left.px]="z.x"
+              [style.top.px]="z.y"
+              [style.width.px]="z.w"
+              [style.height.px]="z.h"
+            >
+              <div
+                class="zona-header"
+                (pointerdown)="onZonaHeaderPointerDown($event, z)"
+              >
+                <input
+                  class="zona-nombre-input"
+                  [(ngModel)]="z.nombre"
+                  (keydown.enter)="$event.preventDefault(); guardarNombreZonaDesdeModel(z)"
+                  (blur)="guardarNombreZonaDesdeModel(z)"
+                />
+                <button type="button" class="zona-btn-x" (click)="eliminarZona(z); $event.stopPropagation()">
+                  ×
+                </button>
+              </div>
+              <div
+                class="zona-body"
+                (dragover)="onPlanoDragOver($event)"
+                (drop)="onZonaBodyDrop($event, z)"
+              >
+                <div
+                  class="mesa-plano"
+                  *ngFor="let mm of z.mesas; trackBy: trackMesaZona"
+                  [class.plano-mesa-seleccionada]="isSelected(mm.idMesa)"
+                  [style.left.px]="mm.x"
+                  [style.top.px]="mm.y"
+                  [style.width.px]="mesaAnchoUi"
+                  [style.height.px]="mesaAltoUi"
+                  (pointerdown)="onMesaPlanoPointerDown($event, z, mm)"
+                  (click)="onMesaPlanoClick(z, mm)"
+                >
+                  <img class="mesa-plano-img" [src]="logoMesa(mm.idMesa)" alt="" />
+                  <button
+                    type="button"
+                    class="mesa-plano-btn-retirar"
+                    (click)="retirarMesaPlanoConfirm(z, mm); $event.stopPropagation()"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <span
+                *ngFor="let h of ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']"
+                class="zona-resize"
+                [ngClass]="'zona-resize--' + h"
+                (pointerdown)="startResize($event, z, h)"
+              ></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sin-zona-strip" *ngIf="mesasSinZona.length">
+        <div class="sin-zona-titulo">Sin zona</div>
+        <div class="sin-zona-grid">
+          <div
+            class="sin-zona-item"
+            *ngFor="let sz of mesasSinZona"
+            draggable="true"
+            (dragstart)="onSinZonaDragStart($event, sz)"
+          >
+            <img [src]="logoMesa(sz.idMesa)" alt="" />
+            <span>{{ nombreMesa(sz.idMesa) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <footer class="pos-save-bar">
+        <span class="save-state" [attr.data-state]="saveState">
+          <ng-container [ngSwitch]="saveState">
+            <span *ngSwitchCase="'saving'">Guardando…</span>
+            <span *ngSwitchCase="'ok'">Guardado</span>
+            <span *ngSwitchCase="'error'">Error al guardar</span>
+            <span *ngSwitchDefault></span>
+          </ng-container>
+        </span>
+      </footer>
+    </section>
+
+    <!-- Card 3: PIN -->
+    <section class="pos-card pos-card-pin" aria-label="PIN y acciones">
+      <div class="pin-brand">
+        <img src="assets/images/logos/markerCliente.png" alt="" class="pin-logo" />
+        <h3 class="pin-sucursal">{{ nombreSucursal }}</h3>
+        <p class="pin-sub">PIN de acceso</p>
+        <p class="pin-mesero">{{ nombreMeseroSesion }}</p>
+      </div>
+      <div class="pin-display">{{ pinDisplay }}</div>
+      <div class="pin-teclado">
+        <button type="button" *ngFor="let d of ['1','2','3','4','5','6','7','8','9']" (click)="onPinDigit(d)">
+          {{ d }}
+        </button>
+        <button type="button" (click)="onPinDigit('0')">0</button>
+        <button type="button" (click)="onPinClear()">Borrar</button>
+      </div>
+      <div class="pin-acciones">
+        <button type="button" class="btn btn-sm w-100 mb-2" [disabled]="comandaDisabled" (click)="onComanda()">
+          Comanda
+        </button>
+        <button type="button" class="btn btn-sm w-100 mb-2" [disabled]="bloquearBotonesCambioMeseroYMesa || selectedIds.size === 0">
+          Cambiar mesa
+        </button>
+        <button type="button" class="btn btn-sm w-100 mb-2" [disabled]="bloquearBotonesCambioMeseroYMesa || selectedIds.size === 0">
+          Cambiar mesero
+        </button>
+        <button type="button" class="btn btn-sm w-100" (click)="onSalir()">Salir</button>
+      </div>
+    </section>
+  </div>
+</div>

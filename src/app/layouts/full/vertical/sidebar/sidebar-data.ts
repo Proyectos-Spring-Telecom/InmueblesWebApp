@@ -23,6 +23,8 @@ export const navItems: NavItem[] = [
       Permiso.CONSULTAR_MODELOS,
       Permiso.CONSULTAR_EQUIPOS,
       Permiso.CONSULTAR_DEPARTAMENTOS,
+      Permiso.CONSULTAR_INCREMENTOS,
+      Permiso.CONSULTAR_FACTORES,
     ],
     children: [
       {
@@ -59,10 +61,12 @@ export const navItems: NavItem[] = [
         permission: Permiso.CONSULTAR_EQUIPOS,
       },
       {
-        displayName: 'Departamentos',
-        route: '/departamentos',
-        // Mostrar si tiene al menos un permiso de departamentos
-        permission: Permiso.CONSULTAR_DEPARTAMENTOS,
+        displayName: 'Factores',
+        route: '/factores',
+        /* permission: [
+          Permiso.CONSULTAR_DEPARTAMENTOS,
+          Permiso.CONSULTAR_FACTORES,
+        ], */
       },
       // {
       //   displayName: 'Bitácora',
@@ -169,6 +173,22 @@ export const navItems: NavItem[] = [
     iconName: 'building-warehouse',
     route: '/instalaciones',
     permission: Permiso.CONSULTAR_INSTALACIONES_GRID,
+  },
+  {
+    displayName: 'Departamentos',
+    iconName: 'building-community',
+    route: '/departamentos',
+    // Mostrar si tiene al menos un permiso de departamentos
+    permission: Permiso.CONSULTAR_DEPARTAMENTOS,
+  },
+  {
+    displayName: 'Incrementos',
+    iconName: 'trending-up',
+    route: '/incrementos',
+    /* permission: [
+      Permiso.CONSULTAR_DEPARTAMENTOS,
+      Permiso.CONSULTAR_INCREMENTOS,
+    ], */
   },
   //{
   //  navCap: 'Reportes',

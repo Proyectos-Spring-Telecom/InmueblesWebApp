@@ -10,10 +10,11 @@ import { MonitoreoComponent } from './monitoreo.component';
 import { MatCardModule } from '@angular/material/card';
 import { DxiValueAxisModule } from 'devextreme-angular/ui/nested';
 import { MonitoreoInstalacionComponent } from './monitoreo-instalacion/monitoreo-instalacion.component';
+import { MonitoreoLocalesPlanoComponent } from './locales-plano/monitoreo-locales-plano.component';
 
 
 @NgModule({
-  declarations: [MonitoreoComponent, MonitoreoInstalacionComponent],
+  declarations: [MonitoreoComponent, MonitoreoInstalacionComponent, MonitoreoLocalesPlanoComponent],
   imports: [
     CommonModule,
     MonitoreoRoutingModule,

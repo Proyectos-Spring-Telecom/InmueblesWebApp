@@ -95,6 +95,16 @@ export const routes: Routes = [
           import('./pages/departamentos/departamentos.module').then((m) => m.DepartamentosModule),
       },
       {
+        path: 'incrementos',
+        loadChildren: () =>
+          import('./pages/incrementos/incrementos.module').then((m) => m.IncrementosModule),
+      },
+      {
+        path: 'factores',
+        loadChildren: () =>
+          import('./pages/factores/factores.module').then((m) => m.FactoresModule),
+      },
+      {
         path: 'monitoreo',
         loadChildren: () =>
           import('./pages/monitoreo/monitoreo.module').then((m) => m.MonitoreoModule),

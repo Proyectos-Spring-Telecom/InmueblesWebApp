@@ -13,10 +13,22 @@ import { ToastrService } from 'ngx-toastr';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { InstalacionCentral } from 'src/app/services/moduleService/instalacionesCentral.service';
+import {
+  LocalesPlanoContext,
+  MesaCatalogo,
+  MesaEstadoUi,
+} from './locales-plano/pos-locales.models';
 
 declare const google: any;
 
 type ViewMode = 'centrales' | 'instalaciones';
+
+/** Cliente agrupado con sus predios (oficinas centrales). */
+interface ClienteMonitoreoGrupo {
+  idCliente: number | string | null;
+  nombreCliente: string;
+  centrales: any[];
+}
 
 @Component({
   selector: 'app-monitoreo',
@@ -66,9 +78,22 @@ type ViewMode = 'centrales' | 'instalaciones';
 export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly PREVIEW_SERIE = 'preview-demo';
   listaInstalaciones: any[] = [];
+  /** Lista izquierda: clientes con sus predios anidados. */
+  listaClientes: ClienteMonitoreoGrupo[] = [];
+  selectedClienteGrupo: ClienteMonitoreoGrupo | null = null;
+  /** Predio cuyas instalaciones se pintan en el mapa (tras pulsar «Inmuebles» en la card). */
+  selectedPredioParaMapa: any | null = null;
+
   selectedId?: number;
   viewMode: ViewMode = 'centrales';
   selectedCentral: any | null = null;
+
+  /** Muestra el mapa; «Locales» en un inmueble lo oculta por completo (solo layout). */
+  mapVisible = true;
+  /** Contenido pendiente de definir cuando el mapa está oculto por «Locales». */
+  vistaLocalesActiva = false;
+  /** Contexto para la vista operativa tipo POS (plano de locales). */
+  localesPlanoContext: LocalesPlanoContext | null = null;
 
   /** Solo rol 1 ve la lista de Clientes; el resto solo sus Instalaciones. */
   isRol1 = false;
@@ -98,6 +123,20 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     const c = this.selectedCentral;
     return Array.isArray(c?.instalaciones) ? c.instalaciones : [];
+  }
+
+  /** Inmuebles (locales) del cliente seleccionado, todos los predios, con referencia al predio padre. */
+  get inmueblesDelCliente(): { instalacion: any; central: any }[] {
+    const g = this.selectedClienteGrupo;
+    if (!g?.centrales?.length) return [];
+    const out: { instalacion: any; central: any }[] = [];
+    for (const central of g.centrales) {
+      const inst = Array.isArray(central?.instalaciones) ? central.instalaciones : [];
+      for (const ins of inst) {
+        out.push({ instalacion: ins, central });
+      }
+    }
+    return out;
   }
 
   constructor(
@@ -146,21 +185,141 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       const u = this.auth.getUser();
       const idCliente = u?.idCliente != null ? u.idCliente : null;
 
+      let rowsParaClientes = data;
+
       if (this.isRol1) {
         this.listaInstalaciones = data;
         this.viewMode = 'centrales';
         this.selectedCentral = null;
+        this.selectedClienteGrupo = null;
+        this.selectedPredioParaMapa = null;
       } else {
         const filtered = data.filter(
           (c: any) => c?.idCliente == idCliente || c?.id == idCliente
         );
         this.listaInstalaciones = filtered;
+        rowsParaClientes = filtered;
         this.selectedCentral = filtered.length ? filtered[0] : null;
         this.viewMode = 'instalaciones';
       }
 
+      this.rebuildListaClientes(rowsParaClientes);
+
       if (this.map) this.renderAccordingMode();
     });
+  }
+
+  private rebuildListaClientes(rows: any[]) {
+    const byKey = new Map<string, ClienteMonitoreoGrupo>();
+    for (const central of rows || []) {
+      const idC = central?.idCliente ?? null;
+      const key =
+        idC != null && idC !== ''
+          ? `id:${idC}`
+          : `nom:${central?.nombreCliente ?? 'sin-nombre'}`;
+      if (!byKey.has(key)) {
+        byKey.set(key, {
+          idCliente: idC,
+          nombreCliente: central?.nombreCliente ?? 'Cliente',
+          centrales: [],
+        });
+      }
+      byKey.get(key)!.centrales.push(central);
+    }
+    this.listaClientes = Array.from(byKey.values());
+
+    if (!this.isRol1 && this.listaClientes.length === 1) {
+      this.selectCliente(this.listaClientes[0], false);
+    }
+  }
+
+  selectCliente(grupo: ClienteMonitoreoGrupo, resetMap = true) {
+    this.selectedClienteGrupo = grupo;
+    this.selectedId = undefined;
+    this.selectedPredioParaMapa = null;
+    this.selectedCentral = null;
+    this.vistaLocalesActiva = false;
+    this.localesPlanoContext = null;
+    if (resetMap) {
+      this.mapVisible = true;
+    }
+    this.clearPin();
+    if (this.map) {
+      if (resetMap) {
+        this.clearMarkers();
+        this.map.setCenter({ lat: 19.432608, lng: -99.133209 });
+        this.map.setZoom(12);
+      }
+    }
+    this.renderAccordingMode();
+  }
+
+  /** Card predio: ver en mapa solo instalaciones de ese predio. */
+  verInmueblesEnMapa(predio: any, event?: Event) {
+    event?.stopPropagation();
+    this.selectedPredioParaMapa = predio;
+    this.selectedCentral = predio;
+    this.mapVisible = true;
+    this.vistaLocalesActiva = false;
+    this.localesPlanoContext = null;
+    this.clearPin();
+    setTimeout(() => {
+      google.maps.event?.trigger(this.map, 'resize');
+      if (this.map) this.renderInstalacionesOnly();
+    }, 0);
+  }
+
+  /** Card inmueble: vista operativa tipo POS / plano de locales. */
+  abrirVistaLocales(_instalacion: any, central: any, event?: Event) {
+    event?.stopPropagation();
+    this.mapVisible = false;
+    this.vistaLocalesActiva = true;
+    this.localesPlanoContext = this.buildLocalesPlanoContext(central);
+    this.clearPin();
+  }
+
+  private buildLocalesPlanoContext(central: any): LocalesPlanoContext {
+    const mesas: MesaCatalogo[] = this.inmueblesDelCliente.map(
+      ({ instalacion }) => {
+        const id = Number(instalacion?.id) || 0;
+        const ocupado = Number(instalacion?.estatus) === 1;
+        const est: MesaEstadoUi = ocupado ? 'ocupado' : 'vacío';
+        return {
+          id,
+          numero: String(
+            instalacion?.nroPiso ?? instalacion?.id ?? '',
+          ),
+          nombre: `Local ${instalacion?.nombreDepartamento || instalacion?.id || id}`,
+          meseroNombre: null,
+          idPersonal: null,
+          estado: est,
+          logoUrl: 'assets/images/logos/markerInstalacion.png',
+        };
+      },
+    );
+    return {
+      idSucursal: Number(central?.id) || 0,
+      nombreSucursal:
+        central?.nombreInstalacion || central?.nombre || 'Sucursal',
+      mesas,
+    };
+  }
+
+  onPedirComandaDesdeLocales(ids: number[]): void {
+    this.toastr.info(
+      `Locales seleccionados: ${ids.join(', ')}. Enlace al módulo Comanda pendiente.`,
+      'Comanda',
+    );
+  }
+
+  cerrarVistaLocalesYMostrarMapa() {
+    this.vistaLocalesActiva = false;
+    this.localesPlanoContext = null;
+    this.mapVisible = true;
+    setTimeout(() => {
+      google.maps.event?.trigger(this.map, 'resize');
+      this.renderAccordingMode();
+    }, 0);
   }
 
   private async initMap() {
@@ -218,11 +377,32 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private renderAccordingMode() {
-    if (this.viewMode === 'centrales') {
-      this.renderCentrales();
-    } else {
+    if (!this.map) return;
+    if (!this.mapVisible) return;
+
+    if (this.selectedPredioParaMapa) {
       this.renderInstalacionesOnly();
+      return;
     }
+
+    if (this.isRol1 && !this.selectedClienteGrupo) {
+      this.renderCentrales();
+      return;
+    }
+
+    if (
+      !this.isRol1 &&
+      this.selectedClienteGrupo &&
+      this.selectedCentral &&
+      !this.selectedPredioParaMapa
+    ) {
+      this.renderInstalacionesOnly();
+      return;
+    }
+
+    this.clearMarkers();
+    this.map.setCenter({ lat: 19.432608, lng: -99.133209 });
+    this.map.setZoom(12);
   }
 
   private renderCentrales() {
@@ -265,7 +445,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   private renderInstalacionesOnly() {
     this.clearMarkers();
 
-    const c = this.selectedCentral;
+    const c = this.selectedPredioParaMapa ?? this.selectedCentral;
     const childs = Array.isArray(c?.instalaciones) ? c.instalaciones : [];
 
     const bounds = new google.maps.LatLngBounds();
@@ -310,6 +490,11 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   goToCentrales() {
     this.viewMode = 'centrales';
     this.selectedCentral = null;
+    this.selectedClienteGrupo = null;
+    this.selectedPredioParaMapa = null;
+    this.mapVisible = true;
+    this.vistaLocalesActiva = false;
+    this.localesPlanoContext = null;
     this.clearPin();
     this.renderAccordingMode();
   }
@@ -322,10 +507,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   verInstalacionesDeCentral(central: any) {
-    this.selectedCentral = central;
-    this.viewMode = 'instalaciones';
-    this.clearPin();
-    this.renderAccordingMode();
+    this.verInmueblesEnMapa(central);
   }
 
   private showHover(marker: any, html: string) {
@@ -422,42 +604,62 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.markers = [];
   }
 
-  selectInstalacion(item: any, index: number) {
-    if (this.viewMode === 'centrales') {
-      this.selectedId = item.id;
-      this.selectedCentral = item;
-      const lat = Number(item.lat);
-      const lng = Number(item.lng);
-      if (isFinite(lat) && isFinite(lng)) {
-        const pos = { lat, lng };
-        this.map?.panTo(pos);
-        this.map?.setZoom(Math.max(this.map?.getZoom() ?? 12, 15));
-        const marker = this.markers[index];
-        if (marker) {
-          this.togglePin(marker, this.buildInfoHtml(item), { central: item });
-        }
-      }
+  selectPredioCard(predio: any) {
+    this.selectedId = predio?.id;
+  }
+
+  selectInstalacion(
+    payload: { instalacion: any; central: any },
+    indexEnMapa: number
+  ) {
+    if (!this.mapVisible) return;
+    const { instalacion: ins, central: c } = payload;
+    if (
+      this.selectedPredioParaMapa &&
+      this.selectedPredioParaMapa.id !== c?.id
+    ) {
+      this.verInmueblesEnMapa(c);
+    }
+    const lat = Number(ins.lat);
+    const lng = Number(ins.lng);
+    if (!isFinite(lat) || !isFinite(lng)) return;
+    const pos = { lat, lng };
+    this.map?.panTo(pos);
+    this.map?.setZoom(Math.max(this.map?.getZoom() ?? 12, 15));
+    const marker = this.markers[indexEnMapa];
+    if (marker) {
+      this.togglePin(marker, this.buildInfoHtmlInstalacion(c, ins), {
+        central: c,
+        instalacion: ins,
+      });
+    }
+  }
+
+  /** Índice del marcador en el mapa actual para una instalación (mismo orden que renderInstalacionesOnly). */
+  indiceMarcadorInmueble(central: any, ins: any): number {
+    const mapCentral = this.selectedPredioParaMapa ?? this.selectedCentral;
+    if (!mapCentral || mapCentral.id !== central?.id) return -1;
+    const childs = Array.isArray(central?.instalaciones) ? central.instalaciones : [];
+    return childs.indexOf(ins);
+  }
+
+  onCentrarInmueble(row: { instalacion: any; central: any }, event?: Event) {
+    event?.stopPropagation();
+    const run = () => {
+      const idx = this.indiceMarcadorInmueble(row.central, row.instalacion);
+      if (idx >= 0) this.selectInstalacion(row, idx);
+    };
+    if (!this.mapVisible) {
+      this.verInmueblesEnMapa(row.central);
+      setTimeout(run, 120);
       return;
     }
-
-    const ins = this.selectedCentral?.instalaciones?.[index];
-    if (ins) {
-      const lat = Number(ins.lat);
-      const lng = Number(ins.lng);
-      if (isFinite(lat) && isFinite(lng)) {
-        const pos = { lat, lng };
-        this.map?.panTo(pos);
-        this.map?.setZoom(Math.max(this.map?.getZoom() ?? 12, 15));
-        const marker = this.markers[index];
-        if (marker) {
-          this.togglePin(
-            marker,
-            this.buildInfoHtmlInstalacion(this.selectedCentral, ins),
-            { central: this.selectedCentral, instalacion: ins }
-          );
-        }
-      }
+    if (this.selectedPredioParaMapa?.id !== row.central?.id) {
+      this.verInmueblesEnMapa(row.central);
+      setTimeout(run, 120);
+      return;
     }
+    run();
   }
 
   private openInfo(marker: any, html: string, payload?: any, pinned = false) {
