@@ -1,7 +1,7 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
   <header class="perm-head" role="region" aria-label="Sección: Factores">
     <div class="perm-head__icon" aria-hidden="true">
-      <mat-icon>functions</mat-icon>
+      <mat-icon>straighten</mat-icon>
     </div>
 
     <div class="perm-head__text">
@@ -28,8 +28,10 @@
         {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
       </button>
     </div>
-    <div class="mt-3">
-      <dx-data-grid
+    <div class="row mt-3 g-3">
+      <div class="col-12 col-lg-6">
+        <h5 class="mb-2">Grid de Factores</h5>
+        <dx-data-grid
         #gridContainer
         id="gridFactores"
         [columnHidingEnabled]="true"
@@ -52,7 +54,7 @@
         }"
         (onPageIndexChanged)="onPageIndexChanged($event)"
         (onOptionChanged)="onGridOptionChanged($event)"
-      >
+        >
         <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
@@ -69,12 +71,31 @@
         ></dxi-column>
         <dxi-column dataField="nombre" caption="Nombre" alignment="center" dataType="string"></dxi-column>
         <dxi-column
+          dataField="categoriaLabel"
+          caption="Categoría"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
+        <dxi-column
+          dataField="unidadLabel"
+          caption="Unidad"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
+        <dxi-column
           dataField="valor"
           caption="Valor"
           alignment="center"
           dataType="number"
           format="#0.##"
         ></dxi-column>
+        <dxi-column
+          dataField="zonaReferencia"
+          caption="Zona / mercado"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
+        <dxi-column dataField="descripcion" caption="Descripción" alignment="center" dataType="string"></dxi-column>
         <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="est" dataType="string">
           <div *dxTemplate="let f of 'est'">
             @if (f.data.estatus === 1) {
@@ -116,7 +137,43 @@
           }"
         >
         </dxo-export>
-      </dx-data-grid>
+        </dx-data-grid>
+      </div>
+      <div class="col-12 col-lg-6">
+        <h5 class="mb-2">Grid de Fórmulas</h5>
+        <dx-data-grid
+        id="gridFormulas"
+        [columnHidingEnabled]="true"
+        [showBorders]="true"
+        [showColumnLines]="true"
+        [showRowLines]="true"
+        [rowAlternationEnabled]="true"
+        [dataSource]="listaFactores"
+        [keyExpr]="'id'"
+        [width]="'100%'"
+        [remoteOperations]="{ paging: true }"
+        [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'"
+        >
+        <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+        <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
+        <dxi-column dataField="nombre" caption="Factor" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="categoriaLabel" caption="Categoría" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="unidadLabel" caption="Unidad" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="valor" caption="Valor base" alignment="center" dataType="number" format="#0.##"></dxi-column>
+        <dxi-column dataField="formulaTexto" caption="Fórmula" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="estFormula" dataType="string">
+          <div *dxTemplate="let f of 'estFormula'">
+            @if (f.data.estatus === 1) {
+            <span class="estatus estatus-activo">Activo</span>
+            } @else {
+            <span class="estatus estatus-inactivo">Inactivo</span>
+            }
+          </div>
+        </dxi-column>
+        </dx-data-grid>
+      </div>
     </div>
   </div>
 </div>

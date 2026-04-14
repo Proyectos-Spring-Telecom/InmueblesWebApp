@@ -1,7 +1,7 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-  <header class="perm-head perm-head--left" role="region" aria-label="Sección: Incrementos">
+  <header class="perm-head perm-head--left" role="region" aria-label="Sección: INPC">
     <div class="perm-head__icon" aria-hidden="true">
-      <mat-icon>trending_up</mat-icon>
+      <mat-icon>receipt_long</mat-icon>
     </div>
     <div class="perm-head__text">
       <span class="eyebrow">Sección</span>
@@ -10,7 +10,7 @@
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Administración</span>
       <span class="sep">/</span>
-      <span class="crumb active">Incrementos</span>
+      <span class="crumb active">INPC</span>
     </nav>
   </header>
   <div class="surface">
@@ -18,7 +18,7 @@
       <form [formGroup]="incrementoForm" class="perm-form-body">
         <div class="row g-4">
           <div class="col-12 col-md-6">
-            <label for="incNombre" class="form-label perm-label">Nombre</label>
+            <label for="incNombre" class="form-label perm-label">Concepto INPC</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">title</mat-icon>
@@ -29,15 +29,15 @@
                   formControlName="nombre"
                   class="form-control"
                   id="incNombre"
-                  placeholder="Ej.: Incremento anual"
+                  placeholder="Ej.: Ajuste anual INPC"
                   required
                 />
-                <label for="incNombre">Ej.: Incremento anual</label>
+                <label for="incNombre">Ej.: Ajuste anual INPC</label>
               </div>
             </div>
           </div>
           <div class="col-12 col-md-6">
-            <label for="incPorcentaje" class="form-label perm-label">Porcentaje</label>
+            <label for="incPorcentaje" class="form-label perm-label">Variación INPC (%)</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">percent</mat-icon>
@@ -52,8 +52,94 @@
                   min="0"
                   step="0.01"
                 />
-                <label for="incPorcentaje">Valor numérico (ej.: 3.5)</label>
+                <label for="incPorcentaje">Porcentaje del índice (ej.: 3.5)</label>
               </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="incTipoInmueble" class="form-label perm-label">Tipo de inmueble</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">apartment</mat-icon>
+              </span>
+              <select class="form-select flex-grow-1" formControlName="tipoInmueble" id="incTipoInmueble">
+                <option value="" disabled>Seleccione…</option>
+                <option value="COMERCIAL">Local u oficina (comercial)</option>
+                <option value="RESIDENCIAL">Vivienda (residencial)</option>
+                <option value="ESTACIONAMIENTO">Estacionamiento</option>
+                <option value="MIXTO">Uso mixto</option>
+                <option value="OTRO">Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="incPeriodicidad" class="form-label perm-label">Periodicidad de actualización INPC</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">calendar_month</mat-icon>
+              </span>
+              <select class="form-select flex-grow-1" formControlName="periodicidad" id="incPeriodicidad">
+                <option value="" disabled>Seleccione…</option>
+                <option value="ANUAL">Anual</option>
+                <option value="SEMESTRAL">Semestral</option>
+                <option value="TRIMESTRAL">Trimestral</option>
+                <option value="MENSUAL">Mensual</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="incMesAplicacion" class="form-label perm-label">Mes de renovación (opcional)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">event</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="number"
+                  formControlName="mesAplicacion"
+                  class="form-control"
+                  id="incMesAplicacion"
+                  placeholder="1–12"
+                  min="1"
+                  max="12"
+                  step="1"
+                />
+                <label for="incMesAplicacion">Mes del calendario (1 a 12)</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="incIndice" class="form-label perm-label">Índice o referencia (opcional)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">gavel</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="text"
+                  formControlName="indiceReferencia"
+                  class="form-control"
+                  id="incIndice"
+                  placeholder="Ej.: INPC, IPC, pactado en contrato"
+                  maxlength="120"
+                />
+                <label for="incIndice">Ej.: INPC, cláusula contractual</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <label for="incDescripcion" class="form-label perm-label">Descripción o notas (opcional)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">notes</mat-icon>
+              </span>
+              <input
+                type="text"
+                formControlName="descripcion"
+                class="form-control"
+                id="incDescripcion"
+                placeholder="Contexto del arrendamiento, vigencia, observaciones para valuación o cobro…"
+              />
             </div>
           </div>
         </div>

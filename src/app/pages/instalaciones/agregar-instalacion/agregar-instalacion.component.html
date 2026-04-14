@@ -38,14 +38,14 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label for="idCliente" class="form-label perm-label">Cliente</label>
+                        <label for="idCliente" class="form-label perm-label">Arrendador</label>
                         <div class="input-group input-group-lg perm-ig">
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">person</mat-icon>
                             </span>
                             <div class="form-floating flex-grow-1 perm-select-floating">
                                 <select class="form-select" id="idCliente" formControlName="idCliente">
-                                    <option [ngValue]="null" disabled>Selecciona un cliente
+                                    <option [ngValue]="null" disabled>Selecciona un arrendador
                                     </option>
                                     <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
                                         {{ cliente.nombre }}

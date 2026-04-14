@@ -51,7 +51,7 @@
                 <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
                 <dxi-column caption="Acciones" cellTemplate="Acciones" alignment="center" *appHasPermission="['50', '52']" dataType="string"
                     [width]="220"></dxi-column>
-                <dxi-column dataField="nombreCliente" caption="Cliente" alignment="center" cellTemplate="client"
+                <dxi-column dataField="nombreCliente" caption="Arrendador" alignment="center" cellTemplate="client"
                     dataType="string">
                     <div *dxTemplate="let r of 'client'">
                         {{ r.data?.equipo?.cliente.nombre }} {{ r.data?.equipo?.cliente.apellidoPaterno }} {{

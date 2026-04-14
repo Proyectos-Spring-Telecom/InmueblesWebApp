@@ -1,0 +1,458 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+  <header class="perm-head perm-head--left" role="region" aria-label="Sección: Contratos">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>description</mat-icon>
+    </div>
+    <div class="perm-head__text">
+      <span class="eyebrow">Sección</span>
+      <h2>{{ title }}</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Administración</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Contratos</span>
+    </nav>
+  </header>
+
+  <div class="surface">
+    <section class="perm-form-nc container-fluid py-4">
+      <form [formGroup]="contratoForm" class="perm-form-body" autocomplete="off" novalidate>
+        <div class="row g-4">
+          <div class="col-12 col-md-4">
+            <label for="ctrTipoMod" class="form-label perm-label">Tipo de modificación</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">list</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="ctrTipoMod" formControlName="tipoModificacion" required>
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let t of tiposModificacion" [ngValue]="t">{{ t }}</option>
+                </select>
+                <label for="ctrTipoMod">Seleccione…</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrNumero" class="form-label perm-label">Contrato</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">edit</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="ctrNumero"
+                  formControlName="numeroContrato"
+                  placeholder="Ej.: PC-0006"
+                  required
+                />
+                <label for="ctrNumero">Ej.: PC-0006</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrArrendador" class="form-label perm-label">Arrendador</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">business</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="ctrArrendador" formControlName="idArrendador" required>
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
+                    {{ cliente.nombre }}
+                    <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
+                    <ng-container *ngIf="cliente.apellidoMaterno">{{ ' ' + cliente.apellidoMaterno }}</ng-container>
+                  </option>
+                </select>
+                <label for="ctrArrendador">Selecciona un arrendador</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrArrendatario" class="form-label perm-label">Arrendatario</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">person</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="ctrArrendatario" formControlName="idArrendatario" required>
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
+                    {{ cliente.nombre }}
+                    <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
+                    <ng-container *ngIf="cliente.apellidoMaterno">{{ ' ' + cliente.apellidoMaterno }}</ng-container>
+                  </option>
+                </select>
+                <label for="ctrArrendatario">Selecciona un arrendatario</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrInmuebles" class="form-label perm-label">Inmueble(s)</label>
+            <div class="input-group input-group-lg perm-ig align-items-start">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">apartment</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select
+                  class="form-select"
+                  id="ctrInmuebles"
+                  formControlName="idInmuebles"
+                >
+                  <option>
+                  </option>
+                </select>
+                <label for="ctrInmuebles">Seleccione...</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrFechaIni" class="form-label perm-label">Fecha de inicio</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">event</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="date" class="form-control" id="ctrFechaIni" formControlName="fechaInicio" required />
+                <label for="ctrFechaIni">dd/mm/aaaa</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrFechaFin" class="form-label perm-label">Fecha de término</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">event</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="date" class="form-control" id="ctrFechaFin" formControlName="fechaTermino" required />
+                <label for="ctrFechaFin">dd/mm/aaaa</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrMoneda" class="form-label perm-label">Tipo de moneda</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">payments</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="ctrMoneda" formControlName="tipoMoneda" required>
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let m of tiposMoneda" [ngValue]="m">{{ m }}</option>
+                </select>
+                <label for="ctrMoneda">Seleccione…</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrM2" class="form-label perm-label">Metros rentados</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">straighten</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ctrM2"
+                  formControlName="metrosRentados"
+                  min="0"
+                  step="0.01"
+                  placeholder="0"
+                  required
+                />
+                <label for="ctrM2">m²</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrCostoM2" class="form-label perm-label">Costo por m²</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">attach_money</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ctrCostoM2"
+                  formControlName="costoPorM2"
+                  min="0"
+                  step="0.0001"
+                  placeholder="0"
+                  required
+                />
+                <label for="ctrCostoM2">Importe</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrMesesDep" class="form-label perm-label">Meses de depósito</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">schedule</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="ctrMesesDep" formControlName="mesesDeposito" required>
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let m of mesesCatalogo" [ngValue]="m.id">{{ m.text }}</option>
+                </select>
+                <label for="ctrMesesDep">Seleccione…</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrMontoDep" class="form-label perm-label">Monto de depósito</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">attach_money</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ctrMontoDep"
+                  formControlName="montoDeposito"
+                  min="0"
+                  step="0.01"
+                  placeholder="0"
+                  required
+                />
+                <label for="ctrMontoDep">Importe</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrPctMant" class="form-label perm-label">% de mantenimiento</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">percent</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ctrPctMant"
+                  formControlName="pctMantenimiento"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  placeholder="0"
+                  required
+                />
+                <label for="ctrPctMant">Sobre renta base</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrAnosArr" class="form-label perm-label">Años forzosos (arrendador)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">calendar_view_month</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="ctrAnosArr" formControlName="anosForzososArrendador" required>
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let a of anosForzososCatalogo" [ngValue]="a.id">{{ a.text }}</option>
+                </select>
+                <label for="ctrAnosArr">Seleccione…</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrAnosArre" class="form-label perm-label">Años forzosos (arrendatario)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">calendar_view_month</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="ctrAnosArre" formControlName="anosForzososArrendatario" required>
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let a of anosForzososCatalogo" [ngValue]="a.id">{{ a.text }}</option>
+                </select>
+                <label for="ctrAnosArre">Seleccione…</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrMesesAdel" class="form-label perm-label">Meses de adelanto</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">schedule</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="ctrMesesAdel" formControlName="mesesAdelanto" required>
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let m of mesesCatalogo" [ngValue]="m.id">{{ m.text }}</option>
+                </select>
+                <label for="ctrMesesAdel">Seleccione…</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="ctrMontoAdel" class="form-label perm-label">Monto de adelanto</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">attach_money</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ctrMontoAdel"
+                  formControlName="montoAdelanto"
+                  min="0"
+                  step="0.01"
+                  placeholder="0"
+                  required
+                />
+                <label for="ctrMontoAdel">Importe</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <h6 class="mb-3 mt-2">Totales calculados (IVA 16%)</h6>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label perm-label">Subtotal de renta</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">functions</mat-icon></span>
+              <input type="text" class="form-control" formControlName="subtotalRenta" readonly />
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label perm-label">IVA de renta</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">percent</mat-icon></span>
+              <input type="text" class="form-control" formControlName="ivaRenta" readonly />
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label perm-label">Renta total</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">attach_money</mat-icon></span>
+              <input type="text" class="form-control" formControlName="rentaTotal" readonly />
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label perm-label">Subtotal de mantenimiento</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">functions</mat-icon></span>
+              <input type="text" class="form-control" formControlName="subtotalMantenimiento" readonly />
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label perm-label">IVA de mantenimiento</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">percent</mat-icon></span>
+              <input type="text" class="form-control" formControlName="ivaMantenimiento" readonly />
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label perm-label">Mantenimiento total</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">attach_money</mat-icon></span>
+              <input type="text" class="form-control" formControlName="mantenimientoTotal" readonly />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-8">
+            <label for="ctrObs" class="form-label perm-label">Observaciones</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">notes</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="ctrObs"
+                  formControlName="observaciones"
+                  placeholder="Notas del contrato"
+                  required
+                />
+                <label for="ctrObs">Notas del contrato</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 uploader-wrap">
+            <label class="form-label perm-label d-block mb-2">Documento (PDF)</label>
+            <div class="uploader-hero">
+              <div
+                class="uploader"
+                [class.dragging]="pdfDragging"
+                (dragover)="onPdfDragOver($event)"
+                (dragleave)="onPdfDragLeave($event)"
+                (drop)="onPdfDrop($event)"
+              >
+                <div class="uploader__glow"></div>
+                <div class="uploader__body">
+                  <div class="uploader__icon">
+                    <mat-icon>picture_as_pdf</mat-icon>
+                  </div>
+                  <h5 class="uploader__title">Sube tu PDF</h5>
+                  <p class="uploader__subtitle">Arrastra y suelta aquí o</p>
+                  <div class="uploader__cta">
+                    <button mat-flat-button color="primary" type="button" (click)="openContratoPdfPicker()">
+                      Seleccionar archivo
+                    </button>
+                    <span class="uploader__badge">PDF · Contrato</span>
+                  </div>
+                  <div class="uploader__status" *ngIf="pdfFileName || (documentoExistenteUrl && !pdfFile)">
+                    <div class="uploader__filename" *ngIf="pdfFileName">{{ pdfFileName }}</div>
+                    <a
+                      *ngIf="documentoExistenteUrl && !pdfFile"
+                      class="uploader__filename uploader__filename--link"
+                      [href]="documentoExistenteUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >Ver documento actual</a>
+                  </div>
+                  <input
+                    #contratoPdfInput
+                    type="file"
+                    accept="application/pdf"
+                    (change)="onPdfSelected($event)"
+                    class="uploader__input"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
+          <button class="button-success" role="button" (click)="submit()">
+            <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
+          </button>
+          <button type="button" class="button-danger" (click)="regresar()">
+            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

@@ -7,6 +7,20 @@ import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { FactoresService } from 'src/app/services/moduleService/factores.service';
 import Swal from 'sweetalert2';
 
+const CATEGORIA_FACTOR_LABEL: Record<string, string> = {
+  UBICACION: 'Ubicación y entorno',
+  SUPERFICIE: 'Superficie / físico',
+  MERCADO: 'Mercado / demanda',
+  USO_SUELO: 'Uso de suelo',
+  OTRO: 'Otro',
+};
+
+const UNIDAD_FACTOR_LABEL: Record<string, string> = {
+  COEFICIENTE: 'Coeficiente',
+  POR_M2: 'Por m²',
+  PORCENTUAL: 'Porcentual (%)',
+};
+
 @Component({
   selector: 'app-lista-factores',
   templateUrl: './lista-factores.component.html',
@@ -180,6 +194,10 @@ export class ListaFactoresComponent implements OnInit {
                 : item?.estatus === 0
                   ? 'Inactivo'
                   : null,
+            categoriaLabel:
+              CATEGORIA_FACTOR_LABEL[item?.categoria] ?? item?.categoria ?? '',
+            unidadLabel: UNIDAD_FACTOR_LABEL[item?.unidad] ?? item?.unidad ?? '',
+            formulaTexto: `${item?.nombre ?? 'Factor'} = (${item?.valor ?? 0}) x ${UNIDAD_FACTOR_LABEL[item?.unidad] ?? item?.unidad ?? 'unidad'}`,
           }));
 
           this.totalRegistros = totalRegistros;

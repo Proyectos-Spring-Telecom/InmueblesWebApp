@@ -6,6 +6,16 @@ import { environment } from '../../../environments/environment';
 export interface IncrementoPayload {
   nombre: string;
   porcentaje: number;
+  /** Descripción del criterio de aplicación (contrato, cláusula, etc.) */
+  descripcion?: string | null;
+  /** Comercial, residencial, estacionamiento u otro */
+  tipoInmueble?: string | null;
+  /** Frecuencia del incremento pactada */
+  periodicidad?: string | null;
+  /** Mes del año en que aplica la renovación (1–12), si aplica */
+  mesAplicacion?: number | null;
+  /** Referencia legal o índice (p. ej. INPC, IPC) */
+  indiceReferencia?: string | null;
 }
 
 @Injectable({
