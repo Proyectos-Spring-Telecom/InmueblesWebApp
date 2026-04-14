@@ -2,18 +2,59 @@ import {
   ChangeDetectorRef,
   Component,
   NgZone,
+  OnDestroy,
   OnInit,
   ViewChild,
 } from '@angular/core';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { DxDataGridComponent } from 'devextreme-angular';
 import { io, Socket } from 'socket.io-client';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { EMPTY, forkJoin, Observable, of, Subscription } from 'rxjs';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
+import { ClientesService } from 'src/app/services/moduleService/clientes.service';
+import { ContratosService } from 'src/app/services/moduleService/contratos.service';
+import { InstalacionService } from 'src/app/services/moduleService/instalaciones.service';
 import { InstalacionCentral } from 'src/app/services/moduleService/instalacionesCentral.service';
-import { SocketService } from 'src/app/services/moduleService/socket.service';
-import { environment } from 'src/environments/environment.prod';
+
+const IVA_CONTRATO = 0.16;
+
+/** Vista de solo lectura del modal local: mismos campos que el formulario de contratos. */
+interface VistaContratoLocalModal {
+  tipoModificacion: string;
+  numeroContrato: string;
+  arrendador: string;
+  arrendatario: string;
+  inmuebles: string;
+  fechaInicio: string;
+  fechaTermino: string;
+  tipoMoneda: string;
+  metrosRentados: string;
+  costoPorM2: string;
+  mesesDeposito: string;
+  montoDeposito: string;
+  pctMantenimiento: string;
+  anosForzososArrendador: string;
+  anosForzososArrendatario: string;
+  mesesAdelanto: string;
+  montoAdelanto: string;
+  subtotalRenta: string;
+  ivaRenta: string;
+  rentaTotal: string;
+  subtotalMantenimiento: string;
+  ivaMantenimiento: string;
+  mantenimientoTotal: string;
+  observaciones: string;
+  documentoUrl: string | null;
+  esDemo: boolean;
+}
+
+interface ServicioDetalle {
+  concepto: string;
+  contrato: string;
+}
 
 @Component({
   selector: 'app-monitoreo-instalacion',
@@ -31,12 +72,49 @@ import { environment } from 'src/environments/environment.prod';
         ),
       ]),
     ]),
+    trigger('contractDimAnim', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('180ms ease-out', style({ opacity: 1 })),
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ opacity: 0 })),
+      ]),
+    ]),
+    trigger('contractModalAnim', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(12px) scale(0.98)' }),
+        animate(
+          '220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          style({ opacity: 1, transform: 'translateY(0) scale(1)' }),
+        ),
+      ]),
+      transition(':leave', [
+        animate(
+          '170ms cubic-bezier(0.4, 0, 1, 1)',
+          style({ opacity: 0, transform: 'translateY(8px) scale(0.985)' }),
+        ),
+      ]),
+    ]),
   ],
 })
-export class MonitoreoInstalacionComponent implements OnInit {
+export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   private readonly PREVIEW_SERIE = 'preview-demo';
   isPreviewMode = false;
   showInmuebleExtras = false;
+  /** Tema y copy: misma estructura de página, distinta identidad visual (`?vista=local` o `?vista=inmueble`). */
+  vistaEntidad: 'inmueble' | 'local' = 'inmueble';
+  /** Contrato asociado en URL (`?idContrato=`) para cargar el mismo modelo que el formulario de contratos. */
+  idContratoQuery: number | null = null;
+  inmuebleEsRenta = true;
+  localEstatus: 'ocupado' | 'libre' = 'ocupado';
+  mostrarModalContratoLocal = false;
+  contratoModalLoading = false;
+  contratoModalError: string | null = null;
+  contratoModal: VistaContratoLocalModal | null = null;
+  private clientesNombreMap: Map<number, string> | null = null;
+  private inmueblesNombreMap: Map<number, string> | null = null;
+  private vistaQuerySub?: Subscription;
   now = new Date();
   readonly ubicacionLat = 18.9242;
   readonly ubicacionLng = -99.2216;
@@ -52,15 +130,26 @@ export class MonitoreoInstalacionComponent implements OnInit {
       archivos: ['Escritura 235,444 Constitucion BHV.pdf'],
     },
   ];
-  readonly servicios = [
-    { concepto: 'Agua', contrato: '54035' },
-    { concepto: 'Luz', contrato: '348150305391' },
-    { concepto: 'Predial', contrato: '110009829001' },
-  ];
+  private readonly referenciasServicioBase: Record<string, string> = {
+    Agua: 'SRV-AGUA-54035',
+    Luz: 'SRV-LUZ-348150305391',
+    'Licencia funcionamiento': 'SRV-LIC-2026-001',
+    Seguridad: 'SRV-SEG-88210',
+    Limpieza: 'SRV-LMP-64012',
+    Internet: 'SRV-INT-78155',
+    Renta: 'CON-RTA-2026-004',
+    Mantenimiento: 'CON-MNT-2026-004',
+    Predio: 'IMP-PRED-110009829001',
+  };
   readonly zonas = [
     { zona: 'Planta Baja Corporativo Piramide', superficie: '2,598.31 m²' },
     { zona: '1er. Piso Corporativo Piramide', superficie: '2,003.35 m²' },
     { zona: '2do Piso Corporativo Piramide', superficie: '1,191.07 m²' },
+  ];
+  readonly estacionamientosInmueble = [
+    { nombrePensionado: 'Juan Pérez', numeroTarjeta: 'TAR-1001', arrendatario: 'Santory' },
+    { nombrePensionado: 'María Gómez', numeroTarjeta: 'TAR-1042', arrendatario: 'Spring Telecom México' },
+    { nombrePensionado: 'Luis Ramírez', numeroTarjeta: 'TAR-1108', arrendatario: 'Santory' },
   ];
   readonly pagosData = [
     { concepto: 'Mantenimiento', fechaPago: '2026-04-02', monto: 12850.5, metodo: 'Transferencia', estatus: 'Pagado' },
@@ -139,10 +228,408 @@ export class MonitoreoInstalacionComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
     private route: ActivatedRoute,
-    private router: Router
-  ) { }  
+    private router: Router,
+    private contratosService: ContratosService,
+    private clientesService: ClientesService,
+    private instalacionService: InstalacionService,
+  ) { }
 
-  regresar(){
+  ngOnDestroy(): void {
+    this.vistaQuerySub?.unsubscribe();
+  }
+
+  /** `?vista=local|inmueble` o `?origen=local` para vista de local (tema morado). */
+  private applyVistaDesdeQuery(qp: ParamMap): void {
+    const vista = (qp.get('vista') ?? '').toLowerCase();
+    const origen = (qp.get('origen') ?? '').toLowerCase();
+    this.vistaEntidad =
+      vista === 'local' || origen === 'local' ? 'local' : 'inmueble';
+    this.showInmuebleExtras = this.vistaEntidad === 'inmueble';
+    const esRentaRaw = (qp.get('esRenta') ?? '').trim().toLowerCase();
+    const estatusLocalRaw = (qp.get('estatusLocal') ?? '').trim().toLowerCase();
+    if (esRentaRaw === 'true' || esRentaRaw === '1' || esRentaRaw === 'si') {
+      this.inmuebleEsRenta = true;
+    } else if (esRentaRaw === 'false' || esRentaRaw === '0' || esRentaRaw === 'no') {
+      this.inmuebleEsRenta = false;
+    } else {
+      this.inmuebleEsRenta = true;
+    }
+    this.localEstatus = estatusLocalRaw === 'libre' ? 'libre' : 'ocupado';
+    const idRaw = qp.get('idContrato');
+    const idn = idRaw != null && String(idRaw).trim() !== '' ? Number(idRaw) : NaN;
+    this.idContratoQuery =
+      Number.isFinite(idn) && idn > 0 ? Math.floor(idn) : null;
+    this.cdr.markForCheck();
+  }
+
+  get serviciosVista(): ServicioDetalle[] {
+    const comunes = [
+      'Agua',
+      'Luz',
+      'Licencia funcionamiento',
+      'Seguridad',
+      'Limpieza',
+      'Internet',
+    ];
+    const conceptos =
+      this.vistaEntidad === 'local'
+        ? [...comunes, 'Renta', 'Mantenimiento']
+        : this.inmuebleEsRenta
+          ? [...comunes, 'Renta', 'Mantenimiento']
+          : [...comunes, 'Predio'];
+
+    return conceptos.map((concepto) => ({
+      concepto,
+      contrato: this.referenciasServicioBase[concepto] ?? 'N/D',
+    }));
+  }
+
+  abrirModalContratoLocal(): void {
+    this.mostrarModalContratoLocal = true;
+    this.contratoModalError = null;
+    this.contratoModal = null;
+    this.contratoModalLoading = true;
+    this.cdr.markForCheck();
+    this.cargarContenidoModalContrato();
+  }
+
+  cerrarModalContratoLocal(): void {
+    this.mostrarModalContratoLocal = false;
+    this.contratoModalLoading = false;
+    this.contratoModalError = null;
+    this.cdr.markForCheck();
+  }
+
+  private cargarContenidoModalContrato(): void {
+    if (this.idContratoQuery) {
+      this.getCatalogosMaps$()
+        .pipe(
+          catchError(() => {
+            this.contratoModal = null;
+            this.contratoModalError =
+              'No se pudieron cargar los catálogos de clientes o inmuebles.';
+            return EMPTY;
+          }),
+          switchMap((maps) =>
+            this.contratosService.obtenerContrato(this.idContratoQuery!).pipe(
+              map((res: any) => ({ maps, res })),
+              catchError(() => {
+                this.contratoModal = null;
+                this.contratoModalError =
+                  'No se pudo cargar el contrato. Verifique el identificador o su conexión.';
+                return EMPTY;
+              }),
+            ),
+          ),
+          finalize(() => {
+            this.contratoModalLoading = false;
+            this.cdr.markForCheck();
+          }),
+        )
+        .subscribe({
+          next: ({ maps, res }) => {
+            const d = res?.data ?? res ?? {};
+            this.contratoModal = this.buildVistaContratoDesdeBackend(
+              d,
+              maps.c,
+              maps.i,
+              false,
+            );
+            this.contratoModalError = null;
+          },
+        });
+      return;
+    }
+
+    this.getCatalogosMaps$()
+      .pipe(
+        catchError(() =>
+          of({ c: new Map<number, string>(), i: new Map<number, string>() }),
+        ),
+        finalize(() => {
+          this.contratoModalLoading = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (maps) => {
+          this.contratoModal = this.buildVistaContratoDemo(maps.c, maps.i);
+          this.contratoModalError = null;
+        },
+      });
+  }
+
+  private getCatalogosMaps$(): Observable<{
+    c: Map<number, string>;
+    i: Map<number, string>;
+  }> {
+    if (this.clientesNombreMap && this.inmueblesNombreMap) {
+      return of({ c: this.clientesNombreMap, i: this.inmueblesNombreMap });
+    }
+    return forkJoin({
+      clientes: this.clientesService.obtenerClientes(),
+      inmuebles: this.instalacionService.obtenerInstalaciones(),
+    }).pipe(
+      map(({ clientes, inmuebles }) => {
+        const c = this.mapClientesAResolver(clientes);
+        const i = this.mapInmueblesAResolver(inmuebles);
+        this.clientesNombreMap = c;
+        this.inmueblesNombreMap = i;
+        return { c, i };
+      }),
+    );
+  }
+
+  private mapClientesAResolver(res: any): Map<number, string> {
+    const m = new Map<number, string>();
+    const rows = res?.data ?? res ?? [];
+    (Array.isArray(rows) ? rows : []).forEach((cl: any) => {
+      const id = Number(cl?.id);
+      if (!Number.isFinite(id)) return;
+      const t = [cl?.nombre, cl?.apellidoPaterno, cl?.apellidoMaterno]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      m.set(id, t || `#${id}`);
+    });
+    return m;
+  }
+
+  private mapInmueblesAResolver(res: any): Map<number, string> {
+    const m = new Map<number, string>();
+    const rows = res?.data ?? res ?? [];
+    (Array.isArray(rows) ? rows : []).forEach((ins: any) => {
+      const id = Number(ins?.id);
+      if (!Number.isFinite(id)) return;
+      const t =
+        ins?.nombreInstalacion ?? ins?.nombre ?? ins?.clave ?? `#${id}`;
+      m.set(id, String(t));
+    });
+    return m;
+  }
+
+  private parseIdsInmuebles(raw: unknown): number[] {
+    if (raw == null) return [];
+    if (Array.isArray(raw)) {
+      return raw.map((x) => Number(x)).filter((n) => Number.isFinite(n));
+    }
+    if (typeof raw === 'string') {
+      try {
+        return this.parseIdsInmuebles(JSON.parse(raw));
+      } catch {
+        return raw
+          .split(',')
+          .map((s) => Number(s.trim()))
+          .filter((n) => Number.isFinite(n));
+      }
+    }
+    return [];
+  }
+
+  private toDateDisplay(v: unknown): string {
+    if (v == null || v === '') return '—';
+    const d = v instanceof Date ? v : new Date(String(v));
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  private mesesCatalogoTexto(v: unknown): string {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '—';
+    if (n === 0) return '0 meses';
+    return `${n} ${n === 1 ? 'mes' : 'meses'}`;
+  }
+
+  private anosForzososTexto(v: unknown): string {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '—';
+    return `${n} ${n === 1 ? 'año' : 'años'}`;
+  }
+
+  private formatoImporte(
+    n: number | null | undefined,
+    tipoMonedaLabel: string,
+  ): string {
+    if (n == null || !Number.isFinite(Number(n))) return '—';
+    const num = Number(n);
+    const isUsd = (tipoMonedaLabel || '').toUpperCase().includes('USD');
+    return num.toLocaleString(isUsd ? 'en-US' : 'es-MX', {
+      style: 'currency',
+      currency: isUsd ? 'USD' : 'MXN',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    });
+  }
+
+  private formatoNumero(
+    n: number | null | undefined,
+    maxFrac = 4,
+  ): string {
+    if (n == null || !Number.isFinite(Number(n))) return '—';
+    return Number(n).toLocaleString('es-MX', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: maxFrac,
+    });
+  }
+
+  private calcTotalesContrato(
+    metros: number,
+    costoM2: number,
+    pctMant: number,
+  ): {
+    subtotalRenta: number;
+    ivaRenta: number;
+    rentaTotal: number;
+    subtotalMantenimiento: number;
+    ivaMantenimiento: number;
+    mantenimientoTotal: number;
+  } {
+    const subR = metros * costoM2;
+    const ivaR = subR * IVA_CONTRATO;
+    const totR = subR + ivaR;
+    const subM = subR * (pctMant / 100);
+    const ivaM = subM * IVA_CONTRATO;
+    const totM = subM + ivaM;
+    return {
+      subtotalRenta: Math.round(subR * 1e6) / 1e6,
+      ivaRenta: Math.round(ivaR * 1e6) / 1e6,
+      rentaTotal: Math.round(totR * 1e6) / 1e6,
+      subtotalMantenimiento: Math.round(subM * 1e6) / 1e6,
+      ivaMantenimiento: Math.round(ivaM * 1e6) / 1e6,
+      mantenimientoTotal: Math.round(totM * 1e6) / 1e6,
+    };
+  }
+
+  private nombresInmueblesLista(
+    mapa: Map<number, string> | null,
+    ids: number[],
+  ): string {
+    if (!ids.length) return '—';
+    if (!mapa) return ids.join(', ');
+    return ids
+      .map((id) => mapa.get(id) ?? `#${id}`)
+      .join(' · ');
+  }
+
+  private nombreClienteId(
+    mapa: Map<number, string> | null,
+    id: number | null,
+  ): string {
+    if (id == null || !Number.isFinite(id)) return '—';
+    return mapa?.get(id) ?? `#${id}`;
+  }
+
+  private buildVistaContratoDesdeBackend(
+    d: any,
+    mapC: Map<number, string>,
+    mapI: Map<number, string>,
+    esDemo: boolean,
+  ): VistaContratoLocalModal {
+    const tipoMoneda = d.tipoMoneda != null ? String(d.tipoMoneda) : '—';
+    const m = Number(d.metrosRentados) || 0;
+    const c = Number(d.costoPorM2) || 0;
+    const p = Number(d.pctMantenimiento) || 0;
+    const t = this.calcTotalesContrato(m, c, p);
+    const idArr = this.parseIdsInmuebles(d.idInmuebles ?? d.idsInmuebles);
+    const idArrendador =
+      d.idArrendador != null ? Number(d.idArrendador) : null;
+    const idArrendatario =
+      d.idArrendatario != null ? Number(d.idArrendatario) : null;
+    return {
+      tipoModificacion:
+        d.tipoModificacion != null ? String(d.tipoModificacion) : '—',
+      numeroContrato:
+        d.numeroContrato != null ? String(d.numeroContrato) : '—',
+      arrendador: this.nombreClienteId(mapC, idArrendador),
+      arrendatario: this.nombreClienteId(mapC, idArrendatario),
+      inmuebles: this.nombresInmueblesLista(mapI, idArr),
+      fechaInicio: this.toDateDisplay(d.fechaInicio),
+      fechaTermino: this.toDateDisplay(d.fechaTermino),
+      tipoMoneda,
+      metrosRentados: this.formatoNumero(m, 2),
+      costoPorM2: this.formatoNumero(c, 4),
+      mesesDeposito: this.mesesCatalogoTexto(d.mesesDeposito),
+      montoDeposito: this.formatoImporte(
+        d.montoDeposito != null ? Number(d.montoDeposito) : null,
+        tipoMoneda,
+      ),
+      pctMantenimiento:
+        d.pctMantenimiento != null && Number.isFinite(Number(d.pctMantenimiento))
+          ? `${Number(d.pctMantenimiento).toLocaleString('es-MX', { maximumFractionDigits: 2 })}%`
+          : '—',
+      anosForzososArrendador: this.anosForzososTexto(d.anosForzososArrendador),
+      anosForzososArrendatario: this.anosForzososTexto(
+        d.anosForzososArrendatario,
+      ),
+      mesesAdelanto: this.mesesCatalogoTexto(d.mesesAdelanto),
+      montoAdelanto: this.formatoImporte(
+        d.montoAdelanto != null ? Number(d.montoAdelanto) : null,
+        tipoMoneda,
+      ),
+      subtotalRenta: this.formatoImporte(t.subtotalRenta, tipoMoneda),
+      ivaRenta: this.formatoImporte(t.ivaRenta, tipoMoneda),
+      rentaTotal: this.formatoImporte(t.rentaTotal, tipoMoneda),
+      subtotalMantenimiento: this.formatoImporte(
+        t.subtotalMantenimiento,
+        tipoMoneda,
+      ),
+      ivaMantenimiento: this.formatoImporte(t.ivaMantenimiento, tipoMoneda),
+      mantenimientoTotal: this.formatoImporte(
+        t.mantenimientoTotal,
+        tipoMoneda,
+      ),
+      observaciones:
+        d.observaciones != null && String(d.observaciones).trim() !== ''
+          ? String(d.observaciones)
+          : '—',
+      documentoUrl: d.documentoUrl ?? d.documento ?? null,
+      esDemo,
+    };
+  }
+
+  private buildVistaContratoDemo(
+    mapC: Map<number, string> | null,
+    mapI: Map<number, string> | null,
+  ): VistaContratoLocalModal {
+    const ck = mapC && mapC.size ? Array.from(mapC.keys()) : [];
+    const ik = mapI && mapI.size ? Array.from(mapI.keys()) : [];
+    const idArrendador = ck[0] ?? 1;
+    const idArrendatario = ck[1] ?? ck[0] ?? 2;
+    const idsInmuebles = ik.length ? [ik[0]] : [1];
+    return this.buildVistaContratoDesdeBackend(
+      {
+        tipoModificacion: 'Por renovación',
+        numeroContrato: 'PC-DEMO-BHV-001',
+        idArrendador,
+        idArrendatario,
+        idInmuebles: idsInmuebles,
+        fechaInicio: '2025-01-15',
+        fechaTermino: '2028-01-14',
+        tipoMoneda: 'Peso (MXN)',
+        metrosRentados: 128.5,
+        costoPorM2: 385.5,
+        mesesDeposito: 2,
+        montoDeposito: 95000,
+        pctMantenimiento: 12,
+        anosForzososArrendador: 3,
+        anosForzososArrendatario: 2,
+        mesesAdelanto: 1,
+        montoAdelanto: 47500,
+        observaciones:
+          'Contrato de demostración para la vista de local. Cuando la URL incluya ?idContrato= se cargarán los datos reales del API.',
+        documentoUrl: null,
+      },
+      mapC ?? new Map<number, string>(),
+      mapI ?? new Map<number, string>(),
+      true,
+    );
+  }
+
+  regresar() {
     window.history.back();
   }
 
@@ -165,8 +652,10 @@ export class MonitoreoInstalacionComponent implements OnInit {
 
   ngOnInit(): void {
     this.numeroSerie = this.route.snapshot.paramMap.get('numeroSerie') ?? '';
-    const origen = this.route.snapshot.queryParamMap.get('origen') ?? '';
-    this.showInmuebleExtras = origen === 'inmueble';
+    this.applyVistaDesdeQuery(this.route.snapshot.queryParamMap);
+    this.vistaQuerySub = this.route.queryParamMap.subscribe((qp) =>
+      this.applyVistaDesdeQuery(qp),
+    );
 
     // Fecha fin: hoy a la hora actual
     this.fechaFin = new Date();

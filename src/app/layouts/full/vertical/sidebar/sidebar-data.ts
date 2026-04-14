@@ -60,6 +60,15 @@ export const navItems: NavItem[] = [
         route: '/equipos',
         permission: Permiso.CONSULTAR_EQUIPOS,
       },
+      
+      {
+        displayName: 'INPC',
+        route: '/incrementos',
+        /* permission: [
+          Permiso.CONSULTAR_DEPARTAMENTOS,
+          Permiso.CONSULTAR_INCREMENTOS,
+        ], */
+      },
       {
         displayName: 'Factores',
         route: '/factores',
@@ -76,7 +85,7 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    displayName: 'Clientes',
+    displayName: 'Arrendadores',
     iconName: 'address-book',
     route: '/menu-level',
     // Mostrar si tiene al menos un permiso de clientes
@@ -88,13 +97,13 @@ export const navItems: NavItem[] = [
     ],
     children: [
       {
-        displayName: 'Agregar Cliente',
+        displayName: 'Agregar Arrendador',
         // iconName: 'user-cog',
         route: '/clientes/agregar-cliente',
         permission: Permiso.AGREGAR_CLIENTE,
       },
       {
-        displayName: 'Lista Clientes',
+        displayName: 'Lista Arrendadores',
         // iconName: 'user-cog',
         route: '/clientes',
         permission: Permiso.CONSULTA_CLIENTE,
@@ -169,6 +178,11 @@ export const navItems: NavItem[] = [
     permission: Permiso.CONSULTAR_OFICINA_CENTRAL,
   },
   {
+    displayName: 'Estacionamiento',
+    iconName: 'parking',
+    route: '/estacionamiento',
+  },
+  /* {
     displayName: 'Instalaciones',
     iconName: 'building-warehouse',
     route: '/instalaciones',
@@ -178,18 +192,14 @@ export const navItems: NavItem[] = [
     displayName: 'Departamentos',
     iconName: 'building-community',
     route: '/departamentos',
-    // Mostrar si tiene al menos un permiso de departamentos
     permission: Permiso.CONSULTAR_DEPARTAMENTOS,
-  },
-  {
-    displayName: 'Incrementos',
-    iconName: 'trending-up',
-    route: '/incrementos',
-    /* permission: [
-      Permiso.CONSULTAR_DEPARTAMENTOS,
-      Permiso.CONSULTAR_INCREMENTOS,
-    ], */
-  },
+  }, */
+  /* {
+    displayName: 'Contratos',
+    iconName: 'file-text',
+    route: '/contratos',
+    permission: Permiso.CONSULTAR_DEPARTAMENTOS,
+  }, */
   //{
   //  navCap: 'Reportes',
   //},

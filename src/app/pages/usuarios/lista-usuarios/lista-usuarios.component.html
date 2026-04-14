@@ -55,7 +55,7 @@
                     <img *ngIf="data.value == null" style="max-width: 100px;"
                         src="https://analiticadevideo.s3.us-east-1.amazonaws.com/Usuarios/d9ad9d73-b046-43a2-a4a0-d5fc2f3e3597.png" />
                 </div>
-                <dxi-column caption="Cliente" alignment="center" cellTemplate="clien">
+                <dxi-column caption="Arrendador" alignment="center" cellTemplate="clien">
                     <div *dxTemplate="let f of 'clien'">
                         {{ f.data.clienteNombre || ' ' }} {{ f.data.ApellidoPaternoCliente || ' ' }} {{
                         f.data.ApellidoMaternoCliente || ' ' }}

@@ -7,6 +7,21 @@ import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { IncrementosService } from 'src/app/services/moduleService/incrementos.service';
 import Swal from 'sweetalert2';
 
+const TIPO_INMUEBLE_LABEL: Record<string, string> = {
+  COMERCIAL: 'Comercial',
+  RESIDENCIAL: 'Residencial',
+  ESTACIONAMIENTO: 'Estacionamiento',
+  MIXTO: 'Mixto',
+  OTRO: 'Otro',
+};
+
+const PERIODICIDAD_LABEL: Record<string, string> = {
+  ANUAL: 'Anual',
+  SEMESTRAL: 'Semestral',
+  TRIMESTRAL: 'Trimestral',
+  MENSUAL: 'Mensual',
+};
+
 @Component({
   selector: 'app-lista-incrementos',
   templateUrl: './lista-incrementos.component.html',
@@ -56,7 +71,7 @@ export class ListaIncrementosComponent implements OnInit {
   activar(rowData: any) {
     Swal.fire({
       title: '¡Activar!',
-      html: `¿Está seguro que requiere activar el incremento: <strong>${rowData.nombre}</strong>?`,
+      html: `¿Está seguro que requiere activar el registro de INPC: <strong>${rowData.nombre}</strong>?`,
       icon: 'warning',
       background: '#141a21',
       color: '#ffffff',
@@ -73,7 +88,7 @@ export class ListaIncrementosComponent implements OnInit {
               background: '#141a21',
               color: '#ffffff',
               title: '¡Confirmación Realizada!',
-              html: `El incremento ha sido activado.`,
+              html: `El registro de INPC ha sido activado.`,
               icon: 'success',
               confirmButtonColor: '#3085d6',
               confirmButtonText: 'Confirmar',
@@ -100,7 +115,7 @@ export class ListaIncrementosComponent implements OnInit {
   desactivar(rowData: any) {
     Swal.fire({
       title: '¡Desactivar!',
-      html: `¿Está seguro que requiere desactivar el incremento: <strong>${rowData.nombre}</strong>?`,
+      html: `¿Está seguro que requiere desactivar el registro de INPC: <strong>${rowData.nombre}</strong>?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -115,7 +130,7 @@ export class ListaIncrementosComponent implements OnInit {
           () => {
             Swal.fire({
               title: '¡Confirmación Realizada!',
-              html: `El incremento ha sido desactivado.`,
+              html: `El registro de INPC ha sido desactivado.`,
               icon: 'success',
               confirmButtonColor: '#3085d6',
               confirmButtonText: 'Confirmar',
@@ -180,6 +195,10 @@ export class ListaIncrementosComponent implements OnInit {
                 : item?.estatus === 0
                   ? 'Inactivo'
                   : null,
+            tipoInmuebleLabel:
+              TIPO_INMUEBLE_LABEL[item?.tipoInmueble] ?? item?.tipoInmueble ?? '',
+            periodicidadLabel:
+              PERIODICIDAD_LABEL[item?.periodicidad] ?? item?.periodicidad ?? '',
           }));
 
           this.totalRegistros = totalRegistros;

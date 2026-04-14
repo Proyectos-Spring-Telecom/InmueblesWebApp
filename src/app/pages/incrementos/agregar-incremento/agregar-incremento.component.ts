@@ -2,7 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { IncrementosService } from 'src/app/services/moduleService/incrementos.service';
+import {
+  IncrementoPayload,
+  IncrementosService,
+} from 'src/app/services/moduleService/incrementos.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -17,7 +20,7 @@ export class AgregarIncrementoComponent implements OnInit {
   public loading: boolean = false;
   public incrementoForm: FormGroup;
   public idIncremento: number;
-  public title = 'Agregar Incremento';
+  public title = 'Agregar INPC';
 
   constructor(
     private fb: FormBuilder,
@@ -31,7 +34,7 @@ export class AgregarIncrementoComponent implements OnInit {
     this.activatedRouted.params.subscribe((params) => {
       this.idIncremento = params['idIncremento'];
       if (this.idIncremento) {
-        this.title = 'Actualizar Incremento';
+        this.title = 'Actualizar INPC';
         this.obtenerIncremento();
       }
     });
@@ -44,6 +47,14 @@ export class AgregarIncrementoComponent implements OnInit {
         {
           nombre: data?.nombre ?? '',
           porcentaje: data?.porcentaje ?? 0,
+          descripcion: data?.descripcion ?? '',
+          tipoInmueble: data?.tipoInmueble ?? '',
+          periodicidad: data?.periodicidad ?? '',
+          mesAplicacion:
+            data?.mesAplicacion != null && data?.mesAplicacion !== ''
+              ? Number(data.mesAplicacion)
+              : null,
+          indiceReferencia: data?.indiceReferencia ?? '',
         },
         { emitEvent: false },
       );
@@ -55,6 +66,11 @@ export class AgregarIncrementoComponent implements OnInit {
     this.incrementoForm = this.fb.group({
       nombre: ['', Validators.required],
       porcentaje: [0, [Validators.required, Validators.min(0)]],
+      descripcion: ['', [Validators.maxLength(2000)]],
+      tipoInmueble: ['', Validators.required],
+      periodicidad: ['', Validators.required],
+      mesAplicacion: [null as number | null],
+      indiceReferencia: ['', [Validators.maxLength(120)]],
     });
   }
 
@@ -71,6 +87,11 @@ export class AgregarIncrementoComponent implements OnInit {
   private etiquetas: Record<string, string> = {
     nombre: 'Nombre',
     porcentaje: 'Porcentaje',
+    descripcion: 'Descripción',
+    tipoInmueble: 'Tipo de inmueble',
+    periodicidad: 'Periodicidad',
+    mesAplicacion: 'Mes de aplicación',
+    indiceReferencia: 'Índice o referencia',
   };
 
   private mostrarErroresValidacion(esActualizar: boolean) {
@@ -112,22 +133,64 @@ export class AgregarIncrementoComponent implements OnInit {
     });
   }
 
+  private validarMesOpcional(): boolean {
+    const v = this.incrementoForm.get('mesAplicacion')?.value;
+    if (v === null || v === undefined || v === '') {
+      return true;
+    }
+    const n = Number(v);
+    if (!Number.isFinite(n) || n < 1 || n > 12) {
+      Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: 'Mes de aplicación',
+        text: 'Indique un mes entre 1 y 12, o deje el campo vacío.',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+      });
+      return false;
+    }
+    return true;
+  }
+
+  private buildPayload(): IncrementoPayload {
+    const v = this.incrementoForm.value;
+    const mesRaw = v.mesAplicacion;
+    let mes: number | null = null;
+    if (mesRaw !== null && mesRaw !== undefined && mesRaw !== '') {
+      const n = Number(mesRaw);
+      mes = Number.isFinite(n) ? n : null;
+    }
+    return {
+      nombre: (v.nombre ?? '').trim(),
+      porcentaje: Number(v.porcentaje),
+      descripcion: (v.descripcion ?? '').trim() || null,
+      tipoInmueble: (v.tipoInmueble ?? '').trim() || null,
+      periodicidad: (v.periodicidad ?? '').trim() || null,
+      mesAplicacion: mes != null && !Number.isNaN(mes) ? mes : null,
+      indiceReferencia: (v.indiceReferencia ?? '').trim() || null,
+    };
+  }
+
   agregar() {
+    if (!this.validarMesOpcional()) {
+      this.submitButton = 'Guardar';
+      this.loading = false;
+      return;
+    }
     if (this.incrementoForm.invalid) {
       this.mostrarErroresValidacion(false);
       return;
     }
-    const payload = {
-      nombre: this.incrementoForm.value.nombre,
-      porcentaje: Number(this.incrementoForm.value.porcentaje),
-    };
+    const payload = this.buildPayload();
     this.incrementosService.agregarIncremento(payload).subscribe(
       () => {
         this.submitButton = 'Guardar';
         this.loading = false;
         Swal.fire({
           title: '¡Operación Exitosa!',
-          text: `Se agregó un nuevo incremento de manera exitosa.`,
+          text: `Se agregó un nuevo registro de INPC de manera exitosa.`,
           icon: 'success',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -141,7 +204,7 @@ export class AgregarIncrementoComponent implements OnInit {
         this.loading = false;
         Swal.fire({
           title: '¡Ops!',
-          text: `Ocurrió un error al agregar el incremento.`,
+          text: `Ocurrió un error al agregar el registro de INPC.`,
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -153,21 +216,23 @@ export class AgregarIncrementoComponent implements OnInit {
   }
 
   actualizar() {
+    if (!this.validarMesOpcional()) {
+      this.submitButton = 'Actualizar';
+      this.loading = false;
+      return;
+    }
     if (this.incrementoForm.invalid) {
       this.mostrarErroresValidacion(true);
       return;
     }
-    const payload = {
-      nombre: this.incrementoForm.value.nombre,
-      porcentaje: Number(this.incrementoForm.value.porcentaje),
-    };
+    const payload = this.buildPayload();
     this.incrementosService.actualizarIncremento(this.idIncremento, payload).subscribe(
       () => {
         this.submitButton = 'Actualizar';
         this.loading = false;
         Swal.fire({
           title: '¡Operación Exitosa!',
-          text: `Los datos del incremento se actualizaron correctamente.`,
+          text: `Los datos del registro de INPC se actualizaron correctamente.`,
           icon: 'success',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -181,7 +246,7 @@ export class AgregarIncrementoComponent implements OnInit {
         this.loading = false;
         Swal.fire({
           title: '¡Ops!',
-          text: `Ocurrió un error al actualizar el incremento.`,
+          text: `Ocurrió un error al actualizar el registro de INPC.`,
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',

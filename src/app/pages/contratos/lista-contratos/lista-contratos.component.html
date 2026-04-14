@@ -1,0 +1,108 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+  <header class="perm-head" role="region" aria-label="Sección: Contratos">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>description</mat-icon>
+    </div>
+    <div class="perm-head__text">
+      <span class="eyebrow">Sección</span>
+      <h2>Contratos</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Administración</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Contratos</span>
+    </nav>
+  </header>
+
+  <div class="surface">
+    <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
+      <div *appHasPermission="'47'">
+        <button (click)="agregarContrato()" mat-flat-button class="bg-secondary">
+          <i class="fa fa-plus"></i> Agregar</button>
+      </div>
+      <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
+      <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+        {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+      </button>
+    </div>
+    <div class="mt-3">
+      <dx-data-grid
+        #gridContainer
+        id="gridContratos"
+        [columnHidingEnabled]="true"
+        [showBorders]="true"
+        [showColumnLines]="true"
+        [showRowLines]="true"
+        [rowAlternationEnabled]="true"
+        [dataSource]="listaContratos"
+        [keyExpr]="'id'"
+        [width]="'100%'"
+        [remoteOperations]="{ paging: true }"
+        [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'"
+        [pager]="{
+          showPageSizeSelector: true,
+          allowedPageSizes: [50],
+          showInfo: true,
+          infoText: 'Página {0} de {1}',
+          visible: true
+        }"
+        (onPageIndexChanged)="onPageIndexChanged($event)"
+        (onOptionChanged)="onGridOptionChanged($event)"
+      >
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar..."></dxo-search-panel>
+        <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+        <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+        <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+        <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+
+        <dxi-column
+          caption="Acciones"
+          cellTemplate="tplAcciones"
+          alignment="center"
+          *appHasPermission="'46'"
+          [width]="100"
+        ></dxi-column>
+
+        <dxi-column dataField="numeroContrato" caption="Contrato" dataType="string" [width]="120"></dxi-column>
+        <dxi-column dataField="tipoModificacion" caption="Tipo" dataType="string" [width]="140"></dxi-column>
+        <dxi-column dataField="nombreArrendador" caption="Arrendador" dataType="string"></dxi-column>
+        <dxi-column dataField="nombreArrendatario" caption="Arrendatario" dataType="string"></dxi-column>
+        <dxi-column dataField="inmueblesTexto" caption="Inmueble(s)" dataType="string" [minWidth]="160"></dxi-column>
+        <dxi-column dataField="fechaInicio" caption="Inicio" dataType="date" format="dd/MM/yyyy" [width]="110"></dxi-column>
+        <dxi-column dataField="fechaTermino" caption="Término" dataType="date" format="dd/MM/yyyy" [width]="110"></dxi-column>
+        <dxi-column dataField="tipoMoneda" caption="Moneda" dataType="string" [width]="120"></dxi-column>
+        <dxi-column dataField="rentaTotal" caption="Renta total" dataType="number" format="#0.##" [width]="120"></dxi-column>
+        <dxi-column dataField="mantenimientoTotal" caption="Mant. total" dataType="number" format="#0.##" [width]="120"></dxi-column>
+        <dxi-column
+          dataField="documentoUrl"
+          caption="PDF"
+          cellTemplate="tplDoc"
+          dataType="string"
+          [width]="72"
+          alignment="center"
+        ></dxi-column>
+
+        <div *dxTemplate="let row of 'tplAcciones'" class="d-flex gap-3 justify-content-center">
+          <button
+            type="button"
+            class="btnAcciones"
+            title="Editar"
+            (click)="actualizarContrato(row.data.id)"
+          >
+            <i class="fa fa-edit"></i>
+          </button>
+        </div>
+        <div *dxTemplate="let cell of 'tplDoc'">
+          @if (cell.value) {
+          <a [href]="cell.value" target="_blank" rel="noopener">PDF</a>
+          } @else {
+          <span>—</span>
+          }
+        </div>
+      </dx-data-grid>
+    </div>
+  </div>
+</div>

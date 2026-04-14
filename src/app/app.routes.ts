@@ -95,6 +95,11 @@ export const routes: Routes = [
           import('./pages/departamentos/departamentos.module').then((m) => m.DepartamentosModule),
       },
       {
+        path: 'contratos',
+        loadChildren: () =>
+          import('./pages/contratos/contratos.module').then((m) => m.ContratosModule),
+      },
+      {
         path: 'incrementos',
         loadChildren: () =>
           import('./pages/incrementos/incrementos.module').then((m) => m.IncrementosModule),
@@ -118,6 +123,11 @@ export const routes: Routes = [
         path: 'instalaciones',
         loadChildren: () =>
           import('./pages/instalaciones/instalaciones.module').then((m) => m.InstalacionesModule),
+      },
+      {
+        path: 'estacionamiento',
+        loadChildren: () =>
+          import('./pages/estacionamiento/estacionamiento.module').then((m) => m.EstacionamientoModule),
       },
     ],
   },

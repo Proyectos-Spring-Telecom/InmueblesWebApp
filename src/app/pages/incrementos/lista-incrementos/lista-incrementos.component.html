@@ -1,18 +1,18 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-  <header class="perm-head" role="region" aria-label="Sección: Incrementos">
+  <header class="perm-head" role="region" aria-label="Sección: INPC">
     <div class="perm-head__icon" aria-hidden="true">
-      <mat-icon>trending_up</mat-icon>
+      <mat-icon>receipt_long</mat-icon>
     </div>
 
     <div class="perm-head__text">
       <span class="eyebrow">Sección</span>
-      <h2>Incrementos</h2>
+      <h2>INPC</h2>
     </div>
 
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Administración</span>
       <span class="sep">/</span>
-      <span class="crumb active">Incrementos</span>
+      <span class="crumb active">INPC</span>
     </nav>
   </header>
 
@@ -20,7 +20,7 @@
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
       <div *appHasPermission="['47', '55']">
         <button (click)="agregarIncremento()" mat-flat-button class="bg-secondary">
-          <i class="fa fa-plus"></i> Agregar</button>
+          <i class="fa fa-plus"></i> Agregar INPC</button>
       </div>
       <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
       <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
@@ -67,14 +67,39 @@
           dataType="string"
           [width]="180"
         ></dxi-column>
-        <dxi-column dataField="nombre" caption="Nombre" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="nombre" caption="Concepto INPC" alignment="center" dataType="string"></dxi-column>
+        <dxi-column
+          dataField="tipoInmuebleLabel"
+          caption="Tipo de inmueble"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
+        <dxi-column
+          dataField="periodicidadLabel"
+          caption="Periodicidad"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
         <dxi-column
           dataField="porcentaje"
-          caption="Porcentaje"
+          caption="Variación INPC (%)"
           alignment="center"
           dataType="number"
           format="#0.##"
         ></dxi-column>
+        <dxi-column
+          dataField="mesAplicacion"
+          caption="Mes renovación"
+          alignment="center"
+          dataType="number"
+        ></dxi-column>
+        <dxi-column
+          dataField="indiceReferencia"
+          caption="Índice / referencia"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
+        <dxi-column dataField="descripcion" caption="Descripción" alignment="center" dataType="string"></dxi-column>
         <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="est" dataType="string">
           <div *dxTemplate="let f of 'est'">
             @if (f.data.estatus === 1) {

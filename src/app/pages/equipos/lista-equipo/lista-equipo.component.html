@@ -48,7 +48,7 @@
         <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
         <dxi-column caption="Acciones" cellTemplate="Acciones" alignment="center" *appHasPermission="['26', '28']" dataType="string"
           [width]="180"></dxi-column>
-        <dxi-column caption="Cliente" alignment="center" dataType="string" cellTemplate="tplCliente"></dxi-column>
+        <dxi-column caption="Arrendador" alignment="center" dataType="string" cellTemplate="tplCliente"></dxi-column>
         <div *dxTemplate="let r of 'tplCliente'">
           {{ r.data?.cliente?.nombre }}
           <ng-container *ngIf="r.data?.cliente?.apellidoPaterno"> {{ ' ' + r.data.cliente.apellidoPaterno

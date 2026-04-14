@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { FactoresService } from 'src/app/services/moduleService/factores.service';
+import { FactorPayload, FactoresService } from 'src/app/services/moduleService/factores.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -44,6 +44,10 @@ export class AgregarFactorComponent implements OnInit {
         {
           nombre: data?.nombre ?? '',
           valor: data?.valor ?? 0,
+          descripcion: data?.descripcion ?? '',
+          categoria: data?.categoria ?? '',
+          zonaReferencia: data?.zonaReferencia ?? '',
+          unidad: data?.unidad ?? '',
         },
         { emitEvent: false },
       );
@@ -54,7 +58,11 @@ export class AgregarFactorComponent implements OnInit {
   initForm() {
     this.factorForm = this.fb.group({
       nombre: ['', Validators.required],
-      valor: [0, [Validators.required]],
+      valor: [0, [Validators.required, Validators.min(0)]],
+      descripcion: ['', [Validators.maxLength(2000)]],
+      categoria: ['', Validators.required],
+      zonaReferencia: ['', [Validators.maxLength(200)]],
+      unidad: ['', Validators.required],
     });
   }
 
@@ -71,6 +79,10 @@ export class AgregarFactorComponent implements OnInit {
   private etiquetas: Record<string, string> = {
     nombre: 'Nombre',
     valor: 'Valor',
+    descripcion: 'Descripción',
+    categoria: 'Categoría',
+    zonaReferencia: 'Zona o mercado',
+    unidad: 'Unidad del valor',
   };
 
   private mostrarErroresValidacion(esActualizar: boolean) {
@@ -112,15 +124,24 @@ export class AgregarFactorComponent implements OnInit {
     });
   }
 
+  private buildPayload(): FactorPayload {
+    const v = this.factorForm.value;
+    return {
+      nombre: (v.nombre ?? '').trim(),
+      valor: Number(v.valor),
+      descripcion: (v.descripcion ?? '').trim() || null,
+      categoria: (v.categoria ?? '').trim() || null,
+      zonaReferencia: (v.zonaReferencia ?? '').trim() || null,
+      unidad: (v.unidad ?? '').trim() || null,
+    };
+  }
+
   agregar() {
     if (this.factorForm.invalid) {
       this.mostrarErroresValidacion(false);
       return;
     }
-    const payload = {
-      nombre: this.factorForm.value.nombre,
-      valor: Number(this.factorForm.value.valor),
-    };
+    const payload = this.buildPayload();
     this.factoresService.agregarFactor(payload).subscribe(
       () => {
         this.submitButton = 'Guardar';
@@ -157,10 +178,7 @@ export class AgregarFactorComponent implements OnInit {
       this.mostrarErroresValidacion(true);
       return;
     }
-    const payload = {
-      nombre: this.factorForm.value.nombre,
-      valor: Number(this.factorForm.value.valor),
-    };
+    const payload = this.buildPayload();
     this.factoresService.actualizarFactor(this.idFactor, payload).subscribe(
       () => {
         this.submitButton = 'Actualizar';

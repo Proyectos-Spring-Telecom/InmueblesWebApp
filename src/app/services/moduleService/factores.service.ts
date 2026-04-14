@@ -6,6 +6,14 @@ import { environment } from '../../../environments/environment';
 export interface FactorPayload {
   nombre: string;
   valor: number;
+  /** Detalle del factor (ubicación, mercado, uso del suelo, etc.) */
+  descripcion?: string | null;
+  /** Categoría del factor en valuación o renta */
+  categoria?: string | null;
+  /** Zona, colonia, corredor o mercado de referencia */
+  zonaReferencia?: string | null;
+  /** Cómo se interpreta el valor numérico */
+  unidad?: string | null;
 }
 
 @Injectable({

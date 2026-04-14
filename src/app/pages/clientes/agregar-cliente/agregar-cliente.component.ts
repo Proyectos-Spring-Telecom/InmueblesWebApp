@@ -20,7 +20,7 @@ export class AgregarClienteComponent implements OnInit {
   public loading: boolean = false;
   public clienteForm: FormGroup;
   public idCliente: number;
-  public title = 'Agregar Cliente';
+  public title = 'Agregar Arrendador';
   public listaClientes: any[] = [];
   selectedFileName: string = '';
   previewUrl: string | ArrayBuffer | null = null;
@@ -43,7 +43,7 @@ export class AgregarClienteComponent implements OnInit {
     this.activatedRouted.params.subscribe((params) => {
       this.idCliente = params['idCliente'];
       if (this.idCliente) {
-        this.title = 'Actualizar Cliente';
+        this.title = 'Actualizar Arrendador';
         this.obtenerClienteID();
       }
     });
@@ -355,7 +355,7 @@ export class AgregarClienteComponent implements OnInit {
           color: '#ffffff',
           background: '#141a21',
           title: '¡Operación Exitosa!',
-          text: 'Se agregó un nuevo cliente de manera exitosa.',
+          text: 'Se agregó un nuevo arrendador de manera exitosa.',
           icon: 'success',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -533,7 +533,7 @@ export class AgregarClienteComponent implements OnInit {
           color: '#ffffff',
           background: '#141a21',
           title: '¡Operación Exitosa!',
-          text: 'Los datos del cliente se actualizaron correctamente.',
+          text: 'Los datos del arrendador se actualizaron correctamente.',
           icon: 'success',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -547,7 +547,7 @@ export class AgregarClienteComponent implements OnInit {
           color: '#ffffff',
           background: '#141a21',
           title: '¡Ops!',
-          text: 'Ocurrió un error al actualizar el cliente.',
+          text: 'Ocurrió un error al actualizar el arrendador.',
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',

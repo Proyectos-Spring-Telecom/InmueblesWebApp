@@ -2,6 +2,7 @@
   <header class="perm-head" role="region" aria-label="Sección: Monitoreo">
     <div class="perm-head__icon" aria-hidden="true">
       <mat-icon>map_icon</mat-icon>
+
     </div>
 
     <div class="perm-head__text">
@@ -17,281 +18,382 @@
   </header>
 
   <div class="surface">
-    <div class="row g-2 g-md-3 align-items-stretch">
-      <!-- Izquierda: clientes + predios del cliente -->
-      <div class="col-12 col-lg-4">
-        <div class="h-100 d-flex flex-column monitor-left-stack">
-          <div class="card-header monitor-card-header">
-            <div class="row g-2 align-items-center">
-              <div class="col">
-                <div class="monitor-head-wrap w-100">
-                  <div class="monitor-head-icon" aria-hidden="true">
-                    <mat-icon>groups</mat-icon>
-                  </div>
-                  <div class="monitor-head-title">
-                    <h6 class="monitor-head-text m-0">Clientes</h6>
-                    <span
-                      class="monitor-head-client d-block"
-                      *ngIf="selectedClienteGrupo as g"
-                      >{{ g.nombreCliente }}</span
-                    >
-                  </div>
+    <ng-container *ngIf="flowMode === 'inmuebles'; else clientesFlowTpl">
+      <div class="row g-2 g-md-3">
+        <div class="col-12 col-lg-5">
+          <div class="h-100 d-flex flex-column">
+            <div class="card-header monitor-card-header">
+              <div class="monitor-head-wrap w-100" [@monitorModeHeader]="flowMode">
+                <div class="monitor-head-icon" aria-hidden="true">
+                  <mat-icon>home_work</mat-icon>
                 </div>
-              </div>
-              <div class="col-auto" *ngIf="isRol1 && selectedClienteGrupo">
-                <button type="button" class="btn btn-sm" (click)="goToCentrales()">
-                  Ver todos
-                </button>
+                <div class="monitor-head-title">
+                  <h6 class="monitor-head-text m-0">
+                    <span class="monitor-head-label">{{ zonasViewActive ? 'Locales:' : 'Inmuebles:' }}</span>
+                    <span class="monitor-head-client">{{ nombreInmuebleCabeceraLocales }}</span>
+                  </h6>
+                </div>
+                <div class="monitor-head-actions">
+                  <button *ngIf="zonasViewActive" type="button" class="btn btn-sm"
+                    (click)="volverListaInmueblesDesdeZonas()">
+                    Inmuebles
+                  </button>
+                  <button *ngIf="isRol1" type="button" class="btn btn-sm" (click)="goToCentrales()">
+                    Arrendadores
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div class="card-body insta-body flex-grow-1 monitor-scroll">
-            <ng-container *ngIf="listaClientes.length > 0; else noClientesTpl">
-              <div
-                class="insta-item"
-                *ngFor="let g of listaClientes"
-                [class.active]="selectedClienteGrupo === g"
-                (click)="selectCliente(g)"
-              >
-                <div class="inmueble-line">
-                  <strong>{{ g.nombreCliente }}</strong>
-                </div>
-                <div class="inmueble-line text-muted small">
-                  {{ g.centrales.length }} predio(s)
-                </div>
-              </div>
-
-              <ng-container *ngIf="selectedClienteGrupo as sg">
-                <div class="monitor-subblock-title mt-3 mb-2">Predios</div>
-                <ng-container *ngIf="sg.centrales.length > 0; else noPrediosTpl">
-                  <div
-                    class="insta-item central"
-                    *ngFor="let predio of sg.centrales"
-                    [class.active]="selectedId === predio.id"
-                    (click)="selectPredioCard(predio)"
-                  >
-                    <div class="inmueble-card-shell">
-                      <div class="inmueble-content-grid">
-                        <div class="inmueble-media">
-                          <img
-                            src="https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=900&q=80"
-                            alt="Imagen del predio"
-                          />
-                          <span class="inmueble-status">RENTADO</span>
-                        </div>
-                        <div class="inmueble-info">
-                          <div class="inmueble-top">
-                            <div class="inmueble-name">
-                              {{ predio.nombreInstalacion || predio.nombre || 'Predio' }}
-                            </div>
-                            <div class="inmueble-renta">
-                              <span>Superficie total</span>
-                              <strong>5,000 m²</strong>
-                            </div>
+            <div class="card-body insta-body" [@monitorListSwap]="viewMode">
+              <ng-container *ngIf="zonasViewActive">
+                <ng-container *ngIf="localesParaListaZonas.length > 0">
+                  <div class="insta-item instalacion"
+                    *ngFor="let loc of localesParaListaZonas; let li = index; trackBy: trackByLocalEnZonas"
+                    [@monitorItemIn] [attr.id]="idAtributoFilaListaLocal(loc, li)"
+                    [class.local-zona-row--selected]="isLocalResaltadoEnListaZonas(loc, li)"
+                    (click)="onListaLocalRowClick(loc, li)">
+                    <div class="inmueble-card-shell local-zona-list-card">
+                      <div [@localCardInfo]="localListaAnimKey(loc, li)">
+                        <div class="inmueble-content-grid local-zona-content-grid">
+                          <div class="inmueble-media">
+                            <img [src]="getImagenLocalLista(loc, li)"
+                              [alt]="'Imagen del local ' + getNombreLocalEnLista(loc)" />
+                            <span class="inmueble-status" [ngClass]="getEstadoChipClassLista(loc)">
+                              {{ getOcupacionEtiquetaLista(loc) }}
+                            </span>
                           </div>
-                          <div class="inmueble-line mt-1">
-                            <strong>Cliente:</strong> {{ predio.nombreCliente }}
-                          </div>
-                          <div class="inmueble-line">
-                            <mat-icon>place</mat-icon>
-                            <span><strong>Dirección:</strong> {{ predio.direccion }}</span>
+
+                          <div class="inmueble-info">
+                            <div class="inmueble-top">
+                              <div class="inmueble-name text-truncate">{{ getNombreLocalEnLista(loc) }}</div>
+                              <div class="inmueble-renta" *ngIf="getMensualidadLocalLista(loc) as mensualidad">
+                                <span>Mensualidad</span>
+                                <strong>{{ mensualidad }}</strong>
+                              </div>
+                            </div>
+                            <div class="inmueble-line mt-1" *ngIf="getOcupanteLocalLista(loc) as ocupante">
+                              <strong>Ocupante:</strong> {{ ocupante }}
+                            </div>
+                            <div class="inmueble-line" *ngIf="getMedidaLocalLista(loc) as medida">
+                              <strong>Medida:</strong> {{ medida }}
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div class="inmueble-footer d-flex gap-2 ms-auto flex-wrap">
-                        <button
-                          type="button"
-                          class="btn btn-sm"
-                          (click)="verInmueblesEnMapa(predio, $event)"
-                        >
-                          Inmuebles
+                      <div class="inmueble-footer d-flex flex-wrap gap-2 mt-2 justify-content-end">
+                        <button *ngIf="zonasViewActive && rightPanelMode === 'mapa' && mapScopeMode === 'locales'"
+                          type="button" class="btn btn-sm" (click)="centrarMapaEnLocal(loc, li, $event)">
+                          Centrar
                         </button>
-                        <button
-                          type="button"
-                          class="btn btn-sm"
-                          (click)="onPredioDetalleAction(predio); $event.stopPropagation()"
-                        >
-                          Información
+                        <button type="button" class="btn btn-sm" (click)="toggleVistaLocal(loc, li, $event)">
+                          {{ isLocalVisibleEnMapa(loc, li) ? 'Diagrama' : 'Mapa' }}
                         </button>
+                        <button type="button" class="btn btn-sm" (click)="onInfoLocal(loc, $event)">Información</button>
                       </div>
                     </div>
                   </div>
                 </ng-container>
-                <ng-template #noPrediosTpl>
-                  <div class="insta-empty">
-                    <p class="m-0 small">Sin predios para este cliente.</p>
+                <div class="insta-empty" *ngIf="localesParaListaZonas.length === 0">
+                  <div class="insta-empty-icon">
+                    <mat-icon>storefront</mat-icon>
                   </div>
-                </ng-template>
+                  <div class="insta-empty-text">
+                    <h6>Sin locales</h6>
+                    <p>No hay locales para mostrar en este inmueble.</p>
+                  </div>
+                </div>
               </ng-container>
-            </ng-container>
-            <ng-template #noClientesTpl>
-              <div class="insta-empty">
-                <div class="insta-empty-icon">
-                  <mat-icon>person_off</mat-icon>
+
+              <ng-container *ngIf="!zonasViewActive && listaVisible.length > 0; else noInstalacionesTpl">
+                <div class="insta-item" *ngFor="let item of listaVisible; let i = index" [@monitorItemIn]
+                  [class.central]="viewMode === 'centrales'" [class.instalacion]="viewMode === 'instalaciones'"
+                  [class.active]="viewMode === 'centrales' && item.id === selectedId"
+                  (click)="selectInstalacion(item, i)">
+                  <div class="inmueble-card-shell">
+                    <div class="inmueble-content-grid">
+                      <div class="inmueble-media">
+                        <img [src]="getImagenInmuebleCard(item, i)" alt="Imagen del inmueble" />
+                      </div>
+
+                      <div class="inmueble-info">
+                        <div class="inmueble-top">
+                          <div class="inmueble-name">
+                            {{ selectedCentral?.nombreCliente || item.nombreCliente || 'Inmueble' }}
+                          </div>
+                          <div class="inmueble-renta">
+                            <span>Renta</span>
+                            <strong>$25,729.73 MXN</strong>
+                          </div>
+                        </div>
+                        <div class="inmueble-line mt-1">
+                          <strong>Dirección del inmueble:</strong>
+                          {{ selectedCentral?.direccion || item.direccion || 'Sin dirección' }}
+                        </div>
+                        <div class="inmueble-line">
+                          <strong>Vigencia:</strong> 0 años
+                        </div>
+                        <div class="inmueble-line">
+                          <strong>Inicio:</strong> 02/01/2017
+                          <span class="m-x-8">|</span>
+                          <strong>Fin:</strong> 01/01/2019
+                        </div>
+                        <div class="inmueble-line">
+                          <mat-icon>person</mat-icon>
+                          <span>Arrendador: Desarrollo Inmobiliario BHV SA de CV</span>
+                        </div>
+                        <div class="inmueble-line">
+                          <mat-icon>calendar_today</mat-icon>
+                          <span>Tiempo de renta: 2 años</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="inmueble-footer d-flex gap-2 ms-auto">
+                      <button type="button" class="btn btn-sm"
+                        (click)="selectInstalacion(item, i); $event.stopPropagation()">
+                        Centrar
+                      </button>
+                      <button type="button" class="btn btn-sm"
+                        (click)="abrirZonasInmueble(item); $event.stopPropagation()">
+                        Zonas
+                      </button>
+                      <button type="button" class="btn btn-sm"
+                        (click)="onInfoAction({ central: selectedCentral, instalacion: item }); $event.stopPropagation()">
+                        Información
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div class="insta-empty-text">
-                  <h6>Sin clientes</h6>
-                  <p>No hay datos de clientes / predios para mostrar.</p>
+              </ng-container>
+              <ng-template #noInstalacionesTpl>
+                <div class="insta-empty" *ngIf="viewMode === 'instalaciones'">
+                  <div class="insta-empty-icon">
+                    <mat-icon>location_off</mat-icon>
+                  </div>
+                  <div class="insta-empty-text">
+                    <h6 *ngIf="!isRol1 && !selectedCentral">Sin oficina central asignada</h6>
+                    <h6 *ngIf="isRol1 || selectedCentral">Sin inmuebles registrados</h6>
+                    <p *ngIf="!isRol1 && !selectedCentral">No tiene asignada una oficina central para ver sus inmuebles.
+                    </p>
+                    <p *ngIf="selectedCentral">Este arrendador aún no tiene inmuebles registrados.</p>
+                  </div>
                 </div>
-              </div>
-            </ng-template>
+              </ng-template>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Derecha: inmuebles + mapa, o vista plano de locales (mapa sigue en DOM) -->
-      <div class="col-12 col-lg-8 monitor-right-stack d-flex flex-column">
-        <ng-container *ngIf="vistaLocalesActiva && localesPlanoContext; else monitorInmueblesColumn">
-          <div class="card-header monitor-card-header flex-shrink-0">
-            <div class="monitor-head-wrap w-100">
-              <div class="monitor-head-icon" aria-hidden="true">
-                <mat-icon>storefront</mat-icon>
-              </div>
-              <div class="monitor-head-title">
-                <h6 class="monitor-head-text m-0">Plano de locales</h6>
-                <span class="monitor-head-client d-block text-truncate">{{
-                  localesPlanoContext.nombreSucursal
-                }}</span>
-              </div>
-              <button
-                type="button"
-                class="btn btn-sm ms-auto"
-                (click)="cerrarVistaLocalesYMostrarMapa()"
-              >
-                Mostrar Mapa
-              </button>
-            </div>
+        <div class="col-12 col-lg-7">
+          <div class="map-wrapper" *ngIf="rightPanelMode === 'mapa'; else localesCardTpl">
+            <!-- <button *ngIf="zonasViewActive && mapScopeMode === 'locales'" type="button"
+              class="btn btn-sm map-back-to-diagram" (click)="volverDiagramaDesdeMapaLocal()">
+              Volver al diagrama
+            </button> -->
+            <div id="map"></div>
           </div>
-          <div
-            class="card-body insta-body p-2 flex-grow-1 monitor-locales-plano-host d-flex flex-column"
-          >
-            <app-monitoreo-locales-plano
-              class="flex-grow-1 d-flex flex-column locales-plano-flex-min"
-              [context]="localesPlanoContext"
-              (cerrar)="cerrarVistaLocalesYMostrarMapa()"
-              (pedirComanda)="onPedirComandaDesdeLocales($event)"
-            />
-          </div>
-        </ng-container>
-        <ng-template #monitorInmueblesColumn>
-          <div class="card-header monitor-card-header flex-shrink-0">
-            <div class="monitor-head-wrap w-100">
-              <div class="monitor-head-icon" aria-hidden="true">
-                <mat-icon>home_work</mat-icon>
-              </div>
-              <div class="monitor-head-title">
-                <h6 class="monitor-head-text m-0">Inmuebles</h6>
-                <span class="monitor-head-client d-block" *ngIf="!selectedClienteGrupo"
-                  >Seleccione un cliente</span
-                >
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="card-body insta-body monitor-inmuebles-body"
-            *ngIf="selectedClienteGrupo; else sinClienteInmuebles"
-          >
-            <ng-container *ngIf="inmueblesDelCliente.length > 0; else noInmueblesTpl">
-              <div
-                class="insta-item instalacion"
-                *ngFor="let row of inmueblesDelCliente; let i = index"
-              >
-                <div class="inmueble-card-shell">
-                  <div class="inmueble-content-grid">
-                    <div class="inmueble-media">
-                      <img
-                        src="https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=900&q=80"
-                        alt="Imagen del inmueble"
-                      />
-                      <span class="inmueble-status">RENTADO</span>
-                    </div>
-                    <div class="inmueble-info">
-                      <div class="inmueble-top">
-                        <div class="inmueble-name">
-                          {{ row.central?.nombreCliente || row.instalacion?.nombreCliente || 'Local' }}
-                        </div>
-                        <div class="inmueble-renta">
-                          <span>Renta</span>
-                          <strong>$25,729.73 MXN</strong>
-                        </div>
-                      </div>
-                      <div class="inmueble-line mt-1">
-                        <strong>Predio:</strong>
-                        {{ row.central?.nombreInstalacion || row.central?.nombre || '—' }}
-                      </div>
-                      <div class="inmueble-line">
-                        <strong>Dirección del local:</strong>
-                        {{ row.central?.direccion || row.instalacion?.direccion || 'Sin dirección' }}
-                      </div>
-                      <div class="inmueble-line">
-                        <strong>Vigencia:</strong> 0 años
-                      </div>
-                      <div class="inmueble-line">
-                        <strong>Inicio:</strong> 02/01/2017
-                        <span class="m-x-8">|</span>
-                        <strong>Fin:</strong> 01/01/2019
-                      </div>
-                      <div class="inmueble-line">
-                        <mat-icon>person</mat-icon>
-                        <span>Arrendador: Desarrollo Inmobiliario BHV SA de CV</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="inmueble-footer d-flex gap-2 ms-auto flex-wrap">
-                    <button
-                      type="button"
-                      class="btn btn-sm"
-                      (click)="abrirVistaLocales(row.instalacion, row.central, $event)"
-                    >
-                      Locales
+          <ng-template #localesCardTpl>
+            <div class="locales-wrapper">
+              <div class="locales-card">
+                <div class="locales-card__head">
+                  <h5 class="m-0">Locales del inmueble</h5>
+                  <div class="locales-actions d-flex gap-2">
+                    <button type="button" class="btn btn-sm" [disabled]="!uiState.dirty || uiState.saving"
+                      (click)="saveLayout()">
+                      {{ uiState.saving ? 'Guardando...' : 'Guardar' }}
                     </button>
-                    <button
-                      type="button"
-                      class="btn btn-sm"
-                      (click)="onCentrarInmueble(row, $event)"
-                    >
-                      Centrar
+                    <button type="button" class="btn btn-sm" [disabled]="!uiState.dirty"
+                      (click)="restoreLastSavedLayout()">
+                      Restaurar
                     </button>
-                    <button
-                      type="button"
-                      class="btn btn-sm"
-                      (click)="
-                        onInfoAction({ central: row.central, instalacion: row.instalacion });
-                        $event.stopPropagation()
-                      "
-                    >
-                      Información
+                    <button type="button" class="btn btn-sm" (click)="volverAMapa()">
+                      {{ zonasViewActive ? 'Volver a inmuebles' : 'Volver al mapa' }}
                     </button>
                   </div>
                 </div>
-              </div>
-            </ng-container>
-            <ng-template #noInmueblesTpl>
-              <div class="insta-empty">
-                <h6 class="m-0">Sin inmuebles</h6>
-                <p class="m-0 small">Este cliente no tiene locales registrados.</p>
-              </div>
-            </ng-template>
-          </div>
-          <ng-template #sinClienteInmuebles>
-            <div class="card-body insta-body">
-              <div class="insta-empty">
-                <h6 class="m-0">Seleccione un cliente</h6>
-                <p class="m-0 small">Aquí se listarán los inmuebles del cliente elegido.</p>
+                <div class="locales-card__body">
+                  <!-- <div class="locales-meta d-flex justify-content-between align-items-center mb-2">
+                    <p class="m-0">
+                      Inmueble:
+                      <strong>{{ selectedInmuebleForLocales?.nombreDepartamento ||
+                        selectedInmuebleForLocales?.nombreInstalacion || selectedCentral?.nombreCliente || 'Sin nombre'
+                        }}</strong>
+                    </p>
+                    <div class="small">
+                      Zoom: {{ zoom | number:'1.0-2' }}x
+                      <span class="ms-2" [class.text-warning]="uiState.dirty">Dirty: {{ uiState.dirty ? 'Sí' : 'No'
+                        }}</span>
+                    </div>
+                  </div> -->
+                  <div class="locales-error" *ngIf="uiState.error">{{ uiState.error }}</div>
+
+                  <div class="locales-board" (mousedown)="startPan($event)" (mousemove)="onDragMove($event)"
+                    (mouseup)="onDragEnd(); endPan()" (mouseleave)="onDragEnd(); endPan()"
+                    (wheel)="onLayoutWheel($event)" (click)="clearSelection(); closeInlineEditors()">
+                    <div class="locales-floating-controls">
+                      <div class="locales-controls-row">
+                        <div class="locales-inline-editor" [@inlineEditorPop] *ngIf="showZoneNameEditor"
+                          (click)="$event.stopPropagation()">
+                          <input type="text" class="form-control form-control-sm"
+                            placeholder="Ej. Planta baja, Piso 1, Piso 2…"
+                            [(ngModel)]="zoneNameDraft"
+                            (keydown.enter)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()" />
+                          <div class="d-flex gap-1 mt-1">
+                            <button type="button" class="btn btn-sm" [disabled]="!zoneNameDraft.trim()"
+                              (click)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()">
+                              {{ isRenamingZone ? 'Renombrar' : 'Crear zona' }}
+                            </button>
+                            <button type="button" class="btn btn-sm" (click)="cancelAddZona()">Cancelar</button>
+                          </div>
+                        </div>
+                        <div class="locales-inline-editor" [@inlineEditorPop] *ngIf="showLocalNameEditor"
+                          (click)="$event.stopPropagation()">
+                          <input type="text" class="form-control form-control-sm" placeholder="Nombre del local"
+                            [(ngModel)]="localNameDraft" (keydown.enter)="confirmAddLocal()" />
+                          <div class="d-flex gap-1 mt-1">
+                            <button type="button" class="btn btn-sm" [disabled]="!localNameDraft.trim()"
+                              (click)="confirmAddLocal()">Crear local</button>
+                            <button type="button" class="btn btn-sm" (click)="cancelAddLocal()">Cancelar</button>
+                          </div>
+                        </div>
+                        <div class="locales-create-row">
+                          <button type="button" class="btn btn-sm btn-create-zona"
+                            (click)="addZona(); $event.stopPropagation()">Agregar Zona</button>
+                          <button type="button" class="btn btn-sm btn-create-local"
+                            (click)="addLocal(); $event.stopPropagation()">Agregar Local</button>
+                        </div>
+                        <div class="locales-zoom-stack">
+                          <button type="button" class="btn btn-sm locales-zoom-btn"
+                            (click)="zoomIn(); $event.stopPropagation()">+</button>
+                          <button type="button" class="btn btn-sm locales-zoom-btn"
+                            (click)="zoomOut(); $event.stopPropagation()">-</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="locales-inline-editor locales-inline-editor--mobile" [@inlineEditorPop]
+                      *ngIf="showZoneNameEditor || showLocalNameEditor" (click)="$event.stopPropagation()">
+                      <input *ngIf="showZoneNameEditor" type="text" class="form-control form-control-sm"
+                        placeholder="Ej. Planta baja, Piso 1…" [(ngModel)]="zoneNameDraft"
+                        (keydown.enter)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()" />
+                      <input *ngIf="showLocalNameEditor" type="text" class="form-control form-control-sm"
+                        placeholder="Nombre del local" [(ngModel)]="localNameDraft"
+                        (keydown.enter)="confirmAddLocal()" />
+                      <div class="d-flex gap-1 mt-1">
+                        <button *ngIf="showZoneNameEditor" type="button" class="btn btn-sm"
+                          [disabled]="!zoneNameDraft.trim()"
+                          (click)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()">
+                          {{ isRenamingZone ? 'Renombrar' : 'Crear zona' }}
+                        </button>
+                        <button *ngIf="showZoneNameEditor" type="button" class="btn btn-sm"
+                          (click)="cancelAddZona()">Cancelar</button>
+                        <button *ngIf="showLocalNameEditor" type="button" class="btn btn-sm"
+                          [disabled]="!localNameDraft.trim()" (click)="confirmAddLocal()">Crear local</button>
+                        <button *ngIf="showLocalNameEditor" type="button" class="btn btn-sm"
+                          (click)="cancelAddLocal()">Cancelar</button>
+                      </div>
+                    </div>
+                    <div class="locales-stage" [style.width.px]="visualLayout.canvas.width"
+                      [style.height.px]="visualLayout.canvas.height"
+                      [style.transform]="'translate(' + pan.x + 'px,' + pan.y + 'px) scale(' + zoom + ')'">
+                      <div class="zona-item" *ngFor="let zona of visualLayout.zonas; trackBy: trackByZona"
+                        [class.selected]="zona.id === selectedZoneId" [style.left.px]="zona.x" [style.top.px]="zona.y"
+                        [style.width.px]="zona.width" [style.height.px]="zona.height"
+                        (mousedown)="onZoneDragStart($event, zona)"
+                        (click)="selectedZoneId = zona.id; $event.stopPropagation()"
+                        (dblclick)="renameZona(zona); $event.stopPropagation()">
+                        <span class="zona-label">{{ zona.nombre }}</span>
+                        <span *ngFor="let handle of getZoneResizeHandles()" class="zona-resize-handle"
+                          [ngClass]="getZoneHandleClass(handle)"
+                          (mousedown)="startResizeZona($event, zona, handle)"></span>
+                      </div>
+
+                      <div class="local-item" *ngFor="let local of visualLayout.locales; trackBy: trackByLocal"
+                        [ngClass]="getLocalClasses(local)" [style.left.px]="local.x" [style.top.px]="local.y"
+                        [style.width.px]="local.width" [style.height.px]="local.height"
+                        (mousedown)="onDragStart($event, local)"
+                        (click)="selectLocal(local.id); $event.stopPropagation()">
+                        <div class="local-icon-wrap">
+                          <img src="assets/images/svgs/icon-office-bag-2.svg" alt="Local" />
+                        </div>
+                        <div class="local-name">{{ local.nombre }}</div>
+                        <div class="local-zona">{{ local.zonaId || 'Sin zona' }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </ng-template>
-        </ng-template>
-
-        <div
-          class="map-wrapper flex-shrink-0"
-          [class.map-wrapper--hidden]="!mapVisible"
-        >
-          <div id="map"></div>
         </div>
       </div>
-    </div>
+    </ng-container>
+
+    <ng-template #clientesFlowTpl>
+      <div class="p-3">
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2 clientes-flow-head">
+          <h5 class="m-0">Arrendadores</h5>
+          <div class="clientes-search-wrap">
+            <input
+              type="text"
+              class="form-control form-control-sm clientes-search-input"
+              placeholder="Buscar por nombre del cliente..."
+              [(ngModel)]="clienteSearchTerm"
+            />
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-12 col-md-6 col-xl-4" *ngFor="let cliente of clientesFiltrados; let ci = index">
+            <div class="inmueble-card-shell cliente-grid-card cliente-card-v2">
+              <header class="cliente-card-head">
+                <div class="cliente-card-media">
+                  <img
+                    [src]="getImagenClienteCard(cliente, ci)"
+                    [attr.alt]="'Logo — ' + (cliente?.nombreCliente || cliente?.nombre || 'Arrendador')"
+                  />
+                </div>
+                <div class="cliente-card-head-main">
+                  <span class="cliente-card-role-label">Arrendatario</span>
+                  <h3 class="cliente-card-title">{{ cliente?.nombreCliente || cliente?.nombre || 'Arrendador' }}</h3>
+                </div>
+              </header>
+
+              <section
+                class="cliente-card-block cliente-card-block--tight"
+                *ngIf="getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']).length > 0"
+              >
+                <div class="cliente-meta-grid" role="list">
+                  <div
+                    class="cliente-meta-pair"
+                    *ngFor="let info of getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']) | slice:0:10"
+                    role="listitem"
+                  >
+                    <span class="cliente-meta-label">{{ info.key }}</span>
+                    <p class="cliente-meta-value">{{ info.value }}</p>
+                  </div>
+                </div>
+              </section>
+
+              <section class="cliente-card-block cliente-card-block--tight cliente-card-block--ubicacion">
+                <div class="cliente-ubicacion-grid">
+                  <div class="cliente-ubicacion-text">
+                    <span class="cliente-ubicacion-label">Ubicación</span>
+                    <p class="cliente-meta-value cliente-meta-value--lead cliente-meta-value--direccion">
+                      {{ cliente?.direccion || 'Sin dirección' }}
+                    </p>
+                  </div>
+                  <div class="cliente-ubicacion-actions">
+                    <button
+                      type="button"
+                      class="btn cliente-action-btn cliente-inmuebles-btn"
+                      (click)="seleccionarCliente(cliente)"
+                    >
+                      Inmuebles
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
   </div>
 </div>
