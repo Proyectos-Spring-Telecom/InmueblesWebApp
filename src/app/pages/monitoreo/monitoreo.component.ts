@@ -15,7 +15,7 @@ import {
   transition,
   trigger,
 } from '@angular/animations';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { AuthenticationService } from 'src/app/services/auth.service';
@@ -62,6 +62,10 @@ interface LocalCanvasModel {
   ocupanteNombre?: string;
   /** Lista / API: mensualidad en MXN (opcional). */
   mensualidadMxn?: number;
+  /** Giro o actividad comercial (opcional). */
+  giroActividad?: string;
+  /** Fin de vigencia de contrato (ISO o texto). */
+  vigenciaHasta?: string;
 }
 
 interface VisualLayoutModel {
@@ -334,7 +338,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const est = String(local?.estado ?? '');
     const img = this.getImagenLocalLista(local, index);
     const vista = this.isLocalVisibleEnMapa(local, index) ? 'mapa' : 'diagrama';
-    return `${id}|${nom}|${occ}|${med}|${men}|${est}|${img}|${vista}`;
+    const zona = this.getZonaNombreLocalLista(local) ?? '';
+    const giro = this.getGiroActividadLocalLista(local) ?? '';
+    const vig = this.getVigenciaContratoLocalLista(local) ?? '';
+    return `${id}|${nom}|${occ}|${med}|${men}|${est}|${img}|${vista}|${zona}|${giro}|${vig}`;
   }
 
   getImagenLocalLista(local: any, index = 0): string {
@@ -496,6 +503,61 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /** Nivel o zona del plano (p. ej. Planta baja, Piso 1). */
+  getZonaNombreLocalLista(local: any): string | null {
+    const zid = local?.zonaId;
+    if (zid == null || String(zid).trim() === '') return null;
+    const z = this.visualLayout?.zonas?.find((it) => String(it.id) === String(zid));
+    const n = z?.nombre != null ? String(z.nombre).trim() : '';
+    return n.length ? n : null;
+  }
+
+  /** Giro, rubro o actividad. */
+  getGiroActividadLocalLista(local: any): string | null {
+    const v =
+      local?.giroActividad ??
+      local?.giro ??
+      local?.rubro ??
+      local?.actividad ??
+      local?.giroComercial ??
+      local?.tipoNegocio ??
+      local?.descripcionGiro;
+    const s = v != null ? String(v).trim() : '';
+    return s.length ? s : null;
+  }
+
+  /** Fin de vigencia del contrato (texto corto en español). */
+  getVigenciaContratoLocalLista(local: any): string | null {
+    const raw =
+      local?.vigenciaHasta ??
+      local?.fechaFinContrato ??
+      local?.fechaFinVigencia ??
+      local?.finContrato ??
+      local?.vigenciaFin;
+    if (raw == null || String(raw).trim() === '') return null;
+    if (raw instanceof Date) {
+      return this.formatFechaCortaLista(raw);
+    }
+    const d = new Date(String(raw));
+    if (!Number.isNaN(d.getTime())) {
+      return this.formatFechaCortaLista(d);
+    }
+    const t = String(raw).trim();
+    return t.length ? t : null;
+  }
+
+  private formatFechaCortaLista(d: Date): string {
+    try {
+      return d.toLocaleDateString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return d.toISOString().slice(0, 10);
+    }
+  }
+
   /** Texto junto a «Locales:» en el encabezado de la lista izquierda. */
   get nombreInmuebleCabeceraLocales(): string {
     if (this.zonasViewActive && this.selectedInmuebleForLocales) {
@@ -511,9 +573,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private insService: InstalacionCentral,
     private router: Router,
+    private route: ActivatedRoute,
     private toastr: ToastrService,
     private auth: AuthenticationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   private checkRol(): void {
@@ -571,7 +634,74 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       if (this.map && this.flowMode === 'inmuebles') this.renderAccordingMode();
+      this.aplicarRetornoDesdeDetalleSiCorresponde();
     });
+  }
+
+  /** Al volver desde detalle instalación/local: restaurar lista de inmuebles o de locales. */
+  private aplicarRetornoDesdeDetalleSiCorresponde(): void {
+    const qp = this.route.snapshot.queryParamMap;
+    const retorno = (qp.get('retorno') ?? '').toLowerCase();
+    if (!retorno) return;
+
+    const idClienteRaw = qp.get('idCliente');
+    if (idClienteRaw != null && String(idClienteRaw).trim() !== '' && this.isRol1) {
+      const idStr = String(idClienteRaw).trim();
+      const c = this.listaInstalaciones.find(
+        (x: any) => String(x?.idCliente ?? x?.id ?? '') === idStr,
+      );
+      if (c) {
+        this.verInstalacionesDeCentral(c);
+      }
+    }
+
+    if (retorno === 'inmuebles') {
+      this.cerrarVistaZonasSinDirtyConfirm();
+      this.flowMode = 'inmuebles';
+      this.viewMode = 'instalaciones';
+      this.clearQueryParamsRetorno();
+      this.cdr.markForCheck();
+      if (this.map && this.flowMode === 'inmuebles') this.renderAccordingMode();
+      return;
+    }
+
+    if (retorno === 'locales') {
+      const idInm = qp.get('idInmueble');
+      if (idInm != null && String(idInm).trim() !== '' && this.selectedCentral) {
+        const insts = Array.isArray(this.selectedCentral.instalaciones)
+          ? this.selectedCentral.instalaciones
+          : [];
+        const ins = insts.find(
+          (x: any) =>
+            String(x?.id ?? x?.idInstalacion ?? x?.idDepartamento ?? '') ===
+            String(idInm).trim(),
+        );
+        if (ins) {
+          this.abrirZonasInmueble(ins);
+        }
+      }
+      this.flowMode = 'inmuebles';
+      this.viewMode = 'instalaciones';
+      this.clearQueryParamsRetorno();
+      this.cdr.markForCheck();
+      if (this.map && this.flowMode === 'inmuebles') this.renderAccordingMode();
+    }
+  }
+
+  private clearQueryParamsRetorno(): void {
+    this.router.navigate(['/monitoreo'], { replaceUrl: true });
+  }
+
+  /** Cierra vista Zonas sin diálogo de cambios sin guardar (vuelta desde detalle). */
+  private cerrarVistaZonasSinDirtyConfirm(): void {
+    this.zonasViewActive = false;
+    this.selectedInmuebleForLocales = null;
+    this.selectedLocalForMap = null;
+    this.closeInlineEditors();
+    this.clearSelection();
+    this.rightPanelMode = 'mapa';
+    this.mapScopeMode = 'inmuebles';
+    this.ensureMapReadyAndRender();
   }
 
   private async initMap() {
@@ -1100,11 +1230,14 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   onInfoLocal(local: any, event?: Event): void {
     event?.stopPropagation();
     const ins = this.selectedInmuebleForLocales;
+    const parentInmuebleId =
+      ins?.id ?? ins?.idInstalacion ?? ins?.idDepartamento ?? ins?.idInstalacionDepartamento;
     const merged = { ...(ins || {}), ...(local || {}) };
     this.onInfoAction({
       central: this.selectedCentral,
       instalacion: merged,
       vistaEntidad: 'local',
+      parentInmuebleId,
     });
   }
 
@@ -1269,6 +1402,15 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
                 : `Ing. María López ${i + 1}`
               : undefined,
           mensualidadMxn: 7800 + i * 420,
+          ...(estado === 'ocupado'
+            ? {
+                giroActividad:
+                  i % 2 === 0 ? 'Comercio minorista' : 'Servicios profesionales',
+                vigenciaHasta: `202${7 + (i % 2)}-0${(i % 6) + 1}-28`,
+              }
+            : estado === 'reservado'
+              ? { vigenciaHasta: '2026-04-15' }
+              : {}),
         };
       });
 
@@ -1307,6 +1449,26 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       const mn = Number(mensRaw);
       if (isFinite(mn) && mn >= 0) base.mensualidadMxn = mn;
+      const giroRaw =
+        it['giroActividad'] ??
+        it['giro'] ??
+        it['rubro'] ??
+        it['actividad'] ??
+        it['giroComercial'] ??
+        it['tipoNegocio'] ??
+        it['descripcionGiro'];
+      if (giroRaw != null && String(giroRaw).trim() !== '') {
+        base.giroActividad = String(giroRaw).trim();
+      }
+      const vigRaw =
+        it['vigenciaHasta'] ??
+        it['fechaFinContrato'] ??
+        it['fechaFinVigencia'] ??
+        it['finContrato'] ??
+        it['vigenciaFin'];
+      if (vigRaw != null && String(vigRaw).trim() !== '') {
+        base.vigenciaHasta = String(vigRaw).trim();
+      }
       return base;
     });
 
@@ -2216,10 +2378,24 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       ins?.idContrato ?? ins?.id_contrato ?? ins?.contratoId ?? ins?.contrato?.id;
     const idContratoNum = Number(idContratoRaw);
     const qp: Record<string, string | number> = esVistaLocal
-      ? { vista: 'local' }
-      : { origen: 'inmueble' };
+      ? { vista: 'local', retorno: 'locales' }
+      : { origen: 'inmueble', retorno: 'inmuebles' };
     if (esVistaLocal && Number.isFinite(idContratoNum) && idContratoNum > 0) {
       qp['idContrato'] = idContratoNum;
+    }
+    const parentId =
+      payload?.parentInmuebleId ??
+      ins?.id ??
+      ins?.idInstalacion ??
+      ins?.idDepartamento ??
+      ins?.idInstalacionDepartamento;
+    if (esVistaLocal && parentId != null && String(parentId).trim() !== '') {
+      qp['idInmueble'] = String(parentId).trim();
+    }
+    const central = payload?.central;
+    const idCli = central?.idCliente ?? central?.id;
+    if (idCli != null && String(idCli).trim() !== '') {
+      qp['idCliente'] = String(idCli).trim();
     }
     this.router.navigate(
       ['/monitoreo', 'instalacion', numeroSerie || this.PREVIEW_SERIE],
@@ -2459,7 +2635,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
           background:#681330; color:#fff; border:0; cursor:pointer;
           border-radius:10px; padding:8px 12px; font-size:.85rem;
         ">
-          Incidencias
+          Información
         </button>
       </div>
     </div>

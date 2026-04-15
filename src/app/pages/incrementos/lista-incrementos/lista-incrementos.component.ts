@@ -2,25 +2,9 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
-import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { IncrementosService } from 'src/app/services/moduleService/incrementos.service';
+import { INPC_HISTORICO_DEMO } from '../inpc-historico.data';
 import Swal from 'sweetalert2';
-
-const TIPO_INMUEBLE_LABEL: Record<string, string> = {
-  COMERCIAL: 'Comercial',
-  RESIDENCIAL: 'Residencial',
-  ESTACIONAMIENTO: 'Estacionamiento',
-  MIXTO: 'Mixto',
-  OTRO: 'Otro',
-};
-
-const PERIODICIDAD_LABEL: Record<string, string> = {
-  ANUAL: 'Anual',
-  SEMESTRAL: 'Semestral',
-  TRIMESTRAL: 'Trimestral',
-  MENSUAL: 'Mensual',
-};
 
 @Component({
   selector: 'app-lista-incrementos',
@@ -31,7 +15,7 @@ const PERIODICIDAD_LABEL: Record<string, string> = {
 })
 export class ListaIncrementosComponent implements OnInit {
   public mensajeAgrupar: string =
-    'Arrastre un encabezado de columna aquí para agrupar por esa columna';
+    'Arrastre una columna aquí para agrupar por dicha columna';
   public listaIncrementos: any;
   public showFilterRow: boolean;
   public showHeaderFilter: boolean;
@@ -39,7 +23,7 @@ export class ListaIncrementosComponent implements OnInit {
   public loadingMessage: string = 'Cargando...';
   public paginaActual: number = 1;
   public totalRegistros: number = 0;
-  public pageSize: number = 20;
+  public pageSize: number = 10;
   public totalPaginas: number = 0;
   @ViewChild(DxDataGridComponent, { static: false })
   dataGrid: DxDataGridComponent;
@@ -48,15 +32,13 @@ export class ListaIncrementosComponent implements OnInit {
   public paginaActualData: any[] = [];
   public filtroActivo: string = '';
 
-  constructor(
-    private router: Router,
-    private incrementosService: IncrementosService,
-  ) {
+  constructor(private router: Router) {
     this.showFilterRow = true;
     this.showHeaderFilter = true;
   }
 
   ngOnInit() {
+    this.paginaActualData = [...INPC_HISTORICO_DEMO];
     this.setupDataSource();
   }
 
@@ -68,94 +50,6 @@ export class ListaIncrementosComponent implements OnInit {
     this.router.navigateByUrl('/incrementos/editar-incremento/' + idIncremento);
   }
 
-  activar(rowData: any) {
-    Swal.fire({
-      title: '¡Activar!',
-      html: `¿Está seguro que requiere activar el registro de INPC: <strong>${rowData.nombre}</strong>?`,
-      icon: 'warning',
-      background: '#141a21',
-      color: '#ffffff',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Confirmar',
-      cancelButtonText: 'Cancelar',
-    }).then((result) => {
-      if (result.value) {
-        this.incrementosService.updateEstatusActivar(rowData.id, 1).subscribe(
-          () => {
-            Swal.fire({
-              background: '#141a21',
-              color: '#ffffff',
-              title: '¡Confirmación Realizada!',
-              html: `El registro de INPC ha sido activado.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
-            this.setupDataSource();
-            this.dataGrid.instance.refresh();
-          },
-          (error) => {
-            Swal.fire({
-              background: '#141a21',
-              color: '#ffffff',
-              title: '¡Ops!',
-              html: `${error}`,
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
-          },
-        );
-      }
-    });
-  }
-
-  desactivar(rowData: any) {
-    Swal.fire({
-      title: '¡Desactivar!',
-      html: `¿Está seguro que requiere desactivar el registro de INPC: <strong>${rowData.nombre}</strong>?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Confirmar',
-      cancelButtonText: 'Cancelar',
-      background: '#141a21',
-      color: '#ffffff',
-    }).then((result) => {
-      if (result.value) {
-        this.incrementosService.updateEstatusDesactivar(rowData.id, 0).subscribe(
-          () => {
-            Swal.fire({
-              title: '¡Confirmación Realizada!',
-              html: `El registro de INPC ha sido desactivado.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-              background: '#141a21',
-              color: '#ffffff',
-            });
-            this.setupDataSource();
-            this.dataGrid.instance.refresh();
-          },
-          (error) => {
-            Swal.fire({
-              title: '¡Ops!',
-              html: `${error}`,
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-              background: '#141a21',
-              color: '#ffffff',
-            });
-          },
-        );
-      }
-    });
-  }
-
   onPageIndexChanged(e: any) {
     const pageIndex = e.component.pageIndex();
     this.paginaActual = pageIndex + 1;
@@ -164,64 +58,28 @@ export class ListaIncrementosComponent implements OnInit {
 
   setupDataSource() {
     this.loading = true;
+    const total = INPC_HISTORICO_DEMO.length;
 
     this.listaIncrementos = new CustomStore({
       key: 'id',
       load: async (loadOptions: any) => {
-        const take = Number(loadOptions?.take) || this.pageSize || 10;
-        const skip = Number(loadOptions?.skip) || 0;
+        const take = Number(loadOptions?.take) ?? this.pageSize;
+        const skip = Number(loadOptions?.skip) ?? 0;
         const page = Math.floor(skip / take) + 1;
 
-        try {
-          const resp: any = await lastValueFrom(
-            this.incrementosService.obtenerIncrementosData(page, take),
-          );
-          this.loading = false;
-          const rows: any[] = Array.isArray(resp?.data) ? resp.data : [];
-          const meta = resp?.paginated || {};
-          const totalRegistros =
-            toNum(meta.total) ?? toNum(resp?.total) ?? rows.length;
-          const paginaActual = toNum(meta.page) ?? toNum(resp?.page) ?? page;
-          const totalPaginas =
-            toNum(meta.lastPage) ??
-            toNum(resp?.pages) ??
-            Math.max(1, Math.ceil(totalRegistros / take));
+        this.loading = false;
+        const slice = INPC_HISTORICO_DEMO.slice(skip, skip + take);
+        this.totalRegistros = total;
+        this.paginaActual = page;
+        this.totalPaginas = Math.max(1, Math.ceil(total / take));
+        this.paginaActualData = [...INPC_HISTORICO_DEMO];
 
-          const dataTransformada = rows.map((item: any) => ({
-            ...item,
-            estatusTexto:
-              item?.estatus === 1
-                ? 'Activo'
-                : item?.estatus === 0
-                  ? 'Inactivo'
-                  : null,
-            tipoInmuebleLabel:
-              TIPO_INMUEBLE_LABEL[item?.tipoInmueble] ?? item?.tipoInmueble ?? '',
-            periodicidadLabel:
-              PERIODICIDAD_LABEL[item?.periodicidad] ?? item?.periodicidad ?? '',
-          }));
-
-          this.totalRegistros = totalRegistros;
-          this.paginaActual = paginaActual;
-          this.totalPaginas = totalPaginas;
-          this.paginaActualData = dataTransformada;
-
-          return {
-            data: dataTransformada,
-            totalCount: totalRegistros,
-          };
-        } catch (err) {
-          this.loading = false;
-          console.error('Error en la solicitud de datos:', err);
-          return { data: [], totalCount: 0 };
-        }
+        return {
+          data: slice,
+          totalCount: total,
+        };
       },
     });
-
-    function toNum(v: any): number | null {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
-    }
   }
 
   onGridOptionChanged(e: any) {
@@ -262,7 +120,7 @@ export class ListaIncrementosComponent implements OnInit {
       const hitEnColumnas = dataFields.some((df) =>
         normalizar(row?.[df]).includes(texto),
       );
-      const extras = [normalizar(row?.id), normalizar(row?.estatusTexto)];
+      const extras = [normalizar(row?.id)];
 
       return hitEnColumnas || extras.some((s) => s.includes(texto));
     });

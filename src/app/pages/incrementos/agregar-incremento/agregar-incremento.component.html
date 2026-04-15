@@ -10,136 +10,68 @@
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Administración</span>
       <span class="sep">/</span>
-      <span class="crumb active">INPC</span>
+      <span class="crumb">INPC</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Consultar Histórico</span>
     </nav>
   </header>
   <div class="surface">
     <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="incrementoForm" class="perm-form-body">
         <div class="row g-4">
-          <div class="col-12 col-md-6">
-            <label for="incNombre" class="form-label perm-label">Concepto INPC</label>
+          <div class="col-12 col-md-4">
+            <label for="incAnio" class="form-label perm-label">Año</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">title</mat-icon>
-              </span>
-              <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  formControlName="nombre"
-                  class="form-control"
-                  id="incNombre"
-                  placeholder="Ej.: Ajuste anual INPC"
-                  required
-                />
-                <label for="incNombre">Ej.: Ajuste anual INPC</label>
-              </div>
-            </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <label for="incPorcentaje" class="form-label perm-label">Variación INPC (%)</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">percent</mat-icon>
+                <mat-icon aria-hidden="true">calendar_today</mat-icon>
               </span>
               <div class="form-floating flex-grow-1">
                 <input
                   type="number"
-                  formControlName="porcentaje"
+                  formControlName="anio"
                   class="form-control"
-                  id="incPorcentaje"
-                  placeholder="0"
-                  min="0"
-                  step="0.01"
+                  id="incAnio"
+                  placeholder="Año"
+                  min="1990"
+                  max="2040"
+                  step="1"
+                  required
                 />
-                <label for="incPorcentaje">Porcentaje del índice (ej.: 3.5)</label>
+                <label for="incAnio">Ej.: 2017</label>
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-6">
-            <label for="incTipoInmueble" class="form-label perm-label">Tipo de inmueble</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">apartment</mat-icon>
-              </span>
-              <select class="form-select flex-grow-1" formControlName="tipoInmueble" id="incTipoInmueble">
-                <option value="" disabled>Seleccione…</option>
-                <option value="COMERCIAL">Local u oficina (comercial)</option>
-                <option value="RESIDENCIAL">Vivienda (residencial)</option>
-                <option value="ESTACIONAMIENTO">Estacionamiento</option>
-                <option value="MIXTO">Uso mixto</option>
-                <option value="OTRO">Otro</option>
-              </select>
-            </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <label for="incPeriodicidad" class="form-label perm-label">Periodicidad de actualización INPC</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">calendar_month</mat-icon>
-              </span>
-              <select class="form-select flex-grow-1" formControlName="periodicidad" id="incPeriodicidad">
-                <option value="" disabled>Seleccione…</option>
-                <option value="ANUAL">Anual</option>
-                <option value="SEMESTRAL">Semestral</option>
-                <option value="TRIMESTRAL">Trimestral</option>
-                <option value="MENSUAL">Mensual</option>
-              </select>
-            </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <label for="incMesAplicacion" class="form-label perm-label">Mes de renovación (opcional)</label>
+          <div class="col-12 col-md-4">
+            <label for="incMes" class="form-label perm-label">Mes</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">event</mat-icon>
               </span>
+              <select class="form-select flex-grow-1" formControlName="mes" id="incMes" required>
+                <option value="" disabled>Seleccione…</option>
+                <option *ngFor="let m of mesesOpciones" [value]="m">{{ m }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="incValorInpc" class="form-label perm-label">INPC</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">calculate</mat-icon>
+              </span>
               <div class="form-floating flex-grow-1">
                 <input
                   type="number"
-                  formControlName="mesAplicacion"
+                  formControlName="valorInpc"
                   class="form-control"
-                  id="incMesAplicacion"
-                  placeholder="1–12"
-                  min="1"
-                  max="12"
-                  step="1"
+                  id="incValorInpc"
+                  placeholder="0.000"
+                  min="0"
+                  step="0.001"
+                  required
                 />
-                <label for="incMesAplicacion">Mes del calendario (1 a 12)</label>
+                <label for="incValorInpc">Valor del índice (ej.: 126.091)</label>
               </div>
-            </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <label for="incIndice" class="form-label perm-label">Índice o referencia (opcional)</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">gavel</mat-icon>
-              </span>
-              <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  formControlName="indiceReferencia"
-                  class="form-control"
-                  id="incIndice"
-                  placeholder="Ej.: INPC, IPC, pactado en contrato"
-                  maxlength="120"
-                />
-                <label for="incIndice">Ej.: INPC, cláusula contractual</label>
-              </div>
-            </div>
-          </div>
-          <div class="col-12">
-            <label for="incDescripcion" class="form-label perm-label">Descripción o notas (opcional)</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">notes</mat-icon>
-              </span>
-              <input
-                type="text"
-                formControlName="descripcion"
-                class="form-control"
-                id="incDescripcion"
-                placeholder="Contexto del arrendamiento, vigencia, observaciones para valuación o cobro…"
-              />
             </div>
           </div>
         </div>

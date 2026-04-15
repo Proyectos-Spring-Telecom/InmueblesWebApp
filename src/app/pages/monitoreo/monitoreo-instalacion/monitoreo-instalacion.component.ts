@@ -127,7 +127,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   readonly documentos = [
     {
       grupo: 'Escrituras',
-      archivos: ['Escritura 235,444 Constitucion BHV.pdf'],
+      archivos: ['Contrato_inmobiliario_BHV.pdf'],
     },
   ];
   private readonly referenciasServicioBase: Record<string, string> = {
@@ -273,7 +273,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     ];
     const conceptos =
       this.vistaEntidad === 'local'
-        ? [...comunes, 'Renta', 'Mantenimiento']
+        ? ['Renta', 'Mantenimiento']
         : this.inmuebleEsRenta
           ? [...comunes, 'Renta', 'Mantenimiento']
           : [...comunes, 'Predio'];
@@ -282,6 +282,12 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       concepto,
       contrato: this.referenciasServicioBase[concepto] ?? 'N/D',
     }));
+  }
+
+  get nombreArchivoContratoLocal(): string {
+    const archivos = this.documentos[0]?.archivos;
+    const nombre = archivos?.[0];
+    return nombre?.trim() ? nombre : 'Sin archivo';
   }
 
   abrirModalContratoLocal(): void {
@@ -630,6 +636,31 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   }
 
   regresar() {
+    const qp = this.route.snapshot.queryParamMap;
+    const retorno = (qp.get('retorno') ?? '').toLowerCase();
+    const idInmueble = qp.get('idInmueble');
+    const idCliente = qp.get('idCliente');
+    const extras: Record<string, string> = {};
+    if (idInmueble != null && String(idInmueble).trim() !== '') {
+      extras['idInmueble'] = String(idInmueble).trim();
+    }
+    if (idCliente != null && String(idCliente).trim() !== '') {
+      extras['idCliente'] = String(idCliente).trim();
+    }
+
+    if (retorno === 'locales') {
+      this.router.navigate(['/monitoreo'], {
+        queryParams: { retorno: 'locales', ...extras },
+      });
+      return;
+    }
+    if (retorno === 'inmuebles') {
+      this.router.navigate(['/monitoreo'], {
+        queryParams: { retorno: 'inmuebles', ...extras },
+      });
+      return;
+    }
+
     window.history.back();
   }
 

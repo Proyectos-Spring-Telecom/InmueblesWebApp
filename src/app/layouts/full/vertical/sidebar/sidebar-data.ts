@@ -167,16 +167,16 @@ export const navItems: NavItem[] = [
   },
   {
     displayName: 'Monitoreo',
-    iconName: 'chart-line',
+    iconName: 'building',
     route: '/monitoreo',
     permission: Permiso.CONSULTAR_MONITOREO,
   },
-  {
+  /* {
     displayName: 'Oficinas Centrales',
     iconName: 'antenna',
     route: '/instalaciones-centrales',
     permission: Permiso.CONSULTAR_OFICINA_CENTRAL,
-  },
+  }, */
   {
     displayName: 'Estacionamiento',
     iconName: 'parking',

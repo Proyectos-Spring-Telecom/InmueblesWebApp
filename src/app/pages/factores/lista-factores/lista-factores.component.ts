@@ -2,24 +2,10 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
-import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { FactoresService } from 'src/app/services/moduleService/factores.service';
 import Swal from 'sweetalert2';
-
-const CATEGORIA_FACTOR_LABEL: Record<string, string> = {
-  UBICACION: 'Ubicación y entorno',
-  SUPERFICIE: 'Superficie / físico',
-  MERCADO: 'Mercado / demanda',
-  USO_SUELO: 'Uso de suelo',
-  OTRO: 'Otro',
-};
-
-const UNIDAD_FACTOR_LABEL: Record<string, string> = {
-  COEFICIENTE: 'Coeficiente',
-  POR_M2: 'Por m²',
-  PORCENTUAL: 'Porcentual (%)',
-};
+import { FACTORES_PRESUPUESTO_DEMO } from '../factores-presupuesto-demo.data';
+import { FORMULAS_PRESUPUESTO_DEMO } from '../formulas-presupuesto-demo.data';
 
 @Component({
   selector: 'app-lista-factores',
@@ -30,33 +16,33 @@ const UNIDAD_FACTOR_LABEL: Record<string, string> = {
 })
 export class ListaFactoresComponent implements OnInit {
   public mensajeAgrupar: string =
-    'Arrastre un encabezado de columna aquí para agrupar por esa columna';
-  public listaFactores: any;
+    'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
+  public listaFactoresDemo: any;
+  public listaFormulasDemo: any;
   public showFilterRow: boolean;
   public showHeaderFilter: boolean;
-  public loading: boolean;
-  public loadingMessage: string = 'Cargando...';
+  public pageSizeFactoresDemo: number = 20;
+  public pageSizeFormulasDemo: number = 20;
   public paginaActual: number = 1;
-  public totalRegistros: number = 0;
-  public pageSize: number = 20;
-  public totalPaginas: number = 0;
-  @ViewChild(DxDataGridComponent, { static: false })
-  dataGrid: DxDataGridComponent;
+  @ViewChild('gridFactoresDemo', { static: false })
+  dataGridFactores!: DxDataGridComponent;
+  @ViewChild('gridFormulas', { static: false })
+  dataGridFormulas!: DxDataGridComponent;
   public autoExpandAllGroups: boolean = true;
   isGrouped: boolean = false;
-  public paginaActualData: any[] = [];
-  public filtroActivo: string = '';
+  public paginaActualDataFactores: any[] = [];
+  public paginaActualDataFormulas: any[] = [];
+  public filtroActivoFactores: string = '';
+  public filtroActivoFormulas: string = '';
 
-  constructor(
-    private router: Router,
-    private factoresService: FactoresService,
-  ) {
+  constructor(private router: Router) {
     this.showFilterRow = true;
     this.showHeaderFilter = true;
   }
 
   ngOnInit() {
-    this.setupDataSource();
+    this.setupFactoresPresupuestoDemo();
+    this.setupFormulasPresupuestoDemo();
   }
 
   agregarFactor() {
@@ -67,173 +53,81 @@ export class ListaFactoresComponent implements OnInit {
     this.router.navigateByUrl('/factores/editar-factor/' + idFactor);
   }
 
-  activar(rowData: any) {
+  editarFormulaDemo(_row: { id: number; nombre: string; formula: string }) {
+    this.router.navigateByUrl('/factores/agregar-factor');
+  }
+
+  eliminarFormulaDemo(row: { id: number; nombre: string }) {
     Swal.fire({
-      title: '¡Activar!',
-      html: `¿Está seguro que requiere activar el factor: <strong>${rowData.nombre}</strong>?`,
-      icon: 'warning',
+      title: 'Eliminar fórmula',
+      html: `La fórmula <strong>${row.nombre}</strong> es de demostración y no se elimina del servidor.`,
+      icon: 'info',
       background: '#141a21',
       color: '#ffffff',
-      showCancelButton: true,
       confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Confirmar',
-      cancelButtonText: 'Cancelar',
-    }).then((result) => {
-      if (result.value) {
-        this.factoresService.updateEstatusActivar(rowData.id, 1).subscribe(
-          () => {
-            Swal.fire({
-              background: '#141a21',
-              color: '#ffffff',
-              title: '¡Confirmación Realizada!',
-              html: `El factor ha sido activado.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
-            this.setupDataSource();
-            this.dataGrid.instance.refresh();
-          },
-          (error) => {
-            Swal.fire({
-              background: '#141a21',
-              color: '#ffffff',
-              title: '¡Ops!',
-              html: `${error}`,
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
-          },
-        );
-      }
+      confirmButtonText: 'Entendido',
     });
   }
 
-  desactivar(rowData: any) {
-    Swal.fire({
-      title: '¡Desactivar!',
-      html: `¿Está seguro que requiere desactivar el factor: <strong>${rowData.nombre}</strong>?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Confirmar',
-      cancelButtonText: 'Cancelar',
-      background: '#141a21',
-      color: '#ffffff',
-    }).then((result) => {
-      if (result.value) {
-        this.factoresService.updateEstatusDesactivar(rowData.id, 0).subscribe(
-          () => {
-            Swal.fire({
-              title: '¡Confirmación Realizada!',
-              html: `El factor ha sido desactivado.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-              background: '#141a21',
-              color: '#ffffff',
-            });
-            this.setupDataSource();
-            this.dataGrid.instance.refresh();
-          },
-          (error) => {
-            Swal.fire({
-              title: '¡Ops!',
-              html: `${error}`,
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-              background: '#141a21',
-              color: '#ffffff',
-            });
-          },
-        );
-      }
-    });
-  }
-
-  onPageIndexChanged(e: any) {
+  onPageIndexChangedFactoresDemo(e: any) {
     const pageIndex = e.component.pageIndex();
     this.paginaActual = pageIndex + 1;
     e.component.refresh();
   }
 
-  setupDataSource() {
-    this.loading = true;
-
-    this.listaFactores = new CustomStore({
-      key: 'id',
-      load: async (loadOptions: any) => {
-        const take = Number(loadOptions?.take) || this.pageSize || 10;
-        const skip = Number(loadOptions?.skip) || 0;
-        const page = Math.floor(skip / take) + 1;
-
-        try {
-          const resp: any = await lastValueFrom(
-            this.factoresService.obtenerFactoresData(page, take),
-          );
-          this.loading = false;
-          const rows: any[] = Array.isArray(resp?.data) ? resp.data : [];
-          const meta = resp?.paginated || {};
-          const totalRegistros =
-            toNum(meta.total) ?? toNum(resp?.total) ?? rows.length;
-          const paginaActual = toNum(meta.page) ?? toNum(resp?.page) ?? page;
-          const totalPaginas =
-            toNum(meta.lastPage) ??
-            toNum(resp?.pages) ??
-            Math.max(1, Math.ceil(totalRegistros / take));
-
-          const dataTransformada = rows.map((item: any) => ({
-            ...item,
-            estatusTexto:
-              item?.estatus === 1
-                ? 'Activo'
-                : item?.estatus === 0
-                  ? 'Inactivo'
-                  : null,
-            categoriaLabel:
-              CATEGORIA_FACTOR_LABEL[item?.categoria] ?? item?.categoria ?? '',
-            unidadLabel: UNIDAD_FACTOR_LABEL[item?.unidad] ?? item?.unidad ?? '',
-            formulaTexto: `${item?.nombre ?? 'Factor'} = (${item?.valor ?? 0}) x ${UNIDAD_FACTOR_LABEL[item?.unidad] ?? item?.unidad ?? 'unidad'}`,
-          }));
-
-          this.totalRegistros = totalRegistros;
-          this.paginaActual = paginaActual;
-          this.totalPaginas = totalPaginas;
-          this.paginaActualData = dataTransformada;
-
-          return {
-            data: dataTransformada,
-            totalCount: totalRegistros,
-          };
-        } catch (err) {
-          this.loading = false;
-          console.error('Error en la solicitud de datos:', err);
-          return { data: [], totalCount: 0 };
-        }
-      },
-    });
-
-    function toNum(v: any): number | null {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
-    }
+  onPageIndexChangedFormulasDemo(e: any) {
+    const pageIndex = e.component.pageIndex();
+    this.paginaActual = pageIndex + 1;
+    e.component.refresh();
   }
 
-  onGridOptionChanged(e: any) {
+  setupFactoresPresupuestoDemo() {
+    const all = [...FACTORES_PRESUPUESTO_DEMO];
+    this.paginaActualDataFactores = all;
+
+    this.listaFactoresDemo = new CustomStore({
+      key: 'id',
+      load: async (loadOptions: any) => {
+        const take = Number(loadOptions?.take) || this.pageSizeFactoresDemo || 10;
+        const skip = Number(loadOptions?.skip) || 0;
+        const slice = all.slice(skip, skip + take);
+        return {
+          data: slice,
+          totalCount: all.length,
+        };
+      },
+    });
+  }
+
+  setupFormulasPresupuestoDemo() {
+    const all = [...FORMULAS_PRESUPUESTO_DEMO];
+    this.paginaActualDataFormulas = all;
+
+    this.listaFormulasDemo = new CustomStore({
+      key: 'id',
+      load: async (loadOptions: any) => {
+        const take = Number(loadOptions?.take) || this.pageSizeFormulasDemo || 10;
+        const skip = Number(loadOptions?.skip) || 0;
+        const slice = all.slice(skip, skip + take);
+        return {
+          data: slice,
+          totalCount: all.length,
+        };
+      },
+    });
+  }
+
+  onFactoresDemoGridOptionChanged(e: any) {
     if (e.fullName !== 'searchPanel.text') return;
 
-    const grid = this.dataGrid?.instance;
+    const grid = this.dataGridFactores?.instance;
     const texto = (e.value ?? '').toString().trim().toLowerCase();
     if (!texto) {
-      this.filtroActivo = '';
-      grid?.option('dataSource', this.listaFactores);
+      this.filtroActivoFactores = '';
+      grid?.option('dataSource', this.listaFactoresDemo);
       return;
     }
-    this.filtroActivo = texto;
+    this.filtroActivoFactores = texto;
     let columnas: any[] = [];
     try {
       const colsOpt = grid?.option('columns');
@@ -249,33 +143,68 @@ export class ListaFactoresComponent implements OnInit {
       .filter((df: any) => typeof df === 'string' && df.trim().length > 0);
     const normalizar = (val: any): string => {
       if (val === null || val === undefined) return '';
-      if (val instanceof Date) {
-        const dd = String(val.getDate()).padStart(2, '0');
-        const mm = String(val.getMonth() + 1).padStart(2, '0');
-        const yyyy = val.getFullYear();
-        return `${dd}/${mm}/${yyyy}`.toLowerCase();
-      }
       return String(val).toLowerCase();
     };
-    const dataFiltrada = (this.paginaActualData || []).filter((row: any) => {
+    const dataFiltrada = (this.paginaActualDataFactores || []).filter((row: any) => {
       const hitEnColumnas = dataFields.some((df) =>
         normalizar(row?.[df]).includes(texto),
       );
-      const extras = [normalizar(row?.id), normalizar(row?.estatusTexto)];
+      const extras = [normalizar(row?.id)];
+      return hitEnColumnas || extras.some((s) => s.includes(texto));
+    });
+    grid?.option('dataSource', dataFiltrada);
+  }
 
+  onFormulasDemoGridOptionChanged(e: any) {
+    if (e.fullName !== 'searchPanel.text') return;
+
+    const grid = this.dataGridFormulas?.instance;
+    const texto = (e.value ?? '').toString().trim().toLowerCase();
+    if (!texto) {
+      this.filtroActivoFormulas = '';
+      grid?.option('dataSource', this.listaFormulasDemo);
+      return;
+    }
+    this.filtroActivoFormulas = texto;
+    let columnas: any[] = [];
+    try {
+      const colsOpt = grid?.option('columns');
+      if (Array.isArray(colsOpt) && colsOpt.length) columnas = colsOpt;
+    } catch {
+      /* noop */
+    }
+    if (!columnas.length && grid?.getVisibleColumns) {
+      columnas = grid.getVisibleColumns();
+    }
+    const dataFields: string[] = columnas
+      .map((c: any) => c?.dataField)
+      .filter((df: any) => typeof df === 'string' && df.trim().length > 0);
+    const normalizar = (val: any): string => {
+      if (val === null || val === undefined) return '';
+      return String(val).toLowerCase();
+    };
+    const dataFiltrada = (this.paginaActualDataFormulas || []).filter((row: any) => {
+      const hitEnColumnas = dataFields.some((df) =>
+        normalizar(row?.[df]).includes(texto),
+      );
+      const extras = [normalizar(row?.id)];
       return hitEnColumnas || extras.some((s) => s.includes(texto));
     });
     grid?.option('dataSource', dataFiltrada);
   }
 
   limpiarCampos() {
-    this.dataGrid.instance.clearGrouping();
+    this.dataGridFactores?.instance?.clearGrouping();
+    this.dataGridFormulas?.instance?.clearGrouping();
     this.isGrouped = false;
-    this.dataGrid.instance.refresh();
+    this.dataGridFactores?.instance?.refresh();
+    this.dataGridFormulas?.instance?.refresh();
   }
 
   toggleExpandGroups() {
-    const groupedColumns = this.dataGrid.instance
+    const inst = this.dataGridFactores?.instance;
+    if (!inst) return;
+    const groupedColumns = inst
       .getVisibleColumns()
       .filter((col) => (col.groupIndex ?? -1) >= 0);
     if (groupedColumns.length === 0) {
@@ -292,7 +221,8 @@ export class ListaFactoresComponent implements OnInit {
       });
     } else {
       this.autoExpandAllGroups = !this.autoExpandAllGroups;
-      this.dataGrid.instance.refresh();
+      inst.refresh();
+      this.dataGridFormulas?.instance?.refresh();
     }
   }
 }
