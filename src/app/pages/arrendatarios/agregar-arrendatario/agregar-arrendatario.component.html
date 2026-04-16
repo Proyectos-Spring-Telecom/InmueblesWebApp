@@ -17,215 +17,402 @@
     <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="arrendatarioForm" class="perm-form-body">
         <div class="row g-4">
-          <div class="col-12 col-md-6">
-            <label for="razonSocial" class="form-label perm-label">Razón social</label>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="nombreInmueble" class="form-label perm-label">Inmueble</label>
             <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold"><mat-icon>business</mat-icon></span>
+              <span class="input-group-text fw-bold"><mat-icon>apartment</mat-icon></span>
               <div class="form-floating flex-grow-1">
-                <input id="razonSocial" type="text" class="form-control" formControlName="razonSocial" placeholder="Razón social" />
-                <label for="razonSocial">Nombre legal del arrendatario</label>
+                <input id="nombreInmueble" type="text" class="form-control" formControlName="nombreInmueble" placeholder="Nombre del inmueble" />
+                <label for="nombreInmueble">Nombre del inmueble</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="rentaMxn" class="form-label perm-label">Renta (MXN)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="rentaMxn" type="number" class="form-control" formControlName="rentaMxn" placeholder="Monto de renta" />
+                <label for="rentaMxn">Monto de renta</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="direccionInmueble" class="form-label perm-label">Dirección del inmueble</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>location_on</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="direccionInmueble" type="text" class="form-control" formControlName="direccionInmueble" placeholder="Dirección del inmueble" />
+                <label for="direccionInmueble">Dirección del inmueble</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="estatusInmueble" class="form-label perm-label">Estatus del inmueble</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="estatusInmueble" type="text" class="form-control" formControlName="estatusInmueble" placeholder="Ej.: RENTADO / PROPIO" />
+                <label for="estatusInmueble">Ej.: RENTADO / PROPIO</label>
               </div>
             </div>
           </div>
 
-          <div class="col-12 col-md-6">
-            <label for="nombreComercial" class="form-label perm-label">Nombre comercial</label>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="vigenciaAnios" class="form-label perm-label">Vigencia (años)</label>
             <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
+              <span class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
               <div class="form-floating flex-grow-1">
-                <input id="nombreComercial" type="text" class="form-control" formControlName="nombreComercial" placeholder="Nombre comercial" />
-                <label for="nombreComercial">Nombre visible en monitoreo</label>
+                <input id="vigenciaAnios" type="number" class="form-control" formControlName="vigenciaAnios" placeholder="Años de vigencia" />
+                <label for="vigenciaAnios">Años de vigencia</label>
               </div>
             </div>
           </div>
-
-          <div class="col-12 col-md-4">
-            <label for="rfc" class="form-label perm-label">RFC</label>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="fechaInicio" class="form-label perm-label">Inicio</label>
             <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
+              <span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
               <div class="form-floating flex-grow-1">
-                <input id="rfc" type="text" class="form-control" formControlName="rfc" placeholder="RFC" />
-                <label for="rfc">Ej.: STM240101AB1</label>
+                <input id="fechaInicio" type="date" class="form-control" formControlName="fechaInicio" />
+                <label for="fechaInicio">Fecha de inicio</label>
               </div>
             </div>
           </div>
-
-          <div class="col-12 col-md-4">
-            <label for="correo" class="form-label perm-label">Correo</label>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="fechaFin" class="form-label perm-label">Fin</label>
             <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold"><mat-icon>mail</mat-icon></span>
+              <span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
               <div class="form-floating flex-grow-1">
-                <input id="correo" type="email" class="form-control" formControlName="correo" placeholder="Correo" />
-                <label for="correo">Contacto administrativo</label>
+                <input id="fechaFin" type="date" class="form-control" formControlName="fechaFin" />
+                <label for="fechaFin">Fecha de fin</label>
               </div>
             </div>
           </div>
-
-          <div class="col-12 col-md-4">
-            <label for="telefono" class="form-label perm-label">Teléfono</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold"><mat-icon>call</mat-icon></span>
-              <div class="form-floating flex-grow-1">
-                <input id="telefono" type="text" class="form-control" formControlName="telefono" placeholder="Teléfono" />
-                <label for="telefono">Ej.: 55 0000 0000</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 col-md-6">
-            <label for="giroPrincipal" class="form-label perm-label">Giro principal</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold"><mat-icon>category</mat-icon></span>
-              <div class="form-floating flex-grow-1">
-                <input id="giroPrincipal" type="text" class="form-control" formControlName="giroPrincipal" placeholder="Giro principal" />
-                <label for="giroPrincipal">Actividad principal del negocio</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-3 col-xl-3">
             <label for="arrendador" class="form-label perm-label">Arrendador</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
               <div class="form-floating flex-grow-1">
                 <input id="arrendador" type="text" class="form-control" formControlName="arrendador" placeholder="Arrendador" />
-                <label for="arrendador">Propietario del inmueble</label>
+                <label for="arrendador">Arrendador</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="tiempoRentaAnios" class="form-label perm-label">Tiempo de renta (años)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="tiempoRentaAnios" type="number" class="form-control" formControlName="tiempoRentaAnios" placeholder="Tiempo de renta" />
+                <label for="tiempoRentaAnios">Tiempo de renta</label>
               </div>
             </div>
           </div>
 
           <div class="col-12">
-            <label for="observaciones" class="form-label perm-label">Observaciones</label>
+            <h6 class="section-title mt-2 mb-0">Servicios</h6>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="servicioAguaContrato" class="form-label perm-label">Contrato de agua</label>
             <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span>
+              <span class="input-group-text fw-bold"><mat-icon>water_drop</mat-icon></span>
               <div class="form-floating flex-grow-1">
-                <input id="observaciones" type="text" class="form-control" formControlName="observaciones" placeholder="Observaciones" />
-                <label for="observaciones">Notas internas del arrendatario</label>
+                <input id="servicioAguaContrato" type="text" class="form-control" formControlName="servicioAguaContrato" placeholder="Número de contrato" />
+                <label for="servicioAguaContrato">Número de contrato</label>
               </div>
             </div>
           </div>
-        </div>
-
-        <div class="locales-builder mt-4">
-          <div class="locales-builder__head d-flex flex-wrap gap-2 align-items-center justify-content-between">
-            <div>
-              <h5 class="mb-1">Locales del arrendatario</h5>
-              <p class="mb-0">
-                Arreglo dinámico para capturar N locales por arrendatario. Total superficie:
-                <strong>{{ totalSuperficie | number : '1.0-2' }} m²</strong> · Mensualidad total:
-                <strong>{{ totalMensualidad | currency : 'MXN' : 'symbol' : '1.0-0' }}</strong>
-              </p>
-            </div>
-            <button type="button" class="button-success local-main-action-btn" (click)="agregarLocal()">
-              <i class="fa fa-plus"></i>&nbsp;&nbsp;Agregar Local
-            </button>
-          </div>
-
-          <div formArrayName="locales" class="row g-3 mt-2">
-            <div class="col-12" *ngFor="let localControl of locales.controls; let i = index" [formGroupName]="i">
-              <article class="local-item-card">
-                <div class="local-item-card__head d-flex flex-wrap align-items-center justify-content-between gap-2">
-                  <h6 class="mb-0">Local {{ i + 1 }} · {{ localControl.get('nombreLocal')?.value || 'Sin nombre' }}</h6>
-                  <div class="d-flex gap-2">
-                    <button type="button" class="local-action-btn local-action-btn--clone local-btn" (click)="duplicarLocal(i)">
-                      <i class="fa fa-clone"></i>&nbsp;Duplicar
-                    </button>
-                    <button type="button" class="local-action-btn local-action-btn--remove local-btn" (click)="eliminarLocal(i)">
-                      <i class="fa fa-trash"></i>&nbsp;Quitar
-                    </button>
-                  </div>
-                </div>
-
-                <div class="row g-3 mt-1 local-item-card__grid">
-                  <div class="col-12 col-sm-6 col-xl-3">
-                    <label class="form-label perm-label">Nombre del local</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>storefront</mat-icon></span>
-                      <div class="form-floating flex-grow-1">
-                        <input class="form-control" id="nombreLocal{{ i }}" type="text" formControlName="nombreLocal" placeholder="Local PB-01" />
-                        <label for="nombreLocal{{ i }}">Ej.: Local PB-01</label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 col-xl-3">
-                    <label class="form-label perm-label">Inmueble</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>apartment</mat-icon></span>
-                      <select class="form-select flex-grow-1" formControlName="idInmueble" (change)="onInmuebleChange(localControl)">
-                        <option [ngValue]="null" disabled>Selecciona un inmueble</option>
-                        <option *ngFor="let item of inmueblesCatalogo" [ngValue]="item.id">{{ item.nombre }}</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 col-xl-2">
-                    <label class="form-label perm-label">Nivel</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>layers</mat-icon></span>
-                      <div class="form-floating flex-grow-1">
-                        <input class="form-control" id="nivel{{ i }}" type="text" formControlName="nivel" placeholder="Planta baja" />
-                        <label for="nivel{{ i }}">Ej.: Planta baja</label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 col-xl-2">
-                    <label class="form-label perm-label">Superficie m²</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span>
-                      <div class="form-floating flex-grow-1">
-                        <input class="form-control" id="superficie{{ i }}" type="number" formControlName="superficieM2" min="1" placeholder="0" />
-                        <label for="superficie{{ i }}">m²</label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 col-xl-2">
-                    <label class="form-label perm-label">Mensualidad MXN</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
-                      <div class="form-floating flex-grow-1">
-                        <input class="form-control" id="mensualidad{{ i }}" type="number" formControlName="mensualidadMxn" min="0" placeholder="0" />
-                        <label for="mensualidad{{ i }}">Renta mensual</label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 col-lg-3">
-                    <label class="form-label perm-label">Fecha inicio</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
-                      <input class="form-control flex-grow-1" type="date" formControlName="fechaInicio" />
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 col-lg-3">
-                    <label class="form-label perm-label">Fecha término</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>event_busy</mat-icon></span>
-                      <input class="form-control flex-grow-1" type="date" formControlName="fechaTermino" />
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 col-lg-3">
-                    <label class="form-label perm-label">Estatus contrato</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>task_alt</mat-icon></span>
-                      <select class="form-select flex-grow-1" formControlName="estatusContrato">
-                        <option value="vigente">Vigente</option>
-                        <option value="por vencer">Por vencer</option>
-                        <option value="vencido">Vencido</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6 col-lg-3">
-                    <label class="form-label perm-label">Inmueble (texto)</label>
-                    <div class="input-group perm-ig">
-                      <span class="input-group-text fw-bold"><mat-icon>home_work</mat-icon></span>
-                      <div class="form-floating flex-grow-1">
-                        <input class="form-control" id="nombreInmueble{{ i }}" type="text" formControlName="nombreInmueble" placeholder="Se autocompleta por catálogo" />
-                        <label for="nombreInmueble{{ i }}">Nombre del inmueble</label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </article>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="servicioLuzContrato" class="form-label perm-label">Contrato de luz</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>bolt</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="servicioLuzContrato" type="text" class="form-control" formControlName="servicioLuzContrato" placeholder="Número de contrato" />
+                <label for="servicioLuzContrato">Número de contrato</label>
+              </div>
             </div>
           </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="servicioMantenimientoContrato" class="form-label perm-label">Contrato de mantenimiento</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="servicioMantenimientoContrato" type="text" class="form-control" formControlName="servicioMantenimientoContrato" placeholder="Número de contrato" />
+                <label for="servicioMantenimientoContrato">Número de contrato</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <h6 class="section-title mt-2 mb-0">Zonas</h6>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="zonaPrincipal" class="form-label perm-label">Zona principal</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>layers</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="zonaPrincipal" type="text" class="form-control" formControlName="zonaPrincipal" placeholder="Ej.: Planta baja corporativo" />
+                <label for="zonaPrincipal">Ej.: Planta baja corporativo</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="zonaSuperficieM2" class="form-label perm-label">Superficie de zona (m²)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="zonaSuperficieM2" type="number" class="form-control" formControlName="zonaSuperficieM2" placeholder="m² de la zona" />
+                <label for="zonaSuperficieM2">m² de la zona</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="superficieDisponiblePredioM2" class="form-label perm-label">Superficie disponible predio (m²)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>crop_square</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="superficieDisponiblePredioM2" type="number" class="form-control" formControlName="superficieDisponiblePredioM2" placeholder="m² disponibles" />
+                <label for="superficieDisponiblePredioM2">m² disponibles</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <h6 class="section-title mt-2 mb-0">Estacionamientos</h6>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="estacionamientoPensionado" class="form-label perm-label">Nombre del pensionado</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="estacionamientoPensionado" type="text" class="form-control" formControlName="estacionamientoPensionado" placeholder="Nombre del pensionado" />
+                <label for="estacionamientoPensionado">Nombre del pensionado</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="estacionamientoTarjeta" class="form-label perm-label">Número de tarjeta</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>credit_card</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="estacionamientoTarjeta" type="text" class="form-control" formControlName="estacionamientoTarjeta" placeholder="Ej.: TAR-1001" />
+                <label for="estacionamientoTarjeta">Ej.: TAR-1001</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="estacionamientoArrendatario" class="form-label perm-label">Arrendatario (estacionamiento)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="estacionamientoArrendatario" type="text" class="form-control" formControlName="estacionamientoArrendatario" placeholder="Arrendatario relacionado" />
+                <label for="estacionamientoArrendatario">Arrendatario relacionado</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <h6 class="section-title mt-2 mb-0">Pagos</h6>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="pagoConcepto" class="form-label perm-label">Concepto de pago</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>receipt_long</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="pagoConcepto" type="text" class="form-control" formControlName="pagoConcepto" placeholder="Ej.: Mantenimiento" />
+                <label for="pagoConcepto">Ej.: Mantenimiento</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="pagoFecha" class="form-label perm-label">Fecha de pago</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="pagoFecha" type="date" class="form-control" formControlName="pagoFecha" />
+                <label for="pagoFecha">Fecha de pago</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="pagoMonto" class="form-label perm-label">Monto</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="pagoMonto" type="number" class="form-control" formControlName="pagoMonto" placeholder="Monto pagado" />
+                <label for="pagoMonto">Monto pagado</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <h6 class="section-title mt-2 mb-0">Vigencias</h6>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="vigenciaDocumento" class="form-label perm-label">Documento</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>description</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="vigenciaDocumento" type="text" class="form-control" formControlName="vigenciaDocumento" placeholder="Documento de vigencia" />
+                <label for="vigenciaDocumento">Documento de vigencia</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="vigenciaDiasRestantes" class="form-label perm-label">Días restantes</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>timer</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="vigenciaDiasRestantes" type="number" class="form-control" formControlName="vigenciaDiasRestantes" placeholder="Días restantes" />
+                <label for="vigenciaDiasRestantes">Días restantes</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="vigenciaEstatus" class="form-label perm-label">Estatus de vigencia</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>check_circle</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="vigenciaEstatus" type="text" class="form-control" formControlName="vigenciaEstatus" placeholder="Ej.: Vigente / Por vencer" />
+                <label for="vigenciaEstatus">Ej.: Vigente / Por vencer</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <h6 class="section-title mt-2 mb-0">Documentos e imágenes</h6>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label class="form-label perm-label d-block mb-2">Archivo de escritura (PDF)</label>
+            <div class="uploader">
+              <div class="uploader__body">
+                <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                <h6 class="uploader__title">Sube tu archivo</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorArchivo('escritura')">Seleccionar</button>
+                  <span class="uploader__badge">PDF</span>
+                </div>
+                <div class="uploader__status" *ngIf="archivoEscrituraNombre">{{ archivoEscrituraNombre }}</div>
+                <input #archivoEscrituraInput type="file" accept=".pdf,application/pdf" class="uploader__input" (change)="onFileSelected($event, 'documentoEscritura')" />
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label class="form-label perm-label d-block mb-2">Imagen licencia</label>
+            <div class="uploader">
+              <div class="uploader__body">
+                <div class="uploader__icon"><mat-icon>image</mat-icon></div>
+                <h6 class="uploader__title">Sube imagen</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorArchivo('licencia')">Seleccionar</button>
+                  <span class="uploader__badge">PNG · JPG · JPEG</span>
+                </div>
+                <div class="uploader__status" *ngIf="imagenLicenciaNombre">{{ imagenLicenciaNombre }}</div>
+                <input #imagenLicenciaInput type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'documentoLicencia')" />
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label class="form-label perm-label d-block mb-2">Imagen plano</label>
+            <div class="uploader">
+              <div class="uploader__body">
+                <div class="uploader__icon"><mat-icon>map</mat-icon></div>
+                <h6 class="uploader__title">Sube imagen</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorArchivo('plano')">Seleccionar</button>
+                  <span class="uploader__badge">PNG · JPG · JPEG</span>
+                </div>
+                <div class="uploader__status" *ngIf="imagenPlanoNombre">{{ imagenPlanoNombre }}</div>
+                <input #imagenPlanoInput type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'documentoPlano')" />
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label class="form-label perm-label d-block mb-2">Imagen galería 1</label>
+            <div class="uploader">
+              <div class="uploader__body">
+                <div class="uploader__icon"><mat-icon>image</mat-icon></div>
+                <h6 class="uploader__title">Sube imagen</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorArchivo('gal1')">Seleccionar</button>
+                  <span class="uploader__badge">PNG · JPG · JPEG</span>
+                </div>
+                <div class="uploader__status" *ngIf="galeriaImagen1Nombre">{{ galeriaImagen1Nombre }}</div>
+                <input #galeriaImagen1Input type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'galeriaImagen1')" />
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label class="form-label perm-label d-block mb-2">Imagen galería 2</label>
+            <div class="uploader">
+              <div class="uploader__body">
+                <div class="uploader__icon"><mat-icon>photo_library</mat-icon></div>
+                <h6 class="uploader__title">Sube imagen</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorArchivo('gal2')">Seleccionar</button>
+                  <span class="uploader__badge">PNG · JPG · JPEG</span>
+                </div>
+                <div class="uploader__status" *ngIf="galeriaImagen2Nombre">{{ galeriaImagen2Nombre }}</div>
+                <input #galeriaImagen2Input type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'galeriaImagen2')" />
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h6 class="section-title mt-2 mb-0">Locales (lista y detalle)</h6>
+              <button type="button" class="btn btn-sm uploader__btn" (click)="agregarLocal()">Agregar local</button>
+            </div>
+          </div>
+
+          <ng-container formArrayName="locales">
+            <ng-container *ngFor="let localCtrl of localesFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2 mt-1">
+                <h6 class="perm-label m-0">Local {{ i + 1 }}</h6>
+                <button type="button" class="btn btn-sm button-danger" (click)="eliminarLocal(i)" [disabled]="localesFormArray.length === 1">
+                  Eliminar local
+                </button>
+              </div>
+
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Nombre local</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>storefront</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="nombreLocal" placeholder="Nombre del local" /><label>Nombre del local</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Estado local</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="estadoLocal" placeholder="Ej.: Ocupado / Libre" /><label>Ej.: Ocupado / Libre</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Mensualidad (MXN)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="mensualidadLocalMxn" placeholder="Mensualidad" /><label>Mensualidad</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Zona</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>layers</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="zonaLocal" placeholder="Zona del local" /><label>Zona del local</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Ocupante</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="ocupanteLocal" placeholder="Ocupante" /><label>Ocupante</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Giro</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>work</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="giroLocal" placeholder="Giro del local" /><label>Giro del local</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Medida</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="medidaLocal" placeholder="Ej.: 95 m²" /><label>Ej.: 95 m²</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Contrato hasta</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span><div class="form-floating flex-grow-1"><input type="date" class="form-control" formControlName="contratoHastaLocal" /><label>Contrato hasta</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Archivo contrato</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>attach_file</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="archivoContratoLocal" placeholder="Nombre de archivo" /><label>Nombre de archivo</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Número de contrato</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>description</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="numeroContratoLocal" placeholder="Número de contrato" /><label>Número de contrato</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Tipo modificación</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>edit_note</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="tipoModificacionContratoLocal" placeholder="Tipo de modificación" /><label>Tipo de modificación</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Arrendador (local)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>business</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="arrendadorLocal" placeholder="Arrendador" /><label>Arrendador</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Arrendatario (local)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="arrendatarioLocal" placeholder="Arrendatario" /><label>Arrendatario</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Inicio contrato</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span><div class="form-floating flex-grow-1"><input type="date" class="form-control" formControlName="fechaInicioContratoLocal" /><label>Inicio contrato</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Término contrato</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event_busy</mat-icon></span><div class="form-floating flex-grow-1"><input type="date" class="form-control" formControlName="fechaTerminoContratoLocal" /><label>Término contrato</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Tipo de moneda</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>attach_money</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="tipoMonedaLocal" placeholder="Ej.: MXN" /><label>Ej.: MXN</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Metros rentados</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>straighten</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="metrosRentadosLocal" placeholder="Metros rentados" /><label>Metros rentados</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Costo por m²</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>calculate</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="costoPorM2Local" placeholder="Costo por m²" /><label>Costo por m²</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">% mantenimiento</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>percent</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="pctMantenimientoLocal" placeholder="% mantenimiento" /><label>% mantenimiento</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Meses depósito</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>calendar_month</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="mesesDepositoLocal" placeholder="Meses depósito" /><label>Meses depósito</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Monto depósito</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="montoDepositoLocal" placeholder="Monto depósito" /><label>Monto depósito</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Meses adelanto</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>today</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="mesesAdelantoLocal" placeholder="Meses adelanto" /><label>Meses adelanto</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Monto adelanto</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="montoAdelantoLocal" placeholder="Monto adelanto" /><label>Monto adelanto</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Años forzosos arrendador</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="anosForzososArrendadorLocal" placeholder="Años forzosos arrendador" /><label>Años forzosos arrendador</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Años forzosos arrendatario</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>schedule_send</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="anosForzososArrendatarioLocal" placeholder="Años forzosos arrendatario" /><label>Años forzosos arrendatario</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Subtotal renta</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>request_quote</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="subtotalRentaLocal" placeholder="Subtotal renta" /><label>Subtotal renta</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">IVA renta</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="ivaRentaLocal" placeholder="IVA renta" /><label>IVA renta</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Renta total</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>paid</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="rentaTotalLocal" placeholder="Renta total" /><label>Renta total</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Subtotal mantenimiento</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>handyman</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="subtotalMantenimientoLocal" placeholder="Subtotal mantenimiento" /><label>Subtotal mantenimiento</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">IVA mantenimiento</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="ivaMantenimientoLocal" placeholder="IVA mantenimiento" /><label>IVA mantenimiento</label></div></div></div>
+              <div class="col-12 col-md-3 col-xl-3"><label class="form-label perm-label">Mantenimiento total</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>paid</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="mantenimientoTotalLocal" placeholder="Mantenimiento total" /><label>Mantenimiento total</label></div></div></div>
+              <div class="col-12 col-md-6 col-xl-6"><label class="form-label perm-label">Observaciones del contrato local</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="observacionesContratoLocal" placeholder="Observaciones del contrato local" /><label>Observaciones del contrato local</label></div></div></div>
+            </ng-container>
+          </ng-container>
         </div>
 
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">

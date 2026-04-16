@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { ARRENDATARIOS_FORM_DEMO, INMUEBLES_ARRENDATARIOS_DEMO } from '../arrendatarios-demo.data';
+import { ARRENDATARIOS_FORM_DEMO } from '../arrendatarios-demo.data';
 
 @Component({
   selector: 'app-agregar-arrendatario',
@@ -17,10 +17,17 @@ export class AgregarArrendatarioComponent implements OnInit {
   public submitButton: string = 'Guardar';
   public arrendatarioForm: FormGroup;
   public idArrendatario: number;
-  public inmueblesCatalogo = INMUEBLES_ARRENDATARIOS_DEMO.map((i) => ({
-    id: i.idInmueble,
-    nombre: i.nombreInmueble,
-  }));
+  archivoEscrituraNombre: string | null = null;
+  imagenLicenciaNombre: string | null = null;
+  imagenPlanoNombre: string | null = null;
+  galeriaImagen1Nombre: string | null = null;
+  galeriaImagen2Nombre: string | null = null;
+
+  @ViewChild('archivoEscrituraInput') archivoEscrituraInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenLicenciaInput') imagenLicenciaInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenPlanoInput') imagenPlanoInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('galeriaImagen1Input') galeriaImagen1Input!: ElementRef<HTMLInputElement>;
+  @ViewChild('galeriaImagen2Input') galeriaImagen2Input!: ElementRef<HTMLInputElement>;
 
   constructor(
     private fb: FormBuilder,
@@ -40,93 +47,113 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
-  get locales(): FormArray {
+  private initForm(): void {
+    this.arrendatarioForm = this.fb.group({
+      nombreInmueble: ['', Validators.required],
+      rentaMxn: ['', Validators.required],
+      direccionInmueble: ['', Validators.required],
+      vigenciaAnios: ['', Validators.required],
+      fechaInicio: ['', Validators.required],
+      fechaFin: ['', Validators.required],
+      arrendador: ['', Validators.required],
+      tiempoRentaAnios: ['', Validators.required],
+      estatusInmueble: ['', Validators.required],
+      documentoEscritura: [null],
+      documentoLicencia: [null],
+      documentoPlano: [null],
+      galeriaImagen1: [null],
+      galeriaImagen2: [null],
+      servicioAguaContrato: [''],
+      servicioLuzContrato: [''],
+      servicioMantenimientoContrato: [''],
+      zonaPrincipal: [''],
+      zonaSuperficieM2: [''],
+      superficieDisponiblePredioM2: [''],
+      estacionamientoPensionado: [''],
+      estacionamientoTarjeta: [''],
+      estacionamientoArrendatario: [''],
+      pagoConcepto: [''],
+      pagoFecha: [''],
+      pagoMonto: [''],
+      vigenciaDocumento: [''],
+      vigenciaDiasRestantes: [''],
+      vigenciaEstatus: [''],
+      locales: this.fb.array([this.crearLocalFormGroup()]),
+    });
+  }
+
+  private crearLocalFormGroup(): FormGroup {
+    return this.fb.group({
+      nombreLocal: ['', Validators.required],
+      estadoLocal: [''],
+      mensualidadLocalMxn: [''],
+      zonaLocal: [''],
+      ocupanteLocal: [''],
+      giroLocal: [''],
+      medidaLocal: [''],
+      contratoHastaLocal: [''],
+      archivoContratoLocal: [''],
+      numeroContratoLocal: [''],
+      tipoModificacionContratoLocal: [''],
+      arrendadorLocal: [''],
+      arrendatarioLocal: [''],
+      fechaInicioContratoLocal: [''],
+      fechaTerminoContratoLocal: [''],
+      tipoMonedaLocal: [''],
+      metrosRentadosLocal: [''],
+      costoPorM2Local: [''],
+      pctMantenimientoLocal: [''],
+      mesesDepositoLocal: [''],
+      montoDepositoLocal: [''],
+      mesesAdelantoLocal: [''],
+      montoAdelantoLocal: [''],
+      anosForzososArrendadorLocal: [''],
+      anosForzososArrendatarioLocal: [''],
+      subtotalRentaLocal: [''],
+      ivaRentaLocal: [''],
+      rentaTotalLocal: [''],
+      subtotalMantenimientoLocal: [''],
+      ivaMantenimientoLocal: [''],
+      mantenimientoTotalLocal: [''],
+      observacionesContratoLocal: [''],
+    });
+  }
+
+  get localesFormArray(): FormArray {
     return this.arrendatarioForm.get('locales') as FormArray;
   }
 
-  get totalMensualidad(): number {
-    return this.locales.controls.reduce((acc, control) => {
-      const n = Number(control.get('mensualidadMxn')?.value ?? 0);
-      return acc + (Number.isFinite(n) ? n : 0);
-    }, 0);
-  }
-
-  get totalSuperficie(): number {
-    return this.locales.controls.reduce((acc, control) => {
-      const n = Number(control.get('superficieM2')?.value ?? 0);
-      return acc + (Number.isFinite(n) ? n : 0);
-    }, 0);
-  }
-
-  private initForm(): void {
-    this.arrendatarioForm = this.fb.group({
-      razonSocial: ['', Validators.required],
-      nombreComercial: ['', Validators.required],
-      rfc: ['', [Validators.required, Validators.minLength(12)]],
-      correo: ['', [Validators.required, Validators.email]],
-      telefono: ['', [Validators.required, Validators.minLength(10)]],
-      giroPrincipal: ['', Validators.required],
-      arrendador: ['', Validators.required],
-      observaciones: [''],
-      locales: this.fb.array([this.createLocalGroup()]),
-    });
-  }
-
-  private createLocalGroup(data?: any): FormGroup {
-    return this.fb.group({
-      idLocal: [data?.idLocal ?? Date.now(), Validators.required],
-      nombreLocal: [data?.nombreLocal ?? '', Validators.required],
-      idInmueble: [data?.idInmueble ?? null, Validators.required],
-      nombreInmueble: [data?.nombreInmueble ?? '', Validators.required],
-      nivel: [data?.nivel ?? '', Validators.required],
-      superficieM2: [data?.superficieM2 ?? 0, [Validators.required, Validators.min(1)]],
-      mensualidadMxn: [data?.mensualidadMxn ?? 0, [Validators.required, Validators.min(0)]],
-      fechaInicio: [data?.fechaInicio ?? '', Validators.required],
-      fechaTermino: [data?.fechaTermino ?? '', Validators.required],
-      estatusContrato: [data?.estatusContrato ?? 'vigente', Validators.required],
-    });
-  }
-
   agregarLocal(): void {
-    this.locales.push(this.createLocalGroup());
-  }
-
-  duplicarLocal(index: number): void {
-    const source = this.locales.at(index)?.value;
-    if (!source) return;
-    this.locales.push(
-      this.createLocalGroup({
-        ...source,
-        idLocal: Date.now() + Math.floor(Math.random() * 1000),
-        nombreLocal: `${source.nombreLocal} copia`,
-      }),
-    );
+    this.localesFormArray.push(this.crearLocalFormGroup());
   }
 
   eliminarLocal(index: number): void {
-    if (this.locales.length <= 1) {
-      Swal.fire({
-        title: 'Local requerido',
-        text: 'Debe existir al menos un local en el arrendatario.',
-        icon: 'warning',
-        confirmButtonColor: '#3085d6',
-        background: '#141a21',
-        color: '#ffffff',
-      });
-      return;
-    }
-    this.locales.removeAt(index);
+    if (this.localesFormArray.length === 1) return;
+    this.localesFormArray.removeAt(index);
   }
 
-  onInmuebleChange(control: AbstractControl): void {
-    const idInmueble = Number(control.get('idInmueble')?.value);
-    const inmueble = this.inmueblesCatalogo.find((item) => item.id === idInmueble);
-    control.patchValue(
-      {
-        nombreInmueble: inmueble?.nombre ?? '',
-      },
-      { emitEvent: false },
-    );
+  abrirSelectorArchivo(ref: 'escritura' | 'licencia' | 'plano' | 'gal1' | 'gal2'): void {
+    const map = {
+      escritura: this.archivoEscrituraInput,
+      licencia: this.imagenLicenciaInput,
+      plano: this.imagenPlanoInput,
+      gal1: this.galeriaImagen1Input,
+      gal2: this.galeriaImagen2Input,
+    };
+    map[ref]?.nativeElement?.click();
+  }
+
+  onFileSelected(event: Event, controlName: string): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.arrendatarioForm.get(controlName)?.setValue(file);
+
+    const name = file?.name ?? null;
+    if (controlName === 'documentoEscritura') this.archivoEscrituraNombre = name;
+    if (controlName === 'documentoLicencia') this.imagenLicenciaNombre = name;
+    if (controlName === 'documentoPlano') this.imagenPlanoNombre = name;
+    if (controlName === 'galeriaImagen1') this.galeriaImagen1Nombre = name;
+    if (controlName === 'galeriaImagen2') this.galeriaImagen2Nombre = name;
   }
 
   private cargarDemoEdicion(id: number): void {
@@ -134,20 +161,59 @@ export class AgregarArrendatarioComponent implements OnInit {
     if (!registro) return;
     this.arrendatarioForm.patchValue(
       {
-        razonSocial: registro.razonSocial,
-        nombreComercial: registro.nombreComercial,
-        rfc: registro.rfc,
-        correo: registro.correo,
-        telefono: registro.telefono,
-        giroPrincipal: registro.giroPrincipal,
+        nombreInmueble: registro.locales?.[0]?.nombreInmueble ?? '',
+        rentaMxn: registro.locales?.[0]?.mensualidadMxn ?? '',
+        direccionInmueble: '',
+        vigenciaAnios: '',
+        fechaInicio: registro.locales?.[0]?.fechaInicio ?? '',
+        fechaFin: registro.locales?.[0]?.fechaTermino ?? '',
         arrendador: registro.arrendador,
-        observaciones: registro.observaciones,
+        tiempoRentaAnios: '',
+        estatusInmueble: '',
       },
       { emitEvent: false },
     );
 
-    this.locales.clear();
-    registro.locales.forEach((local) => this.locales.push(this.createLocalGroup(local)));
+    const localDemo = registro.locales?.[0];
+    if (localDemo) {
+      this.localesFormArray.clear();
+      this.localesFormArray.push(
+        this.fb.group({
+          nombreLocal: [localDemo.nombreLocal ?? ''],
+          estadoLocal: [''],
+          mensualidadLocalMxn: [localDemo.mensualidadMxn ?? ''],
+          zonaLocal: [localDemo.nivel ?? ''],
+          ocupanteLocal: [registro.nombreComercial ?? ''],
+          giroLocal: [''],
+          medidaLocal: [localDemo.superficieM2 ? `${localDemo.superficieM2} m²` : ''],
+          contratoHastaLocal: [localDemo.fechaTermino ?? ''],
+          archivoContratoLocal: [''],
+          numeroContratoLocal: [''],
+          tipoModificacionContratoLocal: [''],
+          arrendadorLocal: [registro.arrendador ?? ''],
+          arrendatarioLocal: [registro.nombreComercial ?? ''],
+          fechaInicioContratoLocal: [localDemo.fechaInicio ?? ''],
+          fechaTerminoContratoLocal: [localDemo.fechaTermino ?? ''],
+          tipoMonedaLocal: [''],
+          metrosRentadosLocal: [localDemo.superficieM2 ?? ''],
+          costoPorM2Local: [''],
+          pctMantenimientoLocal: [''],
+          mesesDepositoLocal: [''],
+          montoDepositoLocal: [''],
+          mesesAdelantoLocal: [''],
+          montoAdelantoLocal: [''],
+          anosForzososArrendadorLocal: [''],
+          anosForzososArrendatarioLocal: [''],
+          subtotalRentaLocal: [''],
+          ivaRentaLocal: [''],
+          rentaTotalLocal: [''],
+          subtotalMantenimientoLocal: [''],
+          ivaMantenimientoLocal: [''],
+          mantenimientoTotalLocal: [''],
+          observacionesContratoLocal: [''],
+        }),
+      );
+    }
   }
 
   submit(): void {
@@ -155,7 +221,7 @@ export class AgregarArrendatarioComponent implements OnInit {
       this.arrendatarioForm.markAllAsTouched();
       Swal.fire({
         title: '¡Revise el formulario!',
-        text: 'Complete todos los campos requeridos del arrendatario y sus locales.',
+        text: 'Complete todos los campos requeridos del inmueble.',
         icon: 'error',
         confirmButtonColor: '#3085d6',
         background: '#141a21',
@@ -167,8 +233,8 @@ export class AgregarArrendatarioComponent implements OnInit {
     Swal.fire({
       title: '¡Operación Exitosa!',
       text: this.idArrendatario
-        ? 'El arrendatario y sus locales se actualizaron correctamente.'
-        : 'Se agregó el arrendatario con su arreglo de locales.',
+        ? 'El inmueble se actualizó correctamente.'
+        : 'Se agregó la información del inmueble correctamente.',
       icon: 'success',
       confirmButtonColor: '#3085d6',
       confirmButtonText: 'Confirmar',
