@@ -19,19 +19,22 @@
   </header>
 
   <div class="surface">
-    <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
-      <div *appHasPermission="['47', '59']">
-        <button (click)="agregarFactor()" mat-flat-button class="bg-secondary">
-          <i class="fa fa-plus"></i> Agregar</button>
-      </div>
-      <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
-      <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
-        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
-        {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
-      </button>
-    </div>
     <div class="row mt-3 g-3">
       <div class="col-12 col-lg-6">
+        <div class="d-flex flex-wrap gap-10 mb-2 justify-content-end w-100">
+          <div *appHasPermission="['47', '59']">
+            <button (click)="agregarFactor()" mat-flat-button class="bg-secondary">
+              <i class="fa fa-plus"></i> Agregar
+            </button>
+          </div>
+          <button (click)="limpiarFactores()" mat-flat-button class="bg-success">
+            <i class="fa fa-eraser"></i> Limpiar
+          </button>
+          <button (click)="toggleExpandFactores()" mat-flat-button class="bg-warn">
+            <i [class]="autoExpandAllGroupsFactores ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+            {{ autoExpandAllGroupsFactores ? ' Contraer Grupos' : ' Expandir Grupos' }}
+          </button>
+        </div>
         <h5 class="mb-2">Factores</h5>
         <dx-data-grid
           #gridFactoresDemo
@@ -61,27 +64,27 @@
           <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
           <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
           <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
-          <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+          <dxo-grouping [autoExpandAll]="autoExpandAllGroupsFactores"></dxo-grouping>
           <dxi-column
             caption="Acciones"
             cellTemplate="AccionesFactores"
             alignment="center"
             *appHasPermission="['46', '48', '58', '60']"
             dataType="string"
-            [width]="100"
+            [width]="120"
           ></dxi-column>
           <dxi-column dataField="variable" caption="Variable" alignment="center" dataType="string"></dxi-column>
           <dxi-column dataField="valor" caption="Valor" alignment="center" dataType="string"></dxi-column>
           <dxi-column dataField="descripcion" caption="Descripción" alignment="center" dataType="string"></dxi-column>
           <div *dxTemplate="let row of 'AccionesFactores'" class="d-flex gap-3 justify-content-center">
             <div *appHasPermission="['46', '58']">
-              <button
-                type="button"
-                class="btnAcciones"
-                (click)="actualizarFactor(row.data.id)"
-                title="Editar"
-              >
+              <button type="button" valueExpr="id" id="actualizarButton" class="btnAcciones" title="Editar" (click)="editarFormulaDemo(row.data)">
                 <i class="fa fa-edit"></i>
+              </button>
+            </div>
+            <div *appHasPermission="['48', '60']">
+              <button type="button" id="deleteButton" class="btnAcciones" title="Eliminar" (click)="eliminarFormulaDemo(row.data)">
+                <i class="fa fa-times"></i>
               </button>
             </div>
           </div>
@@ -97,6 +100,20 @@
         </dx-data-grid>
       </div>
       <div class="col-12 col-lg-6">
+        <div class="d-flex flex-wrap gap-10 mb-2 justify-content-end w-100">
+          <div *appHasPermission="['47', '59']">
+            <button (click)="agregarFormula()" mat-flat-button class="bg-secondary">
+              <i class="fa fa-plus"></i> Agregar
+            </button>
+          </div>
+          <button (click)="limpiarFormulas()" mat-flat-button class="bg-success">
+            <i class="fa fa-eraser"></i> Limpiar
+          </button>
+          <button (click)="toggleExpandFormulas()" mat-flat-button class="bg-warn">
+            <i [class]="autoExpandAllGroupsFormulas ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+            {{ autoExpandAllGroupsFormulas ? ' Contraer Grupos' : ' Expandir Grupos' }}
+          </button>
+        </div>
         <h5 class="mb-2">Fórmulas</h5>
         <dx-data-grid
           #gridFormulas
@@ -126,7 +143,7 @@
           <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
           <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
           <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
-          <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+          <dxo-grouping [autoExpandAll]="autoExpandAllGroupsFormulas"></dxo-grouping>
           <dxi-column
             caption="Acciones"
             cellTemplate="AccionesFormulas"

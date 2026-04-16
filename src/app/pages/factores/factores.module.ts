@@ -8,9 +8,10 @@ import { FactoresRoutingModule } from './factores-routing.module';
 import { ListaFactoresComponent } from './lista-factores/lista-factores.component';
 import { AgregarFactorComponent } from './agregar-factor/agregar-factor.component';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
+import { AgregarFormulaComponent } from './agregar-formula/agregar-formula.component';
 
 @NgModule({
-  declarations: [ListaFactoresComponent, AgregarFactorComponent],
+  declarations: [ListaFactoresComponent, AgregarFactorComponent, AgregarFormulaComponent],
   imports: [
     CommonModule,
     FactoresRoutingModule,

@@ -42,12 +42,9 @@ export class AgregarFactorComponent implements OnInit {
       const data = res?.data ?? res ?? {};
       this.factorForm.patchValue(
         {
-          nombre: data?.nombre ?? '',
-          valor: data?.valor ?? 0,
+          variable: data?.variable ?? data?.nombre ?? '',
+          valor: data?.valor ?? '',
           descripcion: data?.descripcion ?? '',
-          categoria: data?.categoria ?? '',
-          zonaReferencia: data?.zonaReferencia ?? '',
-          unidad: data?.unidad ?? '',
         },
         { emitEvent: false },
       );
@@ -57,12 +54,9 @@ export class AgregarFactorComponent implements OnInit {
 
   initForm() {
     this.factorForm = this.fb.group({
-      nombre: ['', Validators.required],
-      valor: [0, [Validators.required, Validators.min(0)]],
+      variable: ['', Validators.required],
+      valor: ['', Validators.required],
       descripcion: ['', [Validators.maxLength(2000)]],
-      categoria: ['', Validators.required],
-      zonaReferencia: ['', [Validators.maxLength(200)]],
-      unidad: ['', Validators.required],
     });
   }
 
@@ -77,12 +71,9 @@ export class AgregarFactorComponent implements OnInit {
   }
 
   private etiquetas: Record<string, string> = {
-    nombre: 'Nombre',
+    variable: 'Variable',
     valor: 'Valor',
     descripcion: 'Descripción',
-    categoria: 'Categoría',
-    zonaReferencia: 'Zona o mercado',
-    unidad: 'Unidad del valor',
   };
 
   private mostrarErroresValidacion(esActualizar: boolean) {
@@ -127,12 +118,12 @@ export class AgregarFactorComponent implements OnInit {
   private buildPayload(): FactorPayload {
     const v = this.factorForm.value;
     return {
-      nombre: (v.nombre ?? '').trim(),
-      valor: Number(v.valor),
+      nombre: (v.variable ?? '').trim(),
+      valor: Number(v.valor) || 0,
       descripcion: (v.descripcion ?? '').trim() || null,
-      categoria: (v.categoria ?? '').trim() || null,
-      zonaReferencia: (v.zonaReferencia ?? '').trim() || null,
-      unidad: (v.unidad ?? '').trim() || null,
+      categoria: null,
+      zonaReferencia: null,
+      unidad: null,
     };
   }
 

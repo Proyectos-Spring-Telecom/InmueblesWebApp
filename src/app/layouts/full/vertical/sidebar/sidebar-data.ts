@@ -111,6 +111,24 @@ export const navItems: NavItem[] = [
     ],
   },
   {
+    displayName: 'Arrendatarios',
+    iconName: 'building-store',
+    route: '/menu-level',
+    permission: [Permiso.CONSULTA_CLIENTE, Permiso.AGREGAR_CLIENTE],
+    children: [
+      {
+        displayName: 'Agregar Arrendatario',
+        route: '/arrendatarios/agregar-arrendatario',
+        permission: Permiso.AGREGAR_CLIENTE,
+      },
+      {
+        displayName: 'Lista Arrendatarios',
+        route: '/arrendatarios',
+        permission: Permiso.CONSULTA_CLIENTE,
+      },
+    ],
+  },
+  {
     displayName: 'Usuarios',
     iconName: 'users',
     route: '/menu-level',
@@ -177,11 +195,11 @@ export const navItems: NavItem[] = [
     route: '/instalaciones-centrales',
     permission: Permiso.CONSULTAR_OFICINA_CENTRAL,
   }, */
-  {
+  /* {
     displayName: 'Estacionamiento',
     iconName: 'parking',
     route: '/estacionamiento',
-  },
+  }, */
   /* {
     displayName: 'Instalaciones',
     iconName: 'building-warehouse',

@@ -28,7 +28,8 @@ export class ListaFactoresComponent implements OnInit {
   dataGridFactores!: DxDataGridComponent;
   @ViewChild('gridFormulas', { static: false })
   dataGridFormulas!: DxDataGridComponent;
-  public autoExpandAllGroups: boolean = true;
+  public autoExpandAllGroupsFactores: boolean = true;
+  public autoExpandAllGroupsFormulas: boolean = true;
   isGrouped: boolean = false;
   public paginaActualDataFactores: any[] = [];
   public paginaActualDataFormulas: any[] = [];
@@ -49,12 +50,16 @@ export class ListaFactoresComponent implements OnInit {
     this.router.navigateByUrl('/factores/agregar-factor');
   }
 
+  agregarFormula() {
+    this.router.navigateByUrl('/factores/agregar-formula');
+  }
+
   actualizarFactor(idFactor: number) {
     this.router.navigateByUrl('/factores/editar-factor/' + idFactor);
   }
 
-  editarFormulaDemo(_row: { id: number; nombre: string; formula: string }) {
-    this.router.navigateByUrl('/factores/agregar-factor');
+  editarFormulaDemo(row: { id: number; nombre: string; formula: string }) {
+    this.router.navigateByUrl('/factores/editar-formula/' + row.id);
   }
 
   eliminarFormulaDemo(row: { id: number; nombre: string }) {
@@ -193,15 +198,17 @@ export class ListaFactoresComponent implements OnInit {
     grid?.option('dataSource', dataFiltrada);
   }
 
-  limpiarCampos() {
+  limpiarFactores() {
     this.dataGridFactores?.instance?.clearGrouping();
-    this.dataGridFormulas?.instance?.clearGrouping();
-    this.isGrouped = false;
     this.dataGridFactores?.instance?.refresh();
+  }
+
+  limpiarFormulas() {
+    this.dataGridFormulas?.instance?.clearGrouping();
     this.dataGridFormulas?.instance?.refresh();
   }
 
-  toggleExpandGroups() {
+  toggleExpandFactores() {
     const inst = this.dataGridFactores?.instance;
     if (!inst) return;
     const groupedColumns = inst
@@ -220,9 +227,32 @@ export class ListaFactoresComponent implements OnInit {
         allowOutsideClick: false,
       });
     } else {
-      this.autoExpandAllGroups = !this.autoExpandAllGroups;
+      this.autoExpandAllGroupsFactores = !this.autoExpandAllGroupsFactores;
       inst.refresh();
-      this.dataGridFormulas?.instance?.refresh();
+    }
+  }
+
+  toggleExpandFormulas() {
+    const inst = this.dataGridFormulas?.instance;
+    if (!inst) return;
+    const groupedColumns = inst
+      .getVisibleColumns()
+      .filter((col) => (col.groupIndex ?? -1) >= 0);
+    if (groupedColumns.length === 0) {
+      Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: '¡Ops!',
+        text: 'Debes arrastrar un encabezado de una columna para expandir o contraer grupos.',
+        icon: 'warning',
+        showCancelButton: false,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+        allowOutsideClick: false,
+      });
+    } else {
+      this.autoExpandAllGroupsFormulas = !this.autoExpandAllGroupsFormulas;
+      inst.refresh();
     }
   }
 }

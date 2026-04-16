@@ -1172,6 +1172,47 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     return `${first}${second}`.toUpperCase();
   }
 
+  /**
+   * Simula asociar estacionamientos al inmueble (contador en sessionStorage) y abre el alta de estacionamiento.
+   */
+  irAEstacionamientosDesdeInmueble(inmueble: any, ev?: Event): void {
+    ev?.stopPropagation();
+    const id = String(
+      inmueble?.id ??
+        inmueble?.idInstalacion ??
+        inmueble?.idDepartamento ??
+        inmueble?.idInstalacionDepartamento ??
+        'sin-id'
+    );
+    const key = 'monitoreoSimEstacionamientos';
+    let total = 1;
+    try {
+      const raw = sessionStorage.getItem(key);
+      const map: Record<string, number> = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+      map[id] = (map[id] ?? 0) + 1;
+      total = map[id];
+      sessionStorage.setItem(key, JSON.stringify(map));
+    } catch {
+      /* ignore storage errors */
+    }
+    const nombre =
+      inmueble?.nombreDepartamento ??
+      inmueble?.nombreInstalacion ??
+      inmueble?.nombre ??
+      'Inmueble';
+    const idCliente =
+      this.selectedCentral != null
+        ? String(this.selectedCentral?.idCliente ?? this.selectedCentral?.id ?? '').trim()
+        : '';
+    void this.router.navigate(['/estacionamiento/agregar-estacionamiento'], {
+      queryParams: {
+        desdeMonitoreo: '1',
+        inmuebleId: id,
+        ...(idCliente ? { idCliente } : {}),
+      },
+    });
+  }
+
   /** Botón Zonas en la card de inmueble: lista de locales + diagrama. */
   abrirZonasInmueble(inmueble: any): void {
     this.selectedInmuebleForLocales = inmueble;

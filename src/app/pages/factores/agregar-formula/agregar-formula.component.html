@@ -1,7 +1,7 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-  <header class="perm-head perm-head--left" role="region" aria-label="Sección: Factores">
+  <header class="perm-head perm-head--left" role="region" aria-label="Sección: Fórmulas">
     <div class="perm-head__icon" aria-hidden="true">
-      <mat-icon>straighten</mat-icon>
+      <mat-icon>functions</mat-icon>
     </div>
     <div class="perm-head__text">
       <span class="eyebrow">Sección</span>
@@ -10,15 +10,15 @@
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Administración</span>
       <span class="sep">/</span>
-      <span class="crumb active">Factores</span>
+      <span class="crumb active">Fórmulas</span>
     </nav>
   </header>
   <div class="surface">
     <section class="perm-form-nc container-fluid py-4">
-      <form [formGroup]="factorForm" class="perm-form-body">
+      <form [formGroup]="formulaForm" class="perm-form-body">
         <div class="row g-4">
-          <div class="col-12 col-md-6">
-            <label for="facVariable" class="form-label perm-label">Variable</label>
+          <div class="col-6">
+            <label for="forNombre" class="form-label perm-label">Nombre</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">title</mat-icon>
@@ -26,47 +26,33 @@
               <div class="form-floating flex-grow-1">
                 <input
                   type="text"
-                  formControlName="variable"
+                  formControlName="nombre"
                   class="form-control"
-                  id="facVariable"
-                  placeholder="Ej.: inpcAnterior"
+                  id="forNombre"
+                  placeholder="Ej.: Fórmula de incremento"
                   required
                 />
-                <label for="facVariable">Nombre de variable mostrado en el grid</label>
+                <label for="forNombre">Nombre mostrado en el grid</label>
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-6">
-            <label for="facValor" class="form-label perm-label">Valor</label>
+          <div class="col-6">
+            <label for="forFormula" class="form-label perm-label">Fórmula</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">pin</mat-icon>
+                <mat-icon aria-hidden="true">calculate</mat-icon>
               </span>
               <div class="form-floating flex-grow-1">
                 <input
                   type="text"
-                  formControlName="valor"
+                  formControlName="formula"
                   class="form-control"
-                  id="facValor"
-                  placeholder="Ej.: variable o 100"
+                  id="forFormula"
+                  placeholder="((inpcActual/inpcAnterior)-uno)*cien"
+                  required
                 />
-                <label for="facValor">Valor mostrado en el grid</label>
+                <label for="forFormula">Expresión de cálculo mostrada en el grid</label>
               </div>
-            </div>
-          </div>
-          <div class="col-12">
-            <label for="facDescripcion" class="form-label perm-label">Descripción (opcional)</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">notes</mat-icon>
-              </span>
-              <input
-                type="text"
-                formControlName="descripcion"
-                class="form-control"
-                id="facDescripcion"
-                placeholder="Criterios de aplicación del factor en rentas o avalúos…"
-              />
             </div>
           </div>
         </div>

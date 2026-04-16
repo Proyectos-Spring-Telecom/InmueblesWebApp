@@ -1,0 +1,242 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+  <header class="perm-head perm-head--left" role="region" aria-label="Sección: Arrendatarios">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>storefront</mat-icon>
+    </div>
+    <div class="perm-head__text">
+      <span class="eyebrow">Sección</span>
+      <h2>{{ title }}</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Administración</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Arrendatarios</span>
+    </nav>
+  </header>
+  <div class="surface">
+    <section class="perm-form-nc container-fluid py-4">
+      <form [formGroup]="arrendatarioForm" class="perm-form-body">
+        <div class="row g-4">
+          <div class="col-12 col-md-6">
+            <label for="razonSocial" class="form-label perm-label">Razón social</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>business</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="razonSocial" type="text" class="form-control" formControlName="razonSocial" placeholder="Razón social" />
+                <label for="razonSocial">Nombre legal del arrendatario</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label for="nombreComercial" class="form-label perm-label">Nombre comercial</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="nombreComercial" type="text" class="form-control" formControlName="nombreComercial" placeholder="Nombre comercial" />
+                <label for="nombreComercial">Nombre visible en monitoreo</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="rfc" class="form-label perm-label">RFC</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="rfc" type="text" class="form-control" formControlName="rfc" placeholder="RFC" />
+                <label for="rfc">Ej.: STM240101AB1</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="correo" class="form-label perm-label">Correo</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>mail</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="correo" type="email" class="form-control" formControlName="correo" placeholder="Correo" />
+                <label for="correo">Contacto administrativo</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="telefono" class="form-label perm-label">Teléfono</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>call</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="telefono" type="text" class="form-control" formControlName="telefono" placeholder="Teléfono" />
+                <label for="telefono">Ej.: 55 0000 0000</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label for="giroPrincipal" class="form-label perm-label">Giro principal</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>category</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="giroPrincipal" type="text" class="form-control" formControlName="giroPrincipal" placeholder="Giro principal" />
+                <label for="giroPrincipal">Actividad principal del negocio</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label for="arrendador" class="form-label perm-label">Arrendador</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="arrendador" type="text" class="form-control" formControlName="arrendador" placeholder="Arrendador" />
+                <label for="arrendador">Propietario del inmueble</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label for="observaciones" class="form-label perm-label">Observaciones</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="observaciones" type="text" class="form-control" formControlName="observaciones" placeholder="Observaciones" />
+                <label for="observaciones">Notas internas del arrendatario</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="locales-builder mt-4">
+          <div class="locales-builder__head d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div>
+              <h5 class="mb-1">Locales del arrendatario</h5>
+              <p class="mb-0">
+                Arreglo dinámico para capturar N locales por arrendatario. Total superficie:
+                <strong>{{ totalSuperficie | number : '1.0-2' }} m²</strong> · Mensualidad total:
+                <strong>{{ totalMensualidad | currency : 'MXN' : 'symbol' : '1.0-0' }}</strong>
+              </p>
+            </div>
+            <button type="button" class="button-success local-main-action-btn" (click)="agregarLocal()">
+              <i class="fa fa-plus"></i>&nbsp;&nbsp;Agregar Local
+            </button>
+          </div>
+
+          <div formArrayName="locales" class="row g-3 mt-2">
+            <div class="col-12" *ngFor="let localControl of locales.controls; let i = index" [formGroupName]="i">
+              <article class="local-item-card">
+                <div class="local-item-card__head d-flex flex-wrap align-items-center justify-content-between gap-2">
+                  <h6 class="mb-0">Local {{ i + 1 }} · {{ localControl.get('nombreLocal')?.value || 'Sin nombre' }}</h6>
+                  <div class="d-flex gap-2">
+                    <button type="button" class="local-action-btn local-action-btn--clone local-btn" (click)="duplicarLocal(i)">
+                      <i class="fa fa-clone"></i>&nbsp;Duplicar
+                    </button>
+                    <button type="button" class="local-action-btn local-action-btn--remove local-btn" (click)="eliminarLocal(i)">
+                      <i class="fa fa-trash"></i>&nbsp;Quitar
+                    </button>
+                  </div>
+                </div>
+
+                <div class="row g-3 mt-1 local-item-card__grid">
+                  <div class="col-12 col-sm-6 col-xl-3">
+                    <label class="form-label perm-label">Nombre del local</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>storefront</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input class="form-control" id="nombreLocal{{ i }}" type="text" formControlName="nombreLocal" placeholder="Local PB-01" />
+                        <label for="nombreLocal{{ i }}">Ej.: Local PB-01</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6 col-xl-3">
+                    <label class="form-label perm-label">Inmueble</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>apartment</mat-icon></span>
+                      <select class="form-select flex-grow-1" formControlName="idInmueble" (change)="onInmuebleChange(localControl)">
+                        <option [ngValue]="null" disabled>Selecciona un inmueble</option>
+                        <option *ngFor="let item of inmueblesCatalogo" [ngValue]="item.id">{{ item.nombre }}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6 col-xl-2">
+                    <label class="form-label perm-label">Nivel</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>layers</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input class="form-control" id="nivel{{ i }}" type="text" formControlName="nivel" placeholder="Planta baja" />
+                        <label for="nivel{{ i }}">Ej.: Planta baja</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6 col-xl-2">
+                    <label class="form-label perm-label">Superficie m²</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input class="form-control" id="superficie{{ i }}" type="number" formControlName="superficieM2" min="1" placeholder="0" />
+                        <label for="superficie{{ i }}">m²</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6 col-xl-2">
+                    <label class="form-label perm-label">Mensualidad MXN</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input class="form-control" id="mensualidad{{ i }}" type="number" formControlName="mensualidadMxn" min="0" placeholder="0" />
+                        <label for="mensualidad{{ i }}">Renta mensual</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label perm-label">Fecha inicio</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
+                      <input class="form-control flex-grow-1" type="date" formControlName="fechaInicio" />
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label perm-label">Fecha término</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>event_busy</mat-icon></span>
+                      <input class="form-control flex-grow-1" type="date" formControlName="fechaTermino" />
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label perm-label">Estatus contrato</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>task_alt</mat-icon></span>
+                      <select class="form-select flex-grow-1" formControlName="estatusContrato">
+                        <option value="vigente">Vigente</option>
+                        <option value="por vencer">Por vencer</option>
+                        <option value="vencido">Vencido</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label perm-label">Inmueble (texto)</label>
+                    <div class="input-group perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>home_work</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input class="form-control" id="nombreInmueble{{ i }}" type="text" formControlName="nombreInmueble" placeholder="Se autocompleta por catálogo" />
+                        <label for="nombreInmueble{{ i }}">Nombre del inmueble</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
+          <button class="button-success" role="button" (click)="submit()">
+            <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
+          </button>
+          <button type="button" class="button-danger" (click)="regresar()">
+            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

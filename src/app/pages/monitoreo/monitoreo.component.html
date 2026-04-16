@@ -168,11 +168,18 @@
                       </div>
                     </div>
 
-                    <div class="inmueble-footer d-flex gap-2 ms-auto">
+                    <div class="inmueble-footer d-flex flex-wrap gap-2 ms-auto">
                       <!-- <button type="button" class="btn btn-sm"
                         (click)="selectInstalacion(item, i); $event.stopPropagation()">
                         Centrar
                       </button> -->
+                      <button
+                        type="button"
+                        class="btn btn-sm monitor-list-btn monitor-list-btn--estacionamiento"
+                        (click)="irAEstacionamientosDesdeInmueble(item, $event)"
+                      >
+                        Estacionamientos
+                      </button>
                       <button type="button" class="btn btn-sm monitor-list-btn monitor-list-btn--efectivo"
                         (click)="abrirZonasInmueble(item); $event.stopPropagation()">
                         Zonas
