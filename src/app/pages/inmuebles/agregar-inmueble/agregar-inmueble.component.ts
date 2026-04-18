@@ -1,25 +1,44 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { animate, style, transition, trigger } from '@angular/animations';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { ARRENDATARIOS_FORM_DEMO } from '../arrendatarios-demo.data';
+import { INMUEBLES_FORM_DEMO } from '../inmuebles-demo.data';
 
 @Component({
-  selector: 'app-agregar-arrendatario',
-  templateUrl: './agregar-arrendatario.component.html',
-  styleUrl: './agregar-arrendatario.component.scss',
+  selector: 'app-agregar-inmueble',
+  templateUrl: './agregar-inmueble.component.html',
+  styleUrl: './agregar-inmueble.component.scss',
   standalone: false,
-  animations: [routeAnimation],
+  animations: [
+    routeAnimation,
+    trigger('arrayItemAnim', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(6px) scale(0.995)' }),
+        animate('180ms ease-out', style({ opacity: 1, transform: 'translateY(0) scale(1)' })),
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ opacity: 0, transform: 'translateY(-4px) scale(0.992)' })),
+      ]),
+    ]),
+  ],
 })
-export class AgregarArrendatarioComponent implements OnInit {
-  public title = 'Agregar Arrendatario';
+export class AgregarInmuebleComponent implements OnInit {
+  public title = 'Agregar Inmueble';
   public submitButton: string = 'Guardar';
-  public arrendatarioForm: FormGroup;
-  public idArrendatario: number;
+  public inmuebleForm!: FormGroup;
+  public idInmueble!: number;
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
+  mostrarModalMapa = false;
+  map: any = null;
+  marker: any = null;
+  latSeleccionada: number | null = null;
+  lngSeleccionada: number | null = null;
+  private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
+  private readonly PIN_URL = 'assets/images/logos/marker_spring.webp';
 
   @ViewChild('archivoEscrituraInput') archivoEscrituraInput!: ElementRef<HTMLInputElement>;
   @ViewChild('imagenLicenciaInput') imagenLicenciaInput!: ElementRef<HTMLInputElement>;
@@ -34,17 +53,17 @@ export class AgregarArrendatarioComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.activatedRoute.params.subscribe((params) => {
-      this.idArrendatario = Number(params['idArrendatario']);
-      if (this.idArrendatario) {
-        this.title = 'Actualizar Arrendatario';
+      this.idInmueble = Number(params['idInmueble']);
+      if (this.idInmueble) {
+        this.title = 'Actualizar Inmueble';
         this.submitButton = 'Actualizar';
-        this.cargarDemoEdicion(this.idArrendatario);
+        this.cargarDemoEdicion(this.idInmueble);
       }
     });
   }
 
   private initForm(): void {
-    this.arrendatarioForm = this.fb.group({
+    this.inmuebleForm = this.fb.group({
       nombreInmueble: ['', Validators.required],
       rentaMxn: ['', Validators.required],
       direccionInmueble: ['', Validators.required],
@@ -63,54 +82,9 @@ export class AgregarArrendatarioComponent implements OnInit {
       estacionamientos: this.fb.array([this.crearEstacionamientoFormGroup()]),
       pagos: this.fb.array([this.crearPagoFormGroup()]),
       vigencias: this.fb.array([this.crearVigenciaFormGroup()]),
+      lat: [''],
+      lng: [''],
       locales: this.fb.array([this.crearLocalFormGroup()]),
-    });
-  }
-
-  private crearGaleriaImagenFormGroup(): FormGroup {
-    return this.fb.group({
-      archivo: [null],
-      nombre: [''],
-    });
-  }
-
-  private crearServicioFormGroup(): FormGroup {
-    return this.fb.group({
-      servicioAguaContrato: [''],
-      servicioLuzContrato: [''],
-      servicioMantenimientoContrato: [''],
-    });
-  }
-
-  private crearZonaFormGroup(): FormGroup {
-    return this.fb.group({
-      zonaPrincipal: [''],
-      zonaSuperficieM2: [''],
-      superficieDisponiblePredioM2: [''],
-    });
-  }
-
-  private crearEstacionamientoFormGroup(): FormGroup {
-    return this.fb.group({
-      estacionamientoPensionado: [''],
-      estacionamientoTarjeta: [''],
-      estacionamientoArrendatario: [''],
-    });
-  }
-
-  private crearPagoFormGroup(): FormGroup {
-    return this.fb.group({
-      pagoConcepto: [''],
-      pagoFecha: [''],
-      pagoMonto: [''],
-    });
-  }
-
-  private crearVigenciaFormGroup(): FormGroup {
-    return this.fb.group({
-      vigenciaDocumento: [''],
-      vigenciaDiasRestantes: [''],
-      vigenciaEstatus: [''],
     });
   }
 
@@ -151,43 +125,88 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
-  get localesFormArray(): FormArray {
-    return this.arrendatarioForm.get('locales') as FormArray;
+  private crearServicioFormGroup(): FormGroup {
+    return this.fb.group({
+      servicioAguaContrato: [''],
+      servicioLuzContrato: [''],
+      servicioMantenimientoContrato: [''],
+    });
   }
 
-  get galeriaImagenesFormArray(): FormArray {
-    return this.arrendatarioForm.get('galeriaImagenes') as FormArray;
+  private crearGaleriaImagenFormGroup(): FormGroup {
+    return this.fb.group({
+      archivo: [null],
+      nombre: [''],
+    });
+  }
+
+  private crearZonaFormGroup(): FormGroup {
+    return this.fb.group({
+      zonaPrincipal: [''],
+      zonaSuperficieM2: [''],
+      superficieDisponiblePredioM2: [''],
+    });
+  }
+
+  private crearEstacionamientoFormGroup(): FormGroup {
+    return this.fb.group({
+      estacionamientoPensionado: [''],
+      estacionamientoTarjeta: [''],
+      estacionamientoArrendatario: [''],
+    });
+  }
+
+  private crearPagoFormGroup(): FormGroup {
+    return this.fb.group({
+      pagoConcepto: [''],
+      pagoFecha: [''],
+      pagoMonto: [''],
+    });
+  }
+
+  private crearVigenciaFormGroup(): FormGroup {
+    return this.fb.group({
+      vigenciaDocumento: [''],
+      vigenciaDiasRestantes: [''],
+      vigenciaEstatus: [''],
+    });
+  }
+
+  get localesFormArray(): FormArray {
+    return this.inmuebleForm.get('locales') as FormArray;
   }
 
   get serviciosFormArray(): FormArray {
-    return this.arrendatarioForm.get('servicios') as FormArray;
+    return this.inmuebleForm.get('servicios') as FormArray;
+  }
+
+  get galeriaImagenesFormArray(): FormArray {
+    return this.inmuebleForm.get('galeriaImagenes') as FormArray;
   }
 
   get zonasFormArray(): FormArray {
-    return this.arrendatarioForm.get('zonas') as FormArray;
+    return this.inmuebleForm.get('zonas') as FormArray;
   }
 
   get estacionamientosFormArray(): FormArray {
-    return this.arrendatarioForm.get('estacionamientos') as FormArray;
+    return this.inmuebleForm.get('estacionamientos') as FormArray;
   }
 
   get pagosFormArray(): FormArray {
-    return this.arrendatarioForm.get('pagos') as FormArray;
+    return this.inmuebleForm.get('pagos') as FormArray;
   }
 
   get vigenciasFormArray(): FormArray {
-    return this.arrendatarioForm.get('vigencias') as FormArray;
+    return this.inmuebleForm.get('vigencias') as FormArray;
   }
 
-  abrirModalMapa(): void {
-    Swal.fire({
-      title: 'Ubicación del local',
-      text: 'Activa el selector de mapa en el siguiente paso.',
-      icon: 'info',
-      confirmButtonColor: '#3085d6',
-      background: '#141a21',
-      color: '#ffffff',
-    });
+  agregarLocal(): void {
+    this.localesFormArray.push(this.crearLocalFormGroup());
+  }
+
+  eliminarLocal(index: number): void {
+    if (this.localesFormArray.length === 1) return;
+    this.localesFormArray.removeAt(index);
   }
 
   agregarServicio(): void {
@@ -270,7 +289,7 @@ export class AgregarArrendatarioComponent implements OnInit {
   onFileSelected(event: Event, controlName: string): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
-    this.arrendatarioForm.get(controlName)?.setValue(file);
+    this.inmuebleForm.get(controlName)?.setValue(file);
 
     const name = file?.name ?? null;
     if (controlName === 'documentoEscritura') this.archivoEscrituraNombre = name;
@@ -279,9 +298,9 @@ export class AgregarArrendatarioComponent implements OnInit {
   }
 
   private cargarDemoEdicion(id: number): void {
-    const registro = ARRENDATARIOS_FORM_DEMO.find((item) => item.id === id);
+    const registro = INMUEBLES_FORM_DEMO.find((item) => item.id === id);
     if (!registro) return;
-    this.arrendatarioForm.patchValue(
+    this.inmuebleForm.patchValue(
       {
         nombreInmueble: registro.locales?.[0]?.nombreInmueble ?? '',
         rentaMxn: registro.locales?.[0]?.mensualidadMxn ?? '',
@@ -292,6 +311,8 @@ export class AgregarArrendatarioComponent implements OnInit {
         arrendador: registro.arrendador,
         tiempoRentaAnios: '',
         estatusInmueble: '',
+        lat: '',
+        lng: '',
       },
       { emitEvent: false },
     );
@@ -339,8 +360,8 @@ export class AgregarArrendatarioComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.arrendatarioForm.invalid) {
-      this.arrendatarioForm.markAllAsTouched();
+    if (this.inmuebleForm.invalid) {
+      this.inmuebleForm.markAllAsTouched();
       Swal.fire({
         title: '¡Revise el formulario!',
         text: 'Complete todos los campos requeridos del inmueble.',
@@ -354,7 +375,7 @@ export class AgregarArrendatarioComponent implements OnInit {
 
     Swal.fire({
       title: '¡Operación Exitosa!',
-      text: this.idArrendatario
+      text: this.idInmueble
         ? 'El inmueble se actualizó correctamente.'
         : 'Se agregó la información del inmueble correctamente.',
       icon: 'success',
@@ -367,6 +388,118 @@ export class AgregarArrendatarioComponent implements OnInit {
   }
 
   regresar(): void {
-    this.router.navigateByUrl('/arrendatarios');
+    void this.router.navigateByUrl('/inmuebles');
+  }
+
+  abrirModalMapa(): void {
+    this.mostrarModalMapa = true;
+    setTimeout(() => {
+      this.loadGoogleMaps()
+        .then(() => this.initMapModal())
+        .catch((err) => console.error('No se pudo cargar Google Maps', err));
+    }, 0);
+  }
+
+  cerrarModalMapa(): void {
+    this.mostrarModalMapa = false;
+    this.map = null;
+    this.marker = null;
+  }
+
+  confirmarUbicacionMapa(): void {
+    if (this.latSeleccionada == null || this.lngSeleccionada == null) {
+      Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: 'Selecciona una ubicación',
+        text: 'Haz clic en el mapa para marcar la ubicación del inmueble.',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
+      });
+      return;
+    }
+    this.inmuebleForm.patchValue({
+      lat: this.latSeleccionada,
+      lng: this.lngSeleccionada,
+    });
+    this.cerrarModalMapa();
+  }
+
+  private loadGoogleMaps(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const w = window as any;
+
+      if (w.google && w.google.maps) {
+        resolve();
+        return;
+      }
+
+      const existingScript = document.querySelector('script[data-gmaps="true"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve());
+        existingScript.addEventListener('error', (e) => reject(e));
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}`;
+      script.async = true;
+      script.defer = true;
+      script.setAttribute('data-gmaps', 'true');
+      script.onload = () => resolve();
+      script.onerror = (e) => reject(e);
+      document.head.appendChild(script);
+    });
+  }
+
+  private initMapModal(): void {
+    const mapElement = document.getElementById('mapInmueble');
+    if (!mapElement) return;
+
+    const w = window as any;
+    if (!w.google || !w.google.maps) return;
+
+    const latFromForm = Number(this.inmuebleForm.get('lat')?.value);
+    const lngFromForm = Number(this.inmuebleForm.get('lng')?.value);
+    const lat = this.latSeleccionada ?? (Number.isFinite(latFromForm) ? latFromForm : 18.92173314169828);
+    const lng = this.lngSeleccionada ?? (Number.isFinite(lngFromForm) ? lngFromForm : -99.234049156825952);
+
+    this.map = new w.google.maps.Map(mapElement, {
+      center: { lat, lng },
+      zoom: 13,
+    });
+
+    if (this.latSeleccionada != null && this.lngSeleccionada != null) {
+      this.actualizarMarcador({ lat: this.latSeleccionada, lng: this.lngSeleccionada });
+    } else if (Number.isFinite(latFromForm) && Number.isFinite(lngFromForm)) {
+      this.latSeleccionada = latFromForm;
+      this.lngSeleccionada = lngFromForm;
+      this.actualizarMarcador({ lat: latFromForm, lng: lngFromForm });
+    }
+
+    this.map.addListener('click', (e: any) => {
+      const p = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+      this.latSeleccionada = p.lat;
+      this.lngSeleccionada = p.lng;
+      this.actualizarMarcador(p);
+    });
+  }
+
+  private actualizarMarcador(pos: { lat: number; lng: number }): void {
+    const w = window as any;
+    if (!this.map || !w.google || !w.google.maps) return;
+
+    if (this.marker) this.marker.setMap(null);
+    this.marker = new w.google.maps.Marker({
+      position: pos,
+      map: this.map,
+      icon: {
+        url: this.PIN_URL,
+        scaledSize: new w.google.maps.Size(70, 70),
+        anchor: new w.google.maps.Point(35, 70),
+      },
+    });
+
+    this.map.panTo(pos);
   }
 }

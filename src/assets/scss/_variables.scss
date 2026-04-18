@@ -75,36 +75,36 @@ $text-color: var(--mat-sys-on-background);
 $dark-text-secondary: rgba(255, 255, 255, 0.67);
 $dark-body-bg: #141a21;
 
-/* Botones tipo monitoreo: fondo rgba(base, 0.2), borde más claro rgba(claro, 0.55), texto blanco */
+/* Contrato de botones: fondo medio oscuro + borde claro + texto blanco */
 .bg-primary {
-  background: rgba(96, 165, 250, 0.2) !important;
-  border: 1px solid rgba(186, 230, 253, 0.55) !important;
+  background: rgba(96, 165, 250, 0.28) !important;
+  border: 1px solid rgba(186, 230, 253, 0.74) !important;
   color: #ffffff !important;
 }
 .bg-secondary {
-  background: rgba(104, 19, 48, 0.2) !important;
-  border: 1px solid rgba(251, 165, 180, 0.55) !important;
+  background: rgba(104, 19, 48, 0.28) !important;
+  border: 1px solid rgba(251, 165, 180, 0.74) !important;
   color: #ffffff !important;
 }
 .bg-success {
-  background: rgba(55, 163, 22, 0.2) !important;
-  border: 1px solid rgba(187, 247, 208, 0.55) !important;
+  background: rgba(55, 163, 22, 0.28) !important;
+  border: 1px solid rgba(187, 247, 208, 0.74) !important;
   color: #ffffff !important;
 }
 .bg-warning {
-  background: rgba(245, 158, 11, 0.2) !important;
-  border: 1px solid rgba(254, 243, 199, 0.55) !important;
+  background: rgba(245, 158, 11, 0.28) !important;
+  border: 1px solid rgba(254, 243, 199, 0.74) !important;
   color: #ffffff !important;
 }
 /* Contraer / expandir (listas): mismo patrón que primary */
 .bg-warn {
-  background: rgba(96, 165, 250, 0.2) !important;
-  border: 1px solid rgba(186, 230, 253, 0.55) !important;
+  background: rgba(96, 165, 250, 0.28) !important;
+  border: 1px solid rgba(186, 230, 253, 0.74) !important;
   color: #ffffff !important;
 }
 .bg-error {
-  background: rgba(220, 38, 38, 0.2) !important;
-  border: 1px solid rgba(254, 202, 202, 0.55) !important;
+  background: rgba(220, 38, 38, 0.28) !important;
+  border: 1px solid rgba(254, 202, 202, 0.74) !important;
   color: #ffffff !important;
 }
 
@@ -131,76 +131,76 @@ $dark-body-bg: #141a21;
 
 .mat-mdc-unelevated-button.bg-primary,
 .mat-mdc-raised-button.bg-primary {
-  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.2);
+  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.28);
   --mdc-filled-button-label-text-color: #ffffff;
   --mdc-filled-button-icon-color: #ffffff;
-  border: 1px solid rgba(186, 230, 253, 0.55) !important;
+  border: 1px solid rgba(186, 230, 253, 0.74) !important;
 }
 .mat-mdc-unelevated-button.bg-secondary,
 .mat-mdc-raised-button.bg-secondary {
-  --mdc-filled-button-container-color: rgba(104, 19, 48, 0.2);
+  --mdc-filled-button-container-color: rgba(104, 19, 48, 0.28);
   --mdc-filled-button-label-text-color: #ffffff;
   --mdc-filled-button-icon-color: #ffffff;
-  border: 1px solid rgba(251, 165, 180, 0.55) !important;
+  border: 1px solid rgba(251, 165, 180, 0.74) !important;
 }
 .mat-mdc-unelevated-button.bg-success,
 .mat-mdc-raised-button.bg-success {
-  --mdc-filled-button-container-color: rgba(55, 163, 22, 0.2);
+  --mdc-filled-button-container-color: rgba(55, 163, 22, 0.28);
   --mdc-filled-button-label-text-color: #ffffff;
   --mdc-filled-button-icon-color: #ffffff;
-  border: 1px solid rgba(187, 247, 208, 0.55) !important;
+  border: 1px solid rgba(187, 247, 208, 0.74) !important;
 }
 .mat-mdc-unelevated-button.bg-warning,
 .mat-mdc-raised-button.bg-warning {
-  --mdc-filled-button-container-color: rgba(245, 158, 11, 0.2);
+  --mdc-filled-button-container-color: rgba(245, 158, 11, 0.28);
   --mdc-filled-button-label-text-color: #ffffff;
   --mdc-filled-button-icon-color: #ffffff;
-  border: 1px solid rgba(254, 243, 199, 0.55) !important;
+  border: 1px solid rgba(254, 243, 199, 0.74) !important;
 }
 .mat-mdc-unelevated-button.bg-warn,
 .mat-mdc-raised-button.bg-warn {
-  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.2);
+  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.28);
   --mdc-filled-button-label-text-color: #ffffff;
   --mdc-filled-button-icon-color: #ffffff;
-  border: 1px solid rgba(186, 230, 253, 0.55) !important;
+  border: 1px solid rgba(186, 230, 253, 0.74) !important;
 }
 .mat-mdc-unelevated-button.bg-error,
 .mat-mdc-raised-button.bg-error {
-  --mdc-filled-button-container-color: rgba(220, 38, 38, 0.2);
+  --mdc-filled-button-container-color: rgba(220, 38, 38, 0.28);
   --mdc-filled-button-label-text-color: #ffffff;
   --mdc-filled-button-icon-color: #ffffff;
-  border: 1px solid rgba(254, 202, 202, 0.55) !important;
+  border: 1px solid rgba(254, 202, 202, 0.74) !important;
 }
 
 .mat-mdc-fab.bg-primary,
 .mat-mdc-mini-fab.bg-primary {
-  --mdc-fab-container-color: rgba(96, 165, 250, 0.28);
+  --mdc-fab-container-color: rgba(96, 165, 250, 0.34);
   --mdc-fab-icon-color: #ffffff;
-  border: 1px solid rgba(186, 230, 253, 0.55) !important;
+  border: 1px solid rgba(186, 230, 253, 0.74) !important;
 }
 .mat-mdc-fab.bg-secondary,
 .mat-mdc-mini-fab.bg-secondary {
-  --mdc-fab-container-color: rgba(104, 19, 48, 0.28);
+  --mdc-fab-container-color: rgba(104, 19, 48, 0.34);
   --mdc-fab-icon-color: #ffffff;
-  border: 1px solid rgba(251, 165, 180, 0.55) !important;
+  border: 1px solid rgba(251, 165, 180, 0.74) !important;
 }
 .mat-mdc-fab.bg-error,
 .mat-mdc-mini-fab.bg-error {
-  --mdc-fab-container-color: rgba(220, 38, 38, 0.28);
+  --mdc-fab-container-color: rgba(220, 38, 38, 0.34);
   --mdc-fab-icon-color: #ffffff;
-  border: 1px solid rgba(254, 202, 202, 0.55) !important;
+  border: 1px solid rgba(254, 202, 202, 0.74) !important;
 }
 .mat-mdc-fab.bg-success,
 .mat-mdc-mini-fab.bg-success {
-  --mdc-fab-container-color: rgba(55, 163, 22, 0.28);
+  --mdc-fab-container-color: rgba(55, 163, 22, 0.34);
   --mdc-fab-icon-color: #ffffff;
-  border: 1px solid rgba(187, 247, 208, 0.55) !important;
+  border: 1px solid rgba(187, 247, 208, 0.74) !important;
 }
 .mat-mdc-fab.bg-warning,
 .mat-mdc-mini-fab.bg-warning {
-  --mdc-fab-container-color: rgba(245, 158, 11, 0.28);
+  --mdc-fab-container-color: rgba(245, 158, 11, 0.34);
   --mdc-fab-icon-color: #ffffff;
-  border: 1px solid rgba(254, 243, 199, 0.55) !important;
+  border: 1px solid rgba(254, 243, 199, 0.74) !important;
 }
 
 .mat-mdc-outlined-button.text-primary   { --mdc-outlined-button-label-text-color: var(--mat-sys-primary);   --mdc-outlined-button-outline-color: var(--mat-sys-primary); }
