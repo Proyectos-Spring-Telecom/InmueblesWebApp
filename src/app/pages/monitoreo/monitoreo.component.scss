@@ -939,21 +939,35 @@
   border-color: #470c20 !important;
 }
 
-/* Inmuebles / Arrendadores: mismo gris y tamaño que el icono del header (30px alto, radio 9px) */
-.perm-wrapper .surface .monitor-card-header .btn.btn-sm {
-  background: rgba(94, 102, 113, 0.45) !important;
-  border: 1px solid rgba(113, 121, 132, 0.8) !important;
-  color: #fff !important;
+/* Header monitoreo: tamaño alineado al título; colores reutilizados (efectivo / crédito / violeta) */
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn {
   border-radius: 9px !important;
   box-shadow: none !important;
   padding: 6px 10px !important;
   min-height: 30px;
   line-height: 1.2;
+  color: #fff !important;
 }
 
-.perm-wrapper .surface .monitor-card-header .btn.btn-sm:hover {
-  background: rgba(110, 118, 130, 0.55) !important;
-  border-color: rgba(130, 138, 150, 0.9) !important;
+/* Header: sin verde/azul (reservados para pies de lista Zonas–Información) */
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn--amber {
+  border-color: rgba(245, 158, 11, 0.58) !important;
+  background: rgba(245, 158, 11, 0.2) !important;
+}
+
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn--amber:hover {
+  border-color: rgba(251, 191, 36, 0.72) !important;
+  background: rgba(245, 158, 11, 0.32) !important;
+}
+
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn--violet {
+  border-color: rgba(167, 139, 250, 0.55) !important;
+  background: rgba(139, 92, 246, 0.2) !important;
+}
+
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn--violet:hover {
+  border-color: rgba(167, 139, 250, 0.75) !important;
+  background: rgba(139, 92, 246, 0.32) !important;
 }
 
 .toast-top-right {
@@ -1439,10 +1453,18 @@
   font-size: 1.05rem;
 }
 
+/* Inmuebles (arrendadores): acento violeta — distinto de verde/azul de las listas */
 .surface .cliente-action-btn {
-  background: #681330 !important;
-  border-color: #681330 !important;
-  color: #fff !important;
+  border-color: rgba(167, 139, 250, 0.55) !important;
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: #f5f3ff !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+.surface .cliente-action-btn:hover {
+  border-color: rgba(167, 139, 250, 0.75) !important;
+  background: rgba(139, 92, 246, 0.32) !important;
+  color: #faf5ff !important;
 }
 
 /* Botón Inmuebles: más ancho, poca altura (padding vertical contenido). */
@@ -1606,6 +1628,37 @@
   margin-top: 8px;
   width: 100%;
   justify-content: flex-end;
+}
+
+/* Lista monitoreo: izquierda verde (efectivo), derecha azul (crédito); solo fondo y borde */
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn--estacionamiento {
+  border-color: rgba(238, 109, 34, 0.55);
+  background: rgba(224, 115, 52, 0.16);
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn--estacionamiento:hover {
+  border-color: rgba(168, 102, 63, 0.55);
+  background: rgba(185, 118, 80, 0.16);
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn--efectivo {
+  border-color: rgba(46, 204, 113, 0.55);
+  background: rgba(46, 204, 113, 0.16);
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn--efectivo:hover {
+  border-color: rgba(46, 204, 113, 0.65);
+  background: rgba(46, 204, 113, 0.22);
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn--credito {
+  border-color: rgba(52, 152, 219, 0.55);
+  background: rgba(52, 152, 219, 0.16);
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn--credito:hover {
+  border-color: rgba(52, 152, 219, 0.7);
+  background: rgba(52, 152, 219, 0.22);
 }
 
 .surface .inmueble-line mat-icon {

@@ -218,6 +218,61 @@
   }
 }
 
+.mono-contrato-local-panel__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.mono-contrato-local-panel__file {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mono-contrato-local-panel__label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(219, 232, 255, 0.55);
+  margin-bottom: 0.25rem;
+}
+
+.mono-contrato-local-panel__name {
+  font-size: 0.88rem;
+  color: #dbe8ff;
+  word-break: break-word;
+}
+
+.mono-contrato-local-panel__btn {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+/* Ver Contrato: acento violeta (misma familia que header Inmuebles en monitoreo) */
+.mono-contrato-local-panel .mono-contrato-local-panel__btn.hero-header__back-btn {
+  background: rgba(139, 92, 246, 0.22);
+  border: 1px solid rgba(167, 139, 250, 0.55);
+  color: #fff;
+  backdrop-filter: none;
+
+  mat-icon {
+    color: #f5f3ff;
+  }
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.34);
+    border-color: rgba(167, 139, 250, 0.78);
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.28);
+  }
+
+  &:active {
+    box-shadow: none;
+  }
+}
+
 .mono-block__card,
 .mono-grid-card {
   background: #121b2c;

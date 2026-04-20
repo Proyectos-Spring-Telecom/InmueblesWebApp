@@ -1,0 +1,513 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+  <header class="perm-head perm-head--left" role="region" aria-label="Sección: Inmuebles">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>apartment</mat-icon>
+    </div>
+    <div class="perm-head__text">
+      <span class="eyebrow">Sección</span>
+      <h2>{{ title }}</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Administración</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Inmuebles</span>
+    </nav>
+  </header>
+  <div class="surface">
+    <section class="perm-form-nc container-fluid py-2">
+      <form [formGroup]="inmuebleForm" class="perm-form-body">
+        <div class="row g-2 inmueble-main-grid">
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="nombreInmueble" class="form-label perm-label">Inmueble</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>apartment</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="nombreInmueble" type="text" class="form-control" formControlName="nombreInmueble" placeholder="Nombre del inmueble" />
+                <label for="nombreInmueble">Nombre del inmueble</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="rentaMxn" class="form-label perm-label">Renta (MXN)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="rentaMxn" type="number" class="form-control" formControlName="rentaMxn" placeholder="Monto de renta" />
+                <label for="rentaMxn">Monto de renta</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="direccionInmueble" class="form-label perm-label">Dirección del inmueble</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>location_on</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="direccionInmueble" type="text" class="form-control" formControlName="direccionInmueble" placeholder="Dirección del inmueble" />
+                <label for="direccionInmueble">Dirección del inmueble</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="estatusInmueble" class="form-label perm-label">Estatus del inmueble</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="estatusInmueble" type="text" class="form-control" formControlName="estatusInmueble" placeholder="Ej.: RENTADO / PROPIO" />
+                <label for="estatusInmueble">Ej.: RENTADO / PROPIO</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="vigenciaAnios" class="form-label perm-label">Vigencia (años)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="vigenciaAnios" type="number" class="form-control" formControlName="vigenciaAnios" placeholder="Años de vigencia" />
+                <label for="vigenciaAnios">Años de vigencia</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="fechaInicio" class="form-label perm-label">Inicio</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="fechaInicio" type="date" class="form-control" formControlName="fechaInicio" />
+                <label for="fechaInicio">Fecha de inicio</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="fechaFin" class="form-label perm-label">Fin</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="fechaFin" type="date" class="form-control" formControlName="fechaFin" />
+                <label for="fechaFin">Fecha de fin</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="arrendador" class="form-label perm-label">Arrendador</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="arrendador" type="text" class="form-control" formControlName="arrendador" placeholder="Arrendador" />
+                <label for="arrendador">Arrendador</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="tiempoRentaAnios" class="form-label perm-label">Tiempo de renta (años)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input id="tiempoRentaAnios" type="number" class="form-control" formControlName="tiempoRentaAnios" placeholder="Tiempo de renta" />
+                <label for="tiempoRentaAnios">Tiempo de renta</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-3 col-xl-3" style="display: grid;">
+            <label class="form-label perm-label">Ubicación del inmueble</label>
+            <button
+              type="button"
+              class="inmueble-geo-trigger"
+              title="Seleccionar ubicación del inmueble"
+              (click)="abrirModalMapa()"
+            >
+              <i class="fa fa-map-marker"></i>
+              Seleccionar ubicación
+            </button>
+          </div>
+
+          <div class="col-12 section-toolbar mt-4">
+            <h6 class="form-section-head">Servicios</h6>
+            <button type="button" class="button-agrega" (click)="agregarServicio()">
+              <i class="fa fa-plus"></i> Agregar
+            </button>
+          </div>
+          <ng-container formArrayName="servicios">
+            <ng-container *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="col-12 section-array-item" [@arrayItemAnim]>
+                <div class="section-item-toolbar">
+                  <span class="section-item-title">Servicio {{ i + 1 }}</span>
+                  <button type="button" class="button-dange" (click)="eliminarServicio(i)" *ngIf="serviciosFormArray.length >= 2">
+                    <i class="fa fa-trash"></i> Eliminar fila
+                  </button>
+                </div>
+                <div class="row g-2 align-items-end section-array-row">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Contrato de agua</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>water_drop</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="servicioAguaContrato" placeholder="Número de contrato" />
+                        <label>Número de contrato</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Contrato de luz</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>bolt</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="servicioLuzContrato" placeholder="Número de contrato" />
+                        <label>Número de contrato</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Contrato de mantenimiento</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="servicioMantenimientoContrato" placeholder="Número de contrato" />
+                        <label>Número de contrato</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <div class="col-12 section-toolbar mt-4">
+            <h6 class="form-section-head">Zonas</h6>
+            <button type="button" class="button-agrega" (click)="agregarZona()">
+              <i class="fa fa-plus"></i> Agregar
+            </button>
+          </div>
+          <ng-container formArrayName="zonas">
+            <ng-container *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="col-12 section-array-item" [@arrayItemAnim]>
+                <div class="section-item-toolbar">
+                  <span class="section-item-title">Zona {{ i + 1 }}</span>
+                  <button type="button" class="button-dange" (click)="eliminarZona(i)" *ngIf="zonasFormArray.length >= 2">
+                    <i class="fa fa-trash"></i> Eliminar fila
+                  </button>
+                </div>
+                <div class="row g-2 align-items-end section-array-row">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Zona principal</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>layers</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="zonaPrincipal" placeholder="Ej.: Planta baja corporativo" />
+                        <label>Ej.: Planta baja corporativo</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Superficie de zona (m²)</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="number" class="form-control" formControlName="zonaSuperficieM2" placeholder="m² de la zona" />
+                        <label>m² de la zona</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Superficie disponible predio (m²)</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>crop_square</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="number" class="form-control" formControlName="superficieDisponiblePredioM2" placeholder="m² disponibles" />
+                        <label>m² disponibles</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <div class="col-12 section-toolbar mt-4">
+            <h6 class="form-section-head">Estacionamientos</h6>
+            <button type="button" class="button-agrega" (click)="agregarEstacionamiento()">
+              <i class="fa fa-plus"></i> Agregar
+            </button>
+          </div>
+          <ng-container formArrayName="estacionamientos">
+            <ng-container *ngFor="let estCtrl of estacionamientosFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="col-12 section-array-item" [@arrayItemAnim]>
+                <div class="section-item-toolbar">
+                  <span class="section-item-title">Estacionamiento {{ i + 1 }}</span>
+                  <button type="button" class="button-dange" (click)="eliminarEstacionamiento(i)" *ngIf="estacionamientosFormArray.length >= 2">
+                    <i class="fa fa-trash"></i> Eliminar fila
+                  </button>
+                </div>
+                <div class="row g-2 align-items-end section-array-row">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Nombre del pensionado</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="estacionamientoPensionado" placeholder="Nombre del pensionado" />
+                        <label>Nombre del pensionado</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Número de tarjeta</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>credit_card</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="estacionamientoTarjeta" placeholder="Ej.: TAR-1001" />
+                        <label>Ej.: TAR-1001</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Arrendatario (estacionamiento)</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="estacionamientoArrendatario" placeholder="Arrendatario relacionado" />
+                        <label>Arrendatario relacionado</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <div class="col-12 section-toolbar mt-4">
+            <h6 class="form-section-head">Pagos</h6>
+            <button type="button" class="button-agrega" (click)="agregarPago()">
+              <i class="fa fa-plus"></i> Agregar
+            </button>
+          </div>
+          <ng-container formArrayName="pagos">
+            <ng-container *ngFor="let pagoCtrl of pagosFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="col-12 section-array-item" [@arrayItemAnim]>
+                <div class="section-item-toolbar">
+                  <span class="section-item-title">Pago {{ i + 1 }}</span>
+                  <button type="button" class="button-dange" (click)="eliminarPago(i)" *ngIf="pagosFormArray.length >= 2">
+                    <i class="fa fa-trash"></i> Eliminar fila
+                  </button>
+                </div>
+                <div class="row g-2 align-items-end section-array-row">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Concepto de pago</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>receipt_long</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="pagoConcepto" placeholder="Ej.: Mantenimiento" />
+                        <label>Ej.: Mantenimiento</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Fecha de pago</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="date" class="form-control" formControlName="pagoFecha" />
+                        <label>Fecha de pago</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Monto</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="number" class="form-control" formControlName="pagoMonto" placeholder="Monto pagado" />
+                        <label>Monto pagado</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <div class="col-12 section-toolbar mt-4">
+            <h6 class="form-section-head">Vigencias</h6>
+            <button type="button" class="button-agrega" (click)="agregarVigencia()">
+              <i class="fa fa-plus"></i> Agregar
+            </button>
+          </div>
+          <ng-container formArrayName="vigencias">
+            <ng-container *ngFor="let vigCtrl of vigenciasFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="col-12 section-array-item" [@arrayItemAnim]>
+                <div class="section-item-toolbar">
+                  <span class="section-item-title">Vigencia {{ i + 1 }}</span>
+                  <button type="button" class="button-dange" (click)="eliminarVigencia(i)" *ngIf="vigenciasFormArray.length >= 2">
+                    <i class="fa fa-trash"></i> Eliminar fila
+                  </button>
+                </div>
+                <div class="row g-2 align-items-end section-array-row">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Documento</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>description</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="vigenciaDocumento" placeholder="Documento de vigencia" />
+                        <label>Documento de vigencia</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Días restantes</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>timer</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="number" class="form-control" formControlName="vigenciaDiasRestantes" placeholder="Días restantes" />
+                        <label>Días restantes</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label perm-label">Estatus de vigencia</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold"><mat-icon>check_circle</mat-icon></span>
+                      <div class="form-floating flex-grow-1">
+                        <input type="text" class="form-control" formControlName="vigenciaEstatus" placeholder="Ej.: Vigente / Por vencer" />
+                        <label>Ej.: Vigente / Por vencer</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <div class="col-12 section-toolbar mt-4">
+            <h6 class="form-section-head">Documentos e imágenes</h6>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label class="form-label perm-label d-block mb-2">Archivo de escritura (PDF)</label>
+            <div class="uploader">
+              <div class="uploader__body">
+                <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                <h6 class="uploader__title">Sube tu archivo</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorArchivo('escritura')">Seleccionar</button>
+                  <span class="uploader__badge">PDF</span>
+                </div>
+                <div class="uploader__status" *ngIf="archivoEscrituraNombre">{{ archivoEscrituraNombre }}</div>
+                <input #archivoEscrituraInput type="file" accept=".pdf,application/pdf" class="uploader__input" (change)="onFileSelected($event, 'documentoEscritura')" />
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label class="form-label perm-label d-block mb-2">Imagen licencia</label>
+            <div class="uploader">
+              <div class="uploader__body">
+                <div class="uploader__icon"><mat-icon>image</mat-icon></div>
+                <h6 class="uploader__title">Sube imagen</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorArchivo('licencia')">Seleccionar</button>
+                  <span class="uploader__badge">PNG · JPG · JPEG</span>
+                </div>
+                <div class="uploader__status" *ngIf="imagenLicenciaNombre">{{ imagenLicenciaNombre }}</div>
+                <input #imagenLicenciaInput type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'documentoLicencia')" />
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3">
+            <label class="form-label perm-label d-block mb-2">Imagen plano</label>
+            <div class="uploader">
+              <div class="uploader__body">
+                <div class="uploader__icon"><mat-icon>map</mat-icon></div>
+                <h6 class="uploader__title">Sube imagen</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorArchivo('plano')">Seleccionar</button>
+                  <span class="uploader__badge">PNG · JPG · JPEG</span>
+                </div>
+                <div class="uploader__status" *ngIf="imagenPlanoNombre">{{ imagenPlanoNombre }}</div>
+                <input #imagenPlanoInput type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'documentoPlano')" />
+              </div>
+            </div>
+          </div>
+          <ng-container formArrayName="galeriaImagenes">
+            <ng-container *ngFor="let galCtrl of galeriaImagenesFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="col-12 col-md-3 col-xl-3">
+                <div class="section-item-toolbar mb-2">
+                  <label class="form-label perm-label d-block mb-2">Imagen galería {{ i + 1 }}</label>
+                  <button type="button" class="button-agrega" (click)="agregarFotoGaleria()" *ngIf="i === 0">
+                    +
+                  </button>
+                </div>
+                <div class="uploader">
+                  <div class="uploader__body">
+                    <div class="uploader__icon"><mat-icon>image</mat-icon></div>
+                    <h6 class="uploader__title">Sube imagen</h6>
+                    <p class="uploader__subtitle">Arrastra y suelta o</p>
+                    <div class="uploader__cta">
+                      <button type="button" class="btn btn-sm uploader__btn" (click)="abrirSelectorGaleria(galeriaInput)">Seleccionar</button>
+                      <span class="uploader__badge">PNG · JPG · JPEG</span>
+                    </div>
+                    <div class="uploader__status" *ngIf="galCtrl.get('nombre')?.value">{{ galCtrl.get('nombre')?.value }}</div>
+                    <button type="button" class="button-dange" (click)="eliminarFotoGaleria(i)" *ngIf="galeriaImagenesFormArray.length >= 2">
+                      -
+                    </button>
+                    <input
+                      #galeriaInput
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg"
+                      class="uploader__input"
+                      (change)="onGaleriaFileSelected($event, i)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
+          <button class="button-success" role="button" (click)="submit()">
+            <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
+          </button>
+          <button type="button" class="button-danger" (click)="regresar()">
+            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+
+<div class="docs-backdrop" *ngIf="mostrarModalMapa" (click)="cerrarModalMapa()">
+  <div class="docs-modal" (click)="$event.stopPropagation()">
+    <div class="row docs-modal__header">
+      <div class="col-10 col-md-11">
+        <span class="docs-modal__eyebrow">Mapa del inmueble</span>
+        <h3 class="docs-modal__title">{{ inmuebleForm.get('nombreInmueble')?.value || 'Seleccionar ubicación' }}</h3>
+        <p class="docs-modal__subtitle">Haz clic en el mapa para fijar latitud y longitud.</p>
+      </div>
+      <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
+        <button type="button" class="docs-modal__close" (click)="cerrarModalMapa()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <div class="row docs-modal__body">
+      <div class="col-12">
+        <div class="docs-modal__viewer docs-modal__viewer--map">
+          <div id="mapInmueble"></div>
+        </div>
+      </div>
+    </div>
+    <div class="row docs-modal__footer">
+      <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
+        <button type="button" class="docs-modal__btn docs-modal__btn--ghost" (click)="cerrarModalMapa()">
+          Cancelar
+        </button>
+        <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()">
+          Usar ubicación
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

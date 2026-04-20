@@ -27,16 +27,6 @@
             >
               {{ localEstatus === 'ocupado' ? 'OCUPADA' : 'LIBRE' }}
             </span>
-            <button
-              *ngIf="vistaEntidad === 'local'"
-              type="button"
-              class="hero-header__back-btn"
-              (click)="abrirModalContratoLocal()"
-              aria-label="Ver contrato completo"
-            >
-              <mat-icon aria-hidden="true">description</mat-icon>
-              <span class="hero-header__contrato-local-btn__text">Ver contrato</span>
-            </button>
           </div>
           <div class="hero-header__meta" *ngIf="showInmuebleExtras">
             <span class="hero-header__status">{{ inmuebleEsRenta ? 'RENTADO' : 'PROPIO' }}</span>
@@ -56,7 +46,40 @@
       <div class="hero-header__accent"></div>
     </div>
 
-    <section class="mono-docs mt-1 mt-lg-2" aria-label="Sección Documentos">
+    <section
+      *ngIf="vistaEntidad === 'local'"
+      class="mono-docs mt-1 mt-lg-2"
+      aria-label="Contrato"
+    >
+      <header class="mono-docs__header">
+        <h5 class="m-0">Contrato</h5>
+      </header>
+      <div class="mono-docs__content">
+        <article class="mono-docs__panel mono-contrato-local-panel">
+          <div class="mono-contrato-local-panel__row">
+            <div class="mono-contrato-local-panel__file">
+              <span class="mono-contrato-local-panel__label">Archivo</span>
+              <p class="mono-contrato-local-panel__name m-0">{{ nombreArchivoContratoLocal }}</p>
+            </div>
+            <button
+              type="button"
+              class="hero-header__back-btn mono-contrato-local-panel__btn"
+              (click)="abrirModalContratoLocal()"
+              aria-label="Ver contrato completo"
+            >
+              <mat-icon aria-hidden="true">description</mat-icon>
+              <span class="hero-header__contrato-local-btn__text">Ver Contrato</span>
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section
+      *ngIf="vistaEntidad !== 'local'"
+      class="mono-docs mt-1 mt-lg-2"
+      aria-label="Sección Documentos"
+    >
       <header class="mono-docs__header">
         <h5 class="m-0">Documentos</h5>
       </header>
@@ -104,7 +127,7 @@
         </div>
       </article>
 
-      <article class="mono-block__card">
+      <article class="mono-block__card" *ngIf="vistaEntidad !== 'local'">
         <header class="mono-block__head d-flex align-items-center justify-content-between flex-wrap gap-2">
           <h5 class="m-0">Zonas</h5>
           <div class="mono-zonas-total">Superficie disponible del predio: <strong>1,000.00 m²</strong></div>

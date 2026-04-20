@@ -167,21 +167,56 @@ export const navItems: NavItem[] = [
   },
   {
     displayName: 'Monitoreo',
-    iconName: 'chart-line',
+    iconName: 'building',
     route: '/monitoreo',
     permission: Permiso.CONSULTAR_MONITOREO,
   },
   {
+    displayName: 'Inmuebles',
+    iconName: 'home-2',
+    route: '/menu-level',
+    children: [
+      {
+        displayName: 'Agregar Inmueble',
+        route: '/inmuebles/agregar-inmueble',
+        permission: Permiso.AGREGAR_CLIENTE,
+      },
+      {
+        displayName: 'Lista Inmuebles',
+        route: '/inmuebles',
+        permission: Permiso.CONSULTA_CLIENTE,
+      },
+    ],
+  },
+  {
+    displayName: 'Arrendatarios',
+    iconName: 'building-store',
+    route: '/menu-level',
+    permission: [Permiso.CONSULTA_CLIENTE, Permiso.AGREGAR_CLIENTE],
+    children: [
+      {
+        displayName: 'Agregar Arrendatario',
+        route: '/arrendatarios/agregar-arrendatario',
+        permission: Permiso.AGREGAR_CLIENTE,
+      },
+      {
+        displayName: 'Lista Arrendatarios',
+        route: '/arrendatarios',
+        permission: Permiso.CONSULTA_CLIENTE,
+      },
+    ],
+  },
+  /* {
     displayName: 'Oficinas Centrales',
     iconName: 'antenna',
     route: '/instalaciones-centrales',
     permission: Permiso.CONSULTAR_OFICINA_CENTRAL,
-  },
-  {
+  }, */
+  /* {
     displayName: 'Estacionamiento',
     iconName: 'parking',
     route: '/estacionamiento',
-  },
+  }, */
   /* {
     displayName: 'Instalaciones',
     iconName: 'building-warehouse',

@@ -18,7 +18,7 @@
 
     <div class="surface">
         <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
-            <div *appHasPermission="'6'">
+            <div >
                 <button (click)="agregarUsuario()" mat-flat-button class="bg-secondary">
                     <i class="fa fa-plus"></i> Agregar</button>
             </div>
@@ -39,7 +39,7 @@
                 <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
                 <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
                 <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
-                <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" *appHasPermission="['7', '8']" [width]="150"></dxi-column>
+                <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" [width]="150"></dxi-column>
                 <dxi-column dataField="FotoPerfil" caption="Imagen" cellTemplate="imagen" [width]="200"
                     alignment="center">
                     <dxo-header-filter [allowSearch]="true"></dxo-header-filter>
@@ -74,13 +74,13 @@
                 </dxi-column>
 
                 <div *dxTemplate="let row of 'acciones'" class="d-flex gap-3 justify-content-center">
-                    <div *appHasPermission="'7'">
+                    <div>
                         <button valueExpr="id" id="actualizarButton" class="btnAcciones"
                             (click)="actualizarUsuario(row.data.id)">
                             <i class="fa fa-edit"></i>
                         </button>
                     </div>
-                    <div *appHasPermission="'8'">
+                    <div>
                         @if (row.data.estatus === 0) {
                         <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
                             <i class="fa fa-arrow-up"></i>

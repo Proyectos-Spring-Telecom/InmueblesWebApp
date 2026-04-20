@@ -1,0 +1,13 @@
+---
+description: Contrato visual para botones semanticos
+alwaysApply: true
+---
+
+# Contrato de Botones
+
+- Usar clases semanticas existentes (`bg-primary`, `bg-secondary`, `bg-success`, `bg-warning`, `bg-error`, `bg-warn`) para botones nuevos.
+- Mantener texto blanco en botones semanticos.
+- Mantener **borde mas claro** que el fondo.
+- Mantener **background medianamente oscuro** (no solido, no demasiado claro).
+- Evitar crear tonos nuevos si ya existe una clase semantica que represente la accion.
+- En acciones de `Eliminar fila` de arreglos dinamicos, mostrar el boton solo cuando haya `2` o mas elementos en la seccion.

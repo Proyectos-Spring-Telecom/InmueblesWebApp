@@ -1,0 +1,98 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+  <header class="perm-head" role="region" aria-label="Sección: Arrendatarios">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>storefront</mat-icon>
+    </div>
+
+    <div class="perm-head__text">
+      <span class="eyebrow">Sección</span>
+      <h2>Arrendatarios</h2>
+    </div>
+
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Administración</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Arrendatarios</span>
+    </nav>
+  </header>
+
+  <div class="surface">
+    <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
+      <button (click)="agregarArrendatario()" mat-flat-button class="bg-secondary">
+        <i class="fa fa-plus"></i> Agregar
+      </button>
+      <button (click)="limpiarVista()" mat-flat-button class="bg-success">
+        <i class="fa fa-eraser"></i> Limpiar
+      </button>
+      <button (click)="toggleExpandirContraer()" mat-flat-button class="bg-warn">
+        <i [class]="expandedAll ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+        {{ expandedAll ? ' Contraer Niveles' : ' Expandir Niveles' }}
+      </button>
+    </div>
+
+    <div class="mt-3">
+      <dx-tree-list
+        #treeListRef
+        id="treeArrendatarios"
+        [dataSource]="rows"
+        [keyExpr]="'id'"
+        [parentIdExpr]="'parentId'"
+        [showBorders]="true"
+        [showRowLines]="true"
+        [showColumnLines]="true"
+        [rowAlternationEnabled]="true"
+        [columnAutoWidth]="true"
+        [wordWrapEnabled]="true"
+        [autoExpandAll]="expandedAll"
+      >
+        <dxo-search-panel [visible]="true" [width]="260" placeholder="Buscar..."></dxo-search-panel>
+        <dxo-header-filter [visible]="true"></dxo-header-filter>
+        <dxo-filter-row [visible]="true"></dxo-filter-row>
+        <dxo-paging [enabled]="false"></dxo-paging>
+        <dxi-column
+          caption="Acciones"
+          cellTemplate="accionesTpl"
+          [width]="150"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
+        <dxi-column alignment="center" dataField="inmueble" caption="Inmueble" [width]="240"></dxi-column>
+        <dxi-column alignment="center" dataField="local" caption="Local" [width]="180"></dxi-column>
+        <dxi-column alignment="center" dataField="arrendatario" caption="Arrendatario"></dxi-column>
+        <dxi-column alignment="center" dataField="arrendador" caption="Arrendador"></dxi-column>
+        <dxi-column alignment="center" dataField="nivel" caption="Nivel" [width]="130"></dxi-column>
+        <dxi-column alignment="center" dataField="superficieM2" caption="Superficie (m²)" dataType="number" [width]="140"></dxi-column>
+        <dxi-column alignment="center" dataField="mensualidad" caption="Mensualidad (MXN)" dataType="number" format="currency" [width]="160"></dxi-column>
+        <dxi-column alignment="center" dataField="vigencia" caption="Vigencia"></dxi-column>
+        <dxi-column alignment="center" dataField="estadoLocal" caption="Estado"></dxi-column>
+
+        <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
+          <ng-container *ngIf="row?.data?.tipoNodo === 'inmueble'">
+            <div>
+              <button
+                type="button"
+                class="btnAcciones"
+                id="actualizarButton"
+                title="Editar"
+                (click)="editarInmuebleDesdeFila(row.data); $event.stopPropagation()"
+              >
+                <i class="fa fa-edit"></i>
+              </button>
+            </div>
+            <div>
+              <button
+                type="button"
+                class="btnAcciones"
+                id="deleteButton"
+                title="Eliminar inmueble"
+                (click)="eliminarInmuebleDemo(row.data, $event)"
+              >
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </ng-container>
+        </div>
+      </dx-tree-list>
+    </div>
+  </div>
+</div>

@@ -18,6 +18,10 @@ export class AgregarEstacionamientoComponent implements OnInit {
   public idEstacionamiento!: number;
   public title = 'Agregar Estacionamiento';
 
+  /** Si se entró desde Monitoreo, Cancelar vuelve a la lista de inmuebles allí. */
+  private volverAMonitoreoListaInmuebles = false;
+  private idClienteParaMonitoreo: string | null = null;
+
   constructor(
     private fb: FormBuilder,
     private activatedRoute: ActivatedRoute,
@@ -25,6 +29,10 @@ export class AgregarEstacionamientoComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const q = this.activatedRoute.snapshot.queryParamMap;
+    this.volverAMonitoreoListaInmuebles = q.get('desdeMonitoreo') === '1';
+    this.idClienteParaMonitoreo = q.get('idCliente');
+
     this.initForm();
     this.activatedRoute.params.subscribe((params) => {
       this.idEstacionamiento = params['idEstacionamiento'];
@@ -138,8 +146,21 @@ export class AgregarEstacionamientoComponent implements OnInit {
     });
   }
 
+  /** Tras guardar correctamente: siempre al listado del módulo estacionamiento. */
   regresar(): void {
-    this.router.navigateByUrl('/estacionamiento');
+    void this.router.navigateByUrl('/estacionamiento');
+  }
+
+  /** Cancelar: si vino desde Monitoreo, vuelve a la lista de inmuebles; si no, al listado de estacionamiento. */
+  cancelar(): void {
+    if (this.volverAMonitoreoListaInmuebles) {
+      const qp: Record<string, string> = { retorno: 'inmuebles' };
+      const idc = this.idClienteParaMonitoreo?.trim();
+      if (idc) qp['idCliente'] = idc;
+      void this.router.navigate(['/monitoreo'], { queryParams: qp });
+      return;
+    }
+    void this.router.navigateByUrl('/estacionamiento');
   }
 }
 
