@@ -943,10 +943,58 @@
 .perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn {
   border-radius: 9px !important;
   box-shadow: none !important;
-  padding: 6px 10px !important;
-  min-height: 30px;
+  padding: 8px 14px !important;
+  min-height: 38px;
+  min-width: 112px;
   line-height: 1.2;
+  font-size: 0.9rem;
   color: #fff !important;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translateZ(0);
+}
+
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55) !important;
+  border-color: color-mix(in srgb, currentColor 55%, transparent) !important;
+}
+
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn {
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.14) 18%,
+    rgba(255, 255, 255, 0.06) 34%,
+    transparent 55%
+  );
+  transform: translateX(-130%);
+  transition: transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn:hover::before {
+  transform: translateX(130%);
+}
+
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn .mdc-button__label,
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn span,
+.perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn i {
+  position: relative;
+  z-index: 1;
 }
 
 /* Header: sin verde/azul (reservados para pies de lista Zonas–Información) */
@@ -1470,12 +1518,58 @@
 /* Botón Inmuebles: más ancho, poca altura (padding vertical contenido). */
 .surface .cliente-inmuebles-btn.btn {
   font-weight: 600;
-  font-size: clamp(0.82rem, 0.32rem + 0.85vw, 0.95rem);
+  font-size: 0.9rem;
   line-height: 1.2;
-  padding: 0.38rem clamp(1.25rem, 4.5vw + 0.75rem, 2.6rem);
-  min-height: 0;
+  padding: 8px clamp(1.25rem, 4.5vw + 0.75rem, 2.6rem);
+  min-height: 38px;
   min-width: clamp(9.75rem, 22vw, 15rem);
   border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translateZ(0);
+}
+
+.surface .cliente-ubicacion-actions .cliente-inmuebles-btn.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55);
+  border-color: rgba(167, 139, 250, 0.85) !important;
+}
+
+.surface .cliente-inmuebles-btn.btn {
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+
+.surface .cliente-inmuebles-btn.btn::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.14) 18%,
+    rgba(255, 255, 255, 0.06) 34%,
+    transparent 55%
+  );
+  transform: translateX(-130%);
+  transition: transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.surface .cliente-inmuebles-btn.btn:hover::before {
+  transform: translateX(130%);
+}
+
+.surface .cliente-inmuebles-btn.btn .mdc-button__label,
+.surface .cliente-inmuebles-btn.btn span,
+.surface .cliente-inmuebles-btn.btn i {
+  position: relative;
+  z-index: 1;
 }
 
 .surface .cliente-secondary-btn {
@@ -1631,6 +1725,60 @@
 }
 
 /* Lista monitoreo: izquierda verde (efectivo), derecha azul (crédito); solo fondo y borde */
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn {
+  border-radius: 10px;
+  padding: 8px 14px;
+  min-height: 38px;
+  line-height: 1.2;
+  font-size: 0.9rem;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translateZ(0);
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55);
+  border-color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn {
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.14) 18%,
+    rgba(255, 255, 255, 0.06) 34%,
+    transparent 55%
+  );
+  transform: translateX(-130%);
+  transition: transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn:hover::before {
+  transform: translateX(130%);
+}
+
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn .mdc-button__label,
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn span,
+.surface .inmueble-footer .btn.btn-sm.monitor-list-btn i {
+  position: relative;
+  z-index: 1;
+}
+
 .surface .inmueble-footer .btn.btn-sm.monitor-list-btn--estacionamiento {
   border-color: rgba(238, 109, 34, 0.55);
   background: rgba(224, 115, 52, 0.16);

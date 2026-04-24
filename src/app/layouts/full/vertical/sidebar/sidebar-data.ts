@@ -146,23 +146,6 @@ export const navItems: NavItem[] = [
     permission: Permiso.CONSULTAR_MONITOREO,
   },
   {
-    displayName: 'Inmuebles',
-    iconName: 'home-2',
-    route: '/menu-level',
-    children: [
-      {
-        displayName: 'Agregar Inmueble',
-        route: '/inmuebles/agregar-inmueble',
-        permission: Permiso.AGREGAR_CLIENTE,
-      },
-      {
-        displayName: 'Lista Inmuebles',
-        route: '/inmuebles',
-        permission: Permiso.CONSULTA_CLIENTE,
-      },
-    ],
-  },
-  {
     displayName: 'Arrendadores',
     iconName: 'address-book',
     route: '/menu-level',
@@ -184,6 +167,23 @@ export const navItems: NavItem[] = [
         displayName: 'Lista Arrendadores',
         // iconName: 'user-cog',
         route: '/clientes',
+        permission: Permiso.CONSULTA_CLIENTE,
+      },
+    ],
+  },
+  {
+    displayName: 'Inmuebles',
+    iconName: 'home-2',
+    route: '/menu-level',
+    children: [
+      {
+        displayName: 'Agregar Inmueble',
+        route: '/inmuebles/agregar-inmueble',
+        permission: Permiso.AGREGAR_CLIENTE,
+      },
+      {
+        displayName: 'Lista Inmuebles',
+        route: '/inmuebles',
         permission: Permiso.CONSULTA_CLIENTE,
       },
     ],

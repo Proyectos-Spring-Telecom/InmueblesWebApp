@@ -155,7 +155,7 @@
       mat-icon-button
       class="notify-hub__trigger d-flex align-items-center justify-content-center"
       [matMenuTriggerFor]="menuNotifInmuebles"
-      aria-label="Notificaciones de inmuebles"
+      aria-label="Notificaciones de arrendadores"
     >
       <span class="notify-hub__icon-wrap">
         <i-tabler name="bell-ringing" class="notify-hub__tabler d-flex"></i-tabler>
@@ -171,7 +171,7 @@
       mat-icon-button
       class="notify-hub__trigger d-flex align-items-center justify-content-center"
       [matMenuTriggerFor]="menuNotifPredios"
-      aria-label="Notificaciones de predios"
+      aria-label="Notificaciones de arrendatarios"
     >
       <span class="notify-hub__icon-wrap">
         <i-tabler name="bell" class="notify-hub__tabler d-flex"></i-tabler>
@@ -265,11 +265,15 @@
         type="button"
         mat-menu-item
         class="notify-hub-aviso"
-        [class.notify-hub-aviso--urgent]="a.urgent"
+        [class.notify-hub-aviso--tone-success]="a.tone === 'success'"
+        [class.notify-hub-aviso--tone-warning]="a.tone === 'warning'"
+        [class.notify-hub-aviso--tone-danger]="a.tone === 'danger'"
         (click)="onAvisoContratoClick(a, $event)"
       >
         <div class="notify-hub-aviso__inner">
-          <span class="notify-hub-aviso__title">{{ a.title }}</span>
+          <span class="notify-hub-aviso__title">
+            {{ titleCase(a.title) }}
+          </span>
           <span class="notify-hub-aviso__sub">{{ a.subtitle }}</span>
         </div>
       </button>
@@ -290,8 +294,8 @@
   >
     <div class="notify-hub-panel__header">
       <div class="notify-hub-panel__header-text">
-        <span class="notify-hub-panel__eyebrow">Recibos</span>
-        <h6 class="notify-hub-panel__title m-0">Notificaciones de inmuebles</h6>
+        <span class="notify-hub-panel__eyebrow">Contratos</span>
+        <h6 class="notify-hub-panel__title m-0">Notificaciones de arrendadores</h6>
       </div>
       <span class="notify-hub-panel__count">{{ inmueblesNotifCount }}</span>
     </div>
@@ -307,7 +311,7 @@
           <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
         </span>
         <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
-          <span class="notify-hub-recibo__label d-block text-start">{{ r.label }}</span>
+          <span class="notify-hub-recibo__label d-block text-start">{{ titleCase(r.label) }}</span>
           @if (r.detail) {
           <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
           }
@@ -317,7 +321,7 @@
     </div>
     <div class="notify-hub-panel__footer">
       <button type="button" mat-stroked-button class="notify-hub-panel__cta w-100">
-        Ir a detalle de inmuebles
+        Ver detalle de arrendadores
         <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
       </button>
     </div>
@@ -330,8 +334,8 @@
   >
     <div class="notify-hub-panel__header">
       <div class="notify-hub-panel__header-text">
-        <span class="notify-hub-panel__eyebrow">Recibos</span>
-        <h6 class="notify-hub-panel__title m-0">Notificaciones de predios</h6>
+        <span class="notify-hub-panel__eyebrow">Contratos</span>
+        <h6 class="notify-hub-panel__title m-0">Notificaciones de arrendatarios</h6>
       </div>
       <span class="notify-hub-panel__count">{{ prediosNotifCount }}</span>
     </div>
@@ -347,7 +351,7 @@
           <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
         </span>
         <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
-          <span class="notify-hub-recibo__label d-block text-start">{{ r.label }}</span>
+          <span class="notify-hub-recibo__label d-block text-start">{{ titleCase(r.label) }}</span>
           @if (r.detail) {
           <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
           }
@@ -357,7 +361,7 @@
     </div>
     <div class="notify-hub-panel__footer">
       <button type="button" mat-stroked-button class="notify-hub-panel__cta w-100">
-        Ir a detalle de predios
+        Ver detalle de arrendatarios
         <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
       </button>
     </div>

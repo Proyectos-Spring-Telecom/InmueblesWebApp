@@ -56,6 +56,7 @@ function emailFromJwt(token: string): string | null {
   selector: 'app-cambio-password',
   imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule],
   templateUrl: './cambio-password.component.html',
+  styleUrls: ['./cambio-password.component.scss'],
   animations: [authViewAnimation],
 })
 export class CambioPasswordComponent implements OnInit {

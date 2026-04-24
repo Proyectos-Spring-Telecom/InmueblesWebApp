@@ -81,6 +81,10 @@ body {
 
 .layout-app-footer {
   flex: 0 0 auto;
+  /* No usar Bootstrap .w-100 aquí: width:100% !important + left fijo desborda y recorta el texto a la derecha */
+  width: auto;
+  max-width: none;
+  box-sizing: border-box;
   background-color: var(--mat-sys-secondary);
   color: #fff;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
@@ -91,6 +95,9 @@ body {
   bottom: 0;
   left: $sidenav-desktop;
   overflow: visible;
+  /* Permite apilar el footer según el ancho real del bloque (p. ej. con sidebar), no solo el viewport */
+  container-type: inline-size;
+  container-name: app-footer;
 
   .layout-app-footer__inner {
     display: flex;
@@ -100,6 +107,7 @@ body {
     gap: 8px 14px;
     margin: 0 auto;
     width: 100%;
+    min-width: 0;
   }
 
   .layout-app-footer__brand {
@@ -109,7 +117,8 @@ body {
     font-size: 12px;
     line-height: 1.2;
     min-width: 0;
-    flex: 1 1 220px;
+    /* basis 0: reparte el ancho y permite encoger para que el texto haga salto de línea */
+    flex: 1 1 0;
     white-space: normal;
     word-break: break-word;
 
@@ -145,15 +154,17 @@ body {
   .layout-app-footer__meta {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     font-size: 12px;
     opacity: 0.92;
     flex-wrap: wrap;
     line-height: 1.35;
     min-width: 0;
-    flex: 1 1 240px;
+    flex: 1 1 0;
     white-space: normal;
     word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .layout-app-footer__dot {
@@ -244,9 +255,17 @@ body {
     text-align: left;
     line-height: 1.35;
     min-width: 0;
-    flex: 1 1 260px;
+    flex: 1 1 0;
     white-space: normal;
     word-break: break-word;
+    overflow-wrap: anywhere;
+
+    /* El span es flex item: sin esto min-width:auto impide encoger y corta el texto */
+    > span {
+      display: block;
+      min-width: 0;
+      max-width: 100%;
+    }
 
     .layout-app-footer__copy-main {
       display: inline-block;
@@ -274,6 +293,32 @@ body {
       opacity: 0.72;
     }
   }
+
+  /* Footer estrecho (p. ej. ventana angosta o panel estrecho): una columna, sin recortes */
+  @container app-footer (max-width: 560px) {
+    .layout-app-footer__inner {
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 10px 14px;
+    }
+
+    .layout-app-footer__brand,
+    .layout-app-footer__meta,
+    .layout-app-footer__copy {
+      flex: 0 1 auto;
+      width: 100%;
+    }
+
+    .layout-app-footer__meta {
+      justify-content: flex-start;
+    }
+
+    .layout-app-footer__copy {
+      justify-content: flex-start;
+      text-align: left;
+    }
+  }
 }
 
 @media (max-width: 1200px) {
@@ -284,6 +329,20 @@ body {
 }
 
 @media (max-width: 768px) {
+  .layout-app-footer .layout-app-footer__inner {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 10px 14px;
+  }
+
+  .layout-app-footer .layout-app-footer__brand,
+  .layout-app-footer .layout-app-footer__meta,
+  .layout-app-footer .layout-app-footer__copy {
+    flex: 0 1 auto;
+    width: 100%;
+  }
+
   .layout-app-footer .layout-app-footer__meta,
   .layout-app-footer .layout-app-footer__links,
   .layout-app-footer .layout-app-footer__copy {

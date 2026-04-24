@@ -75,7 +75,7 @@ export class AppSideLoginComponent implements OnInit {
   hidePass = true;
 
   public correoUsuario: string = '';
-  public textLogin: string = 'Iniciar Sesión';
+  public textLogin: string = 'iniciar sesión';
   public loading: boolean = false;
   onSubmit() {
     if (this.isDisabled || this.loginForm.invalid) {
@@ -83,7 +83,7 @@ export class AppSideLoginComponent implements OnInit {
     }
     this.isDisabled = true;
     this.loading = true;
-    this.textLogin = 'Cargando...';
+    this.textLogin = 'cargando...';
     window.scrollTo({
       top: 0,
       behavior: 'smooth',
@@ -99,7 +99,7 @@ export class AppSideLoginComponent implements OnInit {
       .pipe(
         catchError((error: any) => {
           this.loading = false;
-          this.textLogin = 'Iniciar Sesión';
+          this.textLogin = 'iniciar sesión';
           // Obtener el mensaje del servidor desde error.error.message
           const errorMessage = error?.error?.message || error?.message || 'Error al iniciar sesión';
           this.toastr.error(errorMessage, '¡Ops!');
@@ -120,7 +120,7 @@ export class AppSideLoginComponent implements OnInit {
         );
 
         this.loading = false;
-        this.textLogin = 'Iniciar Sesión';
+        this.textLogin = 'iniciar sesión';
       });
   }
 

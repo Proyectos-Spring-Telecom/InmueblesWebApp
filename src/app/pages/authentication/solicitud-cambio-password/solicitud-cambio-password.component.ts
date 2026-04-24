@@ -17,6 +17,7 @@ import { authViewAnimation } from '../auth-view.animation';
   selector: 'app-solicitud-cambio-password',
   imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule],
   templateUrl: './solicitud-cambio-password.component.html',
+  styleUrls: ['./solicitud-cambio-password.component.scss'],
   animations: [authViewAnimation],
 })
 export class SolicitudCambioPasswordComponent {

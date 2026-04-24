@@ -11,6 +11,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { DxDataGridComponent } from 'devextreme-angular';
 import { io, Socket } from 'socket.io-client';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EMPTY, forkJoin, Observable, of, Subscription } from 'rxjs';
 import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
 
@@ -71,6 +72,17 @@ interface MonitoreoDocumentoGrupo {
   archivos: MonitoreoDocumentoArchivo[];
 }
 
+type PagoEstatus = 'Pagado' | 'Pendiente' | 'Cancelado';
+
+interface PagoRow {
+  id: number;
+  concepto: string;
+  fechaPago: string;
+  monto: number;
+  metodo: string;
+  estatus: PagoEstatus;
+}
+
 @Component({
   selector: 'app-monitoreo-instalacion',
   templateUrl: './monitoreo-instalacion.component.html',
@@ -124,6 +136,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   inmuebleEsRenta = true;
   localEstatus: 'ocupado' | 'libre' = 'ocupado';
   mostrarModalContratoLocal = false;
+  mostrarModalPago = false;
+  pagoForm!: FormGroup;
   contratoModalLoading = false;
   contratoModalError: string | null = null;
   contratoModal: VistaContratoLocalModal | null = null;
@@ -171,10 +185,10 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     { nombrePensionado: 'María Gómez', numeroTarjeta: 'TAR-1042', arrendatario: 'Spring Telecom México' },
     { nombrePensionado: 'Luis Ramírez', numeroTarjeta: 'TAR-1108', arrendatario: 'Santory' },
   ];
-  readonly pagosData = [
-    { concepto: 'Mantenimiento', fechaPago: '2026-04-02', monto: 12850.5, metodo: 'Transferencia', estatus: 'Pagado' },
-    { concepto: 'Vigilancia', fechaPago: '2026-04-06', monto: 7600, metodo: 'Tarjeta', estatus: 'Pagado' },
-    { concepto: 'Limpieza', fechaPago: '2026-04-10', monto: 5400, metodo: 'Transferencia', estatus: 'Pendiente' },
+  pagosData: PagoRow[] = [
+    { id: 1, concepto: 'Mantenimiento', fechaPago: '2026-04-02', monto: 12850.5, metodo: 'Transferencia', estatus: 'Pagado' },
+    { id: 2, concepto: 'Vigilancia', fechaPago: '2026-04-06', monto: 7600, metodo: 'Tarjeta', estatus: 'Pagado' },
+    { id: 3, concepto: 'Limpieza', fechaPago: '2026-04-10', monto: 5400, metodo: 'Transferencia', estatus: 'Pendiente' },
   ];
   readonly vigenciasData = [
     { documento: 'Contrato de Arrendamiento', fechaInicio: '2025-01-01', fechaFin: '2027-01-01', diasRestantes: 266, estatus: 'Vigente' },
@@ -253,6 +267,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     private clientesService: ClientesService,
     private instalacionService: InstalacionService,
     private http: HttpClient,
+    private fb: FormBuilder,
   ) {}
 
   ngOnDestroy(): void {
@@ -736,6 +751,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.initPagoForm();
     this.numeroSerie = this.route.snapshot.paramMap.get('numeroSerie') ?? '';
     this.applyVistaDesdeQuery(this.route.snapshot.queryParamMap);
     this.vistaQuerySub = this.route.queryParamMap.subscribe((qp) =>
@@ -790,6 +806,191 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.cargarHoy();
     this.cargarUltimoHit();
     this.consultar();
+  }
+
+  private initPagoForm(): void {
+    this.pagoForm = this.fb.group({
+      concepto: ['', Validators.required],
+      fechaPago: ['', Validators.required],
+      monto: ['', Validators.required],
+      metodo: ['', Validators.required],
+      estatus: ['Pendiente' as PagoEstatus, Validators.required],
+    });
+  }
+
+  abrirModalPago(): void {
+    this.mostrarModalPago = true;
+    this.pagoForm?.reset({
+      concepto: '',
+      fechaPago: '',
+      monto: '',
+      metodo: '',
+      estatus: 'Pendiente' as PagoEstatus,
+    });
+    this.cdr.markForCheck();
+  }
+
+  cerrarModalPago(): void {
+    this.mostrarModalPago = false;
+    this.cdr.markForCheck();
+  }
+
+  guardarPagoDesdeModal(): void {
+    if (!this.pagoForm) return;
+    if (this.pagoForm.invalid) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'warning',
+        title: 'Faltan datos',
+        text: 'Completa los campos obligatorios para agregar el pago.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    const v = this.pagoForm.value as {
+      concepto: string;
+      fechaPago: string;
+      monto: string;
+      metodo: string;
+      estatus: PagoEstatus;
+    };
+
+    const montoN = this.parseMontoToNumber(v.monto);
+    if (!Number.isFinite(montoN)) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'warning',
+        title: 'Monto inválido',
+        text: 'Captura un monto válido.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    const nextId =
+      this.pagosData.reduce((max, r) => Math.max(max, r.id), 0) + 1;
+    const nuevo: PagoRow = {
+      id: nextId,
+      concepto: String(v.concepto ?? '').trim(),
+      fechaPago: String(v.fechaPago ?? '').trim(),
+      monto: montoN,
+      metodo: String(v.metodo ?? '').trim(),
+      estatus: (v.estatus ?? 'Pendiente') as PagoEstatus,
+    };
+
+    this.pagosData = [nuevo, ...this.pagosData];
+    this.cerrarModalPago();
+  }
+
+  onMontoKeydown(ev: KeyboardEvent): void {
+    const allowedKeys = new Set([
+      'Backspace',
+      'Delete',
+      'Tab',
+      'Escape',
+      'Enter',
+      'ArrowLeft',
+      'ArrowRight',
+      'Home',
+      'End',
+    ]);
+    if (allowedKeys.has(ev.key)) return;
+    if (ev.ctrlKey || ev.metaKey) return;
+    if (ev.key >= '0' && ev.key <= '9') return;
+    if (ev.key === '.') return;
+    ev.preventDefault();
+  }
+
+  onMontoInput(ev: Event): void {
+    const input = ev.target as HTMLInputElement | null;
+    if (!input || !this.pagoForm) return;
+    const formatted = this.formatMontoTyping(input.value);
+    this.pagoForm.get('monto')?.setValue(formatted, { emitEvent: false });
+  }
+
+  onMontoBlur(): void {
+    const raw = String(this.pagoForm?.get('monto')?.value ?? '');
+    const n = this.parseMontoToNumber(raw);
+    if (!Number.isFinite(n)) {
+      this.pagoForm?.get('monto')?.setValue('', { emitEvent: false });
+      return;
+    }
+    this.pagoForm?.get('monto')?.setValue(this.formatCurrencyFixed(n), {
+      emitEvent: false,
+    });
+  }
+
+  private parseMontoToNumber(raw: string): number {
+    const s = String(raw ?? '')
+      .replace(/[^\d.]/g, '')
+      .trim();
+    if (!s) return NaN;
+    const parts = s.split('.');
+    const intPart = parts[0] ?? '';
+    const decPart = (parts[1] ?? '').slice(0, 2);
+    const num = Number(decPart ? `${intPart}.${decPart}` : intPart);
+    return Number.isFinite(num) ? num : NaN;
+  }
+
+  private formatMontoTyping(raw: string): string {
+    const cleaned = String(raw ?? '').replace(/[^\d.]/g, '');
+    if (!cleaned) return '';
+
+    const firstDot = cleaned.indexOf('.');
+    const intRaw = firstDot === -1 ? cleaned : cleaned.slice(0, firstDot);
+    const decRaw =
+      firstDot === -1 ? '' : cleaned.slice(firstDot + 1).replace(/\./g, '');
+
+    const intDigits = (intRaw || '0').replace(/^0+(?=\d)/, '') || '0';
+    const intNum = Number(intDigits);
+    const intFmt = Number.isFinite(intNum)
+      ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
+          intNum,
+        )
+      : '0';
+
+    const decPart = decRaw.slice(0, 2);
+    if (firstDot !== -1) return `$${intFmt}.${decPart}`;
+    return `$${intFmt}`;
+  }
+
+  private formatCurrencyFixed(n: number): string {
+    const num = Math.round(n * 100) / 100;
+    const fmt = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+    return `$${fmt}`;
+  }
+
+  cambiarEstatusPago(row: PagoRow): void {
+    void Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      icon: 'question',
+      title: 'Cambiar estatus',
+      text: `Pago: ${row.concepto}`,
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'Pagado',
+      denyButtonText: 'Pendiente',
+      cancelButtonText: 'Cancelado',
+      allowOutsideClick: false,
+    }).then((res) => {
+      let nuevo: PagoEstatus | null = null;
+      if (res.isConfirmed) nuevo = 'Pagado';
+      else if (res.isDenied) nuevo = 'Pendiente';
+      else if (res.dismiss === Swal.DismissReason.cancel) nuevo = 'Cancelado';
+      if (!nuevo) return;
+
+      this.pagosData = this.pagosData.map((p) =>
+        p.id === row.id ? { ...p, estatus: nuevo! } : p,
+      );
+      this.cdr.markForCheck();
+    });
   }
 
   private cargarUltimoHit(): void {

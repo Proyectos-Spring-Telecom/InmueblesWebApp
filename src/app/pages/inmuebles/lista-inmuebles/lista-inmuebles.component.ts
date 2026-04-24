@@ -14,6 +14,8 @@ import { InmuebleTreeRow, buildInmueblesTreeRows } from '../inmuebles-demo.data'
 export class ListaInmueblesComponent implements OnInit {
   public rows: InmuebleTreeRow[] = [];
   public expandedAll = false;
+  public mensajeAgrupar: string =
+    'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
 
   @ViewChild('treeListRef', { static: false })
   treeListRef!: DxTreeListComponent;
@@ -38,10 +40,10 @@ export class ListaInmueblesComponent implements OnInit {
     ev.stopPropagation();
     if (row.tipoNodo !== 'inmueble') return;
     const ok = window.confirm(
-      `¿Dar de baja el inmueble «${row.inmueble}»? (demostración)`,
+      `¿Dar de baja el inmueble «${row.inmueble}»? (solo demostración; no se persiste).`,
     );
     if (!ok) return;
-    window.alert('Demostración: baja procesada en backend.');
+    window.alert('Demostración: la baja de inmueble se procesaría en backend.');
   }
 
   limpiarVista(): void {
