@@ -1,0 +1,9 @@
+---
+description: No usar font-weight en CSS/SCSS del proyecto
+alwaysApply: true
+---
+
+# Contrato de tipografía (peso de fuente)
+
+- **No** usar la propiedad CSS `font-weight` al escribir o modificar estilos en este repositorio (ni en componentes, ni en assets globales), salvo que el usuario pida **explícitamente** permitir o restaurar `font-weight` en un cambio concreto.
+- Para jerarquía visual usar, por ejemplo: `font-size`, `letter-spacing`, `text-transform`, color, márgenes y paddings, o clases del tema existentes — **sin** `font-weight`.

@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
@@ -25,6 +25,9 @@ export class AgregarClienteComponent implements OnInit {
   selectedFileName: string = '';
   previewUrl: string | ArrayBuffer | null = null;
   public showRol: any;
+  ineFileName: string | null = null;
+  inePreviewUrl: string | ArrayBuffer | null = null;
+  ineDragging = false;
 
   constructor(
     private fb: FormBuilder,
@@ -90,12 +93,14 @@ export class AgregarClienteComponent implements OnInit {
           constanciaSituacionFiscal: d.constanciaSituacionFiscal ?? null,
           comprobanteDomicilio: d.comprobanteDomicilio ?? null,
           actaConstitutiva: d.actaConstitutiva ?? null,
+          ineRepresentanteLegal: d.ineRepresentanteLegal ?? null,
         });
         this.originalDocs = {
           logotipo: d.logotipo ?? '',
           constanciaSituacionFiscal: d.constanciaSituacionFiscal ?? '',
           comprobanteDomicilio: d.comprobanteDomicilio ?? '',
           actaConstitutiva: d.actaConstitutiva ?? '',
+          ineRepresentanteLegal: d.ineRepresentanteLegal ?? '',
         };
       });
   }
@@ -168,6 +173,7 @@ export class AgregarClienteComponent implements OnInit {
       constanciaSituacionFiscal: [null, Validators.required],
       comprobanteDomicilio: [null, Validators.required],
       actaConstitutiva: [null, Validators.required],
+      ineRepresentanteLegal: [null, Validators.required],
       nombre: ['', Validators.required],
       apellidoPaterno: [null],
       apellidoMaterno: [null],
@@ -185,7 +191,74 @@ export class AgregarClienteComponent implements OnInit {
       telefonoEncargado: ['', Validators.required],
       correoEncargado: ['', [Validators.required, Validators.email]],
       sitioWeb: [null],
+      socios: this.fb.array([this.crearSocioFormGroup()]),
     });
+  }
+
+  private crearSocioFormGroup(): FormGroup {
+    return this.fb.group({
+      nombreSocio: ['', Validators.required],
+      rfcSocio: [null],
+      socioConstanciaSituacionFiscal: [null],
+      socioConstanciaSituacionFiscalNombre: [''],
+      socioComprobanteDomicilio: [null],
+      socioComprobanteDomicilioNombre: [''],
+      socioActaConstitutiva: [null],
+      socioActaConstitutivaNombre: [''],
+    });
+  }
+
+  get sociosFormArray(): FormArray {
+    return this.clienteForm.get('socios') as FormArray;
+  }
+
+  /** Nombre del primer socio (se muestra junto al título “Socios” mientras escriben). */
+  get primerNombreSocio(): string {
+    const raw = this.sociosFormArray?.at(0)?.get('nombreSocio')?.value;
+    if (raw == null) return '';
+    return String(raw).trim();
+  }
+
+  nombreSocioEnIndice(index: number): string {
+    const raw = this.sociosFormArray?.at(index)?.get('nombreSocio')?.value;
+    if (raw == null) return '';
+    return String(raw).trim();
+  }
+
+  agregarSocio(): void {
+    this.sociosFormArray.push(this.crearSocioFormGroup());
+  }
+
+  eliminarSocio(index: number): void {
+    if (this.sociosFormArray.length === 1) return;
+    this.sociosFormArray.removeAt(index);
+  }
+
+  openSocioFilePicker(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  onSocioFileSelected(
+    event: Event,
+    index: number,
+    field:
+      | 'socioConstanciaSituacionFiscal'
+      | 'socioComprobanteDomicilio'
+      | 'socioActaConstitutiva',
+    nameField:
+      | 'socioConstanciaSituacionFiscalNombre'
+      | 'socioComprobanteDomicilioNombre'
+      | 'socioActaConstitutivaNombre',
+  ): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    const group = this.sociosFormArray.at(index) as FormGroup;
+
+    group.patchValue({
+      [field]: file,
+      [nameField]: file?.name ?? '',
+    });
+    if (input) input.value = '';
   }
 
   submit() {
@@ -238,6 +311,7 @@ export class AgregarClienteComponent implements OnInit {
         constanciaSituacionFiscal: 'Constancia de Situación Fiscal',
         comprobanteDomicilio: 'Comprobante de Domicilio',
         actaConstitutiva: 'Acta Constitutiva',
+        ineRepresentanteLegal: 'INE del Representante Legal',
         nombre: 'Nombre / Razón Social',
         apellidoPaterno: 'Apellido Paterno',
         apellidoMaterno: 'Apellido Materno',
@@ -249,9 +323,9 @@ export class AgregarClienteComponent implements OnInit {
         calle: 'Calle',
         numeroExterior: 'Número Exterior',
         cp: 'Código Postal',
-        nombreEncargado: 'Nombre del Encargado',
-        telefonoEncargado: 'Teléfono del Encargado',
-        correoEncargado: 'Email del Encargado',
+        nombreEncargado: 'Nombre del Representante Legal',
+        telefonoEncargado: 'Teléfono del Representante Legal',
+        correoEncargado: 'Email del Representante Legal',
       };
 
       const camposFaltantes: string[] = [];
@@ -333,6 +407,7 @@ export class AgregarClienteComponent implements OnInit {
     const csf = v.constanciaSituacionFiscal;
     const comp = v.comprobanteDomicilio;
     const acta = v.actaConstitutiva;
+    const ine = v.ineRepresentanteLegal;
 
     if (logotipo instanceof File) {
       formData.append('logotipo', logotipo, logotipo.name);
@@ -345,6 +420,9 @@ export class AgregarClienteComponent implements OnInit {
     }
     if (acta instanceof File) {
       formData.append('actaConstitutiva', acta, acta.name);
+    }
+    if (ine instanceof File) {
+      formData.append('ineRepresentanteLegal', ine, ine.name);
     }
 
     this.clieService.agregarCliente(formData).subscribe(
@@ -418,6 +496,7 @@ export class AgregarClienteComponent implements OnInit {
         constanciaSituacionFiscal: 'Constancia de Situación Fiscal',
         comprobanteDomicilio: 'Comprobante de Domicilio',
         actaConstitutiva: 'Acta Constitutiva',
+        ineRepresentanteLegal: 'INE del Representante Legal',
         nombre: 'Nombre / Razón Social',
         apellidoPaterno: 'Apellido Paterno',
         apellidoMaterno: 'Apellido Materno',
@@ -429,9 +508,9 @@ export class AgregarClienteComponent implements OnInit {
         calle: 'Calle',
         numeroExterior: 'Número Exterior',
         cp: 'Código Postal',
-        nombreEncargado: 'Nombre del Encargado',
-        telefonoEncargado: 'Teléfono del Encargado',
-        correoEncargado: 'Email del Encargado',
+        nombreEncargado: 'Nombre del Representante Legal',
+        telefonoEncargado: 'Teléfono del Representante Legal',
+        correoEncargado: 'Email del Representante Legal',
       };
 
       const camposFaltantes: string[] = [];
@@ -511,6 +590,7 @@ export class AgregarClienteComponent implements OnInit {
     const csf = v.constanciaSituacionFiscal;
     const comp = v.comprobanteDomicilio;
     const acta = v.actaConstitutiva;
+    const ine = v.ineRepresentanteLegal;
 
     if (logotipo instanceof File) {
       formData.append('logotipo', logotipo, logotipo.name);
@@ -523,6 +603,9 @@ export class AgregarClienteComponent implements OnInit {
     }
     if (acta instanceof File) {
       formData.append('actaConstitutiva', acta, acta.name);
+    }
+    if (ine instanceof File) {
+      formData.append('ineRepresentanteLegal', ine, ine.name);
     }
 
     this.clieService.actualizarCliente(this.idCliente, formData).subscribe(
@@ -565,6 +648,7 @@ export class AgregarClienteComponent implements OnInit {
     constanciaSituacionFiscal: '' as string,
     comprobanteDomicilio: '' as string,
     actaConstitutiva: '' as string,
+    ineRepresentanteLegal: '' as string,
   };
 
   private isFileLike(v: any): v is File {
@@ -576,6 +660,7 @@ export class AgregarClienteComponent implements OnInit {
   @ViewChild('compDomFileInput')
   compDomFileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('actaFileInput') actaFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('ineFileInput') ineFileInput!: ElementRef<HTMLInputElement>;
 
   logoPreviewUrl: string | ArrayBuffer | null = null;
   csfPreviewUrl: string | ArrayBuffer | null = null;
@@ -1013,6 +1098,48 @@ export class AgregarClienteComponent implements OnInit {
             ?.setErrors({ uploadFailed: true });
         },
       });
+  }
+
+  openIneFilePicker(): void {
+    this.ineFileInput.nativeElement.click();
+  }
+  onIneDragOver(e: DragEvent): void {
+    e.preventDefault();
+    this.ineDragging = true;
+  }
+  onIneDragLeave(e: DragEvent): void {
+    e.preventDefault();
+    this.ineDragging = false;
+  }
+  onIneDrop(e: DragEvent): void {
+    e.preventDefault();
+    this.ineDragging = false;
+    const f = e.dataTransfer?.files?.[0] || null;
+    if (f) this.handleIneFile(f);
+  }
+  onIneFileSelected(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0] || null;
+    if (f) this.handleIneFile(f);
+    if (input) input.value = '';
+  }
+  clearIneFile(e: Event): void {
+    e.stopPropagation();
+    this.inePreviewUrl = null;
+    this.ineFileName = null;
+    this.ineFileInput.nativeElement.value = '';
+    this.clienteForm.patchValue({ ineRepresentanteLegal: this.DEFAULT_AVATAR_URL });
+    this.clienteForm.get('ineRepresentanteLegal')?.setErrors(null);
+  }
+  private handleIneFile(file: File): void {
+    if (!this.isAllowedDoc(file)) {
+      this.clienteForm.get('ineRepresentanteLegal')?.setErrors({ invalid: true });
+      return;
+    }
+    this.ineFileName = file.name;
+    this.loadPreview(file, (url) => (this.inePreviewUrl = url));
+    this.clienteForm.patchValue({ ineRepresentanteLegal: file });
+    this.clienteForm.get('ineRepresentanteLegal')?.setErrors(null);
   }
 
   private extractFileUrl(res: any): string {

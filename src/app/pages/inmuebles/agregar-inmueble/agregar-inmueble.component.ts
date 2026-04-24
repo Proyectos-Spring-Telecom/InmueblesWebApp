@@ -1,29 +1,16 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { animate, style, transition, trigger } from '@angular/animations';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { INMUEBLES_FORM_DEMO } from '../inmuebles-demo.data';
-import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 
 @Component({
   selector: 'app-agregar-inmueble',
   templateUrl: './agregar-inmueble.component.html',
   styleUrl: './agregar-inmueble.component.scss',
   standalone: false,
-  animations: [
-    routeAnimation,
-    trigger('arrayItemAnim', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(6px) scale(0.995)' }),
-        animate('180ms ease-out', style({ opacity: 1, transform: 'translateY(0) scale(1)' })),
-      ]),
-      transition(':leave', [
-        animate('150ms ease-in', style({ opacity: 0, transform: 'translateY(-4px) scale(0.992)' })),
-      ]),
-    ]),
-  ],
+  animations: [routeAnimation],
 })
 export class AgregarInmuebleComponent implements OnInit {
   public title = 'Agregar Inmueble';
@@ -33,6 +20,11 @@ export class AgregarInmuebleComponent implements OnInit {
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
+  contratoRentaNombre: string | null = null;
+  constanciaFiscalNombre: string | null = null;
+  comprobanteDomicilioNombre: string | null = null;
+  actaConstitutivaNombre: string | null = null;
+  ineRepresentanteNombre: string | null = null;
   mostrarModalMapa = false;
   map: any = null;
   marker: any = null;
@@ -40,21 +32,23 @@ export class AgregarInmuebleComponent implements OnInit {
   lngSeleccionada: number | null = null;
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
   private readonly PIN_URL = 'assets/images/logos/marker_spring.webp';
-  public listaClientes: any[] = [];
 
-  @ViewChild('archivoEscrituraInput') archivoEscrituraInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('imagenLicenciaInput') imagenLicenciaInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('imagenPlanoInput') imagenPlanoInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('archivoEscrituraInput') archivoEscrituraInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenLicenciaInput') imagenLicenciaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('constanciaFiscalInput') constanciaFiscalInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('comprobanteDomicilioInput') comprobanteDomicilioInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
 
   constructor(
     private fb: FormBuilder,
     private activatedRoute: ActivatedRoute,
     private router: Router,
-    private clieService: ClientesService,
   ) {}
 
   ngOnInit(): void {
-    this.obtenerClientes();
     this.initForm();
     this.activatedRoute.params.subscribe((params) => {
       this.idInmueble = Number(params['idInmueble']);
@@ -63,15 +57,6 @@ export class AgregarInmuebleComponent implements OnInit {
         this.submitButton = 'Actualizar';
         this.cargarDemoEdicion(this.idInmueble);
       }
-    });
-  }
-
-  obtenerClientes(): void {
-    this.clieService.obtenerClientes().subscribe((response) => {
-      this.listaClientes = (response.data || []).map((c: any) => ({
-        ...c,
-        id: Number(c.id),
-      }));
     });
   }
 
@@ -86,18 +71,87 @@ export class AgregarInmuebleComponent implements OnInit {
       arrendador: ['', Validators.required],
       tiempoRentaAnios: ['', Validators.required],
       estatusInmueble: ['', Validators.required],
+      nombreRepresentanteLegal: ['', Validators.required],
+      telefonoRepresentanteLegal: ['', Validators.required],
+      correoRepresentanteLegal: ['', [Validators.required, Validators.email]],
       documentoEscritura: [null],
       documentoLicencia: [null],
       documentoPlano: [null],
+      documentoContratoRenta: [null],
+      documentoConstanciaFiscal: [null],
+      documentoComprobanteDomicilio: [null],
+      documentoActaConstitutiva: [null],
+      ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
       servicios: this.fb.array([this.crearServicioFormGroup()]),
       zonas: this.fb.array([this.crearZonaFormGroup()]),
       estacionamientos: this.fb.array([this.crearEstacionamientoFormGroup()]),
       pagos: this.fb.array([this.crearPagoFormGroup()]),
       vigencias: this.fb.array([this.crearVigenciaFormGroup()]),
+      socios: this.fb.array([this.crearSocioFormGroup()]),
+      locales: this.fb.array([this.crearLocalFormGroup()]),
       lat: [''],
       lng: [''],
-      locales: this.fb.array([this.crearLocalFormGroup()]),
+    });
+  }
+
+  private crearSocioFormGroup(): FormGroup {
+    return this.fb.group({
+      nombreSocio: ['', Validators.required],
+      rfcSocio: [null],
+      socioConstanciaSituacionFiscal: [null],
+      socioConstanciaSituacionFiscalNombre: [''],
+      socioComprobanteDomicilio: [null],
+      socioComprobanteDomicilioNombre: [''],
+      socioActaConstitutiva: [null],
+      socioActaConstitutivaNombre: [''],
+    });
+  }
+
+  private crearGaleriaImagenFormGroup(): FormGroup {
+    return this.fb.group({
+      archivo: [null],
+      nombre: [''],
+    });
+  }
+
+  private crearServicioFormGroup(): FormGroup {
+    return this.fb.group({
+      servicioAguaContrato: [''],
+      servicioLuzContrato: [''],
+      servicioMantenimientoContrato: [''],
+    });
+  }
+
+  private crearZonaFormGroup(): FormGroup {
+    return this.fb.group({
+      zonaPrincipal: [''],
+      zonaSuperficieM2: [''],
+      superficieDisponiblePredioM2: [''],
+    });
+  }
+
+  private crearEstacionamientoFormGroup(): FormGroup {
+    return this.fb.group({
+      estacionamientoPensionado: [''],
+      estacionamientoTarjeta: [''],
+      estacionamientoArrendatario: [''],
+    });
+  }
+
+  private crearPagoFormGroup(): FormGroup {
+    return this.fb.group({
+      pagoConcepto: [''],
+      pagoFecha: [''],
+      pagoMonto: [''],
+    });
+  }
+
+  private crearVigenciaFormGroup(): FormGroup {
+    return this.fb.group({
+      vigenciaDocumento: [''],
+      vigenciaDiasRestantes: [''],
+      vigenciaEstatus: [''],
     });
   }
 
@@ -138,63 +192,20 @@ export class AgregarInmuebleComponent implements OnInit {
     });
   }
 
-  private crearServicioFormGroup(): FormGroup {
-    return this.fb.group({
-      servicioAguaContrato: [''],
-      servicioLuzContrato: [''],
-      servicioMantenimientoContrato: [''],
-    });
-  }
-
-  private crearGaleriaImagenFormGroup(): FormGroup {
-    return this.fb.group({
-      archivo: [null],
-      nombre: [''],
-    });
-  }
-
-  private crearZonaFormGroup(): FormGroup {
-    return this.fb.group({
-      zonaPrincipal: [''],
-      zonaSuperficieM2: [''],
-      superficieDisponiblePredioM2: [''],
-    });
-  }
-
-  private crearEstacionamientoFormGroup(): FormGroup {
-    return this.fb.group({
-      estacionamientoPensionado: [''],
-      estacionamientoTarjeta: [''],
-      estacionamientoArrendatario: [''],
-    });
-  }
-
-  private crearPagoFormGroup(): FormGroup {
-    return this.fb.group({
-      pagoConcepto: [''],
-      pagoFecha: [''],
-      pagoMonto: [''],
-    });
-  }
-
-  private crearVigenciaFormGroup(): FormGroup {
-    return this.fb.group({
-      vigenciaDocumento: [''],
-      vigenciaDiasRestantes: [''],
-      vigenciaEstatus: [''],
-    });
-  }
-
   get localesFormArray(): FormArray {
     return this.inmuebleForm.get('locales') as FormArray;
   }
 
-  get serviciosFormArray(): FormArray {
-    return this.inmuebleForm.get('servicios') as FormArray;
-  }
-
   get galeriaImagenesFormArray(): FormArray {
     return this.inmuebleForm.get('galeriaImagenes') as FormArray;
+  }
+
+  galeriaGrupo(index: number): FormGroup {
+    return this.galeriaImagenesFormArray.at(index) as FormGroup;
+  }
+
+  get serviciosFormArray(): FormArray {
+    return this.inmuebleForm.get('servicios') as FormArray;
   }
 
   get zonasFormArray(): FormArray {
@@ -213,13 +224,49 @@ export class AgregarInmuebleComponent implements OnInit {
     return this.inmuebleForm.get('vigencias') as FormArray;
   }
 
-  agregarLocal(): void {
-    this.localesFormArray.push(this.crearLocalFormGroup());
+  get sociosFormArray(): FormArray {
+    return this.inmuebleForm.get('socios') as FormArray;
   }
 
-  eliminarLocal(index: number): void {
-    if (this.localesFormArray.length === 1) return;
-    this.localesFormArray.removeAt(index);
+  get primerNombreSocio(): string {
+    const raw = this.sociosFormArray?.at(0)?.get('nombreSocio')?.value;
+    if (raw == null) return '';
+    return String(raw).trim();
+  }
+
+  agregarSocio(): void {
+    this.sociosFormArray.push(this.crearSocioFormGroup());
+  }
+
+  eliminarSocio(index: number): void {
+    if (this.sociosFormArray.length === 1) return;
+    this.sociosFormArray.removeAt(index);
+  }
+
+  openSocioFilePicker(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  onSocioFileSelected(
+    event: Event,
+    index: number,
+    field:
+      | 'socioConstanciaSituacionFiscal'
+      | 'socioComprobanteDomicilio'
+      | 'socioActaConstitutiva',
+    nameField:
+      | 'socioConstanciaSituacionFiscalNombre'
+      | 'socioComprobanteDomicilioNombre'
+      | 'socioActaConstitutivaNombre',
+  ): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    const group = this.sociosFormArray.at(index) as FormGroup;
+    group.patchValue({
+      [field]: file,
+      [nameField]: file?.name ?? '',
+    });
+    if (input) input.value = '';
   }
 
   agregarServicio(): void {
@@ -290,11 +337,26 @@ export class AgregarInmuebleComponent implements OnInit {
     });
   }
 
-  abrirSelectorArchivo(ref: 'escritura' | 'licencia' | 'plano'): void {
+  abrirSelectorArchivo(
+    ref:
+      | 'escritura'
+      | 'licencia'
+      | 'plano'
+      | 'contratoRenta'
+      | 'constanciaFiscal'
+      | 'comprobanteDomicilio'
+      | 'actaConstitutiva'
+      | 'ineRepresentante',
+  ): void {
     const map = {
       escritura: this.archivoEscrituraInput,
       licencia: this.imagenLicenciaInput,
       plano: this.imagenPlanoInput,
+      contratoRenta: this.contratoRentaInput,
+      constanciaFiscal: this.constanciaFiscalInput,
+      comprobanteDomicilio: this.comprobanteDomicilioInput,
+      actaConstitutiva: this.actaConstitutivaInput,
+      ineRepresentante: this.ineRepresentanteInput,
     };
     map[ref]?.nativeElement?.click();
   }
@@ -308,6 +370,11 @@ export class AgregarInmuebleComponent implements OnInit {
     if (controlName === 'documentoEscritura') this.archivoEscrituraNombre = name;
     if (controlName === 'documentoLicencia') this.imagenLicenciaNombre = name;
     if (controlName === 'documentoPlano') this.imagenPlanoNombre = name;
+    if (controlName === 'documentoContratoRenta') this.contratoRentaNombre = name;
+    if (controlName === 'documentoConstanciaFiscal') this.constanciaFiscalNombre = name;
+    if (controlName === 'documentoComprobanteDomicilio') this.comprobanteDomicilioNombre = name;
+    if (controlName === 'documentoActaConstitutiva') this.actaConstitutivaNombre = name;
+    if (controlName === 'ineRepresentanteLegal') this.ineRepresentanteNombre = name;
   }
 
   private cargarDemoEdicion(id: number): void {
@@ -324,8 +391,20 @@ export class AgregarInmuebleComponent implements OnInit {
         arrendador: registro.arrendador,
         tiempoRentaAnios: '',
         estatusInmueble: '',
+        nombreRepresentanteLegal: `Carlos Medina — ${registro.nombreComercial}`,
+        telefonoRepresentanteLegal: registro.telefono ?? '',
+        correoRepresentanteLegal: registro.correo ?? '',
         lat: '',
         lng: '',
+      },
+      { emitEvent: false },
+    );
+
+    const socio0 = this.sociosFormArray.at(0) as FormGroup;
+    socio0?.patchValue(
+      {
+        nombreSocio: registro.razonSocial,
+        rfcSocio: registro.rfc,
       },
       { emitEvent: false },
     );

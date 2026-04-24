@@ -2,10 +2,27 @@
   display: block;
 }
 
+/** Encabezado: título a la izquierda y acciones a la derecha en una sola fila. */
+.est-grid-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.est-grid-head__title {
+  flex: 1 1 auto;
+  min-width: 16rem;
+}
+
 /** Misma fila y altura que `mat-flat-button` de Limpiar / grupos; Cancelar conserva colores y radio de `.button-danger`. */
 .est-grid-toolbar {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  justify-content: flex-end;
 }
 
 .est-grid-toolbar__btn {

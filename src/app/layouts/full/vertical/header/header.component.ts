@@ -59,7 +59,10 @@ interface AvisoNotificacion {
   id: number;
   title: string;
   subtitle: string;
-  urgent?: boolean;
+  /** Semáforo: success = bien (verde), warning = próximo (amarillo), danger = crítico (rojo). */
+  tone?: 'success' | 'warning' | 'danger';
+  /** Días restantes para vencer (si aplica). */
+  daysLeft?: number;
   detalle?: Partial<ContratoDetalleDialogData>;
 }
 
@@ -108,6 +111,18 @@ interface quicklinks {
   encapsulation: ViewEncapsulation.None,
 })
 export class HeaderComponent {
+  titleCase(input: unknown): string {
+    const s = String(input ?? '').trim();
+    if (!s) return '';
+    // Primera mayúscula y resto minúsculas por palabra (mantiene separadores y números).
+    return s
+      .toLowerCase()
+      .replace(/\p{L}[\p{L}\p{M}'’]*/gu, (w) => {
+        const first = w.charAt(0).toUpperCase();
+        return first + w.slice(1);
+      });
+  }
+
   @Input() showToggle = true;
   @Input() toggleChecked = false;
   @Output() toggleMobileNav = new EventEmitter<void>();
@@ -176,6 +191,12 @@ export class HeaderComponent {
     this.showRol = user?.rolNombre;
     this.showEmail = user?.userName;
     translate.setDefaultLang('en');
+
+    // Semáforo: asignar tonos para avisos con daysLeft.
+    this.avisosLista = this.avisosLista.map((a) => ({
+      ...a,
+      tone: a.tone ?? this.toneByDaysLeft(a.daysLeft),
+    }));
   }
 
   openDialog() {
@@ -282,20 +303,34 @@ export class HeaderComponent {
 
   /** Contador sobre el ícono de sobre (demo; enlazar a API cuando exista) */
   avisosCount = 13;
-  inmueblesNotifCount = 1;
-  prediosNotifCount = 0;
+  /** Re-usamos estos contadores para: Arrendadores / Arrendatarios (sin tocar estilos del header). */
+  inmueblesNotifCount = 5;
+  prediosNotifCount = 5;
+
+  private toneByDaysLeft(daysLeft?: number): 'success' | 'warning' | 'danger' {
+    const n = Number(daysLeft);
+    if (!Number.isFinite(n)) return 'success';
+    // Reglas:
+    // - Mayor a 30 días: verde
+    // - Menor a 15 días: amarillo
+    // - Menor a 3 días: rojo
+    if (n < 3) return 'danger';
+    if (n < 15) return 'warning';
+    return 'success';
+  }
 
   avisosLista: AvisoNotificacion[] = [
     {
       id: 1,
       title: 'Contratos próximos a vencer',
       subtitle: 'Contrato : PC-0001 - Prestalana SA de CV',
-      urgent: true,
+      daysLeft: 12,
     },
     {
       id: 2,
       title: 'Contrato : PC-0006 - Estilos QIU Home SA de CV',
       subtitle: 'Revisión de documentación pendiente',
+      daysLeft: 2,
       detalle: {
         contrato: 'PC-0006',
         arrendatario: 'Estilos QIU Home SA de CV',
@@ -306,6 +341,7 @@ export class HeaderComponent {
       id: 3,
       title: 'Contrato : PC-0012 - Logística Norte SA de CV',
       subtitle: 'Vigencia actualizada en el sistema',
+      daysLeft: 40,
       detalle: {
         contrato: 'PC-0012',
         arrendatario: 'Logística Norte SA de CV',
@@ -317,6 +353,7 @@ export class HeaderComponent {
       id: 4,
       title: 'Contrato : PC-0020 - Inmobiliaria del Valle',
       subtitle: 'Recordatorio de pago programado',
+      daysLeft: 1,
       detalle: {
         contrato: 'PC-0020',
         arrendatario: 'Inmobiliaria del Valle',
@@ -325,45 +362,89 @@ export class HeaderComponent {
     },
   ];
 
-  /** Misma estructura de categorías para inmuebles y predios (datos demo) */
+  /**
+   * Misma estructura visual (notify-hub-recibo), pero con información de:
+   * - Arrendadores (menuNotifInmuebles)
+   * - Arrendatarios / Locales (menuNotifPredios)
+   */
   private readonly recibosCategoriasPlantilla: ReciboEstadoItem[] = [
     {
-      id: 'vencidos',
+      id: 'critico',
       tone: 'danger',
       icon: 'x',
-      label: 'Recibos vencidos',
-      detail: 'Agua — Contrato : 54035',
+      label: 'Contratos críticos',
+      detail: 'Arrendador: Inmobiliaria del Valle — Contrato: PC-0020',
     },
     {
       id: 'proximos',
       tone: 'warning',
       icon: 'alert-circle',
-      label: 'Recibos próximos a vencer',
+      label: 'Contratos próximos a vencer',
+      detail: 'Arrendador: BHV SA de CV — Contrato: PC-0001',
     },
     {
-      id: 'cinco-dias',
+      id: 'estables',
       tone: 'amber',
       icon: 'thumb-up',
-      label: 'Recibos con más de 5 días hábiles para pagar',
+      label: 'Contratos por vencer',
+      detail: 'Arrendador: Grupo Comercial Atlas — Contrato: PC-0031',
     },
     {
-      id: 'pagados',
+      id: 'ok',
       tone: 'success',
       icon: 'check',
-      label: 'Recibos pagados este mes',
+      label: 'Contratos con más de 30 días',
+      detail: 'Arrendador: Logística Norte — Contrato: PC-0012',
     },
     {
-      id: 'fuera-tiempo',
+      id: 'info',
       tone: 'info',
       icon: 'info-circle',
-      label: 'Recibos pagados fuera de tiempo este mes',
+      label: 'Notas / seguimiento',
+      detail: 'Documentación pendiente en 2 contratos',
     },
   ];
 
+  /** Menu "inmuebles" -> ahora Arrendadores */
   recibosInmuebles: ReciboEstadoItem[] = [...this.recibosCategoriasPlantilla];
-  recibosPredios: ReciboEstadoItem[] = this.recibosCategoriasPlantilla.map((c) =>
-    c.id === 'vencidos' ? { ...c, detail: undefined } : { ...c },
-  );
+  /** Menu "predios" -> ahora Arrendatarios/Locales */
+  recibosPredios: ReciboEstadoItem[] = [
+    {
+      id: 'critico-loc',
+      tone: 'danger',
+      icon: 'x',
+      label: 'Locales críticos',
+      detail: 'Local 9 (PB) — Contrato: PC-0044 — Arrendatario: Servicios Urbanos',
+    },
+    {
+      id: 'prox-loc',
+      tone: 'warning',
+      icon: 'alert-circle',
+      label: 'Locales próximos a vencer',
+      detail: 'Local 12 (PB) — Contrato: PC-0001 — Arrendatario: Prestalana SA de CV',
+    },
+    {
+      id: 'mid-loc',
+      tone: 'amber',
+      icon: 'thumb-up',
+      label: 'Locales por vencer',
+      detail: 'Local 7 (P1) — Contrato: PC-0012 — Arrendatario: Logística Norte',
+    },
+    {
+      id: 'ok-loc',
+      tone: 'success',
+      icon: 'check',
+      label: 'Locales con más de 30 días',
+      detail: 'Local 21 (PB) — Contrato: PC-0031 — Arrendatario: Atlas Retail',
+    },
+    {
+      id: 'info-loc',
+      tone: 'info',
+      icon: 'info-circle',
+      label: 'Notas / seguimiento',
+      detail: 'Renovaciones en validación: 3 locales',
+    },
+  ];
 
   profiledd: profiledd[] = [
     {

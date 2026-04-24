@@ -1,5 +1,5 @@
 <div class="ul-root auth-anim-root" [@authViewAnimation]>
-  <div class="ul-bg" aria-hidden="true">
+  <div class="ul-bg auth-anim-bg" aria-hidden="true">
     <div class="ul-bg__wash"></div>
     <div class="ul-bg__ring ul-bg__ring--a"></div>
     <div class="ul-bg__ring ul-bg__ring--b"></div>
@@ -10,7 +10,7 @@
   </div>
 
   <main class="ul-main" aria-label="Inicio de sesión">
-    <section class="ul-scene" aria-label="Escena">
+    <section class="ul-scene auth-anim-hero" aria-label="Escena">
       <div class="ul-scene__stack">
         <div class="ul-scene__logoWrap" aria-hidden="true">
           <img
@@ -44,17 +44,17 @@
       </div>
     </section>
 
-    <section class="ul-login" aria-label="Formulario de acceso">
+    <section class="ul-login auth-anim-panel" aria-label="Formulario de acceso">
       <div class="ul-card">
         <div class="ul-card__head">
-          <div class="ul-kicker">Bienvenido</div>
-          <div class="ul-title">Iniciar sesión</div>
-          <div class="ul-subtitle">Ingresa tus credenciales para continuar.</div>
+          <div class="ul-kicker ul-titlecase">bienvenido</div>
+          <div class="ul-title ul-titlecase">iniciar sesión</div>
+          <div class="ul-subtitle ul-titlecase">ingresa tus credenciales para continuar.</div>
         </div>
 
         <form class="ul-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="ul-field">
-            <mat-label class="ul-label">Correo</mat-label>
+            <mat-label class="ul-label ul-titlecase">correo</mat-label>
             <mat-form-field appearance="outline" class="w-100" color="primary">
               <input
                 matInput
@@ -67,7 +67,7 @@
           </div>
 
           <div class="ul-field">
-            <mat-label class="ul-label">Contraseña</mat-label>
+            <mat-label class="ul-label ul-titlecase">contraseña</mat-label>
             <mat-form-field appearance="outline" class="w-100" color="primary">
               <input
                 matInput
@@ -92,11 +92,11 @@
           <div class="ul-actions">
             <label class="ul-check">
               <input type="checkbox" />
-              <span>Recordarme</span>
+              <span class="ul-titlecase">recordarme</span>
             </label>
 
-            <a [routerLink]="['/solicitud-cambio-password']" class="ul-link">
-              ¿Olvidaste tu contraseña?
+            <a [routerLink]="['/solicitud-cambio-password']" class="ul-link ul-titlecase">
+              ¿olvidaste tu contraseña?
             </a>
           </div>
 
@@ -110,7 +110,7 @@
           >
             <span class="ul-submit__content">
               <span class="ul-submit__spinner" aria-hidden="true"></span>
-              <span>{{ textLogin }}</span>
+              <span class="ul-titlecase">{{ textLogin }}</span>
             </span>
             <span class="ul-submit__shine" aria-hidden="true"></span>
           </button>
@@ -118,8 +118,8 @@
       </div>
 
       <div class="ul-footer">
-        <a [routerLink]="['/solicitud-cambio-password']" class="ul-link ul-footer__link">
-          Recuperar acceso
+        <a [routerLink]="['/solicitud-cambio-password']" class="ul-link ul-footer__link ul-titlecase">
+          recuperar acceso
         </a>
       </div>
     </section>

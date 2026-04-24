@@ -198,8 +198,12 @@
     <section class="row g-3 g-lg-4 mt-1">
       <div class="col-12 col-xl-6">
         <article class="mono-grid-card h-100">
-          <header class="mono-grid-card__head">
+          <header class="mono-grid-card__head mono-grid-card__head--actions">
             <h5 class="m-0">Pagos</h5>
+            <button type="button" class="mono-grid-action-btn" (click)="abrirModalPago()">
+              <mat-icon aria-hidden="true">add</mat-icon>
+              <span>Agregar Pago</span>
+            </button>
           </header>
           <div class="mono-grid-card__body">
             <dx-data-grid
@@ -456,6 +460,147 @@
         </div>
       </div>
     </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="mostrarModalPago">
+    <div class="contract-page-dim" (click)="cerrarModalPago()" [@contractDimAnim]></div>
+    <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalPago()">
+      <div
+        class="docs-modal contract-docs-modal mono-pago-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mono-pago-modal-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="row docs-modal__header">
+          <div class="col-10 col-md-11">
+            <!-- <span class="docs-modal__eyebrow">Pagos</span> -->
+            <h3 class="docs-modal__title" id="mono-pago-modal-title">Agregar Pago</h3>
+            <p class="docs-modal__subtitle">Captura el pago y administra su estatus.</p>
+          </div>
+          <div class="col-2 col-md-1 d-flex justify-content-end align-items-start" style="display: flex; align-items: center; justify-content: center;">
+            <button type="button" class="docs-modal__close" (click)="cerrarModalPago()">
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="row docs-modal__body">
+          <div class="col-12">
+            <div class="perm-form-nc">
+            <form [formGroup]="pagoForm" class="perm-form-body mono-pago-form">
+              <div class="row g-3 align-items-end">
+                <div class="col-12 col-lg-4">
+                  <label for="pagoConcepto" class="form-label perm-label">Concepto</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">receipt_long</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input
+                        id="pagoConcepto"
+                        type="text"
+                        class="form-control"
+                        formControlName="concepto"
+                        placeholder="Ej.: Mantenimiento"
+                      />
+                      <label for="pagoConcepto">Ej.: Mantenimiento</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoFecha" class="form-label perm-label">Fecha de Pago</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">event</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="pagoFecha" type="date" class="form-control" formControlName="fechaPago" />
+                      <label for="pagoFecha">Fecha de pago</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoMonto" class="form-label perm-label">Monto</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">payments</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input
+                        id="pagoMonto"
+                        type="text"
+                        inputmode="decimal"
+                        class="form-control"
+                        formControlName="monto"
+                        placeholder="$0.00"
+                        autocomplete="off"
+                        (keydown)="onMontoKeydown($event)"
+                        (input)="onMontoInput($event)"
+                        (blur)="onMontoBlur()"
+                      />
+                      <label for="pagoMonto">$0.00</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoMetodo" class="form-label perm-label">Método de pago</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">credit_card</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select id="pagoMetodo" class="form-select" formControlName="metodo">
+                        <option value="" disabled selected hidden>Métodos de Pxago</option>
+                        <option value="Transferencia">Transferencia</option>
+                        <option value="SPEI">SPEI</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Depósito">Depósito</option>
+                        <option value="Cheque">Cheque</option>
+                      </select>
+                      <label for="pagoMetodo">Métodos de pago</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoEstatus" class="form-label perm-label">Estatus</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">flag</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select id="pagoEstatus" class="form-select" formControlName="estatus">
+                        <option [ngValue]="'Pagado'">Pagado</option>
+                        <option [ngValue]="'Pendiente'">Pendiente</option>
+                        <option [ngValue]="'Cancelado'">Cancelado</option>
+                      </select>
+                      <label for="pagoEstatus">Estatus</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <div class="d-flex gap-2 w-100 mono-pago-actions">
+                    <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalPago()">
+                      Cancelar
+                    </button>
+                    <button type="button" class="button-success mono-pago-form-btn" (click)="guardarPagoDesdeModal()">
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </ng-container>
 </div>

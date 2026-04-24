@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { DxButtonModule, DxTreeListModule } from 'devextreme-angular';
 import { MaterialModule } from 'src/app/material.module';
+import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { AgregarInmuebleComponent } from './agregar-inmueble/agregar-inmueble.component';
 import { InmueblesRoutingModule } from './inmuebles-routing.module';
 import { ListaInmueblesComponent } from './lista-inmuebles/lista-inmuebles.component';
@@ -19,6 +20,7 @@ import { ListaInmueblesComponent } from './lista-inmuebles/lista-inmuebles.compo
     MaterialModule,
     ReactiveFormsModule,
     FormsModule,
+    HasPermissionDirective,
   ],
 })
 export class InmueblesModule {}

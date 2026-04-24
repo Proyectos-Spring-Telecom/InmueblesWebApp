@@ -488,6 +488,9 @@ html .topbar {
   font-size: 13px;
   font-weight: 600;
   color: var(--notify-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .notify-hub-aviso__sub {
@@ -495,6 +498,45 @@ html .topbar {
   color: var(--notify-muted);
   word-break: break-word;
 }
+
+/* ========== AVISOS: semáforo (solo en el menú de Avisos) ========== */
+.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
+  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-success {
+  border-left: 3px solid #22c55e !important;
+  padding-left: 11px !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+}
+
+.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
+  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-warning {
+  border-left: 3px solid #f59e0b !important;
+  padding-left: 11px !important;
+  background: rgba(245, 158, 11, 0.14) !important;
+}
+
+.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
+  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-danger {
+  border-left: 3px solid #ef4444 !important;
+  padding-left: 11px !important;
+  background: rgba(239, 68, 68, 0.14) !important;
+}
+
+/* Hover por tono: mismo color, pero en oscuro (solo Avisos) */
+.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
+  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-success:hover {
+  background: rgba(5, 70, 29, 0.22) !important;
+}
+
+.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
+  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-warning:hover {
+  background: rgba(155, 101, 8, 0.26) !important;
+}
+
+.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
+  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-danger:hover {
+  background: rgba(104, 23, 23, 0.26) !important;
+}
+
 
 .notify-hub-aviso--urgent {
   border-left: 3px solid #f43f5e !important;

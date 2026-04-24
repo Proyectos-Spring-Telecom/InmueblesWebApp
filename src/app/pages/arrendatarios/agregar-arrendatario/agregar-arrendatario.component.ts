@@ -20,10 +20,20 @@ export class AgregarArrendatarioComponent implements OnInit {
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
+  contratoRentaNombre: string | null = null;
+  constanciaFiscalNombre: string | null = null;
+  comprobanteDomicilioNombre: string | null = null;
+  actaConstitutivaNombre: string | null = null;
+  ineRepresentanteNombre: string | null = null;
 
-  @ViewChild('archivoEscrituraInput') archivoEscrituraInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('imagenLicenciaInput') imagenLicenciaInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('imagenPlanoInput') imagenPlanoInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('archivoEscrituraInput') archivoEscrituraInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenLicenciaInput') imagenLicenciaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('constanciaFiscalInput') constanciaFiscalInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('comprobanteDomicilioInput') comprobanteDomicilioInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
 
   constructor(
     private fb: FormBuilder,
@@ -54,16 +64,37 @@ export class AgregarArrendatarioComponent implements OnInit {
       arrendador: ['', Validators.required],
       tiempoRentaAnios: ['', Validators.required],
       estatusInmueble: ['', Validators.required],
+      nombreRepresentanteLegal: ['', Validators.required],
+      telefonoRepresentanteLegal: ['', Validators.required],
+      correoRepresentanteLegal: ['', [Validators.required, Validators.email]],
       documentoEscritura: [null],
       documentoLicencia: [null],
       documentoPlano: [null],
+      documentoContratoRenta: [null],
+      documentoConstanciaFiscal: [null],
+      documentoComprobanteDomicilio: [null],
+      documentoActaConstitutiva: [null],
+      ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
       servicios: this.fb.array([this.crearServicioFormGroup()]),
       zonas: this.fb.array([this.crearZonaFormGroup()]),
       estacionamientos: this.fb.array([this.crearEstacionamientoFormGroup()]),
-      pagos: this.fb.array([this.crearPagoFormGroup()]),
       vigencias: this.fb.array([this.crearVigenciaFormGroup()]),
+      socios: this.fb.array([this.crearSocioFormGroup()]),
       locales: this.fb.array([this.crearLocalFormGroup()]),
+    });
+  }
+
+  private crearSocioFormGroup(): FormGroup {
+    return this.fb.group({
+      nombreSocio: ['', Validators.required],
+      rfcSocio: [null],
+      socioConstanciaSituacionFiscal: [null],
+      socioConstanciaSituacionFiscalNombre: [''],
+      socioComprobanteDomicilio: [null],
+      socioComprobanteDomicilioNombre: [''],
+      socioActaConstitutiva: [null],
+      socioActaConstitutivaNombre: [''],
     });
   }
 
@@ -95,14 +126,6 @@ export class AgregarArrendatarioComponent implements OnInit {
       estacionamientoPensionado: [''],
       estacionamientoTarjeta: [''],
       estacionamientoArrendatario: [''],
-    });
-  }
-
-  private crearPagoFormGroup(): FormGroup {
-    return this.fb.group({
-      pagoConcepto: [''],
-      pagoFecha: [''],
-      pagoMonto: [''],
     });
   }
 
@@ -159,6 +182,10 @@ export class AgregarArrendatarioComponent implements OnInit {
     return this.arrendatarioForm.get('galeriaImagenes') as FormArray;
   }
 
+  galeriaGrupo(index: number): FormGroup {
+    return this.galeriaImagenesFormArray.at(index) as FormGroup;
+  }
+
   get serviciosFormArray(): FormArray {
     return this.arrendatarioForm.get('servicios') as FormArray;
   }
@@ -171,12 +198,59 @@ export class AgregarArrendatarioComponent implements OnInit {
     return this.arrendatarioForm.get('estacionamientos') as FormArray;
   }
 
-  get pagosFormArray(): FormArray {
-    return this.arrendatarioForm.get('pagos') as FormArray;
-  }
-
   get vigenciasFormArray(): FormArray {
     return this.arrendatarioForm.get('vigencias') as FormArray;
+  }
+
+  get sociosFormArray(): FormArray {
+    return this.arrendatarioForm.get('socios') as FormArray;
+  }
+
+  get primerNombreSocio(): string {
+    const raw = this.sociosFormArray?.at(0)?.get('nombreSocio')?.value;
+    if (raw == null) return '';
+    return String(raw).trim();
+  }
+
+  nombreSocioEnIndice(index: number): string {
+    const raw = this.sociosFormArray?.at(index)?.get('nombreSocio')?.value;
+    if (raw == null) return '';
+    return String(raw).trim();
+  }
+
+  agregarSocio(): void {
+    this.sociosFormArray.push(this.crearSocioFormGroup());
+  }
+
+  eliminarSocio(index: number): void {
+    if (this.sociosFormArray.length === 1) return;
+    this.sociosFormArray.removeAt(index);
+  }
+
+  openSocioFilePicker(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  onSocioFileSelected(
+    event: Event,
+    index: number,
+    field:
+      | 'socioConstanciaSituacionFiscal'
+      | 'socioComprobanteDomicilio'
+      | 'socioActaConstitutiva',
+    nameField:
+      | 'socioConstanciaSituacionFiscalNombre'
+      | 'socioComprobanteDomicilioNombre'
+      | 'socioActaConstitutivaNombre',
+  ): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    const group = this.sociosFormArray.at(index) as FormGroup;
+    group.patchValue({
+      [field]: file,
+      [nameField]: file?.name ?? '',
+    });
+    if (input) input.value = '';
   }
 
   abrirModalMapa(): void {
@@ -217,15 +291,6 @@ export class AgregarArrendatarioComponent implements OnInit {
     this.estacionamientosFormArray.removeAt(index);
   }
 
-  agregarPago(): void {
-    this.pagosFormArray.push(this.crearPagoFormGroup());
-  }
-
-  eliminarPago(index: number): void {
-    if (this.pagosFormArray.length === 1) return;
-    this.pagosFormArray.removeAt(index);
-  }
-
   agregarVigencia(): void {
     this.vigenciasFormArray.push(this.crearVigenciaFormGroup());
   }
@@ -258,11 +323,26 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
-  abrirSelectorArchivo(ref: 'escritura' | 'licencia' | 'plano'): void {
+  abrirSelectorArchivo(
+    ref:
+      | 'escritura'
+      | 'licencia'
+      | 'plano'
+      | 'contratoRenta'
+      | 'constanciaFiscal'
+      | 'comprobanteDomicilio'
+      | 'actaConstitutiva'
+      | 'ineRepresentante',
+  ): void {
     const map = {
       escritura: this.archivoEscrituraInput,
       licencia: this.imagenLicenciaInput,
       plano: this.imagenPlanoInput,
+      contratoRenta: this.contratoRentaInput,
+      constanciaFiscal: this.constanciaFiscalInput,
+      comprobanteDomicilio: this.comprobanteDomicilioInput,
+      actaConstitutiva: this.actaConstitutivaInput,
+      ineRepresentante: this.ineRepresentanteInput,
     };
     map[ref]?.nativeElement?.click();
   }
@@ -276,6 +356,11 @@ export class AgregarArrendatarioComponent implements OnInit {
     if (controlName === 'documentoEscritura') this.archivoEscrituraNombre = name;
     if (controlName === 'documentoLicencia') this.imagenLicenciaNombre = name;
     if (controlName === 'documentoPlano') this.imagenPlanoNombre = name;
+    if (controlName === 'documentoContratoRenta') this.contratoRentaNombre = name;
+    if (controlName === 'documentoConstanciaFiscal') this.constanciaFiscalNombre = name;
+    if (controlName === 'documentoComprobanteDomicilio') this.comprobanteDomicilioNombre = name;
+    if (controlName === 'documentoActaConstitutiva') this.actaConstitutivaNombre = name;
+    if (controlName === 'ineRepresentanteLegal') this.ineRepresentanteNombre = name;
   }
 
   private cargarDemoEdicion(id: number): void {
@@ -292,6 +377,18 @@ export class AgregarArrendatarioComponent implements OnInit {
         arrendador: registro.arrendador,
         tiempoRentaAnios: '',
         estatusInmueble: '',
+        nombreRepresentanteLegal: `Carlos Medina — ${registro.nombreComercial}`,
+        telefonoRepresentanteLegal: registro.telefono ?? '',
+        correoRepresentanteLegal: registro.correo ?? '',
+      },
+      { emitEvent: false },
+    );
+
+    const socio0 = this.sociosFormArray.at(0) as FormGroup;
+    socio0?.patchValue(
+      {
+        nombreSocio: registro.razonSocial,
+        rfcSocio: registro.rfc,
       },
       { emitEvent: false },
     );

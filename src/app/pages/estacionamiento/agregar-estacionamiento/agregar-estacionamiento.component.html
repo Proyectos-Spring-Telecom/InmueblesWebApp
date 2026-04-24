@@ -87,22 +87,22 @@
       </form>
 
       <div class="est-vista-previa-grid mt-4 pt-4 border-top border-secondary border-opacity-25">
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-          <h6 class="form-section-head mb-0 flex-grow-1 min-w-0">
+        <div class="est-grid-head mb-2">
+          <h6 class="form-section-head est-grid-head__title mb-0">
             Estacionamiento de Inmueble:<span *ngIf="nombreInmuebleParaTitulo"> {{ nombreInmuebleParaTitulo }}</span>
           </h6>
-        </div>
-        <div class="est-grid-toolbar d-flex flex-wrap justify-content-end w-100 mb-2">
-          <button type="button" (click)="limpiarCamposGrid()" mat-flat-button class="bg-success est-grid-toolbar__btn">
-            <i class="fa fa-eraser"></i> Limpiar
-          </button>
-          <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn est-grid-toolbar__btn">
-            <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
-            {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
-          </button>
-          <button type="button" class="button-danger est-grid-toolbar__btn" (click)="cancelar()">
-            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
-          </button>
+          <div class="est-grid-toolbar">
+            <button type="button" (click)="limpiarCamposGrid()" mat-flat-button class="bg-success est-grid-toolbar__btn">
+              <i class="fa fa-eraser"></i> Limpiar
+            </button>
+            <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn est-grid-toolbar__btn">
+              <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+              {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+            </button>
+            <button type="button" class="button-danger est-grid-toolbar__btn" (click)="cancelar()">
+              <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+            </button>
+          </div>
         </div>
         <div class="mt-3">
           <dx-data-grid
