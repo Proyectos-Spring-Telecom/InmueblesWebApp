@@ -1204,10 +1204,17 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectedCentral != null
         ? String(this.selectedCentral?.idCliente ?? this.selectedCentral?.id ?? '').trim()
         : '';
+    const nombreCliente =
+      this.selectedCentral != null
+        ? String(this.selectedCentral?.nombreCliente ?? '').trim().slice(0, 120)
+        : '';
+    const nombreCorto = String(nombre).trim().slice(0, 160);
     void this.router.navigate(['/estacionamiento/agregar-estacionamiento'], {
       queryParams: {
         desdeMonitoreo: '1',
         inmuebleId: id,
+        ...(nombreCorto ? { inmuebleNombre: nombreCorto } : {}),
+        ...(nombreCliente ? { nombreCliente } : {}),
         ...(idCliente ? { idCliente } : {}),
       },
     });

@@ -25,6 +25,7 @@ import { authViewAnimation } from '../auth-view.animation';
   selector: 'app-side-login',
   imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule],
   templateUrl: './side-login.component.html',
+  styleUrls: ['./side-login.component.scss'],
   animations: [authViewAnimation],
 })
 export class AppSideLoginComponent implements OnInit {

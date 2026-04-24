@@ -8,7 +8,7 @@
       <h2>{{ title }}</h2>
     </div>
     <nav class="perm-head__crumbs" aria-label="Ruta">
-      <span class="crumb">Administración</span>
+      <span class="crumb">Operación</span>
       <span class="sep">/</span>
       <span class="crumb active">Inmuebles</span>
     </nav>
@@ -17,6 +17,23 @@
     <section class="perm-form-nc container-fluid py-2">
       <form [formGroup]="inmuebleForm" class="perm-form-body">
         <div class="row g-2 inmueble-main-grid">
+          <div class="col-12 col-md-3 col-xl-3">
+            <label for="arrendador" class="form-label perm-label">Arrendador</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <select class="form-select" id="arrendador" formControlName="arrendador">
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
+                    {{ cliente.nombre }}
+                    {{ cliente.apellidoPaterno }}
+                    {{ cliente.apellidoMaterno }}
+                  </option>
+                </select>
+                <label for="arrendador">Arrendador</label>
+              </div>
+            </div>
+          </div>
           <div class="col-12 col-md-3 col-xl-3">
             <label for="nombreInmueble" class="form-label perm-label">Inmueble</label>
             <div class="input-group input-group-lg perm-ig">
@@ -88,17 +105,6 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3">
-            <label for="arrendador" class="form-label perm-label">Arrendador</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
-              <div class="form-floating flex-grow-1">
-                <input id="arrendador" type="text" class="form-control" formControlName="arrendador" placeholder="Arrendador" />
-                <label for="arrendador">Arrendador</label>
-              </div>
-            </div>
-          </div>
-
           <div class="col-12 col-md-3 col-xl-3">
             <label for="tiempoRentaAnios" class="form-label perm-label">Tiempo de renta (años)</label>
             <div class="input-group input-group-lg perm-ig">

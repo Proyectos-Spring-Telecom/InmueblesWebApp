@@ -1,8 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DxDataGridComponent } from 'devextreme-angular';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import Swal from 'sweetalert2';
+
+/** Fila del grid; alinea `dataField` con los `formControlName` del formulario. */
+interface EstacionamientoGridFila {
+  id: number;
+  nombrePensionado: string;
+  numeroTarjeta: string;
+  arrendatario: string;
+}
 
 @Component({
   selector: 'app-agregar-estacionamiento',
@@ -12,11 +21,28 @@ import Swal from 'sweetalert2';
   animations: [routeAnimation],
 })
 export class AgregarEstacionamientoComponent implements OnInit {
+  @ViewChild('gridEstacionamiento', { static: false })
+  dataGrid!: DxDataGridComponent;
+
   public submitButton = 'Guardar';
   public loading = false;
   public estacionamientoForm!: FormGroup;
   public idEstacionamiento!: number;
   public title = 'Agregar Estacionamiento';
+
+  /** Estacionamientos de ejemplo asociados al inmueble (misma estructura que el formulario). */
+  public filasEstacionamientosGrid: EstacionamientoGridFila[] = [];
+
+  /** Nombre del inmueble (`inmuebleNombre` en la URL, p. ej. desde Monitoreo). */
+  public nombreInmuebleParaTitulo = '';
+
+  /** Opciones de grid alineadas con `lista-permisos`. */
+  public showFilterRow = true;
+  public showHeaderFilter = true;
+  public autoExpandAllGroups = true;
+  public pageSize = 100;
+  public mensajeAgrupar =
+    'Arrastre un encabezado de columna aquí para agrupar por esa columna';
 
   /** Si se entró desde Monitoreo, Cancelar vuelve a la lista de inmuebles allí. */
   private volverAMonitoreoListaInmuebles = false;
@@ -33,7 +59,16 @@ export class AgregarEstacionamientoComponent implements OnInit {
     this.volverAMonitoreoListaInmuebles = q.get('desdeMonitoreo') === '1';
     this.idClienteParaMonitoreo = q.get('idCliente');
 
+    const inmuebleId = q.get('inmuebleId');
+    const inmuebleNombre = q.get('inmuebleNombre')?.trim() ?? '';
+    this.nombreInmuebleParaTitulo = inmuebleNombre;
+    this.filasEstacionamientosGrid = this.construirFilasDemoPorInmueble(
+      inmuebleId,
+      inmuebleNombre,
+    );
+
     this.initForm();
+
     this.activatedRoute.params.subscribe((params) => {
       this.idEstacionamiento = params['idEstacionamiento'];
       if (this.idEstacionamiento) {
@@ -48,6 +83,50 @@ export class AgregarEstacionamientoComponent implements OnInit {
       numeroTarjeta: ['', Validators.required],
       arrendatario: ['', Validators.required],
     });
+  }
+
+  /**
+   * Filas coherentes con el inmueble (demo): códigos de tarjeta derivados del id y
+   * arrendatarios que mencionan el nombre del predio cuando existe.
+   */
+  private construirFilasDemoPorInmueble(
+    inmuebleId: string | null,
+    inmuebleNombre: string,
+  ): EstacionamientoGridFila[] {
+    const idDigits = (inmuebleId ?? '')
+      .replace(/\D/g, '')
+      .padStart(4, '0')
+      .slice(-4);
+    const codigo = idDigits || '1000';
+    const predio =
+      inmuebleNombre.trim() ||
+      (inmuebleId && inmuebleId !== 'sin-id'
+        ? `Predio ${inmuebleId}`
+        : 'Edificio corporativo');
+
+    const cortoPredio =
+      predio.length > 48 ? `${predio.slice(0, 45).trimEnd()}…` : predio;
+
+    return [
+      {
+        id: 1,
+        nombrePensionado: 'Lic. Patricia Morales',
+        numeroTarjeta: `EST-${codigo}-A`,
+        arrendatario: `${cortoPredio} — Dirección general`,
+      },
+      {
+        id: 2,
+        nombrePensionado: 'Ing. Hugo Salinas',
+        numeroTarjeta: `EST-${codigo}-B`,
+        arrendatario: `Visitas y proveedores (${cortoPredio})`,
+      },
+      {
+        id: 3,
+        nombrePensionado: 'María Elena Vázquez',
+        numeroTarjeta: `EST-${codigo}-C`,
+        arrendatario: 'Spring Telecom México',
+      },
+    ];
   }
 
   submit(): void {
@@ -161,6 +240,47 @@ export class AgregarEstacionamientoComponent implements OnInit {
       return;
     }
     void this.router.navigateByUrl('/estacionamiento');
+  }
+
+  onPageIndexChanged(e: any): void {
+    e.component.refresh();
+  }
+
+  onGridOptionChanged(_e: any): void {
+    /* Lista permisos filtra búsqueda contra el store; aquí el panel de búsqueda actúa sobre el arreglo local. */
+  }
+
+  limpiarCamposGrid(): void {
+    const g = this.dataGrid?.instance;
+    if (!g) return;
+    g.clearGrouping();
+    g.clearFilter();
+    g.searchByText('');
+    g.refresh();
+  }
+
+  toggleExpandGroups(): void {
+    const g = this.dataGrid?.instance;
+    if (!g) return;
+    const groupedColumns = g
+      .getVisibleColumns()
+      .filter((col) => (col.groupIndex ?? -1) >= 0);
+    if (groupedColumns.length === 0) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: '¡Ops!',
+        text: 'Debes arrastar un encabezado de una columna para expandir o contraer grupos.',
+        icon: 'warning',
+        showCancelButton: false,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+        allowOutsideClick: false,
+      });
+      return;
+    }
+    this.autoExpandAllGroups = !this.autoExpandAllGroups;
+    g.refresh();
   }
 }
 

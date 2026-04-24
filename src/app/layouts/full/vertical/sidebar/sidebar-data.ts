@@ -85,32 +85,6 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    displayName: 'Arrendadores',
-    iconName: 'address-book',
-    route: '/menu-level',
-    // Mostrar si tiene al menos un permiso de clientes
-    permission: [
-      Permiso.CONSULTA_CLIENTE,
-      Permiso.AGREGAR_CLIENTE,
-      Permiso.ACTUALIZAR_CLIENTES,
-      Permiso.ELIMINAR_CLIENTE,
-    ],
-    children: [
-      {
-        displayName: 'Agregar Arrendador',
-        // iconName: 'user-cog',
-        route: '/clientes/agregar-cliente',
-        permission: Permiso.AGREGAR_CLIENTE,
-      },
-      {
-        displayName: 'Lista Arrendadores',
-        // iconName: 'user-cog',
-        route: '/clientes',
-        permission: Permiso.CONSULTA_CLIENTE,
-      },
-    ],
-  },
-  {
     displayName: 'Usuarios',
     iconName: 'users',
     route: '/menu-level',
@@ -166,7 +140,7 @@ export const navItems: NavItem[] = [
     navCap: 'Operación',
   },
   {
-    displayName: 'Monitoreo',
+    displayName: 'Propiedades',
     iconName: 'building',
     route: '/monitoreo',
     permission: Permiso.CONSULTAR_MONITOREO,
@@ -184,6 +158,32 @@ export const navItems: NavItem[] = [
       {
         displayName: 'Lista Inmuebles',
         route: '/inmuebles',
+        permission: Permiso.CONSULTA_CLIENTE,
+      },
+    ],
+  },
+  {
+    displayName: 'Arrendadores',
+    iconName: 'address-book',
+    route: '/menu-level',
+    // Mostrar si tiene al menos un permiso de clientes
+    permission: [
+      Permiso.CONSULTA_CLIENTE,
+      Permiso.AGREGAR_CLIENTE,
+      Permiso.ACTUALIZAR_CLIENTES,
+      Permiso.ELIMINAR_CLIENTE,
+    ],
+    children: [
+      {
+        displayName: 'Agregar Arrendador',
+        // iconName: 'user-cog',
+        route: '/clientes/agregar-cliente',
+        permission: Permiso.AGREGAR_CLIENTE,
+      },
+      {
+        displayName: 'Lista Arrendadores',
+        // iconName: 'user-cog',
+        route: '/clientes',
         permission: Permiso.CONSULTA_CLIENTE,
       },
     ],

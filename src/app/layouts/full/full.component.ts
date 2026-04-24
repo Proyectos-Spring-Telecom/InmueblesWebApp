@@ -23,6 +23,7 @@ import { CustomizerComponent } from './shared/customizer/customizer.component';
 import { AppAuthBrandingComponent } from './vertical/sidebar/auth-branding.component';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { NavItem } from './vertical/sidebar/nav-item/nav-item';
+import { AssistantChatComponent } from './shared/assistant-chat/assistant-chat.component';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -60,6 +61,7 @@ interface quicklinks {
     AppHorizontalSidebarComponent,
     CustomizerComponent,
     AppAuthBrandingComponent,
+    AssistantChatComponent,
   ],
   templateUrl: './full.component.html',
   styleUrls: [],

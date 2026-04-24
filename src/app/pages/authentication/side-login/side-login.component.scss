@@ -1,0 +1,608 @@
+$bg0: #141a21;
+$bg1: #141a21;
+$ink: #0b1220;
+
+// Colores de marca
+$brandBlue: #041d69;
+$brandWine: #671230;
+$brandBlueReadable: #8bb7ff;
+
+// Halos acordes a la marca (variaciones más claras para contraste)
+$haloA: #b43a5d; // vino iluminado
+$haloB: #4f7cff; // azul brillante
+
+.ul-root {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+  background:
+    radial-gradient(1200px 800px at 18% 12%, rgba($brandBlue, 0.38), rgba($brandBlue, 0) 62%),
+    radial-gradient(1000px 700px at 82% 86%, rgba($brandWine, 0.32), rgba($brandWine, 0) 62%),
+    linear-gradient(160deg, $bg0 0%, $bg1 55%, $bg0 100%);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+// Animaciones al cargar la vista (entrada)
+.ul-scene__stack,
+.ul-floating,
+.ul-card,
+.ul-footer {
+  animation: ulEnter 720ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.ul-scene__stack {
+  animation-delay: 60ms;
+}
+
+.ul-floating {
+  animation-delay: 140ms;
+}
+
+.ul-card {
+  animation-delay: 220ms;
+}
+
+.ul-footer {
+  animation-delay: 300ms;
+}
+
+@keyframes ulEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.ul-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ul-root * {
+  box-sizing: border-box;
+}
+
+.ul-titlecase {
+  text-transform: capitalize;
+}
+
+.ul-bg__wash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(900px 520px at 55% 35%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 60%);
+}
+
+.ul-bg__ring {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 0 0 1px rgba(13, 110, 253, 0.08) inset;
+  filter: blur(0.1px);
+  opacity: 0.8;
+  animation: ulSpin 18s linear infinite;
+
+  &.ul-bg__ring--a {
+    left: -180px;
+    top: 120px;
+  }
+
+  &.ul-bg__ring--b {
+    right: -220px;
+    bottom: 80px;
+    animation-duration: 26s;
+    animation-direction: reverse;
+  }
+}
+
+.ul-bg__stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.25;
+  background-image:
+    radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.24) 0 1px, transparent 2px),
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.18) 0 1px, transparent 2px),
+    radial-gradient(circle at 75% 65%, rgba(255, 255, 255, 0.20) 0 1px, transparent 2px),
+    radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px);
+  background-size: 420px 260px;
+}
+
+@keyframes ulSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ul-bg__ring--c {
+  width: 760px;
+  height: 760px;
+  left: 8%;
+  top: -420px;
+  opacity: 0.55;
+  animation-duration: 34s;
+}
+
+.ul-bg__ring--d {
+  width: 680px;
+  height: 680px;
+  left: 56%;
+  top: 52%;
+  opacity: 0.45;
+  animation-duration: 40s;
+}
+
+.ul-bg__ring--e {
+  width: 420px;
+  height: 420px;
+  left: 72%;
+  top: -140px;
+  opacity: 0.55;
+  animation-duration: 22s;
+  animation-direction: reverse;
+}
+
+.ul-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(14px, 3vw, 28px);
+}
+
+.ul-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ul-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 14px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ul-header__name {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.ul-header__tag {
+  opacity: 0.76;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.ul-header__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-weight: 700;
+  opacity: 0.95;
+}
+
+.ul-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba($brandWine, 1);
+  box-shadow: 0 0 0 4px rgba($brandWine, 0.18);
+}
+
+.ul-main {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: clamp(18px, 4vw, 48px);
+  align-items: center;
+  padding: clamp(10px, 2.5vw, 28px);
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.ul-scene__logoWrap {
+  width: 236px;
+  height: 236px;
+  border-radius: 40px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+  padding: 0;
+  background:
+    radial-gradient(160px 160px at 34% 30%, rgba($haloA, 0.55), rgba($haloA, 0) 72%),
+    radial-gradient(170px 170px at 76% 78%, rgba($haloB, 0.45), rgba($haloB, 0) 74%),
+    radial-gradient(260px 180px at 50% 52%, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 72%),
+    rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba($haloA, 0.12) inset,
+    0 0 80px rgba($haloB, 0.16);
+  transition: transform 180ms ease, box-shadow 220ms ease, filter 220ms ease;
+  will-change: transform;
+}
+
+.ul-scene__logo {
+  width: 176px;
+  height: 176px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.50));
+  transition: transform 220ms ease, filter 220ms ease;
+}
+
+.ul-scene__stack {
+  max-width: 620px;
+  text-align: center;
+}
+
+.ul-scene__stack:hover .ul-scene__logoWrap {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 22px 58px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba($haloB, 0.14) inset,
+    0 0 110px rgba($haloB, 0.22);
+}
+
+.ul-scene__stack:hover .ul-scene__logo {
+  transform: scale(1.03);
+  filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.62));
+}
+
+.ul-scene__headline {
+  h1 {
+    margin: 0;
+    font-weight: 950;
+    letter-spacing: -0.04em;
+    font-size: clamp(40px, 4.8vw, 66px);
+    line-height: 1.03;
+  }
+
+  p {
+    margin: 14px 0 0;
+    opacity: 0.85;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+}
+
+.ul-floating {
+  margin-top: 22px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ul-tile {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  min-width: 160px;
+  transition: transform 160ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease;
+  will-change: transform;
+
+  .ul-tile__k {
+    font-size: 12px;
+    opacity: 0.78;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  .ul-tile__v {
+    margin-top: 6px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+}
+
+.ul-tile:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.40),
+    0 0 0 1px rgba($brandBlue, 0.10) inset;
+}
+
+.ul-tile:active {
+  transform: translateY(-1px);
+}
+
+.ul-login {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.ul-card {
+  border-radius: 26px;
+  padding: clamp(22px, 3vw, 34px);
+  background:
+    radial-gradient(900px 340px at 10% 10%, rgba($brandBlue, 0.20), rgba($brandBlue, 0) 55%),
+    radial-gradient(700px 300px at 90% 90%, rgba($brandWine, 0.16), rgba($brandWine, 0) 55%),
+    rgba(6, 10, 22, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 36px 100px rgba(0, 0, 0, 0.42),
+    0 3px 14px rgba(0, 0, 0, 0.10);
+  color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  transition: transform 160ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  will-change: transform;
+}
+
+.ul-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 42px 120px rgba(0, 0, 0, 0.48),
+    0 3px 16px rgba(0, 0, 0, 0.12);
+}
+
+.ul-kicker {
+  font-weight: 900;
+  color: rgba($brandWine, 0.95);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 13px;
+}
+
+.ul-title {
+  margin-top: 10px;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.ul-subtitle {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.ul-form {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.ul-label {
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.84);
+  margin-bottom: 6px;
+  display: inline-block;
+}
+
+.ul-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ul-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.76);
+  user-select: none;
+
+  input {
+    width: 16px;
+    height: 16px;
+    accent-color: $brandWine;
+  }
+}
+
+.ul-link {
+  color: rgba($brandBlueReadable, 0.96);
+  text-decoration: none;
+  font-weight: 900;
+  position: relative;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.ul-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba($brandBlueReadable, 0), rgba($brandBlueReadable, 0.9), rgba($brandBlueReadable, 0));
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 180ms ease;
+}
+
+.ul-link:hover::after {
+  transform: scaleX(1);
+}
+
+.ul-submit {
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  transition: transform 160ms ease, box-shadow 220ms ease, filter 220ms ease;
+}
+
+.ul-submit__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.ul-submit__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: rgba($brandBlue, 0.95);
+  border-right-color: rgba($brandWine, 0.9);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 180ms ease, transform 180ms ease;
+  animation: ulSpinMini 900ms linear infinite;
+}
+
+.ul-submit__shine {
+  position: absolute;
+  inset: -40px -90px;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  transform: translateX(-40%);
+  transition: transform 550ms ease;
+  pointer-events: none;
+}
+
+.ul-submit:hover .ul-submit__shine {
+  transform: translateX(35%);
+}
+
+.ul-submit--loading {
+  filter: brightness(1.02);
+}
+
+.ul-submit--loading .ul-submit__spinner {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@keyframes ulSpinMini {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ul-submit:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+  box-shadow:
+    0 16px 34px rgba($brandBlue, 0.22),
+    0 18px 44px rgba($brandWine, 0.18);
+}
+
+.ul-submit:active {
+  transform: translateY(0);
+  box-shadow:
+    0 12px 26px rgba($brandBlue, 0.18),
+    0 12px 30px rgba($brandWine, 0.14);
+}
+
+.ul-submit:disabled {
+  transform: none;
+  filter: none;
+  box-shadow: none;
+}
+
+.ul-footer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.ul-footer__link {
+  grid-column: 1 / -1;
+  text-align: center;
+  opacity: 0.92;
+}
+
+@media (max-width: 1024px) {
+  .ul-main {
+    grid-template-columns: 1fr;
+    min-height: unset;
+    padding-bottom: 28px;
+  }
+
+  .ul-scene {
+    order: 2;
+  }
+
+  .ul-login {
+    order: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .ul-scene__logoWrap {
+    width: 200px;
+    height: 200px;
+  }
+
+  .ul-scene__logo {
+    width: 150px;
+    height: 150px;
+  }
+
+  .ul-tile {
+    min-width: 140px;
+  }
+}
+
+// Afinado de Angular Material dentro de esta vista (oscuro)
+:host ::ng-deep .ul-card .mat-mdc-form-field {
+  transition: filter 180ms ease;
+}
+
+:host ::ng-deep .ul-card .mat-mdc-form-field:hover {
+  filter: brightness(1.03);
+}
+
+
+// Afinado de Angular Material dentro de esta vista (oscuro)
+:host ::ng-deep .ul-card .mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: rgba(255, 255, 255, 0.18);
+  --mdc-outlined-text-field-hover-outline-color: rgba(255, 255, 255, 0.28);
+  --mdc-outlined-text-field-focus-outline-color: rgba($brandBlue, 0.75);
+  --mdc-outlined-text-field-label-text-color: rgba(255, 255, 255, 0.76);
+  --mdc-outlined-text-field-input-text-color: rgba(255, 255, 255, 0.92);
+  --mdc-outlined-text-field-caret-color: rgba($brandWine, 0.95);
+  --mdc-outlined-text-field-focus-label-text-color: rgba($brandBlue, 0.92);
+}
+
+:host ::ng-deep .ul-card .mat-mdc-icon-button {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+// Botón primario: oscuro, texto blanco, borde más claro (contrato visual)
+:host ::ng-deep .ul-card .ul-submit.mat-mdc-unelevated-button {
+  background: linear-gradient(135deg, rgba($brandBlue, 0.96), rgba($brandWine, 0.88));
+}

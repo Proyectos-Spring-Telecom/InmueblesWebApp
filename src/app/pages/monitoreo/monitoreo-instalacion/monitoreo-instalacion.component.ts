@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectorRef,
   Component,
@@ -11,9 +12,11 @@ import { DxDataGridComponent } from 'devextreme-angular';
 import { io, Socket } from 'socket.io-client';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { EMPTY, forkJoin, Observable, of, Subscription } from 'rxjs';
-import { catchError, finalize, map, switchMap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
 
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
+import { environment } from 'src/environments/environment';
+import Swal from 'sweetalert2';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { ContratosService } from 'src/app/services/moduleService/contratos.service';
 import { InstalacionService } from 'src/app/services/moduleService/instalaciones.service';
@@ -54,6 +57,18 @@ interface VistaContratoLocalModal {
 interface ServicioDetalle {
   concepto: string;
   contrato: string;
+}
+
+/** Documento en la sección Documentos (demo / futura API). */
+interface MonitoreoDocumentoArchivo {
+  nombre: string;
+  /** URL del PDF. */
+  url: string;
+}
+
+interface MonitoreoDocumentoGrupo {
+  grupo: string;
+  archivos: MonitoreoDocumentoArchivo[];
 }
 
 @Component({
@@ -124,10 +139,15 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
     'https://images.unsplash.com/photo-1483366774565-c783b9f70e2c?auto=format&fit=crop&w=1200&q=80',
   ];
-  readonly documentos = [
+  readonly documentos: MonitoreoDocumentoGrupo[] = [
     {
       grupo: 'Escrituras',
-      archivos: ['Contrato_inmobiliario_BHV.pdf'],
+      archivos: [
+        {
+          nombre: 'Contrato_inmobiliario_BHV.pdf',
+          url: environment.documentoPdfDemoPath,
+        },
+      ],
     },
   ];
   private readonly referenciasServicioBase: Record<string, string> = {
@@ -232,7 +252,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     private contratosService: ContratosService,
     private clientesService: ClientesService,
     private instalacionService: InstalacionService,
-  ) { }
+    private http: HttpClient,
+  ) {}
 
   ngOnDestroy(): void {
     this.vistaQuerySub?.unsubscribe();
@@ -285,9 +306,42 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   }
 
   get nombreArchivoContratoLocal(): string {
-    const archivos = this.documentos[0]?.archivos;
-    const nombre = archivos?.[0];
-    return nombre?.trim() ? nombre : 'Sin archivo';
+    const nombre = this.documentos[0]?.archivos?.[0]?.nombre?.trim() ?? '';
+    return nombre ? nombre : 'Sin archivo';
+  }
+
+  /**
+   * Descarga el PDF sin navegar ni abrir pestañas: obtiene blob y dispara descarga local.
+   */
+  descargarDocumento(archivo: MonitoreoDocumentoArchivo, ev: Event): void {
+    ev.preventDefault();
+    ev.stopPropagation();
+    this.http
+      .get(archivo.url, { responseType: 'blob' })
+      .pipe(take(1))
+      .subscribe({
+        next: (blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = objectUrl;
+          a.download = archivo.nombre;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(objectUrl);
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'error',
+            title: 'No se pudo descargar',
+            text: 'No se obtuvo el archivo. En desarrollo, usa `ng serve` con proxy (proxy.conf.json). En producción, la URL debe ser del mismo sitio que la aplicación.',
+            confirmButtonText: 'Entendido',
+          });
+        },
+      });
   }
 
   abrirModalContratoLocal(): void {
