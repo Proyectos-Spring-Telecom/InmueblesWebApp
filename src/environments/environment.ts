@@ -4,6 +4,9 @@
 
 export const environment = {
   production: false,
+  /** PDF de demo vía proxy local (proxy.conf.json → w3.org); evita CORS al descargar con HttpClient. */
+  documentoPdfDemoPath:
+    '/demo-pdf-proxy/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
   stripe_token: 'STRIPE_TOKEN',
   paypal_token: 'PAYPAL_TOKEN',
   API_SECURITY: 'https://springtelecom.mx/inmueblesAPI/api',

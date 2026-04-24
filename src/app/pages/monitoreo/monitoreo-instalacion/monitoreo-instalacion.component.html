@@ -86,15 +86,34 @@
 
       <div class="mono-docs__content">
         <article class="mono-docs__panel" *ngFor="let doc of documentos">
-          <div class="mono-docs__panel-head">
-            <span class="mono-docs__chip">{{ doc.grupo }}</span>
-            <span class="mono-docs__upload">Subir</span>
-          </div>
-
-          <ul class="mono-docs__list">
-            <li class="mono-docs__item" *ngFor="let archivo of doc.archivos">
-              <mat-icon aria-hidden="true">description</mat-icon>
-              <span>{{ archivo }}</span>
+          <ul class="mono-docs__list mono-docs__list--stacked">
+            <li class="mono-docs__row" *ngFor="let archivo of doc.archivos">
+              <div class="mono-docs__row-main">
+                <span class="mono-docs__chip">{{ doc.grupo }}</span>
+                <span class="mono-docs__file-inline">
+                  <mat-icon class="mono-docs__file-icon" aria-hidden="true">description</mat-icon>
+                  <span class="mono-docs__file-name">{{ archivo.nombre }}</span>
+                </span>
+              </div>
+              <div class="mono-docs__row-actions">
+                <button
+                  type="button"
+                  class="mono-docs__action-btn mono-docs__action-btn--download"
+                  (click)="descargarDocumento(archivo, $event)"
+                >
+                  <mat-icon aria-hidden="true">download</mat-icon>
+                  Descargar
+                </button>
+                <a
+                  class="mono-docs__action-btn mono-docs__action-btn--view"
+                  [href]="archivo.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <mat-icon aria-hidden="true">open_in_new</mat-icon>
+                  Ver
+                </a>
+              </div>
             </li>
           </ul>
         </article>

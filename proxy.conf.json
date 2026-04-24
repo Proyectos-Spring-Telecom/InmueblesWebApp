@@ -1,0 +1,11 @@
+{
+  "/demo-pdf-proxy": {
+    "target": "https://www.w3.org",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/demo-pdf-proxy": ""
+    },
+    "logLevel": "silent"
+  }
+}

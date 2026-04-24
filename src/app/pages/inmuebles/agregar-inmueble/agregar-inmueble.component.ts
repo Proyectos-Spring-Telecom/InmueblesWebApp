@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { INMUEBLES_FORM_DEMO } from '../inmuebles-demo.data';
+import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 
 @Component({
   selector: 'app-agregar-inmueble',
@@ -39,6 +40,7 @@ export class AgregarInmuebleComponent implements OnInit {
   lngSeleccionada: number | null = null;
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
   private readonly PIN_URL = 'assets/images/logos/marker_spring.webp';
+  public listaClientes: any[] = [];
 
   @ViewChild('archivoEscrituraInput') archivoEscrituraInput!: ElementRef<HTMLInputElement>;
   @ViewChild('imagenLicenciaInput') imagenLicenciaInput!: ElementRef<HTMLInputElement>;
@@ -48,9 +50,11 @@ export class AgregarInmuebleComponent implements OnInit {
     private fb: FormBuilder,
     private activatedRoute: ActivatedRoute,
     private router: Router,
+    private clieService: ClientesService,
   ) {}
 
   ngOnInit(): void {
+    this.obtenerClientes();
     this.initForm();
     this.activatedRoute.params.subscribe((params) => {
       this.idInmueble = Number(params['idInmueble']);
@@ -59,6 +63,15 @@ export class AgregarInmuebleComponent implements OnInit {
         this.submitButton = 'Actualizar';
         this.cargarDemoEdicion(this.idInmueble);
       }
+    });
+  }
+
+  obtenerClientes(): void {
+    this.clieService.obtenerClientes().subscribe((response) => {
+      this.listaClientes = (response.data || []).map((c: any) => ({
+        ...c,
+        id: Number(c.id),
+      }));
     });
   }
 

@@ -1,0 +1,151 @@
+<!-- Floating assistant (visual only) -->
+<div class="ac-root" [class.ac-root--open]="open" aria-live="polite">
+  <button
+    type="button"
+    class="ac-overlay"
+    (click)="close()"
+    [attr.aria-hidden]="!open"
+    tabindex="-1"
+  ></button>
+  <button
+    type="button"
+    class="ac-fab"
+    (click)="toggle()"
+    [attr.aria-expanded]="open"
+    [attr.aria-label]="open ? 'Cerrar asistente' : 'Abrir asistente'"
+  >
+    <span class="ac-fab__glow" aria-hidden="true"></span>
+    <span class="ac-fab__icon" aria-hidden="true">
+      @if (!open) {
+        <!-- chat bubble icon -->
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M7.2 17.2 4 20l.9-4.1c-1.1-1.3-1.7-3-1.7-4.8C3.2 7.2 6.9 4 11.5 4S19.8 7.2 19.8 11.1 16.1 18.2 11.5 18.2c-1.5 0-2.9-.3-4.3-1Z"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path d="M8 10.8h7M8 13.8h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      } @else {
+        <!-- close icon -->
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+          />
+        </svg>
+      }
+    </span>
+  </button>
+
+  <section class="ac-panel" role="dialog" aria-label="Asistente" [attr.aria-hidden]="!open">
+    <header class="ac-header">
+      <div class="ac-headLeft">
+        <div class="ac-avatar" aria-hidden="true">
+          <span class="ac-avatar__ring"></span>
+          <span class="ac-avatar__inner">
+            <img
+              class="ac-avatar__img"
+              alt="Avatar"
+              referrerpolicy="no-referrer"
+              src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=96&h=96&q=80"
+            />
+          </span>
+        </div>
+
+        <div class="ac-title">
+          <div class="ac-title__name">Claudia Robles</div>
+          <div class="ac-title__sub">En línea</div>
+        </div>
+      </div>
+
+      <div class="ac-headActions">
+        <button type="button" class="ac-menu" aria-label="Más opciones">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 6.8a1.1 1.1 0 1 0 0-2.2 1.1 1.1 0 0 0 0 2.2ZM12 13.1a1.1 1.1 0 1 0 0-2.2 1.1 1.1 0 0 0 0 2.2ZM12 19.4a1.1 1.1 0 1 0 0-2.2 1.1 1.1 0 0 0 0 2.2Z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+
+        <button type="button" class="ac-close" (click)="close()" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="ac-quick" aria-label="Opciones rápidas">
+      @for (a of actions; track a.id) {
+        <button type="button" class="ac-chip" (click)="onQuickAction(a)">
+          <span class="ac-chip__dot" aria-hidden="true"></span>
+          <span class="ac-chip__label">{{ a.label }}</span>
+        </button>
+      }
+    </div>
+
+    <div #scrollViewport class="ac-messages" role="log" aria-label="Mensajes">
+      @for (m of messages; track m.id) {
+        <div class="ac-msg" [class.ac-msg--user]="m.role === 'user'" [class.ac-msg--assistant]="m.role === 'assistant'">
+          <div class="ac-bubble">
+            <div class="ac-bubble__text">{{ m.text }}</div>
+          </div>
+        </div>
+      }
+
+      @if (busy) {
+        <div class="ac-msg ac-msg--assistant">
+          <div class="ac-bubble ac-bubble--typing" aria-label="Escribiendo">
+            <span class="ac-dot"></span>
+            <span class="ac-dot"></span>
+            <span class="ac-dot"></span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <form class="ac-compose" (submit)="$event.preventDefault(); send();">
+      <div class="ac-inputWrap">
+        <input
+          class="ac-input"
+          type="text"
+          [formControl]="input"
+          (keydown)="onKeydownEnter($event)"
+          placeholder="Escribe un mensaje…"
+          [attr.aria-label]="'Mensaje'"
+        />
+        <span class="ac-inputGlow" aria-hidden="true"></span>
+      </div>
+
+      <button type="button" class="ac-send" (click)="send()" [disabled]="busy || !input.value?.trim()">
+        <span class="ac-send__bg" aria-hidden="true"></span>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M3.5 11.9 20 4.8l-7.1 16.7-2.4-6.2-7-3.4Z"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M10.6 15.3 20 4.8"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+    </form>
+  </section>
+</div>
+

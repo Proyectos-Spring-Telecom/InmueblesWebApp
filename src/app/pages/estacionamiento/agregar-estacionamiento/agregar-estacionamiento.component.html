@@ -83,11 +83,101 @@
           <button class="button-success" role="button" (click)="submit()">
             <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
           </button>
-          <button type="button" class="button-danger" (click)="cancelar()">
+        </div>
+      </form>
+
+      <div class="est-vista-previa-grid mt-4 pt-4 border-top border-secondary border-opacity-25">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          <h6 class="form-section-head mb-0 flex-grow-1 min-w-0">
+            Estacionamiento de Inmueble:<span *ngIf="nombreInmuebleParaTitulo"> {{ nombreInmuebleParaTitulo }}</span>
+          </h6>
+        </div>
+        <div class="est-grid-toolbar d-flex flex-wrap justify-content-end w-100 mb-2">
+          <button type="button" (click)="limpiarCamposGrid()" mat-flat-button class="bg-success est-grid-toolbar__btn">
+            <i class="fa fa-eraser"></i> Limpiar
+          </button>
+          <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn est-grid-toolbar__btn">
+            <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+            {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+          </button>
+          <button type="button" class="button-danger est-grid-toolbar__btn" (click)="cancelar()">
             <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
           </button>
         </div>
-      </form>
+        <div class="mt-3">
+          <dx-data-grid
+            #gridEstacionamiento
+            id="gridEstacionamientoEst"
+            [columnHidingEnabled]="true"
+            [showBorders]="true"
+            [showColumnLines]="true"
+            [showRowLines]="true"
+            [rowAlternationEnabled]="true"
+            [noDataText]="'Sin registros para mostrar'"
+            [dataSource]="filasEstacionamientosGrid"
+            [keyExpr]="'id'"
+            [width]="'100%'"
+            [remoteOperations]="false"
+            [paging]="{ pageSize: pageSize }"
+            [pager]="{
+              showPageSizeSelector: true,
+              allowedPageSizes: [50],
+              showInfo: true,
+              infoText: 'Página {0} de {1}',
+              visible: true
+            }"
+            (onPageIndexChanged)="onPageIndexChanged($event)"
+            (onOptionChanged)="onGridOptionChanged($event)"
+          >
+            <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+            <dxo-toolbar>
+              <dxi-item name="groupPanel" location="before"></dxi-item>
+              <dxi-item
+                name="exportButton"
+                location="after"
+                [options]="{ text: 'Exportar Grid', icon: 'export' }"
+                [showText]="'always'"
+              ></dxi-item>
+              <dxi-item name="searchPanel" location="after"></dxi-item>
+            </dxo-toolbar>
+            <dxo-pager
+              [showPageSizeSelector]="true"
+              [allowedPageSizes]="[100]"
+              [showInfo]="true"
+            ></dxo-pager>
+            <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+            <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+            <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+            <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+            <dxi-column
+              dataField="nombrePensionado"
+              caption="Nombre del pensionado"
+              alignment="center"
+              dataType="string"
+              [allowSearch]="true"
+            ></dxi-column>
+            <dxi-column
+              dataField="numeroTarjeta"
+              caption="Número de tarjeta"
+              alignment="center"
+              dataType="string"
+              [allowSearch]="true"
+            ></dxi-column>
+            <dxi-column
+              dataField="arrendatario"
+              caption="Arrendatario"
+              alignment="center"
+              dataType="string"
+              [allowSearch]="true"
+            ></dxi-column>
+            <dxo-export
+              [enabled]="false"
+              [allowExportSelectedData]="false"
+              [texts]="{ exportAll: 'Exportar todos los datos a Excel' }"
+            ></dxo-export>
+          </dx-data-grid>
+        </div>
+      </div>
     </section>
   </div>
 </div>

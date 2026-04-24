@@ -1,0 +1,631 @@
+$blue: #0b2a6f;
+$wine: #8b1e3f;
+
+// Neutrales (permitidos para legibilidad en tema oscuro)
+$bg: #06070b;
+$panel: rgba(10, 12, 18, 0.72);
+$stroke: rgba(255, 255, 255, 0.10);
+$text: rgba(255, 255, 255, 0.92);
+$muted: rgba(255, 255, 255, 0.62);
+
+:host {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.ac-root {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9999;
+  pointer-events: none; // se re-habilita en hijos interactivos
+}
+
+.ac-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(20, 26, 32, 0.62); // #141a20 con transparencia para ver el contenido detrás
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 180ms ease;
+  cursor: default;
+  z-index: 0;
+}
+
+.ac-root--open .ac-overlay {
+  pointer-events: auto;
+  visibility: visible;
+  opacity: 1;
+}
+
+.ac-fab {
+  pointer-events: auto;
+  position: fixed;
+  right: 20px;
+  bottom: 60px;
+  width: 66px;
+  height: 66px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: $text;
+  background: linear-gradient(135deg, rgba($wine, 0.92), rgba($blue, 0.92));
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  cursor: pointer;
+  transform: translateZ(0);
+  transition: transform 160ms ease, box-shadow 220ms ease, filter 220ms ease;
+  z-index: 2;
+}
+
+// Cuando el chat está abierto, el panel debe quedar por encima del FAB
+// (el cierre ocurre con el botón X o tocando el overlay).
+.ac-root--open .ac-fab {
+  z-index: 1;
+}
+
+// Asegura que TODO el contenido interno no capture clicks.
+// El click siempre debe caer en el <button>.
+.ac-fab * {
+  pointer-events: none;
+}
+
+.ac-fab__glow {
+  position: absolute;
+  inset: -24px;
+  border-radius: 28px;
+  background: radial-gradient(circle at 50% 45%, rgba($wine, 0.26), rgba($wine, 0) 62%),
+    radial-gradient(circle at 65% 70%, rgba($blue, 0.20), rgba($blue, 0) 64%);
+  filter: blur(12px);
+  opacity: 0.95;
+  pointer-events: none;
+  animation: acGlowPulse 1.8s ease-in-out infinite;
+}
+
+.ac-fab::before {
+  content: '';
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 5px rgba($wine, 0.18);
+  pointer-events: none;
+}
+
+.ac-fab::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 28px;
+  border: 1px solid rgba($wine, 0.35);
+  box-shadow:
+    0 0 0 1px rgba($blue, 0.18) inset,
+    0 0 34px rgba($wine, 0.18);
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 220ms ease, transform 220ms ease;
+  pointer-events: none;
+}
+
+.ac-fab__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    transition: transform 180ms ease;
+  }
+}
+
+.ac-fab:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba($blue, 0.14) inset,
+    0 0 70px rgba($wine, 0.26);
+}
+
+.ac-fab:hover::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ac-fab:hover .ac-fab__icon svg {
+  transform: scale(1.06);
+}
+
+.ac-fab:active {
+  transform: translateY(0);
+}
+
+@keyframes acGlowPulse {
+  0%,
+  100% {
+    filter: blur(12px);
+    opacity: 0.88;
+    transform: scale(1);
+  }
+  50% {
+    filter: blur(14px);
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.ac-panel {
+  pointer-events: none;
+  position: fixed;
+  right: 20px;
+  bottom: 88px;
+  width: min(420px, calc(100vw - 40px));
+  height: min(560px, calc(100vh - 140px));
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(900px 420px at 20% 0%, rgba($blue, 0.24), rgba($blue, 0) 60%),
+    radial-gradient(900px 420px at 100% 100%, rgba($wine, 0.20), rgba($wine, 0) 62%),
+    $panel;
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.70),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  overflow: hidden;
+  transform-origin: bottom right;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  z-index: 2;
+}
+
+.ac-root--open .ac-panel {
+  pointer-events: auto;
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  z-index: 3;
+}
+
+.ac-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(520px 120px at 10% 0%, rgba($wine, 0.55), rgba($wine, 0) 60%),
+    radial-gradient(520px 140px at 80% 10%, rgba($blue, 0.35), rgba($blue, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+}
+
+.ac-headLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ac-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.ac-avatar__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: conic-gradient(from 210deg, rgba($wine, 0.95), rgba($blue, 0.85), rgba($wine, 0.95));
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.40));
+}
+
+.ac-avatar__inner {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0) 55%),
+    rgba(10, 12, 18, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.ac-avatar__img {
+  width: 28px;
+  height: 28px;
+  opacity: 0.96;
+  object-fit: cover;
+  transform: translateY(0);
+  filter: none;
+}
+
+.ac-title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ac-title__name {
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ac-title__sub {
+  position: relative;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ac-title__sub::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba($wine, 0.95);
+  box-shadow: 0 0 0 4px rgba($wine, 0.16);
+}
+
+.ac-title__sub::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 80px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba($wine, 0.0), rgba($wine, 0.65), rgba($blue, 0.55));
+  opacity: 0.7;
+}
+
+.ac-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba($wine, 0.22),
+    rgba(255, 255, 255, 0) 40%,
+    rgba($blue, 0.16)
+  );
+  opacity: 0.35;
+}
+
+.ac-header {
+  position: relative;
+}
+
+.ac-headActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ac-menu {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.84);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 160ms ease, background 220ms ease, border-color 220ms ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.ac-menu:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.ac-title__name {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: $text;
+}
+
+.ac-title__sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: $muted;
+}
+
+.ac-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.84);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 160ms ease, background 220ms ease, border-color 220ms ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.ac-close:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.ac-quick {
+  padding: 12px 14px 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ac-chip {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  color: rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 220ms ease, background 220ms ease, box-shadow 220ms ease;
+}
+
+.ac-chip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba($blue, 0.95), rgba($wine, 0.9));
+  box-shadow: 0 0 0 4px rgba($blue, 0.14);
+}
+
+.ac-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+.ac-messages {
+  padding: 12px 14px 14px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.ac-msg {
+  display: flex;
+  margin: 10px 0;
+}
+
+.ac-msg--assistant {
+  justify-content: flex-start;
+}
+
+.ac-msg--user {
+  justify-content: flex-end;
+}
+
+.ac-bubble {
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.90);
+  line-height: 1.35;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+  transition: transform 160ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+.ac-bubble:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.30);
+}
+
+.ac-msg--user .ac-bubble {
+  background:
+    radial-gradient(220px 120px at 20% 0%, rgba($blue, 0.22), rgba($blue, 0) 60%),
+    radial-gradient(220px 120px at 100% 100%, rgba($wine, 0.20), rgba($wine, 0) 62%),
+    rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.ac-bubble--typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.ac-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  opacity: 0.65;
+  animation: acPulse 900ms ease-in-out infinite;
+}
+
+.ac-dot:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.ac-dot:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+@keyframes acPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 0.9;
+  }
+}
+
+.ac-compose {
+  padding: 12px 12px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.ac-inputWrap {
+  position: relative;
+}
+
+.ac-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+  transition: border-color 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+}
+
+.ac-input::placeholder {
+  color: rgba(255, 255, 255, 0.50);
+}
+
+.ac-inputGlow {
+  position: absolute;
+  inset: -10px;
+  border-radius: 18px;
+  background: radial-gradient(circle at 30% 30%, rgba($blue, 0.18), rgba($blue, 0) 60%),
+    radial-gradient(circle at 70% 70%, rgba($wine, 0.14), rgba($wine, 0) 62%);
+  filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.ac-input:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  filter: brightness(1.03);
+}
+
+.ac-input:focus {
+  border-color: rgba($blue, 0.55);
+  box-shadow: 0 0 0 3px rgba($blue, 0.18);
+}
+
+.ac-input:focus + .ac-inputGlow {
+  opacity: 1;
+}
+
+.ac-send {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 160ms ease, box-shadow 220ms ease, filter 220ms ease, border-color 220ms ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.ac-send__bg {
+  position: absolute;
+  inset: -30px;
+  background: linear-gradient(135deg, rgba($blue, 0.55), rgba($wine, 0.45));
+  opacity: 0.0;
+  filter: blur(14px);
+  transition: opacity 220ms ease;
+}
+
+.ac-send:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.20);
+  filter: brightness(1.03);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.42);
+}
+
+.ac-send:hover .ac-send__bg {
+  opacity: 1;
+}
+
+.ac-send:active {
+  transform: translateY(0);
+}
+
+.ac-send:disabled {
+  cursor: default;
+  opacity: 0.55;
+  transform: none;
+  filter: none;
+  box-shadow: none;
+}
+
+@media (max-width: 520px) {
+  .ac-root,
+  .ac-fab,
+  .ac-panel {
+    right: 14px;
+  }
+
+  .ac-root,
+  .ac-fab {
+    bottom: 14px;
+  }
+
+  .ac-panel {
+    bottom: 82px;
+    height: min(560px, calc(100vh - 120px));
+  }
+}
+

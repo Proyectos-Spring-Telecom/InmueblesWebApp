@@ -2,3 +2,26 @@
   display: block;
 }
 
+/** Misma fila y altura que `mat-flat-button` de Limpiar / grupos; Cancelar conserva colores y radio de `.button-danger`. */
+.est-grid-toolbar {
+  gap: 10px;
+  align-items: center;
+}
+
+.est-grid-toolbar__btn {
+  height: 50px;
+  min-height: 50px;
+}
+
+.est-grid-toolbar .button-danger {
+  width: auto;
+  min-width: 10rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-radius: 8px;
+}
+
+:host ::ng-deep .est-grid-toolbar .est-grid-toolbar__btn.mat-mdc-button-base {
+  height: 50px;
+  min-height: 50px;
+}
