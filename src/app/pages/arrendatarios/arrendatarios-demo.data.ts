@@ -61,6 +61,23 @@ export interface ArrendatarioTreeRow {
   estadoLocal: string;
 }
 
+export interface ArrendatarioLocalGridRow {
+  idLocal: number;
+  inmueble: string;
+  local: string;
+  nivel: string;
+  superficieM2: number;
+  estado: ArrendatarioLocalDemo['estado'];
+  giroActividad: string;
+  mensualidadMxn: number;
+  vigenciaHasta: string;
+  numeroContrato: string;
+  arrendatario: string;
+  arrendador: string;
+  correoContacto: string;
+  telefonoContacto: string;
+}
+
 export const INMUEBLES_ARRENDATARIOS_DEMO: InmuebleArrendatariosDemo[] = [
   {
     idInmueble: 101,
@@ -253,4 +270,25 @@ export function buildArrendatariosTreeRows(): ArrendatarioTreeRow[] {
     });
   });
   return rows;
+}
+
+export function buildArrendatariosLocalesRows(): ArrendatarioLocalGridRow[] {
+  return INMUEBLES_ARRENDATARIOS_DEMO.flatMap((inmueble) =>
+    inmueble.locales.map((local) => ({
+      idLocal: local.idLocal,
+      inmueble: inmueble.nombreInmueble,
+      local: local.nombreLocal,
+      nivel: local.nivel,
+      superficieM2: local.superficieM2,
+      estado: local.estado,
+      giroActividad: local.giroActividad,
+      mensualidadMxn: local.mensualidadMxn,
+      vigenciaHasta: local.vigenciaHasta,
+      numeroContrato: local.numeroContrato,
+      arrendatario: local.arrendatario,
+      arrendador: local.arrendador,
+      correoContacto: local.correoContacto,
+      telefonoContacto: local.telefonoContacto,
+    })),
+  );
 }
