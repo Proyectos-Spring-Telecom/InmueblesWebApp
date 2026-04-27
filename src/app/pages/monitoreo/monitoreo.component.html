@@ -34,20 +34,13 @@
                   </h6>
                 </div>
                 <div class="monitor-head-actions">
-                  <button
-                    *ngIf="zonasViewActive"
-                    type="button"
+                  <button *ngIf="zonasViewActive" type="button"
                     class="btn btn-sm monitor-head-btn monitor-head-btn--violet"
-                    (click)="volverListaInmueblesDesdeZonas()"
-                  >
+                    (click)="volverListaInmueblesDesdeZonas()">
                     Inmuebles
                   </button>
-                  <button
-                    *ngIf="isRol1"
-                    type="button"
-                    class="btn btn-sm monitor-head-btn monitor-head-btn--amber"
-                    (click)="goToCentrales()"
-                  >
+                  <button *ngIf="isRol1" type="button" class="btn btn-sm monitor-head-btn monitor-head-btn--amber"
+                    (click)="goToCentrales()">
                     Arrendadores
                   </button>
                 </div>
@@ -173,11 +166,8 @@
                         (click)="selectInstalacion(item, i); $event.stopPropagation()">
                         Centrar
                       </button> -->
-                      <button
-                        type="button"
-                        class="btn btn-sm monitor-list-btn monitor-list-btn--estacionamiento"
-                        (click)="irAEstacionamientosDesdeInmueble(item, $event)"
-                      >
+                      <button type="button" class="btn btn-sm monitor-list-btn monitor-list-btn--estacionamiento"
+                        (click)="irAEstacionamientosDesdeInmueble(item, $event)">
                         Estacionamientos
                       </button>
                       <button type="button" class="btn btn-sm monitor-list-btn monitor-list-btn--efectivo"
@@ -193,7 +183,7 @@
                 </div>
               </ng-container>
               <ng-template #noInstalacionesTpl>
-                <div class="insta-empty" *ngIf="viewMode === 'instalaciones'">
+                <!-- <div class="insta-empty" *ngIf="viewMode === 'instalaciones'">
                   <div class="insta-empty-icon">
                     <mat-icon>location_off</mat-icon>
                   </div>
@@ -204,7 +194,7 @@
                     </p>
                     <p *ngIf="selectedCentral">Este arrendador aún no tiene inmuebles registrados.</p>
                   </div>
-                </div>
+                </div> -->
               </ng-template>
             </div>
           </div>
@@ -257,8 +247,7 @@
                         <div class="locales-inline-editor" [@inlineEditorPop] *ngIf="showZoneNameEditor"
                           (click)="$event.stopPropagation()">
                           <input type="text" class="form-control form-control-sm"
-                            placeholder="Ej. Planta baja, Piso 1, Piso 2…"
-                            [(ngModel)]="zoneNameDraft"
+                            placeholder="Ej. Planta baja, Piso 1, Piso 2…" [(ngModel)]="zoneNameDraft"
                             (keydown.enter)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()" />
                           <div class="d-flex gap-1 mt-1">
                             <button type="button" class="btn btn-sm" [disabled]="!zoneNameDraft.trim()"
@@ -355,12 +344,8 @@
         <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2 clientes-flow-head">
           <h5 class="m-0">Arrendadores</h5>
           <div class="clientes-search-wrap">
-            <input
-              type="text"
-              class="form-control form-control-sm clientes-search-input"
-              placeholder="Buscar por nombre del cliente..."
-              [(ngModel)]="clienteSearchTerm"
-            />
+            <input type="text" class="form-control form-control-sm clientes-search-input"
+              placeholder="Buscar por nombre del cliente..." [(ngModel)]="clienteSearchTerm" />
           </div>
         </div>
         <div class="row g-3">
@@ -368,10 +353,8 @@
             <div class="inmueble-card-shell cliente-grid-card cliente-card-v2">
               <header class="cliente-card-head">
                 <div class="cliente-card-media">
-                  <img
-                    [src]="getImagenClienteCard(cliente, ci)"
-                    [attr.alt]="'Logo — ' + (cliente?.nombreCliente || cliente?.nombre || 'Arrendador')"
-                  />
+                  <img [src]="getImagenClienteCard(cliente, ci)"
+                    [attr.alt]="'Logo — ' + (cliente?.nombreCliente || cliente?.nombre || 'Arrendador')" />
                 </div>
                 <div class="cliente-card-head-main">
                   <span class="cliente-card-role-label">Arrendatario</span>
@@ -379,16 +362,12 @@
                 </div>
               </header>
 
-              <section
-                class="cliente-card-block cliente-card-block--tight"
-                *ngIf="getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']).length > 0"
-              >
+              <section class="cliente-card-block cliente-card-block--tight"
+                *ngIf="getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']).length > 0">
                 <div class="cliente-meta-grid" role="list">
-                  <div
-                    class="cliente-meta-pair"
+                  <div class="cliente-meta-pair"
                     *ngFor="let info of getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']) | slice:0:10"
-                    role="listitem"
-                  >
+                    role="listitem">
                     <span class="cliente-meta-label">{{ info.key }}</span>
                     <p class="cliente-meta-value">{{ info.value }}</p>
                   </div>
@@ -404,11 +383,8 @@
                     </p>
                   </div>
                   <div class="cliente-ubicacion-actions">
-                    <button
-                      type="button"
-                      class="btn cliente-action-btn cliente-inmuebles-btn"
-                      (click)="seleccionarCliente(cliente)"
-                    >
+                    <button type="button" class="btn cliente-action-btn cliente-inmuebles-btn"
+                      (click)="seleccionarCliente(cliente)">
                       Inmuebles
                     </button>
                   </div>

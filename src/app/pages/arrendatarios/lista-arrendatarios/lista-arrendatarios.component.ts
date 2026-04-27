@@ -1,8 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { DxTreeListComponent } from 'devextreme-angular';
+import { DxDataGridComponent } from 'devextreme-angular/ui/data-grid';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { ArrendatarioTreeRow, buildArrendatariosTreeRows } from '../arrendatarios-demo.data';
+import {
+  ArrendatarioLocalGridRow,
+  buildArrendatariosLocalesRows,
+} from '../arrendatarios-demo.data';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-lista-arrendatarios',
@@ -12,58 +16,52 @@ import { ArrendatarioTreeRow, buildArrendatariosTreeRows } from '../arrendatario
   animations: [routeAnimation],
 })
 export class ListaArrendatariosComponent implements OnInit {
-  public rows: ArrendatarioTreeRow[] = [];
-  /** Inicio contraído: solo filas de inmueble visibles hasta expandir. */
-  public expandedAll: boolean = false;
-  public mensajeAgrupar: string =
-    'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
+  public rows: ArrendatarioLocalGridRow[] = [];
+  public mensajeAgrupar: string = 'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
+  public autoExpandAllGroups: boolean = true;
+  public isGrouped: boolean = false;
+  @ViewChild(DxDataGridComponent, { static: false }) dataGrid: DxDataGridComponent;
 
-  @ViewChild('treeListRef', { static: false })
-  treeListRef!: DxTreeListComponent;
+  @ViewChild('dataGridRef', { static: false })
+  dataGridRef!: DxDataGridComponent;
 
   constructor(private router: Router) {}
 
   ngOnInit(): void {
-    this.rows = buildArrendatariosTreeRows();
+    this.rows = buildArrendatariosLocalesRows();
   }
 
   agregarArrendatario(): void {
     this.router.navigateByUrl('/arrendatarios/agregar-arrendatario');
   }
 
-  editarInmuebleDesdeFila(row: ArrendatarioTreeRow): void {
-    if (row.tipoNodo !== 'inmueble') return;
-    const idNum = row.id.replace(/^inmueble-/, '');
-    void this.router.navigate(['/arrendatarios/agregar-arrendatario'], {
-      queryParams: { demoInmuebleId: idNum },
-    });
-  }
-
-  eliminarInmuebleDemo(row: ArrendatarioTreeRow, ev: Event): void {
-    ev.stopPropagation();
-    if (row.tipoNodo !== 'inmueble') return;
-    const ok = window.confirm(
-      `¿Dar de baja el inmueble «${row.inmueble}»? (solo demostración; no se persiste).`,
-    );
-    if (!ok) return;
-    window.alert('Demostración: la baja de inmueble se procesaría en backend.');
-  }
-
   limpiarVista(): void {
-    const inst = this.treeListRef?.instance;
+    const inst = this.dataGridRef?.instance;
     if (!inst) return;
     inst.clearFilter();
     inst.option('searchPanel.text', '');
-    this.expandedAll = false;
-    inst.option('autoExpandAll', this.expandedAll);
     inst.refresh();
   }
 
-  toggleExpandirContraer(): void {
-    const inst = this.treeListRef?.instance;
-    if (!inst) return;
-    this.expandedAll = !this.expandedAll;
-    inst.option('autoExpandAll', this.expandedAll);
-    inst.refresh();
+  toggleExpandGroups() {
+    const groupedColumns = this.dataGrid.instance
+      .getVisibleColumns()
+      .filter((col) => (col.groupIndex ?? -1) >= 0);
+    if (groupedColumns.length === 0) {
+      Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: '¡Ops!',
+        text: 'Debes arrastar un encabezado de una columna para expandir o contraer grupos.',
+        icon: 'warning',
+        showCancelButton: false,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+        allowOutsideClick: false,
+      });
+    } else {
+      this.autoExpandAllGroups = !this.autoExpandAllGroups;
+      this.dataGrid.instance.refresh();
+    }
   }
 }

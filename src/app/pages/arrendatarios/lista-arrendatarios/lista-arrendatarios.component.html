@@ -18,81 +18,68 @@
 
   <div class="surface">
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
-      <button (click)="agregarArrendatario()" mat-flat-button class="bg-secondary">
-        <i class="fa fa-plus"></i> Agregar
-      </button>
+      <div *appHasPermission="'3'">
+        <button (click)="agregarArrendatario()" mat-flat-button class="bg-secondary">
+          <i class="fa fa-plus"></i> Agregar
+        </button>
+      </div>
       <button (click)="limpiarVista()" mat-flat-button class="bg-success">
-        <i class="fa fa-eraser"></i> Limpiar
+        <i class="fa fa-eraser"></i>
+        Limpiar
       </button>
-      <button (click)="toggleExpandirContraer()" mat-flat-button class="bg-warn">
-        <i [class]="expandedAll ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
-        {{ expandedAll ? ' Contraer Niveles' : ' Expandir Niveles' }}
+      <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+        {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
       </button>
     </div>
 
     <div class="mt-3">
-      <dx-tree-list
-        #treeListRef
-        id="treeArrendatarios"
-        [dataSource]="rows"
-        [keyExpr]="'id'"
-        [parentIdExpr]="'parentId'"
-        [showBorders]="true"
-        [showRowLines]="true"
-        [showColumnLines]="true"
-        [rowAlternationEnabled]="true"
-        [columnAutoWidth]="true"
-        [wordWrapEnabled]="true"
-        [autoExpandAll]="expandedAll"
-      >
+      <dx-data-grid #dataGridRef id="gridArrendatariosLocales" [dataSource]="rows" [keyExpr]="'idLocal'"
+        [showBorders]="true" [showRowLines]="true" [showColumnLines]="true" [rowAlternationEnabled]="true"
+        [columnAutoWidth]="true" [wordWrapEnabled]="true">
         <dxo-search-panel [visible]="true" [width]="260" placeholder="Buscar..."></dxo-search-panel>
         <dxo-header-filter [visible]="true"></dxo-header-filter>
         <dxo-filter-row [visible]="true"></dxo-filter-row>
-        <dxo-paging [enabled]="false"></dxo-paging>
-        <dxi-column
-          caption="Acciones"
-          cellTemplate="accionesTpl"
-          [width]="150"
-          alignment="center"
-          dataType="string"
-        ></dxi-column>
-        <dxi-column alignment="center" dataField="inmueble" caption="Inmueble" [width]="240"></dxi-column>
-        <dxi-column alignment="center" dataField="local" caption="Local" [width]="180"></dxi-column>
-        <dxi-column alignment="center" dataField="arrendatario" caption="Arrendatario"></dxi-column>
-        <dxi-column alignment="center" dataField="arrendador" caption="Arrendador"></dxi-column>
-        <dxi-column alignment="center" dataField="nivel" caption="Nivel" [width]="130"></dxi-column>
-        <dxi-column alignment="center" dataField="superficieM2" caption="Superficie (m²)" dataType="number" [width]="140"></dxi-column>
-        <dxi-column alignment="center" dataField="mensualidad" caption="Mensualidad (MXN)" dataType="number" format="currency" [width]="160"></dxi-column>
-        <dxi-column alignment="center" dataField="vigencia" caption="Vigencia"></dxi-column>
-        <dxi-column alignment="center" dataField="estadoLocal" caption="Estado"></dxi-column>
+        <dxo-paging [pageSize]="15"></dxo-paging>
+        <dxo-pager [visible]="true" [showPageSizeSelector]="true" [allowedPageSizes]="[20]"
+          [showInfo]="true"></dxo-pager>
 
-        <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
-          <ng-container *ngIf="row?.data?.tipoNodo === 'inmueble'">
-            <div>
-              <button
-                type="button"
-                class="btnAcciones"
-                id="actualizarButton"
-                title="Editar"
-                (click)="editarInmuebleDesdeFila(row.data); $event.stopPropagation()"
-              >
-                <i class="fa fa-edit"></i>
-              </button>
-            </div>
-            <div>
-              <button
-                type="button"
-                class="btnAcciones"
-                id="deleteButton"
-                title="Eliminar inmueble"
-                (click)="eliminarInmuebleDemo(row.data, $event)"
-              >
-                <i class="fa fa-times"></i>
-              </button>
-            </div>
-          </ng-container>
+        <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" *appHasPermission="['2', '4']"
+          [width]="150"></dxi-column>
+        <dxi-column alignment="center" dataField="inmueble" caption="Inmueble" [minWidth]="220"></dxi-column>
+        <dxi-column alignment="center" dataField="local" caption="Local" [width]="160"></dxi-column>
+        <dxi-column alignment="center" dataField="nivel" caption="Nivel" [width]="140"></dxi-column>
+        <dxi-column alignment="center" dataField="superficieM2" caption="Superficie (m²)" dataType="number"
+          format="#,##0.##" alignment="right" [width]="150"></dxi-column>
+        <dxi-column alignment="center" dataField="estado" caption="Estado" [width]="120"></dxi-column>
+        <dxi-column alignment="center" dataField="giroActividad" caption="Giro" [minWidth]="180"></dxi-column>
+        <dxi-column alignment="center" dataField="mensualidadMxn" caption="Mensualidad (MXN)" dataType="number"
+          format="currency" alignment="right" [width]="180"></dxi-column>
+        <dxi-column alignment="center" dataField="vigenciaHasta" caption="Vigencia" [width]="140"></dxi-column>
+        <dxi-column alignment="center" dataField="numeroContrato" caption="Contrato" [width]="140"></dxi-column>
+        <dxi-column alignment="center" dataField="arrendatario" caption="Arrendatario" [minWidth]="220"></dxi-column>
+        <dxi-column alignment="center" dataField="correoContacto" caption="Correo" [minWidth]="220"></dxi-column>
+        <dxi-column alignment="center" dataField="telefonoContacto" caption="Teléfono" [width]="150"></dxi-column>
+        <dxi-column alignment="center" dataField="arrendador" caption="Arrendador" [minWidth]="220"></dxi-column>
+        <div *dxTemplate="let row of 'acciones'" class="d-flex gap-3 justify-content-center">
+          <div *appHasPermission="'2'">
+            <button valueExpr="id" id="actualizarButton" class="btnAcciones">
+              <i class="fa fa-edit"></i>
+            </button>
+          </div>
+          <div *appHasPermission="'4'">
+            @if (row.data.estatus === 0) {
+            <button id="pinButton" class="btnAcciones">
+              <i class="fa fa-arrow-up"></i>
+            </button>
+            } @else {
+            <button id="deleteButton" class="btnAcciones">
+              <i class="fa fa-arrow-down"></i>
+            </button>
+            }
+          </div>
         </div>
-      </dx-tree-list>
+      </dx-data-grid>
     </div>
   </div>
 </div>
