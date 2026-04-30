@@ -415,13 +415,6 @@ export class HeaderComponent {
       label: 'Pagos al corriente',
       detail: 'Último pago registrado: 28/04/2026',
     },
-    {
-      id: 'info',
-      tone: 'info',
-      icon: 'info-circle',
-      label: 'Notas / seguimiento',
-      detail: 'Recordatorios activos: 3 servicios',
-    },
   ];
 
   /** Menu "inmuebles" -> ahora Pagos de servicios */
@@ -455,13 +448,6 @@ export class HeaderComponent {
       icon: 'check',
       label: 'Arrendatarios al corriente',
       detail: 'Último pago registrado: 28/04/2026',
-    },
-    {
-      id: 'info-loc',
-      tone: 'info',
-      icon: 'info-circle',
-      label: 'Notas / seguimiento',
-      detail: 'Pendientes de comprobante: 2 servicios',
     },
   ];
 

@@ -55,6 +55,12 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
+  private defaultServicioTipoForIndex(index: number): string | null {
+    if (index === 0) return 'RENTA';
+    if (index === 1) return 'MANTENIMIENTO';
+    return null;
+  }
+
   private initForm(): void {
     this.arrendatarioForm = this.fb.group({
       nombreInmueble: ['', Validators.required],
@@ -80,8 +86,8 @@ export class AgregarArrendatarioComponent implements OnInit {
       ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
       servicios: this.fb.array([
-        this.crearServicioFormGroup('RENTA'),
-        this.crearServicioFormGroup('MANTENIMIENTO'),
+        this.crearServicioFormGroup('RENTA', true),
+        this.crearServicioFormGroup('MANTENIMIENTO', true),
       ]),
       zonas: this.fb.array([this.crearZonaFormGroup()]),
       estacionamientos: this.fb.array([this.crearEstacionamientoFormGroup()]),
@@ -110,9 +116,9 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
-  private crearServicioFormGroup(tipo: string = ''): FormGroup {
+  private crearServicioFormGroup(tipo: string = '', lockTipoContrato: boolean = false): FormGroup {
     return this.fb.group({
-      servicioTipoContrato: [tipo],
+      servicioTipoContrato: [{ value: tipo, disabled: lockTipoContrato }],
       servicioTipoContratoOtro: [''],
       servicioNumeroContrato: [''],
       servicioFechaPago: [''],
@@ -274,6 +280,14 @@ export class AgregarArrendatarioComponent implements OnInit {
   onServicioTipoContratoChange(index: number): void {
     const group = this.serviciosFormArray.at(index) as FormGroup | null;
     if (!group) return;
+    if (index < 2) {
+      const tipo = this.defaultServicioTipoForIndex(index);
+      if (tipo) {
+        group.patchValue({ servicioTipoContrato: tipo, servicioTipoContratoOtro: '' }, { emitEvent: false });
+        group.get('servicioTipoContrato')?.disable({ emitEvent: false });
+      }
+      return;
+    }
     if (this.esServicioTipoOtro(index)) return;
     group.patchValue({ servicioTipoContratoOtro: '' }, { emitEvent: false });
   }
@@ -281,6 +295,7 @@ export class AgregarArrendatarioComponent implements OnInit {
   resetServicioTipoContrato(index: number): void {
     const group = this.serviciosFormArray.at(index) as FormGroup | null;
     if (!group) return;
+    if (index < 2) return;
     group.patchValue(
       { servicioTipoContrato: '', servicioTipoContratoOtro: '' },
       { emitEvent: false },

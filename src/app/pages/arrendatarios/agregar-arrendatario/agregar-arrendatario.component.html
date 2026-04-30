@@ -154,7 +154,7 @@
                         <div class="input-group input-group-lg perm-ig">
                           <span class="input-group-text fw-bold"><mat-icon>fact_check</mat-icon></span>
                           <div class="form-floating flex-grow-1" *ngIf="!esServicioTipoOtro(i)">
-                            <select class="form-select" formControlName="servicioTipoContrato"
+                            <select class="form-select" formControlName="servicioTipoContrato" [disabled]="i < 2"
                               aria-label="Tipo de contrato" (change)="onServicioTipoContratoChange(i)">
                               <option value="" disabled>Selecciona una opción</option>
                               <option value="RENTA">Renta</option>
@@ -168,7 +168,7 @@
                           </div>
                           <div class="form-floating flex-grow-1" *ngIf="esServicioTipoOtro(i)">
                             <input type="text" class="form-control" formControlName="servicioTipoContratoOtro"
-                              placeholder="Escribe el tipo de contrato" />
+                              placeholder="Escribe el tipo de contrato" [disabled]="i < 2" />
                             <label>Tipo de contrato</label>
                           </div>
                         </div>
