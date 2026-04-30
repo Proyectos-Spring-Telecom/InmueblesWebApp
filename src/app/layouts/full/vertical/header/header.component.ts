@@ -32,6 +32,23 @@ const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
   Roles: '/roles',
 };
 
+/** Texto secundario del Panel de accesos (no mostrar rutas). */
+const PANEL_SUBTEXT_BY_DISPLAY_NAME: Record<string, string> = {
+  Administración: 'Configuración general del sistema y gestión de módulos.',
+  Usuarios: 'Alta, edición y control de usuarios del sistema.',
+  Roles: 'Definición de permisos y niveles de acceso.',
+  Arrendadores: 'Monitoreo y gestión de inmuebles y arrendatarios.',
+  Catálogos: 'Administración arrendadores, inmuebles y arrendatarios.',
+  'Perfil Usuario': 'Configuración y actualización de tu información personal.',
+};
+
+function isPanelLogoutItem(item: NavItem): boolean {
+  return (
+    item?.route === '/login' &&
+    /cerrar sesi[oó]n|sign out/i.test(item?.displayName || '')
+  );
+}
+
 function resolvePanelAccessRoute(item: NavItem): string | undefined {
   if (!item.displayName || item.external) return undefined;
   const r = item.route;
@@ -47,9 +64,11 @@ function buildPanelAccessItems(items: NavItem[]): NavItem[] {
   const out: NavItem[] = [];
   for (const item of items) {
     if (!item.displayName) continue;
+    if (isPanelLogoutItem(item)) continue;
     const route = resolvePanelAccessRoute(item);
     if (!route) continue;
-    out.push({ ...item, route });
+    const subtext = PANEL_SUBTEXT_BY_DISPLAY_NAME[item.displayName] ?? item.subtext;
+    out.push({ ...item, route, subtext });
   }
   return out;
 }
@@ -60,7 +79,7 @@ interface AvisoNotificacion {
   title: string;
   subtitle: string;
   /** Semáforo: success = bien (verde), warning = próximo (amarillo), danger = crítico (rojo). */
-  tone?: 'success' | 'warning' | 'danger';
+  tone?: 'success' | 'warning' | 'amber' | 'danger';
   /** Días restantes para vencer (si aplica). */
   daysLeft?: number;
   detalle?: Partial<ContratoDetalleDialogData>;
@@ -233,13 +252,11 @@ export class HeaderComponent {
 
   onAvisoContratoClick(a: AvisoNotificacion, event: Event): void {
     event.stopPropagation();
-    event.preventDefault();
     this.openContratoDetalleDialog(this.buildDetalleFromAviso(a));
   }
 
   onReciboContratoClick(r: ReciboEstadoItem, event: Event): void {
     event.stopPropagation();
-    event.preventDefault();
     this.openContratoDetalleDialog(this.buildDetalleFromRecibo(r));
   }
 
@@ -307,14 +324,16 @@ export class HeaderComponent {
   inmueblesNotifCount = 5;
   prediosNotifCount = 5;
 
-  private toneByDaysLeft(daysLeft?: number): 'success' | 'warning' | 'danger' {
+  private toneByDaysLeft(daysLeft?: number): 'success' | 'warning' | 'amber' | 'danger' {
     const n = Number(daysLeft);
     if (!Number.isFinite(n)) return 'success';
-    // Reglas:
+    // Reglas (semáforo):
     // - Mayor a 30 días: verde
-    // - Menor a 15 días: amarillo
+    // - Menor a 15 días: naranja
+    // - Menor a 7 días: amarillo
     // - Menor a 3 días: rojo
     if (n < 3) return 'danger';
+    if (n < 7) return 'amber';
     if (n < 15) return 'warning';
     return 'success';
   }
@@ -323,13 +342,13 @@ export class HeaderComponent {
     {
       id: 1,
       title: 'Contratos próximos a vencer',
-      subtitle: 'Contrato : PC-0001 - Prestalana SA de CV',
+      subtitle: 'Contrato: PC-0001 — Arrendatario: Prestalana SA de CV — Vence: 12 días',
       daysLeft: 12,
     },
     {
       id: 2,
-      title: 'Contrato : PC-0006 - Estilos QIU Home SA de CV',
-      subtitle: 'Revisión de documentación pendiente',
+      title: 'Renovación pendiente',
+      subtitle: 'Contrato: PC-0006 — Arrendatatario: Estilos QIU Home SA de CV — Documentación pendiente',
       daysLeft: 2,
       detalle: {
         contrato: 'PC-0006',
@@ -339,8 +358,8 @@ export class HeaderComponent {
     },
     {
       id: 3,
-      title: 'Contrato : PC-0012 - Logística Norte SA de CV',
-      subtitle: 'Vigencia actualizada en el sistema',
+      title: 'Contrato actualizado',
+      subtitle: 'Contrato: PC-0012 — Logística Norte SA de CV — Vigencia registrada en sistema',
       daysLeft: 40,
       detalle: {
         contrato: 'PC-0012',
@@ -351,8 +370,8 @@ export class HeaderComponent {
     },
     {
       id: 4,
-      title: 'Contrato : PC-0020 - Inmobiliaria del Valle',
-      subtitle: 'Recordatorio de pago programado',
+      title: 'Aviso urgente',
+      subtitle: 'Contrato: PC-0020 — Inmobiliaria del Valle — Vence: 1 día',
       daysLeft: 1,
       detalle: {
         contrato: 'PC-0020',
@@ -364,85 +383,71 @@ export class HeaderComponent {
 
   /**
    * Misma estructura visual (notify-hub-recibo), pero con información de:
-   * - Arrendadores (menuNotifInmuebles)
-   * - Arrendatarios / Locales (menuNotifPredios)
+   * - Pagos de servicios (menuNotifInmuebles)
+   * - Arrendatarios (menuNotifPredios)
    */
   private readonly recibosCategoriasPlantilla: ReciboEstadoItem[] = [
     {
       id: 'critico',
       tone: 'danger',
       icon: 'x',
-      label: 'Contratos críticos',
-      detail: 'Arrendador: Inmobiliaria del Valle — Contrato: PC-0020',
+      label: 'Pagos vencidos',
+      detail: 'Servicio: Agua — Contrato: SV-1020 — Último día: 25/04/2026',
     },
     {
       id: 'proximos',
       tone: 'warning',
       icon: 'alert-circle',
-      label: 'Contratos próximos a vencer',
-      detail: 'Arrendador: BHV SA de CV — Contrato: PC-0001',
+      label: 'Pagos por vencer',
+      detail: 'Servicio: Luz — Último día: 02/05/2026 — Comprobante pendiente',
     },
     {
       id: 'estables',
       tone: 'amber',
       icon: 'thumb-up',
-      label: 'Contratos por vencer',
-      detail: 'Arrendador: Grupo Comercial Atlas — Contrato: PC-0031',
+      label: 'Pagos en revisión',
+      detail: 'Servicio: Mantenimiento — 2 comprobantes por validar',
     },
     {
       id: 'ok',
       tone: 'success',
       icon: 'check',
-      label: 'Contratos con más de 30 días',
-      detail: 'Arrendador: Logística Norte — Contrato: PC-0012',
-    },
-    {
-      id: 'info',
-      tone: 'info',
-      icon: 'info-circle',
-      label: 'Notas / seguimiento',
-      detail: 'Documentación pendiente en 2 contratos',
+      label: 'Pagos al corriente',
+      detail: 'Último pago registrado: 28/04/2026',
     },
   ];
 
-  /** Menu "inmuebles" -> ahora Arrendadores */
+  /** Menu "inmuebles" -> ahora Pagos de servicios */
   recibosInmuebles: ReciboEstadoItem[] = [...this.recibosCategoriasPlantilla];
-  /** Menu "predios" -> ahora Arrendatarios/Locales */
+  /** Menu "predios" -> ahora Arrendatarios */
   recibosPredios: ReciboEstadoItem[] = [
     {
       id: 'critico-loc',
       tone: 'danger',
       icon: 'x',
-      label: 'Locales críticos',
-      detail: 'Local 9 (PB) — Contrato: PC-0044 — Arrendatario: Servicios Urbanos',
+      label: 'Arrendatarios con adeudo',
+      detail: 'Arrendatario: Servicios Urbanos — Servicio: Renta — Último día: 25/04/2026',
     },
     {
       id: 'prox-loc',
       tone: 'warning',
       icon: 'alert-circle',
-      label: 'Locales próximos a vencer',
-      detail: 'Local 12 (PB) — Contrato: PC-0001 — Arrendatario: Prestalana SA de CV',
+      label: 'Pagos próximos de arrendatarios',
+      detail: 'Arrendatario: Prestalana SA de CV — Servicio: Mantenimiento — Último día: 02/05/2026',
     },
     {
       id: 'mid-loc',
       tone: 'amber',
       icon: 'thumb-up',
-      label: 'Locales por vencer',
-      detail: 'Local 7 (P1) — Contrato: PC-0012 — Arrendatario: Logística Norte',
+      label: 'Renovaciones en proceso',
+      detail: 'Arrendatario: Logística Norte — 1 renovación en validación',
     },
     {
       id: 'ok-loc',
       tone: 'success',
       icon: 'check',
-      label: 'Locales con más de 30 días',
-      detail: 'Local 21 (PB) — Contrato: PC-0031 — Arrendatario: Atlas Retail',
-    },
-    {
-      id: 'info-loc',
-      tone: 'info',
-      icon: 'info-circle',
-      label: 'Notas / seguimiento',
-      detail: 'Renovaciones en validación: 3 locales',
+      label: 'Arrendatarios al corriente',
+      detail: 'Último pago registrado: 28/04/2026',
     },
   ];
 

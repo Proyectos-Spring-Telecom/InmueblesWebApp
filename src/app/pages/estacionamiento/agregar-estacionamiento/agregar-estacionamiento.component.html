@@ -73,7 +73,7 @@
                   placeholder="Ej.: Santory"
                   required
                 />
-                <label for="estArrendatario">Ej.: Santory</label>
+                <label for="estArrendatario">Ej.: Santander</label>
               </div>
             </div>
           </div>
@@ -82,6 +82,9 @@
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
           <button class="button-success" role="button" (click)="submit()">
             <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
+          </button>
+          <button type="button" class="button-danger est-grid-toolbar__btn" (click)="cancelar()">
+            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
           </button>
         </div>
       </form>
@@ -92,15 +95,15 @@
             Estacionamiento de Inmueble:<span *ngIf="nombreInmuebleParaTitulo"> {{ nombreInmuebleParaTitulo }}</span>
           </h6>
           <div class="est-grid-toolbar">
+            <button type="button" (click)="limpiarCamposGrid()" mat-flat-button class="bg-warning est-grid-toolbar__btn">
+              <i class="fa fa-retweet"></i> Entradas y Salidas
+            </button>
             <button type="button" (click)="limpiarCamposGrid()" mat-flat-button class="bg-success est-grid-toolbar__btn">
               <i class="fa fa-eraser"></i> Limpiar
             </button>
             <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn est-grid-toolbar__btn">
               <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
               {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
-            </button>
-            <button type="button" class="button-danger est-grid-toolbar__btn" (click)="cancelar()">
-              <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
             </button>
           </div>
         </div>

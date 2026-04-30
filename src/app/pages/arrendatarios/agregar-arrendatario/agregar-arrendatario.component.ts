@@ -22,6 +22,7 @@ export class AgregarArrendatarioComponent implements OnInit {
   imagenPlanoNombre: string | null = null;
   contratoRentaNombre: string | null = null;
   constanciaFiscalNombre: string | null = null;
+  constanciaRepLegalNombre: string | null = null;
   comprobanteDomicilioNombre: string | null = null;
   actaConstitutivaNombre: string | null = null;
   ineRepresentanteNombre: string | null = null;
@@ -31,6 +32,7 @@ export class AgregarArrendatarioComponent implements OnInit {
   @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
   @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('constanciaFiscalInput') constanciaFiscalInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('constanciaRepLegalInput') constanciaRepLegalInput?: ElementRef<HTMLInputElement>;
   @ViewChild('comprobanteDomicilioInput') comprobanteDomicilioInput?: ElementRef<HTMLInputElement>;
   @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
@@ -53,6 +55,12 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
+  private defaultServicioTipoForIndex(index: number): string | null {
+    if (index === 0) return 'RENTA';
+    if (index === 1) return 'MANTENIMIENTO';
+    return null;
+  }
+
   private initForm(): void {
     this.arrendatarioForm = this.fb.group({
       nombreInmueble: ['', Validators.required],
@@ -72,14 +80,17 @@ export class AgregarArrendatarioComponent implements OnInit {
       documentoPlano: [null],
       documentoContratoRenta: [null],
       documentoConstanciaFiscal: [null],
+      constanciaSituacionFiscalRepresentanteLegal: [null],
       documentoComprobanteDomicilio: [null],
       documentoActaConstitutiva: [null],
       ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
-      servicios: this.fb.array([this.crearServicioFormGroup()]),
+      servicios: this.fb.array([
+        this.crearServicioFormGroup('RENTA', true),
+        this.crearServicioFormGroup('MANTENIMIENTO', true),
+      ]),
       zonas: this.fb.array([this.crearZonaFormGroup()]),
       estacionamientos: this.fb.array([this.crearEstacionamientoFormGroup()]),
-      vigencias: this.fb.array([this.crearVigenciaFormGroup()]),
       socios: this.fb.array([this.crearSocioFormGroup()]),
       locales: this.fb.array([this.crearLocalFormGroup()]),
     });
@@ -105,11 +116,15 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
-  private crearServicioFormGroup(): FormGroup {
+  private crearServicioFormGroup(tipo: string = '', lockTipoContrato: boolean = false): FormGroup {
     return this.fb.group({
-      servicioAguaContrato: [''],
-      servicioLuzContrato: [''],
-      servicioMantenimientoContrato: [''],
+      servicioTipoContrato: [{ value: tipo, disabled: lockTipoContrato }],
+      servicioTipoContratoOtro: [''],
+      servicioNumeroContrato: [''],
+      servicioFechaPago: [''],
+      servicioUltimoDiaPago: [''],
+      servicioComprobantePago: [null],
+      servicioComprobantePagoNombre: [''],
     });
   }
 
@@ -126,14 +141,6 @@ export class AgregarArrendatarioComponent implements OnInit {
       estacionamientoPensionado: [''],
       estacionamientoTarjeta: [''],
       estacionamientoArrendatario: [''],
-    });
-  }
-
-  private crearVigenciaFormGroup(): FormGroup {
-    return this.fb.group({
-      vigenciaDocumento: [''],
-      vigenciaDiasRestantes: [''],
-      vigenciaEstatus: [''],
     });
   }
 
@@ -196,10 +203,6 @@ export class AgregarArrendatarioComponent implements OnInit {
 
   get estacionamientosFormArray(): FormArray {
     return this.arrendatarioForm.get('estacionamientos') as FormArray;
-  }
-
-  get vigenciasFormArray(): FormArray {
-    return this.arrendatarioForm.get('vigencias') as FormArray;
   }
 
   get sociosFormArray(): FormArray {
@@ -268,8 +271,40 @@ export class AgregarArrendatarioComponent implements OnInit {
     this.serviciosFormArray.push(this.crearServicioFormGroup());
   }
 
+  esServicioTipoOtro(index: number): boolean {
+    const group = this.serviciosFormArray.at(index) as FormGroup | null;
+    const raw = group?.get('servicioTipoContrato')?.value;
+    return String(raw ?? '').toUpperCase().trim() === 'OTRO';
+  }
+
+  onServicioTipoContratoChange(index: number): void {
+    const group = this.serviciosFormArray.at(index) as FormGroup | null;
+    if (!group) return;
+    if (index < 2) {
+      const tipo = this.defaultServicioTipoForIndex(index);
+      if (tipo) {
+        group.patchValue({ servicioTipoContrato: tipo, servicioTipoContratoOtro: '' }, { emitEvent: false });
+        group.get('servicioTipoContrato')?.disable({ emitEvent: false });
+      }
+      return;
+    }
+    if (this.esServicioTipoOtro(index)) return;
+    group.patchValue({ servicioTipoContratoOtro: '' }, { emitEvent: false });
+  }
+
+  resetServicioTipoContrato(index: number): void {
+    const group = this.serviciosFormArray.at(index) as FormGroup | null;
+    if (!group) return;
+    if (index < 2) return;
+    group.patchValue(
+      { servicioTipoContrato: '', servicioTipoContratoOtro: '' },
+      { emitEvent: false },
+    );
+  }
+
   eliminarServicio(index: number): void {
-    if (this.serviciosFormArray.length === 1) return;
+    if (index < 2) return;
+    if (this.serviciosFormArray.length <= 2) return;
     this.serviciosFormArray.removeAt(index);
   }
 
@@ -291,13 +326,15 @@ export class AgregarArrendatarioComponent implements OnInit {
     this.estacionamientosFormArray.removeAt(index);
   }
 
-  agregarVigencia(): void {
-    this.vigenciasFormArray.push(this.crearVigenciaFormGroup());
-  }
-
-  eliminarVigencia(index: number): void {
-    if (this.vigenciasFormArray.length === 1) return;
-    this.vigenciasFormArray.removeAt(index);
+  onServicioPagoFileSelected(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    const group = this.serviciosFormArray.at(index) as FormGroup;
+    group.patchValue({
+      servicioComprobantePago: file,
+      servicioComprobantePagoNombre: file?.name ?? '',
+    });
+    if (input) input.value = '';
   }
 
   agregarFotoGaleria(): void {
@@ -330,6 +367,7 @@ export class AgregarArrendatarioComponent implements OnInit {
       | 'plano'
       | 'contratoRenta'
       | 'constanciaFiscal'
+      | 'constanciaRepLegal'
       | 'comprobanteDomicilio'
       | 'actaConstitutiva'
       | 'ineRepresentante',
@@ -340,6 +378,7 @@ export class AgregarArrendatarioComponent implements OnInit {
       plano: this.imagenPlanoInput,
       contratoRenta: this.contratoRentaInput,
       constanciaFiscal: this.constanciaFiscalInput,
+      constanciaRepLegal: this.constanciaRepLegalInput,
       comprobanteDomicilio: this.comprobanteDomicilioInput,
       actaConstitutiva: this.actaConstitutivaInput,
       ineRepresentante: this.ineRepresentanteInput,
@@ -358,6 +397,7 @@ export class AgregarArrendatarioComponent implements OnInit {
     if (controlName === 'documentoPlano') this.imagenPlanoNombre = name;
     if (controlName === 'documentoContratoRenta') this.contratoRentaNombre = name;
     if (controlName === 'documentoConstanciaFiscal') this.constanciaFiscalNombre = name;
+    if (controlName === 'constanciaSituacionFiscalRepresentanteLegal') this.constanciaRepLegalNombre = name;
     if (controlName === 'documentoComprobanteDomicilio') this.comprobanteDomicilioNombre = name;
     if (controlName === 'documentoActaConstitutiva') this.actaConstitutivaNombre = name;
     if (controlName === 'ineRepresentanteLegal') this.ineRepresentanteNombre = name;

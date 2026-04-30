@@ -291,6 +291,104 @@
   }
 }
 
+.mono-docs__header--expediente {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+/* Contrato local: mismo encabezado que expediente inmueble, sin pill de rubros */
+.mono-docs__header--local-contrato {
+  justify-content: flex-start;
+}
+
+.mono-docs__header-text {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.mono-docs__eyebrow {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.95);
+  margin-bottom: 0.2rem;
+}
+
+.mono-docs__title-main {
+  color: #f8fafc;
+  font-size: clamp(1rem, 2.4vw, 1.15rem);
+  letter-spacing: 0.02em;
+}
+
+.mono-docs__lede {
+  margin-top: 0.45rem !important;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(186, 206, 236, 0.88);
+  max-width: 42rem;
+}
+
+.mono-docs__header-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #e0f2fe;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: #7dd3fc;
+  }
+}
+
+.mono-docs__panel--expediente {
+  padding: 0.5rem 0.65rem;
+}
+
+.mono-docs__row--expediente {
+  padding: 0.55rem 0.15rem;
+  align-items: center;
+}
+
+/* Misma fila horizontal que la lista original: chip + contenido */
+.mono-docs__row-main--expediente {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.mono-docs__label-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.mono-docs__doc-label {
+  font-size: clamp(0.88rem, 2vw, 0.95rem);
+  letter-spacing: 0.01em;
+  color: #f1f5f9;
+  line-height: 1.35;
+}
+
+.mono-docs__file-inline--block {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .mono-contrato-local-panel__row {
   display: flex;
   align-items: center;
@@ -299,24 +397,9 @@
   flex-wrap: wrap;
 }
 
-.mono-contrato-local-panel__file {
+.mono-contrato-local-panel__main {
   flex: 1 1 auto;
   min-width: 0;
-}
-
-.mono-contrato-local-panel__label {
-  display: block;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(219, 232, 255, 0.55);
-  margin-bottom: 0.25rem;
-}
-
-.mono-contrato-local-panel__name {
-  font-size: 0.88rem;
-  color: #dbe8ff;
-  word-break: break-word;
 }
 
 .mono-contrato-local-panel__btn {
@@ -518,6 +601,49 @@
   border-color: rgba(129, 140, 248, 0.75);
 }
 
+.mono-grid-row-action-btn--icon {
+  min-width: 36px;
+  padding: 6px 10px;
+
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    line-height: 20px;
+  }
+}
+
+.mono-pago-estatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.5rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.mono-pago-estatus--pagado {
+  color: #ecfdf5;
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(52, 211, 153, 0.55);
+}
+
+.mono-pago-estatus--pendiente {
+  color: #fffbeb;
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.mono-pago-estatus--cancelado {
+  color: #fef2f2;
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
 .mono-zonas-total {
   color: #dbe8ff;
   font-size: 0.84rem;
@@ -570,27 +696,32 @@
   border: 0;
 }
 
-:host ::ng-deep .mono-grid-card .dx-datagrid {
+:host ::ng-deep .mono-grid-card .dx-datagrid,
+:host ::ng-deep .mono-block__panel--servicios-dx .dx-datagrid {
   background: transparent;
   color: #dbe8ff;
   font-size: 0.84rem;
 }
 
-:host ::ng-deep .mono-grid-card .dx-datagrid-headers {
+:host ::ng-deep .mono-grid-card .dx-datagrid-headers,
+:host ::ng-deep .mono-block__panel--servicios-dx .dx-datagrid-headers {
   background: rgba(255, 255, 255, 0.01);
 }
 
-:host ::ng-deep .mono-grid-card .dx-header-row > td {
+:host ::ng-deep .mono-grid-card .dx-header-row > td,
+:host ::ng-deep .mono-block__panel--servicios-dx .dx-header-row > td {
   color: #bcd7f8 !important;
   font-size: 0.8rem !important;
   border-bottom-color: rgba(255, 255, 255, 0.09) !important;
 }
 
-:host ::ng-deep .mono-grid-card .dx-row-alt > td {
+:host ::ng-deep .mono-grid-card .dx-row-alt > td,
+:host ::ng-deep .mono-block__panel--servicios-dx .dx-row-alt > td {
   background: rgba(255, 255, 255, 0.02);
 }
 
-:host ::ng-deep .mono-grid-card .dx-data-row > td {
+:host ::ng-deep .mono-grid-card .dx-data-row > td,
+:host ::ng-deep .mono-block__panel--servicios-dx .dx-data-row > td {
   border-top-color: rgba(255, 255, 255, 0.06) !important;
 }
 

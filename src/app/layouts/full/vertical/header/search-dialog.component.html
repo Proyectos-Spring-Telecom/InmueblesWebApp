@@ -35,7 +35,7 @@
           <h5 class="f-s-15 f-w-500 d-block m-0">
             {{ item.displayName }}
           </h5>
-          <span class="f-s-14 search-dialog-route d-block">{{ item.route }}</span>
+          <span class="f-s-14 search-dialog-route d-block">{{ item.subtext ?? item.route }}</span>
         </a>
       } @else {
         <a
@@ -46,7 +46,7 @@
           <h5 class="f-s-15 f-w-500 d-block m-0">
             {{ item.displayName }}
           </h5>
-          <span class="f-s-14 search-dialog-route d-block">{{ item.route }}</span>
+          <span class="f-s-14 search-dialog-route d-block">{{ item.subtext ?? item.route }}</span>
         </a>
       }
     }
