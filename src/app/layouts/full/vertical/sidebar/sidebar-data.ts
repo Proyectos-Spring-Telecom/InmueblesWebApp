@@ -45,21 +45,6 @@ export const navItems: NavItem[] = [
         // Mostrar si tiene al menos un permiso de productos
         permission: Permiso.CONSULTAR_PRODUCTOS,
       },
-      {
-        displayName: 'Marcas',
-        route: '/marcas',
-        permission: Permiso.CONSULTAR_MARCAS,
-      },
-      {
-        displayName: 'Modelos',
-        route: '/modelos',
-        permission: Permiso.CONSULTAR_MODELOS,
-      },
-      {
-        displayName: 'Equipos',
-        route: '/equipos',
-        permission: Permiso.CONSULTAR_EQUIPOS,
-      },
       
       {
         displayName: 'INPC',
@@ -140,64 +125,26 @@ export const navItems: NavItem[] = [
     navCap: 'Operación',
   },
   {
-    displayName: 'Propiedades',
+    displayName: 'Arrendadores',
     iconName: 'building',
     route: '/monitoreo',
     permission: Permiso.CONSULTAR_MONITOREO,
   },
   {
-    displayName: 'Arrendadores',
+    displayName: 'Catálogos',
     iconName: 'address-book',
     route: '/menu-level',
-    // Mostrar si tiene al menos un permiso de clientes
-    permission: [
-      Permiso.CONSULTA_CLIENTE,
-      Permiso.AGREGAR_CLIENTE,
-      Permiso.ACTUALIZAR_CLIENTES,
-      Permiso.ELIMINAR_CLIENTE,
-    ],
+    permission: Permiso.CONSULTA_CLIENTE,
     children: [
-      {
-        displayName: 'Agregar Arrendador',
-        // iconName: 'user-cog',
-        route: '/clientes/agregar-cliente',
-        permission: Permiso.AGREGAR_CLIENTE,
-      },
       {
         displayName: 'Lista Arrendadores',
-        // iconName: 'user-cog',
         route: '/clientes',
         permission: Permiso.CONSULTA_CLIENTE,
-      },
-    ],
-  },
-  {
-    displayName: 'Inmuebles',
-    iconName: 'home-2',
-    route: '/menu-level',
-    children: [
-      {
-        displayName: 'Agregar Inmueble',
-        route: '/inmuebles/agregar-inmueble',
-        permission: Permiso.AGREGAR_CLIENTE,
       },
       {
         displayName: 'Lista Inmuebles',
         route: '/inmuebles',
         permission: Permiso.CONSULTA_CLIENTE,
-      },
-    ],
-  },
-  {
-    displayName: 'Arrendatarios',
-    iconName: 'building-store',
-    route: '/menu-level',
-    permission: [Permiso.CONSULTA_CLIENTE, Permiso.AGREGAR_CLIENTE],
-    children: [
-      {
-        displayName: 'Agregar Arrendatario',
-        route: '/arrendatarios/agregar-arrendatario',
-        permission: Permiso.AGREGAR_CLIENTE,
       },
       {
         displayName: 'Lista Arrendatarios',

@@ -58,6 +58,8 @@ interface VistaContratoLocalModal {
 interface ServicioDetalle {
   concepto: string;
   contrato: string;
+  fechaPago: string;
+  fechaLimitePago: string;
 }
 
 /** Documento en la sección Documentos (demo / futura API). */
@@ -67,9 +69,10 @@ interface MonitoreoDocumentoArchivo {
   url: string;
 }
 
-interface MonitoreoDocumentoGrupo {
-  grupo: string;
-  archivos: MonitoreoDocumentoArchivo[];
+/** Fila de expediente en detalle de inmueble (mismas categorías que el formulario de alta). */
+interface MonitoreoExpedienteDoc {
+  etiqueta: string;
+  archivo: MonitoreoDocumentoArchivo;
 }
 
 type PagoEstatus = 'Pagado' | 'Pendiente' | 'Cancelado';
@@ -78,6 +81,7 @@ interface PagoRow {
   id: number;
   concepto: string;
   fechaPago: string;
+  fechaLimitePago: string;
   monto: number;
   metodo: string;
   estatus: PagoEstatus;
@@ -153,15 +157,83 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
     'https://images.unsplash.com/photo-1483366774565-c783b9f70e2c?auto=format&fit=crop&w=1200&q=80',
   ];
-  readonly documentos: MonitoreoDocumentoGrupo[] = [
+  /** Nombre mostrado en vista Local (contrato); independiente del expediente del inmueble. */
+  readonly nombreArchivoContratoLocalDemo = 'Contrato_local_corporativo.pdf';
+
+  /**
+   * Expediente digital alineado con «Documentos e imágenes» del formulario de inmuebles.
+   * Demo: cada rubro con archivo (URLs locales / PDF demo).
+   */
+  readonly expedienteDocumentosInmueble: MonitoreoExpedienteDoc[] = [
     {
-      grupo: 'Escrituras',
-      archivos: [
-        {
-          nombre: 'Contrato_inmobiliario_BHV.pdf',
-          url: environment.documentoPdfDemoPath,
-        },
-      ],
+      etiqueta: 'Escritura del inmueble (PDF)',
+      archivo: {
+        nombre: 'Escritura_inmueble_BHV.pdf',
+        url: environment.documentoPdfDemoPath,
+      },
+    },
+    {
+      etiqueta: 'Licencia / uso de suelo',
+      archivo: {
+        nombre: 'Licencia_uso_suelo_2026.jpg',
+        url: '/assets/images/logos/markerInstalacion.png',
+      },
+    },
+    {
+      etiqueta: 'Fachada',
+      archivo: {
+        nombre: 'Fachada_principal.jpg',
+        url: '/assets/images/logos/marker_local.png',
+      },
+    },
+    {
+      etiqueta: 'Contrato de renta',
+      archivo: {
+        nombre: 'Contrato_renta_vigente.pdf',
+        url: environment.documentoPdfDemoPath,
+      },
+    },
+    {
+      etiqueta: 'Constancia de Situación Fiscal',
+      archivo: {
+        nombre: 'CSF_inmueble_sat.pdf',
+        url: environment.documentoPdfDemoPath,
+      },
+    },
+    {
+      etiqueta: 'Comprobante de Domicilio',
+      archivo: {
+        nombre: 'Comprobante_domicilio_fiscal.pdf',
+        url: environment.documentoPdfDemoPath,
+      },
+    },
+    {
+      etiqueta: 'Acta Constitutiva',
+      archivo: {
+        nombre: 'Acta_constitutiva_sociedad.pdf',
+        url: environment.documentoPdfDemoPath,
+      },
+    },
+    {
+      etiqueta: 'Constancia de situación fiscal del representante legal',
+      archivo: {
+        nombre: 'CSF_representante.pdf',
+        url: environment.documentoPdfDemoPath,
+      },
+    },
+    {
+      etiqueta: 'INE Representante Legal',
+      archivo: {
+        nombre: 'INE_representante_legal.pdf',
+        url: environment.documentoPdfDemoPath,
+      },
+    },
+    {
+      etiqueta: 'Imagen 1 (galería del inmueble)',
+      archivo: {
+        nombre: 'Galeria_interior_demo.jpg',
+        url: '/assets/images/logos/markerInstalacion.png',
+      },
     },
   ];
   private readonly referenciasServicioBase: Record<string, string> = {
@@ -186,14 +258,33 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     { nombrePensionado: 'Luis Ramírez', numeroTarjeta: 'TAR-1108', arrendatario: 'Santory' },
   ];
   pagosData: PagoRow[] = [
-    { id: 1, concepto: 'Mantenimiento', fechaPago: '2026-04-02', monto: 12850.5, metodo: 'Transferencia', estatus: 'Pagado' },
-    { id: 2, concepto: 'Vigilancia', fechaPago: '2026-04-06', monto: 7600, metodo: 'Tarjeta', estatus: 'Pagado' },
-    { id: 3, concepto: 'Limpieza', fechaPago: '2026-04-10', monto: 5400, metodo: 'Transferencia', estatus: 'Pendiente' },
-  ];
-  readonly vigenciasData = [
-    { documento: 'Contrato de Arrendamiento', fechaInicio: '2025-01-01', fechaFin: '2027-01-01', diasRestantes: 266, estatus: 'Vigente' },
-    { documento: 'Póliza de Seguro', fechaInicio: '2025-07-15', fechaFin: '2026-07-15', diasRestantes: 96, estatus: 'Vigente' },
-    { documento: 'Licencia de Funcionamiento', fechaInicio: '2024-09-10', fechaFin: '2026-09-10', diasRestantes: 153, estatus: 'Por vencer' },
+    {
+      id: 1,
+      concepto: 'Mantenimiento',
+      fechaPago: '2026-04-02',
+      fechaLimitePago: '2026-04-05',
+      monto: 12850.5,
+      metodo: 'Transferencia',
+      estatus: 'Pagado',
+    },
+    {
+      id: 2,
+      concepto: 'Vigilancia',
+      fechaPago: '2026-04-06',
+      fechaLimitePago: '2026-04-08',
+      monto: 7600,
+      metodo: 'Tarjeta',
+      estatus: 'Pagado',
+    },
+    {
+      id: 3,
+      concepto: 'Limpieza',
+      fechaPago: '2026-04-10',
+      fechaLimitePago: '2026-04-12',
+      monto: 5400,
+      metodo: 'Transferencia',
+      estatus: 'Pendiente',
+    },
   ];
 
   numeroSerie: string = '';
@@ -295,10 +386,21 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     const idn = idRaw != null && String(idRaw).trim() !== '' ? Number(idRaw) : NaN;
     this.idContratoQuery =
       Number.isFinite(idn) && idn > 0 ? Math.floor(idn) : null;
+    this.refrescarServiciosDataSource();
     this.cdr.markForCheck();
   }
 
-  get serviciosVista(): ServicioDetalle[] {
+  /**
+   * Referencia estable para `dx-data-grid` (un getter que devuelve un array nuevo
+   * en cada CD rompe el render de DevExtreme).
+   */
+  serviciosDataSource: ServicioDetalle[] = [];
+
+  private refrescarServiciosDataSource(): void {
+    this.serviciosDataSource = this.buildServiciosLista();
+  }
+
+  private buildServiciosLista(): ServicioDetalle[] {
     const comunes = [
       'Agua',
       'Luz',
@@ -314,14 +416,56 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
           ? [...comunes, 'Renta', 'Mantenimiento']
           : [...comunes, 'Predio'];
 
-    return conceptos.map((concepto) => ({
-      concepto,
-      contrato: this.referenciasServicioBase[concepto] ?? 'N/D',
-    }));
+    const ciclos: { fechaPago: string; fechaLimitePago: string }[] = [
+      { fechaPago: '2026-01-08', fechaLimitePago: '2026-01-15' },
+      { fechaPago: '2026-02-03', fechaLimitePago: '2026-02-10' },
+      { fechaPago: '2026-02-20', fechaLimitePago: '2026-02-28' },
+      { fechaPago: '2026-03-05', fechaLimitePago: '2026-03-12' },
+      { fechaPago: '2026-03-18', fechaLimitePago: '2026-03-25' },
+      { fechaPago: '2026-04-01', fechaLimitePago: '2026-04-08' },
+      { fechaPago: '2026-04-14', fechaLimitePago: '2026-04-21' },
+      { fechaPago: '2026-04-22', fechaLimitePago: '2026-04-29' },
+    ];
+
+    return conceptos.map((concepto, i) => {
+      const f = ciclos[i % ciclos.length];
+      return {
+        concepto,
+        contrato: this.referenciasServicioBase[concepto] ?? 'N/D',
+        fechaPago: f.fechaPago,
+        fechaLimitePago: f.fechaLimitePago,
+      };
+    });
+  }
+
+  verComprobanteImagenPago(_row: PagoRow): void {}
+
+  verComprobanteImagenServicio(_row: ServicioDetalle): void {}
+
+  /** Clases de etiqueta para la columna Estatus del grid de pagos. */
+  clasesEstatusPago(estatus: unknown): Record<string, boolean> {
+    const e = String(estatus ?? '') as PagoEstatus;
+    return {
+      'mono-pago-estatus': true,
+      'mono-pago-estatus--pagado': e === 'Pagado',
+      'mono-pago-estatus--pendiente': e === 'Pendiente',
+      'mono-pago-estatus--cancelado': e === 'Cancelado',
+    };
+  }
+
+  private fechaIsoMasDias(isoDate: string, dias: number): string {
+    const s = String(isoDate ?? '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+    const d = new Date(`${s}T12:00:00`);
+    d.setDate(d.getDate() + dias);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   get nombreArchivoContratoLocal(): string {
-    const nombre = this.documentos[0]?.archivos?.[0]?.nombre?.trim() ?? '';
+    const nombre = this.nombreArchivoContratoLocalDemo.trim();
     return nombre ? nombre : 'Sin archivo';
   }
 
@@ -872,10 +1016,12 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
 
     const nextId =
       this.pagosData.reduce((max, r) => Math.max(max, r.id), 0) + 1;
+    const fechaPagoStr = String(v.fechaPago ?? '').trim();
     const nuevo: PagoRow = {
       id: nextId,
       concepto: String(v.concepto ?? '').trim(),
-      fechaPago: String(v.fechaPago ?? '').trim(),
+      fechaPago: fechaPagoStr,
+      fechaLimitePago: this.fechaIsoMasDias(fechaPagoStr, 10),
       monto: montoN,
       metodo: String(v.metodo ?? '').trim(),
       estatus: (v.estatus ?? 'Pendiente') as PagoEstatus,

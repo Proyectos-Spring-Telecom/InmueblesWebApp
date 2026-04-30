@@ -51,15 +51,22 @@
       class="mono-docs mt-1 mt-lg-2"
       aria-label="Contrato"
     >
-      <header class="mono-docs__header">
-        <h5 class="m-0">Contrato</h5>
+      <header class="mono-docs__header mono-docs__header--expediente mono-docs__header--local-contrato">
+        <div class="mono-docs__header-text">
+          <h5 class="m-0 mono-docs__title-main">Documento</h5>
+        </div>
       </header>
       <div class="mono-docs__content">
-        <article class="mono-docs__panel mono-contrato-local-panel">
+        <article class="mono-docs__panel mono-docs__panel--expediente mono-contrato-local-panel">
           <div class="mono-contrato-local-panel__row">
-            <div class="mono-contrato-local-panel__file">
-              <span class="mono-contrato-local-panel__label">Archivo</span>
-              <p class="mono-contrato-local-panel__name m-0">{{ nombreArchivoContratoLocal }}</p>
+            <div class="mono-docs__row-main mono-docs__row-main--expediente mono-contrato-local-panel__main">
+              <div class="mono-docs__label-block">
+                <span class="mono-docs__doc-label">Contrato</span>
+                <span class="mono-docs__file-inline mono-docs__file-inline--block">
+                  <mat-icon class="mono-docs__file-icon" aria-hidden="true">description</mat-icon>
+                  <span class="mono-docs__file-name">{{ nombreArchivoContratoLocal }}</span>
+                </span>
+              </div>
             </div>
             <button
               type="button"
@@ -78,35 +85,47 @@
     <section
       *ngIf="vistaEntidad !== 'local'"
       class="mono-docs mt-1 mt-lg-2"
-      aria-label="Sección Documentos"
+      aria-label="Documentos e imágenes del inmueble"
     >
-      <header class="mono-docs__header">
-        <h5 class="m-0">Documentos</h5>
+      <header class="mono-docs__header mono-docs__header--expediente">
+        <div class="mono-docs__header-text">
+          <span class="mono-docs__eyebrow">Expediente</span>
+          <h5 class="m-0 mono-docs__title-main">Documentos e imágenes</h5>
+          <p class="mono-docs__lede m-0">
+            Misma checklist que en el formulario de inmuebles: escritura, licencias, fachada, contratos y constancias.
+          </p>
+        </div>
+        <span class="mono-docs__header-pill" aria-hidden="true">
+          <mat-icon>folder_open</mat-icon>
+          <span>{{ expedienteDocumentosInmueble.length }} rubros</span>
+        </span>
       </header>
 
       <div class="mono-docs__content">
-        <article class="mono-docs__panel" *ngFor="let doc of documentos">
+        <article class="mono-docs__panel mono-docs__panel--expediente">
           <ul class="mono-docs__list mono-docs__list--stacked">
-            <li class="mono-docs__row" *ngFor="let archivo of doc.archivos">
-              <div class="mono-docs__row-main">
-                <span class="mono-docs__chip">{{ doc.grupo }}</span>
-                <span class="mono-docs__file-inline">
-                  <mat-icon class="mono-docs__file-icon" aria-hidden="true">description</mat-icon>
-                  <span class="mono-docs__file-name">{{ archivo.nombre }}</span>
-                </span>
+            <li class="mono-docs__row mono-docs__row--expediente" *ngFor="let fila of expedienteDocumentosInmueble">
+              <div class="mono-docs__row-main mono-docs__row-main--expediente">
+                <div class="mono-docs__label-block">
+                  <span class="mono-docs__doc-label">{{ fila.etiqueta }}</span>
+                  <span class="mono-docs__file-inline mono-docs__file-inline--block">
+                    <mat-icon class="mono-docs__file-icon" aria-hidden="true">description</mat-icon>
+                    <span class="mono-docs__file-name">{{ fila.archivo.nombre }}</span>
+                  </span>
+                </div>
               </div>
               <div class="mono-docs__row-actions">
                 <button
                   type="button"
                   class="mono-docs__action-btn mono-docs__action-btn--download"
-                  (click)="descargarDocumento(archivo, $event)"
+                  (click)="descargarDocumento(fila.archivo, $event)"
                 >
                   <mat-icon aria-hidden="true">download</mat-icon>
                   Descargar
                 </button>
                 <a
                   class="mono-docs__action-btn mono-docs__action-btn--view"
-                  [href]="archivo.url"
+                  [href]="fila.archivo.url"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -127,25 +146,99 @@
           <mat-icon aria-hidden="true">description</mat-icon>
         </header>
         <div class="mono-block__body">
-          <div class="mono-block__panel">
-            <table class="table table-borderless mono-table m-0">
-              <thead>
-                <tr>
-                  <th>Concepto de Servicio</th>
-                  <th>Número de Contrato</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let servicio of serviciosVista">
-                  <td>{{ servicio.concepto }}</td>
-                  <td>{{ servicio.contrato }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="mono-block__panel mono-block__panel--servicios-dx">
+            <dx-data-grid
+              [dataSource]="serviciosDataSource"
+              [columnAutoWidth]="true"
+              [showBorders]="false"
+              [rowAlternationEnabled]="true"
+              [hoverStateEnabled]="true"
+              [paging]="{ enabled: true, pageSize: 8 }"
+            >
+              <dxo-search-panel [visible]="true" [width]="220" placeholder="Buscar servicio"></dxo-search-panel>
+              <dxi-column
+                caption="Acciones"
+                cellTemplate="monoServicioAcciones"
+                alignment="center"
+                [width]="110"
+              ></dxi-column>
+              <dxi-column dataField="concepto" caption="Concepto de servicio" alignment="center"></dxi-column>
+              <dxi-column dataField="contrato" caption="Número de contrato" alignment="center"></dxi-column>
+              <dxi-column dataField="fechaPago" caption="Fecha de pago" dataType="date" alignment="center"></dxi-column>
+              <dxi-column dataField="fechaLimitePago" caption="Fecha límite de pago" dataType="date" alignment="center"></dxi-column>
+              <div *dxTemplate="let row of 'monoServicioAcciones'" class="d-flex justify-content-center">
+                <button
+                  type="button"
+                  class="mono-grid-row-action-btn mono-grid-row-action-btn--icon"
+                  (click)="verComprobanteImagenServicio(row.data)"
+                  aria-label="Ver comprobante"
+                >
+                  <mat-icon aria-hidden="true">image</mat-icon>
+                </button>
+              </div>
+            </dx-data-grid>
           </div>
         </div>
       </article>
+    </section>
 
+    <section class="row g-3 g-lg-4 mt-1">
+      <div class="col-12">
+        <article class="mono-grid-card h-100">
+          <header class="mono-grid-card__head mono-grid-card__head--actions">
+            <h5 class="m-0">Pagos</h5>
+            <button type="button" class="mono-grid-action-btn" (click)="abrirModalPago()">
+              <mat-icon aria-hidden="true">add</mat-icon>
+              <span>Agregar Pago</span>
+            </button>
+          </header>
+          <div class="mono-grid-card__body">
+            <dx-data-grid
+              [dataSource]="pagosData"
+              [columnAutoWidth]="true"
+              [showBorders]="false"
+              [rowAlternationEnabled]="true"
+              [hoverStateEnabled]="true"
+              [paging]="{ enabled: true, pageSize: 8 }"
+            >
+              <dxo-search-panel [visible]="true" [width]="220" placeholder="Buscar pago"></dxo-search-panel>
+              <dxi-column
+                caption="Acciones"
+                cellTemplate="monoPagoAcciones"
+                alignment="center"
+                [width]="110"
+              ></dxi-column>
+              <dxi-column dataField="concepto" caption="Concepto" alignment="center"></dxi-column>
+              <dxi-column dataField="fechaPago" caption="Fecha de pago" dataType="date" alignment="center"></dxi-column>
+              <dxi-column dataField="fechaLimitePago" caption="Fecha límite de pago" dataType="date" alignment="center"></dxi-column>
+              <dxi-column dataField="monto" caption="Monto" dataType="number" format="currency" alignment="center"></dxi-column>
+              <dxi-column dataField="metodo" caption="Método" alignment="center"></dxi-column>
+              <dxi-column
+                dataField="estatus"
+                caption="Estatus"
+                alignment="center"
+                cellTemplate="monoPagoEstatusTpl"
+              ></dxi-column>
+              <div *dxTemplate="let cell of 'monoPagoEstatusTpl'" class="d-flex justify-content-center">
+                <span [ngClass]="clasesEstatusPago(cell.value)">{{ cell.value }}</span>
+              </div>
+              <div *dxTemplate="let row of 'monoPagoAcciones'" class="d-flex justify-content-center">
+                <button
+                  type="button"
+                  class="mono-grid-row-action-btn mono-grid-row-action-btn--icon"
+                  (click)="verComprobanteImagenPago(row.data)"
+                  aria-label="Ver comprobante"
+                >
+                  <mat-icon aria-hidden="true">image</mat-icon>
+                </button>
+              </div>
+            </dx-data-grid>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="mono-block mt-3 mt-lg-4" aria-label="Zonas">
       <article class="mono-block__card" *ngIf="vistaEntidad !== 'local'">
         <header class="mono-block__head d-flex align-items-center justify-content-between flex-wrap gap-2">
           <h5 class="m-0">Zonas</h5>
@@ -164,91 +257,6 @@
           </div>
         </div>
       </article>
-    </section>
-
-    <section class="mono-block mt-3 mt-lg-4" aria-label="Estacionamientos" *ngIf="vistaEntidad === 'inmueble'">
-      <article class="mono-block__card">
-        <header class="mono-block__head d-flex align-items-center justify-content-between">
-          <h5 class="m-0">Estacionamientos</h5>
-          <mat-icon aria-hidden="true">local_parking</mat-icon>
-        </header>
-        <div class="mono-block__body">
-          <div class="mono-block__panel">
-            <table class="table table-borderless mono-table m-0">
-              <thead>
-                <tr>
-                  <th>Nombre del pensionado</th>
-                  <th>Número de tarjeta</th>
-                  <th>Arrendatario</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let est of estacionamientosInmueble">
-                  <td>{{ est.nombrePensionado }}</td>
-                  <td>{{ est.numeroTarjeta }}</td>
-                  <td>{{ est.arrendatario }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <section class="row g-3 g-lg-4 mt-1">
-      <div class="col-12 col-xl-6">
-        <article class="mono-grid-card h-100">
-          <header class="mono-grid-card__head mono-grid-card__head--actions">
-            <h5 class="m-0">Pagos</h5>
-            <button type="button" class="mono-grid-action-btn" (click)="abrirModalPago()">
-              <mat-icon aria-hidden="true">add</mat-icon>
-              <span>Agregar Pago</span>
-            </button>
-          </header>
-          <div class="mono-grid-card__body">
-            <dx-data-grid
-              [dataSource]="pagosData"
-              [columnAutoWidth]="true"
-              [showBorders]="false"
-              [rowAlternationEnabled]="true"
-              [hoverStateEnabled]="true"
-              [paging]="{ enabled: true, pageSize: 6 }"
-            >
-              <dxo-search-panel [visible]="true" [width]="220" placeholder="Buscar pago"></dxo-search-panel>
-              <dxi-column dataField="concepto" caption="Concepto"></dxi-column>
-              <dxi-column dataField="fechaPago" caption="Fecha de pago" dataType="date"></dxi-column>
-              <dxi-column dataField="monto" caption="Monto" dataType="number" format="currency"></dxi-column>
-              <dxi-column dataField="metodo" caption="Método"></dxi-column>
-              <dxi-column dataField="estatus" caption="Estatus"></dxi-column>
-            </dx-data-grid>
-          </div>
-        </article>
-      </div>
-
-      <div class="col-12 col-xl-6">
-        <article class="mono-grid-card h-100">
-          <header class="mono-grid-card__head">
-            <h5 class="m-0">Vigencias</h5>
-          </header>
-          <div class="mono-grid-card__body">
-            <dx-data-grid
-              [dataSource]="vigenciasData"
-              [columnAutoWidth]="true"
-              [showBorders]="false"
-              [rowAlternationEnabled]="true"
-              [hoverStateEnabled]="true"
-              [paging]="{ enabled: true, pageSize: 6 }"
-            >
-              <dxo-search-panel [visible]="true" [width]="220" placeholder="Buscar vigencia"></dxo-search-panel>
-              <dxi-column dataField="documento" caption="Documento"></dxi-column>
-              <dxi-column dataField="fechaInicio" caption="Inicio" dataType="date"></dxi-column>
-              <dxi-column dataField="fechaFin" caption="Fin" dataType="date"></dxi-column>
-              <dxi-column dataField="diasRestantes" caption="Días restantes" dataType="number"></dxi-column>
-              <dxi-column dataField="estatus" caption="Estatus"></dxi-column>
-            </dx-data-grid>
-          </div>
-        </article>
-      </div>
     </section>
 
     <section class="mt-3 mt-lg-4" aria-label="Multimedia">

@@ -17,11 +17,13 @@ export class AgregarInmuebleComponent implements OnInit {
   public submitButton: string = 'Guardar';
   public inmuebleForm!: FormGroup;
   public idInmueble!: number;
+  public mostrarCamposRenta = true;
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
   contratoRentaNombre: string | null = null;
   constanciaFiscalNombre: string | null = null;
+  constanciaRepLegalNombre: string | null = null;
   comprobanteDomicilioNombre: string | null = null;
   actaConstitutivaNombre: string | null = null;
   ineRepresentanteNombre: string | null = null;
@@ -38,6 +40,7 @@ export class AgregarInmuebleComponent implements OnInit {
   @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
   @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('constanciaFiscalInput') constanciaFiscalInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('constanciaRepLegalInput') constanciaRepLegalInput?: ElementRef<HTMLInputElement>;
   @ViewChild('comprobanteDomicilioInput') comprobanteDomicilioInput?: ElementRef<HTMLInputElement>;
   @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
@@ -50,6 +53,7 @@ export class AgregarInmuebleComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.initEstatusInmuebleLogic();
     this.activatedRoute.params.subscribe((params) => {
       this.idInmueble = Number(params['idInmueble']);
       if (this.idInmueble) {
@@ -63,13 +67,13 @@ export class AgregarInmuebleComponent implements OnInit {
   private initForm(): void {
     this.inmuebleForm = this.fb.group({
       nombreInmueble: ['', Validators.required],
-      rentaMxn: ['', Validators.required],
+      rentaMxn: [''],
       direccionInmueble: ['', Validators.required],
       vigenciaAnios: ['', Validators.required],
       fechaInicio: ['', Validators.required],
       fechaFin: ['', Validators.required],
       arrendador: ['', Validators.required],
-      tiempoRentaAnios: ['', Validators.required],
+      tiempoRentaAnios: [''],
       estatusInmueble: ['', Validators.required],
       nombreRepresentanteLegal: ['', Validators.required],
       telefonoRepresentanteLegal: ['', Validators.required],
@@ -79,6 +83,7 @@ export class AgregarInmuebleComponent implements OnInit {
       documentoPlano: [null],
       documentoContratoRenta: [null],
       documentoConstanciaFiscal: [null],
+      constanciaSituacionFiscalRepresentanteLegal: [null],
       documentoComprobanteDomicilio: [null],
       documentoActaConstitutiva: [null],
       ineRepresentanteLegal: [null],
@@ -87,12 +92,42 @@ export class AgregarInmuebleComponent implements OnInit {
       zonas: this.fb.array([this.crearZonaFormGroup()]),
       estacionamientos: this.fb.array([this.crearEstacionamientoFormGroup()]),
       pagos: this.fb.array([this.crearPagoFormGroup()]),
-      vigencias: this.fb.array([this.crearVigenciaFormGroup()]),
       socios: this.fb.array([this.crearSocioFormGroup()]),
       locales: this.fb.array([this.crearLocalFormGroup()]),
       lat: [''],
       lng: [''],
     });
+  }
+
+  private initEstatusInmuebleLogic(): void {
+    const estatusCtrl = this.inmuebleForm.get('estatusInmueble');
+    if (!estatusCtrl) return;
+
+    const apply = (raw: unknown): void => {
+      const v = String(raw ?? '').toUpperCase().trim();
+      const rentado = v === 'RENTADO';
+      this.mostrarCamposRenta = rentado;
+
+      const rentaCtrl = this.inmuebleForm.get('rentaMxn');
+      const tiempoCtrl = this.inmuebleForm.get('tiempoRentaAnios');
+      if (!rentaCtrl || !tiempoCtrl) return;
+
+      if (rentado) {
+        rentaCtrl.setValidators([Validators.required]);
+        tiempoCtrl.setValidators([Validators.required]);
+      } else {
+        rentaCtrl.clearValidators();
+        tiempoCtrl.clearValidators();
+        rentaCtrl.setValue('', { emitEvent: false });
+        tiempoCtrl.setValue('', { emitEvent: false });
+      }
+
+      rentaCtrl.updateValueAndValidity({ emitEvent: false });
+      tiempoCtrl.updateValueAndValidity({ emitEvent: false });
+    };
+
+    apply(estatusCtrl.value);
+    estatusCtrl.valueChanges.subscribe((value) => apply(value));
   }
 
   private crearSocioFormGroup(): FormGroup {
@@ -117,9 +152,13 @@ export class AgregarInmuebleComponent implements OnInit {
 
   private crearServicioFormGroup(): FormGroup {
     return this.fb.group({
-      servicioAguaContrato: [''],
-      servicioLuzContrato: [''],
-      servicioMantenimientoContrato: [''],
+      servicioTipoContrato: [''],
+      servicioTipoContratoOtro: [''],
+      servicioNumeroContrato: [''],
+      servicioFechaPago: [''],
+      servicioUltimoDiaPago: [''],
+      servicioComprobantePago: [null],
+      servicioComprobantePagoNombre: [''],
     });
   }
 
@@ -144,14 +183,6 @@ export class AgregarInmuebleComponent implements OnInit {
       pagoConcepto: [''],
       pagoFecha: [''],
       pagoMonto: [''],
-    });
-  }
-
-  private crearVigenciaFormGroup(): FormGroup {
-    return this.fb.group({
-      vigenciaDocumento: [''],
-      vigenciaDiasRestantes: [''],
-      vigenciaEstatus: [''],
     });
   }
 
@@ -220,10 +251,6 @@ export class AgregarInmuebleComponent implements OnInit {
     return this.inmuebleForm.get('pagos') as FormArray;
   }
 
-  get vigenciasFormArray(): FormArray {
-    return this.inmuebleForm.get('vigencias') as FormArray;
-  }
-
   get sociosFormArray(): FormArray {
     return this.inmuebleForm.get('socios') as FormArray;
   }
@@ -273,6 +300,28 @@ export class AgregarInmuebleComponent implements OnInit {
     this.serviciosFormArray.push(this.crearServicioFormGroup());
   }
 
+  esServicioTipoOtro(index: number): boolean {
+    const group = this.serviciosFormArray.at(index) as FormGroup | null;
+    const raw = group?.get('servicioTipoContrato')?.value;
+    return String(raw ?? '').toUpperCase().trim() === 'OTRO';
+  }
+
+  onServicioTipoContratoChange(index: number): void {
+    const group = this.serviciosFormArray.at(index) as FormGroup | null;
+    if (!group) return;
+    if (this.esServicioTipoOtro(index)) return;
+    group.patchValue({ servicioTipoContratoOtro: '' }, { emitEvent: false });
+  }
+
+  resetServicioTipoContrato(index: number): void {
+    const group = this.serviciosFormArray.at(index) as FormGroup | null;
+    if (!group) return;
+    group.patchValue(
+      { servicioTipoContrato: '', servicioTipoContratoOtro: '' },
+      { emitEvent: false },
+    );
+  }
+
   eliminarServicio(index: number): void {
     if (this.serviciosFormArray.length === 1) return;
     this.serviciosFormArray.removeAt(index);
@@ -305,13 +354,15 @@ export class AgregarInmuebleComponent implements OnInit {
     this.pagosFormArray.removeAt(index);
   }
 
-  agregarVigencia(): void {
-    this.vigenciasFormArray.push(this.crearVigenciaFormGroup());
-  }
-
-  eliminarVigencia(index: number): void {
-    if (this.vigenciasFormArray.length === 1) return;
-    this.vigenciasFormArray.removeAt(index);
+  onServicioPagoFileSelected(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    const group = this.serviciosFormArray.at(index) as FormGroup;
+    group.patchValue({
+      servicioComprobantePago: file,
+      servicioComprobantePagoNombre: file?.name ?? '',
+    });
+    if (input) input.value = '';
   }
 
   agregarFotoGaleria(): void {
@@ -344,6 +395,7 @@ export class AgregarInmuebleComponent implements OnInit {
       | 'plano'
       | 'contratoRenta'
       | 'constanciaFiscal'
+      | 'constanciaRepLegal'
       | 'comprobanteDomicilio'
       | 'actaConstitutiva'
       | 'ineRepresentante',
@@ -354,6 +406,7 @@ export class AgregarInmuebleComponent implements OnInit {
       plano: this.imagenPlanoInput,
       contratoRenta: this.contratoRentaInput,
       constanciaFiscal: this.constanciaFiscalInput,
+      constanciaRepLegal: this.constanciaRepLegalInput,
       comprobanteDomicilio: this.comprobanteDomicilioInput,
       actaConstitutiva: this.actaConstitutivaInput,
       ineRepresentante: this.ineRepresentanteInput,
@@ -372,6 +425,7 @@ export class AgregarInmuebleComponent implements OnInit {
     if (controlName === 'documentoPlano') this.imagenPlanoNombre = name;
     if (controlName === 'documentoContratoRenta') this.contratoRentaNombre = name;
     if (controlName === 'documentoConstanciaFiscal') this.constanciaFiscalNombre = name;
+    if (controlName === 'constanciaSituacionFiscalRepresentanteLegal') this.constanciaRepLegalNombre = name;
     if (controlName === 'documentoComprobanteDomicilio') this.comprobanteDomicilioNombre = name;
     if (controlName === 'documentoActaConstitutiva') this.actaConstitutivaNombre = name;
     if (controlName === 'ineRepresentanteLegal') this.ineRepresentanteNombre = name;

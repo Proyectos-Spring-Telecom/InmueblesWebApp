@@ -1,26 +1,131 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
   <header class="perm-head perm-head--left" role="region" aria-label="Sección: Inmuebles">
     <div class="perm-head__icon" aria-hidden="true"><mat-icon>apartment</mat-icon></div>
-    <div class="perm-head__text"><span class="eyebrow">Sección</span><h2>{{ title }}</h2></div>
-    <nav class="perm-head__crumbs" aria-label="Ruta"><span class="crumb">Operación</span><span class="sep">/</span><span class="crumb active">Inmuebles</span></nav>
+    <div class="perm-head__text"><span class="eyebrow">Sección</span>
+      <h2>{{ title }}</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta"><span class="crumb">Operación</span><span class="sep">/</span><span
+        class="crumb active">Inmuebles</span></nav>
   </header>
   <div class="surface">
     <section class="perm-form-nc container-fluid py-2">
       <form [formGroup]="inmuebleForm" class="perm-form-body">
         <div class="row g-2 inmueble-main-grid">
-          <div class="col-12 col-md-3 col-xl-3"><label for="nombreInmueble" class="form-label perm-label">Inmueble</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>apartment</mat-icon></span><div class="form-floating flex-grow-1"><input id="nombreInmueble" type="text" class="form-control" formControlName="nombreInmueble" placeholder="Nombre del inmueble" /><label for="nombreInmueble">Nombre del inmueble</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="rentaMxn" class="form-label perm-label">Renta (MXN)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span><div class="form-floating flex-grow-1"><input id="rentaMxn" type="number" class="form-control" formControlName="rentaMxn" placeholder="Monto de renta" /><label for="rentaMxn">Monto de renta</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="direccionInmueble" class="form-label perm-label">Dirección fiscal</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>location_on</mat-icon></span><div class="form-floating flex-grow-1"><input id="direccionInmueble" type="text" class="form-control" formControlName="direccionInmueble" placeholder="Dirección fiscal" /><label for="direccionInmueble">Dirección fiscal</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="estatusInmueble" class="form-label perm-label">Estatus del inmueble</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span><div class="form-floating flex-grow-1"><input id="estatusInmueble" type="text" class="form-control" formControlName="estatusInmueble" placeholder="Ej.: RENTADO / PROPIO" /><label for="estatusInmueble">Ej.: RENTADO / PROPIO</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="vigenciaAnios" class="form-label perm-label">Vigencia (años)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span><div class="form-floating flex-grow-1"><input id="vigenciaAnios" type="number" class="form-control" formControlName="vigenciaAnios" placeholder="Años de vigencia" /><label for="vigenciaAnios">Años de vigencia</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="fechaInicio" class="form-label perm-label">Inicio</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span><div class="form-floating flex-grow-1"><input id="fechaInicio" type="date" class="form-control" formControlName="fechaInicio" /><label for="fechaInicio">Fecha de inicio</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="fechaFin" class="form-label perm-label">Fin</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span><div class="form-floating flex-grow-1"><input id="fechaFin" type="date" class="form-control" formControlName="fechaFin" /><label for="fechaFin">Fecha de fin</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="arrendador" class="form-label perm-label">Arrendador</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span><div class="form-floating flex-grow-1"><input id="arrendador" type="text" class="form-control" formControlName="arrendador" placeholder="Arrendador" /><label for="arrendador">Arrendador</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="tiempoRentaAnios" class="form-label perm-label">Tiempo de renta (años)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span><div class="form-floating flex-grow-1"><input id="tiempoRentaAnios" type="number" class="form-control" formControlName="tiempoRentaAnios" placeholder="Tiempo de renta" /><label for="tiempoRentaAnios">Tiempo de renta</label></div></div></div>
-          <div class="col-12 col-md-4 col-xl-4"><label for="nombreRepresentanteLegal" class="form-label perm-label">Nombre Representante Legal</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon aria-hidden="true">supervisor_account</mat-icon></span><div class="form-floating flex-grow-1"><input id="nombreRepresentanteLegal" type="text" class="form-control" formControlName="nombreRepresentanteLegal" placeholder="Ej.: María López" /><label for="nombreRepresentanteLegal">Ej.: María López</label></div></div></div>
-          <div class="col-12 col-md-4 col-xl-4"><label for="telefonoRepresentanteLegal" class="form-label perm-label">Teléfono Representante Legal</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon aria-hidden="true">call</mat-icon></span><div class="form-floating flex-grow-1"><input id="telefonoRepresentanteLegal" type="text" maxlength="10" class="form-control" formControlName="telefonoRepresentanteLegal" placeholder="Ej.: 55 9876 5432" /><label for="telefonoRepresentanteLegal">Ej.: 55 9876 5432</label></div></div></div>
-          <div class="col-12 col-md-4 col-xl-4"><label for="correoRepresentanteLegal" class="form-label perm-label">Correo Representante Legal</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon aria-hidden="true">alternate_email</mat-icon></span><div class="form-floating flex-grow-1"><input id="correoRepresentanteLegal" type="email" class="form-control" formControlName="correoRepresentanteLegal" placeholder="Ej.: representante&#64;empresa.com" /><label for="correoRepresentanteLegal">Ej.: representante&#64;empresa.com</label></div></div></div>
-          <div class="col-12 col-md-3 col-xl-3" style="display:grid;"><label class="form-label perm-label">Ubicación del inmueble</label><button type="button" class="inmueble-geo-trigger" title="Seleccionar ubicación del inmueble" (click)="abrirModalMapa()"><i class="fa fa-map-marker"></i> Seleccionar ubicación</button></div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="nombreInmueble"
+              class="form-label perm-label">Inmueble</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>apartment</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="nombreInmueble" type="text" class="form-control"
+                  formControlName="nombreInmueble" placeholder="Nombre del inmueble" /><label
+                  for="nombreInmueble">Nombre del inmueble</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3" *ngIf="mostrarCamposRenta"><label for="rentaMxn"
+              class="form-label perm-label">Renta (MXN)</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="rentaMxn" type="number" class="form-control"
+                  formControlName="rentaMxn" placeholder="Monto de renta" /><label for="rentaMxn">Monto de renta</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="direccionInmueble" class="form-label perm-label">Dirección
+              fiscal</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>location_on</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="direccionInmueble" type="text" class="form-control"
+                  formControlName="direccionInmueble" placeholder="Dirección fiscal" /><label
+                  for="direccionInmueble">Dirección fiscal</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="estatusInmueble" class="form-label perm-label">Estatus del
+              inmueble</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <select id="estatusInmueble" class="form-select" formControlName="estatusInmueble"
+                  aria-label="Estatus del inmueble">
+                  <option value="" disabled>Selecciona una opción</option>
+                  <option value="RENTADO">Rentado</option>
+                  <option value="PROPIO">Propio</option>
+                </select>
+                <label for="estatusInmueble">Estatus del inmueble</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="vigenciaAnios" class="form-label perm-label">Vigencia
+              (años)</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="vigenciaAnios" type="number" class="form-control"
+                  formControlName="vigenciaAnios" placeholder="Años de vigencia" /><label for="vigenciaAnios">Años de
+                  vigencia</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="fechaInicio" class="form-label perm-label">Inicio</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="fechaInicio" type="date" class="form-control"
+                  formControlName="fechaInicio" /><label for="fechaInicio">Fecha de inicio</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="fechaFin" class="form-label perm-label">Fin</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="fechaFin" type="date" class="form-control"
+                  formControlName="fechaFin" /><label for="fechaFin">Fecha de fin</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="arrendador" class="form-label perm-label">Arrendador</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="arrendador" type="text" class="form-control"
+                  formControlName="arrendador" placeholder="Arrendador" /><label for="arrendador">Arrendador</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3" *ngIf="mostrarCamposRenta"><label for="tiempoRentaAnios"
+              class="form-label perm-label">Tiempo de renta (años)</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="tiempoRentaAnios" type="number" class="form-control"
+                  formControlName="tiempoRentaAnios" placeholder="Tiempo de renta" /><label
+                  for="tiempoRentaAnios">Tiempo de renta</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="nombreRepresentanteLegal"
+              class="form-label perm-label">Nombre Representante Legal</label>
+            <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
+                  aria-hidden="true">supervisor_account</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="nombreRepresentanteLegal" type="text"
+                  class="form-control" formControlName="nombreRepresentanteLegal"
+                  placeholder="Ej.: María López" /><label for="nombreRepresentanteLegal">Ej.: María López</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="telefonoRepresentanteLegal"
+              class="form-label perm-label">Teléfono Representante Legal</label>
+            <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
+                  aria-hidden="true">call</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="telefonoRepresentanteLegal" type="text" maxlength="10"
+                  class="form-control" formControlName="telefonoRepresentanteLegal"
+                  placeholder="Ej.: 55 9876 5432" /><label for="telefonoRepresentanteLegal">Ej.: 55 9876 5432</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="correoRepresentanteLegal"
+              class="form-label perm-label">Correo Representante Legal</label>
+            <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
+                  aria-hidden="true">alternate_email</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="correoRepresentanteLegal" type="email"
+                  class="form-control" formControlName="correoRepresentanteLegal"
+                  placeholder="Ej.: representante&#64;empresa.com" /><label for="correoRepresentanteLegal">Ej.:
+                  representante&#64;empresa.com</label></div>
+            </div>
+          </div>
+          <!-- <div class="col-12 col-md-3 col-xl-3" style="display:grid;"><label class="form-label perm-label">Ubicación del
+              inmueble</label><button type="button" class="inmueble-geo-trigger"
+              title="Seleccionar ubicación del inmueble" (click)="abrirModalMapa()"><i class="fa fa-map-marker"></i>
+              Seleccionar ubicación</button></div> -->
 
           <div class="col-12 arrend-fa-section mt-5">
             <div class="arrend-fa-hero">
@@ -30,7 +135,8 @@
                   <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
                     <h6 class="arrend-fa-section-title m-0">Servicios</h6>
                   </div>
-                  <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary" (click)="agregarServicio()"><mat-icon>add</mat-icon> Agregar</button>
+                  <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
+                    (click)="agregarServicio()"><mat-icon>add</mat-icon> Agregar</button>
                 </div>
               </div>
             </div>
@@ -38,14 +144,103 @@
               <ng-container *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index" [formGroupName]="i">
                 <div class="col-12">
                   <div class="arrend-fa-item">
-                    <div class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div
+                      class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
                       <span class="arrend-fa-idx">Servicio {{ i + 1 }}</span>
-                      <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn" (click)="eliminarServicio(i)" *ngIf="serviciosFormArray.length >= 2"><mat-icon>delete_outline</mat-icon> Eliminar</button>
+                      <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn"
+                        (click)="eliminarServicio(i)"
+                        *ngIf="serviciosFormArray.length >= 2"><mat-icon>delete_outline</mat-icon> Eliminar</button>
                     </div>
                     <div class="row g-3">
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Contrato de agua</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>water_drop</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="servicioAguaContrato" placeholder="Número de contrato" /><label>Número de contrato</label></div></div></div>
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Contrato de luz</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>bolt</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="servicioLuzContrato" placeholder="Número de contrato" /><label>Número de contrato</label></div></div></div>
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Contrato de mantenimiento</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>build</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="servicioMantenimientoContrato" placeholder="Número de contrato" /><label>Número de contrato</label></div></div></div>
+                      <div class="col-12 col-md-4">
+                        <div class="srv-tipo-label-row">
+                          <label class="form-label perm-label">Tipo de contrato</label>
+                          <button type="button" class="srv-tipo-reset" *ngIf="esServicioTipoOtro(i)"
+                            (click)="resetServicioTipoContrato(i)" title="Volver a opciones"
+                            aria-label="Volver a opciones">
+                            <mat-icon>refresh</mat-icon>
+                          </button>
+                        </div>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>fact_check</mat-icon></span>
+                          <div class="form-floating flex-grow-1" *ngIf="!esServicioTipoOtro(i)">
+                            <select class="form-select" formControlName="servicioTipoContrato"
+                              aria-label="Tipo de contrato" (change)="onServicioTipoContratoChange(i)">
+                              <option value="" disabled>Selecciona una opción</option>
+                              <option value="AGUA">Agua</option>
+                              <option value="LUZ">Luz</option>
+                              <option value="MANTENIMIENTO">Mantenimiento</option>
+                              <option value="INTERNET">Internet</option>
+                              <option value="OTRO">Otro</option>
+                            </select>
+                            <label>Tipo de contrato</label>
+                          </div>
+                          <div class="form-floating flex-grow-1" *ngIf="esServicioTipoOtro(i)">
+                            <input type="text" class="form-control" formControlName="servicioTipoContratoOtro"
+                              placeholder="Escribe el tipo de contrato" />
+                            <label>Tipo de contrato</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label">Número de contrato</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>bolt</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input type="text" class="form-control"
+                              formControlName="servicioNumeroContrato" placeholder="Número de contrato" /><label>Número
+                              de
+                              contrato</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label">Fecha de pago</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
+                          <div class="form-floating flex-grow-1">
+                            <input type="date" class="form-control" formControlName="servicioFechaPago" />
+                            <label>Fecha de pago</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label">Último día de pago</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
+                          <div class="form-floating flex-grow-1">
+                            <input type="date" class="form-control" formControlName="servicioUltimoDiaPago" />
+                            <label>Último día de pago</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label d-block mb-2">Comprobante de pago</label>
+                        <div class="uploader-hero srv-pago-uploader">
+                          <div class="uploader srv-pago-uploader__card">
+                            <div class="uploader__glow"></div>
+                            <div class="uploader__body">
+                              <div class="srv-pago-uploader__row">
+                                <div class="srv-pago-uploader__left">
+                                  <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
+                                    <mat-icon>receipt</mat-icon>
+                                  </div>
+                                  <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
+                                    Selecciona un archivo
+                                  </button>
+                                </div>
+                                <span class="uploader__badge srv-pago-uploader__formats">PDF · PNG · JPG · JPEG</span>
+                              </div>
+                              <h6 class="uploader__title">Sube imagen</h6>
+                              <p class="uploader__subtitle">Arrastra y suelta o</p>
+                              <div class="uploader__status" *ngIf="srvCtrl.get('servicioComprobantePagoNombre')?.value">
+                                <div class="uploader__filename">{{ srvCtrl.get('servicioComprobantePagoNombre')?.value
+                                  }}</div>
+                              </div>
+                              <input #srvPagoInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg"
+                                class="uploader__input" (change)="onServicioPagoFileSelected($event, i)" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -61,7 +256,8 @@
                   <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
                     <h6 class="arrend-fa-section-title m-0">Zonas</h6>
                   </div>
-                  <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary" (click)="agregarZona()"><mat-icon>add</mat-icon> Agregar</button>
+                  <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
+                    (click)="agregarZona()"><mat-icon>add</mat-icon> Agregar</button>
                 </div>
               </div>
             </div>
@@ -69,14 +265,39 @@
               <ng-container *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index" [formGroupName]="i">
                 <div class="col-12">
                   <div class="arrend-fa-item">
-                    <div class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div
+                      class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
                       <span class="arrend-fa-idx">Zona {{ i + 1 }}</span>
-                      <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn" (click)="eliminarZona(i)" *ngIf="zonasFormArray.length >= 2"><mat-icon>delete_outline</mat-icon> Eliminar</button>
+                      <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn"
+                        (click)="eliminarZona(i)" *ngIf="zonasFormArray.length >= 2"><mat-icon>delete_outline</mat-icon>
+                        Eliminar</button>
                     </div>
                     <div class="row g-3">
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Zona principal</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>layers</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="zonaPrincipal" placeholder="Ej.: Planta baja corporativo" /><label>Ej.: Planta baja corporativo</label></div></div></div>
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Superficie de zona (m²)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="zonaSuperficieM2" placeholder="m² de la zona" /><label>m² de la zona</label></div></div></div>
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Superficie disponible predio (m²)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>crop_square</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="superficieDisponiblePredioM2" placeholder="m² disponibles" /><label>m² disponibles</label></div></div></div>
+                      <div class="col-12 col-md-4"><label class="form-label perm-label">Zona principal</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>layers</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input type="text" class="form-control"
+                              formControlName="zonaPrincipal" placeholder="Ej.: Planta baja corporativo" /><label>Ej.:
+                              Planta baja corporativo</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4"><label class="form-label perm-label">Superficie de zona (m²)</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input type="number" class="form-control"
+                              formControlName="zonaSuperficieM2" placeholder="m² de la zona" /><label>m² de la
+                              zona</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4"><label class="form-label perm-label">Superficie disponible predio
+                          (m²)</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>crop_square</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input type="number" class="form-control"
+                              formControlName="superficieDisponiblePredioM2" placeholder="m² disponibles" /><label>m²
+                              disponibles</label></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -84,69 +305,7 @@
             </div>
           </div>
 
-          <div class="col-12 arrend-fa-section mt-5">
-            <div class="arrend-fa-hero">
-              <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>local_parking</mat-icon></div>
-              <div class="arrend-fa-hero__body">
-                <div class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3">
-                  <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
-                    <h6 class="arrend-fa-section-title m-0">Estacionamientos</h6>
-                  </div>
-                  <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary" (click)="agregarEstacionamiento()"><mat-icon>add</mat-icon> Agregar</button>
-                </div>
-              </div>
-            </div>
-            <div class="row g-1 mt-0" formArrayName="estacionamientos">
-              <ng-container *ngFor="let estCtrl of estacionamientosFormArray.controls; let i = index" [formGroupName]="i">
-                <div class="col-12">
-                  <div class="arrend-fa-item">
-                    <div class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                      <span class="arrend-fa-idx">Estacionamiento {{ i + 1 }}</span>
-                      <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn" (click)="eliminarEstacionamiento(i)" *ngIf="estacionamientosFormArray.length >= 2"><mat-icon>delete_outline</mat-icon> Eliminar</button>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Nombre del pensionado</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="estacionamientoPensionado" placeholder="Nombre del pensionado" /><label>Nombre del pensionado</label></div></div></div>
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Número de tarjeta</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>credit_card</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="estacionamientoTarjeta" placeholder="Ej.: TAR-1001" /><label>Ej.: TAR-1001</label></div></div></div>
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Arrendatario (estacionamiento)</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>person</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="estacionamientoArrendatario" placeholder="Arrendatario relacionado" /><label>Arrendatario relacionado</label></div></div></div>
-                    </div>
-                  </div>
-                </div>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="col-12 arrend-fa-section mt-5">
-            <div class="arrend-fa-hero">
-              <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>event_repeat</mat-icon></div>
-              <div class="arrend-fa-hero__body">
-                <div class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3">
-                  <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
-                    <h6 class="arrend-fa-section-title m-0">Vigencias</h6>
-                  </div>
-                  <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary" (click)="agregarVigencia()"><mat-icon>add</mat-icon> Agregar</button>
-                </div>
-              </div>
-            </div>
-            <div class="row g-1 mt-0" formArrayName="vigencias">
-              <ng-container *ngFor="let vigCtrl of vigenciasFormArray.controls; let i = index" [formGroupName]="i">
-                <div class="col-12">
-                  <div class="arrend-fa-item">
-                    <div class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                      <span class="arrend-fa-idx">Vigencia {{ i + 1 }}</span>
-                      <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn" (click)="eliminarVigencia(i)" *ngIf="vigenciasFormArray.length >= 2"><mat-icon>delete_outline</mat-icon> Eliminar</button>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Documento</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>description</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="vigenciaDocumento" placeholder="Documento de vigencia" /><label>Documento de vigencia</label></div></div></div>
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Días restantes</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>timer</mat-icon></span><div class="form-floating flex-grow-1"><input type="number" class="form-control" formControlName="vigenciaDiasRestantes" placeholder="Días restantes" /><label>Días restantes</label></div></div></div>
-                      <div class="col-12 col-md-4"><label class="form-label perm-label">Estatus de vigencia</label><div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>check_circle</mat-icon></span><div class="form-floating flex-grow-1"><input type="text" class="form-control" formControlName="vigenciaEstatus" placeholder="Ej.: Vigente / Por vencer" /><label>Ej.: Vigente / Por vencer</label></div></div></div>
-                    </div>
-                  </div>
-                </div>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="col-12 arrend-fa-section mt-5">
+          <!-- <div class="col-12 arrend-fa-section mt-5">
             <div class="arrend-fa-hero">
               <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>account_balance_wallet</mat-icon></div>
               <div class="arrend-fa-hero__body">
@@ -175,225 +334,299 @@
                 </div>
               </ng-container>
             </div>
-          </div>
+          </div> -->
 
           <div class="col-12 perm-docs-in-grid">
-            <div class="section-toolbar mt-4"><h6 class="form-section-head">Documentos e imágenes</h6></div>
+            <div class="section-toolbar mt-4">
+              <h6 class="form-section-head">Documentos e imágenes</h6>
+            </div>
 
-            <div class="row g-3 g-lg-4 mt-3 uploader-wrap docs-uploader-docs-row align-items-stretch">
+            <div class="row g-3 g-lg-4 mt-1 uploader-wrap docs-uploader-docs-row align-items-stretch">
               <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                    <label class="form-label perm-label docs-uploader-label">Escritura del inmueble (PDF)</label>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                          <h6 class="uploader__title">Sube archivo</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorArchivo('escritura')">Seleccionar</button>
-                            <span class="uploader__badge">PDF</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="archivoEscrituraNombre || inmuebleForm.get('documentoEscritura')?.value">
-                            <div class="uploader__filename" *ngIf="archivoEscrituraNombre || inmuebleForm.get('documentoEscritura')?.value?.name">
-                              {{ archivoEscrituraNombre || inmuebleForm.get('documentoEscritura')?.value?.name }}
-                            </div>
-                          </div>
-                          <input #archivoEscrituraInput type="file" accept=".pdf,application/pdf" class="uploader__input" (change)="onFileSelected($event, 'documentoEscritura')" />
+                <label class="form-label perm-label docs-uploader-label">Escritura del inmueble (PDF)</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('escritura')">Seleccionar</button>
+                        <span class="uploader__badge">PDF</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="archivoEscrituraNombre || inmuebleForm.get('documentoEscritura')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="archivoEscrituraNombre || inmuebleForm.get('documentoEscritura')?.value?.name">
+                          {{ archivoEscrituraNombre || inmuebleForm.get('documentoEscritura')?.value?.name }}
                         </div>
                       </div>
+                      <input #archivoEscrituraInput type="file" accept=".pdf,application/pdf" class="uploader__input"
+                        (change)="onFileSelected($event, 'documentoEscritura')" />
                     </div>
                   </div>
+                </div>
+              </div>
               <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                    <label class="form-label perm-label docs-uploader-label">Licencia / uso de suelo</label>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>image</mat-icon></div>
-                          <h6 class="uploader__title">Sube imagen</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorArchivo('licencia')">Seleccionar</button>
-                            <span class="uploader__badge">PNG · JPG · JPEG</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="imagenLicenciaNombre || inmuebleForm.get('documentoLicencia')?.value">
-                            <div class="uploader__filename" *ngIf="imagenLicenciaNombre || inmuebleForm.get('documentoLicencia')?.value?.name">
-                              {{ imagenLicenciaNombre || inmuebleForm.get('documentoLicencia')?.value?.name }}
-                            </div>
-                          </div>
-                          <input #imagenLicenciaInput type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'documentoLicencia')" />
+                <label class="form-label perm-label docs-uploader-label">Licencia / uso de suelo</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>image</mat-icon></div>
+                      <h6 class="uploader__title">Sube imagen</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('licencia')">Seleccionar</button>
+                        <span class="uploader__badge">PNG · JPG · JPEG</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="imagenLicenciaNombre || inmuebleForm.get('documentoLicencia')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="imagenLicenciaNombre || inmuebleForm.get('documentoLicencia')?.value?.name">
+                          {{ imagenLicenciaNombre || inmuebleForm.get('documentoLicencia')?.value?.name }}
                         </div>
                       </div>
+                      <input #imagenLicenciaInput type="file" accept="image/png,image/jpeg,image/jpg"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoLicencia')" />
                     </div>
                   </div>
-
-              <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                    <label class="form-label perm-label docs-uploader-label">Fachada</label>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>home</mat-icon></div>
-                          <h6 class="uploader__title">Sube imagen</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorArchivo('plano')">Seleccionar</button>
-                            <span class="uploader__badge">PNG · JPG · JPEG</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="imagenPlanoNombre || inmuebleForm.get('documentoPlano')?.value">
-                            <div class="uploader__filename" *ngIf="imagenPlanoNombre || inmuebleForm.get('documentoPlano')?.value?.name">
-                              {{ imagenPlanoNombre || inmuebleForm.get('documentoPlano')?.value?.name }}
-                            </div>
-                          </div>
-                          <input #imagenPlanoInput type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'documentoPlano')" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                </div>
+              </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                    <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>description</mat-icon></div>
-                          <h6 class="uploader__title">Sube archivo</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorArchivo('contratoRenta')">Seleccionar</button>
-                            <span class="uploader__badge">PDF · PNG · JPG</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="contratoRentaNombre || inmuebleForm.get('documentoContratoRenta')?.value">
-                            <div class="uploader__filename" *ngIf="contratoRentaNombre || inmuebleForm.get('documentoContratoRenta')?.value?.name">
-                              {{ contratoRentaNombre || inmuebleForm.get('documentoContratoRenta')?.value?.name }}
-                            </div>
-                          </div>
-                          <input #contratoRentaInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'documentoContratoRenta')" />
+                <label class="form-label perm-label docs-uploader-label">Fachada</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>home</mat-icon></div>
+                      <h6 class="uploader__title">Sube imagen</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('plano')">Seleccionar</button>
+                        <span class="uploader__badge">PNG · JPG · JPEG</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="imagenPlanoNombre || inmuebleForm.get('documentoPlano')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="imagenPlanoNombre || inmuebleForm.get('documentoPlano')?.value?.name">
+                          {{ imagenPlanoNombre || inmuebleForm.get('documentoPlano')?.value?.name }}
                         </div>
                       </div>
+                      <input #imagenPlanoInput type="file" accept="image/png,image/jpeg,image/jpg"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoPlano')" />
                     </div>
                   </div>
+                </div>
+              </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                    <label class="form-label perm-label docs-uploader-label">Constancia de Situación Fiscal</label>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                          <h6 class="uploader__title">Sube tu PDF</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorArchivo('constanciaFiscal')">Seleccionar</button>
-                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="constanciaFiscalNombre || inmuebleForm.get('documentoConstanciaFiscal')?.value">
-                            <div class="uploader__filename" *ngIf="constanciaFiscalNombre || inmuebleForm.get('documentoConstanciaFiscal')?.value?.name">
-                              {{ constanciaFiscalNombre || inmuebleForm.get('documentoConstanciaFiscal')?.value?.name }}
-                            </div>
-                          </div>
-                          <input #constanciaFiscalInput type="file" accept="application/pdf" class="uploader__input" (change)="onFileSelected($event, 'documentoConstanciaFiscal')" />
+                <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>description</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('contratoRenta')">Seleccionar</button>
+                        <span class="uploader__badge">PDF · PNG · JPG</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="contratoRentaNombre || inmuebleForm.get('documentoContratoRenta')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="contratoRentaNombre || inmuebleForm.get('documentoContratoRenta')?.value?.name">
+                          {{ contratoRentaNombre || inmuebleForm.get('documentoContratoRenta')?.value?.name }}
                         </div>
                       </div>
+                      <input #contratoRentaInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoContratoRenta')" />
                     </div>
                   </div>
+                </div>
+              </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                    <label class="form-label perm-label docs-uploader-label">Comprobante de Domicilio</label>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                          <h6 class="uploader__title">Sube tu PDF</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorArchivo('comprobanteDomicilio')">Seleccionar</button>
-                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="comprobanteDomicilioNombre || inmuebleForm.get('documentoComprobanteDomicilio')?.value">
-                            <div class="uploader__filename" *ngIf="comprobanteDomicilioNombre || inmuebleForm.get('documentoComprobanteDomicilio')?.value?.name">
-                              {{ comprobanteDomicilioNombre || inmuebleForm.get('documentoComprobanteDomicilio')?.value?.name }}
-                            </div>
-                          </div>
-                          <input #comprobanteDomicilioInput type="file" accept="application/pdf" class="uploader__input" (change)="onFileSelected($event, 'documentoComprobanteDomicilio')" />
+                <label class="form-label perm-label docs-uploader-label">Constancia de Situación Fiscal</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                      <h6 class="uploader__title">Sube tu PDF</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('constanciaFiscal')">Seleccionar</button>
+                        <span class="uploader__badge">PDF · Máx. 3 MB</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="constanciaFiscalNombre || inmuebleForm.get('documentoConstanciaFiscal')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="constanciaFiscalNombre || inmuebleForm.get('documentoConstanciaFiscal')?.value?.name">
+                          {{ constanciaFiscalNombre || inmuebleForm.get('documentoConstanciaFiscal')?.value?.name }}
                         </div>
                       </div>
+                      <input #constanciaFiscalInput type="file" accept="application/pdf" class="uploader__input"
+                        (change)="onFileSelected($event, 'documentoConstanciaFiscal')" />
                     </div>
                   </div>
+                </div>
+              </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                    <label class="form-label perm-label docs-uploader-label">Acta Constitutiva</label>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                          <h6 class="uploader__title">Sube tu PDF</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorArchivo('actaConstitutiva')">Seleccionar</button>
-                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value">
-                            <div class="uploader__filename" *ngIf="actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value?.name">
-                              {{ actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value?.name }}
-                            </div>
-                          </div>
-                          <input #actaConstitutivaInput type="file" accept="application/pdf" class="uploader__input" (change)="onFileSelected($event, 'documentoActaConstitutiva')" />
+                <label class="form-label perm-label docs-uploader-label">Comprobante de Domicilio</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                      <h6 class="uploader__title">Sube tu PDF</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('comprobanteDomicilio')">Seleccionar</button>
+                        <span class="uploader__badge">PDF · Máx. 3 MB</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="comprobanteDomicilioNombre || inmuebleForm.get('documentoComprobanteDomicilio')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="comprobanteDomicilioNombre || inmuebleForm.get('documentoComprobanteDomicilio')?.value?.name">
+                          {{ comprobanteDomicilioNombre ||
+                          inmuebleForm.get('documentoComprobanteDomicilio')?.value?.name }}
                         </div>
                       </div>
+                      <input #comprobanteDomicilioInput type="file" accept="application/pdf" class="uploader__input"
+                        (change)="onFileSelected($event, 'documentoComprobanteDomicilio')" />
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
+                <label class="form-label perm-label docs-uploader-label">Acta Constitutiva</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                      <h6 class="uploader__title">Sube tu PDF</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('actaConstitutiva')">Seleccionar</button>
+                        <span class="uploader__badge">PDF · Máx. 3 MB</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value?.name">
+                          {{ actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value?.name }}
+                        </div>
+                      </div>
+                      <input #actaConstitutivaInput type="file" accept="application/pdf" class="uploader__input"
+                        (change)="onFileSelected($event, 'documentoActaConstitutiva')" />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column" [formGroup]="galeriaGrupo(0)">
-                    <div class="docs-uploader-label-row">
-                      <label class="form-label perm-label docs-uploader-label mb-0">Imagen 1</label>
-                      <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary" (click)="agregarFotoGaleria()"><mat-icon>add</mat-icon> Agregar</button>
-                    </div>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>image</mat-icon></div>
-                          <h6 class="uploader__title">Sube imagen</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorGaleria(galeriaInput0)">Seleccionar</button>
-                            <span class="uploader__badge">PNG · JPG · JPEG</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="galeriaGrupo(0).get('nombre')?.value">{{ galeriaGrupo(0).get('nombre')?.value }}</div>
-                          <input #galeriaInput0 type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onGaleriaFileSelected($event, 0)" />
-                        </div>
+                <div class="docs-uploader-label-row">
+                  <label class="form-label perm-label docs-uploader-label mb-0">
+                    Imagen <span *ngIf="galeriaImagenesFormArray.length > 1">1</span>
+                  </label>
+                  <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
+                    (click)="agregarFotoGaleria()"><mat-icon>add</mat-icon> Agregar</button>
+                </div>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>image</mat-icon></div>
+                      <h6 class="uploader__title">Sube imagen</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorGaleria(galeriaInput0)">Seleccionar</button>
+                        <span class="uploader__badge">PNG · JPG · JPEG</span>
                       </div>
+                      <div class="uploader__status" *ngIf="galeriaGrupo(0).get('nombre')?.value">{{
+                        galeriaGrupo(0).get('nombre')?.value }}</div>
+                      <input #galeriaInput0 type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input"
+                        (change)="onGaleriaFileSelected($event, 0)" />
                     </div>
                   </div>
+                </div>
+              </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                    <label class="form-label perm-label docs-uploader-label" id="label-ine-rep-inm">INE Representante Legal</label>
-                    <div class="uploader-hero flex-grow-1">
-                      <div class="uploader">
-                        <div class="uploader__glow"></div>
-                        <div class="uploader__body">
-                          <div class="uploader__icon"><mat-icon>badge</mat-icon></div>
-                          <h6 class="uploader__title">Sube archivo</h6>
-                          <p class="uploader__subtitle">Arrastra y suelta o</p>
-                          <div class="uploader__cta">
-                            <button mat-flat-button color="primary" type="button" (click)="abrirSelectorArchivo('ineRepresentante')">Seleccionar</button>
-                            <span class="uploader__badge">PDF · PNG · JPG</span>
-                          </div>
-                          <div class="uploader__status" *ngIf="ineRepresentanteNombre || inmuebleForm.get('ineRepresentanteLegal')?.value">
-                            <div class="uploader__filename" *ngIf="ineRepresentanteNombre || inmuebleForm.get('ineRepresentanteLegal')?.value?.name">
-                              {{ ineRepresentanteNombre || inmuebleForm.get('ineRepresentanteLegal')?.value?.name }}
-                            </div>
-                          </div>
-                          <input #ineRepresentanteInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onFileSelected($event, 'ineRepresentanteLegal')" aria-labelledby="label-ine-rep-inm" />
+                <label class="form-label perm-label docs-uploader-label" id="label-csf-rep-legal">Constancia de situación
+                  fiscal del representante legal</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('constanciaRepLegal')">Seleccionar</button>
+                        <span class="uploader__badge">PDF · PNG · JPG</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="constanciaRepLegalNombre || inmuebleForm.get('constanciaSituacionFiscalRepresentanteLegal')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="constanciaRepLegalNombre || inmuebleForm.get('constanciaSituacionFiscalRepresentanteLegal')?.value?.name">
+                          {{ constanciaRepLegalNombre || inmuebleForm.get('constanciaSituacionFiscalRepresentanteLegal')?.value?.name }}
                         </div>
                       </div>
+                      <input #constanciaRepLegalInput type="file"
+                        accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
+                        (change)="onFileSelected($event, 'constanciaSituacionFiscalRepresentanteLegal')"
+                        aria-labelledby="label-csf-rep-legal" />
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
+                <label class="form-label perm-label docs-uploader-label" id="label-ine-rep-inm">INE Representante
+                  Legal</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>badge</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('ineRepresentante')">Seleccionar</button>
+                        <span class="uploader__badge">PDF · PNG · JPG</span>
+                      </div>
+                      <div class="uploader__status"
+                        *ngIf="ineRepresentanteNombre || inmuebleForm.get('ineRepresentanteLegal')?.value">
+                        <div class="uploader__filename"
+                          *ngIf="ineRepresentanteNombre || inmuebleForm.get('ineRepresentanteLegal')?.value?.name">
+                          {{ ineRepresentanteNombre || inmuebleForm.get('ineRepresentanteLegal')?.value?.name }}
+                        </div>
+                      </div>
+                      <input #ineRepresentanteInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg"
+                        class="uploader__input" (change)="onFileSelected($event, 'ineRepresentanteLegal')"
+                        aria-labelledby="label-ine-rep-inm" />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <!-- <div class="col-12 arrend-fa-section mt-5 pt-3 socios-section socios-section--after-uploads">
                 <div class="arrend-fa-hero">
@@ -531,9 +764,13 @@
                   <ng-container *ngFor="let galCtrl of galeriaImagenesFormArray.controls; let i = index">
                     <div class="col" *ngIf="i > 0">
                       <div class="arrend-fa-item" [formGroup]="galeriaGrupo(i)">
-                        <div class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div
+                          class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
                           <span class="arrend-fa-idx">Imagen {{ i + 1 }}</span>
-                          <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn" (click)="eliminarFotoGaleria(i)" *ngIf="galeriaImagenesFormArray.length >= 2"><mat-icon>delete_outline</mat-icon> Eliminar</button>
+                          <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn"
+                            (click)="eliminarFotoGaleria(i)"
+                            *ngIf="galeriaImagenesFormArray.length >= 2"><mat-icon>delete_outline</mat-icon>
+                            Eliminar</button>
                         </div>
                         <div class="uploader-hero">
                           <div class="uploader">
@@ -543,11 +780,14 @@
                               <h6 class="uploader__title">Sube imagen</h6>
                               <p class="uploader__subtitle">Arrastra y suelta o</p>
                               <div class="uploader__cta">
-                                <button mat-flat-button color="primary" type="button" (click)="abrirSelectorGaleria(galExtra)">Seleccionar</button>
+                                <button mat-flat-button color="primary" type="button"
+                                  (click)="abrirSelectorGaleria(galExtra)">Seleccionar</button>
                                 <span class="uploader__badge">PNG · JPG · JPEG</span>
                               </div>
-                              <div class="uploader__status" *ngIf="galCtrl.get('nombre')?.value">{{ galCtrl.get('nombre')?.value }}</div>
-                              <input #galExtra type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onGaleriaFileSelected($event, i)" />
+                              <div class="uploader__status" *ngIf="galCtrl.get('nombre')?.value">{{
+                                galCtrl.get('nombre')?.value }}</div>
+                              <input #galExtra type="file" accept="image/png,image/jpeg,image/jpg"
+                                class="uploader__input" (change)="onGaleriaFileSelected($event, i)" />
                             </div>
                           </div>
                         </div>
@@ -561,8 +801,10 @@
         </div>
 
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" (click)="submit()"><i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}</button>
-          <button type="button" class="button-danger" (click)="regresar()"><i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar</button>
+          <button class="button-success" role="button" (click)="submit()"><i class="fa fa-check"></i>&nbsp;&nbsp;{{
+            submitButton }}</button>
+          <button type="button" class="button-danger" (click)="regresar()"><i
+              class="fa fa-times">&nbsp;&nbsp;</i>Cancelar</button>
         </div>
       </form>
     </section>

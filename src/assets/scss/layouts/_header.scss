@@ -249,31 +249,50 @@ html .topbar {
   gap: 10px;
 }
 
-/* Botones del hub: mismo color que el header, borde inferior blanco grueso, halo blanco abajo, íconos blancos */
+/* Trigger base (neutral) */
 .topbar .notify-hub__trigger.mat-mdc-icon-button {
   position: relative;
   z-index: 0;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   border-radius: 50%;
   overflow: visible;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-bottom-width: 2px;
-  border-bottom-color: #808080;
-  background: var(--mat-sys-secondary);
-  box-shadow: 0 6px 14px rgba(255, 255, 255, 0.18);
+  border: none;
+  background: transparent;
+  box-shadow: none;
   transition:
     transform 0.18s ease,
-    border-color 0.18s ease,
-    background-color 0.18s ease,
+    filter 0.18s ease,
     box-shadow 0.18s ease;
+}
+
+/* Trigger "FAB": mismo tamaño/radius, sin borde, con fondo del chat */
+.topbar .notify-hub__trigger.notify-hub__trigger--fab.mat-mdc-icon-button {
+  border: none;
+  /* Fondo igual al FAB del chat */
+  background: linear-gradient(135deg, rgba(139, 30, 63, 0.92), rgba(11, 42, 111, 0.92));
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.55);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(139, 30, 63, 0.26), rgba(139, 30, 63, 0) 62%),
+      radial-gradient(circle at 65% 70%, rgba(11, 42, 111, 0.20), rgba(11, 42, 111, 0) 64%);
+    filter: blur(12px);
+    opacity: 0.95;
+    pointer-events: none;
+  }
 
   &:hover {
     transform: translateY(-1px);
-    background: color-mix(in srgb, var(--mat-sys-secondary) 88%, #fff 12%);
-    border-bottom-color: #fff;
-    box-shadow: 0 8px 18px rgba(255, 255, 255, 0.22);
+    filter: brightness(1.08);
+    box-shadow:
+      0 18px 44px rgba(0, 0, 0, 0.62);
 
     .notify-hub__tabler {
       transform: scale(1.06);
@@ -282,20 +301,21 @@ html .topbar {
 
   &:active {
     transform: translateY(0) scale(0.98);
-    background: var(--mat-sys-secondary);
-    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.14);
+    filter: brightness(1.02);
+    box-shadow:
+      0 12px 28px rgba(0, 0, 0, 0.46);
   }
 
   &:focus-visible {
-    outline: 2px solid #fff;
+    outline: 2px solid rgba(139, 183, 255, 0.95);
     outline-offset: 2px;
   }
 }
 
 @media (min-width: 576px) {
   .topbar .notify-hub__trigger.mat-mdc-icon-button {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
   }
 }
 
@@ -306,16 +326,16 @@ html .topbar {
   justify-content: center;
 }
 
-.topbar .notify-hub__tabler {
+.topbar .notify-hub__trigger--fab .notify-hub__tabler {
   width: 20px;
   height: 20px;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.98) !important;
   transition: transform 0.18s ease;
   filter: none;
 }
 
 @media (max-width: 575.98px) {
-  .topbar .notify-hub__tabler {
+  .topbar .notify-hub__trigger--fab .notify-hub__tabler {
     width: 18px;
     height: 18px;
   }
@@ -330,48 +350,69 @@ html .topbar {
   padding: 0 6px;
   border-radius: 999px;
   font-size: 10px;
-  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 19px;
   text-align: center;
   color: #fff;
-  background: #dc2626;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.95), rgba(103, 18, 48, 0.9));
   border: 2px solid rgba(20, 24, 30, 0.95);
-  box-shadow: none;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.35);
 }
 
 /* Paneles en overlay (clase en mat-menu) */
 .mat-mdc-menu-panel.notify-hub-panel {
-  --notify-surface: #1b212a;
-  --notify-surface-2: #242a33;
-  --notify-border: #323945;
-  --notify-text: #e8edf6;
-  --notify-muted: #9ca6b3;
+  --notify-surface: #1c252e;
+  --notify-surface-2: #1c252e;
+  --notify-border: rgba(255, 255, 255, 0.14);
+  --notify-text: rgba(255, 255, 255, 0.92);
+  --notify-muted: rgba(255, 255, 255, 0.68);
   --mat-menu-container-elevation-shadow: none;
 
   max-width: min(100vw - 24px, 420px) !important;
   min-width: min(100vw - 24px, 288px) !important;
-  border-radius: 14px !important;
+  border-radius: 18px !important;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--notify-border);
   box-shadow: none !important;
+  overflow-x: hidden;
 }
 
 .mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-content {
   padding: 0 !important;
   background: var(--notify-surface);
+  overflow-x: hidden;
 }
 
-/* Cabecera: un solo color sólido en los tres menús (sin gradientes) */
+/* Cabecera: glass + línea de acento */
 .notify-hub-panel__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 16px 16px 18px;
-  background: #282e35;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  /* Fondo igual al FAB del chat (con velo sutil para texto) */
+  background:
+    linear-gradient(135deg, rgba(139, 30, 63, 0.92), rgba(11, 42, 111, 0.92));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: none;
+}
+
+.notify-hub-panel__header::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(79, 124, 255, 0),
+    rgba(79, 124, 255, 0.42),
+    rgba(180, 58, 93, 0.36),
+    rgba(180, 58, 93, 0)
+  );
+  pointer-events: none;
 }
 
 .notify-hub-panel__header-text {
@@ -383,13 +424,12 @@ html .topbar {
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.72);
   margin-bottom: 2px;
 }
 
 .notify-hub-panel__title {
   font-size: clamp(0.8rem, 2.8vw, 0.95rem);
-  font-weight: 600;
   color: #fff;
   line-height: 1.25;
 }
@@ -404,21 +444,22 @@ html .topbar {
   justify-content: center;
   border-radius: 10px;
   font-size: 14px;
-  font-weight: 700;
   color: #fff;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: none;
 }
 
 .notify-hub-panel__body {
-  padding: 6px 0;
+  padding: 12px;
   background: var(--notify-surface);
+  overflow-x: hidden;
 }
 
 .notify-hub-panel__body--scroll {
   max-height: min(52vh, 320px);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .notify-hub-panel__body--scroll::-webkit-scrollbar {
@@ -432,16 +473,33 @@ html .topbar {
 
 .notify-hub-panel__footer {
   padding: 10px 12px 12px;
-  background: #161c24;
+  background: rgba(0, 0, 0, 0.18);
   border-top: 1px solid var(--notify-border);
 }
 
-.notify-hub-panel__cta.mat-mdc-outlined-button {
-  border-radius: 10px;
-  border-color: rgba(255, 255, 255, 0.22) !important;
-  color: var(--notify-text) !important;
+/* CTAs del pie del menú de notificaciones: gris sólido, sin borde (mat-stroked heredaba outline azul del tema) */
+.mat-mdc-menu-panel.notify-hub-panel .notify-hub-panel__footer button.notify-hub-panel__cta.mat-mdc-unelevated-button {
+  border-radius: 14px;
+  border: none !important;
+  box-shadow: none !important;
+  --mdc-filled-button-container-color: #4f5664;
+  --mdc-filled-button-label-text-color: rgba(255, 255, 255, 0.98);
+  --mat-filled-button-state-layer-color: rgba(255, 255, 255, 0.12);
+  background-color: #4f5664 !important;
+  background-image: none !important;
+  color: rgba(255, 255, 255, 0.98) !important;
   font-size: 13px;
   min-height: 40px;
+
+  &.mat-primary,
+  &.mat-accent,
+  &.mat-warn {
+    --mdc-filled-button-container-color: #4f5664;
+    --mdc-filled-button-label-text-color: rgba(255, 255, 255, 0.98);
+    background-color: #4f5664 !important;
+    background-image: none !important;
+    color: rgba(255, 255, 255, 0.98) !important;
+  }
 
   .mdc-button__label {
     display: inline-flex;
@@ -450,9 +508,21 @@ html .topbar {
     gap: 8px;
   }
 
+  i-tabler,
+  .icon-16 {
+    color: rgba(255, 255, 255, 0.98) !important;
+    stroke: rgba(255, 255, 255, 0.98);
+  }
+
   &:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-color: color-mix(in srgb, var(--mat-sys-primary) 50%, rgba(255, 255, 255, 0.3)) !important;
+    filter: brightness(1.1);
+    --mdc-filled-button-container-color: #5a6272;
+    background-color: #5a6272 !important;
+  }
+
+  &:active {
+    filter: brightness(1.04);
+    transform: translateY(0) scale(0.99);
   }
 }
 
@@ -462,17 +532,41 @@ html .topbar {
   height: auto;
   white-space: normal;
   line-height: 1.35;
-  padding: 12px 14px;
-  background: transparent;
-  border-bottom: 1px solid rgba(50, 57, 69, 0.65);
+  padding: 12px 12px;
+  margin: 0 0 10px 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: none;
+  max-width: 100%;
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: rgba(148, 163, 184, 0.35);
+  position: relative;
+  overflow: hidden;
 
   &:last-child {
     border-bottom: none;
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
+    filter: brightness(1.05);
+    background: rgba(255, 255, 255, 0.06) !important;
+    box-shadow:
+      0 14px 30px rgba(0, 0, 0, 0.38),
+      0 0 0 1px rgba(255, 255, 255, 0.06) inset;
   }
+}
+
+.mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-item.notify-hub-aviso::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(420px 180px at 18% 18%, rgba(79, 124, 255, 0.14), rgba(79, 124, 255, 0) 62%),
+    radial-gradient(420px 180px at 88% 88%, rgba(180, 58, 93, 0.10), rgba(180, 58, 93, 0) 62%);
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .notify-hub-aviso__inner {
@@ -482,11 +576,11 @@ html .topbar {
   gap: 4px;
   text-align: left;
   width: 100%;
+  position: relative;
 }
 
 .notify-hub-aviso__title {
   font-size: 13px;
-  font-weight: 600;
   color: var(--notify-text);
   display: inline-flex;
   align-items: center;
@@ -499,50 +593,25 @@ html .topbar {
   word-break: break-word;
 }
 
-/* ========== AVISOS: semáforo (solo en el menú de Avisos) ========== */
+/* Avisos: tono sutil (sin barra lateral) */
 .mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
   .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-success {
-  border-left: 3px solid #22c55e !important;
-  padding-left: 11px !important;
-  background: rgba(34, 197, 94, 0.12) !important;
+  border-left-color: rgba(34, 197, 94, 0.9);
 }
 
 .mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
   .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-warning {
-  border-left: 3px solid #f59e0b !important;
-  padding-left: 11px !important;
-  background: rgba(245, 158, 11, 0.14) !important;
+  border-left-color: rgba(249, 115, 22, 0.92);
+}
+
+.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
+  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-amber {
+  border-left-color: rgba(250, 204, 21, 0.95);
 }
 
 .mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
   .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-danger {
-  border-left: 3px solid #ef4444 !important;
-  padding-left: 11px !important;
-  background: rgba(239, 68, 68, 0.14) !important;
-}
-
-/* Hover por tono: mismo color, pero en oscuro (solo Avisos) */
-.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
-  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-success:hover {
-  background: rgba(5, 70, 29, 0.22) !important;
-}
-
-.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
-  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-warning:hover {
-  background: rgba(155, 101, 8, 0.26) !important;
-}
-
-.mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--avisos
-  .mat-mdc-menu-item.notify-hub-aviso.notify-hub-aviso--tone-danger:hover {
-  background: rgba(104, 23, 23, 0.26) !important;
-}
-
-
-.notify-hub-aviso--urgent {
-  border-left: 3px solid #f43f5e !important;
-  padding-left: 11px !important;
-  background: rgba(244, 63, 94, 0.1) !important;
-  border-radius: 0;
+  border-left-color: rgba(239, 68, 68, 0.95);
 }
 
 /* Filas: recibos — fila horizontal, centrado en altura; texto a la izquierda (contenido en .mat-mdc-menu-item-text) */
@@ -550,18 +619,27 @@ html .topbar {
   min-height: 0;
   height: auto;
   white-space: normal;
-  padding: 12px 14px;
+  padding: 12px 12px;
+  margin: 0 0 10px 0;
+  border-radius: 16px;
   align-items: center;
-  background: transparent;
-  border-bottom: 1px solid rgba(50, 57, 69, 0.5);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   text-align: left;
+  max-width: 100%;
+  position: relative;
+  overflow: hidden;
 
   &:last-child {
     border-bottom: none;
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.04) !important;
+    filter: brightness(1.05);
+    background: rgba(255, 255, 255, 0.06) !important;
+    box-shadow:
+      0 14px 30px rgba(0, 0, 0, 0.38),
+      0 0 0 1px rgba(255, 255, 255, 0.06) inset;
   }
 
   .mat-mdc-menu-item-text {
@@ -573,6 +651,17 @@ html .topbar {
     width: 100%;
     text-align: left;
   }
+}
+
+.mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-item.notify-hub-recibo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(420px 180px at 18% 18%, rgba(79, 124, 255, 0.12), rgba(79, 124, 255, 0) 62%),
+    radial-gradient(420px 180px at 88% 88%, rgba(180, 58, 93, 0.10), rgba(180, 58, 93, 0) 62%);
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .notify-hub-recibo__mark {
@@ -595,22 +684,27 @@ html .topbar {
 
 .notify-hub-recibo__mark--danger {
   background: #dc2626;
+  box-shadow: 0 14px 26px rgba(220, 38, 38, 0.22);
 }
 
 .notify-hub-recibo__mark--warning {
   background: #ea580c;
+  box-shadow: 0 14px 26px rgba(234, 88, 12, 0.22);
 }
 
 .notify-hub-recibo__mark--amber {
   background: #ca8a04;
+  box-shadow: 0 14px 26px rgba(202, 138, 4, 0.20);
 }
 
 .notify-hub-recibo__mark--success {
   background: var(--app-success);
+  box-shadow: 0 14px 26px rgba(34, 197, 94, 0.18);
 }
 
 .notify-hub-recibo__mark--info {
   background: var(--mat-sys-primary);
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.18);
 }
 
 .notify-hub-recibo__text {
@@ -622,11 +716,11 @@ html .topbar {
   min-width: 0;
   flex: 1 1 auto;
   text-align: left;
+  position: relative;
 }
 
 .notify-hub-recibo__label {
   font-size: 13px;
-  font-weight: 500;
   color: var(--notify-text);
   line-height: 1.3;
 }

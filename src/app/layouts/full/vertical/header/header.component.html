@@ -126,10 +126,10 @@
   <span class="flex-1-auto"></span>
 
   <!-- --------------------------------------------------------------- -->
-  <!-- Centro de notificaciones (Avisos · Inmuebles · Predios) -->
+  <!-- Centro de notificaciones (Contratos · Pagos de Servicios · Pagos de Arrendatarios) -->
   <!-- --------------------------------------------------------------- -->
   <div
-    class="notify-hub row flex-nowrap align-items-center justify-content-end g-3 g-sm-4 flex-shrink-0 px-0 px-sm-1 w-auto ms-0 mx-0"
+    class="notify-hub row align-items-center justify-content-end g-3 g-sm-4 flex-shrink-0 px-0 px-sm-1 w-auto ms-0 mx-0"
     role="navigation"
     aria-label="Centro de notificaciones"
   >
@@ -137,12 +137,12 @@
     <button
       type="button"
       mat-icon-button
-      class="notify-hub__trigger d-flex align-items-center justify-content-center"
+      class="notify-hub__trigger notify-hub__trigger--fab d-flex align-items-center justify-content-center"
       [matMenuTriggerFor]="menuAvisos"
-      aria-label="Avisos y mensajes"
+      aria-label="Contratos"
     >
       <span class="notify-hub__icon-wrap">
-        <i-tabler name="mail" class="notify-hub__tabler d-flex"></i-tabler>
+        <i-tabler name="file-description" class="notify-hub__tabler d-flex"></i-tabler>
         @if (avisosCount > 0) {
         <span class="notify-hub__badge" aria-hidden="true">{{ avisosCount }}</span>
         }
@@ -153,12 +153,12 @@
     <button
       type="button"
       mat-icon-button
-      class="notify-hub__trigger d-flex align-items-center justify-content-center"
+      class="notify-hub__trigger notify-hub__trigger--fab d-flex align-items-center justify-content-center"
       [matMenuTriggerFor]="menuNotifInmuebles"
-      aria-label="Notificaciones de arrendadores"
+      aria-label="Pagos de servicios"
     >
       <span class="notify-hub__icon-wrap">
-        <i-tabler name="bell-ringing" class="notify-hub__tabler d-flex"></i-tabler>
+        <i-tabler name="receipt" class="notify-hub__tabler d-flex"></i-tabler>
         @if (inmueblesNotifCount > 0) {
         <span class="notify-hub__badge" aria-hidden="true">{{ inmueblesNotifCount }}</span>
         }
@@ -169,12 +169,12 @@
     <button
       type="button"
       mat-icon-button
-      class="notify-hub__trigger d-flex align-items-center justify-content-center"
+      class="notify-hub__trigger notify-hub__trigger--fab d-flex align-items-center justify-content-center"
       [matMenuTriggerFor]="menuNotifPredios"
-      aria-label="Notificaciones de arrendatarios"
+      aria-label="Pagos de arrendatarios"
     >
       <span class="notify-hub__icon-wrap">
-        <i-tabler name="bell" class="notify-hub__tabler d-flex"></i-tabler>
+        <i-tabler name="users" class="notify-hub__tabler d-flex"></i-tabler>
         @if (prediosNotifCount > 0) {
         <span class="notify-hub__badge" aria-hidden="true">{{ prediosNotifCount }}</span>
         }
@@ -254,8 +254,8 @@
   >
     <div class="notify-hub-panel__header">
       <div class="notify-hub-panel__header-text">
-        <span class="notify-hub-panel__eyebrow">Bandeja</span>
-        <h6 class="notify-hub-panel__title m-0">Avisos</h6>
+        <span class="notify-hub-panel__eyebrow">Contratos</span>
+        <h6 class="notify-hub-panel__title m-0">Vencimientos y Renovaciones</h6>
       </div>
       <span class="notify-hub-panel__count">{{ avisosCount }}</span>
     </div>
@@ -267,6 +267,7 @@
         class="notify-hub-aviso"
         [class.notify-hub-aviso--tone-success]="a.tone === 'success'"
         [class.notify-hub-aviso--tone-warning]="a.tone === 'warning'"
+        [class.notify-hub-aviso--tone-amber]="a.tone === 'amber'"
         [class.notify-hub-aviso--tone-danger]="a.tone === 'danger'"
         (click)="onAvisoContratoClick(a, $event)"
       >
@@ -280,7 +281,7 @@
       }
     </div>
     <div class="notify-hub-panel__footer">
-      <button type="button" mat-stroked-button class="notify-hub-panel__cta w-100">
+      <button type="button" mat-flat-button class="notify-hub-panel__cta w-100">
         Ver todos los avisos
         <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
       </button>
@@ -294,8 +295,8 @@
   >
     <div class="notify-hub-panel__header">
       <div class="notify-hub-panel__header-text">
-        <span class="notify-hub-panel__eyebrow">Contratos</span>
-        <h6 class="notify-hub-panel__title m-0">Notificaciones de arrendadores</h6>
+        <span class="notify-hub-panel__eyebrow">Inmuebles</span>
+        <h6 class="notify-hub-panel__title m-0">Pagos de Servicios</h6>
       </div>
       <span class="notify-hub-panel__count">{{ inmueblesNotifCount }}</span>
     </div>
@@ -320,8 +321,8 @@
       }
     </div>
     <div class="notify-hub-panel__footer">
-      <button type="button" mat-stroked-button class="notify-hub-panel__cta w-100">
-        Ver detalle de arrendadores
+      <button type="button" mat-flat-button class="notify-hub-panel__cta w-100">
+        Ver detalle de pagos
         <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
       </button>
     </div>
@@ -334,8 +335,8 @@
   >
     <div class="notify-hub-panel__header">
       <div class="notify-hub-panel__header-text">
-        <span class="notify-hub-panel__eyebrow">Contratos</span>
-        <h6 class="notify-hub-panel__title m-0">Notificaciones de arrendatarios</h6>
+        <span class="notify-hub-panel__eyebrow">Arrendatarios</span>
+        <h6 class="notify-hub-panel__title m-0">Pagos y Seguimiento</h6>
       </div>
       <span class="notify-hub-panel__count">{{ prediosNotifCount }}</span>
     </div>
@@ -360,7 +361,7 @@
       }
     </div>
     <div class="notify-hub-panel__footer">
-      <button type="button" mat-stroked-button class="notify-hub-panel__cta w-100">
+      <button type="button" mat-flat-button class="notify-hub-panel__cta w-100">
         Ver detalle de arrendatarios
         <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
       </button>

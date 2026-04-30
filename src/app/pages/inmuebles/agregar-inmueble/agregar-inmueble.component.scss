@@ -60,25 +60,46 @@
 .inmueble-geo-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 0.42rem;
-  border-radius: 10px;
-  border: 1px solid rgba(134, 239, 172, 0.62);
-  background: rgba(34, 197, 94, 0.18);
-  color: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 0.4rem 0.75rem;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(134, 239, 172, 0.6);
+  background: radial-gradient(120% 140% at 0% 0%, rgba(34, 197, 94, 0.34), transparent 55%),
+    linear-gradient(180deg, rgba(34, 197, 94, 0.22), rgba(34, 197, 94, 0.12));
+  color: #f8fffb;
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+  padding: 0.62rem 0.9rem;
   line-height: 1;
-  transition: filter 0.16s ease, transform 0.12s ease;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease, border-color 0.14s ease;
 }
 
 .inmueble-geo-trigger i {
-  font-size: 0.88rem;
+  font-size: 1rem;
+  opacity: 0.95;
 }
 
 .inmueble-geo-trigger:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
   transform: translateY(-1px);
+  border-color: rgba(134, 239, 172, 0.75);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.inmueble-geo-trigger:active {
+  transform: translateY(0);
+  filter: brightness(1.02);
+}
+
+.inmueble-geo-trigger:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(16, 185, 129, 0.35),
+    0 0 0 4px rgba(34, 197, 94, 0.18),
+    0 16px 34px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .uploader-wrap .uploader-hero .uploader {
@@ -254,6 +275,62 @@
   color: #c7d6f3;
 }
 
+/* Tipografía en HTML: Cada Palabra con Inicial Mayúscula (solo este componente) */
+:host .perm-label,
+:host .docs-uploader-label,
+:host .arrend-fa-section-title,
+:host .form-section-head,
+:host .arrend-fa-idx,
+:host .socios-subhead {
+  text-transform: capitalize !important;
+}
+
+:host button,
+:host .docs-modal__btn,
+:host .docs-modal__btn--ghost,
+:host .docs-uploader-inline-btn,
+:host .inmueble-geo-trigger {
+  text-transform: capitalize !important;
+}
+
+/* Servicios: toggle OTRO (select ↔ input) */
+.srv-tipo-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.srv-tipo-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e5edff;
+  transition: filter 0.14s ease, transform 0.14s ease, border-color 0.14s ease;
+}
+
+.srv-tipo-reset mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.srv-tipo-reset:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  border-color: rgba(147, 197, 253, 0.55);
+}
+
+.srv-tipo-reset:active {
+  transform: translateY(0);
+  filter: brightness(1.04);
+}
+
 .socios-subhead--docs {
   margin-top: 1rem;
   color: #cfe7ff;
@@ -290,6 +367,114 @@
   color: #e5edff;
   background: rgba(104, 19, 48, 0.35);
   border-color: rgba(244, 114, 182, 0.25) !important;
+}
+
+/* Servicios: comprobante de pago (uploader compacto sin afectar el resto) */
+.srv-pago-uploader {
+  min-height: 0;
+}
+
+.srv-pago-uploader .srv-pago-uploader__card {
+  min-height: 0 !important;
+}
+
+.srv-pago-uploader .uploader {
+  min-height: 0 !important;
+}
+
+@media (max-width: 576px) {
+  .srv-pago-uploader .uploader {
+    min-height: 0 !important;
+    border-radius: 18px;
+  }
+}
+
+.srv-pago-uploader .uploader__body {
+  padding: 0.35rem 0.55rem !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  justify-items: stretch;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.srv-pago-uploader .srv-pago-uploader__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.srv-pago-uploader .srv-pago-uploader__left {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Conserva el look global de `.uploader__icon` (gradiente/sombra), solo lo compactamos */
+.srv-pago-uploader .srv-pago-uploader__icon.uploader__icon {
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 12px;
+  flex: 0 0 auto;
+}
+
+.srv-pago-uploader .srv-pago-uploader__icon.uploader__icon mat-icon {
+  font-size: 1.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  line-height: 1.15rem;
+}
+
+.srv-pago-uploader .uploader__title {
+  display: none;
+}
+
+.srv-pago-uploader .uploader__subtitle {
+  display: none;
+}
+
+.srv-pago-uploader button[mat-flat-button] {
+  min-height: 2.55rem !important;
+  padding: 0 0.85rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1 !important;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.srv-pago-uploader .srv-pago-uploader__formats {
+  margin-left: auto;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.62rem;
+  white-space: nowrap;
+  color: #eaf2ff;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.12));
+  border: 1px dashed rgba(147, 197, 253, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.18),
+    0 10px 22px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.srv-pago-uploader .uploader__status {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-top: 0.2rem !important;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.srv-pago-uploader .uploader__filename {
+  font-size: 0.72rem;
 }
 
 @media (max-width: 767.98px) {
