@@ -17,7 +17,7 @@ export class AgregarInmuebleComponent implements OnInit {
   public submitButton: string = 'Guardar';
   public inmuebleForm!: FormGroup;
   public idInmueble!: number;
-  public mostrarCamposRenta = true;
+  public mostrarCamposRenta = false;
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
@@ -110,20 +110,26 @@ export class AgregarInmuebleComponent implements OnInit {
 
       const rentaCtrl = this.inmuebleForm.get('rentaMxn');
       const tiempoCtrl = this.inmuebleForm.get('tiempoRentaAnios');
+      const contratoCtrl = this.inmuebleForm.get('documentoContratoRenta');
       if (!rentaCtrl || !tiempoCtrl) return;
 
       if (rentado) {
         rentaCtrl.setValidators([Validators.required]);
         tiempoCtrl.setValidators([Validators.required]);
+        contratoCtrl?.setValidators([Validators.required]);
       } else {
         rentaCtrl.clearValidators();
         tiempoCtrl.clearValidators();
         rentaCtrl.setValue('', { emitEvent: false });
         tiempoCtrl.setValue('', { emitEvent: false });
+        contratoCtrl?.clearValidators();
+        contratoCtrl?.setValue(null, { emitEvent: false });
+        this.contratoRentaNombre = null;
       }
 
       rentaCtrl.updateValueAndValidity({ emitEvent: false });
       tiempoCtrl.updateValueAndValidity({ emitEvent: false });
+      contratoCtrl?.updateValueAndValidity({ emitEvent: false });
     };
 
     apply(estatusCtrl.value);

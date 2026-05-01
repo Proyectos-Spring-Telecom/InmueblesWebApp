@@ -615,6 +615,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   obtenerInstalacionesCentral() {
     this.insService.obtenerInstalacionCentral().subscribe((response: any) => {
       let data: any[] = response?.data ?? [];
+      /** Demo: solo mostrar la instalación central con este id (ocultar el resto). */
+      const SOLO_INSTALACION_CENTRAL_ID = 1;
+      data = data.filter((c: any) => Number(c?.id) === SOLO_INSTALACION_CENTRAL_ID);
       const u = this.auth.getUser();
       const idCliente = u?.idCliente != null ? u.idCliente : null;
 

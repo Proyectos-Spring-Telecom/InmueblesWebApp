@@ -126,61 +126,55 @@
   <span class="flex-1-auto"></span>
 
   <!-- --------------------------------------------------------------- -->
-  <!-- Centro de notificaciones (Contratos · Pagos de Servicios · Pagos de Arrendatarios) -->
+  <!-- Centro de notificaciones — iconos; pulso vivo si hay pendientes -->
   <!-- --------------------------------------------------------------- -->
   <div
-    class="notify-hub row align-items-center justify-content-end g-3 g-sm-4 flex-shrink-0 px-0 px-sm-1 w-auto ms-0 mx-0"
+    class="notify-cap flex-shrink-0 ms-0 mx-0 px-0 px-sm-1"
     role="navigation"
     aria-label="Centro de notificaciones"
   >
-    <div class="col-auto p-0 d-flex align-items-center">
     <button
       type="button"
-      mat-icon-button
-      class="notify-hub__trigger notify-hub__trigger--fab d-flex align-items-center justify-content-center"
+      class="notify-cap__btn notify-cap__btn--a"
+      [class.notify-cap__btn--live]="avisosCount > 0"
       [matMenuTriggerFor]="menuAvisos"
       aria-label="Contratos"
     >
-      <span class="notify-hub__icon-wrap">
-        <i-tabler name="file-description" class="notify-hub__tabler d-flex"></i-tabler>
-        @if (avisosCount > 0) {
-        <span class="notify-hub__badge" aria-hidden="true">{{ avisosCount }}</span>
-        }
-      </span>
+      <span class="notify-cap__fill" aria-hidden="true"></span>
+      <span class="notify-cap__shine" aria-hidden="true"></span>
+      <i-tabler name="file-description" class="notify-cap__ico d-flex"></i-tabler>
+      @if (avisosCount > 0) {
+      <span class="notify-cap__badge" aria-hidden="true">{{ avisosCount }}</span>
+      }
     </button>
-    </div>
-    <div class="col-auto p-0 d-flex align-items-center">
     <button
       type="button"
-      mat-icon-button
-      class="notify-hub__trigger notify-hub__trigger--fab d-flex align-items-center justify-content-center"
+      class="notify-cap__btn notify-cap__btn--b"
+      [class.notify-cap__btn--live]="inmueblesNotifCount > 0"
       [matMenuTriggerFor]="menuNotifInmuebles"
       aria-label="Pagos de servicios"
     >
-      <span class="notify-hub__icon-wrap">
-        <i-tabler name="receipt" class="notify-hub__tabler d-flex"></i-tabler>
-        @if (inmueblesNotifCount > 0) {
-        <span class="notify-hub__badge" aria-hidden="true">{{ inmueblesNotifCount }}</span>
-        }
-      </span>
+      <span class="notify-cap__fill" aria-hidden="true"></span>
+      <span class="notify-cap__shine" aria-hidden="true"></span>
+      <i-tabler name="receipt" class="notify-cap__ico d-flex"></i-tabler>
+      @if (inmueblesNotifCount > 0) {
+      <span class="notify-cap__badge" aria-hidden="true">{{ inmueblesNotifCount }}</span>
+      }
     </button>
-    </div>
-    <div class="col-auto p-0 d-flex align-items-center">
     <button
       type="button"
-      mat-icon-button
-      class="notify-hub__trigger notify-hub__trigger--fab d-flex align-items-center justify-content-center"
+      class="notify-cap__btn notify-cap__btn--c"
+      [class.notify-cap__btn--live]="prediosNotifCount > 0"
       [matMenuTriggerFor]="menuNotifPredios"
       aria-label="Pagos de arrendatarios"
     >
-      <span class="notify-hub__icon-wrap">
-        <i-tabler name="users" class="notify-hub__tabler d-flex"></i-tabler>
-        @if (prediosNotifCount > 0) {
-        <span class="notify-hub__badge" aria-hidden="true">{{ prediosNotifCount }}</span>
-        }
-      </span>
+      <span class="notify-cap__fill" aria-hidden="true"></span>
+      <span class="notify-cap__shine" aria-hidden="true"></span>
+      <i-tabler name="users" class="notify-cap__ico d-flex"></i-tabler>
+      @if (prediosNotifCount > 0) {
+      <span class="notify-cap__badge" aria-hidden="true">{{ prediosNotifCount }}</span>
+      }
     </button>
-    </div>
   </div>
 
   <!-- --------------------------------------------------------------- -->

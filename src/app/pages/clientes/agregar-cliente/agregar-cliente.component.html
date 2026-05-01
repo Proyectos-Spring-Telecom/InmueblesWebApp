@@ -17,27 +17,6 @@
         <section class="perm-form-nc container-fluid py-4">
             <form [formGroup]="clienteForm" class="perm-form-body">
                 <div class="row g-4">
-
-                    <div class="col-12 col-md-4">
-                        <label for="cuentaPadre" class="form-label perm-label">Cuenta Padre</label>
-                        <div class="input-group input-group-lg perm-ig">
-                            <span class="input-group-text fw-bold">
-                                <mat-icon aria-hidden="true">account_tree</mat-icon>
-                            </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="cuentaPadre" required formControlName="idPadre">
-                                    <!-- <option [ngValue]="null" disabled>Selecciona una cuenta padre </option> -->
-                                    <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
-                                        {{ cliente.nombre }}
-                                        {{ cliente.apellidoPaterno }}
-                                        {{ cliente.apellidoMaterno }}
-                                    </option>
-                                </select>
-                                <label for="cuentaPadre">Selecciona cuenta padre</label>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="col-12 col-md-4">
                         <label for="rfc" class="form-label perm-label">RFC</label>
                         <div class="input-group input-group-lg perm-ig">
@@ -59,8 +38,9 @@
                                 <mat-icon aria-hidden="true">person</mat-icon>
                             </span>
                             <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="tipoPersona" formControlName="tipoPersona" required>
-                                    <!-- <option [ngValue]="null"></option> -->
+                                <select class="form-select" id="tipoPersona" formControlName="tipoPersona" required
+                                    (change)="onTipoPersonaChange($event)">
+                                    <option [ngValue]="null" disabled>Selecciona tipo de persona</option>
                                     <option [ngValue]="1">Física</option>
                                     <option [ngValue]="2">Moral</option>
                                 </select>
@@ -69,57 +49,59 @@
                         </div>
                     </div>
 
-                    <!-- Nombre / Razón social -->
-                    <div class="col-12 col-md-4">
-                        <label for="nombre" class="form-label perm-label">
-                            {{ clienteForm.value.tipoPersona == 2 ? 'Razón Social' : 'Nombre' }}
-                        </label>
-                        <div class="input-group input-group-lg perm-ig">
-                            <span class="input-group-text fw-bold">
-                                <mat-icon aria-hidden="true">{{ clienteForm.value.tipoPersona == 2 ? 'business' :
-                                    'person' }}</mat-icon>
-                            </span>
-                            <div class="form-floating flex-grow-1">
-                                <input type="text" class="form-control" id="nombre" formControlName="nombre"
-                                    [placeholder]="clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de C.V.' : 'Ej: Juan'"
-                                    required />
-                                <label for="nombre">
-                                    {{ clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de C.V.'
-                                    : 'Ej: Juan' }}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Apellidos (solo si Física) -->
-                    <ng-container *ngIf="clienteForm.value.tipoPersona != 2">
+                    <ng-container *ngIf="tipoPersonaSeleccionada()">
+                        <!-- Nombre / Razón social -->
                         <div class="col-12 col-md-4">
-                            <label for="apellidoPaterno" class="form-label perm-label">Apellido Paterno</label>
+                            <label for="nombre" class="form-label perm-label">
+                                {{ clienteForm.value.tipoPersona == 2 ? 'Razón Social' : 'Nombre' }}
+                            </label>
                             <div class="input-group input-group-lg perm-ig">
                                 <span class="input-group-text fw-bold">
-                                    <mat-icon aria-hidden="true">badge</mat-icon>
+                                    <mat-icon aria-hidden="true">{{ clienteForm.value.tipoPersona == 2 ? 'business' :
+                                        'person' }}</mat-icon>
                                 </span>
                                 <div class="form-floating flex-grow-1">
-                                    <input type="text" class="form-control" id="apellidoPaterno"
-                                        formControlName="apellidoPaterno" placeholder="Ej: Rodríguez" />
-                                    <label for="apellidoPaterno">Ej: Rodríguez</label>
+                                    <input type="text" class="form-control" id="nombre" formControlName="nombre"
+                                        [placeholder]="clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de C.V.' : 'Ej: Juan'"
+                                        required />
+                                    <label for="nombre">
+                                        {{ clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de C.V.'
+                                        : 'Ej: Juan' }}
+                                    </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-4">
-                            <label for="apellidoMaterno" class="form-label perm-label">Apellido Materno</label>
-                            <div class="input-group input-group-lg perm-ig">
-                                <span class="input-group-text fw-bold">
-                                    <mat-icon aria-hidden="true">badge</mat-icon>
-                                </span>
-                                <div class="form-floating flex-grow-1">
-                                    <input type="text" class="form-control" id="apellidoMaterno"
-                                        formControlName="apellidoMaterno" placeholder="Ej: Santos" />
-                                    <label for="apellidoMaterno">Ej: Santos</label>
+                        <!-- Apellidos (solo si Física) -->
+                        <ng-container *ngIf="clienteForm.value.tipoPersona != 2">
+                            <div class="col-12 col-md-4">
+                                <label for="apellidoPaterno" class="form-label perm-label">Apellido Paterno</label>
+                                <div class="input-group input-group-lg perm-ig">
+                                    <span class="input-group-text fw-bold">
+                                        <mat-icon aria-hidden="true">badge</mat-icon>
+                                    </span>
+                                    <div class="form-floating flex-grow-1">
+                                        <input type="text" class="form-control" id="apellidoPaterno"
+                                            formControlName="apellidoPaterno" placeholder="Ej: Rodríguez" />
+                                        <label for="apellidoPaterno">Ej: Rodríguez</label>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+
+                            <div class="col-12 col-md-4">
+                                <label for="apellidoMaterno" class="form-label perm-label">Apellido Materno</label>
+                                <div class="input-group input-group-lg perm-ig">
+                                    <span class="input-group-text fw-bold">
+                                        <mat-icon aria-hidden="true">badge</mat-icon>
+                                    </span>
+                                    <div class="form-floating flex-grow-1">
+                                        <input type="text" class="form-control" id="apellidoMaterno"
+                                            formControlName="apellidoMaterno" placeholder="Ej: Santos" />
+                                        <label for="apellidoMaterno">Ej: Santos</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-container>
                     </ng-container>
 
                     <div class="col-12 col-md-4">
@@ -262,6 +244,7 @@
                         </div>
                     </div>
 
+                    <ng-container *ngIf="esPersonaMoral()">
                     <div class="col-12 col-md-4">
                         <label for="nombreEncargado" class="form-label perm-label">Nombre Representante Legal</label>
                         <div class="input-group input-group-lg perm-ig">
@@ -304,6 +287,7 @@
                             </div>
                         </div>
                     </div>
+                    </ng-container>
 
                     <div class="col-12 col-md-4">
                         <label for="sitioWeb" class="form-label perm-label">Sitio Web</label>
@@ -433,6 +417,7 @@
                             </div>
                         </div>
 
+                        <ng-container *ngIf="esPersonaMoral()">
                         <div class="col-12 col-md-6 col-lg-3">
                             <label class="form-label perm-label d-block mb-2">Acta Constitutiva</label>
                             <div class="uploader-hero">
@@ -509,8 +494,9 @@
                                 </div>
                             </div>
                         </div>
+                        </ng-container>
 
-                        <div class="col-12 mt-5 pt-3 socios-section socios-section--after-uploads">
+                        <div class="col-12 mt-5 pt-3 socios-section socios-section--after-uploads" *ngIf="esPersonaMoral()">
                             <div class="socios-hero">
                                 <div class="socios-hero__icon" aria-hidden="true">
                                     <mat-icon>groups</mat-icon>
@@ -626,7 +612,7 @@
                                                 </div>
 
                                                 <div class="col-12 col-md-4">
-                                                    <label class="form-label perm-label d-block mb-2">Acta Constitutiva</label>
+                                                    <label class="form-label perm-label d-block mb-2">Ine</label>
                                                     <div class="uploader-hero">
                                                         <div class="uploader">
                                                             <div class="uploader__glow"></div>

@@ -39,12 +39,6 @@ export const navItems: NavItem[] = [
         route: '/permisos',
         permission: Permiso.CONSULTAR_PERMISOS,
       },
-      {
-        displayName: 'Productos',
-        route: '/productos',
-        // Mostrar si tiene al menos un permiso de productos
-        permission: Permiso.CONSULTAR_PRODUCTOS,
-      },
       
       {
         displayName: 'INPC',

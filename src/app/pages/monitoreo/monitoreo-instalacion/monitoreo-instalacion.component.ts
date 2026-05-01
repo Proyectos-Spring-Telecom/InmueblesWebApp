@@ -159,6 +159,11 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   ];
   /** Nombre mostrado en vista Local (contrato); independiente del expediente del inmueble. */
   readonly nombreArchivoContratoLocalDemo = 'Contrato_local_corporativo.pdf';
+  /** Archivo del contrato en vista Local (demo). */
+  readonly contratoLocalArchivo: MonitoreoDocumentoArchivo = {
+    nombre: this.nombreArchivoContratoLocalDemo,
+    url: '/assets/docs/Contrato_local_corporativo.pdf',
+  };
 
   /**
    * Expediente digital alineado con «Documentos e imágenes» del formulario de inmuebles.
@@ -169,70 +174,70 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       etiqueta: 'Escritura del inmueble (PDF)',
       archivo: {
         nombre: 'Escritura_inmueble_BHV.pdf',
-        url: environment.documentoPdfDemoPath,
+        url: '/assets/docs/Escritura_inmueble_BHV.pdf',
       },
     },
     {
       etiqueta: 'Licencia / uso de suelo',
       archivo: {
-        nombre: 'Licencia_uso_suelo_2026.jpg',
-        url: '/assets/images/logos/markerInstalacion.png',
+        nombre: 'Licencia_uso_suelo_2026.svg',
+        url: '/assets/docs/Licencia_uso_suelo_2026.svg',
       },
     },
     {
       etiqueta: 'Fachada',
       archivo: {
-        nombre: 'Fachada_principal.jpg',
-        url: '/assets/images/logos/marker_local.png',
+        nombre: 'Fachada_principal.svg',
+        url: '/assets/docs/Fachada_principal.svg',
       },
     },
     {
       etiqueta: 'Contrato de renta',
       archivo: {
         nombre: 'Contrato_renta_vigente.pdf',
-        url: environment.documentoPdfDemoPath,
+        url: '/assets/docs/Contrato_renta_vigente.pdf',
       },
     },
     {
       etiqueta: 'Constancia de Situación Fiscal',
       archivo: {
         nombre: 'CSF_inmueble_sat.pdf',
-        url: environment.documentoPdfDemoPath,
+        url: '/assets/docs/CSF_inmueble_sat.pdf',
       },
     },
     {
       etiqueta: 'Comprobante de Domicilio',
       archivo: {
         nombre: 'Comprobante_domicilio_fiscal.pdf',
-        url: environment.documentoPdfDemoPath,
+        url: '/assets/docs/Comprobante_domicilio_fiscal.pdf',
       },
     },
     {
       etiqueta: 'Acta Constitutiva',
       archivo: {
         nombre: 'Acta_constitutiva_sociedad.pdf',
-        url: environment.documentoPdfDemoPath,
+        url: '/assets/docs/Acta_constitutiva_sociedad.pdf',
       },
     },
     {
       etiqueta: 'Constancia de situación fiscal del representante legal',
       archivo: {
         nombre: 'CSF_representante.pdf',
-        url: environment.documentoPdfDemoPath,
+        url: '/assets/docs/CSF_representante.pdf',
       },
     },
     {
       etiqueta: 'INE Representante Legal',
       archivo: {
         nombre: 'INE_representante_legal.pdf',
-        url: environment.documentoPdfDemoPath,
+        url: '/assets/docs/INE_representante_legal.pdf',
       },
     },
     {
       etiqueta: 'Imagen 1 (galería del inmueble)',
       archivo: {
-        nombre: 'Galeria_interior_demo.jpg',
-        url: '/assets/images/logos/markerInstalacion.png',
+        nombre: 'Galeria_interior_demo.svg',
+        url: '/assets/docs/Galeria_interior_demo.svg',
       },
     },
   ];
@@ -840,7 +845,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         montoAdelanto: 47500,
         observaciones:
           'Contrato de demostración para la vista de local. Cuando la URL incluya ?idContrato= se cargarán los datos reales del API.',
-        documentoUrl: null,
+        documentoUrl: '/assets/docs/Contrato_local_corporativo.pdf',
       },
       mapC ?? new Map<number, string>(),
       mapI ?? new Map<number, string>(),
