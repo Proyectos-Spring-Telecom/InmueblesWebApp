@@ -80,9 +80,10 @@ export class ListaClientesComponent implements OnInit {
             Number(response?.paginated?.limit) ||
             (take > 0 ? Math.ceil(totalRegistros / take) : 0);
 
-          this.totalRegistros = totalRegistros;
           this.paginaActual = paginaActual;
-          this.totalPaginas = totalPaginas;
+
+          /** Demo: solo mostrar el arrendador con este id (ocultar el resto). */
+          const SOLO_ARRENDADOR_ID = 1;
 
           const dataTransformada = (
             Array.isArray(response?.data) ? response.data : []
@@ -122,13 +123,19 @@ export class ListaClientesComponent implements OnInit {
                 direccionCompleta,
               };
             })
+            .filter((row: any) => Number(row?.id) === SOLO_ARRENDADOR_ID)
             .sort((a: any, b: any) => Number(b.id) - Number(a.id));
 
           this.paginaActualData = dataTransformada;
+          this.totalRegistros = dataTransformada.length;
+          this.totalPaginas =
+            dataTransformada.length > 0 && take > 0
+              ? Math.ceil(dataTransformada.length / take)
+              : 0;
 
           return {
             data: dataTransformada,
-            totalCount: totalRegistros,
+            totalCount: dataTransformada.length,
           };
         } catch (error) {
           this.loading = false;

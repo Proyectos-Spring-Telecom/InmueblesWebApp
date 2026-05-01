@@ -95,6 +95,7 @@ export class AgregarClienteComponent implements OnInit {
           actaConstitutiva: d.actaConstitutiva ?? null,
           ineRepresentanteLegal: d.ineRepresentanteLegal ?? null,
         });
+        this.onTipoPersonaChange(null);
         this.originalDocs = {
           logotipo: d.logotipo ?? '',
           constanciaSituacionFiscal: d.constanciaSituacionFiscal ?? '',
@@ -121,27 +122,121 @@ export class AgregarClienteComponent implements OnInit {
     }
   }
 
-  onTipoPersonaChange(_event: any) {
-    const value: number | null = this.clienteForm.get('tipoPersona')!.value;
+  /** True cuando ya eligieron Física (1) o Moral (2); hasta entonces no se muestran nombre/apellidos/razón social. */
+  tipoPersonaSeleccionada(): boolean {
+    const raw = this.clienteForm?.get('tipoPersona')?.value;
+    const n = Number(raw);
+    return n === 1 || n === 2;
+  }
 
-    if (value === 1) {
-      this.clienteForm
-        .get('apellidoPaterno')
-        ?.setValidators([Validators.required]);
-      this.clienteForm
-        .get('apellidoMaterno')
-        ?.setValidators([Validators.required]);
-    } else if (value === 2) {
-      this.clienteForm.get('apellidoPaterno')?.clearValidators();
-      this.clienteForm.get('apellidoMaterno')?.clearValidators();
-      this.clienteForm.patchValue({
-        apellidoPaterno: null,
-        apellidoMaterno: null,
-      });
+  /** Persona moral (2): representante legal, acta/INE del representante y socios. */
+  esPersonaMoral(): boolean {
+    return Number(this.clienteForm?.get('tipoPersona')?.value) === 2;
+  }
+
+  onTipoPersonaChange(_event: any) {
+    const raw = this.clienteForm.get('tipoPersona')!.value;
+    const value =
+      raw === null || raw === undefined || raw === ''
+        ? null
+        : Number(raw);
+
+    const nombreCtrl = this.clienteForm.get('nombre');
+    const apPat = this.clienteForm.get('apellidoPaterno');
+    const apMat = this.clienteForm.get('apellidoMaterno');
+
+    if (value !== 1 && value !== 2) {
+      nombreCtrl?.clearValidators();
+      apPat?.clearValidators();
+      apMat?.clearValidators();
+      nombreCtrl?.setValue('', { emitEvent: false });
+      apPat?.setValue(null, { emitEvent: false });
+      apMat?.setValue(null, { emitEvent: false });
+    } else {
+      nombreCtrl?.setValidators([Validators.required]);
+      if (value === 1) {
+        apPat?.setValidators([Validators.required]);
+        apMat?.setValidators([Validators.required]);
+      } else {
+        apPat?.clearValidators();
+        apMat?.clearValidators();
+        this.clienteForm.patchValue(
+          { apellidoPaterno: null, apellidoMaterno: null },
+          { emitEvent: false },
+        );
+      }
     }
 
-    this.clienteForm.get('apellidoPaterno')?.updateValueAndValidity();
-    this.clienteForm.get('apellidoMaterno')?.updateValueAndValidity();
+    nombreCtrl?.updateValueAndValidity({ emitEvent: false });
+    apPat?.updateValueAndValidity({ emitEvent: false });
+    apMat?.updateValueAndValidity({ emitEvent: false });
+
+    this.aplicarSeccionMoral(value === 2);
+  }
+
+  /** Representante legal, acta/INE y socios solo aplican a persona moral. */
+  private aplicarSeccionMoral(activar: boolean): void {
+    const ne = this.clienteForm.get('nombreEncargado');
+    const te = this.clienteForm.get('telefonoEncargado');
+    const ce = this.clienteForm.get('correoEncargado');
+    const ac = this.clienteForm.get('actaConstitutiva');
+    const ine = this.clienteForm.get('ineRepresentanteLegal');
+
+    if (activar) {
+      ne?.setValidators([Validators.required]);
+      te?.setValidators([Validators.required]);
+      ce?.setValidators([Validators.required, Validators.email]);
+      ac?.setValidators([Validators.required]);
+      ine?.setValidators([Validators.required]);
+      this.sociosFormArray.controls.forEach((ctrl) =>
+        this.setSocioNombreRequerido(ctrl as FormGroup, true),
+      );
+    } else {
+      ne?.clearValidators();
+      te?.clearValidators();
+      ce?.clearValidators();
+      ac?.clearValidators();
+      ine?.clearValidators();
+      ne?.setValue('', { emitEvent: false });
+      te?.setValue('', { emitEvent: false });
+      ce?.setValue('', { emitEvent: false });
+      ac?.setValue(null, { emitEvent: false });
+      ine?.setValue(null, { emitEvent: false });
+      this.actaFileName = null;
+      this.ineFileName = null;
+      while (this.sociosFormArray.length > 1) {
+        this.sociosFormArray.removeAt(this.sociosFormArray.length - 1);
+      }
+      const g0 = this.sociosFormArray.at(0) as FormGroup;
+      g0?.reset(
+        {
+          nombreSocio: '',
+          rfcSocio: null,
+          socioConstanciaSituacionFiscal: null,
+          socioConstanciaSituacionFiscalNombre: '',
+          socioComprobanteDomicilio: null,
+          socioComprobanteDomicilioNombre: '',
+          socioActaConstitutiva: null,
+          socioActaConstitutivaNombre: '',
+        },
+        { emitEvent: false },
+      );
+      this.sociosFormArray.controls.forEach((ctrl) =>
+        this.setSocioNombreRequerido(ctrl as FormGroup, false),
+      );
+    }
+
+    [ne, te, ce, ac, ine].forEach((c) =>
+      c?.updateValueAndValidity({ emitEvent: false }),
+    );
+  }
+
+  private setSocioNombreRequerido(group: FormGroup | null, required: boolean): void {
+    const n = group?.get('nombreSocio');
+    if (!n) return;
+    if (required) n.setValidators([Validators.required]);
+    else n.clearValidators();
+    n.updateValueAndValidity({ emitEvent: false });
   }
 
   sanitizeInput(event: any): void {
@@ -172,9 +267,9 @@ export class AgregarClienteComponent implements OnInit {
       logotipo: [null, Validators.required],
       constanciaSituacionFiscal: [null, Validators.required],
       comprobanteDomicilio: [null, Validators.required],
-      actaConstitutiva: [null, Validators.required],
-      ineRepresentanteLegal: [null, Validators.required],
-      nombre: ['', Validators.required],
+      actaConstitutiva: [null],
+      ineRepresentanteLegal: [null],
+      nombre: [''],
       apellidoPaterno: [null],
       apellidoMaterno: [null],
       telefono: ['', Validators.required],
@@ -187,9 +282,9 @@ export class AgregarClienteComponent implements OnInit {
       numeroExterior: ['', Validators.required],
       numeroInterior: [null],
       cp: ['', Validators.required],
-      nombreEncargado: ['', Validators.required],
-      telefonoEncargado: ['', Validators.required],
-      correoEncargado: ['', [Validators.required, Validators.email]],
+      nombreEncargado: [''],
+      telefonoEncargado: [''],
+      correoEncargado: [''],
       sitioWeb: [null],
       socios: this.fb.array([this.crearSocioFormGroup()]),
     });
@@ -197,7 +292,7 @@ export class AgregarClienteComponent implements OnInit {
 
   private crearSocioFormGroup(): FormGroup {
     return this.fb.group({
-      nombreSocio: ['', Validators.required],
+      nombreSocio: [''],
       rfcSocio: [null],
       socioConstanciaSituacionFiscal: [null],
       socioConstanciaSituacionFiscalNombre: [''],
@@ -226,7 +321,9 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   agregarSocio(): void {
-    this.sociosFormArray.push(this.crearSocioFormGroup());
+    const g = this.crearSocioFormGroup();
+    this.sociosFormArray.push(g);
+    if (this.esPersonaMoral()) this.setSocioNombreRequerido(g, true);
   }
 
   eliminarSocio(index: number): void {
@@ -275,28 +372,7 @@ export class AgregarClienteComponent implements OnInit {
     this.submitButton = 'Cargando...';
     this.loading = true;
 
-    const tipo = Number(this.clienteForm.get('tipoPersona')?.value ?? null);
-    if (tipo === 1) {
-      this.clienteForm
-        .get('apellidoPaterno')
-        ?.setValidators([Validators.required]);
-      this.clienteForm
-        .get('apellidoMaterno')
-        ?.setValidators([Validators.required]);
-    } else if (tipo === 2) {
-      this.clienteForm.get('apellidoPaterno')?.clearValidators();
-      this.clienteForm.get('apellidoMaterno')?.clearValidators();
-      this.clienteForm.patchValue({
-        apellidoPaterno: null,
-        apellidoMaterno: null,
-      });
-    }
-    this.clienteForm
-      .get('apellidoPaterno')
-      ?.updateValueAndValidity({ emitEvent: false });
-    this.clienteForm
-      .get('apellidoMaterno')
-      ?.updateValueAndValidity({ emitEvent: false });
+    this.onTipoPersonaChange(null);
 
     if (this.clienteForm.invalid) {
       this.submitButton = 'Guardar';
@@ -395,12 +471,6 @@ export class AgregarClienteComponent implements OnInit {
     if (v.numeroInterior != null)
       formData.append('numeroInterior', v.numeroInterior);
     if (v.cp != null) formData.append('cp', v.cp);
-    if (v.nombreEncargado != null)
-      formData.append('nombreEncargado', v.nombreEncargado);
-    if (v.telefonoEncargado != null)
-      formData.append('telefonoEncargado', v.telefonoEncargado);
-    if (v.correoEncargado != null)
-      formData.append('correoEncargado', v.correoEncargado);
     if (v.sitioWeb != null) formData.append('sitioWeb', v.sitioWeb);
 
     const logotipo = v.logotipo;
@@ -408,6 +478,21 @@ export class AgregarClienteComponent implements OnInit {
     const comp = v.comprobanteDomicilio;
     const acta = v.actaConstitutiva;
     const ine = v.ineRepresentanteLegal;
+
+    if (Number(v.tipoPersona) === 2) {
+      if (v.nombreEncargado != null)
+        formData.append('nombreEncargado', v.nombreEncargado);
+      if (v.telefonoEncargado != null)
+        formData.append('telefonoEncargado', v.telefonoEncargado);
+      if (v.correoEncargado != null)
+        formData.append('correoEncargado', v.correoEncargado);
+      if (acta instanceof File) {
+        formData.append('actaConstitutiva', acta, acta.name);
+      }
+      if (ine instanceof File) {
+        formData.append('ineRepresentanteLegal', ine, ine.name);
+      }
+    }
 
     if (logotipo instanceof File) {
       formData.append('logotipo', logotipo, logotipo.name);
@@ -417,12 +502,6 @@ export class AgregarClienteComponent implements OnInit {
     }
     if (comp instanceof File) {
       formData.append('comprobanteDomicilio', comp, comp.name);
-    }
-    if (acta instanceof File) {
-      formData.append('actaConstitutiva', acta, acta.name);
-    }
-    if (ine instanceof File) {
-      formData.append('ineRepresentanteLegal', ine, ine.name);
     }
 
     this.clieService.agregarCliente(formData).subscribe(
@@ -460,28 +539,7 @@ export class AgregarClienteComponent implements OnInit {
     this.submitButton = 'Cargando...';
     this.loading = true;
 
-    const tipo = Number(this.clienteForm.get('tipoPersona')?.value ?? null);
-    if (tipo === 1) {
-      this.clienteForm
-        .get('apellidoPaterno')
-        ?.setValidators([Validators.required]);
-      this.clienteForm
-        .get('apellidoMaterno')
-        ?.setValidators([Validators.required]);
-    } else if (tipo === 2) {
-      this.clienteForm.get('apellidoPaterno')?.clearValidators();
-      this.clienteForm.get('apellidoMaterno')?.clearValidators();
-      this.clienteForm.patchValue({
-        apellidoPaterno: null,
-        apellidoMaterno: null,
-      });
-    }
-    this.clienteForm
-      .get('apellidoPaterno')
-      ?.updateValueAndValidity({ emitEvent: false });
-    this.clienteForm
-      .get('apellidoMaterno')
-      ?.updateValueAndValidity({ emitEvent: false });
+    this.onTipoPersonaChange(null);
 
     if (this.clienteForm.invalid) {
       this.submitButton = 'Actualizar';
@@ -578,12 +636,6 @@ export class AgregarClienteComponent implements OnInit {
     if (v.numeroInterior != null)
       formData.append('numeroInterior', v.numeroInterior);
     if (v.cp != null) formData.append('cp', v.cp);
-    if (v.nombreEncargado != null)
-      formData.append('nombreEncargado', v.nombreEncargado);
-    if (v.telefonoEncargado != null)
-      formData.append('telefonoEncargado', v.telefonoEncargado);
-    if (v.correoEncargado != null)
-      formData.append('correoEncargado', v.correoEncargado);
     if (v.sitioWeb != null) formData.append('sitioWeb', v.sitioWeb);
 
     const logotipo = v.logotipo;
@@ -591,6 +643,21 @@ export class AgregarClienteComponent implements OnInit {
     const comp = v.comprobanteDomicilio;
     const acta = v.actaConstitutiva;
     const ine = v.ineRepresentanteLegal;
+
+    if (Number(v.tipoPersona) === 2) {
+      if (v.nombreEncargado != null)
+        formData.append('nombreEncargado', v.nombreEncargado);
+      if (v.telefonoEncargado != null)
+        formData.append('telefonoEncargado', v.telefonoEncargado);
+      if (v.correoEncargado != null)
+        formData.append('correoEncargado', v.correoEncargado);
+      if (acta instanceof File) {
+        formData.append('actaConstitutiva', acta, acta.name);
+      }
+      if (ine instanceof File) {
+        formData.append('ineRepresentanteLegal', ine, ine.name);
+      }
+    }
 
     if (logotipo instanceof File) {
       formData.append('logotipo', logotipo, logotipo.name);
@@ -600,12 +667,6 @@ export class AgregarClienteComponent implements OnInit {
     }
     if (comp instanceof File) {
       formData.append('comprobanteDomicilio', comp, comp.name);
-    }
-    if (acta instanceof File) {
-      formData.append('actaConstitutiva', acta, acta.name);
-    }
-    if (ine instanceof File) {
-      formData.append('ineRepresentanteLegal', ine, ine.name);
     }
 
     this.clieService.actualizarCliente(this.idCliente, formData).subscribe(

@@ -20,6 +20,14 @@
                   for="nombreInmueble">Nombre del inmueble</label></div>
             </div>
           </div>
+          <div class="col-12 col-md-3 col-xl-3"><label for="arrendador" class="form-label perm-label">Arrendador</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="arrendador" type="text" class="form-control"
+                  formControlName="arrendador" placeholder="Arrendador" /><label for="arrendador">Arrendador</label>
+              </div>
+            </div>
+          </div>
           <div class="col-12 col-md-3 col-xl-3" *ngIf="mostrarCamposRenta"><label for="rentaMxn"
               class="form-label perm-label">Renta (MXN)</label>
             <div class="input-group input-group-lg perm-ig"><span
@@ -74,14 +82,6 @@
                 class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="fechaFin" type="date" class="form-control"
                   formControlName="fechaFin" /><label for="fechaFin">Fecha de fin</label></div>
-            </div>
-          </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="arrendador" class="form-label perm-label">Arrendador</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="arrendador" type="text" class="form-control"
-                  formControlName="arrendador" placeholder="Arrendador" /><label for="arrendador">Arrendador</label>
-              </div>
             </div>
           </div>
           <div class="col-12 col-md-3 col-xl-3" *ngIf="mostrarCamposRenta"><label for="tiempoRentaAnios"
@@ -425,7 +425,7 @@
                 </div>
               </div>
 
-              <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column" *ngIf="mostrarCamposRenta">
                 <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
@@ -505,34 +505,6 @@
                       </div>
                       <input #comprobanteDomicilioInput type="file" accept="application/pdf" class="uploader__input"
                         (change)="onFileSelected($event, 'documentoComprobanteDomicilio')" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex flex-column">
-                <label class="form-label perm-label docs-uploader-label">Acta Constitutiva</label>
-                <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
-                    <div class="uploader__glow"></div>
-                    <div class="uploader__body">
-                      <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                      <h6 class="uploader__title">Sube tu PDF</h6>
-                      <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('actaConstitutiva')">Seleccionar</button>
-                        <span class="uploader__badge">PDF · Máx. 3 MB</span>
-                      </div>
-                      <div class="uploader__status"
-                        *ngIf="actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value">
-                        <div class="uploader__filename"
-                          *ngIf="actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value?.name">
-                          {{ actaConstitutivaNombre || inmuebleForm.get('documentoActaConstitutiva')?.value?.name }}
-                        </div>
-                      </div>
-                      <input #actaConstitutivaInput type="file" accept="application/pdf" class="uploader__input"
-                        (change)="onFileSelected($event, 'documentoActaConstitutiva')" />
                     </div>
                   </div>
                 </div>

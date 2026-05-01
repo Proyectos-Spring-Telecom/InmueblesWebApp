@@ -19,14 +19,18 @@
             </span>
           </div>
           <div class="hero-header__row hero-header__row--top">
-            <span
-              class="hero-header__status hero-header__status--local"
-              [class.hero-header__status--ocupado]="localEstatus === 'ocupado'"
-              [class.hero-header__status--libre]="localEstatus === 'libre'"
+            <div
+              class="d-flex align-items-center flex-wrap gap-2"
               *ngIf="vistaEntidad === 'local'"
             >
-              {{ localEstatus === 'ocupado' ? 'OCUPADA' : 'LIBRE' }}
-            </span>
+              <span
+                class="hero-header__status hero-header__status--local"
+                [class.hero-header__status--ocupado]="localEstatus === 'ocupado'"
+                [class.hero-header__status--libre]="localEstatus === 'libre'"
+              >
+                {{ localEstatus === 'ocupado' ? 'OCUPADA' : 'LIBRE' }}
+              </span>
+            </div>
           </div>
           <div class="hero-header__meta" *ngIf="showInmuebleExtras">
             <span class="hero-header__status">{{ inmuebleEsRenta ? 'RENTADO' : 'PROPIO' }}</span>
@@ -48,37 +52,58 @@
 
     <section
       *ngIf="vistaEntidad === 'local'"
-      class="mono-docs mt-1 mt-lg-2"
-      aria-label="Contrato"
+      class="mono-local-contrato-strip mt-2 mt-lg-3"
+      aria-labelledby="mono-local-contrato-strip-title"
     >
-      <header class="mono-docs__header mono-docs__header--expediente mono-docs__header--local-contrato">
-        <div class="mono-docs__header-text">
-          <h5 class="m-0 mono-docs__title-main">Documento</h5>
-        </div>
-      </header>
-      <div class="mono-docs__content">
-        <article class="mono-docs__panel mono-docs__panel--expediente mono-contrato-local-panel">
-          <div class="mono-contrato-local-panel__row">
-            <div class="mono-docs__row-main mono-docs__row-main--expediente mono-contrato-local-panel__main">
-              <div class="mono-docs__label-block">
-                <span class="mono-docs__doc-label">Contrato</span>
-                <span class="mono-docs__file-inline mono-docs__file-inline--block">
-                  <mat-icon class="mono-docs__file-icon" aria-hidden="true">description</mat-icon>
-                  <span class="mono-docs__file-name">{{ nombreArchivoContratoLocal }}</span>
-                </span>
-              </div>
-            </div>
+      <div class="mono-local-contrato-strip__shell">
+        <div class="mono-local-contrato-strip__main">
+          <span class="mono-local-contrato-strip__eyebrow" id="mono-local-contrato-strip-title"
+            >Documentación del local</span
+          >
+          <h2 class="mono-local-contrato-strip__title">Contrato vigente</h2>
+          <p class="mono-local-contrato-strip__lede m-0">
+            Resumen económico y cláusulas en el visor; el PDF firmado queda disponible para descarga o vista rápida.
+          </p>
+          <div class="mono-local-contrato-strip__file-row">
+            <mat-icon class="mono-local-contrato-strip__file-ico" aria-hidden="true">attach_file</mat-icon>
+            <span class="mono-local-contrato-strip__file-name">{{ nombreArchivoContratoLocal }}</span>
+          </div>
+          <div class="mono-local-contrato-strip__quick-actions">
             <button
               type="button"
-              class="hero-header__back-btn mono-contrato-local-panel__btn"
-              (click)="abrirModalContratoLocal()"
-              aria-label="Ver contrato completo"
+              class="mono-local-contrato-strip__linkish"
+              (click)="descargarDocumento(contratoLocalArchivo, $event)"
             >
-              <mat-icon aria-hidden="true">description</mat-icon>
-              <span class="hero-header__contrato-local-btn__text">Ver Contrato</span>
+              <mat-icon aria-hidden="true">download</mat-icon>
+              Descargar PDF
             </button>
+            <a
+              class="mono-local-contrato-strip__linkish"
+              [href]="contratoLocalArchivo.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <mat-icon aria-hidden="true">open_in_new</mat-icon>
+              Abrir en pestaña
+            </a>
           </div>
-        </article>
+        </div>
+        <aside class="mono-local-contrato-strip__cta" aria-label="Acciones del contrato">
+          <div class="mono-local-contrato-strip__cta-glow" aria-hidden="true"></div>
+          <mat-icon class="mono-local-contrato-strip__cta-icon" aria-hidden="true">gavel</mat-icon>
+          <p class="mono-local-contrato-strip__cta-kicker m-0">Detalle operativo</p>
+          <p class="mono-local-contrato-strip__cta-text m-0">
+            Montos, vigencias, partes y totales tal como quedaron capturados en el contrato.
+          </p>
+          <button
+            type="button"
+            class="btn bg-primary mono-local-contrato-strip__cta-btn"
+            (click)="abrirModalContratoLocal()"
+          >
+            <mat-icon aria-hidden="true">visibility</mat-icon>
+            <span>Ver contrato completo</span>
+          </button>
+        </aside>
       </div>
     </section>
 
@@ -563,7 +588,7 @@
                     </span>
                     <div class="form-floating flex-grow-1">
                       <select id="pagoMetodo" class="form-select" formControlName="metodo">
-                        <option value="" disabled selected hidden>Métodos de Pxago</option>
+                        <option value="" disabled selected hidden>Métodos de pago</option>
                         <option value="Transferencia">Transferencia</option>
                         <option value="SPEI">SPEI</option>
                         <option value="Tarjeta">Tarjeta</option>
