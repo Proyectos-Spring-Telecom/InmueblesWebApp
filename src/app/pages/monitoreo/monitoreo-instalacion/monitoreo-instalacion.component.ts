@@ -132,6 +132,11 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   idContratoQuery: number | null = null;
   inmuebleEsRenta = true;
   localEstatus: 'ocupado' | 'libre' = 'ocupado';
+  detalleTitulo = 'Corporativo Pirámide';
+  detalleInmuebleNombre = 'Corporativo Pirámide';
+  detalleLocalNombre = 'Local PB-01';
+  detalleArrendador = 'Inmuebles y Desarrollos HAC S.A de C.V.';
+  detalleArrendatario = 'Laboratorios Chopo';
   mostrarModalContratoLocal = false;
   mostrarModalPago = false;
   pagoForm!: FormGroup;
@@ -146,9 +151,10 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   readonly ubicacionLng = -99.2216;
   galleryIndex = 0;
   readonly galleryImages: string[] = [
-    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1604719312566-8912e9c8a213?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80',
+    'https://propiedadescom.s3.amazonaws.com/files/336x200/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-0-18601330.jpeg',
+    'https://img10.naventcdn.com/avisos/18/01/47/17/58/97/1200x1200/1582232812.jpg?isFirstImage=true',
+    'https://repstaticneu.azureedge.net/images/2003/L/WM/Large/cdb6c9e8-64be-44ea-bead-aa3f1de15e85-99993995-595f-49f8-8fd8-2a6450805281.jpg',
+    'https://cdn.propiedades.com/files/1200x507/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-1-18601330.jpeg',
   ];
   /** Nombre mostrado en vista Local (contrato); independiente del expediente del inmueble. */
   readonly nombreArchivoContratoLocalDemo = 'Contrato local vigente (texto informativo)';
@@ -211,14 +217,13 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     Predio: 'IMP-PRED-110009829001',
   };
   readonly zonas = [
-    { zona: 'Planta Baja Corporativo Piramide', superficie: '2,598.31 m²' },
-    { zona: '1er. Piso Corporativo Piramide', superficie: '2,003.35 m²' },
-    { zona: '2do Piso Corporativo Piramide', superficie: '1,191.07 m²' },
+    { zona: 'Planta baja Corporativo Pirámide', superficie: '200.00 m²' },
+    { zona: 'Segundo piso Corporativo Pirámide', superficie: '200.00 m²' },
   ];
   readonly estacionamientosInmueble = [
-    { nombrePensionado: 'Juan Pérez', numeroTarjeta: 'TAR-1001', arrendatario: 'Santory' },
-    { nombrePensionado: 'María Gómez', numeroTarjeta: 'TAR-1042', arrendatario: 'Spring Telecom México' },
-    { nombrePensionado: 'Luis Ramírez', numeroTarjeta: 'TAR-1108', arrendatario: 'Santory' },
+    { nombrePensionado: 'Carlos Ramírez', numeroTarjeta: 'TAR-1001', arrendatario: 'Laboratorios Chopo' },
+    { nombrePensionado: 'Luis Hernández', numeroTarjeta: 'TAR-1042', arrendatario: 'Inglés Individual' },
+    { nombrePensionado: 'Marta López', numeroTarjeta: 'TAR-1108', arrendatario: 'Poder Judicial del Estado' },
   ];
   pagosData: PagoRow[] = [
     {
@@ -345,6 +350,18 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       this.inmuebleEsRenta = true;
     }
     this.localEstatus = estatusLocalRaw === 'libre' ? 'libre' : 'ocupado';
+    this.detalleInmuebleNombre =
+      (qp.get('nombreInmueble') ?? '').trim() || 'Corporativo Pirámide';
+    this.detalleLocalNombre =
+      (qp.get('nombreLocal') ?? '').trim() || 'Local PB-01';
+    this.detalleArrendador =
+      (qp.get('arrendador') ?? '').trim() || 'Inmuebles y Desarrollos HAC S.A de C.V.';
+    this.detalleArrendatario =
+      (qp.get('arrendatario') ?? '').trim() || 'Laboratorios Chopo';
+    this.detalleTitulo =
+      this.vistaEntidad === 'local'
+        ? this.detalleLocalNombre
+        : this.detalleInmuebleNombre;
     const idRaw = qp.get('idContrato');
     const idn = idRaw != null && String(idRaw).trim() !== '' ? Number(idRaw) : NaN;
     this.idContratoQuery =
@@ -785,7 +802,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     return this.buildVistaContratoDesdeBackend(
       {
         tipoModificacion: 'Por renovación',
-        numeroContrato: 'PC-DEMO-BHV-001',
+        numeroContrato: 'HAC-DEMO-001',
         idArrendador,
         idArrendatario,
         idInmuebles: idsInmuebles,
@@ -802,7 +819,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         mesesAdelanto: 1,
         montoAdelanto: 47500,
         observaciones:
-          'Contrato de demostración para la vista de local. Cuando la URL incluya ?idContrato= se cargarán los datos reales del API.',
+          'Contrato de demostración alineado con el inmueble y arrendatarios del monitoreo. Cuando la URL incluya ?idContrato= se cargarán los datos reales del API.',
         documentoUrl: '/assets/docs/Contrato_local_corporativo.pdf',
       },
       mapC ?? new Map<number, string>(),
