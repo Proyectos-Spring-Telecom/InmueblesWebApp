@@ -29,6 +29,9 @@ export class AgregarInmuebleComponent implements OnInit {
   ineRepresentanteNombre: string | null = null;
   boletaPredialNombre: string | null = null;
   reciboAguaServiciosNombre: string | null = null;
+  resaltarAutocargaContrato = false;
+  resaltarAutocargaDocs = false;
+  private promptAutocargaMostrado = false;
   mostrarModalMapa = false;
   map: any = null;
   marker: any = null;
@@ -49,6 +52,8 @@ export class AgregarInmuebleComponent implements OnInit {
   @ViewChild('boletaPredialInput') boletaPredialInput?: ElementRef<HTMLInputElement>;
   @ViewChild('reciboAguaServiciosInput')
   reciboAguaServiciosInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('autocargaContratoCardInmueble') autocargaContratoCardInmueble?: ElementRef<HTMLElement>;
+  @ViewChild('docsSectionInmueble') docsSectionInmueble?: ElementRef<HTMLElement>;
 
   constructor(
     private fb: FormBuilder,
@@ -65,8 +70,45 @@ export class AgregarInmuebleComponent implements OnInit {
         this.title = 'Actualizar Inmueble';
         this.submitButton = 'Actualizar';
         this.cargarDemoEdicion(this.idInmueble);
+      } else {
+        this.mostrarPromptAutocargaContrato();
       }
     });
+  }
+
+  private mostrarPromptAutocargaContrato(): void {
+    if (this.promptAutocargaMostrado) return;
+    this.promptAutocargaMostrado = true;
+    void Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      icon: 'question',
+      title: '¿Quieres Intentar Completar El Formulario Con Un Archivo?',
+      text: 'Te llevaremos a la sección de Escrituras o Título para subir el archivo y extraer algunos datos.',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, Llevarme',
+      cancelButtonText: 'No, Continuar Manualmente',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.enfocarAutocargaContrato();
+    });
+  }
+
+  private enfocarAutocargaContrato(): void {
+    setTimeout(() => {
+      const archivoClaveCard = this.autocargaContratoCardInmueble?.nativeElement;
+      if (archivoClaveCard) {
+        archivoClaveCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        this.resaltarAutocargaContrato = true;
+        return;
+      }
+      const docs = this.docsSectionInmueble?.nativeElement;
+      if (!docs) return;
+      docs.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      this.resaltarAutocargaDocs = true;
+    }, 120);
   }
 
   private initForm(): void {
@@ -449,6 +491,10 @@ export class AgregarInmuebleComponent implements OnInit {
     if (controlName === 'documentoBoletaPredial') this.boletaPredialNombre = name;
     if (controlName === 'documentoReciboAguaServicios')
       this.reciboAguaServiciosNombre = name;
+    if (controlName === 'documentoEscritura' && file) {
+      this.resaltarAutocargaContrato = false;
+      this.resaltarAutocargaDocs = false;
+    }
   }
 
   private cargarDemoEdicion(id: number): void {
@@ -456,8 +502,8 @@ export class AgregarInmuebleComponent implements OnInit {
 
     this.inmuebleForm.patchValue(
       {
-        nombreInmueble: 'Corporativo Pirámide',
-        direccionInmueble: 'Río Balsas 106, Cuernavaca',
+        nombreInmueble: 'San Cristóbal',
+        direccionInmueble: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
         arrendador: demo?.arrendador ?? 'Inmuebles y Desarrollos HAC S.A de C.V.',
         estatusInmueble: 'RENTADO',
         rentaMxn: 120000,

@@ -9,10 +9,10 @@
   </header>
   <!-- No eliminar -->
   <div class="surface">
-    <section class="perm-form-nc container-fluid py-2">
+    <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="arrendatarioForm" class="perm-form-body">
-        <div class="row g-2 inmueble-main-grid">
-          <div class="col-12 col-md-4 col-xl-3"><label for="nombreInmueble"
+        <div class="row g-4 inmueble-main-grid">
+          <div class="col-12 col-md-4"><label for="nombreInmueble"
               class="form-label perm-label">Arrendatario</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
@@ -21,7 +21,7 @@
                   for="nombreInmueble">Nombre del arrendatario</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="arrendador" class="form-label perm-label">Arrendador</label>
+          <div class="col-12 col-md-4"><label for="arrendador" class="form-label perm-label">Arrendador</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="arrendador" type="text" class="form-control"
@@ -29,7 +29,7 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3">
+          <div class="col-12 col-md-4">
             <label for="tipoPersona" class="form-label perm-label">Tipo Persona</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
@@ -42,61 +42,61 @@
                   <option [ngValue]="1">Física</option>
                   <option [ngValue]="2">Moral</option>
                 </select>
-                <label for="tipoPersona">Selecciona tipo de persona</label>
+                <label for="tipoPersona">Selecciona Tipo De Persona</label>
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="rentaMxn" class="form-label perm-label">Renta (MXN)</label>
+          <div class="col-12 col-md-4"><label for="rentaMxn" class="form-label perm-label">Renta (Mxn)</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="rentaMxn" type="number" class="form-control"
-                  formControlName="rentaMxn" placeholder="Monto de renta" /><label for="rentaMxn">Monto de renta</label>
+                  formControlName="rentaMxn" placeholder="Monto de renta" /><label for="rentaMxn">Monto De Renta</label>
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="direccionInmueble" class="form-label perm-label">Dirección
+          <div class="col-12 col-md-4"><label for="direccionInmueble" class="form-label perm-label">Dirección
               fiscal</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>location_on</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="direccionInmueble" type="text" class="form-control"
                   formControlName="direccionInmueble" placeholder="Dirección fiscal" /><label
-                  for="direccionInmueble">Dirección fiscal</label></div>
+                  for="direccionInmueble">Dirección Fiscal</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="vigenciaAnios" class="form-label perm-label">Vigencia
+          <div class="col-12 col-md-4"><label for="vigenciaAnios" class="form-label perm-label">Vigencia
               (años)</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="vigenciaAnios" type="number" class="form-control"
-                  formControlName="vigenciaAnios" placeholder="Años de vigencia" /><label for="vigenciaAnios">Años de
-                  vigencia</label></div>
+                  formControlName="vigenciaAnios" placeholder="Años de vigencia" /><label for="vigenciaAnios">Años De
+                  Vigencia</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="fechaInicio" class="form-label perm-label">Inicio</label>
+          <div class="col-12 col-md-4"><label for="fechaInicio" class="form-label perm-label">Inicio</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="fechaInicio" type="date" class="form-control"
-                  formControlName="fechaInicio" /><label for="fechaInicio">Fecha de inicio</label></div>
+                  formControlName="fechaInicio" /><label for="fechaInicio">Fecha De Inicio</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="fechaFin" class="form-label perm-label">Fin</label>
+          <div class="col-12 col-md-4"><label for="fechaFin" class="form-label perm-label">Fin</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="fechaFin" type="date" class="form-control"
-                  formControlName="fechaFin" /><label for="fechaFin">Fecha de fin</label></div>
+                  formControlName="fechaFin" /><label for="fechaFin">Fecha De Fin</label></div>
             </div>
           </div>
 
-          <div class="col-12 col-md-4 col-xl-3"><label for="tiempoRentaAnios" class="form-label perm-label">Tiempo de
+          <div class="col-12 col-md-4"><label for="tiempoRentaAnios" class="form-label perm-label">Tiempo De
               renta (años)</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="tiempoRentaAnios" type="number" class="form-control"
                   formControlName="tiempoRentaAnios" placeholder="Tiempo de renta" /><label
-                  for="tiempoRentaAnios">Tiempo de renta</label></div>
+                  for="tiempoRentaAnios">Tiempo De Renta</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="nombreRepresentanteLegal"
+          <div class="col-12 col-md-4"><label for="nombreRepresentanteLegal"
               class="form-label perm-label">Nombre Representante Legal</label>
             <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
                   aria-hidden="true">supervisor_account</mat-icon></span>
@@ -105,7 +105,7 @@
                   placeholder="Ej.: María López" /><label for="nombreRepresentanteLegal">Ej.: María López</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="telefonoRepresentanteLegal"
+          <div class="col-12 col-md-4"><label for="telefonoRepresentanteLegal"
               class="form-label perm-label">Teléfono Representante Legal</label>
             <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
                   aria-hidden="true">call</mat-icon></span>
@@ -115,7 +115,7 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="correoRepresentanteLegal"
+          <div class="col-12 col-md-4"><label for="correoRepresentanteLegal"
               class="form-label perm-label">Correo Representante Legal</label>
             <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
                   aria-hidden="true">alternate_email</mat-icon></span>
@@ -131,152 +131,152 @@
               <div class="arrend-fa-hero__body">
                 <div class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3">
                   <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
-                    <h6 class="arrend-fa-section-title m-0">Datos del contrato</h6>
+                    <h6 class="arrend-fa-section-title m-0">Datos del Contrato</h6>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="row g-2 mt-2">
-              <div class="col-12 col-md-4 col-xl-3">
+            <div class="row g-4 mt-2">
+              <div class="col-12 col-md-4">
                 <label for="inmuebles" class="form-label perm-label">Inmueble</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>home</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="inmuebles" type="text" class="form-control"
                       formControlName="inmuebles" placeholder="Inmueble" /><label for="inmuebles">Inmueble</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="fechaInicioContrato" class="form-label perm-label">Inicio contrato</label>
+              <div class="col-12 col-md-4">
+                <label for="fechaInicioContrato" class="form-label perm-label">Inicio Contrato</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="fechaInicioContrato" type="date" class="form-control"
-                      formControlName="fechaInicioContrato" /><label for="fechaInicioContrato">Inicio contrato</label></div>
+                      formControlName="fechaInicioContrato" /><label for="fechaInicioContrato">Inicio Contrato</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="fechaTerminoContrato" class="form-label perm-label">Término contrato</label>
+              <div class="col-12 col-md-4">
+                <label for="fechaTerminoContrato" class="form-label perm-label">Término Contrato</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="fechaTerminoContrato" type="date" class="form-control"
-                      formControlName="fechaTerminoContrato" /><label for="fechaTerminoContrato">Término contrato</label></div>
+                      formControlName="fechaTerminoContrato" /><label for="fechaTerminoContrato">Término Contrato</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
+              <div class="col-12 col-md-4">
                 <label for="tipoMoneda" class="form-label perm-label">Moneda</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="tipoMoneda" type="text" class="form-control"
                       formControlName="tipoMoneda" placeholder="Tipo de moneda" /><label for="tipoMoneda">Moneda</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="metrosRentados" class="form-label perm-label">Metros rentados</label>
+              <div class="col-12 col-md-4">
+                <label for="metrosRentados" class="form-label perm-label">Metros Rentados</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>straighten</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="metrosRentados" type="number" class="form-control"
-                      formControlName="metrosRentados" placeholder="Metros rentados" /><label for="metrosRentados">Metros rentados</label></div>
+                      formControlName="metrosRentados" placeholder="Metros rentados" /><label for="metrosRentados">Metros Rentados</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="costoPorM2" class="form-label perm-label">Costo por m²</label>
+              <div class="col-12 col-md-4">
+                <label for="costoPorM2" class="form-label perm-label">Costo Por M²</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>attach_money</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="costoPorM2" type="number" class="form-control"
-                      formControlName="costoPorM2" placeholder="Costo por m²" /><label for="costoPorM2">Costo por m²</label></div>
+                      formControlName="costoPorM2" placeholder="Costo por m²" /><label for="costoPorM2">Costo Por M²</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
+              <div class="col-12 col-md-4">
                 <label for="pctMantenimiento" class="form-label perm-label">% Mantenimiento</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>construction</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="pctMantenimiento" type="number" class="form-control"
-                      formControlName="pctMantenimiento" placeholder="% mantenimiento" /><label for="pctMantenimiento">% mantenimiento</label></div>
+                      formControlName="pctMantenimiento" placeholder="% mantenimiento" /><label for="pctMantenimiento">% Mantenimiento</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="mesesDeposito" class="form-label perm-label">Meses depósito</label>
+              <div class="col-12 col-md-4">
+                <label for="mesesDeposito" class="form-label perm-label">Meses Depósito</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>calendar_month</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="mesesDeposito" type="number" class="form-control"
-                      formControlName="mesesDeposito" placeholder="Meses depósito" /><label for="mesesDeposito">Meses depósito</label></div>
+                      formControlName="mesesDeposito" placeholder="Meses depósito" /><label for="mesesDeposito">Meses Depósito</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="montoDeposito" class="form-label perm-label">Monto depósito</label>
+              <div class="col-12 col-md-4">
+                <label for="montoDeposito" class="form-label perm-label">Monto Depósito</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>price_check</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="montoDeposito" type="number" class="form-control"
-                      formControlName="montoDeposito" placeholder="Monto depósito" /><label for="montoDeposito">Monto depósito</label></div>
+                      formControlName="montoDeposito" placeholder="Monto depósito" /><label for="montoDeposito">Monto Depósito</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="mesesAdelanto" class="form-label perm-label">Meses adelanto</label>
+              <div class="col-12 col-md-4">
+                <label for="mesesAdelanto" class="form-label perm-label">Meses Adelanto</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="mesesAdelanto" type="number" class="form-control"
-                      formControlName="mesesAdelanto" placeholder="Meses adelanto" /><label for="mesesAdelanto">Meses adelanto</label></div>
+                      formControlName="mesesAdelanto" placeholder="Meses adelanto" /><label for="mesesAdelanto">Meses Adelanto</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="montoAdelanto" class="form-label perm-label">Monto adelanto</label>
+              <div class="col-12 col-md-4">
+                <label for="montoAdelanto" class="form-label perm-label">Monto Adelanto</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>request_quote</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="montoAdelanto" type="number" class="form-control"
-                      formControlName="montoAdelanto" placeholder="Monto adelanto" /><label for="montoAdelanto">Monto adelanto</label></div>
+                      formControlName="montoAdelanto" placeholder="Monto adelanto" /><label for="montoAdelanto">Monto Adelanto</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="anosForzososArrendador" class="form-label perm-label">Años forzosos arrendador</label>
+              <div class="col-12 col-md-4">
+                <label for="anosForzososArrendador" class="form-label perm-label">Años Forzosos Arrendador</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="anosForzososArrendador" type="number" class="form-control"
-                      formControlName="anosForzososArrendador" placeholder="Años forzosos arrendador" /><label for="anosForzososArrendador">Años forzosos arrendador</label></div>
+                      formControlName="anosForzososArrendador" placeholder="Años forzosos arrendador" /><label for="anosForzososArrendador">Años Forzosos Arrendador</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="anosForzososArrendatario" class="form-label perm-label">Años forzosos arrendatario</label>
+              <div class="col-12 col-md-4">
+                <label for="anosForzososArrendatario" class="form-label perm-label">Años Forzosos Arrendatario</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>manage_accounts</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="anosForzososArrendatario" type="number" class="form-control"
-                      formControlName="anosForzososArrendatario" placeholder="Años forzosos arrendatario" /><label for="anosForzososArrendatario">Años forzosos arrendatario</label></div>
+                      formControlName="anosForzososArrendatario" placeholder="Años forzosos arrendatario" /><label for="anosForzososArrendatario">Años Forzosos Arrendatario</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="subtotalRenta" class="form-label perm-label">Subtotal renta</label>
+              <div class="col-12 col-md-4">
+                <label for="subtotalRenta" class="form-label perm-label">Subtotal Renta</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="subtotalRenta" type="number" class="form-control"
-                      formControlName="subtotalRenta" placeholder="Subtotal renta" /><label for="subtotalRenta">Subtotal renta</label></div>
+                      formControlName="subtotalRenta" placeholder="Subtotal renta" /><label for="subtotalRenta">Subtotal Renta</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="ivaRenta" class="form-label perm-label">IVA renta</label>
+              <div class="col-12 col-md-4">
+                <label for="ivaRenta" class="form-label perm-label">Iva Renta</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>calculate</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="ivaRenta" type="number" class="form-control"
-                      formControlName="ivaRenta" placeholder="IVA renta" /><label for="ivaRenta">IVA renta</label></div>
+                      formControlName="ivaRenta" placeholder="IVA renta" /><label for="ivaRenta">Iva Renta</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="rentaTotal" class="form-label perm-label">Renta total</label>
+              <div class="col-12 col-md-4">
+                <label for="rentaTotal" class="form-label perm-label">Renta Total</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>account_balance_wallet</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="rentaTotal" type="number" class="form-control"
-                      formControlName="rentaTotal" placeholder="Renta total" /><label for="rentaTotal">Renta total</label></div>
+                      formControlName="rentaTotal" placeholder="Renta total" /><label for="rentaTotal">Renta Total</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="subtotalMantenimiento" class="form-label perm-label">Subtotal mantenimiento</label>
+              <div class="col-12 col-md-4">
+                <label for="subtotalMantenimiento" class="form-label perm-label">Subtotal Mantenimiento</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="subtotalMantenimiento" type="number" class="form-control"
-                      formControlName="subtotalMantenimiento" placeholder="Subtotal mantenimiento" /><label for="subtotalMantenimiento">Subtotal mantenimiento</label></div>
+                      formControlName="subtotalMantenimiento" placeholder="Subtotal mantenimiento" /><label for="subtotalMantenimiento">Subtotal Mantenimiento</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="ivaMantenimiento" class="form-label perm-label">IVA mantenimiento</label>
+              <div class="col-12 col-md-4">
+                <label for="ivaMantenimiento" class="form-label perm-label">Iva Mantenimiento</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>functions</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="ivaMantenimiento" type="number" class="form-control"
-                      formControlName="ivaMantenimiento" placeholder="IVA mantenimiento" /><label for="ivaMantenimiento">IVA mantenimiento</label></div>
+                      formControlName="ivaMantenimiento" placeholder="IVA mantenimiento" /><label for="ivaMantenimiento">Iva Mantenimiento</label></div>
                 </div>
               </div>
               <div class="col-12 col-md-4 col-xl-3">
-                <label for="mantenimientoTotal" class="form-label perm-label">Mantenimiento total</label>
+                <label for="mantenimientoTotal" class="form-label perm-label">Mantenimiento Total</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>summarize</mat-icon></span>
                   <div class="form-floating flex-grow-1"><input id="mantenimientoTotal" type="number" class="form-control"
-                      formControlName="mantenimientoTotal" placeholder="Mantenimiento total" /><label for="mantenimientoTotal">Mantenimiento total</label></div>
+                      formControlName="mantenimientoTotal" placeholder="Mantenimiento total" /><label for="mantenimientoTotal">Mantenimiento Total</label></div>
                 </div>
               </div>
-              <div class="col-12 col-md-8 col-xl-9">
+              <div class="col-12 col-md-8">
                 <label for="observaciones" class="form-label perm-label">Observaciones</label>
                 <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span>
                   <div class="form-floating flex-grow-1">
                     <input id="inmuebles" type="text" class="form-control"
                       formControlName="observaciones" placeholder="Observaciones del contrato" />
-                    <label for="observaciones">Observaciones del contrato</label>
+                    <label for="observaciones">Observaciones Del Contrato</label>
                   </div>
                 </div>
               </div>
@@ -310,7 +310,7 @@
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
                         <div class="srv-tipo-label-row">
-                          <label class="form-label perm-label">Tipo de contrato</label>
+                          <label class="form-label perm-label">Tipo De Contrato</label>
                           <button type="button" class="srv-tipo-reset" *ngIf="esServicioTipoOtro(i)"
                             (click)="resetServicioTipoContrato(i)" title="Volver a opciones"
                             aria-label="Volver a opciones">
@@ -330,52 +330,52 @@
                               <option value="INTERNET">Internet</option>
                               <option value="OTRO">Otro</option>
                             </select>
-                            <label>Tipo de contrato</label>
+                            <label>Tipo De Contrato</label>
                           </div>
                           <div class="form-floating flex-grow-1" *ngIf="esServicioTipoOtro(i)">
                             <input type="text" class="form-control" formControlName="servicioTipoContratoOtro"
                               placeholder="Escribe el tipo de contrato" [disabled]="i < 2" />
-                            <label>Tipo de contrato</label>
+                            <label>Tipo De Contrato</label>
                           </div>
                         </div>
                       </div>
 
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label">Número de contrato</label>
+                        <label class="form-label perm-label">Número De Contrato</label>
                         <div class="input-group input-group-lg perm-ig">
                           <span class="input-group-text fw-bold"><mat-icon>receipt_long</mat-icon></span>
                           <div class="form-floating flex-grow-1">
                             <input type="text" class="form-control" formControlName="servicioNumeroContrato"
                               placeholder="Número de contrato" />
-                            <label>Número de contrato</label>
+                            <label>Número De Contrato</label>
                           </div>
                         </div>
                       </div>
 
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label">Fecha de pago</label>
+                        <label class="form-label perm-label">Fecha De Pago</label>
                         <div class="input-group input-group-lg perm-ig">
                           <span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
                           <div class="form-floating flex-grow-1">
                             <input type="date" class="form-control" formControlName="servicioFechaPago" />
-                            <label>Fecha de pago</label>
+                            <label>Fecha De Pago</label>
                           </div>
                         </div>
                       </div>
 
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label">Último día de pago</label>
+                        <label class="form-label perm-label">Último Día De Pago</label>
                         <div class="input-group input-group-lg perm-ig">
                           <span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
                           <div class="form-floating flex-grow-1">
                             <input type="date" class="form-control" formControlName="servicioUltimoDiaPago" />
-                            <label>Último día de pago</label>
+                            <label>Último Día De Pago</label>
                           </div>
                         </div>
                       </div>
 
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label d-block mb-2">Comprobante de pago</label>
+                        <label class="form-label perm-label d-block mb-2">Comprobante De Pago</label>
                         <div class="uploader-hero srv-pago-uploader">
                           <div class="uploader srv-pago-uploader__card">
                             <div class="uploader__glow"></div>
@@ -413,23 +413,11 @@
               <div class="arrend-fa-hero__body">
                 <div class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3">
                   <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
-                    <h6 class="arrend-fa-section-title m-0">Documentos e imágenes</h6>
+                    <h6 class="arrend-fa-section-title m-0">Documentos e Imágenes</h6>
                   </div>
                 </div>
               </div>
             </div>
-
-            <div class="alert alert-info mt-3 mb-0" *ngIf="esPersonaFisica()">
-              <div class="perm-label mb-1">Documentos básicos del arrendador (persona física)</div>
-              <ul class="mb-0 ps-3">
-                <li>Identificación oficial vigente (INE)</li>
-                <li>CURP</li>
-                <li>RFC (con constancia de situación fiscal)</li>
-                <li>Comprobante de domicilio (no mayor a 3 meses)</li>
-                <li>Estado de cuenta bancario (para depósitos de renta)</li>
-              </ul>
-            </div>
-
             <div class="row g-3 g-lg-4 mt-0 uploader-wrap docs-uploader-docs-row align-items-stretch">
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Fachada</label>
@@ -456,8 +444,10 @@
                 </div>
               </div>
 
-              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
-                <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                #autocargaContratoCard
+                [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
+                <label class="form-label perm-label docs-uploader-label">Contrato De Renta</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
                     <div class="uploader__glow"></div>
@@ -465,6 +455,9 @@
                       <div class="uploader__icon"><mat-icon>description</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
+                        Sube Aquí El Contrato Para Intentar Completar El Formulario.
+                      </p>
                       <div class="uploader__cta">
                         <button mat-flat-button color="primary" type="button"
                           (click)="abrirSelectorArchivo('contratoRenta')">Seleccionar</button>
@@ -482,7 +475,7 @@
               </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
-                <label class="form-label perm-label docs-uploader-label">RFC (constancia de situación fiscal)</label>
+                <label class="form-label perm-label docs-uploader-label">Constancia De Situación Fiscal</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
                     <div class="uploader__glow"></div>
@@ -507,7 +500,7 @@
               </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
-                <label class="form-label perm-label docs-uploader-label">Comprobante de Domicilio</label>
+                <label class="form-label perm-label docs-uploader-label">Comprobante De Domicilio</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
                     <div class="uploader__glow"></div>
@@ -610,7 +603,7 @@
               </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
-                <label class="form-label perm-label docs-uploader-label" id="label-csf-rep-legal">Constancia de
+                <label class="form-label perm-label docs-uploader-label" id="label-csf-rep-legal">Constancia De
                   situación
                   fiscal del rep. legal</label>
                 <div class="uploader-hero flex-grow-1">
@@ -669,7 +662,7 @@
               </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card" *ngIf="esPersonaFisica()">
-                <label class="form-label perm-label docs-uploader-label">Estado de cuenta bancario</label>
+                <label class="form-label perm-label docs-uploader-label">Estado De Cuenta Bancario</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
                     <div class="uploader__glow"></div>
@@ -729,7 +722,7 @@
                               <div class="form-floating flex-grow-1">
                                 <input type="text" class="form-control" formControlName="nombreSocio"
                                   placeholder="Nombre del socio" />
-                                <label>Nombre del socio</label>
+                                <label>Nombre Del Socio</label>
                               </div>
                             </div>
                           </div>
@@ -741,7 +734,7 @@
                               <div class="form-floating flex-grow-1">
                                 <input type="text" class="form-control" formControlName="rfcSocio"
                                   placeholder="RFC del socio" />
-                                <label>RFC del socio</label>
+                                <label>Rfc Del Socio</label>
                               </div>
                             </div>
                           </div>
@@ -750,7 +743,7 @@
                             aria-hidden="true">folder_special</mat-icon> Documentación</p> -->
                         <div class="row g-3 mt-1 socios-docs align-items-stretch">
                           <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
-                            <label class="form-label perm-label d-block mb-2">Constancia de Situación Fiscal</label>
+                            <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal</label>
                             <div class="uploader-hero flex-grow-1">
                               <div class="uploader">
                                 <div class="uploader__glow"></div>
@@ -775,7 +768,7 @@
                             </div>
                           </div>
                           <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
-                            <label class="form-label perm-label d-block mb-2">Comprobante de Domicilio</label>
+                            <label class="form-label perm-label d-block mb-2">Comprobante De Domicilio</label>
                             <div class="uploader-hero flex-grow-1">
                               <div class="uploader">
                                 <div class="uploader__glow"></div>

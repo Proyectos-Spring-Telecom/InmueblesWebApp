@@ -3,7 +3,10 @@ import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { ARRENDATARIOS_FORM_DEMO } from '../arrendatarios-demo.data';
+import {
+  ARRENDATARIOS_FORM_DEMO,
+  INMUEBLES_ARRENDATARIOS_DEMO,
+} from '../arrendatarios-demo.data';
 
 @Component({
   selector: 'app-agregar-arrendatario',
@@ -26,6 +29,8 @@ export class AgregarArrendatarioComponent implements OnInit {
   comprobanteDomicilioNombre: string | null = null;
   actaConstitutivaNombre: string | null = null;
   ineRepresentanteNombre: string | null = null;
+  resaltarAutocargaContrato = false;
+  private promptAutocargaMostrado = false;
 
   @ViewChild('archivoEscrituraInput') archivoEscrituraInput?: ElementRef<HTMLInputElement>;
   @ViewChild('imagenLicenciaInput') imagenLicenciaInput?: ElementRef<HTMLInputElement>;
@@ -36,6 +41,7 @@ export class AgregarArrendatarioComponent implements OnInit {
   @ViewChild('comprobanteDomicilioInput') comprobanteDomicilioInput?: ElementRef<HTMLInputElement>;
   @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('autocargaContratoCard') autocargaContratoCard?: ElementRef<HTMLElement>;
 
   constructor(
     private fb: FormBuilder,
@@ -59,8 +65,39 @@ export class AgregarArrendatarioComponent implements OnInit {
         this.title = 'Actualizar Arrendatario';
         this.submitButton = 'Actualizar';
         this.cargarDemoEdicion(this.idArrendatario);
+      } else {
+        this.mostrarPromptAutocargaContrato();
       }
     });
+  }
+
+  private mostrarPromptAutocargaContrato(): void {
+    if (this.promptAutocargaMostrado) return;
+    this.promptAutocargaMostrado = true;
+    void Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      icon: 'question',
+      title: '¿Quieres Intentar Completar El Formulario Con Un Archivo?',
+      text: 'Te llevaremos a la sección de Contrato De Renta para subir el archivo y extraer algunos datos.',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, Llevarme',
+      cancelButtonText: 'No, Continuar Manualmente',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.enfocarAutocargaContrato();
+    });
+  }
+
+  private enfocarAutocargaContrato(): void {
+    setTimeout(() => {
+      const target = this.autocargaContratoCard?.nativeElement;
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      this.resaltarAutocargaContrato = true;
+    }, 120);
   }
 
   private defaultServicioTipoForIndex(index: number): string | null {
@@ -444,7 +481,10 @@ export class AgregarArrendatarioComponent implements OnInit {
     if (controlName === 'documentoEscritura') this.archivoEscrituraNombre = name;
     if (controlName === 'documentoLicencia') this.imagenLicenciaNombre = name;
     if (controlName === 'documentoPlano') this.imagenPlanoNombre = name;
-    if (controlName === 'documentoContratoRenta') this.contratoRentaNombre = name;
+    if (controlName === 'documentoContratoRenta') {
+      this.contratoRentaNombre = name;
+      if (file) this.resaltarAutocargaContrato = false;
+    }
     if (controlName === 'documentoConstanciaFiscal') this.constanciaFiscalNombre = name;
     if (controlName === 'constanciaSituacionFiscalRepresentanteLegal') this.constanciaRepLegalNombre = name;
     if (controlName === 'documentoComprobanteDomicilio') this.comprobanteDomicilioNombre = name;
@@ -453,22 +493,61 @@ export class AgregarArrendatarioComponent implements OnInit {
   }
 
   private cargarDemoEdicion(id: number): void {
+    const demoLocal = this.buscarLocalDemoPorId(id);
     const registro = ARRENDATARIOS_FORM_DEMO.find((item) => item.id === id);
-    if (!registro) return;
+    if (!registro && !demoLocal) return;
+    const arrendatarioNombre =
+      demoLocal?.local.arrendatario ??
+      registro?.nombreComercial ??
+      '';
+    const arrendadorNombre =
+      demoLocal?.local.arrendador ??
+      registro?.arrendador ??
+      '';
+    const nombreRepresentante =
+      this.resolverNombreRepresentanteDemo(arrendatarioNombre);
+    const telefonoRep =
+      demoLocal?.local.telefonoContacto ??
+      registro?.telefono ??
+      '';
+    const correoRep =
+      demoLocal?.local.correoContacto ??
+      registro?.correo ??
+      '';
+    const nombreInmuebleDemo =
+      demoLocal?.inmueble.nombreInmueble ??
+      registro?.locales?.[0]?.nombreInmueble ??
+      '';
+    const localDemo = demoLocal
+      ? {
+          idLocal: demoLocal.local.idLocal,
+          nombreLocal: demoLocal.local.nombreLocal,
+          idInmueble: demoLocal.inmueble.idInmueble,
+          nombreInmueble: demoLocal.inmueble.nombreInmueble,
+          nivel: demoLocal.local.nivel,
+          superficieM2: demoLocal.local.superficieM2,
+          mensualidadMxn: demoLocal.local.mensualidadMxn,
+          fechaInicio: '2024-01-01',
+          fechaTermino: demoLocal.local.vigenciaHasta,
+          estatusContrato: 'vigente' as const,
+        }
+      : registro?.locales?.[0];
+
     this.arrendatarioForm.patchValue(
       {
-        nombreInmueble: registro.locales?.[0]?.nombreInmueble ?? '',
-        rentaMxn: registro.locales?.[0]?.mensualidadMxn ?? '',
+        nombreInmueble: arrendatarioNombre,
+        rentaMxn: localDemo?.mensualidadMxn ?? '',
         direccionInmueble: '',
         vigenciaAnios: '',
-        fechaInicio: registro.locales?.[0]?.fechaInicio ?? '',
-        fechaFin: registro.locales?.[0]?.fechaTermino ?? '',
-        arrendador: registro.arrendador,
+        fechaInicio: localDemo?.fechaInicio ?? '',
+        fechaFin: localDemo?.fechaTermino ?? '',
+        arrendador: arrendadorNombre,
         tiempoRentaAnios: '',
         estatusInmueble: '',
-        nombreRepresentanteLegal: `Carlos Medina — ${registro.nombreComercial}`,
-        telefonoRepresentanteLegal: registro.telefono ?? '',
-        correoRepresentanteLegal: registro.correo ?? '',
+        nombreRepresentanteLegal: nombreRepresentante,
+        telefonoRepresentanteLegal: telefonoRep,
+        correoRepresentanteLegal: correoRep,
+        inmuebles: nombreInmuebleDemo,
       },
       { emitEvent: false },
     );
@@ -476,13 +555,12 @@ export class AgregarArrendatarioComponent implements OnInit {
     const socio0 = this.sociosFormArray.at(0) as FormGroup;
     socio0?.patchValue(
       {
-        nombreSocio: registro.razonSocial,
-        rfcSocio: registro.rfc,
+        nombreSocio: registro?.razonSocial ?? arrendatarioNombre,
+        rfcSocio: registro?.rfc ?? null,
       },
       { emitEvent: false },
     );
 
-    const localDemo = registro.locales?.[0];
     if (localDemo) {
       this.localesFormArray.clear();
       this.localesFormArray.push(
@@ -491,15 +569,15 @@ export class AgregarArrendatarioComponent implements OnInit {
           estadoLocal: [''],
           mensualidadLocalMxn: [localDemo.mensualidadMxn ?? ''],
           zonaLocal: [localDemo.nivel ?? ''],
-          ocupanteLocal: [registro.nombreComercial ?? ''],
+          ocupanteLocal: [arrendatarioNombre ?? ''],
           giroLocal: [''],
           medidaLocal: [localDemo.superficieM2 ? `${localDemo.superficieM2} m²` : ''],
           contratoHastaLocal: [localDemo.fechaTermino ?? ''],
           archivoContratoLocal: [''],
           numeroContratoLocal: [''],
           tipoModificacionContratoLocal: [''],
-          arrendadorLocal: [registro.arrendador ?? ''],
-          arrendatarioLocal: [registro.nombreComercial ?? ''],
+          arrendadorLocal: [arrendadorNombre ?? ''],
+          arrendatarioLocal: [arrendatarioNombre ?? ''],
           fechaInicioContratoLocal: [localDemo.fechaInicio ?? ''],
           fechaTerminoContratoLocal: [localDemo.fechaTermino ?? ''],
           tipoMonedaLocal: [''],
@@ -527,20 +605,22 @@ export class AgregarArrendatarioComponent implements OnInit {
   private cargarDesdeGrid(data: any): void {
     this.arrendatarioForm.patchValue(
       {
-        nombreInmueble: data.inmueble || 'Corporativo Pirámide',
+        nombreInmueble: data.arrendatario || 'Arrendatario Demo',
         tipoPersona: 2,
         rentaMxn: data.mensualidadMxn || 25000,
-        direccionInmueble: 'Río Balsas 106, Vista Hermosa, Cuernavaca',
+        direccionInmueble: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
         vigenciaAnios: 3,
         fechaInicio: '2024-01-01',
         fechaFin: '2027-01-01',
         arrendador: data.arrendador || 'Inmuebles y Desarrollos HAC S.A de C.V.',
         tiempoRentaAnios: 3,
         estatusInmueble: 'RENTADO',
-        nombreRepresentanteLegal: data.arrendatario || 'Representante Demo',
+        nombreRepresentanteLegal: this.resolverNombreRepresentanteDemo(
+          data.arrendatario || '',
+        ),
         telefonoRepresentanteLegal: data.telefonoContacto || '7770000000',
         correoRepresentanteLegal: data.correoContacto || 'demo@correo.com',
-        inmuebles: data.inmueble || 'Corporativo Pirámide',
+        inmuebles: data.inmueble || 'San Cristóbal',
         fechaInicioContrato: '2024-01-01',
         fechaTerminoContrato: '2027-01-01',
         tipoMoneda: 'MXN',
@@ -627,14 +707,6 @@ export class AgregarArrendatarioComponent implements OnInit {
       },
       { emitEvent: false },
     );
-    socios.push(this.crearSocioFormGroup());
-    socios.at(1).patchValue(
-      {
-        nombreSocio: 'Luis Hernández',
-        rfcSocio: 'LUIS850505XYZ',
-      },
-      { emitEvent: false },
-    );
 
     const locales = this.arrendatarioForm.get('locales') as FormArray;
     locales.clear();
@@ -668,6 +740,28 @@ export class AgregarArrendatarioComponent implements OnInit {
       { emitEvent: false },
     );
     galeria.push(imagen);
+  }
+
+  private buscarLocalDemoPorId(idLocal: number): {
+    inmueble: (typeof INMUEBLES_ARRENDATARIOS_DEMO)[number];
+    local: (typeof INMUEBLES_ARRENDATARIOS_DEMO)[number]['locales'][number];
+  } | null {
+    for (const inmueble of INMUEBLES_ARRENDATARIOS_DEMO) {
+      const local = inmueble.locales.find((l) => l.idLocal === idLocal);
+      if (local) return { inmueble, local };
+    }
+    return null;
+  }
+
+  private resolverNombreRepresentanteDemo(arrendatarioNombre: string): string {
+    const key = String(arrendatarioNombre ?? '').trim().toLowerCase();
+    const map: Record<string, string> = {
+      'little caesars': 'Paola Méndez',
+      'farmacia san pablo': 'Ricardo Ortega',
+      'joyerías nice': 'Gabriela Salinas',
+      'spring telecom méxico': 'Luis Fernando Ríos',
+    };
+    return map[key] ?? 'Representante Demo';
   }
 
   submit(): void {

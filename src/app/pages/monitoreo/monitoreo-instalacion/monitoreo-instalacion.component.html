@@ -31,13 +31,9 @@
                 </span>
               </div>
             </div>
-          </div>
-          <div class="hero-header__meta" *ngIf="showInmuebleExtras">
-            <span class="hero-header__status">{{ inmuebleEsRenta ? 'RENTADO' : 'PROPIO' }}</span>
-            <button type="button" class="hero-header__edit-btn">
-              <mat-icon>edit</mat-icon>
-              <span>Editar</span>
-            </button>
+            <div class="hero-header__meta" *ngIf="showInmuebleExtras">
+              <span class="hero-header__status">{{ inmuebleEsRenta ? 'RENTADO' : 'PROPIO' }}</span>
+            </div>
           </div>
           <div class="hero-header__row hero-header__row--top">
             <div class="d-flex align-items-center flex-wrap gap-2">
@@ -46,6 +42,10 @@
                 Arrendatario: {{ detalleArrendatario }}
               </span>
             </div>
+            <button type="button" class="hero-header__edit-btn">
+              <mat-icon>edit</mat-icon>
+              <span>Editar</span>
+            </button>
           </div>
         </div>
         <div class="hero-header__right">
@@ -104,7 +104,7 @@
         </div>
         <span class="mono-docs__header-pill" aria-hidden="true">
           <mat-icon>folder_open</mat-icon>
-          <span>{{ expedienteDocumentosInmueble.length }} rubros</span>
+          <span>{{ expedienteDocumentosInmueble.length }} Archivos</span>
         </span>
       </header>
 
@@ -121,6 +121,64 @@
                   </span>
                 </div>
               </div>
+              <div class="mono-docs__row-actions">
+                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--view">
+                  <mat-icon aria-hidden="true">visibility</mat-icon>
+                  <span>Visualizar</span>
+                </button>
+                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--download">
+                  <mat-icon aria-hidden="true">download</mat-icon>
+                  <span>Descargar</span>
+                </button>
+              </div>
+            </li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section
+      *ngIf="vistaEntidad === 'local'"
+      class="mono-docs mt-1 mt-lg-2"
+      aria-label="Documentos del local"
+    >
+      <header class="mono-docs__header mono-docs__header--expediente">
+        <div class="mono-docs__header-text">
+          <span class="mono-docs__eyebrow">Expediente</span>
+          <h5 class="m-0 mono-docs__title-main">Documentos del local</h5>
+          <p class="mono-docs__lede m-0">
+            Checklist alineada al alta de arrendatario: contrato, identificación, fiscales y permisos del giro.
+          </p>
+        </div>
+        <span class="mono-docs__header-pill" aria-hidden="true">
+          <mat-icon>folder_open</mat-icon>
+          <span>{{ expedienteDocumentosLocal.length }} Archivos</span>
+        </span>
+      </header>
+
+      <div class="mono-docs__content">
+        <article class="mono-docs__panel mono-docs__panel--expediente">
+          <ul class="mono-docs__list mono-docs__list--stacked">
+            <li class="mono-docs__row mono-docs__row--expediente" *ngFor="let fila of expedienteDocumentosLocal">
+              <div class="mono-docs__row-main mono-docs__row-main--expediente">
+                <div class="mono-docs__label-block">
+                  <span class="mono-docs__doc-label">{{ fila.etiqueta }}</span>
+                  <span class="mono-docs__file-inline mono-docs__file-inline--block">
+                    <mat-icon class="mono-docs__file-icon" aria-hidden="true">description</mat-icon>
+                    <span class="mono-docs__file-name">{{ fila.detalle }}</span>
+                  </span>
+                </div>
+              </div>
+              <div class="mono-docs__row-actions">
+                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--view">
+                  <mat-icon aria-hidden="true">visibility</mat-icon>
+                  <span>Ver</span>
+                </button>
+                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--download">
+                  <mat-icon aria-hidden="true">download</mat-icon>
+                  <span>Descargar</span>
+                </button>
+              </div>
             </li>
           </ul>
         </article>
@@ -131,7 +189,6 @@
       <article class="mono-block__card mb-3">
         <header class="mono-block__head d-flex align-items-center justify-content-between">
           <h5 class="m-0">Servicios</h5>
-          <mat-icon aria-hidden="true">description</mat-icon>
         </header>
         <div class="mono-block__body">
           <div class="mono-block__panel mono-block__panel--servicios-dx">
@@ -175,14 +232,31 @@
         <article class="mono-grid-card h-100">
           <header class="mono-grid-card__head mono-grid-card__head--actions">
             <h5 class="m-0">Pagos</h5>
-            <button type="button" class="mono-grid-action-btn" (click)="abrirModalPago()">
-              <mat-icon aria-hidden="true">add</mat-icon>
-              <span>Agregar Pago</span>
-            </button>
+            <div class="mono-pagos-head-actions">
+              <div class="mono-pagos-mes-filter">
+                <label class="form-label mb-1 mono-pagos-mes-filter__label">Filtrar mes</label>
+                <select
+                  class="form-select form-select-sm mono-pagos-mes-filter__select"
+                  [value]="mesFiltroPagosSeleccionado"
+                  (change)="onMesFiltroPagosChange($event)"
+                >
+                  <option
+                    *ngFor="let mes of mesesFiltroPagosOpciones"
+                    [value]="mes.value"
+                  >
+                    {{ mes.label }}
+                  </option>
+                </select>
+              </div>
+              <button type="button" class="mono-grid-action-btn" (click)="abrirModalPago()">
+                <mat-icon aria-hidden="true">add</mat-icon>
+                <span>Agregar Pago</span>
+              </button>
+            </div>
           </header>
           <div class="mono-grid-card__body">
             <dx-data-grid
-              [dataSource]="pagosData"
+              [dataSource]="pagosDataGrid"
               [columnAutoWidth]="true"
               [showBorders]="false"
               [rowAlternationEnabled]="true"
@@ -199,7 +273,13 @@
               <dxi-column dataField="concepto" caption="Concepto" alignment="center"></dxi-column>
               <dxi-column dataField="fechaPago" caption="Fecha de pago" dataType="date" alignment="center"></dxi-column>
               <dxi-column dataField="fechaLimitePago" caption="Fecha límite de pago" dataType="date" alignment="center"></dxi-column>
-              <dxi-column dataField="monto" caption="Monto" dataType="number" format="currency" alignment="center"></dxi-column>
+              <dxi-column
+                dataField="monto"
+                caption="Monto"
+                dataType="number"
+                [customizeText]="formatoMoneda"
+                alignment="center"
+              ></dxi-column>
               <dxi-column dataField="metodo" caption="Método" alignment="center"></dxi-column>
               <dxi-column
                 dataField="estatus"
@@ -257,11 +337,7 @@
             <div class="mono-card__body">
               <div class="mono-doc-image">
                 <img
-                  [src]="
-                    vistaEntidad === 'local'
-                      ? 'https://cdn.propiedades.com/files/1200x507/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-1-18601330.jpeg'
-                      : 'https://cdn.propiedades.com/files/1200x507/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-1-18601330.jpeg'
-                  "
+                  [src]="vistaEntidad === 'local' ? imagenDocumentacionLocal : imagenPlanoInmueble"
                   [alt]="vistaEntidad === 'local' ? 'Imagen del predio' : 'Plano de edificio (demostración)'"
                 />
               </div>
@@ -280,7 +356,7 @@
                   class="mono-iframe"
                   loading="lazy"
                   referrerpolicy="no-referrer-when-downgrade"
-                  src="https://maps.google.com/maps?q=18.9242,-99.2216&z=16&output=embed"
+                  [src]="mapaUbicacionEmbedUrl"
                   title="Ubicación del inmueble"
                 ></iframe>
               </div>
@@ -307,7 +383,7 @@
                   class="mono-iframe"
                   loading="lazy"
                   referrerpolicy="no-referrer-when-downgrade"
-                  src="https://maps.google.com/maps?q=&layer=c&cbll=18.9242,-99.2216&cbp=11,0,0,0,0&output=svembed"
+                  [src]="streetViewEmbedUrl"
                   title="Street View del inmueble"
                 ></iframe>
               </div>
