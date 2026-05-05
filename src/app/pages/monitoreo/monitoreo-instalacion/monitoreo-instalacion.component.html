@@ -15,21 +15,21 @@
                 vistaEntidad === 'local' ? 'storefront' : 'apartment'
               }}</mat-icon>
               <span class="mono-entity-pill__text">{{ vistaEntidad === 'local' ? 'Local:' : 'Inmueble:' }}</span>
-              <h1 class="hero-header__title">Desarrollo Inmobiliario BHV</h1>
+              <h1 class="hero-header__title">{{ detalleTitulo }}</h1>
             </span>
-          </div>
-          <div class="hero-header__row hero-header__row--top">
-            <div
-              class="d-flex align-items-center flex-wrap gap-2"
-              *ngIf="vistaEntidad === 'local'"
-            >
-              <span
-                class="hero-header__status hero-header__status--local"
-                [class.hero-header__status--ocupado]="localEstatus === 'ocupado'"
-                [class.hero-header__status--libre]="localEstatus === 'libre'"
+            <div class="hero-header__row hero-header__row--top">
+              <div
+                class="d-flex align-items-center flex-wrap gap-2"
+                *ngIf="vistaEntidad === 'local'"
               >
-                {{ localEstatus === 'ocupado' ? 'OCUPADA' : 'LIBRE' }}
-              </span>
+                <span
+                  class="hero-header__status hero-header__status--local"
+                  [class.hero-header__status--ocupado]="localEstatus === 'ocupado'"
+                  [class.hero-header__status--libre]="localEstatus === 'libre'"
+                >
+                  {{ localEstatus === 'ocupado' ? 'OCUPADA' : 'LIBRE' }}
+                </span>
+              </div>
             </div>
           </div>
           <div class="hero-header__meta" *ngIf="showInmuebleExtras">
@@ -38,6 +38,14 @@
               <mat-icon>edit</mat-icon>
               <span>Editar</span>
             </button>
+          </div>
+          <div class="hero-header__row hero-header__row--top">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="hero-header__status hero-header__status--local">Arrendador: {{ detalleArrendador }}</span>
+              <span class="hero-header__status hero-header__status--local" *ngIf="vistaEntidad === 'local'">
+                Arrendatario: {{ detalleArrendatario }}
+              </span>
+            </div>
           </div>
         </div>
         <div class="hero-header__right">
@@ -56,32 +64,19 @@
       aria-labelledby="mono-local-contrato-strip-title"
     >
       <div class="mono-local-contrato-strip__shell">
-        <div class="mono-local-contrato-strip__main">
-          <span class="mono-local-contrato-strip__eyebrow" id="mono-local-contrato-strip-title"
-            >Documentación del local</span
-          >
-          <h2 class="mono-local-contrato-strip__title">Contrato vigente</h2>
-          <p class="mono-local-contrato-strip__lede m-0">
-            Resumen económico y cláusulas en el visor; el PDF firmado queda disponible para descarga o vista rápida.
-          </p>
-          <div class="mono-local-contrato-strip__file-row">
-            <mat-icon class="mono-local-contrato-strip__file-ico" aria-hidden="true">attach_file</mat-icon>
-            <span class="mono-local-contrato-strip__file-name">{{ nombreArchivoContratoLocal }}</span>
-          </div>
-          <div class="mono-local-contrato-strip__quick-actions">
-            <span class="mono-local-contrato-strip__linkish">
-              <mat-icon aria-hidden="true">description</mat-icon>
-              Documento de contrato registrado en expediente (solo texto).
-            </span>
-          </div>
-        </div>
-        <aside class="mono-local-contrato-strip__cta" aria-label="Acciones del contrato">
+        <aside class="mono-local-contrato-strip__cta w-100" aria-label="Acciones del contrato">
           <div class="mono-local-contrato-strip__cta-glow" aria-hidden="true"></div>
-          <mat-icon class="mono-local-contrato-strip__cta-icon" aria-hidden="true">gavel</mat-icon>
-          <p class="mono-local-contrato-strip__cta-kicker m-0">Detalle operativo</p>
-          <p class="mono-local-contrato-strip__cta-text m-0">
-            Montos, vigencias, partes y totales tal como quedaron capturados en el contrato.
-          </p>
+          <div class="mono-local-contrato-strip__cta-head">
+            <mat-icon class="mono-local-contrato-strip__cta-icon" aria-hidden="true">gavel</mat-icon>
+            <p class="mono-local-contrato-strip__cta-kicker m-0">Detalle operativo</p>
+          </div>
+          <div class="mono-local-contrato-strip__cta-copy">
+            <!-- <span class="mono-local-contrato-strip__eyebrow" id="mono-local-contrato-strip-title">Documentación del local</span> -->
+            <h2 class="mono-local-contrato-strip__title">Información del contrato</h2>
+            <p class="mono-local-contrato-strip__lede m-0">
+              Consulta datos clave del contrato y abre el detalle completo cuando lo necesites.
+            </p>
+          </div>
           <button
             type="button"
             class="btn bg-primary mono-local-contrato-strip__cta-btn"
@@ -264,8 +259,8 @@
                 <img
                   [src]="
                     vistaEntidad === 'local'
-                      ? 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80'
-                      : 'https://thumb.bibliocad.com/images/content/00130000/4000/134455.jpg'
+                      ? 'https://cdn.propiedades.com/files/1200x507/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-1-18601330.jpeg'
+                      : 'https://cdn.propiedades.com/files/1200x507/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-1-18601330.jpeg'
                   "
                   [alt]="vistaEntidad === 'local' ? 'Imagen del predio' : 'Plano de edificio (demostración)'"
                 />
@@ -439,14 +434,6 @@
               <article class="contract-docs-card">
                 <h5 class="contract-docs-card__title">Observaciones</h5>
                 <p class="contract-docs__notes">{{ cv.observaciones }}</p>
-              </article>
-
-              <article class="contract-docs-card" *ngIf="cv.documentoUrl">
-                <h5 class="contract-docs-card__title">Documento (PDF)</h5>
-                <a class="docs-modal__link" [href]="cv.documentoUrl" target="_blank" rel="noopener noreferrer">
-                  <i class="fa fa-external-link"></i>
-                  Abrir documento del contrato
-                </a>
               </article>
             </section>
           </ng-container>

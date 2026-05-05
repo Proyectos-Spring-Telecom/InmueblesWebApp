@@ -63,15 +63,6 @@
                   for="direccionInmueble">Dirección fiscal</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4 col-xl-3"><label for="estatusInmueble" class="form-label perm-label">Estatus del
-              contrato</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="estatusInmueble" type="text" class="form-control"
-                  formControlName="estatusInmueble" placeholder="Ej.: VIGENTE / POR VENCER" /><label
-                  for="estatusInmueble">Ej.: VIGENTE / POR VENCER</label></div>
-            </div>
-          </div>
           <div class="col-12 col-md-4 col-xl-3"><label for="vigenciaAnios" class="form-label perm-label">Vigencia
               (años)</label>
             <div class="input-group input-group-lg perm-ig"><span
@@ -132,6 +123,163 @@
                   class="form-control" formControlName="correoRepresentanteLegal"
                   placeholder="Ej.: representante&#64;empresa.com" /><label for="correoRepresentanteLegal">Ej.:
                   representante&#64;empresa.com</label></div>
+            </div>
+          </div>
+          <div class="col-12 arrend-fa-section mt-5">
+            <div class="arrend-fa-hero">
+              <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>description</mat-icon></div>
+              <div class="arrend-fa-hero__body">
+                <div class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3">
+                  <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
+                    <h6 class="arrend-fa-section-title m-0">Datos del contrato</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="inmuebles" class="form-label perm-label">Inmueble</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>home</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="inmuebles" type="text" class="form-control"
+                      formControlName="inmuebles" placeholder="Inmueble" /><label for="inmuebles">Inmueble</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="fechaInicioContrato" class="form-label perm-label">Inicio contrato</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="fechaInicioContrato" type="date" class="form-control"
+                      formControlName="fechaInicioContrato" /><label for="fechaInicioContrato">Inicio contrato</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="fechaTerminoContrato" class="form-label perm-label">Término contrato</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="fechaTerminoContrato" type="date" class="form-control"
+                      formControlName="fechaTerminoContrato" /><label for="fechaTerminoContrato">Término contrato</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="tipoMoneda" class="form-label perm-label">Moneda</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="tipoMoneda" type="text" class="form-control"
+                      formControlName="tipoMoneda" placeholder="Tipo de moneda" /><label for="tipoMoneda">Moneda</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="metrosRentados" class="form-label perm-label">Metros rentados</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>straighten</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="metrosRentados" type="number" class="form-control"
+                      formControlName="metrosRentados" placeholder="Metros rentados" /><label for="metrosRentados">Metros rentados</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="costoPorM2" class="form-label perm-label">Costo por m²</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>attach_money</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="costoPorM2" type="number" class="form-control"
+                      formControlName="costoPorM2" placeholder="Costo por m²" /><label for="costoPorM2">Costo por m²</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="pctMantenimiento" class="form-label perm-label">% Mantenimiento</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>construction</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="pctMantenimiento" type="number" class="form-control"
+                      formControlName="pctMantenimiento" placeholder="% mantenimiento" /><label for="pctMantenimiento">% mantenimiento</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="mesesDeposito" class="form-label perm-label">Meses depósito</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>calendar_month</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="mesesDeposito" type="number" class="form-control"
+                      formControlName="mesesDeposito" placeholder="Meses depósito" /><label for="mesesDeposito">Meses depósito</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="montoDeposito" class="form-label perm-label">Monto depósito</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>price_check</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="montoDeposito" type="number" class="form-control"
+                      formControlName="montoDeposito" placeholder="Monto depósito" /><label for="montoDeposito">Monto depósito</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="mesesAdelanto" class="form-label perm-label">Meses adelanto</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="mesesAdelanto" type="number" class="form-control"
+                      formControlName="mesesAdelanto" placeholder="Meses adelanto" /><label for="mesesAdelanto">Meses adelanto</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="montoAdelanto" class="form-label perm-label">Monto adelanto</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>request_quote</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="montoAdelanto" type="number" class="form-control"
+                      formControlName="montoAdelanto" placeholder="Monto adelanto" /><label for="montoAdelanto">Monto adelanto</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="anosForzososArrendador" class="form-label perm-label">Años forzosos arrendador</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="anosForzososArrendador" type="number" class="form-control"
+                      formControlName="anosForzososArrendador" placeholder="Años forzosos arrendador" /><label for="anosForzososArrendador">Años forzosos arrendador</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="anosForzososArrendatario" class="form-label perm-label">Años forzosos arrendatario</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>manage_accounts</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="anosForzososArrendatario" type="number" class="form-control"
+                      formControlName="anosForzososArrendatario" placeholder="Años forzosos arrendatario" /><label for="anosForzososArrendatario">Años forzosos arrendatario</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="subtotalRenta" class="form-label perm-label">Subtotal renta</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="subtotalRenta" type="number" class="form-control"
+                      formControlName="subtotalRenta" placeholder="Subtotal renta" /><label for="subtotalRenta">Subtotal renta</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="ivaRenta" class="form-label perm-label">IVA renta</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>calculate</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="ivaRenta" type="number" class="form-control"
+                      formControlName="ivaRenta" placeholder="IVA renta" /><label for="ivaRenta">IVA renta</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="rentaTotal" class="form-label perm-label">Renta total</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>account_balance_wallet</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="rentaTotal" type="number" class="form-control"
+                      formControlName="rentaTotal" placeholder="Renta total" /><label for="rentaTotal">Renta total</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="subtotalMantenimiento" class="form-label perm-label">Subtotal mantenimiento</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="subtotalMantenimiento" type="number" class="form-control"
+                      formControlName="subtotalMantenimiento" placeholder="Subtotal mantenimiento" /><label for="subtotalMantenimiento">Subtotal mantenimiento</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="ivaMantenimiento" class="form-label perm-label">IVA mantenimiento</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>functions</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="ivaMantenimiento" type="number" class="form-control"
+                      formControlName="ivaMantenimiento" placeholder="IVA mantenimiento" /><label for="ivaMantenimiento">IVA mantenimiento</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 col-xl-3">
+                <label for="mantenimientoTotal" class="form-label perm-label">Mantenimiento total</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>summarize</mat-icon></span>
+                  <div class="form-floating flex-grow-1"><input id="mantenimientoTotal" type="number" class="form-control"
+                      formControlName="mantenimientoTotal" placeholder="Mantenimiento total" /><label for="mantenimientoTotal">Mantenimiento total</label></div>
+                </div>
+              </div>
+              <div class="col-12 col-md-8 col-xl-9">
+                <label for="observaciones" class="form-label perm-label">Observaciones</label>
+                <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span>
+                  <div class="form-floating flex-grow-1">
+                    <input id="inmuebles" type="text" class="form-control"
+                      formControlName="observaciones" placeholder="Observaciones del contrato" />
+                    <label for="observaciones">Observaciones del contrato</label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="col-12 arrend-fa-section mt-5">

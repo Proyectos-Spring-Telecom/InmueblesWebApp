@@ -2526,6 +2526,43 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const qp: Record<string, string | number> = esVistaLocal
       ? { vista: 'local', retorno: 'locales' }
       : { origen: 'inmueble', retorno: 'inmuebles' };
+    const nombreInmueble =
+      ins?.nombreDepartamento ??
+      ins?.nombreInstalacion ??
+      ins?.nombreInmueble ??
+      '';
+    const nombreLocal =
+      ins?.nombreLocal ??
+      ins?.local ??
+      '';
+    const arrendadorNombre =
+      ins?.arrendador ??
+      payload?.central?.nombreCliente ??
+      '';
+    const arrendatarioNombre =
+      ins?.arrendatario ??
+      ins?.arrendatarioLocal ??
+      ins?.ocupante ??
+      '';
+    const estatusLocal =
+      ins?.estado != null && String(ins.estado).trim() !== ''
+        ? String(ins.estado).toLowerCase()
+        : '';
+    if (String(nombreInmueble).trim() !== '') {
+      qp['nombreInmueble'] = String(nombreInmueble).trim();
+    }
+    if (String(nombreLocal).trim() !== '') {
+      qp['nombreLocal'] = String(nombreLocal).trim();
+    }
+    if (String(arrendadorNombre).trim() !== '') {
+      qp['arrendador'] = String(arrendadorNombre).trim();
+    }
+    if (String(arrendatarioNombre).trim() !== '') {
+      qp['arrendatario'] = String(arrendatarioNombre).trim();
+    }
+    if (estatusLocal === 'ocupado' || estatusLocal === 'libre') {
+      qp['estatusLocal'] = estatusLocal;
+    }
     if (esVistaLocal && Number.isFinite(idContratoNum) && idContratoNum > 0) {
       qp['idContrato'] = idContratoNum;
     }
