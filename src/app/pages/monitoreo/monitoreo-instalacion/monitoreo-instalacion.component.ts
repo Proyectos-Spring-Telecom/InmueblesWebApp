@@ -14,6 +14,7 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EMPTY, forkJoin, Observable, of, Subscription } from 'rxjs';
 import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { environment } from 'src/environments/environment';
@@ -61,6 +62,8 @@ interface ServicioDetalle {
   fechaPago: string;
   fechaLimitePago: string;
 }
+
+type FrecuenciaPago = 'mensual' | 'bimestral-impar' | 'bimestral-par' | 'anual-marzo';
 
 /** Fila de expediente en detalle de inmueble (mismas categorías que el formulario de alta). */
 interface MonitoreoExpedienteDoc {
@@ -132,8 +135,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   idContratoQuery: number | null = null;
   inmuebleEsRenta = true;
   localEstatus: 'ocupado' | 'libre' = 'ocupado';
-  detalleTitulo = 'Corporativo Pirámide';
-  detalleInmuebleNombre = 'Corporativo Pirámide';
+  detalleTitulo = 'San Cristóbal';
+  detalleInmuebleNombre = 'San Cristóbal';
   detalleLocalNombre = 'Local PB-01';
   detalleArrendador = 'Inmuebles y Desarrollos HAC S.A de C.V.';
   detalleArrendatario = 'Laboratorios Chopo';
@@ -147,15 +150,20 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   private inmueblesNombreMap: Map<number, string> | null = null;
   private vistaQuerySub?: Subscription;
   now = new Date();
-  readonly ubicacionLat = 18.9242;
-  readonly ubicacionLng = -99.2216;
+  readonly ubicacionLat = 18.953177342874035;
+  readonly ubicacionLng = -99.23588919868236;
   galleryIndex = 0;
   readonly galleryImages: string[] = [
-    'https://propiedadescom.s3.amazonaws.com/files/336x200/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-0-18601330.jpeg',
-    'https://img10.naventcdn.com/avisos/18/01/47/17/58/97/1200x1200/1582232812.jpg?isFirstImage=true',
-    'https://repstaticneu.azureedge.net/images/2003/L/WM/Large/cdb6c9e8-64be-44ea-bead-aa3f1de15e85-99993995-595f-49f8-8fd8-2a6450805281.jpg',
-    'https://cdn.propiedades.com/files/1200x507/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-1-18601330.jpeg',
+    'https://lh3.googleusercontent.com/gps-cs-s/APNQkAFlG1RuIX_TUTB944PQtcU_VhwJBKarAk6AZl61hj8-4Pes7T6n4kUQicm-qp8DtXMazia1NU7pjij4ziIozMFwvKH6Lbr1r60PIedWpOhP9ouysXVnE2gjY2rWj212L9kc7r3D=s680-w680-h510-rw',
+    'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?panoid=qjL0kL4w35FZ37eF-rx7AQ&cb_client=search.gws-prod.gps&w=408&h=240&yaw=61.73827&pitch=0&thumbfov=100',
+    'https://joyeriafinaonline.com.mx/wp-content/uploads/2022/07/10-Cuernavaca2.jpg',
   ];
+  /** Imagen de plano (tarjeta «Plano» en detalle de inmueble). */
+  readonly imagenPlanoInmueble =
+    'https://images.homify.com/v1558386691/p/photo/image/3062344/plano_3.jpg';
+  /** Imagen de documentación del predio (vista local). */
+  readonly imagenDocumentacionLocal =
+    'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?panoid=qjL0kL4w35FZ37eF-rx7AQ&cb_client=search.gws-prod.gps&w=408&h=240&yaw=61.73827&pitch=0&thumbfov=100';
   /** Nombre mostrado en vista Local (contrato); independiente del expediente del inmueble. */
   readonly nombreArchivoContratoLocalDemo = 'Contrato local vigente (texto informativo)';
 
@@ -205,6 +213,38 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       detalle: 'Imagen de referencia de interiores para expediente.',
     },
   ];
+
+  /** Expediente demo para vista local (misma checklist que alta de arrendatario). */
+  readonly expedienteDocumentosLocal: MonitoreoExpedienteDoc[] = [
+    {
+      etiqueta: 'Contrato de renta del local',
+      detalle: 'Contrato vigente entre arrendador y arrendatario.',
+    },
+    {
+      etiqueta: 'Constancia de situación fiscal (arrendatario)',
+      detalle: 'RFC y datos fiscales del arrendatario.',
+    },
+    {
+      etiqueta: 'Identificación oficial del representante',
+      detalle: 'INE o documento vigente del firmante.',
+    },
+    {
+      etiqueta: 'Comprobante de domicilio del negocio',
+      detalle: 'Reciente y coincidente con el domicilio fiscal.',
+    },
+    {
+      etiqueta: 'Licencia de funcionamiento',
+      detalle: 'Permiso municipal alineado al giro del local.',
+    },
+    {
+      etiqueta: 'Acta constitutiva o poder',
+      detalle: 'Personalidad jurídica o facultades para obligarse.',
+    },
+    {
+      etiqueta: 'Anexo de obligaciones / uso de áreas',
+      detalle: 'Condiciones de mantenimiento y zonas comunes.',
+    },
+  ];
   private readonly referenciasServicioBase: Record<string, string> = {
     Agua: 'SRV-AGUA-54035',
     Luz: 'SRV-LUZ-348150305391',
@@ -217,42 +257,19 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     Predio: 'IMP-PRED-110009829001',
   };
   readonly zonas = [
-    { zona: 'Planta baja Corporativo Pirámide', superficie: '200.00 m²' },
-    { zona: 'Segundo piso Corporativo Pirámide', superficie: '200.00 m²' },
+    { zona: 'Planta baja San Cristóbal', superficie: '200.00 m²' },
+    { zona: 'Segundo piso San Cristóbal', superficie: '200.00 m²' },
   ];
   readonly estacionamientosInmueble = [
     { nombrePensionado: 'Carlos Ramírez', numeroTarjeta: 'TAR-1001', arrendatario: 'Laboratorios Chopo' },
     { nombrePensionado: 'Luis Hernández', numeroTarjeta: 'TAR-1042', arrendatario: 'Inglés Individual' },
     { nombrePensionado: 'Marta López', numeroTarjeta: 'TAR-1108', arrendatario: 'Poder Judicial del Estado' },
   ];
-  pagosData: PagoRow[] = [
-    {
-      id: 1,
-      concepto: 'Mantenimiento',
-      fechaPago: '2026-04-02',
-      fechaLimitePago: '2026-04-05',
-      monto: 12850.5,
-      metodo: 'Transferencia',
-      estatus: 'Pagado',
-    },
-    {
-      id: 2,
-      concepto: 'Vigilancia',
-      fechaPago: '2026-04-06',
-      fechaLimitePago: '2026-04-08',
-      monto: 7600,
-      metodo: 'Tarjeta',
-      estatus: 'Pagado',
-    },
-    {
-      id: 3,
-      concepto: 'Limpieza',
-      fechaPago: '2026-04-10',
-      fechaLimitePago: '2026-04-12',
-      monto: 5400,
-      metodo: 'Transferencia',
-      estatus: 'Pendiente',
-    },
+  pagosData: PagoRow[] = [];
+  pagosDataGrid: PagoRow[] = [];
+  mesFiltroPagosSeleccionado = '__all__';
+  mesesFiltroPagosOpciones: Array<{ value: string; label: string }> = [
+    { value: '__all__', label: 'Todos los meses' },
   ];
 
   numeroSerie: string = '';
@@ -327,6 +344,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     private instalacionService: InstalacionService,
     private http: HttpClient,
     private fb: FormBuilder,
+    private sanitizer: DomSanitizer,
   ) {}
 
   ngOnDestroy(): void {
@@ -351,7 +369,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     }
     this.localEstatus = estatusLocalRaw === 'libre' ? 'libre' : 'ocupado';
     this.detalleInmuebleNombre =
-      (qp.get('nombreInmueble') ?? '').trim() || 'Corporativo Pirámide';
+      (qp.get('nombreInmueble') ?? '').trim() || 'San Cristóbal';
     this.detalleLocalNombre =
       (qp.get('nombreLocal') ?? '').trim() || 'Local PB-01';
     this.detalleArrendador =
@@ -378,6 +396,125 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
 
   private refrescarServiciosDataSource(): void {
     this.serviciosDataSource = this.buildServiciosLista();
+    this.pagosData = this.buildPagosDesdeServicios(this.serviciosDataSource);
+    this.refrescarMesesFiltroPagosOpciones();
+    this.aplicarFiltroPagosGrid();
+  }
+
+  private buildPagosDesdeServicios(servicios: ServicioDetalle[]): PagoRow[] {
+    const metodos = ['Transferencia', 'Tarjeta', 'SPEI', 'Domiciliado'];
+    const basePorConceptoInmueble: Record<string, number> = {
+      Agua: 900,
+      Luz: 1850,
+      'Licencia funcionamiento': 650,
+      Seguridad: 2400,
+      Limpieza: 1600,
+      Internet: 750,
+      Renta: 32000,
+      Mantenimiento: 4200,
+      Predio: 1200,
+    };
+    const basePorConceptoArrendatario: Record<string, number> = {
+      Renta: 18500,
+      Mantenimiento: 2100,
+    };
+    const calendarioPagoPorConceptoInmueble: Record<
+      string,
+      { diaPago: number; diaLimite: number }
+    > = {
+      Renta: { diaPago: 1, diaLimite: 5 },
+      Mantenimiento: { diaPago: 1, diaLimite: 10 },
+      Agua: { diaPago: 8, diaLimite: 17 },
+      Luz: { diaPago: 12, diaLimite: 20 },
+      Internet: { diaPago: 10, diaLimite: 18 },
+      Seguridad: { diaPago: 5, diaLimite: 12 },
+      Limpieza: { diaPago: 5, diaLimite: 12 },
+      'Licencia funcionamiento': { diaPago: 3, diaLimite: 15 },
+      Predio: { diaPago: 10, diaLimite: 17 },
+    };
+    const calendarioPagoPorConceptoArrendatario: Record<
+      string,
+      { diaPago: number; diaLimite: number }
+    > = {
+      Renta: { diaPago: 1, diaLimite: 5 },
+      Mantenimiento: { diaPago: 1, diaLimite: 10 },
+    };
+    const basePorConcepto =
+      this.vistaEntidad === 'local'
+        ? basePorConceptoArrendatario
+        : basePorConceptoInmueble;
+    const calendarioPagoPorConcepto =
+      this.vistaEntidad === 'local'
+        ? calendarioPagoPorConceptoArrendatario
+        : calendarioPagoPorConceptoInmueble;
+    const frecuenciaPorConcepto: Record<string, FrecuenciaPago> =
+      this.vistaEntidad === 'local'
+        ? {
+            Renta: 'mensual',
+            Mantenimiento: 'mensual',
+          }
+        : {
+            Renta: 'mensual',
+            Mantenimiento: 'mensual',
+            Agua: 'mensual',
+            Luz: 'bimestral-par',
+            Internet: 'mensual',
+            Seguridad: 'mensual',
+            Limpieza: 'mensual',
+            'Licencia funcionamiento': 'anual-marzo',
+            Predio: 'bimestral-impar',
+          };
+    const hoy = new Date();
+    const ciclos = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      return {
+        anio: d.getFullYear(),
+        mes: d.getMonth() + 1,
+      };
+    });
+
+    const fechaIso = (anio: number, mes: number, dia: number): string => {
+      const ultimoDia = new Date(anio, mes, 0).getDate();
+      const d = String(Math.min(dia, ultimoDia)).padStart(2, '0');
+      return `${anio}-${String(mes).padStart(2, '0')}-${d}`;
+    };
+
+    const rows: PagoRow[] = [];
+    let id = 1;
+    ciclos.forEach((ciclo, cicloIndex) => {
+      servicios.forEach((servicio, servicioIndex) => {
+        const frecuencia = frecuenciaPorConcepto[servicio.concepto] ?? 'mensual';
+        if (!this.esMesProgramado(ciclo.mes, frecuencia)) return;
+        const base = basePorConcepto[servicio.concepto] ?? 3500;
+        const calendario =
+          calendarioPagoPorConcepto[servicio.concepto] ?? {
+            diaPago: 5,
+            diaLimite: 12,
+          };
+        const fechaPago = fechaIso(ciclo.anio, ciclo.mes, calendario.diaPago);
+        const fechaLimitePago = fechaIso(
+          ciclo.anio,
+          ciclo.mes,
+          calendario.diaLimite,
+        );
+        const variacion = ((servicioIndex + 1) * 38.5) + (cicloIndex * 21.75);
+        rows.push({
+          id: id++,
+          concepto: servicio.concepto,
+          fechaPago,
+          fechaLimitePago,
+          monto: Number((base + variacion).toFixed(2)),
+          metodo: metodos[(cicloIndex + servicioIndex) % metodos.length],
+          estatus: cicloIndex >= ciclos.length - 2 ? 'Pendiente' : 'Pagado',
+        });
+      });
+    });
+    rows.sort((a, b) => {
+      const fa = String(a.fechaPago ?? '');
+      const fb = String(b.fechaPago ?? '');
+      return fb.localeCompare(fa);
+    });
+    return rows;
   }
 
   private buildServiciosLista(): ServicioDetalle[] {
@@ -396,26 +533,89 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
           ? [...comunes, 'Renta', 'Mantenimiento']
           : [...comunes, 'Predio'];
 
-    const ciclos: { fechaPago: string; fechaLimitePago: string }[] = [
-      { fechaPago: '2026-01-08', fechaLimitePago: '2026-01-15' },
-      { fechaPago: '2026-02-03', fechaLimitePago: '2026-02-10' },
-      { fechaPago: '2026-02-20', fechaLimitePago: '2026-02-28' },
-      { fechaPago: '2026-03-05', fechaLimitePago: '2026-03-12' },
-      { fechaPago: '2026-03-18', fechaLimitePago: '2026-03-25' },
-      { fechaPago: '2026-04-01', fechaLimitePago: '2026-04-08' },
-      { fechaPago: '2026-04-14', fechaLimitePago: '2026-04-21' },
-      { fechaPago: '2026-04-22', fechaLimitePago: '2026-04-29' },
-    ];
+    const calendarioPagoPorConcepto: Record<
+      string,
+      { diaPago: number; diaLimite: number }
+    > =
+      this.vistaEntidad === 'local'
+        ? {
+            Renta: { diaPago: 1, diaLimite: 5 },
+            Mantenimiento: { diaPago: 1, diaLimite: 10 },
+          }
+        : {
+            Renta: { diaPago: 1, diaLimite: 5 },
+            Mantenimiento: { diaPago: 1, diaLimite: 10 },
+            Agua: { diaPago: 8, diaLimite: 17 },
+            Luz: { diaPago: 12, diaLimite: 20 },
+            Internet: { diaPago: 10, diaLimite: 18 },
+            Seguridad: { diaPago: 5, diaLimite: 12 },
+            Limpieza: { diaPago: 5, diaLimite: 12 },
+            'Licencia funcionamiento': { diaPago: 3, diaLimite: 15 },
+            Predio: { diaPago: 10, diaLimite: 17 },
+          };
+    const frecuenciaPorConcepto: Record<string, FrecuenciaPago> =
+      this.vistaEntidad === 'local'
+        ? {
+            Renta: 'mensual',
+            Mantenimiento: 'mensual',
+          }
+        : {
+            Renta: 'mensual',
+            Mantenimiento: 'mensual',
+            Agua: 'mensual',
+            Luz: 'bimestral-par',
+            Internet: 'mensual',
+            Seguridad: 'mensual',
+            Limpieza: 'mensual',
+            'Licencia funcionamiento': 'anual-marzo',
+            Predio: 'bimestral-impar',
+          };
+    const fechaIso = (anio: number, mes: number, dia: number): string => {
+      const ultimoDia = new Date(anio, mes, 0).getDate();
+      const d = String(Math.min(dia, ultimoDia)).padStart(2, '0');
+      return `${anio}-${String(mes).padStart(2, '0')}-${d}`;
+    };
+    const hoy = new Date();
+    const baseAnio = hoy.getFullYear();
+    const baseMes = hoy.getMonth() + 1;
 
     return conceptos.map((concepto, i) => {
-      const f = ciclos[i % ciclos.length];
+      const frecuencia = frecuenciaPorConcepto[concepto] ?? 'mensual';
+      const calendario = calendarioPagoPorConcepto[concepto] ?? {
+        diaPago: 5,
+        diaLimite: 12,
+      };
+      const { anio: anioPago, mes: mesPago } =
+        this.obtenerMesProgramadoReciente(baseAnio, baseMes, frecuencia);
       return {
         concepto,
         contrato: this.referenciasServicioBase[concepto] ?? 'N/D',
-        fechaPago: f.fechaPago,
-        fechaLimitePago: f.fechaLimitePago,
+        fechaPago: fechaIso(anioPago, mesPago, calendario.diaPago),
+        fechaLimitePago: fechaIso(anioPago, mesPago, calendario.diaLimite),
       };
-    });
+    }).sort((a, b) => String(b.fechaPago).localeCompare(String(a.fechaPago)));
+  }
+
+  private esMesProgramado(mes: number, frecuencia: FrecuenciaPago): boolean {
+    if (frecuencia === 'mensual') return true;
+    if (frecuencia === 'bimestral-impar') return mes % 2 === 1;
+    if (frecuencia === 'bimestral-par') return mes % 2 === 0;
+    if (frecuencia === 'anual-marzo') return mes === 3;
+    return true;
+  }
+
+  private obtenerMesProgramadoReciente(
+    anioRef: number,
+    mesRef: number,
+    frecuencia: FrecuenciaPago,
+  ): { anio: number; mes: number } {
+    for (let i = 0; i < 24; i++) {
+      const d = new Date(anioRef, mesRef - 1 - i, 1);
+      const mes = d.getMonth() + 1;
+      if (!this.esMesProgramado(mes, frecuencia)) continue;
+      return { anio: d.getFullYear(), mes };
+    }
+    return { anio: anioRef, mes: mesRef };
   }
 
   verComprobanteImagenPago(_row: PagoRow): void {}
@@ -431,6 +631,85 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       'mono-pago-estatus--pendiente': e === 'Pendiente',
       'mono-pago-estatus--cancelado': e === 'Cancelado',
     };
+  }
+
+  formatoMoneda(e: any): string {
+    if (!e?.value) return '$0.00';
+    return (
+      '$' +
+      Number(e.value).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    );
+  }
+
+  onMesFiltroPagosChange(event: Event): void {
+    const input = event.target as HTMLSelectElement | null;
+    this.mesFiltroPagosSeleccionado = input?.value || '__all__';
+    this.aplicarFiltroPagosGrid();
+  }
+
+  private refrescarMesesFiltroPagosOpciones(): void {
+    const meses = new Set<string>();
+    this.pagosData.forEach((r) => {
+      const k = this.obtenerClaveMes(r.fechaPago);
+      if (k) meses.add(k);
+    });
+
+    const ordenados = Array.from(meses).sort();
+    const opciones = ordenados.map((value) => ({
+      value,
+      label: this.formatearEtiquetaMes(value),
+    }));
+    this.mesesFiltroPagosOpciones = [
+      { value: '__all__', label: 'Todos los meses' },
+      ...opciones,
+    ];
+
+    const existeSeleccion = this.mesesFiltroPagosOpciones.some(
+      (o) => o.value === this.mesFiltroPagosSeleccionado,
+    );
+    if (!existeSeleccion) this.mesFiltroPagosSeleccionado = '__all__';
+    this.aplicarFiltroPagosGrid();
+  }
+
+  private aplicarFiltroPagosGrid(): void {
+    if (this.mesFiltroPagosSeleccionado === '__all__') {
+      this.pagosDataGrid = [...this.pagosData];
+      return;
+    }
+    this.pagosDataGrid = this.pagosData.filter(
+      (r) => this.obtenerClaveMes(r.fechaPago) === this.mesFiltroPagosSeleccionado,
+    );
+  }
+
+  private obtenerClaveMes(fechaIso: string): string {
+    const s = String(fechaIso ?? '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+    return s.slice(0, 7);
+  }
+
+  private formatearEtiquetaMes(ym: string): string {
+    if (!/^\d{4}-\d{2}$/.test(ym)) return ym;
+    const [yy, mm] = ym.split('-');
+    const m = Number(mm);
+    const meses = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+    const nombreMes = meses[m - 1] ?? mm;
+    return `${nombreMes} ${yy}`;
   }
 
   private fechaIsoMasDias(isoDate: string, dias: number): string {
@@ -874,6 +1153,16 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.galleryIndex = index;
   }
 
+  get mapaUbicacionEmbedUrl(): SafeResourceUrl {
+    const url = `https://maps.google.com/maps?q=${this.ubicacionLat},${this.ubicacionLng}&z=16&output=embed`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  get streetViewEmbedUrl(): SafeResourceUrl {
+    const url = `https://maps.google.com/maps?q=&layer=c&cbll=${this.ubicacionLat},${this.ubicacionLng}&cbp=11,0,0,0,0&output=svembed`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
   ngOnInit(): void {
     this.initPagoForm();
     this.numeroSerie = this.route.snapshot.paramMap.get('numeroSerie') ?? '';
@@ -1008,6 +1297,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     };
 
     this.pagosData = [nuevo, ...this.pagosData];
+    this.refrescarMesesFiltroPagosOpciones();
+    this.aplicarFiltroPagosGrid();
     this.cerrarModalPago();
   }
 

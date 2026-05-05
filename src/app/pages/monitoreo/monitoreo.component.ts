@@ -202,9 +202,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     'https://analiticadevideo.s3.us-east-1.amazonaws.com/Clientes/37269948-9b8c-42c7-a858-87d0f6101fad.png',
     'https://analiticadevideo.s3.us-east-1.amazonaws.com/Clientes/1b74ca94-7427-4689-bca8-29963c05925f.png',
   ];
-  readonly imagenesInmuebles = [
-    'https://propiedadescom.s3.amazonaws.com/files/336x200/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-0-18601330.jpeg',
-  ];
+  /** Fachada / predio para tarjetas de inmuebles en monitoreo (demo San Cristóbal). */
+  readonly imagenListaInmuebleMonitoreo =
+    'https://lh3.googleusercontent.com/gps-cs-s/APNQkAFlG1RuIX_TUTB944PQtcU_VhwJBKarAk6AZl61hj8-4Pes7T6n4kUQicm-qp8DtXMazia1NU7pjij4ziIozMFwvKH6Lbr1r60PIedWpOhP9ouysXVnE2gjY2rWj212L9kc7r3D=s680-w680-h510-rw';
+  readonly imagenesInmuebles = [this.imagenListaInmuebleMonitoreo];
   readonly imagenesLocales = [
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoG7Mwy-QiPc4n0i5-UL1ucJTAqtzOdRikSA&s',
     'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80',
@@ -379,6 +380,18 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       .toLowerCase()
       .trim();
 
+    if (identidad.includes('little')) {
+      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRU5QgdZTMyLU4FQKJstMQCNelj4-KJQvqMlg&s';
+    }
+    if (identidad.includes('san pablo')) {
+      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKJR0tQXoD5ZaSEZZjfVAXlCWuU3EUGYvphA&s';
+    }
+    if (identidad.includes('nice')) {
+      return 'https://lh3.googleusercontent.com/gps-cs-s/APNQkAFRdzOnO_eCBYiNzIY5XKWz2H1fcCxQVme6VX1HTAmb_0E_MCiTeb5AznPRWGmma-Zbcub1n4f3i0bLuPF9sBNCiHFNWKlitrOmClUJJ4Gnz_GZqusoUGw8bV18ymQRCPpu1ukgqlNS_mw=s680-w680-h510-rw';
+    }
+    if (identidad.includes('spring')) {
+      return 'https://lh3.googleusercontent.com/gps-cs-s/APNQkAFlG1RuIX_TUTB944PQtcU_VhwJBKarAk6AZl61hj8-4Pes7T6n4kUQicm-qp8DtXMazia1NU7pjij4ziIozMFwvKH6Lbr1r60PIedWpOhP9ouysXVnE2gjY2rWj212L9kc7r3D=s680-w680-h510-rw';
+    }
     if (identidad.includes('inglés individual') || identidad.includes('ingles individual')) {
       return 'https://escuelasmexico.mx/wp-content/uploads/2024/08/Ingles-Individual-Cuernavaca-Vista-Hermosa-en-Cuernavaca.jpg';
     }
@@ -665,9 +678,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         idCliente: 1,
         nombreCliente: 'Inmuebles y Desarrollos HAC S.A de C.V.',
         nombreEncargado: 'Osvaldo Martínez',
-        direccion: 'Río Balsas 106, Vista Hermosa, 62290 Cuernavaca, Mor.',
-        lat: 18.93121493373098,
-        lng: -99.22074175794218,
+        direccion: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
+        lat: 18.953177342874035,
+        lng: -99.23588919868236,
         instalaciones: INMUEBLES_ARRENDATARIOS_DEMO.map((inmueble) => ({
           id: inmueble.idInmueble,
           idInstalacion: inmueble.idInmueble,
@@ -681,8 +694,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
           fechaInicio: '2024-01-01',
           fechaFin: '2029-01-01',
           mensualidadMxn: inmueble.locales.reduce((acc, local) => acc + (Number(local.mensualidadMxn) || 0), 0),
-          lat: 18.93121493373098,
-          lng: -99.22074175794218,
+          lat: 18.953177342874035,
+          lng: -99.23588919868236,
           locales: inmueble.locales.map((local) => ({
             ...local,
             id: local.idLocal,

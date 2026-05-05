@@ -8,10 +8,10 @@
         class="crumb active">Inmuebles</span></nav>
   </header>
   <div class="surface">
-    <section class="perm-form-nc container-fluid py-2">
+    <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="inmuebleForm" class="perm-form-body">
-        <div class="row g-2 inmueble-main-grid">
-          <div class="col-12 col-md-3 col-xl-3"><label for="nombreInmueble"
+        <div class="row g-4 inmueble-main-grid">
+          <div class="col-12 col-md-4"><label for="nombreInmueble"
               class="form-label perm-label">Inmueble</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>apartment</mat-icon></span>
@@ -20,7 +20,7 @@
                   for="nombreInmueble">Nombre del inmueble</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="arrendador" class="form-label perm-label">Arrendador</label>
+          <div class="col-12 col-md-4"><label for="arrendador" class="form-label perm-label">Arrendador</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="arrendador" type="text" class="form-control"
@@ -28,7 +28,7 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3" *ngIf="mostrarCamposRenta"><label for="rentaMxn"
+          <div class="col-12 col-md-4" *ngIf="mostrarCamposRenta"><label for="rentaMxn"
               class="form-label perm-label">Renta (MXN)</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
@@ -37,7 +37,7 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="direccionInmueble" class="form-label perm-label">Dirección
+          <div class="col-12 col-md-4"><label for="direccionInmueble" class="form-label perm-label">Dirección
               fiscal</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>location_on</mat-icon></span>
@@ -46,7 +46,7 @@
                   for="direccionInmueble">Dirección fiscal</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="estatusInmueble" class="form-label perm-label">Estatus del
+          <div class="col-12 col-md-4"><label for="estatusInmueble" class="form-label perm-label">Estatus del
               inmueble</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
@@ -61,7 +61,7 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="vigenciaAnios" class="form-label perm-label">Vigencia
+          <div class="col-12 col-md-4"><label for="vigenciaAnios" class="form-label perm-label">Vigencia
               (años)</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
@@ -70,21 +70,21 @@
                   vigencia</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="fechaInicio" class="form-label perm-label">Inicio</label>
+          <div class="col-12 col-md-4"><label for="fechaInicio" class="form-label perm-label">Inicio</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="fechaInicio" type="date" class="form-control"
                   formControlName="fechaInicio" /><label for="fechaInicio">Fecha de inicio</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="fechaFin" class="form-label perm-label">Fin</label>
+          <div class="col-12 col-md-4"><label for="fechaFin" class="form-label perm-label">Fin</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="fechaFin" type="date" class="form-control"
                   formControlName="fechaFin" /><label for="fechaFin">Fecha de fin</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3" *ngIf="mostrarCamposRenta"><label for="tiempoRentaAnios"
+          <div class="col-12 col-md-4" *ngIf="mostrarCamposRenta"><label for="tiempoRentaAnios"
               class="form-label perm-label">Tiempo de renta (años)</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
@@ -93,7 +93,7 @@
                   for="tiempoRentaAnios">Tiempo de renta</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="nombreRepresentanteLegal"
+          <div class="col-12 col-md-4"><label for="nombreRepresentanteLegal"
               class="form-label perm-label">Nombre Representante Legal</label>
             <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
                   aria-hidden="true">supervisor_account</mat-icon></span>
@@ -102,7 +102,7 @@
                   placeholder="Ej.: María López" /><label for="nombreRepresentanteLegal">Ej.: María López</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="telefonoRepresentanteLegal"
+          <div class="col-12 col-md-4"><label for="telefonoRepresentanteLegal"
               class="form-label perm-label">Teléfono Representante Legal</label>
             <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
                   aria-hidden="true">call</mat-icon></span>
@@ -112,7 +112,7 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-3 col-xl-3"><label for="correoRepresentanteLegal"
+          <div class="col-12 col-md-4"><label for="correoRepresentanteLegal"
               class="form-label perm-label">Correo Representante Legal</label>
             <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
                   aria-hidden="true">alternate_email</mat-icon></span>
@@ -335,13 +335,15 @@
             </div>
           </div> -->
 
-          <div class="col-12 perm-docs-in-grid mt-4">
+          <div class="col-12 perm-docs-in-grid mt-4"
+            #docsSectionInmueble
+            [class.autocarga-docs-highlight]="resaltarAutocargaDocs">
             <div class="arrend-fa-hero mt-4">
               <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>folder_copy</mat-icon></div>
               <div class="arrend-fa-hero__body">
                 <div class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3">
                   <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
-                    <h6 class="arrend-fa-section-title m-0">Documentos e imágenes</h6>
+                    <h6 class="arrend-fa-section-title m-0">Documentos e Imágenes</h6>
                   </div>
                 </div>
               </div>
@@ -396,7 +398,8 @@
                 </div>
               </div>
 
-              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card" *ngIf="mostrarCamposRenta">
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                *ngIf="mostrarCamposRenta">
                 <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
@@ -556,7 +559,9 @@
                 </div>
               </div>
 
-              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                #autocargaContratoCardInmueble
+                [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
                 <label class="form-label perm-label docs-uploader-label">Escrituras O Título De Propiedad</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
@@ -565,6 +570,9 @@
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
+                        Sube Aquí La Escritura O Título Para Intentar Completar El Formulario.
+                      </p>
                       <div class="uploader__cta">
                         <button mat-flat-button color="primary" type="button"
                           (click)="abrirSelectorArchivo('escritura')">Seleccionar</button>
