@@ -62,17 +62,10 @@ interface ServicioDetalle {
   fechaLimitePago: string;
 }
 
-/** Documento en la sección Documentos (demo / futura API). */
-interface MonitoreoDocumentoArchivo {
-  nombre: string;
-  /** URL del PDF. */
-  url: string;
-}
-
 /** Fila de expediente en detalle de inmueble (mismas categorías que el formulario de alta). */
 interface MonitoreoExpedienteDoc {
   etiqueta: string;
-  archivo: MonitoreoDocumentoArchivo;
+  detalle: string;
 }
 
 type PagoEstatus = 'Pagado' | 'Pendiente' | 'Cancelado';
@@ -153,17 +146,12 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   readonly ubicacionLng = -99.2216;
   galleryIndex = 0;
   readonly galleryImages: string[] = [
-    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1483366774565-c783b9f70e2c?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1604719312566-8912e9c8a213?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80',
   ];
   /** Nombre mostrado en vista Local (contrato); independiente del expediente del inmueble. */
-  readonly nombreArchivoContratoLocalDemo = 'Contrato_local_corporativo.pdf';
-  /** Archivo del contrato en vista Local (demo). */
-  readonly contratoLocalArchivo: MonitoreoDocumentoArchivo = {
-    nombre: this.nombreArchivoContratoLocalDemo,
-    url: '/assets/docs/Contrato_local_corporativo.pdf',
-  };
+  readonly nombreArchivoContratoLocalDemo = 'Contrato local vigente (texto informativo)';
 
   /**
    * Expediente digital alineado con «Documentos e imágenes» del formulario de inmuebles.
@@ -172,73 +160,43 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   readonly expedienteDocumentosInmueble: MonitoreoExpedienteDoc[] = [
     {
       etiqueta: 'Escritura del inmueble (PDF)',
-      archivo: {
-        nombre: 'Escritura_inmueble_BHV.pdf',
-        url: '/assets/docs/Escritura_inmueble_BHV.pdf',
-      },
+      detalle: 'Documento base del predio registrado y vigente.',
     },
     {
       etiqueta: 'Licencia / uso de suelo',
-      archivo: {
-        nombre: 'Licencia_uso_suelo_2026.svg',
-        url: '/assets/docs/Licencia_uso_suelo_2026.svg',
-      },
+      detalle: 'Licencia municipal y validación de uso de suelo.',
     },
     {
       etiqueta: 'Fachada',
-      archivo: {
-        nombre: 'Fachada_principal.svg',
-        url: '/assets/docs/Fachada_principal.svg',
-      },
+      detalle: 'Evidencia fotográfica de fachada principal del inmueble.',
     },
     {
       etiqueta: 'Contrato de renta',
-      archivo: {
-        nombre: 'Contrato_renta_vigente.pdf',
-        url: '/assets/docs/Contrato_renta_vigente.pdf',
-      },
+      detalle: 'Contrato principal de arrendamiento con vigencia activa.',
     },
     {
       etiqueta: 'Constancia de Situación Fiscal',
-      archivo: {
-        nombre: 'CSF_inmueble_sat.pdf',
-        url: '/assets/docs/CSF_inmueble_sat.pdf',
-      },
+      detalle: 'Constancia fiscal del contribuyente asociado al inmueble.',
     },
     {
       etiqueta: 'Comprobante de Domicilio',
-      archivo: {
-        nombre: 'Comprobante_domicilio_fiscal.pdf',
-        url: '/assets/docs/Comprobante_domicilio_fiscal.pdf',
-      },
+      detalle: 'Comprobante de domicilio fiscal actualizado.',
     },
     {
       etiqueta: 'Acta Constitutiva',
-      archivo: {
-        nombre: 'Acta_constitutiva_sociedad.pdf',
-        url: '/assets/docs/Acta_constitutiva_sociedad.pdf',
-      },
+      detalle: 'Acta constitutiva de la razón social titular.',
     },
     {
       etiqueta: 'Constancia de situación fiscal del representante legal',
-      archivo: {
-        nombre: 'CSF_representante.pdf',
-        url: '/assets/docs/CSF_representante.pdf',
-      },
+      detalle: 'Constancia fiscal del representante legal registrado.',
     },
     {
       etiqueta: 'INE Representante Legal',
-      archivo: {
-        nombre: 'INE_representante_legal.pdf',
-        url: '/assets/docs/INE_representante_legal.pdf',
-      },
+      detalle: 'Identificación oficial vigente del representante legal.',
     },
     {
       etiqueta: 'Imagen 1 (galería del inmueble)',
-      archivo: {
-        nombre: 'Galeria_interior_demo.svg',
-        url: '/assets/docs/Galeria_interior_demo.svg',
-      },
+      detalle: 'Imagen de referencia de interiores para expediente.',
     },
   ];
   private readonly referenciasServicioBase: Record<string, string> = {
@@ -477,7 +435,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   /**
    * Descarga el PDF sin navegar ni abrir pestañas: obtiene blob y dispara descarga local.
    */
-  descargarDocumento(archivo: MonitoreoDocumentoArchivo, ev: Event): void {
+  descargarDocumento(archivo: { nombre: string; url: string }, ev: Event): void {
     ev.preventDefault();
     ev.stopPropagation();
     this.http

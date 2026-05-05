@@ -31,54 +31,36 @@
     </div>
 
     <div class="mt-3">
-      <dx-tree-list
-        #treeListRef
-        id="treeInmuebles"
-        [dataSource]="rows"
-        [keyExpr]="'id'"
-        [parentIdExpr]="'parentId'"
-        [showBorders]="true"
-        [showRowLines]="true"
-        [showColumnLines]="true"
-        [rowAlternationEnabled]="true"
-        [columnAutoWidth]="true"
-        [wordWrapEnabled]="true"
-        [autoExpandAll]="expandedAll"
-      >
+      <dx-tree-list #treeListRef id="treeInmuebles" [dataSource]="rows" [keyExpr]="'id'" [parentIdExpr]="'parentId'"
+        [showBorders]="true" [showRowLines]="true" [showColumnLines]="true" [rowAlternationEnabled]="true"
+        [columnAutoWidth]="true" [wordWrapEnabled]="true" [autoExpandAll]="expandedAll">
+
         <dxo-search-panel [visible]="true" [width]="260" placeholder="Buscar..."></dxo-search-panel>
         <dxo-header-filter [visible]="true"></dxo-header-filter>
         <dxo-filter-row [visible]="true"></dxo-filter-row>
         <dxo-paging [enabled]="false"></dxo-paging>
-        <dxi-column
-          caption="Acciones"
-          cellTemplate="accionesTpl"
-          [width]="150"
-          alignment="center"
-          dataType="string"
-        ></dxi-column>
+
+        <!-- 🔹 COLUMNA ACCIONES -->
+        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="150" alignment="center"></dxi-column>
+
         <dxi-column alignment="center" dataField="inmueble" caption="Inmueble" [width]="240"></dxi-column>
         <dxi-column alignment="center" dataField="local" caption="Local" [width]="180"></dxi-column>
         <dxi-column alignment="center" dataField="arrendatario" caption="Arrendatario"></dxi-column>
         <dxi-column alignment="center" dataField="arrendador" caption="Arrendador"></dxi-column>
         <dxi-column alignment="center" dataField="nivel" caption="Nivel" [width]="130"></dxi-column>
-        <dxi-column
-          alignment="center"
-          dataField="superficieM2"
-          caption="Superficie (m²)"
-          dataType="number"
-          [width]="140"
-        ></dxi-column>
-        <dxi-column
+        <dxi-column alignment="center" dataField="superficieM2" caption="Superficie (m²)" dataType="number"
+          [width]="140"></dxi-column>
+          <dxi-column
           alignment="center"
           dataField="mensualidad"
           caption="Mensualidad (MXN)"
-          dataType="number"
-          format="currency"
           [width]="160"
-        ></dxi-column>
+          [customizeText]="formatoMoneda">
+        </dxi-column>
         <dxi-column alignment="center" dataField="vigencia" caption="Vigencia"></dxi-column>
         <dxi-column alignment="center" dataField="estadoLocal" caption="Estado"></dxi-column>
 
+        <!-- 🔥 TEMPLATE ACCIONES CORREGIDO -->
         <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
           <ng-container *ngIf="row?.data?.tipoNodo === 'inmueble'">
             <div>

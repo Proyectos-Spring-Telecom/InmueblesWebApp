@@ -20,6 +20,7 @@ import { ToastrService } from 'ngx-toastr';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { InstalacionCentral } from 'src/app/services/moduleService/instalacionesCentral.service';
+import { INMUEBLES_ARRENDATARIOS_DEMO } from '../arrendatarios/arrendatarios-demo.data';
 
 declare const google: any;
 
@@ -178,6 +179,20 @@ interface ZoneDragState {
   ],
 })
 export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly layoutInicialInmueble = {
+    canvas: { width: 1200, height: 760 },
+    zonas: [
+      { id: 'Planta baja', nombre: 'Planta baja', x: 30, y: 35, width: 270, height: 670 },
+      { id: 'Segundo piso', nombre: 'Piso 1', x: 330, y: 35, width: 270, height: 670 },
+    ],
+    locales: [
+      { id: '3001', zonaId: 'Planta baja', x: 40, y: 580, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
+      { id: '3002', zonaId: 'Planta baja', x: 160, y: 160, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
+      { id: '3003', zonaId: 'Segundo piso', x: 460, y: 480, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
+      { id: '3004', zonaId: 'Segundo piso', x: 420, y: 140, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
+    ],
+  };
+
   private readonly PREVIEW_SERIE = 'preview-demo';
   /**
    * Logos por defecto cuando el API no envía imagen (temporal).
@@ -188,16 +203,13 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     'https://analiticadevideo.s3.us-east-1.amazonaws.com/Clientes/1b74ca94-7427-4689-bca8-29963c05925f.png',
   ];
   readonly imagenesInmuebles = [
-    'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1430285561322-7808604715df?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80',
+    'https://propiedadescom.s3.amazonaws.com/files/336x200/Morelos-Vista-Hermosa-RIO-BALSAS-Cuernavaca-33-0-18601330.jpeg',
   ];
   readonly imagenesLocales = [
-    'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1497215842964-222b430dc094?auto=format&fit=crop&w=900&q=80',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoG7Mwy-QiPc4n0i5-UL1ucJTAqtzOdRikSA&s',
+    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=900&q=80',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhU5VreFPfCZ6G2tYfgXy3igpgfvgq9mYpRg&s',
   ];
   /** Imagen default de locales cuando no llega foto del API. */
   readonly imagenLocalListaDefault = this.imagenesLocales[0];
@@ -354,6 +366,32 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       local?.urlFoto;
     const s = u != null ? String(u).trim() : '';
     if (s.length) return s;
+
+    const identidad = String(
+      local?.arrendatario ??
+      local?.arrendatarioLocal ??
+      local?.ocupante ??
+      local?.ocupanteNombre ??
+      local?.nombreLocal ??
+      local?.local ??
+      '',
+    )
+      .toLowerCase()
+      .trim();
+
+    if (identidad.includes('inglés individual') || identidad.includes('ingles individual')) {
+      return 'https://escuelasmexico.mx/wp-content/uploads/2024/08/Ingles-Individual-Cuernavaca-Vista-Hermosa-en-Cuernavaca.jpg';
+    }
+    if (identidad.includes('chopo')) {
+      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoG7Mwy-QiPc4n0i5-UL1ucJTAqtzOdRikSA&s';
+    }
+    if (identidad.includes('poder judicial')) {
+      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhU5VreFPfCZ6G2tYfgXy3igpgfvgq9mYpRg&s';
+    }
+    if (identidad.includes('clínica') || identidad.includes('clinica') || identidad.includes('médic')) {
+      return 'https://hospitalcenter.com.mx/images/site/galeria/habitaciones/HAB-4.jpg';
+    }
+
     const seed = local?.id ?? local?.nombre ?? index;
     return this.pickImageBySeed(seed, this.imagenesLocales, this.imagenLocalListaDefault);
   }
@@ -505,6 +543,14 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** Nivel o zona del plano (p. ej. Planta baja, Piso 1). */
   getZonaNombreLocalLista(local: any): string | null {
+    const nivelDirecto =
+      local?.nivel ??
+      local?.nivelLocal ??
+      local?.planta ??
+      local?.piso;
+    const nivelTexto = nivelDirecto != null ? String(nivelDirecto).trim() : '';
+    if (nivelTexto.length) return nivelTexto;
+
     const zid = local?.zonaId;
     if (zid == null || String(zid).trim() === '') return null;
     const z = this.visualLayout?.zonas?.find((it) => String(it.id) === String(zid));
@@ -613,32 +659,53 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   obtenerInstalacionesCentral() {
-    this.insService.obtenerInstalacionCentral().subscribe((response: any) => {
-      let data: any[] = response?.data ?? [];
-      /** Demo: solo mostrar la instalación central con este id (ocultar el resto). */
-      const SOLO_INSTALACION_CENTRAL_ID = 1;
-      data = data.filter((c: any) => Number(c?.id) === SOLO_INSTALACION_CENTRAL_ID);
-      const u = this.auth.getUser();
-      const idCliente = u?.idCliente != null ? u.idCliente : null;
+    const data = [
+      {
+        id: 1,
+        idCliente: 1,
+        nombreCliente: 'Inmuebles y Desarrollos HAC S.A de C.V.',
+        nombreEncargado: 'Osvaldo Martínez',
+        direccion: 'Río Balsas 106, Vista Hermosa, 62290 Cuernavaca, Mor.',
+        lat: 18.93121493373098,
+        lng: -99.22074175794218,
+        instalaciones: INMUEBLES_ARRENDATARIOS_DEMO.map((inmueble) => ({
+          id: inmueble.idInmueble,
+          idInstalacion: inmueble.idInmueble,
+          nombreDepartamento: inmueble.nombreInmueble,
+          nombreInstalacion: inmueble.nombreInmueble,
+          direccion: inmueble.direccion,
+          arrendador: inmueble.arrendador,
+          estatusInmueble: 'RENTADO',
+          vigenciaAnios: 5,
+          tiempoRentaAnios: 5,
+          fechaInicio: '2024-01-01',
+          fechaFin: '2029-01-01',
+          mensualidadMxn: inmueble.locales.reduce((acc, local) => acc + (Number(local.mensualidadMxn) || 0), 0),
+          lat: 18.93121493373098,
+          lng: -99.22074175794218,
+          locales: inmueble.locales.map((local) => ({
+            ...local,
+            id: local.idLocal,
+            nombre: local.nombreLocal,
+          })),
+        })),
+      },
+    ];
 
-      if (this.isRol1) {
-        this.listaInstalaciones = data;
-        this.viewMode = 'centrales';
-        this.flowMode = 'clientes';
-        this.selectedCentral = null;
-      } else {
-        const filtered = data.filter(
-          (c: any) => c?.idCliente == idCliente || c?.id == idCliente
-        );
-        this.listaInstalaciones = filtered;
-        this.selectedCentral = filtered.length ? filtered[0] : null;
-        this.viewMode = 'instalaciones';
-        this.flowMode = 'inmuebles';
-      }
+    if (this.isRol1) {
+      this.listaInstalaciones = data;
+      this.viewMode = 'centrales';
+      this.flowMode = 'clientes';
+      this.selectedCentral = null;
+    } else {
+      this.listaInstalaciones = data;
+      this.selectedCentral = data[0] ?? null;
+      this.viewMode = 'instalaciones';
+      this.flowMode = 'inmuebles';
+    }
 
-      if (this.map && this.flowMode === 'inmuebles') this.renderAccordingMode();
-      this.aplicarRetornoDesdeDetalleSiCorresponde();
-    });
+    if (this.map && this.flowMode === 'inmuebles') this.renderAccordingMode();
+    this.aplicarRetornoDesdeDetalleSiCorresponde();
   }
 
   /** Al volver desde detalle instalación/local: restaurar lista de inmuebles o de locales. */
@@ -1480,19 +1547,25 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         it['ocupanteNombre'] ??
         it['nombreEmpresa'] ??
         it['empresa'] ??
+        it['arrendatarioLocal'] ??
         it['arrendatario'] ??
         it['inquilino'];
       const mensRaw =
         it['mensualidadMxn'] ?? it['mensualidad'] ?? it['rentaMensual'] ?? it['pagoMensual'];
       const base: LocalCanvasModel = {
-        id: String(it['id'] ?? `local-${i + 1}`),
-        nombre: String(it['nombre'] ?? `Local ${i + 1}`),
+        id: String(it['id'] ?? it['idLocal'] ?? `local-${i + 1}`),
+        nombre: String(it['nombre'] ?? it['nombreLocal'] ?? it['local'] ?? `Local ${i + 1}`),
         x: Number(it['x'] ?? 0),
         y: Number(it['y'] ?? 0),
         width: Math.max(50, Number(it['width'] ?? 92)),
         height: Math.max(50, Number(it['height'] ?? 72)),
-        zonaId: it['zonaId'] != null ? String(it['zonaId']) : null,
-        estado: this.normalizeLocalState(it['estado']),
+        zonaId:
+          it['zonaId'] != null
+            ? String(it['zonaId'])
+            : it['nivel'] != null
+              ? String(it['nivel'])
+              : null,
+        estado: this.normalizeLocalState(it['estado'] ?? it['estadoLocal']),
         bloqueado: Boolean(it['bloqueado']),
       };
       if (ocupanteRaw != null && String(ocupanteRaw).trim() !== '') {
@@ -1523,23 +1596,43 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       return base;
     });
 
-    const zonaSet = new Set<string>();
-    mappedLocales.forEach((l) => {
-      if (l.zonaId) zonaSet.add(l.zonaId);
-    });
-    const zonas: ZonaCanvasModel[] = Array.from(zonaSet).map((zonaId, i) => ({
-      id: zonaId,
-      nombre: this.nombreNivelPlantaPorIndice(i),
-      x: 30 + i * 300,
-      y: 35,
-      width: 270,
-      height: 670,
+    const zonas: ZonaCanvasModel[] = this.layoutInicialInmueble.zonas.map((z) => ({
+      id: z.id,
+      nombre: z.nombre,
+      x: z.x,
+      y: z.y,
+      width: z.width,
+      height: z.height,
     }));
 
+    const posicionPorId = new Map(
+      this.layoutInicialInmueble.locales.map((l) => [String(l.id), l]),
+    );
+
+    const localesConLayoutInicial = mappedLocales.map((local, i) => {
+      const preset = posicionPorId.get(String(local.id));
+      if (!preset) {
+        return {
+          ...local,
+          x: 60 + (i % 4) * 120,
+          y: i < 4 ? 70 : 400,
+        };
+      }
+      return {
+        ...local,
+        x: preset.x,
+        y: preset.y,
+        width: preset.width,
+        height: preset.height,
+        zonaId: preset.zonaId,
+        estado: preset.estado,
+      };
+    });
+
     return {
-      canvas: { width: 1200, height: 760 },
+      canvas: { ...this.layoutInicialInmueble.canvas },
       zonas,
-      locales: mappedLocales,
+      locales: localesConLayoutInicial,
     };
   }
 
@@ -1830,6 +1923,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.uiState = { ...this.uiState, saving: true, error: null };
     const payload = this.serializeLayout();
+    // Debug temporal: JSON listo para copiar/pegar en chat y reutilizar en carga.
+    console.log('MONITOREO_LAYOUT_JSON', JSON.parse(payload));
     Promise.resolve(payload)
       .then(() => {
         this.lastSavedLayoutSerialized = payload;

@@ -131,32 +131,32 @@
                       <div class="inmueble-info">
                         <div class="inmueble-top">
                           <div class="inmueble-name">
-                            {{ selectedCentral?.nombreCliente || item.nombreCliente || 'Inmueble' }}
+                            {{ item.nombreDepartamento || item.nombreInstalacion || 'Inmueble' }}
                           </div>
                           <div class="inmueble-renta">
                             <span>Renta</span>
-                            <strong>$25,729.73 MXN</strong>
+                            <strong>{{ (item.mensualidadMxn ?? item.rentaMxn ?? 120000) | currency:'MXN':'symbol':'1.0-0' }}</strong>
                           </div>
                         </div>
                         <div class="inmueble-line mt-1">
                           <strong>Dirección del inmueble:</strong>
-                          {{ selectedCentral?.direccion || item.direccion || 'Sin dirección' }}
+                          {{ item.direccion || selectedCentral?.direccion || 'Río Balsas 106, Cuernavaca' }}
                         </div>
                         <div class="inmueble-line">
-                          <strong>Vigencia:</strong> 0 años
+                          <strong>Vigencia:</strong> {{ item.vigenciaAnios || 5 }} años
                         </div>
                         <div class="inmueble-line">
-                          <strong>Inicio:</strong> 02/01/2017
+                          <strong>Inicio:</strong> {{ item.fechaInicio || '2024-01-01' }}
                           <span class="m-x-8">|</span>
-                          <strong>Fin:</strong> 01/01/2019
+                          <strong>Fin:</strong> {{ item.fechaFin || '2029-01-01' }}
                         </div>
                         <div class="inmueble-line">
                           <mat-icon>person</mat-icon>
-                          <span>Arrendador: Desarrollo Inmobiliario BHV SA de CV</span>
+                          <span>Arrendador: {{ item.arrendador || selectedCentral?.nombreCliente || 'Inmuebles y Desarrollos HAC S.A de C.V.' }}</span>
                         </div>
                         <div class="inmueble-line">
                           <mat-icon>calendar_today</mat-icon>
-                          <span>Tiempo de renta: 2 años</span>
+                          <span>Tiempo de renta: {{ item.tiempoRentaAnios || 5 }} años</span>
                         </div>
                       </div>
                     </div>
@@ -211,7 +211,7 @@
             <div class="locales-wrapper">
               <div class="locales-card">
                 <div class="locales-card__head">
-                  <h5 class="m-0">Locales del inmueble</h5>
+                  <h5 class="m-0">Locales del Inmueble</h5>
                   <div class="locales-actions d-flex gap-2">
                     <button type="button" class="btn btn-sm" [disabled]="!uiState.dirty || uiState.saving"
                       (click)="saveLayout()">

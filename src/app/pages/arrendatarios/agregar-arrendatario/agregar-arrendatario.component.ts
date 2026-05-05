@@ -45,8 +45,16 @@ export class AgregarArrendatarioComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    const stateData = history.state?.arrendatario;
+    if (stateData && stateData.idLocal) {
+      this.idArrendatario = Number(stateData.idLocal);
+      this.title = 'Actualizar Arrendatario';
+      this.submitButton = 'Actualizar';
+      this.cargarDesdeGrid(stateData);
+      return;
+    }
     this.activatedRoute.params.subscribe((params) => {
-      this.idArrendatario = Number(params['idArrendatario']);
+      this.idArrendatario = Number(params['id'] ?? params['idArrendatario']);
       if (this.idArrendatario) {
         this.title = 'Actualizar Arrendatario';
         this.submitButton = 'Actualizar';
@@ -64,6 +72,7 @@ export class AgregarArrendatarioComponent implements OnInit {
   private initForm(): void {
     this.arrendatarioForm = this.fb.group({
       nombreInmueble: ['', Validators.required],
+      tipoPersona: [null, Validators.required],
       rentaMxn: ['', Validators.required],
       direccionInmueble: ['', Validators.required],
       vigenciaAnios: ['', Validators.required],
@@ -80,8 +89,10 @@ export class AgregarArrendatarioComponent implements OnInit {
       documentoPlano: [null],
       documentoContratoRenta: [null],
       documentoConstanciaFiscal: [null],
+      documentoCurp: [null],
       constanciaSituacionFiscalRepresentanteLegal: [null],
       documentoComprobanteDomicilio: [null],
+      documentoEstadoCuentaBancario: [null],
       documentoActaConstitutiva: [null],
       ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
@@ -94,6 +105,24 @@ export class AgregarArrendatarioComponent implements OnInit {
       socios: this.fb.array([this.crearSocioFormGroup()]),
       locales: this.fb.array([this.crearLocalFormGroup()]),
     });
+  }
+
+  onTipoPersonaChange(_event: Event): void {
+    const raw = this.arrendatarioForm.get('tipoPersona')?.value;
+    const value =
+      raw === null || raw === undefined || raw === ''
+        ? null
+        : Number(raw);
+
+    this.arrendatarioForm.get('tipoPersona')?.setValue(value, { emitEvent: false });
+  }
+
+  esPersonaFisica(): boolean {
+    return Number(this.arrendatarioForm?.get('tipoPersona')?.value) === 1;
+  }
+
+  esPersonaMoral(): boolean {
+    return Number(this.arrendatarioForm?.get('tipoPersona')?.value) === 2;
   }
 
   private crearSocioFormGroup(): FormGroup {
@@ -473,6 +502,131 @@ export class AgregarArrendatarioComponent implements OnInit {
         }),
       );
     }
+  }
+
+  private cargarDesdeGrid(data: any): void {
+    this.arrendatarioForm.patchValue(
+      {
+        nombreInmueble: data.inmueble || 'Corporativo Pirámide',
+        tipoPersona: 2,
+        rentaMxn: data.mensualidadMxn || 25000,
+        direccionInmueble: 'Río Balsas 106, Vista Hermosa, Cuernavaca',
+        vigenciaAnios: 3,
+        fechaInicio: '2024-01-01',
+        fechaFin: '2027-01-01',
+        arrendador: data.arrendador || 'Inmuebles y Desarrollos HAC S.A de C.V.',
+        tiempoRentaAnios: 3,
+        estatusInmueble: 'RENTADO',
+        nombreRepresentanteLegal: data.arrendatario || 'Representante Demo',
+        telefonoRepresentanteLegal: data.telefonoContacto || '7770000000',
+        correoRepresentanteLegal: data.correoContacto || 'demo@correo.com',
+      },
+      { emitEvent: false },
+    );
+
+    const servicios = this.arrendatarioForm.get('servicios') as FormArray;
+    servicios.clear();
+    const servicioRenta = this.crearServicioFormGroup('RENTA', true);
+    servicioRenta.patchValue(
+      {
+        servicioNumeroContrato: data.numeroContrato || 'RENTA-001',
+        servicioFechaPago: '2024-02-01',
+        servicioUltimoDiaPago: '2024-02-28',
+        servicioComprobantePagoNombre: 'comprobante_renta.pdf',
+      },
+      { emitEvent: false },
+    );
+    servicios.push(servicioRenta);
+
+    const servicioMtto = this.crearServicioFormGroup('MANTENIMIENTO', true);
+    servicioMtto.patchValue(
+      {
+        servicioNumeroContrato: 'MTTO-001',
+        servicioFechaPago: '2024-02-01',
+        servicioUltimoDiaPago: '2024-02-28',
+        servicioComprobantePagoNombre: 'comprobante_mtto.pdf',
+      },
+      { emitEvent: false },
+    );
+    servicios.push(servicioMtto);
+
+    const zonas = this.arrendatarioForm.get('zonas') as FormArray;
+    zonas.clear();
+    const zona = this.crearZonaFormGroup();
+    zona.patchValue(
+      {
+        zonaPrincipal: 'Zona Comercial',
+        zonaSuperficieM2: data.superficieM2 || 100,
+        superficieDisponiblePredioM2: 50,
+      },
+      { emitEvent: false },
+    );
+    zonas.push(zona);
+
+    const estacionamientos = this.arrendatarioForm.get('estacionamientos') as FormArray;
+    estacionamientos.clear();
+    const estacionamiento = this.crearEstacionamientoFormGroup();
+    estacionamiento.patchValue(
+      {
+        estacionamientoPensionado: '10',
+        estacionamientoTarjeta: '0',
+        estacionamientoArrendatario: '0',
+      },
+      { emitEvent: false },
+    );
+    estacionamientos.push(estacionamiento);
+
+    const socios = this.arrendatarioForm.get('socios') as FormArray;
+    socios.clear();
+    socios.push(this.crearSocioFormGroup());
+    socios.at(0).patchValue(
+      {
+        nombreSocio: 'Carlos Ramírez',
+        rfcSocio: 'CARL900101ABC',
+      },
+      { emitEvent: false },
+    );
+    socios.push(this.crearSocioFormGroup());
+    socios.at(1).patchValue(
+      {
+        nombreSocio: 'Luis Hernández',
+        rfcSocio: 'LUIS850505XYZ',
+      },
+      { emitEvent: false },
+    );
+
+    const locales = this.arrendatarioForm.get('locales') as FormArray;
+    locales.clear();
+    const local = this.crearLocalFormGroup();
+    local.patchValue(
+      {
+        nombreLocal: data.local || 'Local Demo',
+        zonaLocal: data.nivel || 'Planta baja',
+        medidaLocal: data.superficieM2 ? `${data.superficieM2} m²` : '100 m²',
+        ocupanteLocal: data.arrendatario || 'Arrendatario Demo',
+        mensualidadLocalMxn: data.mensualidadMxn || 25000,
+        arrendatarioLocal: data.arrendatario || 'Arrendatario Demo',
+        arrendadorLocal: data.arrendador || 'Inmuebles y Desarrollos HAC S.A de C.V.',
+        numeroContratoLocal: data.numeroContrato || 'RENTA-001',
+        fechaInicioContratoLocal: '2024-01-01',
+        fechaTerminoContratoLocal: '2027-01-01',
+        contratoHastaLocal: '2027-01-01',
+      },
+      { emitEvent: false },
+    );
+    locales.push(local);
+
+    const galeria = this.arrendatarioForm.get('galeriaImagenes') as FormArray;
+    galeria.clear();
+    const imagen = this.crearGaleriaImagenFormGroup();
+    imagen.patchValue(
+      {
+        archivo: null,
+        nombre: 'fondonegro.png',
+      },
+      { emitEvent: false },
+    );
+    galeria.push(imagen);
   }
 
   submit(): void {

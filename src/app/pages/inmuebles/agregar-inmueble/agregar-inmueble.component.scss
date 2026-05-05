@@ -139,6 +139,67 @@
   min-height: 0;
 }
 
+.docs-upload-card .uploader-hero {
+  width: 100%;
+}
+
+.docs-upload-card .uploader {
+  height: 100%;
+}
+
+.uploader-wrap .uploader__title,
+.srv-pago-uploader .uploader__title {
+  font-size: clamp(0.95rem, 0.84rem + 0.45vw, 1.12rem);
+  line-height: 1.2;
+}
+
+.uploader-wrap .uploader__subtitle,
+.srv-pago-uploader .uploader__subtitle {
+  font-size: clamp(0.78rem, 0.73rem + 0.28vw, 0.92rem);
+  line-height: 1.35;
+}
+
+.uploader-wrap .uploader__cta,
+.srv-pago-uploader .srv-pago-uploader__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.uploader-wrap .uploader__cta button[mat-flat-button],
+.srv-pago-uploader button[mat-flat-button] {
+  font-size: clamp(0.74rem, 0.7rem + 0.22vw, 0.86rem) !important;
+  min-height: 2.45rem !important;
+  padding-inline: clamp(0.7rem, 0.55rem + 0.45vw, 1rem) !important;
+}
+
+.uploader-wrap .uploader__badge,
+.srv-pago-uploader .srv-pago-uploader__formats {
+  font-size: clamp(0.68rem, 0.64rem + 0.2vw, 0.8rem);
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 0 auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.uploader-wrap .uploader__badge.uploader__badge--file,
+.srv-pago-uploader .srv-pago-uploader__formats.uploader__badge--file {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: #f1f6ff;
+  border-style: solid;
+  border-color: rgba(147, 197, 253, 0.55);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.22), rgba(30, 64, 175, 0.2));
+  box-shadow:
+    0 0 0 1px rgba(147, 197, 253, 0.22),
+    0 8px 20px rgba(0, 0, 0, 0.32);
+  padding-inline: clamp(0.55rem, 0.48rem + 0.28vw, 0.82rem);
+}
+
 .docs-uploader-inline-btn {
   flex: 0 0 auto;
   min-height: 2rem !important;
@@ -485,6 +546,25 @@
   .arrend-fa-add-btn {
     width: 100%;
     min-width: 0;
+  }
+
+  .uploader-wrap .uploader__cta,
+  .srv-pago-uploader .srv-pago-uploader__row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .uploader-wrap .uploader__cta button[mat-flat-button],
+  .srv-pago-uploader button[mat-flat-button] {
+    width: auto;
+    min-width: min(100%, 11.5rem);
+  }
+
+  .uploader-wrap .uploader__badge,
+  .srv-pago-uploader .srv-pago-uploader__formats {
+    width: fit-content;
+    max-width: 100%;
+    text-align: center;
   }
 }
 

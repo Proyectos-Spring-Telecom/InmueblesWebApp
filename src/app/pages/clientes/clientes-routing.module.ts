@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ListaClientesComponent } from './lista-clientes/lista-clientes.component';
 import { AgregarClienteComponent } from './agregar-cliente/agregar-cliente.component';
+import { AuthGuard } from '../authentication/side-login/Guard/auth.guard';
 
 const routes: Routes = 
 [
@@ -14,6 +15,7 @@ const routes: Routes =
   {
     path: 'editar-cliente/:idCliente',
     component: AgregarClienteComponent,
+    canActivate: [AuthGuard]
   },
 ];
 

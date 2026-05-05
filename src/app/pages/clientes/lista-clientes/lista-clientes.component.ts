@@ -48,6 +48,31 @@ export class ListaClientesComponent implements OnInit {
 
   ngOnInit(): void {
     this.setupDataSource();
+    this.listaClientes = [
+      {
+        id: 1,
+        logotipo: 'assets/images/logos/fondonegro.jpg',
+    
+        actaConstitutiva: 'https://example.com/acta.pdf',
+        comprobanteDomicilio: 'https://example.com/domicilio.pdf',
+        constanciaSituacionFiscal: 'https://example.com/constancia.pdf',
+    
+        NombreCompleto: 'Inmuebles y Desarrollos HAC S.A de C.V.',
+        telefono: '7771234567',
+        rfc: 'IDH230101ABC',
+        correo: 'contacto@hac.com',
+    
+        tipoPersona: 'Moral',
+    
+        nombreEncargado: 'Osvaldo Martinez',
+        telefonoEncargado: '7779876543',
+        correoEncargado: 'osvaldo.martinez@hac.com',
+    
+        direccionCompleta: 'Río Balsas 106, Vista Hermosa, 62290 Cuernavaca, Mor',
+    
+        estatusCliente: 1
+      }
+    ];
   }
 
   agregarCliente() {
@@ -224,8 +249,11 @@ export class ListaClientesComponent implements OnInit {
     e.component.refresh();
   }
 
-  actualizarCliente(idCliente: number) {
-    this.route.navigateByUrl('/clientes/editar-cliente/' + idCliente);
+  actualizarCliente(cliente: any) {
+    this.route.navigate(
+      ['/clientes/editar-cliente', cliente.id],
+      { state: { cliente } }
+    );
   }
 
   eliminarCliente(cliente: any) {

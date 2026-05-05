@@ -34,7 +34,7 @@
 }
 
 .uploader-wrap .socios-section--after-uploads {
-  border-top: 1px solid rgba(142, 165, 214, 0.22);
+  margin-top: 5px;
 }
 
 .socios-hero {
@@ -129,10 +129,7 @@
 
 .socios-socio {
   position: relative;
-  margin-top: 0.15rem;
-  padding: 0.95rem 0.95rem 0.95rem 1rem;
-  border-radius: 14px;
-  border: 1px solid rgba(150, 173, 211, 0.22);
+  padding: 0rem 0.95rem 0rem 1rem;
   /* background: linear-gradient(180deg, rgba(18, 26, 42, 0.55), rgba(10, 16, 28, 0.35));
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35); */
 }
@@ -203,7 +200,7 @@
 }
 
 .socios-identidad {
-  padding: 0.65rem 0.65rem 0.35rem;
+  padding: 0.15rem 0.65rem 0.35rem;
   border-radius: 12px;
 }
 
@@ -223,7 +220,7 @@
   justify-content: center;
   min-width: 3rem;
   color: #e5edff;
-  background: rgba(104, 19, 48, 0.35);
+  background: #681330;
   border-color: rgba(244, 114, 182, 0.25) !important;
 }
 
@@ -235,5 +232,152 @@
   .socios-add-btn {
     width: 100%;
     min-width: 0;
+  }
+}
+
+/* Uploaders responsivos (cards de archivos + socios) */
+.docs-uploader-docs-row > [class*='col-'] {
+  min-width: 0;
+}
+
+.docs-uploader-docs-row > [class*='col-'] > .uploader-hero {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.docs-upload-card .uploader-hero,
+.docs-upload-card .uploader {
+  width: 100%;
+}
+
+.docs-upload-card .uploader-hero {
+  flex-grow: 1;
+}
+
+.docs-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(130, 160, 255, 0.35);
+  background: radial-gradient(120% 120% at 0% 0%, rgba(96, 132, 255, 0.18), transparent 55%),
+    linear-gradient(180deg, rgba(22, 32, 52, 0.92), rgba(12, 18, 30, 0.72));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.docs-hero__icon {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(147, 197, 253, 0.45);
+  background: rgba(59, 130, 246, 0.16);
+  color: #dbeafe;
+}
+
+.docs-hero__icon mat-icon {
+  font-size: 1.55rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  line-height: 1.55rem;
+}
+
+.docs-hero__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.docs-hero__title {
+  color: #f8fbff;
+  font-size: 1.12rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(147, 197, 253, 0.35);
+}
+
+.docs-hero__head {
+  width: 100%;
+}
+
+.uploader-wrap .uploader__title,
+.uploader-wrap .uploader__subtitle,
+.socios-docs .uploader__title,
+.socios-docs .uploader__subtitle {
+  font-size: clamp(0.95rem, 0.84rem + 0.45vw, 1.12rem);
+}
+
+.uploader-wrap .uploader__subtitle,
+.socios-docs .uploader__subtitle {
+  font-size: clamp(0.78rem, 0.73rem + 0.28vw, 0.92rem);
+  line-height: 1.35;
+}
+
+.uploader-wrap .uploader__cta,
+.socios-docs .uploader__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.uploader-wrap .uploader__cta button[mat-flat-button],
+.socios-docs .uploader__cta button[mat-flat-button] {
+  font-size: clamp(0.74rem, 0.7rem + 0.22vw, 0.86rem) !important;
+  min-height: 2.45rem !important;
+  padding-inline: clamp(0.7rem, 0.55rem + 0.45vw, 1rem) !important;
+}
+
+.uploader-wrap .uploader__badge,
+.socios-docs .uploader__badge {
+  font-size: clamp(0.68rem, 0.64rem + 0.2vw, 0.8rem);
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 0 auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.uploader-wrap .uploader__badge.uploader__badge--file,
+.socios-docs .uploader__badge.uploader__badge--file {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: #f1f6ff;
+  border-style: solid;
+  border-color: rgba(147, 197, 253, 0.55);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.22), rgba(30, 64, 175, 0.2));
+  box-shadow:
+    0 0 0 1px rgba(147, 197, 253, 0.22),
+    0 8px 20px rgba(0, 0, 0, 0.32);
+  padding-inline: clamp(0.55rem, 0.48rem + 0.28vw, 0.82rem);
+}
+
+@media (max-width: 767.98px) {
+  .docs-hero {
+    padding: 0.85rem 0.85rem;
+  }
+
+  .uploader-wrap .uploader__cta,
+  .socios-docs .uploader__cta {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .uploader-wrap .uploader__cta button[mat-flat-button],
+  .socios-docs .uploader__cta button[mat-flat-button] {
+    width: auto;
+    min-width: min(100%, 11.5rem);
+  }
+
+  .uploader-wrap .uploader__badge,
+  .socios-docs .uploader__badge {
+    width: fit-content;
+    max-width: 100%;
+    text-align: center;
   }
 }

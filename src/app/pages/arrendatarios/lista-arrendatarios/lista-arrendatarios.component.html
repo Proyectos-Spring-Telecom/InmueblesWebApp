@@ -50,11 +50,11 @@
         <dxi-column alignment="center" dataField="local" caption="Local" [width]="160"></dxi-column>
         <dxi-column alignment="center" dataField="nivel" caption="Nivel" [width]="140"></dxi-column>
         <dxi-column alignment="center" dataField="superficieM2" caption="Superficie (m²)" dataType="number"
-          format="#,##0.##" alignment="right" [width]="150"></dxi-column>
+          format="#,##0.##" alignment="center" [width]="150"></dxi-column>
         <dxi-column alignment="center" dataField="estado" caption="Estado" [width]="120"></dxi-column>
         <dxi-column alignment="center" dataField="giroActividad" caption="Giro" [minWidth]="180"></dxi-column>
         <dxi-column alignment="center" dataField="mensualidadMxn" caption="Mensualidad (MXN)" dataType="number"
-          format="currency" alignment="right" [width]="180"></dxi-column>
+          format="currency" alignment="center" [width]="180"></dxi-column>
         <dxi-column alignment="center" dataField="vigenciaHasta" caption="Vigencia" [width]="140"></dxi-column>
         <dxi-column alignment="center" dataField="numeroContrato" caption="Contrato" [width]="140"></dxi-column>
         <dxi-column alignment="center" dataField="arrendatario" caption="Arrendatario" [minWidth]="220"></dxi-column>
@@ -63,7 +63,7 @@
         <dxi-column alignment="center" dataField="arrendador" caption="Arrendador" [minWidth]="220"></dxi-column>
         <div *dxTemplate="let row of 'acciones'" class="d-flex gap-3 justify-content-center">
           <div *appHasPermission="'2'">
-            <button valueExpr="id" id="actualizarButton" class="btnAcciones">
+            <button valueExpr="id" id="actualizarButton" class="btnAcciones" (click)="editarArrendatario(row.data)">
               <i class="fa fa-edit"></i>
             </button>
           </div>

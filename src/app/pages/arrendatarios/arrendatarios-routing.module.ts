@@ -6,6 +6,7 @@ import { AgregarArrendatarioComponent } from './agregar-arrendatario/agregar-arr
 const routes: Routes = [
   { path: '', component: ListaArrendatariosComponent },
   { path: 'agregar-arrendatario', component: AgregarArrendatarioComponent },
+  { path: 'agregar-arrendatario/:id', component: AgregarArrendatarioComponent },
   { path: 'editar-arrendatario/:idArrendatario', component: AgregarArrendatarioComponent },
 ];
 
