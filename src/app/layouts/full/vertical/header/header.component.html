@@ -127,6 +127,15 @@
 
   <!-- --------------------------------------------------------------- -->
   <!-- Centro de notificaciones — iconos; pulso vivo si hay pendientes -->
+   <!-- Empresa inmuebles y desarrollos HAC S.A de C.V.
+
+   Licencia de funcionamiento,  constancia de protección civil,  uso de suelo, Plano catastral: Arrendadores
+   
+
+   Socios
+   socios beneficiario y controlador sera un nuevo campo.
+   Beneficiario: toma decisiones de la empresa.
+   Controlador: es fisica o moral que lleva los bienes -->
   <!-- --------------------------------------------------------------- -->
   <div
     class="notify-cap flex-shrink-0 ms-0 mx-0 px-0 px-sm-1"
@@ -246,39 +255,55 @@
     class="notify-hub-panel notify-hub-panel--avisos dd-notifications"
     xPosition="before"
   >
-    <div class="notify-hub-panel__header">
-      <div class="notify-hub-panel__header-text">
-        <span class="notify-hub-panel__eyebrow">Contratos</span>
-        <h6 class="notify-hub-panel__title m-0">Vencimientos y Renovaciones</h6>
-      </div>
-      <span class="notify-hub-panel__count">{{ avisosCount }}</span>
-    </div>
-    <div class="notify-hub-panel__body notify-hub-panel__body--scroll">
-      @for (a of avisosLista; track a.id) {
-      <button
-        type="button"
-        mat-menu-item
-        class="notify-hub-aviso"
-        [class.notify-hub-aviso--tone-success]="a.tone === 'success'"
-        [class.notify-hub-aviso--tone-warning]="a.tone === 'warning'"
-        [class.notify-hub-aviso--tone-amber]="a.tone === 'amber'"
-        [class.notify-hub-aviso--tone-danger]="a.tone === 'danger'"
-        (click)="onAvisoContratoClick(a, $event)"
-      >
-        <div class="notify-hub-aviso__inner">
-          <span class="notify-hub-aviso__title">
-            {{ titleCase(a.title) }}
-          </span>
-          <span class="notify-hub-aviso__sub">{{ a.subtitle }}</span>
+    <div class="notify-hub-frame">
+      <header class="notify-hub-frame__hero notify-hub-frame__hero--contracts">
+        <div class="notify-hub-frame__hero-badge" aria-hidden="true">
+          <i-tabler name="file-description" class="notify-hub-frame__hero-ico d-flex"></i-tabler>
         </div>
-      </button>
-      }
-    </div>
-    <div class="notify-hub-panel__footer">
-      <button type="button" mat-flat-button class="notify-hub-panel__cta w-100">
-        Ver todos los avisos
-        <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
-      </button>
+        <div class="notify-hub-frame__hero-main">
+          <span class="notify-hub-frame__kicker">Contratos</span>
+          <p class="notify-hub-frame__lede m-0">Vencimientos y Renovaciones</p>
+        </div>
+        <div class="notify-hub-frame__metric" aria-label="Avisos en lista">
+          <span class="notify-hub-frame__metric-value">{{ avisosCount }}</span>
+          <span class="notify-hub-frame__metric-label">pendientes</span>
+        </div>
+      </header>
+
+      <div class="notify-hub-frame__stream notify-hub-frame__stream--scroll">
+        @for (a of avisosLista; track a.id) {
+        <button
+          type="button"
+          mat-menu-item
+          class="notify-hub-aviso"
+          [class.notify-hub-aviso--tone-success]="a.tone === 'success'"
+          [class.notify-hub-aviso--tone-warning]="a.tone === 'warning'"
+          [class.notify-hub-aviso--tone-amber]="a.tone === 'amber'"
+          [class.notify-hub-aviso--tone-danger]="a.tone === 'danger'"
+          (click)="onAvisoContratoClick(a, $event)"
+        >
+          <div class="notify-hub-aviso__strip">
+            <span class="notify-hub-aviso__glyph" aria-hidden="true"></span>
+            <div class="notify-hub-aviso__body">
+              <span class="notify-hub-aviso__title">{{ titleCase(a.title) }}</span>
+              <span class="notify-hub-aviso__sub">{{ a.subtitle }}</span>
+            </div>
+          </div>
+        </button>
+        }
+      </div>
+
+      <!-- <footer class="notify-hub-frame__foot">
+        <button
+          type="button"
+          mat-flat-button
+          class="bg-secondary w-100 notify-hub-frame__cta"
+          (click)="verTodoAvisos()"
+        >
+          Ver todo
+          <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
+        </button> 
+      </footer>-->
     </div>
   </mat-menu>
 
@@ -287,38 +312,57 @@
     class="notify-hub-panel notify-hub-panel--inmuebles dd-notifications"
     xPosition="before"
   >
-    <div class="notify-hub-panel__header">
-      <div class="notify-hub-panel__header-text">
-        <span class="notify-hub-panel__eyebrow">Inmuebles</span>
-        <h6 class="notify-hub-panel__title m-0">Pagos de Servicios</h6>
+    <div class="notify-hub-frame">
+      <header class="notify-hub-frame__hero notify-hub-frame__hero--services">
+        <div class="notify-hub-frame__hero-badge" aria-hidden="true">
+          <i-tabler name="receipt" class="notify-hub-frame__hero-ico d-flex"></i-tabler>
+        </div>
+        <div class="notify-hub-frame__hero-main">
+          <span class="notify-hub-frame__kicker">Inmuebles</span>
+          <p class="notify-hub-frame__lede m-0">Pagos de Servicios</p>
+        </div>
+        <div class="notify-hub-frame__metric" aria-label="Recibos listados">
+          <span class="notify-hub-frame__metric-value">{{ inmueblesNotifCount }}</span>
+          <span class="notify-hub-frame__metric-label">recibos</span>
+        </div>
+      </header>
+
+      <div class="notify-hub-frame__stream">
+        @for (r of recibosInmuebles; track r.id) {
+        <button
+          type="button"
+          mat-menu-item
+          class="notify-hub-recibo d-flex align-items-center text-start w-100 flex-row"
+          (click)="onReciboContratoClick(r, $event)"
+        >
+          <span class="notify-hub-recibo__tile flex-shrink-0 notify-hub-recibo__tile--{{ r.tone }}">
+            <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
+          </span>
+          <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
+            <span class="notify-hub-recibo__label d-block text-start">{{ titleCase(r.label) }}</span>
+            @if (r.detail) {
+            <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
+            }
+          </span>
+          <span class="notify-hub-recibo__chev flex-shrink-0" aria-hidden="true">
+            <i-tabler name="chevron-right" class="d-flex notify-hub-recibo__chev-ico"></i-tabler>
+          </span>
+        </button>
+        }
       </div>
-      <span class="notify-hub-panel__count">{{ inmueblesNotifCount }}</span>
-    </div>
-    <div class="notify-hub-panel__body">
-      @for (r of recibosInmuebles; track r.id) {
-      <button
-        type="button"
-        mat-menu-item
-        class="notify-hub-recibo d-flex align-items-center text-start w-100 flex-row"
-        (click)="onReciboContratoClick(r, $event)"
-      >
-        <span class="notify-hub-recibo__mark flex-shrink-0 notify-hub-recibo__mark--{{ r.tone }}">
-          <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
-        </span>
-        <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
-          <span class="notify-hub-recibo__label d-block text-start">{{ titleCase(r.label) }}</span>
-          @if (r.detail) {
-          <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
-          }
-        </span>
-      </button>
-      }
-    </div>
-    <div class="notify-hub-panel__footer">
-      <button type="button" mat-flat-button class="notify-hub-panel__cta w-100">
-        Ver detalle de pagos
-        <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
-      </button>
+
+      <!-- <footer class="notify-hub-frame__foot">
+        Ver todo: inmuebles / pagos de servicios 
+        <button
+          type="button"
+          mat-flat-button
+          class="bg-secondary w-100 notify-hub-frame__cta"
+          (click)="verTodoInmueblesNotif()"
+        >
+          Ver todo
+          <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
+        </button>
+      </footer>-->
     </div>
   </mat-menu>
 
@@ -327,38 +371,57 @@
     class="notify-hub-panel notify-hub-panel--predios dd-notifications"
     xPosition="before"
   >
-    <div class="notify-hub-panel__header">
-      <div class="notify-hub-panel__header-text">
-        <span class="notify-hub-panel__eyebrow">Arrendatarios</span>
-        <h6 class="notify-hub-panel__title m-0">Pagos y Seguimiento</h6>
+    <div class="notify-hub-frame">
+      <header class="notify-hub-frame__hero notify-hub-frame__hero--tenants">
+        <div class="notify-hub-frame__hero-badge" aria-hidden="true">
+          <i-tabler name="users" class="notify-hub-frame__hero-ico d-flex"></i-tabler>
+        </div>
+        <div class="notify-hub-frame__hero-main">
+          <span class="notify-hub-frame__kicker">Arrendatarios</span>
+          <p class="notify-hub-frame__lede m-0">Pagos y Seguimiento</p>
+        </div>
+        <div class="notify-hub-frame__metric" aria-label="Casos listados">
+          <span class="notify-hub-frame__metric-value">{{ prediosNotifCount }}</span>
+          <span class="notify-hub-frame__metric-label">casos</span>
+        </div>
+      </header>
+
+      <div class="notify-hub-frame__stream">
+        @for (r of recibosPredios; track r.id) {
+        <button
+          type="button"
+          mat-menu-item
+          class="notify-hub-recibo d-flex align-items-center text-start w-100 flex-row"
+          (click)="onReciboContratoClick(r, $event)"
+        >
+          <span class="notify-hub-recibo__tile flex-shrink-0 notify-hub-recibo__tile--{{ r.tone }}">
+            <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
+          </span>
+          <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
+            <span class="notify-hub-recibo__label d-block text-start">{{ titleCase(r.label) }}</span>
+            @if (r.detail) {
+            <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
+            }
+          </span>
+          <span class="notify-hub-recibo__chev flex-shrink-0" aria-hidden="true">
+            <i-tabler name="chevron-right" class="d-flex notify-hub-recibo__chev-ico"></i-tabler>
+          </span>
+        </button>
+        }
       </div>
-      <span class="notify-hub-panel__count">{{ prediosNotifCount }}</span>
-    </div>
-    <div class="notify-hub-panel__body">
-      @for (r of recibosPredios; track r.id) {
-      <button
-        type="button"
-        mat-menu-item
-        class="notify-hub-recibo d-flex align-items-center text-start w-100 flex-row"
-        (click)="onReciboContratoClick(r, $event)"
-      >
-        <span class="notify-hub-recibo__mark flex-shrink-0 notify-hub-recibo__mark--{{ r.tone }}">
-          <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
-        </span>
-        <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
-          <span class="notify-hub-recibo__label d-block text-start">{{ titleCase(r.label) }}</span>
-          @if (r.detail) {
-          <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
-          }
-        </span>
-      </button>
-      }
-    </div>
-    <div class="notify-hub-panel__footer">
-      <button type="button" mat-flat-button class="notify-hub-panel__cta w-100">
-        Ver detalle de arrendatarios
-        <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
-      </button>
+
+      <!-- <footer class="notify-hub-frame__foot">
+        Ver todo: arrendatarios / seguimiento 
+        <button
+          type="button"
+          mat-flat-button
+          class="bg-secondary w-100 notify-hub-frame__cta"
+          (click)="verTodoArrendatariosNotif()"
+        >
+          Ver todo
+          <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
+        </button> 
+      </footer>-->
     </div>
   </mat-menu>
 

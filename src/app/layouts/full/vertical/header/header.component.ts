@@ -11,7 +11,7 @@ import { navItems } from '../sidebar/sidebar-data';
 import { TranslateService } from '@ngx-translate/core';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MaterialModule } from 'src/app/material.module';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgScrollbarModule } from 'ngx-scrollbar';
@@ -202,6 +202,7 @@ export class HeaderComponent {
     public dialog: MatDialog,
     private translate: TranslateService,
     private users: AuthenticationService,
+    private router: Router,
   ) {
     const user = this.users.getUser();
     this.showNombre = user?.nombre;
@@ -258,6 +259,21 @@ export class HeaderComponent {
   onReciboContratoClick(r: ReciboEstadoItem, event: Event): void {
     event.stopPropagation();
     this.openContratoDetalleDialog(this.buildDetalleFromRecibo(r));
+  }
+
+  /** Pie del menú Contratos: lista completa de contratos. */
+  verTodoAvisos(): void {
+    void this.router.navigate(['/contratos']);
+  }
+
+  /** Pie del menú Inmuebles: listado de inmuebles (pagos de servicios). */
+  verTodoInmueblesNotif(): void {
+    void this.router.navigate(['/inmuebles']);
+  }
+
+  /** Pie del menú Arrendatarios: listado de arrendatarios. */
+  verTodoArrendatariosNotif(): void {
+    void this.router.navigate(['/arrendatarios']);
   }
 
   private openContratoDetalleDialog(data: ContratoDetalleDialogData): void {

@@ -518,21 +518,39 @@ body {
   font-size: .9rem;
 }
 
+/* Botón + etiqueta de formatos siempre en fila (evita alturas distintas entre tarjetas) */
 .uploader__cta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px 14px;
+  flex-wrap: nowrap;
+  gap: 6px 8px;
   align-items: center;
   justify-content: center;
   margin-top: 6px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.uploader__cta > .mat-mdc-unelevated-button,
+.uploader__cta > .mat-mdc-button,
+.uploader__cta > button {
+  flex-shrink: 0;
 }
 
 .uploader__badge {
-  font-size: .8rem;
-  padding: 6px 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: clamp(0.6rem, 1.4vw, 0.75rem);
+  padding: 4px 8px;
+  line-height: 1.2;
   border-radius: 999px;
   background: rgba(255,255,255,.06);
   border: 1px dashed rgba(255,255,255,.18);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+  text-align: center;
 }
 
 .uploader__input {
@@ -585,7 +603,13 @@ body {
 @media (max-width: 576px) {
   .uploader { min-height: 130px; border-radius: 14px; }
   .uploader__icon { width: 52px; height: 52px; border-radius: 14px; }
-  .uploader__badge { font-size: .76rem; }
+  .uploader__badge {
+    font-size: clamp(0.55rem, 2.8vw, 0.68rem);
+    padding: 3px 6px;
+  }
+  .uploader__cta {
+    gap: 4px 6px;
+  }
 }
 
 

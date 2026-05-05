@@ -65,7 +65,8 @@
                                         [placeholder]="clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de C.V.' : 'Ej: Juan'"
                                         required />
                                     <label for="nombre">
-                                        {{ clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de C.V.'
+                                        {{ clienteForm.value.tipoPersona == 2 ? 'Ej: Comercializadora Ejemplo S.A. de
+                                        C.V.'
                                         : 'Ej: Juan' }}
                                     </label>
                                 </div>
@@ -245,51 +246,54 @@
                     </div>
 
                     <ng-container *ngIf="esPersonaMoral()">
-                    <div class="col-12 col-md-4">
-                        <label for="nombreEncargado" class="form-label perm-label">Nombre Representante Legal</label>
-                        <div class="input-group input-group-lg perm-ig">
-                            <span class="input-group-text fw-bold">
-                                <mat-icon aria-hidden="true">supervisor_account</mat-icon>
-                            </span>
-                            <div class="form-floating flex-grow-1">
-                                <input type="text" formControlName="nombreEncargado" class="form-control"
-                                    id="nombreEncargado" placeholder="Ej.: María López" required>
-                                <label for="nombreEncargado">Ej.: María López</label>
+                        <div class="col-12 col-md-4">
+                            <label for="nombreEncargado" class="form-label perm-label">Nombre Rep.
+                                Legal</label>
+                            <div class="input-group input-group-lg perm-ig">
+                                <span class="input-group-text fw-bold">
+                                    <mat-icon aria-hidden="true">supervisor_account</mat-icon>
+                                </span>
+                                <div class="form-floating flex-grow-1">
+                                    <input type="text" formControlName="nombreEncargado" class="form-control"
+                                        id="nombreEncargado" placeholder="Ej.: María López" required>
+                                    <label for="nombreEncargado">Ej.: María López</label>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-12 col-md-4">
-                        <label for="telefonoEncargado" class="form-label perm-label">Teléfono Representante Legal</label>
-                        <div class="input-group input-group-lg perm-ig">
-                            <span class="input-group-text fw-bold">
-                                <mat-icon aria-hidden="true">call</mat-icon>
-                            </span>
-                            <div class="form-floating flex-grow-1">
-                                <input maxlength="10" (keypress)="allowOnlyNumbers($event)"
-                                    formControlName="telefonoEncargado" class="form-control" id="telefonoEncargado"
-                                    placeholder="Ej.: 55 9876 5432" required>
-                                <label for="telefonoEncargado">Ej.: 55 9876 5432</label>
+                        <div class="col-12 col-md-4">
+                            <label for="telefonoEncargado" class="form-label perm-label">Teléfono Rep.
+                                Legal</label>
+                            <div class="input-group input-group-lg perm-ig">
+                                <span class="input-group-text fw-bold">
+                                    <mat-icon aria-hidden="true">call</mat-icon>
+                                </span>
+                                <div class="form-floating flex-grow-1">
+                                    <input maxlength="10" (keypress)="allowOnlyNumbers($event)"
+                                        formControlName="telefonoEncargado" class="form-control" id="telefonoEncargado"
+                                        placeholder="Ej.: 55 9876 5432" required>
+                                    <label for="telefonoEncargado">Ej.: 55 9876 5432</label>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-12 col-md-4">
-                        <label for="correoEncargado" class="form-label perm-label">Correo Electrónico Representante Legal</label>
-                        <div class="input-group input-group-lg perm-ig">
-                            <span class="input-group-text fw-bold">
-                                <mat-icon aria-hidden="true">alternate_email</mat-icon>
-                            </span>
-                            <div class="form-floating flex-grow-1">
-                                <input type="email" formControlName="correoEncargado" class="form-control"
-                                    id="correoEncargado" placeholder="Ej.: encargado@empresa.com" required>
-                                <label for="correoEncargado">Ej.: encargado&#64;empresa.com</label>
+                        <div class="col-12 col-md-4">
+                            <label for="correoEncargado" class="form-label perm-label">Correo Electrónico Rep.
+                                Legal</label>
+                            <div class="input-group input-group-lg perm-ig">
+                                <span class="input-group-text fw-bold">
+                                    <mat-icon aria-hidden="true">alternate_email</mat-icon>
+                                </span>
+                                <div class="form-floating flex-grow-1">
+                                    <input type="email" formControlName="correoEncargado" class="form-control"
+                                        id="correoEncargado" placeholder="Ej.: encargado@empresa.com" required>
+                                    <label for="correoEncargado">Ej.: encargado&#64;empresa.com</label>
+                                </div>
                             </div>
                         </div>
-                    </div>
                     </ng-container>
 
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-4 mb-2">
                         <label for="sitioWeb" class="form-label perm-label">Sitio Web</label>
                         <div class="input-group input-group-lg perm-ig">
                             <span class="input-group-text fw-bold">
@@ -303,8 +307,20 @@
                         </div>
                     </div>
 
-                    <div class="row g-4 mt-3 uploader-wrap">
-                        <div class="col-12 col-md-6 col-lg-3">
+                    <div class="docs-hero mt-5">
+                        <div class="docs-hero__icon" aria-hidden="true"><mat-icon>folder_copy</mat-icon></div>
+                        <div class="docs-hero__body">
+                            <div
+                                class="docs-hero__head d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                <div class="d-flex align-items-center flex-wrap gap-2 docs-hero-title-wrap">
+                                    <h6 class="docs-hero__title m-0">Documentos e imágenes</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 g-lg-4 mt-0 uploader-wrap docs-uploader-docs-row align-items-stretch">
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                             <label class="form-label perm-label d-block mb-2">Logotipo</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="logoDragging"
@@ -318,10 +334,18 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openLogoFilePicker()">Seleccionar</button>
-                                            <span class="uploader__badge">PNG · JPG · JPEG</span>
+                                            <span class="uploader__badge"
+                                                [class.uploader__badge--file]="clienteForm.get('logotipo')?.value?.name || clienteForm.get('logotipo')?.value">
+                                                {{
+                                                clienteForm.get('logotipo')?.value?.name ||
+                                                clienteForm.get('logotipo')?.value ||
+                                                'PNG · JPG · JPEG'
+                                                }}
+                                            </span>
                                         </div>
 
-                                        <div class="uploader__status" *ngIf="clienteForm.get('logotipo')?.value">
+                                        <div class="uploader__status"
+                                            *ngIf="clienteForm.get('logotipo')?.value && !clienteForm.get('logotipo')?.value?.name">
                                             <div class="uploader__filename"
                                                 *ngIf="clienteForm.get('logotipo')?.value?.name">
                                                 {{ clienteForm.get('logotipo')?.value?.name }}
@@ -341,8 +365,8 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <label class="form-label perm-label d-block mb-2">Constancia de Situación Fiscal</label>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                            <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="csfDragging" (dragover)="onCsfDragOver($event)"
                                     (dragleave)="onCsfDragLeave($event)" (drop)="onCsfDrop($event)">
@@ -354,11 +378,18 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openCsfFilePicker()">Seleccionar</button>
-                                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
+                                            <span class="uploader__badge"
+                                                [class.uploader__badge--file]="csfFileName || clienteForm.get('constanciaSituacionFiscal')?.value?.name || clienteForm.get('constanciaSituacionFiscal')?.value">
+                                                {{ csfFileName ||
+                                                clienteForm.get('constanciaSituacionFiscal')?.value?.name ||
+                                                clienteForm.get('constanciaSituacionFiscal')?.value ||
+                                                'PDF · Máx. 3 MB'
+                                                }}
+                                            </span>
                                         </div>
 
                                         <div class="uploader__status"
-                                            *ngIf="csfFileName || clienteForm.get('constanciaSituacionFiscal')?.value">
+                                            *ngIf="clienteForm.get('constanciaSituacionFiscal')?.value && !csfFileName && !clienteForm.get('constanciaSituacionFiscal')?.value?.name">
                                             <div class="uploader__filename"
                                                 *ngIf="csfFileName || clienteForm.get('constanciaSituacionFiscal')?.value?.name">
                                                 {{ csfFileName
@@ -379,8 +410,8 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <label class="form-label perm-label d-block mb-2">Comprobante de Domicilio</label>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                            <label class="form-label perm-label d-block mb-2">Comprobante De Domicilio Fiscal</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="compDomDragging"
                                     (dragover)="onCompDomDragOver($event)" (dragleave)="onCompDomDragLeave($event)"
@@ -393,11 +424,18 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openCompDomFilePicker()">Seleccionar</button>
-                                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
+                                            <span class="uploader__badge"
+                                                [class.uploader__badge--file]="compDomFileName || clienteForm.get('comprobanteDomicilio')?.value?.name || clienteForm.get('comprobanteDomicilio')?.value">
+                                                {{ compDomFileName ||
+                                                clienteForm.get('comprobanteDomicilio')?.value?.name ||
+                                                clienteForm.get('comprobanteDomicilio')?.value ||
+                                                'PDF · Máx. 3 MB'
+                                                }}
+                                            </span>
                                         </div>
 
                                         <div class="uploader__status"
-                                            *ngIf="compDomFileName || clienteForm.get('comprobanteDomicilio')?.value">
+                                            *ngIf="clienteForm.get('comprobanteDomicilio')?.value && !compDomFileName && !clienteForm.get('comprobanteDomicilio')?.value?.name">
                                             <div class="uploader__filename"
                                                 *ngIf="compDomFileName || clienteForm.get('comprobanteDomicilio')?.value?.name">
                                                 {{ compDomFileName
@@ -417,114 +455,367 @@
                             </div>
                         </div>
 
-                        <ng-container *ngIf="esPersonaMoral()">
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <label class="form-label perm-label d-block mb-2">Acta Constitutiva</label>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                            <label class="form-label perm-label d-block mb-2">Licencia De Funcionamiento</label>
                             <div class="uploader-hero">
-                                <div class="uploader" [class.dragging]="actaDragging"
-                                    (dragover)="onActaDragOver($event)" (dragleave)="onActaDragLeave($event)"
-                                    (drop)="onActaDrop($event)">
+                                <div class="uploader" [class.dragging]="licenciaDragging"
+                                    (dragover)="onLicenciaDragOver($event)" (dragleave)="onLicenciaDragLeave($event)"
+                                    (drop)="onLicenciaDrop($event)">
                                     <div class="uploader__glow"></div>
                                     <div class="uploader__body">
-                                        <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                                        <h6 class="uploader__title">Sube tu PDF</h6>
-                                        <p class="uploader__subtitle">Arrastra y suelta o</p>
-                                        <div class="uploader__cta">
-                                            <button mat-flat-button color="primary" type="button"
-                                                (click)="openActaFilePicker()">Seleccionar</button>
-                                            <span class="uploader__badge">PDF · Máx. 3 MB</span>
-                                        </div>
-
-                                        <div class="uploader__status"
-                                            *ngIf="actaFileName || clienteForm.get('actaConstitutiva')?.value">
-                                            <div class="uploader__filename"
-                                                *ngIf="actaFileName || clienteForm.get('actaConstitutiva')?.value?.name">
-                                                {{ actaFileName
-                                                || clienteForm.get('actaConstitutiva')?.value?.name }}
-                                            </div>
-                                            <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!actaFileName && !clienteForm.get('actaConstitutiva')?.value?.name"
-                                                [href]="clienteForm.get('actaConstitutiva')?.value" target="_blank"
-                                                rel="noopener noreferrer">
-                                                {{ clienteForm.get('actaConstitutiva')?.value }}
-                                            </a>
-                                        </div>
-
-                                        <input #actaFileInput type="file" accept="application/pdf"
-                                            (change)="onActaFileSelected($event)" class="uploader__input" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <label class="form-label perm-label d-block mb-2">INE Representante Legal</label>
-                            <div class="uploader-hero">
-                                <div class="uploader" [class.dragging]="ineDragging" (dragover)="onIneDragOver($event)"
-                                    (dragleave)="onIneDragLeave($event)" (drop)="onIneDrop($event)">
-                                    <div class="uploader__glow"></div>
-                                    <div class="uploader__body">
-                                        <div class="uploader__icon"><mat-icon>badge</mat-icon></div>
+                                        <div class="uploader__icon"><mat-icon>gavel</mat-icon></div>
                                         <h6 class="uploader__title">Sube archivo</h6>
                                         <p class="uploader__subtitle">Arrastra y suelta o</p>
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
-                                                (click)="openIneFilePicker()">Seleccionar</button>
-                                            <span class="uploader__badge">PDF · PNG · JPG · Máx. 3 MB</span>
+                                                (click)="openLicenciaFilePicker()">Seleccionar</button>
+                                            <span class="uploader__badge"
+                                                [class.uploader__badge--file]="licenciaFileName || clienteForm.get('licenciaFuncionamiento')?.value?.name || clienteForm.get('licenciaFuncionamiento')?.value">
+                                                {{ licenciaFileName ||
+                                                clienteForm.get('licenciaFuncionamiento')?.value?.name ||
+                                                clienteForm.get('licenciaFuncionamiento')?.value ||
+                                                'PDF · PNG · JPG · Máx. 3 MB'
+                                                }}
+                                            </span>
                                         </div>
-
                                         <div class="uploader__status"
-                                            *ngIf="ineFileName || clienteForm.get('ineRepresentanteLegal')?.value">
+                                            *ngIf="clienteForm.get('licenciaFuncionamiento')?.value && !licenciaFileName && !clienteForm.get('licenciaFuncionamiento')?.value?.name">
                                             <div class="uploader__filename"
-                                                *ngIf="ineFileName || clienteForm.get('ineRepresentanteLegal')?.value?.name">
-                                                {{ ineFileName || clienteForm.get('ineRepresentanteLegal')?.value?.name }}
+                                                *ngIf="licenciaFileName || clienteForm.get('licenciaFuncionamiento')?.value?.name">
+                                                {{ licenciaFileName
+                                                || clienteForm.get('licenciaFuncionamiento')?.value?.name }}
                                             </div>
                                             <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!ineFileName && !clienteForm.get('ineRepresentanteLegal')?.value?.name"
-                                                [href]="clienteForm.get('ineRepresentanteLegal')?.value" target="_blank"
-                                                rel="noopener noreferrer">
-                                                {{ clienteForm.get('ineRepresentanteLegal')?.value }}
+                                                *ngIf="!licenciaFileName && !clienteForm.get('licenciaFuncionamiento')?.value?.name"
+                                                [href]="clienteForm.get('licenciaFuncionamiento')?.value"
+                                                target="_blank" rel="noopener noreferrer">
+                                                {{ clienteForm.get('licenciaFuncionamiento')?.value }}
                                             </a>
                                         </div>
-
-                                        <input #ineFileInput type="file"
+                                        <input #licenciaFileInput type="file"
                                             accept="application/pdf,image/png,image/jpeg,image/jpg"
-                                            (change)="onIneFileSelected($event)" class="uploader__input" />
+                                            (change)="onLicenciaFileSelected($event)" class="uploader__input" />
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                            <label class="form-label perm-label d-block mb-2">Constancia De Protección Civil</label>
+                            <div class="uploader-hero">
+                                <div class="uploader" [class.dragging]="proteccionCivilDragging"
+                                    (dragover)="onProteccionCivilDragOver($event)"
+                                    (dragleave)="onProteccionCivilDragLeave($event)"
+                                    (drop)="onProteccionCivilDrop($event)">
+                                    <div class="uploader__glow"></div>
+                                    <div class="uploader__body">
+                                        <div class="uploader__icon"><mat-icon>health_and_safety</mat-icon></div>
+                                        <h6 class="uploader__title">Sube archivo</h6>
+                                        <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <div class="uploader__cta">
+                                            <button mat-flat-button color="primary" type="button"
+                                                (click)="openProteccionCivilFilePicker()">Seleccionar</button>
+                                            <span class="uploader__badge"
+                                                [class.uploader__badge--file]="proteccionCivilFileName || clienteForm.get('constanciaProteccionCivil')?.value?.name || clienteForm.get('constanciaProteccionCivil')?.value">
+                                                {{ proteccionCivilFileName ||
+                                                clienteForm.get('constanciaProteccionCivil')?.value?.name ||
+                                                clienteForm.get('constanciaProteccionCivil')?.value ||
+                                                'PDF · PNG · JPG · Máx. 3 MB'
+                                                }}
+                                            </span>
+                                        </div>
+                                        <div class="uploader__status"
+                                            *ngIf="clienteForm.get('constanciaProteccionCivil')?.value && !proteccionCivilFileName && !clienteForm.get('constanciaProteccionCivil')?.value?.name">
+                                            <div class="uploader__filename"
+                                                *ngIf="proteccionCivilFileName || clienteForm.get('constanciaProteccionCivil')?.value?.name">
+                                                {{ proteccionCivilFileName
+                                                || clienteForm.get('constanciaProteccionCivil')?.value?.name }}
+                                            </div>
+                                            <a class="uploader__filename uploader__filename--link"
+                                                *ngIf="!proteccionCivilFileName && !clienteForm.get('constanciaProteccionCivil')?.value?.name"
+                                                [href]="clienteForm.get('constanciaProteccionCivil')?.value"
+                                                target="_blank" rel="noopener noreferrer">
+                                                {{ clienteForm.get('constanciaProteccionCivil')?.value }}
+                                            </a>
+                                        </div>
+                                        <input #proteccionCivilFileInput type="file"
+                                            accept="application/pdf,image/png,image/jpeg,image/jpg"
+                                            (change)="onProteccionCivilFileSelected($event)" class="uploader__input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                            <label class="form-label perm-label d-block mb-2">Uso De Suelo</label>
+                            <div class="uploader-hero">
+                                <div class="uploader" [class.dragging]="usoSueloDragging"
+                                    (dragover)="onUsoSueloDragOver($event)" (dragleave)="onUsoSueloDragLeave($event)"
+                                    (drop)="onUsoSueloDrop($event)">
+                                    <div class="uploader__glow"></div>
+                                    <div class="uploader__body">
+                                        <div class="uploader__icon"><mat-icon>map</mat-icon></div>
+                                        <h6 class="uploader__title">Sube archivo</h6>
+                                        <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <div class="uploader__cta">
+                                            <button mat-flat-button color="primary" type="button"
+                                                (click)="openUsoSueloFilePicker()">Seleccionar</button>
+                                            <span class="uploader__badge"
+                                                [class.uploader__badge--file]="usoSueloFileName || clienteForm.get('usoSuelo')?.value?.name || clienteForm.get('usoSuelo')?.value">
+                                                {{
+                                                usoSueloFileName ||
+                                                clienteForm.get('usoSuelo')?.value?.name ||
+                                                clienteForm.get('usoSuelo')?.value ||
+                                                'PDF · PNG · JPG · Máx. 3 MB'
+                                                }}
+                                            </span>
+                                        </div>
+                                        <div class="uploader__status"
+                                            *ngIf="clienteForm.get('usoSuelo')?.value && !usoSueloFileName && !clienteForm.get('usoSuelo')?.value?.name">
+                                            <div class="uploader__filename"
+                                                *ngIf="usoSueloFileName || clienteForm.get('usoSuelo')?.value?.name">
+                                                {{ usoSueloFileName
+                                                || clienteForm.get('usoSuelo')?.value?.name }}
+                                            </div>
+                                            <a class="uploader__filename uploader__filename--link"
+                                                *ngIf="!usoSueloFileName && !clienteForm.get('usoSuelo')?.value?.name"
+                                                [href]="clienteForm.get('usoSuelo')?.value" target="_blank"
+                                                rel="noopener noreferrer">
+                                                {{ clienteForm.get('usoSuelo')?.value }}
+                                            </a>
+                                        </div>
+                                        <input #usoSueloFileInput type="file"
+                                            accept="application/pdf,image/png,image/jpeg,image/jpg"
+                                            (change)="onUsoSueloFileSelected($event)" class="uploader__input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                            <label class="form-label perm-label d-block mb-2">Plano Catastral</label>
+                            <div class="uploader-hero">
+                                <div class="uploader" [class.dragging]="planoCatastralDragging"
+                                    (dragover)="onPlanoCatastralDragOver($event)"
+                                    (dragleave)="onPlanoCatastralDragLeave($event)"
+                                    (drop)="onPlanoCatastralDrop($event)">
+                                    <div class="uploader__glow"></div>
+                                    <div class="uploader__body">
+                                        <div class="uploader__icon"><mat-icon>layers</mat-icon></div>
+                                        <h6 class="uploader__title">Sube archivo</h6>
+                                        <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <div class="uploader__cta">
+                                            <button mat-flat-button color="primary" type="button"
+                                                (click)="openPlanoCatastralFilePicker()">Seleccionar</button>
+                                            <span class="uploader__badge"
+                                                [class.uploader__badge--file]="planoCatastralFileName || clienteForm.get('planoCatastral')?.value?.name || clienteForm.get('planoCatastral')?.value">
+                                                {{ planoCatastralFileName ||
+                                                clienteForm.get('planoCatastral')?.value?.name ||
+                                                clienteForm.get('planoCatastral')?.value ||
+                                                'PDF · PNG · JPG · Máx. 3 MB'
+                                                }}
+                                            </span>
+                                        </div>
+                                        <div class="uploader__status"
+                                            *ngIf="clienteForm.get('planoCatastral')?.value && !planoCatastralFileName && !clienteForm.get('planoCatastral')?.value?.name">
+                                            <div class="uploader__filename"
+                                                *ngIf="planoCatastralFileName || clienteForm.get('planoCatastral')?.value?.name">
+                                                {{ planoCatastralFileName
+                                                || clienteForm.get('planoCatastral')?.value?.name }}
+                                            </div>
+                                            <a class="uploader__filename uploader__filename--link"
+                                                *ngIf="!planoCatastralFileName && !clienteForm.get('planoCatastral')?.value?.name"
+                                                [href]="clienteForm.get('planoCatastral')?.value" target="_blank"
+                                                rel="noopener noreferrer">
+                                                {{ clienteForm.get('planoCatastral')?.value }}
+                                            </a>
+                                        </div>
+                                        <input #planoCatastralFileInput type="file"
+                                            accept="application/pdf,image/png,image/jpeg,image/jpg"
+                                            (change)="onPlanoCatastralFileSelected($event)" class="uploader__input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ng-container *ngIf="esPersonaMoral()">
+                            <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                                <label class="form-label perm-label d-block mb-2">Acta Constitutiva</label>
+                                <div class="uploader-hero">
+                                    <div class="uploader" [class.dragging]="actaDragging"
+                                        (dragover)="onActaDragOver($event)" (dragleave)="onActaDragLeave($event)"
+                                        (drop)="onActaDrop($event)">
+                                        <div class="uploader__glow"></div>
+                                        <div class="uploader__body">
+                                            <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                                            <h6 class="uploader__title">Sube tu PDF</h6>
+                                            <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                            <div class="uploader__cta">
+                                                <button mat-flat-button color="primary" type="button"
+                                                    (click)="openActaFilePicker()">Seleccionar</button>
+                                                <span class="uploader__badge"
+                                                    [class.uploader__badge--file]="actaFileName || clienteForm.get('actaConstitutiva')?.value?.name || clienteForm.get('actaConstitutiva')?.value">
+                                                    {{ actaFileName ||
+                                                    clienteForm.get('actaConstitutiva')?.value?.name ||
+                                                    clienteForm.get('actaConstitutiva')?.value ||
+                                                    'PDF · Máx. 3 MB'
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div class="uploader__status"
+                                                *ngIf="clienteForm.get('actaConstitutiva')?.value && !actaFileName && !clienteForm.get('actaConstitutiva')?.value?.name">
+                                                <div class="uploader__filename"
+                                                    *ngIf="actaFileName || clienteForm.get('actaConstitutiva')?.value?.name">
+                                                    {{ actaFileName
+                                                    || clienteForm.get('actaConstitutiva')?.value?.name }}
+                                                </div>
+                                                <a class="uploader__filename uploader__filename--link"
+                                                    *ngIf="!actaFileName && !clienteForm.get('actaConstitutiva')?.value?.name"
+                                                    [href]="clienteForm.get('actaConstitutiva')?.value" target="_blank"
+                                                    rel="noopener noreferrer">
+                                                    {{ clienteForm.get('actaConstitutiva')?.value }}
+                                                </a>
+                                            </div>
+
+                                            <input #actaFileInput type="file" accept="application/pdf"
+                                                (change)="onActaFileSelected($event)" class="uploader__input" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                                <label class="form-label perm-label d-block mb-2">Poder Del Rep. Legal</label>
+                                <div class="uploader-hero">
+                                    <div class="uploader" [class.dragging]="poderDragging"
+                                        (dragover)="onPoderDragOver($event)" (dragleave)="onPoderDragLeave($event)"
+                                        (drop)="onPoderDrop($event)">
+                                        <div class="uploader__glow"></div>
+                                        <div class="uploader__body">
+                                            <div class="uploader__icon"><mat-icon>assignment_ind</mat-icon></div>
+                                            <h6 class="uploader__title">Sube tu PDF</h6>
+                                            <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                            <div class="uploader__cta">
+                                                <button mat-flat-button color="primary" type="button"
+                                                    (click)="openPoderFilePicker()">Seleccionar</button>
+                                                <span class="uploader__badge"
+                                                    [class.uploader__badge--file]="poderFileName || clienteForm.get('poderRepresentanteLegal')?.value?.name || clienteForm.get('poderRepresentanteLegal')?.value">
+                                                    {{ poderFileName ||
+                                                    clienteForm.get('poderRepresentanteLegal')?.value?.name ||
+                                                    clienteForm.get('poderRepresentanteLegal')?.value ||
+                                                    'PDF · Máx. 3 MB'
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div class="uploader__status"
+                                                *ngIf="clienteForm.get('poderRepresentanteLegal')?.value && !poderFileName && !clienteForm.get('poderRepresentanteLegal')?.value?.name">
+                                                <div class="uploader__filename"
+                                                    *ngIf="poderFileName || clienteForm.get('poderRepresentanteLegal')?.value?.name">
+                                                    {{ poderFileName
+                                                    || clienteForm.get('poderRepresentanteLegal')?.value?.name }}
+                                                </div>
+                                                <a class="uploader__filename uploader__filename--link"
+                                                    *ngIf="!poderFileName && !clienteForm.get('poderRepresentanteLegal')?.value?.name"
+                                                    [href]="clienteForm.get('poderRepresentanteLegal')?.value"
+                                                    target="_blank" rel="noopener noreferrer">
+                                                    {{ clienteForm.get('poderRepresentanteLegal')?.value }}
+                                                </a>
+                                            </div>
+
+                                            <input #poderFileInput type="file" accept="application/pdf"
+                                                (change)="onPoderFileSelected($event)" class="uploader__input" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                                <label class="form-label perm-label d-block mb-2">Identificación Oficial Del Rep.
+                                    Legal</label>
+                                <div class="uploader-hero">
+                                    <div class="uploader" [class.dragging]="ineDragging"
+                                        (dragover)="onIneDragOver($event)" (dragleave)="onIneDragLeave($event)"
+                                        (drop)="onIneDrop($event)">
+                                        <div class="uploader__glow"></div>
+                                        <div class="uploader__body">
+                                            <div class="uploader__icon"><mat-icon>badge</mat-icon></div>
+                                            <h6 class="uploader__title">Sube archivo</h6>
+                                            <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                            <div class="uploader__cta">
+                                                <button mat-flat-button color="primary" type="button"
+                                                    (click)="openIneFilePicker()">Seleccionar</button>
+                                                <span class="uploader__badge"
+                                                    [class.uploader__badge--file]="ineFileName || clienteForm.get('ineRepresentanteLegal')?.value?.name || clienteForm.get('ineRepresentanteLegal')?.value">
+                                                    {{
+                                                    ineFileName ||
+                                                    clienteForm.get('ineRepresentanteLegal')?.value?.name ||
+                                                    clienteForm.get('ineRepresentanteLegal')?.value ||
+                                                    'PDF · PNG · JPG · Máx. 3 MB'
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div class="uploader__status"
+                                                *ngIf="clienteForm.get('ineRepresentanteLegal')?.value && !ineFileName && !clienteForm.get('ineRepresentanteLegal')?.value?.name">
+                                                <div class="uploader__filename"
+                                                    *ngIf="ineFileName || clienteForm.get('ineRepresentanteLegal')?.value?.name">
+                                                    {{ ineFileName ||
+                                                    clienteForm.get('ineRepresentanteLegal')?.value?.name }}
+                                                </div>
+                                                <a class="uploader__filename uploader__filename--link"
+                                                    *ngIf="!ineFileName && !clienteForm.get('ineRepresentanteLegal')?.value?.name"
+                                                    [href]="clienteForm.get('ineRepresentanteLegal')?.value"
+                                                    target="_blank" rel="noopener noreferrer">
+                                                    {{ clienteForm.get('ineRepresentanteLegal')?.value }}
+                                                </a>
+                                            </div>
+
+                                            <input #ineFileInput type="file"
+                                                accept="application/pdf,image/png,image/jpeg,image/jpg"
+                                                (change)="onIneFileSelected($event)" class="uploader__input" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </ng-container>
 
-                        <div class="col-12 mt-5 pt-3 socios-section socios-section--after-uploads" *ngIf="esPersonaMoral()">
+                        <div class="col-12 mt-5 pt-3 socios-section socios-section--after-uploads"
+                            *ngIf="esPersonaMoral()">
                             <div class="socios-hero">
                                 <div class="socios-hero__icon" aria-hidden="true">
                                     <mat-icon>groups</mat-icon>
                                 </div>
                                 <div class="socios-hero__body">
-                                    <div class="socios-head d-flex align-items-center justify-content-between flex-wrap gap-3 w-100">
+                                    <div
+                                        class="socios-head d-flex align-items-center justify-content-between flex-wrap gap-3 w-100">
                                         <div class="d-flex align-items-center flex-wrap gap-2 socios-title-wrap">
-                                            <h6 class="socios-section-title m-0">Registro de Socios</h6>
-                                            
+                                            <h6 class="socios-section-title m-0">Socios</h6>
+
                                         </div>
-                                        <button class="socios-add-btn ms-md-auto" mat-flat-button color="primary" type="button"
-                                            (click)="agregarSocio()">
+                                        <button class="socios-add-btn ms-md-auto" mat-flat-button color="primary"
+                                            type="button" (click)="agregarSocio()">
                                             <mat-icon>add</mat-icon> Agregar
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div formArrayName="socios" class="row g-3 mt-1">
-                                <ng-container *ngFor="let socioCtrl of sociosFormArray.controls; let i = index" [formGroupName]="i">
+                            <div formArrayName="socios" class="row g-3 mt-0">
+                                <ng-container *ngFor="let socioCtrl of sociosFormArray.controls; let i = index"
+                                    [formGroupName]="i">
                                     <div class="col-12">
                                         <div class="socios-socio">
-                                            <div class="socios-socio__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                            <div
+                                                class="socios-socio__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
                                                 <div class="d-flex align-items-center flex-wrap gap-2">
-                                                    <span class="socios-live-name" *ngIf="primerNombreSocio">{{ 'Socio: ' + primerNombreSocio }}</span>
+                                                    <span class="socios-live-name" *ngIf="primerNombreSocio">{{ 'Socio:
+                                                        ' + primerNombreSocio }}</span>
                                                 </div>
-                                                <button class="socios-btn-remove" mat-stroked-button color="warn" type="button"
-                                                    (click)="eliminarSocio(i)" *ngIf="sociosFormArray.length >= 2">
+                                                <button class="socios-btn-remove" mat-stroked-button color="warn"
+                                                    type="button" (click)="eliminarSocio(i)"
+                                                    *ngIf="sociosFormArray.length >= 2">
                                                     <mat-icon>delete_outline</mat-icon> Eliminar
                                                 </button>
                                             </div>
@@ -536,7 +827,9 @@
                                                             <mat-icon aria-hidden="true">person</mat-icon>
                                                         </span>
                                                         <div class="form-floating flex-grow-1">
-                                                            <input type="text" class="form-control" formControlName="nombreSocio" placeholder="Nombre del socio" />
+                                                            <input type="text" class="form-control"
+                                                                formControlName="nombreSocio"
+                                                                placeholder="Nombre del socio" />
                                                             <label>Nombre del socio</label>
                                                         </div>
                                                     </div>
@@ -549,87 +842,114 @@
                                                             <mat-icon aria-hidden="true">badge</mat-icon>
                                                         </span>
                                                         <div class="form-floating flex-grow-1">
-                                                            <input type="text" class="form-control" formControlName="rfcSocio" placeholder="RFC del socio" />
+                                                            <input type="text" class="form-control"
+                                                                formControlName="rfcSocio"
+                                                                placeholder="RFC del socio" />
                                                             <label>RFC del socio</label>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <p class="socios-subhead socios-subhead--docs">
-                                                <mat-icon class="socios-subhead__icon" aria-hidden="true">folder_special</mat-icon>
+                                            <!-- <p class="socios-subhead socios-subhead--docs">
+                                                <mat-icon class="socios-subhead__icon"
+                                                    aria-hidden="true">folder_special</mat-icon>
                                                 Documentación
-                                            </p>
-                                            <div class="row g-3 socios-docs">
-                                                <div class="col-12 col-md-4">
-                                                    <label class="form-label perm-label d-block mb-2">Constancia de Situación Fiscal</label>
-                                                    <div class="uploader-hero">
+                                            </p> -->
+                                            <div class="row mt-2 g-3 socios-docs align-items-stretch">
+                                                <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
+                                                    <label class="form-label perm-label d-block mb-2">Constancia De
+                                                        Situación Fiscal</label>
+                                                    <div class="uploader-hero flex-grow-1">
                                                         <div class="uploader">
                                                             <div class="uploader__glow"></div>
                                                             <div class="uploader__body">
-                                                                <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                                                                <div class="uploader__icon">
+                                                                    <mat-icon>picture_as_pdf</mat-icon></div>
                                                                 <h6 class="uploader__title">Sube archivo</h6>
                                                                 <p class="uploader__subtitle">Arrastra y suelta o</p>
                                                                 <div class="uploader__cta">
-                                                                    <button mat-flat-button color="primary" type="button" (click)="openSocioFilePicker(socioCsfInput)">Seleccionar</button>
-                                                                    <span class="uploader__badge">PDF · PNG · JPG</span>
+                                                                    <button mat-flat-button color="primary"
+                                                                        type="button"
+                                                                        (click)="openSocioFilePicker(socioCsfInput)">Seleccionar</button>
+                                                                    <span class="uploader__badge"
+                                                                        [class.uploader__badge--file]="socioCtrl.get('socioConstanciaSituacionFiscalNombre')?.value || socioCtrl.get('socioConstanciaSituacionFiscal')?.value">
+                                                                        {{
+                                                                        socioCtrl.get('socioConstanciaSituacionFiscalNombre')?.value
+                                                                        ||
+                                                                        socioCtrl.get('socioConstanciaSituacionFiscal')?.value
+                                                                        || 'PDF · PNG · JPG' }}
+                                                                    </span>
                                                                 </div>
-                                                                <div class="uploader__status" *ngIf="(socioCtrl.get('socioConstanciaSituacionFiscalNombre')?.value || socioCtrl.get('socioConstanciaSituacionFiscal')?.value)">
-                                                                    <div class="uploader__filename">
-                                                                        {{ socioCtrl.get('socioConstanciaSituacionFiscalNombre')?.value || socioCtrl.get('socioConstanciaSituacionFiscal')?.value }}
-                                                                    </div>
-                                                                </div>
-                                                                <input #socioCsfInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
+                                                                <input #socioCsfInput type="file"
+                                                                    accept="application/pdf,image/png,image/jpeg,image/jpg"
+                                                                    class="uploader__input"
                                                                     (change)="onSocioFileSelected($event, i, 'socioConstanciaSituacionFiscal', 'socioConstanciaSituacionFiscalNombre')" />
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div class="col-12 col-md-4">
-                                                    <label class="form-label perm-label d-block mb-2">Comprobante de Domicilio</label>
-                                                    <div class="uploader-hero">
+                                                <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
+                                                    <label class="form-label perm-label d-block mb-2">Comprobante De
+                                                        Domicilio Fiscal</label>
+                                                    <div class="uploader-hero flex-grow-1">
                                                         <div class="uploader">
                                                             <div class="uploader__glow"></div>
                                                             <div class="uploader__body">
-                                                                <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                                                                <div class="uploader__icon">
+                                                                    <mat-icon>picture_as_pdf</mat-icon></div>
                                                                 <h6 class="uploader__title">Sube archivo</h6>
                                                                 <p class="uploader__subtitle">Arrastra y suelta o</p>
                                                                 <div class="uploader__cta">
-                                                                    <button mat-flat-button color="primary" type="button" (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
-                                                                    <span class="uploader__badge">PDF · PNG · JPG</span>
+                                                                    <button mat-flat-button color="primary"
+                                                                        type="button"
+                                                                        (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
+                                                                    <span class="uploader__badge"
+                                                                        [class.uploader__badge--file]="socioCtrl.get('socioComprobanteDomicilioNombre')?.value || socioCtrl.get('socioComprobanteDomicilio')?.value">
+                                                                        {{
+                                                                        socioCtrl.get('socioComprobanteDomicilioNombre')?.value
+                                                                        ||
+                                                                        socioCtrl.get('socioComprobanteDomicilio')?.value
+                                                                        || 'PDF · PNG · JPG' }}
+                                                                    </span>
                                                                 </div>
-                                                                <div class="uploader__status" *ngIf="(socioCtrl.get('socioComprobanteDomicilioNombre')?.value || socioCtrl.get('socioComprobanteDomicilio')?.value)">
-                                                                    <div class="uploader__filename">
-                                                                        {{ socioCtrl.get('socioComprobanteDomicilioNombre')?.value || socioCtrl.get('socioComprobanteDomicilio')?.value }}
-                                                                    </div>
-                                                                </div>
-                                                                <input #socioCompInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
+                                                                <input #socioCompInput type="file"
+                                                                    accept="application/pdf,image/png,image/jpeg,image/jpg"
+                                                                    class="uploader__input"
                                                                     (change)="onSocioFileSelected($event, i, 'socioComprobanteDomicilio', 'socioComprobanteDomicilioNombre')" />
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div class="col-12 col-md-4">
-                                                    <label class="form-label perm-label d-block mb-2">Ine</label>
-                                                    <div class="uploader-hero">
+                                                <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
+                                                    <label class="form-label perm-label d-block mb-2">Identificación
+                                                        Oficial</label>
+                                                    <div class="uploader-hero flex-grow-1">
                                                         <div class="uploader">
                                                             <div class="uploader__glow"></div>
                                                             <div class="uploader__body">
-                                                                <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                                                                <div class="uploader__icon">
+                                                                    <mat-icon>picture_as_pdf</mat-icon></div>
                                                                 <h6 class="uploader__title">Sube archivo</h6>
                                                                 <p class="uploader__subtitle">Arrastra y suelta o</p>
                                                                 <div class="uploader__cta">
-                                                                    <button mat-flat-button color="primary" type="button" (click)="openSocioFilePicker(socioActaInput)">Seleccionar</button>
-                                                                    <span class="uploader__badge">PDF · PNG · JPG</span>
+                                                                    <button mat-flat-button color="primary"
+                                                                        type="button"
+                                                                        (click)="openSocioFilePicker(socioActaInput)">Seleccionar</button>
+                                                                    <span class="uploader__badge"
+                                                                        [class.uploader__badge--file]="socioCtrl.get('socioActaConstitutivaNombre')?.value || socioCtrl.get('socioActaConstitutiva')?.value">
+                                                                        {{
+                                                                        socioCtrl.get('socioActaConstitutivaNombre')?.value
+                                                                        ||
+                                                                        socioCtrl.get('socioActaConstitutiva')?.value ||
+                                                                        'PDF · PNG · JPG' }}
+                                                                    </span>
                                                                 </div>
-                                                                <div class="uploader__status" *ngIf="(socioCtrl.get('socioActaConstitutivaNombre')?.value || socioCtrl.get('socioActaConstitutiva')?.value)">
-                                                                    <div class="uploader__filename">
-                                                                        {{ socioCtrl.get('socioActaConstitutivaNombre')?.value || socioCtrl.get('socioActaConstitutiva')?.value }}
-                                                                    </div>
-                                                                </div>
-                                                                <input #socioActaInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
+                                                                <input #socioActaInput type="file"
+                                                                    accept="application/pdf,image/png,image/jpeg,image/jpg"
+                                                                    class="uploader__input"
                                                                     (change)="onSocioFileSelected($event, i, 'socioActaConstitutiva', 'socioActaConstitutivaNombre')" />
                                                             </div>
                                                         </div>

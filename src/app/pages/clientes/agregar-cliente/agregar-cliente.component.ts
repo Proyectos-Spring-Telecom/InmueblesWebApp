@@ -41,14 +41,92 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.obtenerClientes();
+
+    // 🔹 1. Inicializar formulario
     this.initForm();
-    this.activatedRouted.params.subscribe((params) => {
-      this.idCliente = params['idCliente'];
-      if (this.idCliente) {
-        this.title = 'Actualizar Arrendador';
-        this.obtenerClienteID();
+  
+    // 🔹 2. Obtener data
+    const data = history.state?.cliente;
+  
+    if (data && data.id) {
+  
+      const tipoPersona = data.tipoPersona === 'Moral' || data.tipoPersona === 2 ? 2 : 1;
+  
+      // 🔥 PATCH PRINCIPAL
+      this.clienteForm.patchValue({
+        rfc: data.rfc || '',
+        tipoPersona: tipoPersona,
+  
+        nombre: data.NombreCompleto || '',
+        apellidoPaterno: data.apellidoPaterno || '',
+        apellidoMaterno: data.apellidoMaterno || '',
+  
+        telefono: data.telefono || '',
+        correo: data.correo || '',
+  
+        // 🔥 Dirección completa (ya bien)
+        estado: data.estado || 'Morelos',
+        municipio: data.municipio || 'Cuernavaca',
+        colonia: data.colonia || 'Vista Hermosa',
+        calle: data.calle || 'Río Balsas',
+        entreCalles: data.entreCalles || 'Calle 1 y Calle 2',
+        cp: data.cp || '62290',
+        numeroExterior: data.numeroExterior || '106',
+        numeroInterior: data.numeroInterior || 'A',
+  
+        nombreEncargado: data.nombreEncargado || 'Osvaldo Martínez',
+        telefonoEncargado: data.telefonoEncargado || '7779876543',
+        correoEncargado: data.correoEncargado || 'osvaldo.martinez@hac.com',
+  
+        sitioWeb: data.sitioWeb || 'https://hac.com'
+      });
+  
+      // 🔥 IMPORTANTE → dispara render de ngIf
+      this.clienteForm.get('tipoPersona')?.updateValueAndValidity();
+  
+      // 🔥 SOCIOS (FormArray)
+      if (tipoPersona === 2) {
+        this.setSociosMock();
       }
+  
+      this.title = 'Editar Arrendador';
+      this.submitButton = 'Actualizar';
+  
+    } else {
+      this.title = 'Agregar Arrendador';
+      this.submitButton = 'Guardar';
+    }
+  }
+
+  setSociosMock() {
+
+    const sociosArray = this.clienteForm.get('socios') as FormArray;
+    sociosArray.clear();
+  
+    const sociosMock = [
+      {
+        nombreSocio: 'Carlos Ramírez',
+        rfcSocio: 'CARL900101ABC',
+        socioConstanciaSituacionFiscal: 'https://example.com/csf1.pdf',
+        socioConstanciaSituacionFiscalNombre: 'csf1.pdf',
+        socioComprobanteDomicilio: 'https://example.com/domicilio1.pdf',
+        socioComprobanteDomicilioNombre: 'domicilio1.pdf',
+        socioActaConstitutiva: 'https://example.com/ine1.pdf',
+        socioActaConstitutivaNombre: 'ine1.pdf'
+      },
+    ];
+  
+    sociosMock.forEach(socio => {
+      sociosArray.push(this.fb.group({
+        nombreSocio: [socio.nombreSocio],
+        rfcSocio: [socio.rfcSocio],
+        socioConstanciaSituacionFiscal: [socio.socioConstanciaSituacionFiscal],
+        socioConstanciaSituacionFiscalNombre: [socio.socioConstanciaSituacionFiscalNombre],
+        socioComprobanteDomicilio: [socio.socioComprobanteDomicilio],
+        socioComprobanteDomicilioNombre: [socio.socioComprobanteDomicilioNombre],
+        socioActaConstitutiva: [socio.socioActaConstitutiva],
+        socioActaConstitutivaNombre: [socio.socioActaConstitutivaNombre]
+      }));
     });
   }
 
@@ -92,7 +170,12 @@ export class AgregarClienteComponent implements OnInit {
           sitioWeb: d.sitioWeb ?? '',
           constanciaSituacionFiscal: d.constanciaSituacionFiscal ?? null,
           comprobanteDomicilio: d.comprobanteDomicilio ?? null,
+          licenciaFuncionamiento: d.licenciaFuncionamiento ?? null,
+          constanciaProteccionCivil: d.constanciaProteccionCivil ?? null,
+          usoSuelo: d.usoSuelo ?? null,
+          planoCatastral: d.planoCatastral ?? null,
           actaConstitutiva: d.actaConstitutiva ?? null,
+          poderRepresentanteLegal: d.poderRepresentanteLegal ?? null,
           ineRepresentanteLegal: d.ineRepresentanteLegal ?? null,
         });
         this.onTipoPersonaChange(null);
@@ -100,7 +183,12 @@ export class AgregarClienteComponent implements OnInit {
           logotipo: d.logotipo ?? '',
           constanciaSituacionFiscal: d.constanciaSituacionFiscal ?? '',
           comprobanteDomicilio: d.comprobanteDomicilio ?? '',
+          licenciaFuncionamiento: d.licenciaFuncionamiento ?? '',
+          constanciaProteccionCivil: d.constanciaProteccionCivil ?? '',
+          usoSuelo: d.usoSuelo ?? '',
+          planoCatastral: d.planoCatastral ?? '',
           actaConstitutiva: d.actaConstitutiva ?? '',
+          poderRepresentanteLegal: d.poderRepresentanteLegal ?? '',
           ineRepresentanteLegal: d.ineRepresentanteLegal ?? '',
         };
       });
@@ -180,6 +268,7 @@ export class AgregarClienteComponent implements OnInit {
     const te = this.clienteForm.get('telefonoEncargado');
     const ce = this.clienteForm.get('correoEncargado');
     const ac = this.clienteForm.get('actaConstitutiva');
+    const poder = this.clienteForm.get('poderRepresentanteLegal');
     const ine = this.clienteForm.get('ineRepresentanteLegal');
 
     if (activar) {
@@ -187,6 +276,7 @@ export class AgregarClienteComponent implements OnInit {
       te?.setValidators([Validators.required]);
       ce?.setValidators([Validators.required, Validators.email]);
       ac?.setValidators([Validators.required]);
+      poder?.setValidators([Validators.required]);
       ine?.setValidators([Validators.required]);
       this.sociosFormArray.controls.forEach((ctrl) =>
         this.setSocioNombreRequerido(ctrl as FormGroup, true),
@@ -196,13 +286,16 @@ export class AgregarClienteComponent implements OnInit {
       te?.clearValidators();
       ce?.clearValidators();
       ac?.clearValidators();
+      poder?.clearValidators();
       ine?.clearValidators();
       ne?.setValue('', { emitEvent: false });
       te?.setValue('', { emitEvent: false });
       ce?.setValue('', { emitEvent: false });
       ac?.setValue(null, { emitEvent: false });
+      poder?.setValue(null, { emitEvent: false });
       ine?.setValue(null, { emitEvent: false });
       this.actaFileName = null;
+      this.poderFileName = null;
       this.ineFileName = null;
       while (this.sociosFormArray.length > 1) {
         this.sociosFormArray.removeAt(this.sociosFormArray.length - 1);
@@ -226,7 +319,7 @@ export class AgregarClienteComponent implements OnInit {
       );
     }
 
-    [ne, te, ce, ac, ine].forEach((c) =>
+    [ne, te, ce, ac, poder, ine].forEach((c) =>
       c?.updateValueAndValidity({ emitEvent: false }),
     );
   }
@@ -267,7 +360,12 @@ export class AgregarClienteComponent implements OnInit {
       logotipo: [null, Validators.required],
       constanciaSituacionFiscal: [null, Validators.required],
       comprobanteDomicilio: [null, Validators.required],
+      licenciaFuncionamiento: [null],
+      constanciaProteccionCivil: [null],
+      usoSuelo: [null],
+      planoCatastral: [null],
       actaConstitutiva: [null],
+      poderRepresentanteLegal: [null],
       ineRepresentanteLegal: [null],
       nombre: [''],
       apellidoPaterno: [null],
@@ -384,10 +482,11 @@ export class AgregarClienteComponent implements OnInit {
         tipoPersona: 'Tipo de Persona',
         estatus: 'Estatus',
         logotipo: 'Logotipo',
-        constanciaSituacionFiscal: 'Constancia de Situación Fiscal',
-        comprobanteDomicilio: 'Comprobante de Domicilio',
+        constanciaSituacionFiscal: 'Constancia De Situación Fiscal (RFC De La Empresa)',
+        comprobanteDomicilio: 'Comprobante De Domicilio Fiscal',
         actaConstitutiva: 'Acta Constitutiva',
-        ineRepresentanteLegal: 'INE del Representante Legal',
+        poderRepresentanteLegal: 'Poder Del Representante Legal',
+        ineRepresentanteLegal: 'Identificación Oficial Del Representante Legal',
         nombre: 'Nombre / Razón Social',
         apellidoPaterno: 'Apellido Paterno',
         apellidoMaterno: 'Apellido Materno',
@@ -477,6 +576,7 @@ export class AgregarClienteComponent implements OnInit {
     const csf = v.constanciaSituacionFiscal;
     const comp = v.comprobanteDomicilio;
     const acta = v.actaConstitutiva;
+    const poder = v.poderRepresentanteLegal;
     const ine = v.ineRepresentanteLegal;
 
     if (Number(v.tipoPersona) === 2) {
@@ -488,6 +588,9 @@ export class AgregarClienteComponent implements OnInit {
         formData.append('correoEncargado', v.correoEncargado);
       if (acta instanceof File) {
         formData.append('actaConstitutiva', acta, acta.name);
+      }
+      if (poder instanceof File) {
+        formData.append('poderRepresentanteLegal', poder, poder.name);
       }
       if (ine instanceof File) {
         formData.append('ineRepresentanteLegal', ine, ine.name);
@@ -502,6 +605,22 @@ export class AgregarClienteComponent implements OnInit {
     }
     if (comp instanceof File) {
       formData.append('comprobanteDomicilio', comp, comp.name);
+    }
+    const lic = v.licenciaFuncionamiento;
+    const pciv = v.constanciaProteccionCivil;
+    const uso = v.usoSuelo;
+    const plano = v.planoCatastral;
+    if (lic instanceof File) {
+      formData.append('licenciaFuncionamiento', lic, lic.name);
+    }
+    if (pciv instanceof File) {
+      formData.append('constanciaProteccionCivil', pciv, pciv.name);
+    }
+    if (uso instanceof File) {
+      formData.append('usoSuelo', uso, uso.name);
+    }
+    if (plano instanceof File) {
+      formData.append('planoCatastral', plano, plano.name);
     }
 
     this.clieService.agregarCliente(formData).subscribe(
@@ -551,10 +670,11 @@ export class AgregarClienteComponent implements OnInit {
         tipoPersona: 'Tipo de Persona',
         estatus: 'Estatus',
         logotipo: 'Logotipo',
-        constanciaSituacionFiscal: 'Constancia de Situación Fiscal',
-        comprobanteDomicilio: 'Comprobante de Domicilio',
+        constanciaSituacionFiscal: 'Constancia De Situación Fiscal (RFC De La Empresa)',
+        comprobanteDomicilio: 'Comprobante De Domicilio Fiscal',
         actaConstitutiva: 'Acta Constitutiva',
-        ineRepresentanteLegal: 'INE del Representante Legal',
+        poderRepresentanteLegal: 'Poder Del Representante Legal',
+        ineRepresentanteLegal: 'Identificación Oficial Del Representante Legal',
         nombre: 'Nombre / Razón Social',
         apellidoPaterno: 'Apellido Paterno',
         apellidoMaterno: 'Apellido Materno',
@@ -642,6 +762,7 @@ export class AgregarClienteComponent implements OnInit {
     const csf = v.constanciaSituacionFiscal;
     const comp = v.comprobanteDomicilio;
     const acta = v.actaConstitutiva;
+    const poderDoc = v.poderRepresentanteLegal;
     const ine = v.ineRepresentanteLegal;
 
     if (Number(v.tipoPersona) === 2) {
@@ -653,6 +774,13 @@ export class AgregarClienteComponent implements OnInit {
         formData.append('correoEncargado', v.correoEncargado);
       if (acta instanceof File) {
         formData.append('actaConstitutiva', acta, acta.name);
+      }
+      if (poderDoc instanceof File) {
+        formData.append(
+          'poderRepresentanteLegal',
+          poderDoc,
+          poderDoc.name,
+        );
       }
       if (ine instanceof File) {
         formData.append('ineRepresentanteLegal', ine, ine.name);
@@ -667,6 +795,22 @@ export class AgregarClienteComponent implements OnInit {
     }
     if (comp instanceof File) {
       formData.append('comprobanteDomicilio', comp, comp.name);
+    }
+    const lic2 = v.licenciaFuncionamiento;
+    const pciv2 = v.constanciaProteccionCivil;
+    const uso2 = v.usoSuelo;
+    const plano2 = v.planoCatastral;
+    if (lic2 instanceof File) {
+      formData.append('licenciaFuncionamiento', lic2, lic2.name);
+    }
+    if (pciv2 instanceof File) {
+      formData.append('constanciaProteccionCivil', pciv2, pciv2.name);
+    }
+    if (uso2 instanceof File) {
+      formData.append('usoSuelo', uso2, uso2.name);
+    }
+    if (plano2 instanceof File) {
+      formData.append('planoCatastral', plano2, plano2.name);
     }
 
     this.clieService.actualizarCliente(this.idCliente, formData).subscribe(
@@ -708,7 +852,12 @@ export class AgregarClienteComponent implements OnInit {
     logotipo: '' as string,
     constanciaSituacionFiscal: '' as string,
     comprobanteDomicilio: '' as string,
+    licenciaFuncionamiento: '' as string,
+    constanciaProteccionCivil: '' as string,
+    usoSuelo: '' as string,
+    planoCatastral: '' as string,
     actaConstitutiva: '' as string,
+    poderRepresentanteLegal: '' as string,
     ineRepresentanteLegal: '' as string,
   };
 
@@ -721,21 +870,44 @@ export class AgregarClienteComponent implements OnInit {
   @ViewChild('compDomFileInput')
   compDomFileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('actaFileInput') actaFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('poderFileInput') poderFileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('ineFileInput') ineFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('licenciaFileInput') licenciaFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('proteccionCivilFileInput')
+  proteccionCivilFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('usoSueloFileInput') usoSueloFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('planoCatastralFileInput')
+  planoCatastralFileInput!: ElementRef<HTMLInputElement>;
 
   logoPreviewUrl: string | ArrayBuffer | null = null;
   csfPreviewUrl: string | ArrayBuffer | null = null;
   compDomPreviewUrl: string | ArrayBuffer | null = null;
   actaPreviewUrl: string | ArrayBuffer | null = null;
+  poderPreviewUrl: string | ArrayBuffer | null = null;
 
   logoDragging = false;
   csfDragging = false;
   compDomDragging = false;
   actaDragging = false;
+  poderDragging = false;
+  licenciaDragging = false;
+  proteccionCivilDragging = false;
+  usoSueloDragging = false;
+  planoCatastralDragging = false;
 
   csfFileName: string | null = null;
   compDomFileName: string | null = null;
   actaFileName: string | null = null;
+  poderFileName: string | null = null;
+  licenciaFileName: string | null = null;
+  proteccionCivilFileName: string | null = null;
+  usoSueloFileName: string | null = null;
+  planoCatastralFileName: string | null = null;
+
+  licenciaPreviewUrl: string | ArrayBuffer | null = null;
+  proteccionCivilPreviewUrl: string | ArrayBuffer | null = null;
+  usoSueloPreviewUrl: string | ArrayBuffer | null = null;
+  planoCatastralPreviewUrl: string | ArrayBuffer | null = null;
 
   private readonly MAX_MB = 3;
 
@@ -840,7 +1012,7 @@ export class AgregarClienteComponent implements OnInit {
 
         Swal.fire({
           color: '#ffffff',
-        background: '#141a21',
+          background: '#141a21',
           icon: 'warning',
           title: '¡Dimensiones Inválidas!',
           text: 'El logotipo debe medir exactamente 799 x 286 px.'
@@ -1161,6 +1333,42 @@ export class AgregarClienteComponent implements OnInit {
       });
   }
 
+  openPoderFilePicker(): void {
+    this.poderFileInput.nativeElement.click();
+  }
+  onPoderDragOver(e: DragEvent): void {
+    e.preventDefault();
+    this.poderDragging = true;
+  }
+  onPoderDragLeave(e: DragEvent): void {
+    e.preventDefault();
+    this.poderDragging = false;
+  }
+  onPoderDrop(e: DragEvent): void {
+    e.preventDefault();
+    this.poderDragging = false;
+    const f = e.dataTransfer?.files?.[0] ?? null;
+    if (f) this.handlePoderFile(f);
+  }
+  onPoderFileSelected(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0] ?? null;
+    if (f) this.handlePoderFile(f);
+    if (input) input.value = '';
+  }
+  private handlePoderFile(file: File): void {
+    if (!this.isAllowedDoc(file)) {
+      this.clienteForm
+        .get('poderRepresentanteLegal')
+        ?.setErrors({ invalid: true });
+      return;
+    }
+    this.poderFileName = file.name;
+    this.loadPreview(file, (url) => (this.poderPreviewUrl = url));
+    this.clienteForm.patchValue({ poderRepresentanteLegal: file });
+    this.clienteForm.get('poderRepresentanteLegal')?.setErrors(null);
+  }
+
   openIneFilePicker(): void {
     this.ineFileInput.nativeElement.click();
   }
@@ -1201,6 +1409,128 @@ export class AgregarClienteComponent implements OnInit {
     this.loadPreview(file, (url) => (this.inePreviewUrl = url));
     this.clienteForm.patchValue({ ineRepresentanteLegal: file });
     this.clienteForm.get('ineRepresentanteLegal')?.setErrors(null);
+  }
+
+  /** Documentos opcionales: licencia, protección civil, uso de suelo, plano catastral. */
+  private handleExtraDoc(
+    file: File,
+    control: 'licenciaFuncionamiento' | 'constanciaProteccionCivil' | 'usoSuelo' | 'planoCatastral',
+  ): void {
+    if (!this.isAllowedDoc(file)) {
+      this.clienteForm.get(control)?.setErrors({ invalid: true });
+      return;
+    }
+    if (control === 'licenciaFuncionamiento') {
+      this.licenciaFileName = file.name;
+      this.loadPreview(file, (url) => (this.licenciaPreviewUrl = url));
+    } else if (control === 'constanciaProteccionCivil') {
+      this.proteccionCivilFileName = file.name;
+      this.loadPreview(file, (url) => (this.proteccionCivilPreviewUrl = url));
+    } else if (control === 'usoSuelo') {
+      this.usoSueloFileName = file.name;
+      this.loadPreview(file, (url) => (this.usoSueloPreviewUrl = url));
+    } else {
+      this.planoCatastralFileName = file.name;
+      this.loadPreview(file, (url) => (this.planoCatastralPreviewUrl = url));
+    }
+    this.clienteForm.patchValue({ [control]: file });
+    this.clienteForm.get(control)?.setErrors(null);
+  }
+
+  openLicenciaFilePicker(): void {
+    this.licenciaFileInput.nativeElement.click();
+  }
+  onLicenciaDragOver(e: DragEvent): void {
+    e.preventDefault();
+    this.licenciaDragging = true;
+  }
+  onLicenciaDragLeave(e: DragEvent): void {
+    e.preventDefault();
+    this.licenciaDragging = false;
+  }
+  onLicenciaDrop(e: DragEvent): void {
+    e.preventDefault();
+    this.licenciaDragging = false;
+    const f = e.dataTransfer?.files?.[0] ?? null;
+    if (f) this.handleExtraDoc(f, 'licenciaFuncionamiento');
+  }
+  onLicenciaFileSelected(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0] ?? null;
+    if (f) this.handleExtraDoc(f, 'licenciaFuncionamiento');
+    if (input) input.value = '';
+  }
+
+  openProteccionCivilFilePicker(): void {
+    this.proteccionCivilFileInput.nativeElement.click();
+  }
+  onProteccionCivilDragOver(e: DragEvent): void {
+    e.preventDefault();
+    this.proteccionCivilDragging = true;
+  }
+  onProteccionCivilDragLeave(e: DragEvent): void {
+    e.preventDefault();
+    this.proteccionCivilDragging = false;
+  }
+  onProteccionCivilDrop(e: DragEvent): void {
+    e.preventDefault();
+    this.proteccionCivilDragging = false;
+    const f = e.dataTransfer?.files?.[0] ?? null;
+    if (f) this.handleExtraDoc(f, 'constanciaProteccionCivil');
+  }
+  onProteccionCivilFileSelected(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0] ?? null;
+    if (f) this.handleExtraDoc(f, 'constanciaProteccionCivil');
+    if (input) input.value = '';
+  }
+
+  openUsoSueloFilePicker(): void {
+    this.usoSueloFileInput.nativeElement.click();
+  }
+  onUsoSueloDragOver(e: DragEvent): void {
+    e.preventDefault();
+    this.usoSueloDragging = true;
+  }
+  onUsoSueloDragLeave(e: DragEvent): void {
+    e.preventDefault();
+    this.usoSueloDragging = false;
+  }
+  onUsoSueloDrop(e: DragEvent): void {
+    e.preventDefault();
+    this.usoSueloDragging = false;
+    const f = e.dataTransfer?.files?.[0] ?? null;
+    if (f) this.handleExtraDoc(f, 'usoSuelo');
+  }
+  onUsoSueloFileSelected(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0] ?? null;
+    if (f) this.handleExtraDoc(f, 'usoSuelo');
+    if (input) input.value = '';
+  }
+
+  openPlanoCatastralFilePicker(): void {
+    this.planoCatastralFileInput.nativeElement.click();
+  }
+  onPlanoCatastralDragOver(e: DragEvent): void {
+    e.preventDefault();
+    this.planoCatastralDragging = true;
+  }
+  onPlanoCatastralDragLeave(e: DragEvent): void {
+    e.preventDefault();
+    this.planoCatastralDragging = false;
+  }
+  onPlanoCatastralDrop(e: DragEvent): void {
+    e.preventDefault();
+    this.planoCatastralDragging = false;
+    const f = e.dataTransfer?.files?.[0] ?? null;
+    if (f) this.handleExtraDoc(f, 'planoCatastral');
+  }
+  onPlanoCatastralFileSelected(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0] ?? null;
+    if (f) this.handleExtraDoc(f, 'planoCatastral');
+    if (input) input.value = '';
   }
 
   private extractFileUrl(res: any): string {

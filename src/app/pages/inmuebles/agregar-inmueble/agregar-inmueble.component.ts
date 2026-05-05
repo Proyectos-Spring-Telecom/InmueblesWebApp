@@ -27,6 +27,8 @@ export class AgregarInmuebleComponent implements OnInit {
   comprobanteDomicilioNombre: string | null = null;
   actaConstitutivaNombre: string | null = null;
   ineRepresentanteNombre: string | null = null;
+  boletaPredialNombre: string | null = null;
+  reciboAguaServiciosNombre: string | null = null;
   mostrarModalMapa = false;
   map: any = null;
   marker: any = null;
@@ -44,6 +46,9 @@ export class AgregarInmuebleComponent implements OnInit {
   @ViewChild('comprobanteDomicilioInput') comprobanteDomicilioInput?: ElementRef<HTMLInputElement>;
   @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('boletaPredialInput') boletaPredialInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('reciboAguaServiciosInput')
+  reciboAguaServiciosInput?: ElementRef<HTMLInputElement>;
 
   constructor(
     private fb: FormBuilder,
@@ -79,6 +84,8 @@ export class AgregarInmuebleComponent implements OnInit {
       telefonoRepresentanteLegal: ['', Validators.required],
       correoRepresentanteLegal: ['', [Validators.required, Validators.email]],
       documentoEscritura: [null],
+      documentoBoletaPredial: [null],
+      documentoReciboAguaServicios: [null],
       documentoLicencia: [null],
       documentoPlano: [null],
       documentoContratoRenta: [null],
@@ -404,10 +411,14 @@ export class AgregarInmuebleComponent implements OnInit {
       | 'constanciaRepLegal'
       | 'comprobanteDomicilio'
       | 'actaConstitutiva'
-      | 'ineRepresentante',
+      | 'ineRepresentante'
+      | 'boletaPredial'
+      | 'reciboAgua',
   ): void {
     const map = {
       escritura: this.archivoEscrituraInput,
+      boletaPredial: this.boletaPredialInput,
+      reciboAgua: this.reciboAguaServiciosInput,
       licencia: this.imagenLicenciaInput,
       plano: this.imagenPlanoInput,
       contratoRenta: this.contratoRentaInput,
@@ -435,80 +446,131 @@ export class AgregarInmuebleComponent implements OnInit {
     if (controlName === 'documentoComprobanteDomicilio') this.comprobanteDomicilioNombre = name;
     if (controlName === 'documentoActaConstitutiva') this.actaConstitutivaNombre = name;
     if (controlName === 'ineRepresentanteLegal') this.ineRepresentanteNombre = name;
+    if (controlName === 'documentoBoletaPredial') this.boletaPredialNombre = name;
+    if (controlName === 'documentoReciboAguaServicios')
+      this.reciboAguaServiciosNombre = name;
   }
 
   private cargarDemoEdicion(id: number): void {
-    const registro = INMUEBLES_FORM_DEMO.find((item) => item.id === id);
-    if (!registro) return;
+    const demo = INMUEBLES_FORM_DEMO.find((item) => item.id === id);
+
     this.inmuebleForm.patchValue(
       {
-        nombreInmueble: registro.locales?.[0]?.nombreInmueble ?? '',
-        rentaMxn: registro.locales?.[0]?.mensualidadMxn ?? '',
-        direccionInmueble: '',
-        vigenciaAnios: '',
-        fechaInicio: registro.locales?.[0]?.fechaInicio ?? '',
-        fechaFin: registro.locales?.[0]?.fechaTermino ?? '',
-        arrendador: registro.arrendador,
-        tiempoRentaAnios: '',
-        estatusInmueble: '',
-        nombreRepresentanteLegal: `Carlos Medina — ${registro.nombreComercial}`,
-        telefonoRepresentanteLegal: registro.telefono ?? '',
-        correoRepresentanteLegal: registro.correo ?? '',
-        lat: '',
-        lng: '',
+        nombreInmueble: 'Corporativo Pirámide',
+        direccionInmueble: 'Río Balsas 106, Cuernavaca',
+        arrendador: demo?.arrendador ?? 'Inmuebles y Desarrollos HAC S.A de C.V.',
+        estatusInmueble: 'RENTADO',
+        rentaMxn: 120000,
+        tiempoRentaAnios: 5,
+        vigenciaAnios: 5,
+        fechaInicio: '2024-01-01',
+        fechaFin: '2029-01-01',
+        nombreRepresentanteLegal: 'Osvaldo Martínez',
+        telefonoRepresentanteLegal: '7779876543',
+        correoRepresentanteLegal: 'osvaldo.martinez@hac.com',
+        lat: '18.9242',
+        lng: '-99.2216',
       },
       { emitEvent: false },
     );
 
-    const socio0 = this.sociosFormArray.at(0) as FormGroup;
-    socio0?.patchValue(
+    const estatusCtrl = this.inmuebleForm.get('estatusInmueble');
+    estatusCtrl?.updateValueAndValidity({ emitEvent: false });
+
+    const serviciosArray = this.inmuebleForm.get('servicios') as FormArray;
+    serviciosArray.clear();
+    const servicio = this.crearServicioFormGroup();
+    servicio.patchValue(
       {
-        nombreSocio: registro.razonSocial,
-        rfcSocio: registro.rfc,
+        servicioTipoContrato: 'AGUA',
+        servicioTipoContratoOtro: '',
+        servicioNumeroContrato: 'AG-12345',
+        servicioFechaPago: '2024-02-01',
+        servicioUltimoDiaPago: '2024-02-28',
+        servicioComprobantePago: null,
+        servicioComprobantePagoNombre: 'comprobante.pdf',
+      },
+      { emitEvent: false },
+    );
+    serviciosArray.push(servicio);
+
+    const zonasArray = this.inmuebleForm.get('zonas') as FormArray;
+    zonasArray.clear();
+    const zona = this.crearZonaFormGroup();
+    zona.patchValue(
+      {
+        zonaPrincipal: 'Zona Comercial',
+        zonaSuperficieM2: 500,
+        superficieDisponiblePredioM2: 200,
+      },
+      { emitEvent: false },
+    );
+    zonasArray.push(zona);
+
+    const sociosArray = this.inmuebleForm.get('socios') as FormArray;
+    sociosArray.clear();
+    sociosArray.push(this.crearSocioFormGroup());
+    sociosArray.at(0).patchValue(
+      {
+        nombreSocio: 'Carlos Ramírez',
+        rfcSocio: 'CARL900101ABC',
+      },
+      { emitEvent: false },
+    );
+    sociosArray.push(this.crearSocioFormGroup());
+    sociosArray.at(1).patchValue(
+      {
+        nombreSocio: 'Luis Hernández',
+        rfcSocio: 'LUIS850505XYZ',
       },
       { emitEvent: false },
     );
 
-    const localDemo = registro.locales?.[0];
-    if (localDemo) {
-      this.localesFormArray.clear();
-      this.localesFormArray.push(
-        this.fb.group({
-          nombreLocal: [localDemo.nombreLocal ?? ''],
-          estadoLocal: [''],
-          mensualidadLocalMxn: [localDemo.mensualidadMxn ?? ''],
-          zonaLocal: [localDemo.nivel ?? ''],
-          ocupanteLocal: [registro.nombreComercial ?? ''],
-          giroLocal: [''],
-          medidaLocal: [localDemo.superficieM2 ? `${localDemo.superficieM2} m²` : ''],
-          contratoHastaLocal: [localDemo.fechaTermino ?? ''],
-          archivoContratoLocal: [''],
-          numeroContratoLocal: [''],
-          tipoModificacionContratoLocal: [''],
-          arrendadorLocal: [registro.arrendador ?? ''],
-          arrendatarioLocal: [registro.nombreComercial ?? ''],
-          fechaInicioContratoLocal: [localDemo.fechaInicio ?? ''],
-          fechaTerminoContratoLocal: [localDemo.fechaTermino ?? ''],
-          tipoMonedaLocal: [''],
-          metrosRentadosLocal: [localDemo.superficieM2 ?? ''],
-          costoPorM2Local: [''],
-          pctMantenimientoLocal: [''],
-          mesesDepositoLocal: [''],
-          montoDepositoLocal: [''],
-          mesesAdelantoLocal: [''],
-          montoAdelantoLocal: [''],
-          anosForzososArrendadorLocal: [''],
-          anosForzososArrendatarioLocal: [''],
-          subtotalRentaLocal: [''],
-          ivaRentaLocal: [''],
-          rentaTotalLocal: [''],
-          subtotalMantenimientoLocal: [''],
-          ivaMantenimientoLocal: [''],
-          mantenimientoTotalLocal: [''],
-          observacionesContratoLocal: [''],
-        }),
-      );
-    }
+    const localesArray = this.inmuebleForm.get('locales') as FormArray;
+    localesArray.clear();
+    const localesMock = [
+      { nombreLocal: 'Local PB-01', ocupanteLocal: 'Laboratorios Chopo', rentaTotalLocal: 38000 },
+      { nombreLocal: 'Local PB-02', ocupanteLocal: 'Inglés Individual', rentaTotalLocal: 25000 },
+      { nombreLocal: 'Local P2-01', ocupanteLocal: 'Médicos', rentaTotalLocal: 20000 },
+      { nombreLocal: 'Local P2-02', ocupanteLocal: 'Poder Judicial', rentaTotalLocal: 42000 },
+    ];
+    localesMock.forEach((local) => {
+      const grupoLocal = this.crearLocalFormGroup();
+      grupoLocal.patchValue(local, { emitEvent: false });
+      localesArray.push(grupoLocal);
+    });
+
+    const estacionamientosArray = this.inmuebleForm.get('estacionamientos') as FormArray;
+    estacionamientosArray.clear();
+    const estacionamiento = this.crearEstacionamientoFormGroup();
+    estacionamiento.patchValue(
+      {
+        estacionamientoPensionado: '12',
+        estacionamientoTarjeta: '8',
+        estacionamientoArrendatario: '5',
+      },
+      { emitEvent: false },
+    );
+    estacionamientosArray.push(estacionamiento);
+
+    const pagosArray = this.inmuebleForm.get('pagos') as FormArray;
+    pagosArray.clear();
+    const pago = this.crearPagoFormGroup();
+    pago.patchValue(
+      {
+        pagoConcepto: 'Renta mensual',
+        pagoFecha: '2024-02-01',
+        pagoMonto: 120000,
+      },
+      { emitEvent: false },
+    );
+    pagosArray.push(pago);
+
+    const galeriaArray = this.inmuebleForm.get('galeriaImagenes') as FormArray;
+    galeriaArray.clear();
+    const imagen = this.crearGaleriaImagenFormGroup();
+    imagen.patchValue({ archivo: null, nombre: 'fachada_principal.jpg' }, { emitEvent: false });
+    galeriaArray.push(imagen);
   }
 
   submit(): void {
