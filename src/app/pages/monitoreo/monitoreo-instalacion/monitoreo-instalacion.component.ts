@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   NgZone,
   OnDestroy,
   OnInit,
@@ -331,6 +332,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
 
   registros: any[] = [];
   @ViewChild('gridRef', { static: false }) gridRef: DxDataGridComponent;
+  @ViewChild('pagoComprobanteInput', { static: false })
+  pagoComprobanteInput?: ElementRef<HTMLInputElement>;
 
   private socket!: Socket;
   constructor(
@@ -1228,6 +1231,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       monto: ['', Validators.required],
       metodo: ['', Validators.required],
       estatus: ['Pendiente' as PagoEstatus, Validators.required],
+      comprobantePago: [null as File | null],
+      comprobantePagoNombre: [''],
     });
   }
 
@@ -1239,12 +1244,28 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       monto: '',
       metodo: '',
       estatus: 'Pendiente' as PagoEstatus,
+      comprobantePago: null,
+      comprobantePagoNombre: '',
     });
     this.cdr.markForCheck();
+    setTimeout(() => {
+      const el = this.pagoComprobanteInput?.nativeElement;
+      if (el) el.value = '';
+    });
   }
 
   cerrarModalPago(): void {
     this.mostrarModalPago = false;
+    this.cdr.markForCheck();
+  }
+
+  onPagoComprobanteFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.pagoForm?.patchValue({
+      comprobantePago: file,
+      comprobantePagoNombre: file?.name ?? '',
+    });
     this.cdr.markForCheck();
   }
 
@@ -1268,6 +1289,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       monto: string;
       metodo: string;
       estatus: PagoEstatus;
+      comprobantePago: File | null;
+      comprobantePagoNombre: string;
     };
 
     const montoN = this.parseMontoToNumber(v.monto);

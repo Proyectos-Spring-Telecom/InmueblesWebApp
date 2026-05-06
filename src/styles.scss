@@ -326,6 +326,39 @@ body {
   .perm-label { color: rgba(255,255,255,.86); font-weight: 300;}
 }
 
+.hero-header__back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;           /* más separación */
+  padding: 0.7rem 1.3rem;/* más “cuerpo” */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;   /* opcional: más grande visualmente */
+  color: #ffffff;
+  font-size: 1rem;       /* texto más grande */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+
+  mat-icon {
+    font-size: 20px;     /* icono más grande */
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 .button-success {
   display: flex;
   justify-content: center;

@@ -11,6 +11,12 @@
     <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="inmuebleForm" class="perm-form-body">
         <div class="row g-4 inmueble-main-grid">
+          <div class="d-flex justify-content-end">
+            <button type="button" class="hero-header__back-btn" (click)="regresar()">
+              <mat-icon>arrow_back</mat-icon>
+              <span>Regresar</span>
+            </button>
+          </div>
           <div class="col-12 col-md-4"><label for="nombreInmueble"
               class="form-label perm-label">Inmueble</label>
             <div class="input-group input-group-lg perm-ig"><span

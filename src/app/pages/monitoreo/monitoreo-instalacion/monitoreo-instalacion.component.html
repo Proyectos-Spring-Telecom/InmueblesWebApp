@@ -650,7 +650,38 @@
                 </div>
 
                 <div class="col-12 col-lg-4">
-                  <div class="d-flex gap-2 w-100 mono-pago-actions">
+                  <label class="form-label perm-label d-block mb-2">Comprobante De Pago</label>
+                  <div class="uploader-hero srv-pago-uploader">
+                    <div class="uploader srv-pago-uploader__card">
+                      <div class="uploader__glow"></div>
+                      <div class="uploader__body mono-pago-comprobante-uploader__body">
+                        <button
+                          mat-flat-button
+                          color="primary"
+                          type="button"
+                          class="mono-pago-comprobante-btn"
+                          (click)="pagoComprobanteInput.click()"
+                        >
+                          {{
+                            pagoForm.get('comprobantePagoNombre')?.value
+                              ? pagoForm.get('comprobantePagoNombre')?.value
+                              : 'Selecciona un archivo · PDF · PNG · JPG'
+                          }}
+                        </button>
+                        <input
+                          #pagoComprobanteInput
+                          type="file"
+                          accept="application/pdf,image/png,image/jpeg,image/jpg"
+                          class="uploader__input"
+                          (change)="onPagoComprobanteFileSelected($event)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
                     <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalPago()">
                       Cancelar
                     </button>
