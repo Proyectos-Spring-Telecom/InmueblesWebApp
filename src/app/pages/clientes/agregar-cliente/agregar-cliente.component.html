@@ -17,6 +17,12 @@
         <section class="perm-form-nc container-fluid py-4">
             <form [formGroup]="clienteForm" class="perm-form-body">
                 <div class="row g-4">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="hero-header__back-btn" (click)="regresar()">
+                          <mat-icon>arrow_back</mat-icon>
+                          <span>Regresar</span>
+                        </button>
+                      </div>
                     <div class="col-12 col-md-4">
                         <label for="rfc" class="form-label perm-label">RFC</label>
                         <div class="input-group input-group-lg perm-ig">

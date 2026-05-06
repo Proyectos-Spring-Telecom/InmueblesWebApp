@@ -182,14 +182,14 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly layoutInicialInmueble = {
     canvas: { width: 1200, height: 760 },
     zonas: [
-      { id: 'Planta baja', nombre: 'Planta baja', x: 30, y: 35, width: 270, height: 670 },
-      { id: 'Segundo piso', nombre: 'Piso 1', x: 330, y: 35, width: 270, height: 670 },
+      { id: 'Planta baja', nombre: 'Planta baja', x: 0, y: 260, width: 400, height: 500 },
+      { id: 'Segundo piso', nombre: 'Piso 1', x: 540, y: 260, width: 400, height: 500 },
     ],
     locales: [
-      { id: '3001', zonaId: 'Planta baja', x: 40, y: 580, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
-      { id: '3002', zonaId: 'Planta baja', x: 160, y: 160, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
-      { id: '3003', zonaId: 'Segundo piso', x: 460, y: 480, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
-      { id: '3004', zonaId: 'Segundo piso', x: 420, y: 140, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
+      { id: '3001', zonaId: 'Planta baja', x: 40, y: 620, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
+      { id: '3002', zonaId: 'Planta baja', x: 280, y: 620, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
+      { id: '3003', zonaId: 'Segundo piso', x: 700, y: 640, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
+      { id: '3004', zonaId: 'Segundo piso', x: 700, y: 320, width: 92, height: 72, estado: 'ocupado' as LocalVisualState },
     ],
   };
 
