@@ -26,11 +26,21 @@
                   for="nombreInmueble">Nombre del inmueble</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4"><label for="arrendador" class="form-label perm-label">Arrendador</label>
+          <div class="col-12 col-md-4">
+            <label for="idArrendador" class="form-label perm-label">Arrendador</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="arrendador" type="text" class="form-control"
-                  formControlName="arrendador" placeholder="Arrendador" /><label for="arrendador">Arrendador</label>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select id="idArrendador" class="form-select" formControlName="idArrendador"
+                  aria-label="Arrendador (cliente)">
+                  <option [ngValue]="null"></option>
+                  <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
+                    {{ cliente.nombre }}
+                    <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
+                    <ng-container *ngIf="cliente.apellidoMaterno">{{ ' ' + cliente.apellidoMaterno }}</ng-container>
+                  </option>
+                </select>
+                <label for="idArrendador">Arrendador</label>
               </div>
             </div>
           </div>
@@ -820,7 +830,8 @@
         </div>
 
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" (click)="submit()"><i class="fa fa-check"></i>&nbsp;&nbsp;{{
+          <button class="button-success" role="button" type="button" [disabled]="loadingSubmit"
+            (click)="submit()"><i class="fa fa-check"></i>&nbsp;&nbsp;{{
             submitButton }}</button>
           <button type="button" class="button-danger" (click)="regresar()"><i
               class="fa fa-times">&nbsp;&nbsp;</i>Cancelar</button>

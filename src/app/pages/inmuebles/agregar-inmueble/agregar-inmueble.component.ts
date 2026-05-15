@@ -1,9 +1,11 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { debounceTime, map, Subscription, switchMap, tap } from 'rxjs';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { INMUEBLES_FORM_DEMO } from '../inmuebles-demo.data';
+import { ClientesService } from 'src/app/services/moduleService/clientes.service';
+import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 
 @Component({
   selector: 'app-agregar-inmueble',
@@ -12,11 +14,14 @@ import { INMUEBLES_FORM_DEMO } from '../inmuebles-demo.data';
   standalone: false,
   animations: [routeAnimation],
 })
-export class AgregarInmuebleComponent implements OnInit {
+export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   public title = 'Agregar Inmueble';
   public submitButton: string = 'Guardar';
   public inmuebleForm!: FormGroup;
-  public idInmueble!: number;
+  public idInmueble?: number;
+  /** Catálogo de clientes (arrendadores) para `idArrendador`. */
+  public listaClientes: { id: number; nombre?: string; apellidoPaterno?: string; apellidoMaterno?: string }[] = [];
+  public loadingSubmit = false;
   public mostrarCamposRenta = false;
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
@@ -32,6 +37,9 @@ export class AgregarInmuebleComponent implements OnInit {
   resaltarAutocargaContrato = false;
   resaltarAutocargaDocs = false;
   private promptAutocargaMostrado = false;
+  /** Log del formulario tras pausa de escritura (ms); se cancela al destruir el componente. */
+  private readonly debounceLogMs = 400;
+  private formValueLogSub?: Subscription;
   mostrarModalMapa = false;
   map: any = null;
   marker: any = null;
@@ -59,21 +67,56 @@ export class AgregarInmuebleComponent implements OnInit {
     private fb: FormBuilder,
     private activatedRoute: ActivatedRoute,
     private router: Router,
+    private clientesService: ClientesService,
+    private inmueblesService: InmueblesService,
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     this.initEstatusInmuebleLogic();
-    this.activatedRoute.params.subscribe((params) => {
-      this.idInmueble = Number(params['idInmueble']);
-      if (this.idInmueble) {
-        this.title = 'Actualizar Inmueble';
-        this.submitButton = 'Actualizar';
-        this.cargarDemoEdicion(this.idInmueble);
-      } else {
-        this.mostrarPromptAutocargaContrato();
-      }
-    });
+    this.formValueLogSub = this.inmuebleForm.valueChanges
+      .pipe(debounceTime(this.debounceLogMs))
+      .subscribe((value) => {
+        console.log('[agregar-inmueble] valor del formulario (tras pausa de escritura)', value);
+      });
+    this.activatedRoute.params
+      .pipe(
+        switchMap((params) =>
+          this.clientesService.obtenerClientes().pipe(
+            tap((res: unknown) => {
+              const r = res as { data?: unknown[] } | unknown[];
+              const rows = Array.isArray(r) ? r : ((r as { data?: unknown[] })?.data ?? []);
+              this.listaClientes = Array.isArray(rows)
+                ? rows.map((c) => {
+                    const row = c as Record<string, unknown>;
+                    return { ...row, id: Number(row['id']) };
+                  })
+                : [];
+            }),
+            map(() => params),
+          ),
+        ),
+      )
+      .subscribe((params) => {
+        const raw = params['idInmueble'];
+        this.idInmueble =
+          raw != null && String(raw).trim() !== '' && Number.isFinite(Number(raw))
+            ? Number(raw)
+            : undefined;
+        if (this.idInmueble != null) {
+          this.title = 'Actualizar Inmueble';
+          this.submitButton = 'Actualizar';
+          this.cargarDemoEdicion(this.idInmueble);
+        } else {
+          this.title = 'Agregar Inmueble';
+          this.submitButton = 'Guardar';
+          this.mostrarPromptAutocargaContrato();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.formValueLogSub?.unsubscribe();
   }
 
   private mostrarPromptAutocargaContrato(): void {
@@ -119,7 +162,7 @@ export class AgregarInmuebleComponent implements OnInit {
       vigenciaAnios: ['', Validators.required],
       fechaInicio: ['', Validators.required],
       fechaFin: ['', Validators.required],
-      arrendador: ['', Validators.required],
+      idArrendador: [null as number | null, Validators.required],
       tiempoRentaAnios: [''],
       estatusInmueble: ['', Validators.required],
       nombreRepresentanteLegal: ['', Validators.required],
@@ -497,14 +540,12 @@ export class AgregarInmuebleComponent implements OnInit {
     }
   }
 
-  private cargarDemoEdicion(id: number): void {
-    const demo = INMUEBLES_FORM_DEMO.find((item) => item.id === id);
-
+  private cargarDemoEdicion(_id: number): void {
     this.inmuebleForm.patchValue(
       {
         nombreInmueble: 'San Cristóbal',
         direccionInmueble: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
-        arrendador: demo?.arrendador ?? 'Inmuebles y Desarrollos HAC S.A de C.V.',
+        idArrendador: this.listaClientes[0]?.id ?? null,
         estatusInmueble: 'RENTADO',
         rentaMxn: 120000,
         tiempoRentaAnios: 5,
@@ -633,18 +674,198 @@ export class AgregarInmuebleComponent implements OnInit {
       return;
     }
 
-    Swal.fire({
-      title: '¡Operación Exitosa!',
-      text: this.idInmueble
-        ? 'El inmueble se actualizó correctamente.'
-        : 'Se agregó la información del inmueble correctamente.',
-      icon: 'success',
-      confirmButtonColor: '#3085d6',
-      confirmButtonText: 'Confirmar',
-      background: '#141a21',
-      color: '#ffffff',
+    if (this.idInmueble != null) {
+      Swal.fire({
+        title: '¡Operación Exitosa!',
+        text: 'El inmueble se actualizó correctamente.',
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Confirmar',
+        background: '#141a21',
+        color: '#ffffff',
+      });
+      this.regresar();
+      return;
+    }
+
+    this.loadingSubmit = true;
+    const fd = this.construirFormDataInmueble();
+    this.inmueblesService.crearInmueble(fd).subscribe({
+      next: () => {
+        this.loadingSubmit = false;
+        Swal.fire({
+          title: '¡Operación Exitosa!',
+          text: 'Se agregó la información del inmueble correctamente.',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'Confirmar',
+          background: '#141a21',
+          color: '#ffffff',
+        });
+        this.regresar();
+      },
+      error: (err: unknown) => {
+        this.loadingSubmit = false;
+        const e = err as { error?: { message?: string }; message?: string };
+        const text =
+          e?.error?.message ??
+          e?.message ??
+          'No se pudo registrar el inmueble. Verifique la información e intente de nuevo.';
+        Swal.fire({
+          title: 'No se pudo guardar',
+          text: String(text),
+          icon: 'error',
+          confirmButtonColor: '#3085d6',
+          background: '#141a21',
+          color: '#ffffff',
+        });
+      },
     });
-    this.regresar();
+  }
+
+  /**
+   * Arma el cuerpo multipart alineado con POST `/inmuebles`:
+   * escalares, `servicios[i].*`, `zonas[i].*`, `archivos[i].*`, `imagenes[i].*`.
+   */
+  private construirFormDataInmueble(): FormData {
+    const fd = new FormData();
+    const v = this.inmuebleForm.getRawValue() as Record<string, unknown>;
+
+    fd.append('inmueble', String(v['nombreInmueble'] ?? '').trim());
+    fd.append('idArrendador', String(v['idArrendador'] ?? ''));
+
+    const dirFiscal = String(v['direccionInmueble'] ?? '').trim();
+    if (dirFiscal) fd.append('direccionFiscal', dirFiscal);
+
+    const estatusNum = this.estatusInmuebleANumero(v['estatusInmueble']);
+    if (estatusNum != null) fd.append('estatusInmueble', String(estatusNum));
+
+    const vig = v['vigenciaAnios'];
+    if (vig != null && String(vig).trim() !== '') fd.append('vigenciaAnios', String(vig).trim());
+
+    const fi = String(v['fechaInicio'] ?? '').trim();
+    if (fi) fd.append('fechaInicio', fi);
+    const ff = String(v['fechaFin'] ?? '').trim();
+    if (ff) fd.append('fechaFin', ff);
+
+    const nomRep = String(v['nombreRepresentanteLegal'] ?? '').trim();
+    if (nomRep) fd.append('nombreRepresentante', nomRep);
+    const telRep = String(v['telefonoRepresentanteLegal'] ?? '').trim();
+    if (telRep) fd.append('telefonoRepresentante', telRep);
+    const mailRep = String(v['correoRepresentanteLegal'] ?? '').trim();
+    if (mailRep) fd.append('correoRepresentante', mailRep);
+
+    let si = 0;
+    this.serviciosFormArray.controls.forEach((ctrl) => {
+      const g = ctrl as FormGroup;
+      const tipoRaw = String(g.get('servicioTipoContrato')?.value ?? '').trim();
+      const idTipo = this.idTipoServicioDesdeForm(tipoRaw);
+      if (idTipo == null) return;
+
+      fd.append(`servicios[${si}].idTipoServicio`, String(idTipo));
+      const nc = g.get('servicioNumeroContrato')?.value;
+      if (nc != null && String(nc).trim() !== '') {
+        fd.append(`servicios[${si}].numeroContrato`, String(nc).trim());
+      }
+      const fp = String(g.get('servicioFechaPago')?.value ?? '').trim();
+      if (fp) fd.append(`servicios[${si}].fechaPago`, fp);
+      const ulp = String(g.get('servicioUltimoDiaPago')?.value ?? '').trim();
+      if (ulp) fd.append(`servicios[${si}].ultimoDiaPago`, ulp);
+      const arch = g.get('servicioComprobantePago')?.value;
+      if (arch instanceof File) fd.append(`servicios[${si}].archivo`, arch, arch.name);
+      si += 1;
+    });
+
+    let zi = 0;
+    this.zonasFormArray.controls.forEach((ctrl) => {
+      const g = ctrl as FormGroup;
+      const zp = String(g.get('zonaPrincipal')?.value ?? '').trim();
+      const supZ = g.get('zonaSuperficieM2')?.value;
+      const supD = g.get('superficieDisponiblePredioM2')?.value;
+      const zonaVacia =
+        !zp &&
+        (supZ === '' || supZ == null) &&
+        (supD === '' || supD == null);
+      if (zonaVacia) return;
+
+      if (zp) fd.append(`zonas[${zi}].zonaPrincipal`, zp);
+      if (supZ !== '' && supZ != null && Number.isFinite(Number(supZ))) {
+        fd.append(`zonas[${zi}].superficieZonaM2`, String(Number(supZ)));
+      }
+      if (supD !== '' && supD != null && Number.isFinite(Number(supD))) {
+        fd.append(`zonas[${zi}].superficieDisponibleM2`, String(Number(supD)));
+      }
+      fd.append(`zonas[${zi}].numeroZona`, String(zi + 1));
+      zi += 1;
+    });
+
+    let ai = 0;
+    const pushArchivo = (file: unknown, nombre: string): void => {
+      if (file instanceof File) {
+        fd.append(`archivos[${ai}].nombre`, nombre);
+        fd.append(`archivos[${ai}].archivo`, file, file.name);
+        ai += 1;
+      }
+    };
+
+    if (this.mostrarCamposRenta) {
+      pushArchivo(v['documentoContratoRenta'], 'Contrato de renta');
+    }
+    pushArchivo(v['documentoConstanciaFiscal'], 'Constancia de situación fiscal');
+    pushArchivo(v['documentoComprobanteDomicilio'], 'Comprobante de domicilio');
+    pushArchivo(v['documentoEscritura'], 'Escrituras o título de propiedad');
+    pushArchivo(v['documentoBoletaPredial'], 'Boleta predial vigente');
+    pushArchivo(v['constanciaSituacionFiscalRepresentanteLegal'], 'Constancia fiscal representante legal');
+    pushArchivo(v['ineRepresentanteLegal'], 'Identificación oficial representante legal');
+
+    let ii = 0;
+    const pushImagen = (file: unknown, nombre: string): void => {
+      if (file instanceof File) {
+        fd.append(`imagenes[${ii}].nombre`, nombre || file.name);
+        fd.append(`imagenes[${ii}].archivo`, file, file.name);
+        ii += 1;
+      }
+    };
+
+    pushImagen(v['documentoLicencia'], 'Licencia o uso de suelo');
+    pushImagen(v['documentoPlano'], 'Fachada');
+
+    this.galeriaImagenesFormArray.controls.forEach((galCtrl) => {
+      const g = galCtrl as FormGroup;
+      const f = g.get('archivo')?.value;
+      const nom = String(g.get('nombre')?.value ?? '').trim();
+      if (f instanceof File) {
+        fd.append(`imagenes[${ii}].nombre`, nom || f.name);
+        fd.append(`imagenes[${ii}].archivo`, f, f.name);
+        ii += 1;
+      }
+    });
+
+    return fd;
+  }
+
+  private estatusInmuebleANumero(raw: unknown): number | null {
+    const s = String(raw ?? '').toUpperCase().trim();
+    if (s === 'RENTADO') return 1;
+    if (s === 'PROPIO') return 2;
+    if (raw != null && String(raw).trim() !== '' && Number.isFinite(Number(raw))) {
+      return Number(raw);
+    }
+    return null;
+  }
+
+  /** Mapeo local tipo UI → `idTipoServicio` (ajustar si el catálogo del API difiere). */
+  private idTipoServicioDesdeForm(tipoContrato: string): number | null {
+    const t = tipoContrato.toUpperCase().trim();
+    if (!t) return null;
+    if (t === 'OTRO') return 99;
+    const mapa: Record<string, number> = {
+      AGUA: 1,
+      LUZ: 2,
+      MANTENIMIENTO: 3,
+      INTERNET: 4,
+    };
+    return mapa[t] ?? null;
   }
 
   regresar(): void {
