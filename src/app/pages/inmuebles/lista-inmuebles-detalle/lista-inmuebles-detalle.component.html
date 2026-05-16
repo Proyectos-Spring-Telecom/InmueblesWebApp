@@ -1,0 +1,101 @@
+<div class="inm-detalle" *ngIf="row">
+  <nav class="inm-detalle__tabs" aria-label="Secciones del inmueble">
+    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
+      (click)="detalleTab = 0">Zonas ({{ zonas.length }})</button>
+    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 1"
+      (click)="detalleTab = 1">Servicios ({{ servicios.length }})</button>
+    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 2"
+      (click)="detalleTab = 2">Documentos ({{ archivos.length }})</button>
+  </nav>
+
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 0">
+    <div class="inm-zonas-resumen" *ngIf="zonas.length">
+      <span class="inm-chip inm-chip--muted">
+        <i class="fa fa-object-group"></i> Superficie total: {{ superficieTotalZonas() | number:'1.0-2' }} m²
+      </span>
+      <span class="inm-chip inm-chip--muted">
+        <i class="fa fa-square-o"></i> Disponible: {{ superficieDisponibleTotal() | number:'1.0-2' }} m²
+      </span>
+    </div>
+    <div class="inm-zonas-grid" *ngIf="zonas.length; else sinZonas">
+      <article class="inm-zona-card" *ngFor="let z of zonas">
+        <div class="inm-zona-card__head">
+          <span class="inm-zona-card__num">Zona {{ z.numeroZona ?? '—' }}</span>
+          <span class="inm-chip inm-chip--muted">{{ z.zonaPrincipal || 'Sin nombre' }}</span>
+        </div>
+        <div class="inm-zona-card__metrics">
+          <div>
+            <span class="inm-zona-card__metric-label">Superficie</span>
+            <strong>{{ z.superficieZonaM2 ?? '—' }} m²</strong>
+          </div>
+          <div>
+            <span class="inm-zona-card__metric-label">Disponible</span>
+            <strong>{{ z.superficieDisponibleM2 ?? '—' }} m²</strong>
+          </div>
+        </div>
+      </article>
+    </div>
+    <ng-template #sinZonas>
+      <p class="inm-empty">Sin zonas registradas.</p>
+    </ng-template>
+  </div>
+
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
+    <div class="inm-servicios-grid" *ngIf="servicios.length; else sinServicios">
+      <article class="inm-servicio-card" *ngFor="let s of servicios">
+        <div class="inm-servicio-card__icon"><i class="fa fa-tint"></i></div>
+        <div class="inm-servicio-card__body">
+          <h4>{{ nombreServicio(s) }}</h4>
+          <p *ngIf="s.numeroContrato">Contrato: {{ s.numeroContrato }}</p>
+          <p *ngIf="s.fechaPago">Pago: {{ formatearFecha(s.fechaPago) }}</p>
+          <p *ngIf="s.ultimoDiaPago">Último día: {{ formatearFecha(s.ultimoDiaPago) }}</p>
+        </div>
+        <button *ngIf="s.urlComprobante" type="button" mat-flat-button class="bg-warn inm-servicio-card__btn"
+          (click)="abrirDocumento(s.urlComprobante, 'Comprobante de pago')">
+          <i class="fa fa-eye"></i> Ver
+        </button>
+      </article>
+    </div>
+    <ng-template #sinServicios>
+      <p class="inm-empty">Sin servicios registrados.</p>
+    </ng-template>
+  </div>
+
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 2">
+    <div class="inm-docs-grid" *ngIf="archivos.length; else sinDocs">
+      <article class="inm-doc-card" *ngFor="let a of archivos">
+        <div class="inm-doc-card__thumb" *ngIf="a.url && esImagenArchivo(a.url, a.nombre)">
+          <img [src]="a.url" [alt]="a.nombre" loading="lazy" />
+        </div>
+        <div class="inm-doc-card__thumb inm-doc-card__thumb--pdf"
+          *ngIf="a.url && esPdfArchivo(a.url, a.nombre) && urlVistaPreviaPdf(a.url)">
+          <iframe [src]="urlVistaPreviaPdf(a.url)!" [title]="a.nombre || 'Documento PDF'" loading="lazy"></iframe>
+        </div>
+        <div class="inm-doc-card__icon"
+          *ngIf="!a.url || (!esImagenArchivo(a.url, a.nombre) && !esPdfArchivo(a.url, a.nombre))">
+          <i class="fa" [ngClass]="iconoArchivo(a.url || '', a.nombre || '')"></i>
+        </div>
+        <div class="inm-doc-card__info">
+          <span class="inm-doc-card__name">{{ a.nombre || 'Documento' }}</span>
+        </div>
+        <div class="inm-doc-card__actions">
+          <button type="button" mat-flat-button class="bg-warn inm-doc-pill"
+            [title]="a.nombre || 'Documento'"
+            (click)="abrirDocumento(a.url, a.nombre || 'Documento')" [disabled]="!a.url">
+            <i class="fa fa-eye"></i> Ver
+          </button>
+          <a *ngIf="a.url" class="bg-success inm-doc-pill inm-doc-pill--link" [href]="a.url"
+            target="_blank" rel="noopener noreferrer" [title]="a.nombre || 'Documento'"
+            [attr.download]="a.nombre || null">
+            <i class="fa fa-download"></i> Descargar
+          </a>
+        </div>
+      </article>
+    </div>
+    <ng-template #sinDocs>
+      <p class="inm-empty">Sin documentos adjuntos.</p>
+    </ng-template>
+  </div>
+</div>
+
+<app-documento-preview #docPreview eyebrow="Documento del inmueble"></app-documento-preview>

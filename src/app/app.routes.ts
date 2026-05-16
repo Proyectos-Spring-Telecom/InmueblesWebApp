@@ -110,6 +110,11 @@ export const routes: Routes = [
           import('./pages/factores/factores.module').then((m) => m.FactoresModule),
       },
       {
+        path: 'servicios',
+        loadChildren: () =>
+          import('./pages/servicios/servicios.module').then((m) => m.ServiciosModule),
+      },
+      {
         path: 'monitoreo',
         loadChildren: () =>
           import('./pages/monitoreo/monitoreo.module').then((m) => m.MonitoreoModule),

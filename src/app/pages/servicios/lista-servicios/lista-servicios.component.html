@@ -1,45 +1,46 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-  <header class="perm-head" role="region" aria-label="Sección: INPC">
+  <header class="perm-head" role="region" aria-label="Sección: Servicios">
     <div class="perm-head__icon" aria-hidden="true">
-      <mat-icon>receipt_long</mat-icon>
+      <mat-icon>design_services</mat-icon>
     </div>
 
     <div class="perm-head__text">
       <span class="eyebrow">Sección</span>
-      <h2>INPC</h2>
+      <h2>Servicios</h2>
     </div>
 
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Administración</span>
       <span class="sep">/</span>
-      <span class="crumb">INPC</span>
+      <span class="crumb">Servicios</span>
       <span class="sep">/</span>
-      <span class="crumb active">Consultar Histórico</span>
+      <span class="crumb active">Catálogo</span>
     </nav>
   </header>
 
   <div class="surface">
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
-      <div *appHasPermission="['47', '55']">
-        <button (click)="agregarIncremento()" mat-flat-button class="bg-secondary">
-          <i class="fa fa-plus"></i> Agregar INPC</button>
-      </div>
-      <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
+      <button (click)="agregarServicio()" mat-flat-button class="bg-secondary">
+        <i class="fa fa-plus"></i> Agregar servicio
+      </button>
+      <button (click)="limpiarCampos()" mat-flat-button class="bg-success">
+        <i class="fa fa-eraser"></i> Limpiar
+      </button>
       <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
         <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
-        {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+        {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
       </button>
     </div>
     <div class="mt-3">
       <dx-data-grid
         #gridContainer
-        id="gridIncrementos"
+        id="gridServicios"
         [columnHidingEnabled]="false"
         [showBorders]="true"
         [showColumnLines]="true"
         [showRowLines]="true"
         [rowAlternationEnabled]="true"
-        [dataSource]="listaIncrementos"
+        [dataSource]="listaServicios"
         [keyExpr]="'id'"
         [width]="'100%'"
         [remoteOperations]="{ paging: true }"
@@ -62,22 +63,14 @@
         <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
         <dxi-column
           caption="Acciones"
-          cellTemplate="Acciones"
+          cellTemplate="AccionesServicios"
           alignment="center"
-          *appHasPermission="['46', '48', '54', '56']"
           dataType="string"
           [width]="180"
         ></dxi-column>
-        <dxi-column dataField="anio" caption="Año" alignment="center" dataType="number"></dxi-column>
-        <dxi-column dataField="mes" caption="Mes" alignment="center" dataType="string"></dxi-column>
-        <dxi-column
-          dataField="valorInpcFmt"
-          caption="INPC"
-          alignment="center"
-          dataType="string"
-        ></dxi-column>
-        <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="estInpc" dataType="string">
-          <div *dxTemplate="let f of 'estInpc'">
+        <dxi-column dataField="nombre" caption="Nombre" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="estServicio" dataType="string">
+          <div *dxTemplate="let f of 'estServicio'">
             @if (f.data.estatus === 1) {
               <span class="estatus estatus-activo">Activo</span>
             } @else {
@@ -85,16 +78,16 @@
             }
           </div>
         </dxi-column>
-        <div *dxTemplate="let row of 'Acciones'" class="d-flex gap-3 justify-content-center">
-          <div *appHasPermission="['46', '54']">
+        <div *dxTemplate="let row of 'AccionesServicios'" class="d-flex gap-3 justify-content-center">
+          <div >
             <button
               valueExpr="id" id="actualizarButton" class="btnAcciones"
-              (click)="actualizarIncremento(row.data.id)"
+              (click)="editarServicio(row.data.id)"
             >
               <i class="fa fa-edit"></i>
             </button>
           </div>
-          <div *appHasPermission="['48', '56']">
+          <div>
             @if (row.data.estatus === 0) {
               <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
                   <i class="fa fa-arrow-up"></i>

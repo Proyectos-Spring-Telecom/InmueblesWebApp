@@ -9,6 +9,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, switchMap, take } from 'rxjs/operators';
 import { AuthenticationService } from './auth.service';
+import { AUTH_RETRIED_AFTER_REFRESH } from './auth-http.context';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -20,16 +21,11 @@ export class AuthInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.authService.getToken();
     const isAuthEndpoint = this.isAuthEndpoint(req.url);
-
     const authReq = token && !isAuthEndpoint ? this.addToken(req, token) : req;
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (
-          error.status === 401 &&
-          !req.url.includes('/login/refresh') &&
-          !req.url.includes('/login/logout')
-        ) {
+        if (this.shouldAttemptRefresh(error, req)) {
           return this.handle401Error(req, next);
         }
         return throwError(() => error);
@@ -37,10 +33,24 @@ export class AuthInterceptor implements HttpInterceptor {
     );
   }
 
+  private shouldAttemptRefresh(error: HttpErrorResponse, req: HttpRequest<any>): boolean {
+    if (error.status !== 401) return false;
+    if (req.context.get(AUTH_RETRIED_AFTER_REFRESH)) return false;
+    if (req.url.includes('/login/refresh') || req.url.includes('/login/logout')) return false;
+    if (this.isAuthEndpoint(req.url)) return false;
+    if (this.authService.isRefreshBlocked()) return false;
+    return true;
+  }
+
   private handle401Error(
     req: HttpRequest<any>,
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
+    if (!this.authService.getRefreshToken()) {
+      this.authService.clearSessionOnly();
+      return this.sessionExpiredError();
+    }
+
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);
@@ -49,22 +59,20 @@ export class AuthInterceptor implements HttpInterceptor {
         switchMap(() => {
           this.isRefreshing = false;
           const newToken = this.authService.getToken();
-          this.refreshTokenSubject.next(newToken || null);
-          return next.handle(this.addToken(req, newToken));
+          if (!newToken) {
+            this.refreshTokenSubject.next('');
+            this.authService.clearSessionOnly();
+            return this.sessionExpiredError();
+          }
+          this.refreshTokenSubject.next(newToken);
+          return this.retryWithToken(req, next, newToken);
         }),
-        catchError(() => {
+        catchError((refreshErr: HttpErrorResponse) => {
           this.isRefreshing = false;
-          // Desbloquea requests en espera sin propagar 401.
           this.refreshTokenSubject.next('');
-          this.authService.clearSessionAndRedirect();
-          return throwError(
-            () =>
-              new HttpErrorResponse({
-                status: 0,
-                statusText: 'SESSION_EXPIRED',
-                error: { message: 'La sesión finalizó. Inicia sesión nuevamente.' },
-              })
-          );
+          // Refresh 401 (token inválido/expirado): limpiar sesión, sin redirigir al login.
+          this.authService.clearSessionOnly();
+          return throwError(() => refreshErr);
         })
       );
     }
@@ -74,17 +82,32 @@ export class AuthInterceptor implements HttpInterceptor {
       take(1),
       switchMap((token) => {
         if (!token) {
-          return throwError(
-            () =>
-              new HttpErrorResponse({
-                status: 0,
-                statusText: 'SESSION_EXPIRED',
-                error: { message: 'La sesión finalizó. Inicia sesión nuevamente.' },
-              })
-          );
+          return this.sessionExpiredError();
         }
-        return next.handle(this.addToken(req, token));
+        return this.retryWithToken(req, next, token);
       })
+    );
+  }
+
+  private retryWithToken(
+    req: HttpRequest<any>,
+    next: HttpHandler,
+    token: string
+  ): Observable<HttpEvent<any>> {
+    const retryReq = this.addToken(req, token).clone({
+      context: req.context.set(AUTH_RETRIED_AFTER_REFRESH, true),
+    });
+    return next.handle(retryReq);
+  }
+
+  private sessionExpiredError(): Observable<never> {
+    return throwError(
+      () =>
+        new HttpErrorResponse({
+          status: 0,
+          statusText: 'SESSION_EXPIRED',
+          error: { message: 'La sesión finalizó. Inicia sesión nuevamente.' },
+        })
     );
   }
 

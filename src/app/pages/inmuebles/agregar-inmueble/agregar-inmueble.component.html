@@ -33,7 +33,7 @@
               <div class="form-floating flex-grow-1 perm-select-floating">
                 <select id="idArrendador" class="form-select" formControlName="idArrendador"
                   aria-label="Arrendador (cliente)">
-                  <option [ngValue]="null"></option>
+                  <option [ngValue]="null" disabled></option>
                   <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
                     {{ cliente.nombre }}
                     <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
@@ -69,7 +69,7 @@
               <div class="form-floating flex-grow-1">
                 <select id="estatusInmueble" class="form-select" formControlName="estatusInmueble"
                   aria-label="Estatus del inmueble">
-                  <option value="" disabled>Selecciona una opción</option>
+                  <option [ngValue]="null" disabled></option>
                   <option value="RENTADO">Rentado</option>
                   <option value="PROPIO">Propio</option>
                 </select>
@@ -86,18 +86,18 @@
                   vigencia</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4"><label for="fechaInicio" class="form-label perm-label">Inicio</label>
+          <div class="col-12 col-md-4"><label for="fechaInicio" class="form-label perm-label">Inicio de vigencia</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="fechaInicio" type="date" class="form-control"
-                  formControlName="fechaInicio" /><label for="fechaInicio">Fecha de inicio</label></div>
+                  formControlName="fechaInicio" /><label for="fechaInicio">Inicio de vigencia</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4"><label for="fechaFin" class="form-label perm-label">Fin</label>
+          <div class="col-12 col-md-4"><label for="fechaFin" class="form-label perm-label">Fin de vigencia</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="fechaFin" type="date" class="form-control"
-                  formControlName="fechaFin" /><label for="fechaFin">Fecha de fin</label></div>
+                  formControlName="fechaFin" /><label for="fechaFin">Fin de vigencia</label></div>
             </div>
           </div>
           <div class="col-12 col-md-4" *ngIf="mostrarCamposRenta"><label for="tiempoRentaAnios"
@@ -169,32 +169,18 @@
                     </div>
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
-                        <div class="srv-tipo-label-row">
-                          <label class="form-label perm-label">Tipo de contrato</label>
-                          <button type="button" class="srv-tipo-reset" *ngIf="esServicioTipoOtro(i)"
-                            (click)="resetServicioTipoContrato(i)" title="Volver a opciones"
-                            aria-label="Volver a opciones">
-                            <mat-icon>refresh</mat-icon>
-                          </button>
-                        </div>
+                        <label class="form-label perm-label">Tipo de servicio</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>fact_check</mat-icon></span>
-                          <div class="form-floating flex-grow-1" *ngIf="!esServicioTipoOtro(i)">
-                            <select class="form-select" formControlName="servicioTipoContrato"
-                              aria-label="Tipo de contrato" (change)="onServicioTipoContratoChange(i)">
-                              <option value="" disabled>Selecciona una opción</option>
-                              <option value="AGUA">Agua</option>
-                              <option value="LUZ">Luz</option>
-                              <option value="MANTENIMIENTO">Mantenimiento</option>
-                              <option value="INTERNET">Internet</option>
-                              <option value="OTRO">Otro</option>
+                          <div class="form-floating flex-grow-1 perm-select-floating">
+                            <select class="form-select" formControlName="idTipoServicio"
+                              aria-label="Tipo de servicio">
+                              <option [ngValue]="null"></option>
+                              <option *ngFor="let srv of listaCatServicios" [ngValue]="srv.id">
+                                {{ etiquetaCatServicio(srv) }}
+                              </option>
                             </select>
-                            <label>Tipo de contrato</label>
-                          </div>
-                          <div class="form-floating flex-grow-1" *ngIf="esServicioTipoOtro(i)">
-                            <input type="text" class="form-control" formControlName="servicioTipoContratoOtro"
-                              placeholder="Escribe el tipo de contrato" />
-                            <label>Tipo de contrato</label>
+                            <label>Tipo de servicio</label>
                           </div>
                         </div>
                       </div>
@@ -234,23 +220,45 @@
                           <div class="uploader srv-pago-uploader__card">
                             <div class="uploader__glow"></div>
                             <div class="uploader__body">
-                              <div class="srv-pago-uploader__row">
-                                <div class="srv-pago-uploader__left">
-                                  <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
-                                    <mat-icon>receipt</mat-icon>
+                              <ng-container *ngIf="layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value); else srvPagoUploaderDefault">
+                                <div class="srv-pago-uploader__row srv-pago-uploader__row--archivo-remoto">
+                                  <div class="uploader__cta-actions">
+                                    <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
+                                      Seleccionar
+                                    </button>
+                                    <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
+                                      url: srvCtrl.get('servicioComprobantePagoUrl')?.value,
+                                      titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
+                                    }"></ng-container>
                                   </div>
-                                  <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
-                                    Selecciona un archivo
-                                  </button>
+                                  <span class="uploader__badge uploader__badge--file srv-pago-uploader__formats">
+                                    {{ srvCtrl.get('servicioComprobantePagoNombre')?.value }}
+                                  </span>
                                 </div>
-                                <span class="uploader__badge srv-pago-uploader__formats"
-                                  [class.uploader__badge--file]="srvCtrl.get('servicioComprobantePagoNombre')?.value">
-                                  {{ srvCtrl.get('servicioComprobantePagoNombre')?.value || 'PDF · PNG · JPG · JPEG' }}
-                                </span>
-                              </div>
+                              </ng-container>
+                              <ng-template #srvPagoUploaderDefault>
+                                <div class="srv-pago-uploader__row">
+                                  <div class="srv-pago-uploader__left">
+                                    <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
+                                      <mat-icon>receipt</mat-icon>
+                                    </div>
+                                    <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
+                                      Selecciona un archivo
+                                    </button>
+                                  </div>
+                                  <span class="uploader__badge srv-pago-uploader__formats"
+                                    [class.uploader__badge--file]="srvCtrl.get('servicioComprobantePagoNombre')?.value || srvCtrl.get('servicioComprobantePagoUrl')?.value">
+                                    {{ srvCtrl.get('servicioComprobantePagoNombre')?.value || etiquetaPdfImagenes }}
+                                  </span>
+                                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
+                                    url: srvCtrl.get('servicioComprobantePagoUrl')?.value,
+                                    titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
+                                  }"></ng-container>
+                                </div>
+                              </ng-template>
                               <h6 class="uploader__title">Sube imagen</h6>
                               <p class="uploader__subtitle">Arrastra y suelta o</p>
-                              <input #srvPagoInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg"
+                              <input #srvPagoInput type="file" [accept]="acceptPdfImagenes"
                                 class="uploader__input" (change)="onServicioPagoFileSelected($event, i)" />
                             </div>
                           </div>
@@ -364,6 +372,60 @@
                 </div>
               </div>
             </div>
+            <ng-template #btnVerArchivo let-url="url" let-titulo="titulo">
+              <button *ngIf="url" type="button" mat-flat-button class="bg-warn docs-uploader-ver-btn"
+                (click)="verArchivoRemoto(url, titulo)">
+                <mat-icon>visibility</mat-icon>
+                <span>Ver</span>
+              </button>
+            </ng-template>
+            <ng-template #docsUploaderCta let-url="url" let-nombreRemoto="nombreRemoto" let-controlName="controlName"
+              let-placeholder="placeholder" let-tituloVer="tituloVer" let-selector="selector">
+              <ng-container *ngIf="layoutArchivoRemoto(url); else docsUploaderCtaDefault">
+                <div class="uploader__cta uploader__cta--archivo-remoto">
+                  <div class="uploader__cta-actions">
+                    <button mat-flat-button color="primary" type="button"
+                      (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
+                    <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
+                  </div>
+                  <span class="uploader__badge uploader__badge--file">{{ nombreRemoto }}</span>
+                </div>
+              </ng-container>
+              <ng-template #docsUploaderCtaDefault>
+                <div class="uploader__cta">
+                  <button mat-flat-button color="primary" type="button"
+                    (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
+                  <span class="uploader__badge"
+                    [class.uploader__badge--file]="nombreRemoto || url || inmuebleForm.get(controlName)?.value?.name">
+                    {{ nombreRemoto || inmuebleForm.get(controlName)?.value?.name || placeholder }}
+                  </span>
+                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
+                </div>
+              </ng-template>
+            </ng-template>
+            <ng-template #docsUploaderCtaGaleria let-url="url" let-nombre="nombre" let-placeholder="placeholder"
+              let-titulo="titulo" let-fileInput="fileInput">
+              <ng-container *ngIf="layoutArchivoRemoto(url); else docsUploaderCtaGaleriaDefault">
+                <div class="uploader__cta uploader__cta--archivo-remoto">
+                  <div class="uploader__cta-actions">
+                    <button mat-flat-button color="primary" type="button"
+                      (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
+                    <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
+                  </div>
+                  <span class="uploader__badge uploader__badge--file">{{ nombre }}</span>
+                </div>
+              </ng-container>
+              <ng-template #docsUploaderCtaGaleriaDefault>
+                <div class="uploader__cta">
+                  <button mat-flat-button color="primary" type="button"
+                    (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
+                  <span class="uploader__badge" [class.uploader__badge--file]="nombre || url">
+                    {{ nombre || placeholder }}
+                  </span>
+                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
+                </div>
+              </ng-template>
+            </ng-template>
             <div class="row g-3 g-lg-4 mt-1 uploader-wrap docs-uploader-docs-row align-items-stretch">
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Licencia / uso de suelo</label>
@@ -372,18 +434,17 @@
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>image</mat-icon></div>
-                      <h6 class="uploader__title">Sube imagen</h6>
+                      <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('licencia')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="imagenLicenciaNombre || inmuebleForm.get('documentoLicencia')?.value?.name">
-                          {{ imagenLicenciaNombre || inmuebleForm.get('documentoLicencia')?.value?.name || 'PNG · JPG · JPEG'
-                          }}
-                        </span>
-                      </div>
-                      <input #imagenLicenciaInput type="file" accept="image/png,image/jpeg,image/jpg"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: imagenLicenciaUrl,
+                        nombreRemoto: imagenLicenciaNombre,
+                        controlName: 'documentoLicencia',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: imagenLicenciaNombre || 'Licencia / uso de suelo',
+                        selector: 'licencia'
+                      }"></ng-container>
+                      <input #imagenLicenciaInput type="file" [accept]="acceptPdfImagenes"
                         class="uploader__input" (change)="onFileSelected($event, 'documentoLicencia')" />
                     </div>
                   </div>
@@ -399,15 +460,15 @@
                       <div class="uploader__icon"><mat-icon>home</mat-icon></div>
                       <h6 class="uploader__title">Sube imagen</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('plano')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="imagenPlanoNombre || inmuebleForm.get('documentoPlano')?.value?.name">
-                          {{ imagenPlanoNombre || inmuebleForm.get('documentoPlano')?.value?.name || 'PNG · JPG · JPEG' }}
-                        </span>
-                      </div>
-                      <input #imagenPlanoInput type="file" accept="image/png,image/jpeg,image/jpg"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: imagenPlanoUrl,
+                        nombreRemoto: imagenPlanoNombre,
+                        controlName: 'documentoPlano',
+                        placeholder: etiquetaSoloImagenes,
+                        tituloVer: imagenPlanoNombre || 'Fachada',
+                        selector: 'plano'
+                      }"></ng-container>
+                      <input #imagenPlanoInput type="file" [accept]="acceptSoloImagenes"
                         class="uploader__input" (change)="onFileSelected($event, 'documentoPlano')" />
                     </div>
                   </div>
@@ -424,16 +485,15 @@
                       <div class="uploader__icon"><mat-icon>description</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('contratoRenta')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="contratoRentaNombre || inmuebleForm.get('documentoContratoRenta')?.value?.name">
-                          {{ contratoRentaNombre || inmuebleForm.get('documentoContratoRenta')?.value?.name || 'PDF · PNG · JPG'
-                          }}
-                        </span>
-                      </div>
-                      <input #contratoRentaInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: contratoRentaUrl,
+                        nombreRemoto: contratoRentaNombre,
+                        controlName: 'documentoContratoRenta',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: contratoRentaNombre || 'Contrato de renta',
+                        selector: 'contratoRenta'
+                      }"></ng-container>
+                      <input #contratoRentaInput type="file" [accept]="acceptPdfImagenes"
                         class="uploader__input" (change)="onFileSelected($event, 'documentoContratoRenta')" />
                     </div>
                   </div>
@@ -447,18 +507,17 @@
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                      <h6 class="uploader__title">Sube tu PDF</h6>
+                      <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('constanciaFiscal')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="constanciaFiscalNombre || inmuebleForm.get('documentoConstanciaFiscal')?.value?.name">
-                          {{ constanciaFiscalNombre || inmuebleForm.get('documentoConstanciaFiscal')?.value?.name || 'PDF · Máx.
-                          3 MB' }}
-                        </span>
-                      </div>
-                      <input #constanciaFiscalInput type="file" accept="application/pdf" class="uploader__input"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: constanciaFiscalUrl,
+                        nombreRemoto: constanciaFiscalNombre,
+                        controlName: 'documentoConstanciaFiscal',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: constanciaFiscalNombre || 'Constancia de situación fiscal',
+                        selector: 'constanciaFiscal'
+                      }"></ng-container>
+                      <input #constanciaFiscalInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
                         (change)="onFileSelected($event, 'documentoConstanciaFiscal')" />
                     </div>
                   </div>
@@ -472,31 +531,42 @@
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                      <h6 class="uploader__title">Sube tu PDF</h6>
+                      <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('comprobanteDomicilio')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="comprobanteDomicilioNombre || inmuebleForm.get('documentoComprobanteDomicilio')?.value?.name">
-                          {{ comprobanteDomicilioNombre || inmuebleForm.get('documentoComprobanteDomicilio')?.value?.name || 'PDF
-                          · Máx. 3 MB' }}
-                        </span>
-                      </div>
-                      <input #comprobanteDomicilioInput type="file" accept="application/pdf" class="uploader__input"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: comprobanteDomicilioUrl,
+                        nombreRemoto: comprobanteDomicilioNombre,
+                        controlName: 'documentoComprobanteDomicilio',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: comprobanteDomicilioNombre || 'Comprobante de domicilio',
+                        selector: 'comprobanteDomicilio'
+                      }"></ng-container>
+                      <input #comprobanteDomicilioInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
                         (change)="onFileSelected($event, 'documentoComprobanteDomicilio')" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card" [formGroup]="galeriaGrupo(0)">
+              <ng-container formArrayName="galeriaImagenes">
+              <div *ngFor="let galCtrl of galeriaImagenesFormArray.controls; let i = index"
+                class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                [class.docs-galeria-card-enter]="indiceGaleriaAnimando === i"
+                [formGroupName]="i"
+                (animationend)="finalizarAnimacionGaleria(i)">
                 <div class="docs-uploader-label-row">
-                  <label class="form-label perm-label docs-uploader-label mb-0">
-                    Imagen <span *ngIf="galeriaImagenesFormArray.length > 1">1</span>
-                  </label>
-                  <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
-                    (click)="agregarFotoGaleria()"><mat-icon>add</mat-icon> Agregar</button>
+                  <label class="form-label perm-label docs-uploader-label mb-0">Imagen {{ i + 1 }}</label>
+                  <div class="d-flex flex-wrap gap-1 justify-content-end">
+                    <button type="button" class="docs-uploader-inline-btn" mat-stroked-button color="warn"
+                      (click)="eliminarFotoGaleria(i)" *ngIf="galeriaImagenesFormArray.length >= 2"
+                      title="Eliminar imagen" aria-label="Eliminar imagen">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                    <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
+                      (click)="agregarFotoGaleria()" *ngIf="i === galeriaImagenesFormArray.length - 1">
+                      <mat-icon>add</mat-icon> Agregar
+                    </button>
+                  </div>
                 </div>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
@@ -505,19 +575,20 @@
                       <div class="uploader__icon"><mat-icon>image</mat-icon></div>
                       <h6 class="uploader__title">Sube imagen</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorGaleria(galeriaInput0)">Seleccionar</button>
-                        <span class="uploader__badge" [class.uploader__badge--file]="galeriaGrupo(0).get('nombre')?.value">
-                          {{ galeriaGrupo(0).get('nombre')?.value || 'PNG · JPG · JPEG' }}
-                        </span>
-                      </div>
-                      <input #galeriaInput0 type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input"
-                        (change)="onGaleriaFileSelected($event, 0)" />
+                      <ng-container *ngTemplateOutlet="docsUploaderCtaGaleria; context: {
+                        url: galCtrl.get('url')?.value,
+                        nombre: galCtrl.get('nombre')?.value,
+                        placeholder: etiquetaSoloImagenes,
+                        titulo: galCtrl.get('nombre')?.value || ('Imagen ' + (i + 1)),
+                        fileInput: galFileInput
+                      }"></ng-container>
+                      <input #galFileInput type="file" [accept]="acceptSoloImagenes" class="uploader__input"
+                        (change)="onGaleriaFileSelected($event, i)" />
                     </div>
                   </div>
                 </div>
               </div>
+              </ng-container>
 
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label" id="label-csf-rep-legal">Constancia de Situación
@@ -529,17 +600,15 @@
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('constanciaRepLegal')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="constanciaRepLegalNombre || inmuebleForm.get('constanciaSituacionFiscalRepresentanteLegal')?.value?.name">
-                          {{ constanciaRepLegalNombre ||
-                          inmuebleForm.get('constanciaSituacionFiscalRepresentanteLegal')?.value?.name || 'PDF · PNG · JPG' }}
-                        </span>
-                      </div>
-                      <input #constanciaRepLegalInput type="file"
-                        accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: constanciaRepLegalUrl,
+                        nombreRemoto: constanciaRepLegalNombre,
+                        controlName: 'constanciaSituacionFiscalRepresentanteLegal',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: constanciaRepLegalNombre || 'Constancia fiscal representante legal',
+                        selector: 'constanciaRepLegal'
+                      }"></ng-container>
+                      <input #constanciaRepLegalInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
                         (change)="onFileSelected($event, 'constanciaSituacionFiscalRepresentanteLegal')"
                         aria-labelledby="label-csf-rep-legal" />
                     </div>
@@ -558,16 +627,15 @@
                       <div class="uploader__icon"><mat-icon>badge</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('ineRepresentante')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="ineRepresentanteNombre || inmuebleForm.get('ineRepresentanteLegal')?.value?.name">
-                          {{ ineRepresentanteNombre || inmuebleForm.get('ineRepresentanteLegal')?.value?.name || 'PDF · PNG · JPG'
-                          }}
-                        </span>
-                      </div>
-                      <input #ineRepresentanteInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: ineRepresentanteUrl,
+                        nombreRemoto: ineRepresentanteNombre,
+                        controlName: 'ineRepresentanteLegal',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: ineRepresentanteNombre || 'Identificación oficial representante legal',
+                        selector: 'ineRepresentante'
+                      }"></ng-container>
+                      <input #ineRepresentanteInput type="file" [accept]="acceptPdfImagenes"
                         class="uploader__input" (change)="onFileSelected($event, 'ineRepresentanteLegal')"
                         aria-labelledby="label-ine-rep-inm" />
                     </div>
@@ -589,15 +657,15 @@
                       <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
                         Sube Aquí La Escritura O Título Para Intentar Completar El Formulario.
                       </p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('escritura')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="archivoEscrituraNombre || inmuebleForm.get('documentoEscritura')?.value?.name">
-                          {{ archivoEscrituraNombre || inmuebleForm.get('documentoEscritura')?.value?.name || 'PDF · Máx. 3 MB' }}
-                        </span>
-                      </div>
-                      <input #archivoEscrituraInput type="file" accept=".pdf,application/pdf" class="uploader__input"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: archivoEscrituraUrl,
+                        nombreRemoto: archivoEscrituraNombre,
+                        controlName: 'documentoEscritura',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: archivoEscrituraNombre || 'Escrituras o título de propiedad',
+                        selector: 'escritura'
+                      }"></ng-container>
+                      <input #archivoEscrituraInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
                         (change)="onFileSelected($event, 'documentoEscritura')" />
                     </div>
                   </div>
@@ -612,17 +680,15 @@
                       <div class="uploader__icon"><mat-icon>receipt_long</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <div class="uploader__cta">
-                        <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorArchivo('boletaPredial')">Seleccionar</button>
-                        <span class="uploader__badge"
-                          [class.uploader__badge--file]="boletaPredialNombre || inmuebleForm.get('documentoBoletaPredial')?.value?.name">
-                          {{ boletaPredialNombre || inmuebleForm.get('documentoBoletaPredial')?.value?.name || 'PDF · PNG · JPG ·
-                          Máx. 3 MB' }}
-                        </span>
-                      </div>
-                      <input #boletaPredialInput type="file"
-                        accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: boletaPredialUrl,
+                        nombreRemoto: boletaPredialNombre,
+                        controlName: 'documentoBoletaPredial',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: boletaPredialNombre || 'Boleta predial vigente',
+                        selector: 'boletaPredial'
+                      }"></ng-container>
+                      <input #boletaPredialInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
                         (change)="onFileSelected($event, 'documentoBoletaPredial')" />
                     </div>
                   </div>
@@ -777,60 +843,12 @@
                   </ng-container>
                 </div>
               </div> -->
-
-              <div class="col-12 arrend-fa-section mt-5 pt-3" *ngIf="galeriaImagenesFormArray.length > 1">
-                <div class="arrend-fa-hero">
-                  <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>collections</mat-icon></div>
-                  <div class="arrend-fa-hero__body">
-                    <div class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3">
-                      <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
-                        <h6 class="arrend-fa-section-title m-0">Más imágenes</h6>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="row g-1 mt-0">
-                  <ng-container *ngFor="let galCtrl of galeriaImagenesFormArray.controls; let i = index">
-                    <div class="col-12 col-md-6 col-lg-4" *ngIf="i > 0">
-                      <div class="arrend-fa-item" [formGroup]="galeriaGrupo(i)">
-                        <div
-                          class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                          <span class="arrend-fa-idx">Imagen {{ i + 1 }}</span>
-                          <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn"
-                            (click)="eliminarFotoGaleria(i)"
-                            *ngIf="galeriaImagenesFormArray.length >= 2"><mat-icon>delete_outline</mat-icon>
-                            Eliminar</button>
-                        </div>
-                        <div class="uploader-hero">
-                          <div class="uploader">
-                            <div class="uploader__glow"></div>
-                            <div class="uploader__body">
-                              <div class="uploader__icon"><mat-icon>image</mat-icon></div>
-                              <h6 class="uploader__title">Sube imagen</h6>
-                              <p class="uploader__subtitle">Arrastra y suelta o</p>
-                              <div class="uploader__cta">
-                                <button mat-flat-button color="primary" type="button"
-                                  (click)="abrirSelectorGaleria(galExtra)">Seleccionar</button>
-                                <span class="uploader__badge" [class.uploader__badge--file]="galCtrl.get('nombre')?.value">
-                                  {{ galCtrl.get('nombre')?.value || 'PNG · JPG · JPEG' }}
-                                </span>
-                              </div>
-                              <input #galExtra type="file" accept="image/png,image/jpeg,image/jpg"
-                                class="uploader__input" (change)="onGaleriaFileSelected($event, i)" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </ng-container>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" type="button" [disabled]="loadingSubmit"
+          <button class="button-success" role="button" type="button" [disabled]="loadingSubmit || cargandoDetalle"
             (click)="submit()"><i class="fa fa-check"></i>&nbsp;&nbsp;{{
             submitButton }}</button>
           <button type="button" class="button-danger" (click)="regresar()"><i
@@ -841,18 +859,17 @@
   </div>
 </div>
 
-<div class="docs-backdrop" *ngIf="mostrarModalMapa" (click)="cerrarModalMapa()">
+<app-documento-preview #docPreview eyebrow="Archivo del inmueble"></app-documento-preview>
+
+<div class="docs-backdrop" *ngIf="mostrarModalMapa">
   <div class="docs-modal" (click)="$event.stopPropagation()">
     <div class="row docs-modal__header">
-      <div class="col-10 col-md-11">
-        <span class="docs-modal__eyebrow">Mapa del inmueble</span>
+      <div class="col-12">
+        <span class="docs-modal__eyebrow">Ubicación obligatoria</span>
         <h3 class="docs-modal__title">{{ inmuebleForm.get('nombreInmueble')?.value || 'Seleccionar ubicación' }}</h3>
-        <p class="docs-modal__subtitle">Haz clic en el mapa para fijar latitud y longitud.</p>
-      </div>
-      <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
-        <button type="button" class="docs-modal__close" (click)="cerrarModalMapa()">
-          <i class="fa fa-times"></i>
-        </button>
+        <p class="docs-modal__subtitle">
+          Haz clic en el mapa para fijar latitud y longitud. No podrás registrar el inmueble sin marcar un punto.
+        </p>
       </div>
     </div>
     <div class="row docs-modal__body">
@@ -864,11 +881,13 @@
     </div>
     <div class="row docs-modal__footer">
       <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
-        <button type="button" class="docs-modal__btn docs-modal__btn--ghost" (click)="cerrarModalMapa()">
+        <button type="button" class="docs-modal__btn docs-modal__btn--ghost" (click)="cancelarModalMapa()"
+          [disabled]="loadingSubmit">
           Cancelar
         </button>
-        <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()">
-          Usar ubicación
+        <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()"
+          [disabled]="loadingSubmit">
+          Guardar
         </button>
       </div>
     </div>

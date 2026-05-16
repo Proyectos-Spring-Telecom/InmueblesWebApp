@@ -6,6 +6,7 @@ import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
+import { AuthenticationService } from 'src/app/services/auth.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -40,39 +41,18 @@ export class ListaClientesComponent implements OnInit {
   constructor(
     private cliService: ClientesService,
     private route: Router,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private auth: AuthenticationService
   ) {
     this.showFilterRow = true;
     this.showHeaderFilter = true;
   }
 
   ngOnInit(): void {
+    if (!this.auth.isAuthenticated() || this.auth.isRefreshBlocked()) {
+      return;
+    }
     this.setupDataSource();
-    this.listaClientes = [
-      {
-        id: 1,
-        logotipo: 'assets/images/logos/fondonegro.jpg',
-    
-        actaConstitutiva: 'https://example.com/acta.pdf',
-        comprobanteDomicilio: 'https://example.com/domicilio.pdf',
-        constanciaSituacionFiscal: 'https://example.com/constancia.pdf',
-    
-        NombreCompleto: 'Inmuebles y Desarrollos HAC S.A de C.V.',
-        telefono: '7771234567',
-        rfc: 'IDH230101ABC',
-        correo: 'contacto@hac.com',
-    
-        tipoPersona: 'Moral',
-    
-        nombreEncargado: 'Osvaldo Martinez',
-        telefonoEncargado: '7779876543',
-        correoEncargado: 'osvaldo.martinez@hac.com',
-    
-        direccionCompleta: 'Río Balsas 106, Vista Hermosa, 62290 Cuernavaca, Mor',
-    
-        estatusCliente: 1
-      }
-    ];
   }
 
   agregarCliente() {
@@ -88,6 +68,10 @@ export class ListaClientesComponent implements OnInit {
     this.listaClientes = new CustomStore({
       key: 'id',
       load: async (loadOptions: any) => {
+        if (!this.auth.isAuthenticated() || this.auth.isRefreshBlocked()) {
+          return { data: [], totalCount: 0 };
+        }
+
         const skip = Number(loadOptions?.skip) || 0;
         const take = Number(loadOptions?.take) || this.pageSize;
         const page = Math.floor(skip / take) + 1;
@@ -99,68 +83,68 @@ export class ListaClientesComponent implements OnInit {
 
           this.loading = false;
 
-          const totalRegistros = Number(response?.paginated?.total) || 0;
-          const paginaActual = Number(response?.paginated?.page) || page;
+          const meta = response?.paginated || {};
+          const totalRegistros =
+            Number(meta.total) || Number(response?.total) || 0;
+          const paginaActual =
+            Number(meta.page) || Number(response?.page) || page;
           const totalPaginas =
-            Number(response?.paginated?.limit) ||
+            Number(meta.lastPage) ||
+            Number(response?.pages) ||
             (take > 0 ? Math.ceil(totalRegistros / take) : 0);
 
           this.paginaActual = paginaActual;
-
-          /** Demo: solo mostrar el arrendador con este id (ocultar el resto). */
-          const SOLO_ARRENDADOR_ID = 1;
+          this.totalRegistros = totalRegistros;
+          this.totalPaginas = totalPaginas;
 
           const dataTransformada = (
             Array.isArray(response?.data) ? response.data : []
-          )
-            .map((item: any) => {
-              const nombre = item?.nombre || '';
-              const paterno = item?.apellidoPaterno || '';
-              const materno = item?.apellidoMaterno || '';
-              const direccionCompleta = [
-                item?.calle ? `Calle ${item.calle}` : '',
-                item?.numeroExterior ? `#${item.numeroExterior}` : '',
-                item?.numeroInterior ? `Int. ${item.numeroInterior}` : '',
-                item?.colonia || '',
-                item?.municipio || '',
-                item?.estado || '',
-                item?.cp ? `CP ${item.cp}` : '',
-                item?.entreCalles ? `(Entre calles: ${item.entreCalles})` : '',
-              ]
-                .filter(Boolean)
-                .join(', ');
+          ).map((item: any) => {
+            const nombre = item?.nombre || '';
+            const paterno = item?.apellidoPaterno || '';
+            const materno = item?.apellidoMaterno || '';
+            const direccionCompleta = [
+              item?.calle ? `Calle ${item.calle}` : '',
+              item?.numeroExterior ? `#${item.numeroExterior}` : '',
+              item?.numeroInterior ? `Int. ${item.numeroInterior}` : '',
+              item?.colonia || '',
+              item?.municipio || '',
+              item?.estado || '',
+              item?.cp ? `CP ${item.cp}` : '',
+              item?.entreCalles ? `(Entre calles: ${item.entreCalles})` : '',
+            ]
+              .filter(Boolean)
+              .join(', ');
 
-              return {
-                ...item,
-                id: Number(item?.id),
-                tipoPersona:
-                  item?.tipoPersona == 1
-                    ? 'Físico'
-                    : item?.tipoPersona == 2
-                    ? 'Moral'
-                    : 'Desconocido',
-                idRol: item?.idRol != null ? Number(item.idRol) : null,
-                idCliente:
-                  item?.idCliente != null ? Number(item.idCliente) : null,
-                NombreCompleto: [nombre, paterno, materno]
-                  .filter(Boolean)
-                  .join(' '),
-                direccionCompleta,
-              };
-            })
-            .filter((row: any) => Number(row?.id) === SOLO_ARRENDADOR_ID)
-            .sort((a: any, b: any) => Number(b.id) - Number(a.id));
+            const estatus =
+              item?.estatusCliente ?? item?.estatus ?? 0;
+
+            return {
+              ...item,
+              id: Number(item?.id),
+              estatus: Number(estatus),
+              estatusCliente: Number(estatus),
+              tipoPersona:
+                item?.tipoPersona == 1
+                  ? 'Físico'
+                  : item?.tipoPersona == 2
+                  ? 'Moral'
+                  : 'Desconocido',
+              idRol: item?.idRol != null ? Number(item.idRol) : null,
+              idCliente:
+                item?.idCliente != null ? Number(item.idCliente) : null,
+              NombreCompleto: [nombre, paterno, materno]
+                .filter(Boolean)
+                .join(' '),
+              direccionCompleta,
+            };
+          });
 
           this.paginaActualData = dataTransformada;
-          this.totalRegistros = dataTransformada.length;
-          this.totalPaginas =
-            dataTransformada.length > 0 && take > 0
-              ? Math.ceil(dataTransformada.length / take)
-              : 0;
 
           return {
             data: dataTransformada,
-            totalCount: dataTransformada.length,
+            totalCount: totalRegistros,
           };
         } catch (error) {
           this.loading = false;
@@ -270,7 +254,7 @@ export class ListaClientesComponent implements OnInit {
       cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (result.value) {
-        this.cliService.eliminarCliente(cliente.Id).subscribe(
+        this.cliService.eliminarCliente(cliente.id).subscribe(
           (response) => {
             Swal.fire({
               background: '#141a21',

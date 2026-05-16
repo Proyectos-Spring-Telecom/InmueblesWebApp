@@ -1,3 +1,161 @@
 :host {
   display: block;
 }
+
+@import '../../../shared/documento-preview/documento-preview.component.scss';
+
+.inm-lista__grid-wrap {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(130, 160, 255, 0.18);
+  background: rgba(10, 14, 22, 0.55);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.inm-data-grid ::ng-deep .dx-datagrid-headers {
+  background: rgba(14, 20, 32, 0.95);
+  border-bottom: 1px solid rgba(130, 160, 255, 0.2);
+}
+
+.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-row {
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row.dx-state-hover > td,
+.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row.dx-row-hover > td {
+  background-color: transparent !important;
+}
+
+.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-row-alt.dx-state-hover > td,
+.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-row-alt.dx-row-hover > td {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+.inm-data-grid ::ng-deep .dx-master-detail-row.dx-state-hover > td,
+.inm-data-grid ::ng-deep .dx-master-detail-row:hover > td {
+  background-color: rgba(8, 12, 20, 0.92) !important;
+}
+
+.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row > td {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  vertical-align: middle;
+  font-size: 0.78rem;
+}
+
+.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row > td .btnAcciones {
+  flex-shrink: 0;
+}
+
+.inm-data-grid ::ng-deep .dx-master-detail-row > .dx-master-detail-cell {
+  background: rgba(8, 12, 20, 0.92);
+  border-top: 1px solid rgba(130, 160, 255, 0.15);
+  padding: 0.5rem 1rem 1rem;
+}
+
+.inm-master-detail {
+  width: 100%;
+}
+
+.inm-row-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.inm-row-card--nombre {
+  min-width: 0;
+}
+
+.inm-row-card__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(89, 109, 255, 0.16);
+  border: 1px solid rgba(130, 160, 255, 0.28);
+  flex-shrink: 0;
+}
+
+.inm-row-card__icon mat-icon {
+  font-size: 1.35rem;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.inm-row-card__title {
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  min-width: 0;
+}
+
+.inm-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.inm-cell-stack--center {
+  align-items: center;
+  text-align: center;
+}
+
+.inm-cell-line {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.inm-cell-line--muted {
+  font-size: 0.74rem;
+}
+
+.inm-cell-line i {
+  margin-right: 0.28rem;
+  opacity: 0.85;
+}
+
+.inm-row-chips {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.inm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(130, 160, 255, 0.22);
+  color: #c0cbeb;
+  background: rgba(14, 20, 32, 0.88);
+}
+
+.inm-chip--muted {
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #aeb9d9;
+}
+
+.docs-modal__viewer--map {
+  height: 60vh;
+}
+
+.docs-modal__viewer--map iframe,
+.docs-modal__viewer--map .lista-inmuebles-map-host {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  min-height: 200px;
+}
+
+@media (max-width: 1200px) {
+  .inm-row-chips {
+    align-items: flex-start;
+  }
+}

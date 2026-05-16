@@ -1,0 +1,39 @@
+<div class="docs-backdrop" *ngIf="visible" (click)="cerrar()">
+  <div class="docs-modal" (click)="$event.stopPropagation()">
+    <div class="row docs-modal__header">
+      <div class="col-10 col-md-11">
+        <span class="docs-modal__eyebrow">{{ eyebrow }}</span>
+        <h3 class="docs-modal__title">{{ titulo }}</h3>
+        <p class="docs-modal__subtitle" *ngIf="subtitulo">{{ subtitulo }}</p>
+      </div>
+      <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
+        <button type="button" class="docs-modal__close" (click)="cerrar()" aria-label="Cerrar">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <div class="row docs-modal__body">
+      <div class="col-12">
+        <div class="docs-modal__viewer docs-modal__viewer--image" *ngIf="esImagen(url)">
+          <img [src]="url" [alt]="titulo" />
+        </div>
+        <div class="docs-modal__viewer" *ngIf="!esImagen(url) && safeUrl">
+          <iframe [src]="safeUrl" frameborder="0" [title]="titulo"></iframe>
+        </div>
+        <div class="docs-modal__fallback" *ngIf="!esImagen(url) && !safeUrl && url">
+          <p>No se pudo previsualizar el archivo.</p>
+          <a [href]="url" target="_blank" rel="noopener noreferrer">Abrir en otra pestaña</a>
+        </div>
+      </div>
+    </div>
+    <div class="row docs-modal__footer">
+      <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <a class="docs-modal__link" [href]="url" target="_blank" rel="noopener noreferrer" *ngIf="url">
+          <i class="fa fa-external-link"></i>
+          <span>Abrir en nueva pestaña</span>
+        </a>
+        <button type="button" class="docs-modal__btn" (click)="cerrar()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

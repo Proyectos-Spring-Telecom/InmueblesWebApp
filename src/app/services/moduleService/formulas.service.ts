@@ -3,37 +3,36 @@ import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-/** POST/PATCH `/factores`. */
-export interface FactorPayload {
-  variable: string;
-  valor: string;
-  descripcion?: string | null;
+/** POST/PATCH `/formulas`. Las variables dentro de `formula` deben coincidir con `variable` en Factores cuando el motor evalúe la expresión. */
+export interface FormulaPayload {
+  nombre: string;
+  formula: string;
 }
 
 @Injectable({
   providedIn: 'root',
 })
-export class FactoresService {
-  private readonly base = `${environment.API_SECURITY}/factores`;
+export class FormulasService {
+  private readonly base = `${environment.API_SECURITY}/formulas`;
 
   constructor(private http: HttpClient) {}
 
-  obtenerFactoresData(page: number, limit: number): Observable<any> {
+  obtenerFormulasData(page: number, limit: number): Observable<any> {
     const params = new HttpParams()
       .set('page', String(page))
       .set('limit', String(limit));
     return this.http.get(`${this.base}/paginated`, { params });
   }
 
-  obtenerFactor(id: number): Observable<any> {
+  obtenerFormula(id: number): Observable<any> {
     return this.http.get(`${this.base}/${id}`);
   }
 
-  agregarFactor(data: FactorPayload): Observable<any> {
+  agregarFormula(data: FormulaPayload): Observable<any> {
     return this.http.post(this.base, data);
   }
 
-  actualizarFactor(id: number, data: FactorPayload): Observable<any> {
+  actualizarFormula(id: number, data: FormulaPayload): Observable<any> {
     return this.http.patch(`${this.base}/${id}`, data);
   }
 

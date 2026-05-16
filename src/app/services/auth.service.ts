@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, Subject, of, switchMap, tap, map, catchError } from 'rxjs';
+import { Observable, Subject, of, switchMap, tap, map, catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { User } from '../entities/User';
 import { Credentials } from '../entities/Credentials';
@@ -22,18 +22,27 @@ interface LoginResponse {
 export class AuthenticationService extends BaseServicesService {
   private authenticationChanged = new Subject<boolean>();
   private user: User | null = null;
+  /** Tras un refresh rechazado (401), no volver a llamar /login/refresh ni redirigir. */
+  private refreshBlocked = false;
   private readonly baseUrl = environment.API_SECURITY;
+  /** Cliente sin interceptores: refresh/logout no deben disparar otro refresh ni redirección. */
+  private readonly rawHttp: HttpClient;
 
   constructor(
     private http: HttpClient,
+    httpBackend: HttpBackend,
     private router: Router,
   ) {
     super();
+    this.rawHttp = new HttpClient(httpBackend);
   }
 
   public login(body: { userName: string; password: string }): Observable<User> {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, body).pipe(
-      tap((resp) => this.persistTokens(resp)),
+      tap((resp) => {
+        this.resetSessionState();
+        this.persistTokens(resp);
+      }),
       switchMap(() => this.getMe()),
     );
   }
@@ -53,15 +62,15 @@ export class AuthenticationService extends BaseServicesService {
   public refreshToken(): Observable<LoginResponse> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
-      return of({}).pipe(
-        switchMap(() => {
-          throw new Error('No refreshToken available');
-        })
-      );
+      return throwError(() => new Error('No refreshToken available'));
     }
 
-    return this.http
-      .post<LoginResponse>(`${this.baseUrl}/login/refresh`, { refreshToken })
+    return this.rawHttp
+      .post<LoginResponse>(
+        `${this.baseUrl}/login/refresh`,
+        { refreshToken },
+        { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
+      )
       .pipe(tap((resp) => this.persistTokens(resp)));
   }
 
@@ -72,8 +81,12 @@ export class AuthenticationService extends BaseServicesService {
       return of(void 0);
     }
 
-    return this.http
-      .post(`${this.baseUrl}/login/logout`, { refreshToken })
+    return this.rawHttp
+      .post(
+        `${this.baseUrl}/login/logout`,
+        { refreshToken },
+        { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
+      )
       .pipe(
         map(() => void 0),
         catchError(() => of(void 0)),
@@ -81,15 +94,47 @@ export class AuthenticationService extends BaseServicesService {
       );
   }
 
-  public clearSessionAndRedirect(): void {
+  /** Limpia sesión sin navegar (p. ej. refresh 401: el usuario no debe ser expulsado al login). */
+  public clearSessionOnly(): void {
+    this.user = null;
     this.cleanSession();
     localStorage.clear();
     this.authenticationChanged.next(false);
-    this.router.navigate(['/login']);
+    this.blockRefresh();
+  }
+
+  /** Cierre de sesión explícito (logout): limpia y va al login. */
+  public clearSessionAndRedirect(): void {
+    this.clearSessionOnly();
+    if (!this.isAuthRoute()) {
+      void this.router.navigate(['/login']);
+    }
+  }
+
+  public isRefreshBlocked(): boolean {
+    return this.refreshBlocked;
+  }
+
+  public resetSessionState(): void {
+    this.refreshBlocked = false;
   }
 
   public isAuthenticated(): boolean {
     return !!this.getToken();
+  }
+
+  private blockRefresh(): void {
+    this.refreshBlocked = true;
+  }
+
+  private isAuthRoute(): boolean {
+    const url = this.router.url || '';
+    return (
+      url.startsWith('/login') ||
+      url.startsWith('/register') ||
+      url.startsWith('/solicitud-cambio-password') ||
+      url.startsWith('/cambio-password')
+    );
   }
 
   public isAuthenticationChanged(): Observable<boolean> {
@@ -190,15 +235,25 @@ export class AuthenticationService extends BaseServicesService {
     const refreshToken = this.extractRefreshToken(payload);
     if (token) sessionStorage.setItem('token', token);
     if (refreshToken) sessionStorage.setItem('refreshToken', refreshToken);
+    if (token || refreshToken) {
+      this.refreshBlocked = false;
+    }
     this.authenticationChanged.next(this.isAuthenticated());
   }
 
   private extractToken(payload: any): string {
-    return payload?.token || payload?.accessToken || '';
+    const source = payload?.data ?? payload;
+    return (
+      source?.token ||
+      source?.accessToken ||
+      source?.access_token ||
+      ''
+    );
   }
 
   private extractRefreshToken(payload: any): string {
-    return payload?.refreshToken || '';
+    const source = payload?.data ?? payload;
+    return source?.refreshToken || source?.refresh_token || '';
   }
 
   private setStorageUser(value: any): void {

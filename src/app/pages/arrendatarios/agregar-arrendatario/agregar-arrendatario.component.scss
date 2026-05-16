@@ -733,7 +733,8 @@
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7);
 }
 
-.docs-modal__viewer--map #mapInmueble {
+.docs-modal__viewer--map #mapInmueble,
+.docs-modal__viewer--map #mapArrendatario {
   width: 100%;
   height: 60vh;
   border-radius: 14px;
@@ -924,7 +925,8 @@
     padding: 0.9rem;
   }
 
-  .docs-modal__viewer--map #mapInmueble {
+  .docs-modal__viewer--map #mapInmueble,
+  .docs-modal__viewer--map #mapArrendatario {
     height: 55vh;
   }
 }

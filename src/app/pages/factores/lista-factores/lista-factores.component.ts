@@ -2,10 +2,38 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
+import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
+import { FactoresService } from 'src/app/services/moduleService/factores.service';
+import { FormulasService } from 'src/app/services/moduleService/formulas.service';
+import { formatValorMilesParaLista } from 'src/app/shared/valor-miles-format';
 import Swal from 'sweetalert2';
-import { FACTORES_PRESUPUESTO_DEMO } from '../factores-presupuesto-demo.data';
-import { FORMULAS_PRESUPUESTO_DEMO } from '../formulas-presupuesto-demo.data';
+
+function mapFactorGridRow(item: any) {
+  const variable = String(
+    item?.variable ?? item?.Variable ?? item?.nombre ?? item?.Nombre ?? '',
+  ).trim();
+  const valorRaw = item?.valor ?? item?.Valor ?? '';
+  return {
+    ...item,
+    id: Number(item?.id ?? item?.Id),
+    variable,
+    valor: valorRaw,
+    valorFmt: formatValorMilesParaLista(valorRaw),
+    descripcion: item?.descripcion ?? item?.Descripcion ?? '',
+    estatus: Number(item?.estatus ?? item?.Estatus ?? 1),
+  };
+}
+
+function mapFormulaGridRow(item: any) {
+  return {
+    ...item,
+    id: Number(item?.id ?? item?.Id),
+    nombre: item?.nombre ?? item?.Nombre ?? '',
+    formula: item?.formula ?? item?.Formula ?? '',
+    estatus: Number(item?.estatus ?? item?.Estatus ?? 1),
+  };
+}
 
 @Component({
   selector: 'app-lista-factores',
@@ -36,14 +64,18 @@ export class ListaFactoresComponent implements OnInit {
   public filtroActivoFactores: string = '';
   public filtroActivoFormulas: string = '';
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private factoresService: FactoresService,
+    private formulasService: FormulasService,
+  ) {
     this.showFilterRow = true;
     this.showHeaderFilter = true;
   }
 
   ngOnInit() {
-    this.setupFactoresPresupuestoDemo();
-    this.setupFormulasPresupuestoDemo();
+    this.setupFactoresDataSource();
+    this.setupFormulasDataSource();
   }
 
   agregarFactor() {
@@ -58,19 +90,179 @@ export class ListaFactoresComponent implements OnInit {
     this.router.navigateByUrl('/factores/editar-factor/' + idFactor);
   }
 
-  editarFormulaDemo(row: { id: number; nombre: string; formula: string }) {
+  editarFormula(row: { id: number; nombre: string; formula: string }) {
     this.router.navigateByUrl('/factores/editar-formula/' + row.id);
   }
 
-  eliminarFormulaDemo(row: { id: number; nombre: string }) {
+  activarFactor(rowData: any) {
     Swal.fire({
-      title: 'Eliminar fórmula',
-      html: `La fórmula <strong>${row.nombre}</strong> es de demostración y no se elimina del servidor.`,
-      icon: 'info',
+      title: '¡Activar!',
+      html: `¿Confirma dar de alta el factor: <strong>${rowData.variable}</strong>?`,
+      icon: 'warning',
       background: '#141a21',
       color: '#ffffff',
+      showCancelButton: true,
       confirmButtonColor: '#3085d6',
-      confirmButtonText: 'Entendido',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.factoresService.updateEstatusActivar(rowData.id, 1).subscribe({
+        next: () => {
+            Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Confirmación realizada!',
+              html: `El factor ha sido activado.`,
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+            this.setupFactoresDataSource();
+            this.dataGridFactores?.instance?.refresh();
+          },
+          error: (error) => {
+            Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Ops!',
+              html: `${error}`,
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+        },
+      });
+    });
+  }
+
+  desactivarFactor(rowData: any) {
+    Swal.fire({
+      title: '¡Desactivar!',
+      html: `¿Confirma dar de baja el factor: <strong>${rowData.variable}</strong>?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+      background: '#141a21',
+      color: '#ffffff',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.factoresService.updateEstatusDesactivar(rowData.id, 0).subscribe({
+        next: () => {
+            Swal.fire({
+              title: '¡Confirmación realizada!',
+              html: `El factor ha sido desactivado.`,
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+              background: '#141a21',
+              color: '#ffffff',
+            });
+            this.setupFactoresDataSource();
+            this.dataGridFactores?.instance?.refresh();
+          },
+          error: (error) => {
+            Swal.fire({
+              title: '¡Ops!',
+              html: `${error}`,
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+              background: '#141a21',
+              color: '#ffffff',
+            });
+        },
+      });
+    });
+  }
+
+  activarFormula(rowData: any) {
+    Swal.fire({
+      title: '¡Activar!',
+      html: `¿Confirma dar de alta la fórmula: <strong>${rowData.nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.formulasService.updateEstatusActivar(rowData.id, 1).subscribe({
+        next: () => {
+            Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Confirmación realizada!',
+              html: `La fórmula ha sido activada.`,
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+            this.setupFormulasDataSource();
+            this.dataGridFormulas?.instance?.refresh();
+          },
+          error: (error) => {
+            Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Ops!',
+              html: `${error}`,
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+        },
+      });
+    });
+  }
+
+  desactivarFormula(rowData: any) {
+    Swal.fire({
+      title: '¡Desactivar!',
+      html: `¿Confirma dar de baja la fórmula: <strong>${rowData.nombre}</strong>?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+      background: '#141a21',
+      color: '#ffffff',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.formulasService.updateEstatusDesactivar(rowData.id, 0).subscribe({
+        next: () => {
+            Swal.fire({
+              title: '¡Confirmación realizada!',
+              html: `La fórmula ha sido desactivada.`,
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+              background: '#141a21',
+              color: '#ffffff',
+            });
+            this.setupFormulasDataSource();
+            this.dataGridFormulas?.instance?.refresh();
+          },
+          error: (error) => {
+            Swal.fire({
+              title: '¡Ops!',
+              html: `${error}`,
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+              background: '#141a21',
+              color: '#ffffff',
+            });
+        },
+      });
     });
   }
 
@@ -86,38 +278,70 @@ export class ListaFactoresComponent implements OnInit {
     e.component.refresh();
   }
 
-  setupFactoresPresupuestoDemo() {
-    const all = [...FACTORES_PRESUPUESTO_DEMO];
-    this.paginaActualDataFactores = all;
+  setupFactoresDataSource() {
+    const defaultPageSize = this.pageSizeFactoresDemo || 10;
 
     this.listaFactoresDemo = new CustomStore({
       key: 'id',
       load: async (loadOptions: any) => {
-        const take = Number(loadOptions?.take) || this.pageSizeFactoresDemo || 10;
+        const take = Number(loadOptions?.take) || defaultPageSize;
         const skip = Number(loadOptions?.skip) || 0;
-        const slice = all.slice(skip, skip + take);
-        return {
-          data: slice,
-          totalCount: all.length,
-        };
+        const page = Math.floor(skip / take) + 1;
+
+        try {
+          const resp: any = await lastValueFrom(
+            this.factoresService.obtenerFactoresData(page, take),
+          );
+          const rowsRaw: any[] = Array.isArray(resp?.data) ? resp.data : [];
+          const meta = resp?.paginated || {};
+          const totalRegistros =
+            toNum(meta.total) ?? toNum(resp?.total) ?? rowsRaw.length;
+          const dataTransformada = rowsRaw.map((item: any) => mapFactorGridRow(item));
+
+          this.paginaActualDataFactores = dataTransformada;
+
+          return {
+            data: dataTransformada,
+            totalCount: totalRegistros,
+          };
+        } catch (err) {
+          console.error('Error al cargar factores:', err);
+          return { data: [], totalCount: 0 };
+        }
       },
     });
   }
 
-  setupFormulasPresupuestoDemo() {
-    const all = [...FORMULAS_PRESUPUESTO_DEMO];
-    this.paginaActualDataFormulas = all;
+  setupFormulasDataSource() {
+    const defaultPageSize = this.pageSizeFormulasDemo || 10;
 
     this.listaFormulasDemo = new CustomStore({
       key: 'id',
       load: async (loadOptions: any) => {
-        const take = Number(loadOptions?.take) || this.pageSizeFormulasDemo || 10;
+        const take = Number(loadOptions?.take) || defaultPageSize;
         const skip = Number(loadOptions?.skip) || 0;
-        const slice = all.slice(skip, skip + take);
-        return {
-          data: slice,
-          totalCount: all.length,
-        };
+        const page = Math.floor(skip / take) + 1;
+
+        try {
+          const resp: any = await lastValueFrom(
+            this.formulasService.obtenerFormulasData(page, take),
+          );
+          const rowsRaw: any[] = Array.isArray(resp?.data) ? resp.data : [];
+          const meta = resp?.paginated || {};
+          const totalRegistros =
+            toNum(meta.total) ?? toNum(resp?.total) ?? rowsRaw.length;
+          const dataTransformada = rowsRaw.map((item: any) => mapFormulaGridRow(item));
+
+          this.paginaActualDataFormulas = dataTransformada;
+
+          return {
+            data: dataTransformada,
+            totalCount: totalRegistros,
+          };
+        } catch (err) {
+          console.error('Error al cargar fórmulas:', err);
+          return { data: [], totalCount: 0 };
+        }
       },
     });
   }
@@ -154,7 +378,11 @@ export class ListaFactoresComponent implements OnInit {
       const hitEnColumnas = dataFields.some((df) =>
         normalizar(row?.[df]).includes(texto),
       );
-      const extras = [normalizar(row?.id)];
+      const extras = [
+        normalizar(row?.id),
+        normalizar(row?.valor),
+        normalizar(String(row?.valorFmt ?? '').replace(/,/g, '')),
+      ];
       return hitEnColumnas || extras.some((s) => s.includes(texto));
     });
     grid?.option('dataSource', dataFiltrada);
@@ -227,7 +455,9 @@ export class ListaFactoresComponent implements OnInit {
         allowOutsideClick: false,
       });
     } else {
-      this.autoExpandAllGroupsFactores = !this.autoExpandAllGroupsFactores;
+      const next = !this.autoExpandAllGroupsFactores;
+      this.autoExpandAllGroupsFactores = next;
+      inst.option('grouping.autoExpandAll', next);
       inst.refresh();
     }
   }
@@ -251,8 +481,15 @@ export class ListaFactoresComponent implements OnInit {
         allowOutsideClick: false,
       });
     } else {
-      this.autoExpandAllGroupsFormulas = !this.autoExpandAllGroupsFormulas;
+      const next = !this.autoExpandAllGroupsFormulas;
+      this.autoExpandAllGroupsFormulas = next;
+      inst.option('grouping.autoExpandAll', next);
       inst.refresh();
     }
   }
+}
+
+function toNum(v: any): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
