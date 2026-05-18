@@ -34,7 +34,10 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private shouldAttemptRefresh(error: HttpErrorResponse, req: HttpRequest<any>): boolean {
-    if (error.status !== 401) return false;
+    const status = error.status;
+    if (status !== 401 && status !== 403) return false;
+    // 403 con Bearer suele ser JWT rechazado en algunos filtros; sin Authorization es más probable un permiso real.
+    if (status === 403 && !req.headers.get('Authorization')) return false;
     if (req.context.get(AUTH_RETRIED_AFTER_REFRESH)) return false;
     if (req.url.includes('/login/refresh') || req.url.includes('/login/logout')) return false;
     if (this.isAuthEndpoint(req.url)) return false;
@@ -121,6 +124,22 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private isAuthEndpoint(url: string): boolean {
-    return url.includes('/login') && !url.includes('/login/me');
+    const path = this.requestPath(url);
+    if (path.includes('/login/me')) return false;
+    // Evitar falsos positivos tipo ".../login-recovery" (includes('/login') fallaba antes).
+    return /\/login(\/|$)/.test(path);
+  }
+
+  private requestPath(url: string): string {
+    try {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return new URL(url).pathname || '';
+      }
+    } catch {
+      /* seguir con url relativa */
+    }
+    const q = url.indexOf('?');
+    const base = q === -1 ? url : url.slice(0, q);
+    return base.startsWith('/') ? base : `/${base}`;
   }
 }

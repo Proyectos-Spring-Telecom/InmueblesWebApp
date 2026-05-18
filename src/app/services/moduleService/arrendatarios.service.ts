@@ -11,8 +11,16 @@ export class ArrendatariosService {
 
   constructor(private http: HttpClient) {}
 
+  obtenerArrendatariosPaginated(page: number, limit: number): Observable<unknown> {
+    return this.http.get(`${this.base}/paginated?page=${page}&limit=${limit}`);
+  }
+
   crearArrendatario(data: FormData): Observable<unknown> {
     return this.http.post(this.base, data);
+  }
+
+  obtenerArrendatario(id: number): Observable<unknown> {
+    return this.http.get(`${this.base}/${id}`);
   }
 
   actualizarArrendatario(id: number, data: FormData): Observable<unknown> {

@@ -1,3 +1,4 @@
+import { AnimationEvent } from '@angular/animations';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CoreService } from 'src/app/services/core.service';
 import {
@@ -20,6 +21,7 @@ import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
 import { Permiso } from 'src/app/entities/permiso.enum';
 import { authViewAnimation } from '../auth-view.animation';
+import { AuthTransitionService } from 'src/app/services/auth-transition.service';
 
 @Component({
   selector: 'app-side-login',
@@ -40,8 +42,12 @@ export class AppSideLoginComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private authService: AuthenticationService
+    private authService: AuthenticationService,
+    private authTransition: AuthTransitionService
   ) {}
+
+  authAnimState: 'idle' | 'success' = 'idle';
+  private pendingRoute: string[] | null = null;
 
   form = new FormGroup({
     uname: new FormControl('', [Validators.required, Validators.minLength(6)]),
@@ -107,21 +113,54 @@ export class AppSideLoginComponent implements OnInit {
           return throwError(() => '');
         })
       )
-      .subscribe((result: User) => {
-        this.isDisabled = false;
-
+      .subscribe(() => {
         const perms = this.authService.getPermissions() || [];
         const hasMonitoreo = perms.includes(String(Permiso.CONSULTAR_MONITOREO));
-        this.router.navigate(hasMonitoreo ? ['/monitoreo'] : ['/usuarios/perfil-usuario']);
+        const route = hasMonitoreo ? ['/monitoreo'] : ['/usuarios/perfil-usuario'];
 
-        this.toastr.success(
-          'Bienvenido al Sistema.',
-          '¡Credenciales Correctas!'
-        );
+        if (this.prefersReducedMotion()) {
+          this.completeLoginNavigation(route);
+          return;
+        }
 
-        this.loading = false;
-        this.textLogin = 'iniciar sesión';
+        this.authTransition.beginLoginExit();
+        this.pendingRoute = route;
+        this.textLogin = 'accediendo...';
+        this.authAnimState = 'success';
+        this.cdr.markForCheck();
+        window.setTimeout(() => {
+          if (this.pendingRoute) {
+            this.onAuthAnimDone({ toState: 'success' } as AnimationEvent);
+          }
+        }, 620);
       });
+  }
+
+  onAuthAnimDone(event: AnimationEvent): void {
+    if (event.toState !== 'success' || !this.pendingRoute) {
+      return;
+    }
+    const route = this.pendingRoute;
+    this.pendingRoute = null;
+    this.completeLoginNavigation(route);
+  }
+
+  private completeLoginNavigation(route: string[]): void {
+    void this.router.navigate(route).then(() => {
+      this.authTransition.startAppReveal();
+    });
+    this.toastr.success('Bienvenido al Sistema.', '¡Credenciales Correctas!');
+    this.loading = false;
+    this.textLogin = 'iniciar sesión';
+    this.isDisabled = false;
+    this.authAnimState = 'idle';
+  }
+
+  private prefersReducedMotion(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
   }
 
   onSubmits() {

@@ -62,14 +62,6 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-4"><label for="rentaMxn" class="form-label perm-label">Renta (Mxn)</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="rentaMxn" type="number" class="form-control"
-                  formControlName="rentaMxn" placeholder="Monto de renta" /><label for="rentaMxn">Monto De Renta</label>
-              </div>
-            </div>
-          </div>
           <div class="col-12 col-md-4"><label for="direccionInmueble" class="form-label perm-label">Dirección
               fiscal</label>
             <div class="input-group input-group-lg perm-ig"><span
@@ -77,6 +69,21 @@
               <div class="form-floating flex-grow-1"><input id="direccionInmueble" type="text" class="form-control"
                   formControlName="direccionInmueble" placeholder="Dirección fiscal" /><label
                   for="direccionInmueble">Dirección Fiscal</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4"><label for="estatusInmueble" class="form-label perm-label">Estatus Del
+              Inmueble</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select id="estatusInmueble" class="form-select" formControlName="estatusInmueble"
+                  aria-label="Estatus del inmueble asociado">
+                  <option [ngValue]="null" disabled></option>
+                  <option value="RENTADO">Rentado</option>
+                  <option value="PROPIO">Propio</option>
+                </select>
+                <label for="estatusInmueble">Estatus Del Inmueble</label>
+              </div>
             </div>
           </div>
           <div class="col-12 col-md-4"><label for="vigenciaAnios" class="form-label perm-label">Vigencia
@@ -103,13 +110,22 @@
             </div>
           </div>
 
-          <div class="col-12 col-md-4"><label for="tiempoRentaAnios" class="form-label perm-label">Tiempo De
+          <div class="col-12 col-md-4" *ngIf="mostrarCamposRenta"><label for="rentaMxn" class="form-label perm-label">Renta
+              (MxN)</label>
+            <div class="input-group input-group-lg perm-ig"><span
+                class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+              <div class="form-floating flex-grow-1"><input id="rentaMxn" type="number" class="form-control"
+                  formControlName="rentaMxn" placeholder="Monto de renta" /><label for="rentaMxn">Monto de renta</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4" *ngIf="mostrarCamposRenta"><label for="tiempoRentaAnios" class="form-label perm-label">Tiempo De
               renta (años)</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="tiempoRentaAnios" type="number" class="form-control"
                   formControlName="tiempoRentaAnios" placeholder="Tiempo de renta" /><label
-                  for="tiempoRentaAnios">Tiempo De Renta</label></div>
+                  for="tiempoRentaAnios">Tiempo de renta</label></div>
             </div>
           </div>
           <div class="col-12 col-md-4"><label for="nombreRepresentanteLegal"
@@ -140,14 +156,6 @@
                   placeholder="Ej.: representante&#64;empresa.com" /><label for="correoRepresentanteLegal">Ej.:
                   representante&#64;empresa.com</label></div>
             </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <label class="form-label perm-label">Ubicación del arrendatario</label>
-            <button type="button" class="inmueble-geo-trigger"
-              title="Seleccionar ubicación en el mapa" (click)="abrirModalMapa()">
-              <i class="fa fa-map-marker"></i>
-              Seleccionar ubicación
-            </button>
           </div>
           <div class="col-12 arrend-fa-section mt-5">
             <div class="arrend-fa-hero">
@@ -433,8 +441,6 @@
                                   }"></ng-container>
                                 </div>
                               </ng-template>
-                              <h6 class="uploader__title">Sube imagen</h6>
-                              <p class="uploader__subtitle">Arrastra y suelta o</p>
                               <input #srvPagoInput type="file" [accept]="acceptPdfImagenes"
                                 class="uploader__input" (change)="onServicioPagoFileSelected($event, i)" />
                             </div>
@@ -448,7 +454,9 @@
             </div>
           </div>
 
-          <div class="col-12 perm-docs-in-grid mt-4">
+          <div class="col-12 perm-docs-in-grid mt-4"
+            #docsSectionArrendatario
+            [class.autocarga-docs-highlight]="resaltarAutocargaDocs">
             <div class="arrend-fa-hero mt-4">
               <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>folder_copy</mat-icon></div>
               <div class="arrend-fa-hero__body">
@@ -461,6 +469,33 @@
             </div>
             <div class="row g-3 g-lg-4 mt-0 uploader-wrap docs-uploader-docs-row align-items-stretch">
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                <label class="form-label perm-label docs-uploader-label">Licencia / uso de suelo</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>image</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('licencia')">Seleccionar</button>
+                        <button *ngIf="imagenLicenciaUrl" mat-flat-button class="bg-warn docs-uploader-ver-btn"
+                          type="button" (click)="verArchivoRemoto(imagenLicenciaUrl, imagenLicenciaNombre || 'Licencia')">
+                          <mat-icon>visibility</mat-icon><span>Ver</span>
+                        </button>
+                        <span class="uploader__badge"
+                          [class.uploader__badge--file]="imagenLicenciaNombre || arrendatarioForm.get('documentoLicencia')?.value?.name">
+                          {{ imagenLicenciaNombre || arrendatarioForm.get('documentoLicencia')?.value?.name || etiquetaPdfImagenes }}
+                        </span>
+                      </div>
+                      <input #imagenLicenciaInput type="file" [accept]="acceptPdfImagenes"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoLicencia')" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Fachada</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
@@ -472,13 +507,16 @@
                       <div class="uploader__cta">
                         <button mat-flat-button color="primary" type="button"
                           (click)="abrirSelectorArchivo('plano')">Seleccionar</button>
+                        <button *ngIf="imagenPlanoUrl" mat-flat-button class="bg-warn docs-uploader-ver-btn"
+                          type="button" (click)="verArchivoRemoto(imagenPlanoUrl, imagenPlanoNombre || 'Fachada')">
+                          <mat-icon>visibility</mat-icon><span>Ver</span>
+                        </button>
                         <span class="uploader__badge"
                           [class.uploader__badge--file]="imagenPlanoNombre || arrendatarioForm.get('documentoPlano')?.value?.name">
-                          {{ imagenPlanoNombre || arrendatarioForm.get('documentoPlano')?.value?.name || 'PNG · JPG · JPEG'
-                          }}
+                          {{ imagenPlanoNombre || arrendatarioForm.get('documentoPlano')?.value?.name || etiquetaSoloImagenes }}
                         </span>
                       </div>
-                      <input #imagenPlanoInput type="file" accept="image/png,image/jpeg,image/jpg"
+                      <input #imagenPlanoInput type="file" [accept]="acceptSoloImagenes"
                         class="uploader__input" (change)="onFileSelected($event, 'documentoPlano')" />
                     </div>
                   </div>
@@ -486,9 +524,8 @@
               </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
-                #autocargaContratoCard
-                [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
-                <label class="form-label perm-label docs-uploader-label">Contrato De Renta</label>
+                *ngIf="mostrarCamposRenta">
+                <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
                     <div class="uploader__glow"></div>
@@ -496,20 +533,106 @@
                       <div class="uploader__icon"><mat-icon>description</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
-                        Sube Aquí El Contrato Para Intentar Completar El Formulario.
-                      </p>
                       <div class="uploader__cta">
                         <button mat-flat-button color="primary" type="button"
                           (click)="abrirSelectorArchivo('contratoRenta')">Seleccionar</button>
+                        <button *ngIf="contratoRentaUrl" mat-flat-button class="bg-warn docs-uploader-ver-btn"
+                          type="button" (click)="verArchivoRemoto(contratoRentaUrl, contratoRentaNombre || 'Contrato de renta')">
+                          <mat-icon>visibility</mat-icon><span>Ver</span>
+                        </button>
                         <span class="uploader__badge"
                           [class.uploader__badge--file]="contratoRentaNombre || arrendatarioForm.get('documentoContratoRenta')?.value?.name">
-                          {{ contratoRentaNombre || arrendatarioForm.get('documentoContratoRenta')?.value?.name || 'PDF · PNG
-                          · JPG' }}
+                          {{ contratoRentaNombre || arrendatarioForm.get('documentoContratoRenta')?.value?.name || etiquetaPdfImagenes }}
                         </span>
                       </div>
-                      <input #contratoRentaInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg"
+                      <input #contratoRentaInput type="file" [accept]="acceptPdfImagenes"
                         class="uploader__input" (change)="onFileSelected($event, 'documentoContratoRenta')" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                #autocargaEscrituraCard
+                [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
+                <label class="form-label perm-label docs-uploader-label">Escrituras o título de propiedad</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
+                        Sube aquí la escritura o título para intentar completar el formulario.
+                      </p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('escritura')">Seleccionar</button>
+                        <button *ngIf="archivoEscrituraUrl" mat-flat-button class="bg-warn docs-uploader-ver-btn"
+                          type="button" (click)="verArchivoRemoto(archivoEscrituraUrl, archivoEscrituraNombre || 'Escrituras')">
+                          <mat-icon>visibility</mat-icon><span>Ver</span>
+                        </button>
+                        <span class="uploader__badge"
+                          [class.uploader__badge--file]="archivoEscrituraNombre || arrendatarioForm.get('documentoEscritura')?.value?.name">
+                          {{ archivoEscrituraNombre || arrendatarioForm.get('documentoEscritura')?.value?.name || etiquetaPdfImagenes }}
+                        </span>
+                      </div>
+                      <input #archivoEscrituraInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
+                        (change)="onFileSelected($event, 'documentoEscritura')" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                <label class="form-label perm-label docs-uploader-label">Boleta predial vigente</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>receipt_long</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('boletaPredial')">Seleccionar</button>
+                        <button *ngIf="boletaPredialUrl" mat-flat-button class="bg-warn docs-uploader-ver-btn"
+                          type="button"
+                          (click)="verArchivoRemoto(boletaPredialUrl!, boletaPredialNombre || 'Boleta predial')">
+                          <mat-icon>visibility</mat-icon><span>Ver</span>
+                        </button>
+                        <span class="uploader__badge"
+                          [class.uploader__badge--file]="boletaPredialNombre || arrendatarioForm.get('documentoBoletaPredial')?.value?.name">
+                          {{ boletaPredialNombre || arrendatarioForm.get('documentoBoletaPredial')?.value?.name || etiquetaPdfImagenes }}
+                        </span>
+                      </div>
+                      <input #boletaPredialInput type="file" [accept]="acceptPdfImagenes"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoBoletaPredial')" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                <label class="form-label perm-label docs-uploader-label">Recibo de agua y servicios</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>water_drop</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Opcional · compatible con PDF imagen</p>
+                      <div class="uploader__cta">
+                        <button mat-flat-button color="primary" type="button"
+                          (click)="abrirSelectorArchivo('reciboAgua')">Seleccionar</button>
+                        <span class="uploader__badge"
+                          [class.uploader__badge--file]="reciboAguaServiciosNombre || arrendatarioForm.get('documentoReciboAguaServicios')?.value?.name">
+                          {{ reciboAguaServiciosNombre || arrendatarioForm.get('documentoReciboAguaServicios')?.value?.name || etiquetaPdfImagenes }}
+                        </span>
+                      </div>
+                      <input #reciboAguaServiciosInput type="file" [accept]="acceptPdfImagenes"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoReciboAguaServicios')" />
                     </div>
                   </div>
                 </div>
@@ -613,11 +736,25 @@
                 </div>
               </div>
 
-              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card" [formGroup]="galeriaGrupo(0)">
+              <ng-container formArrayName="galeriaImagenes">
+              <div *ngFor="let galCtrl of galeriaImagenesFormArray.controls; let i = index"
+                class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                [class.docs-galeria-card-enter]="indiceGaleriaAnimando === i"
+                [formGroupName]="i"
+                (animationend)="finalizarAnimacionGaleria(i)">
                 <div class="docs-uploader-label-row">
-                  <label class="form-label perm-label docs-uploader-label mb-0">Imagen 1</label>
-                  <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
-                    (click)="agregarFotoGaleria()"><mat-icon>add</mat-icon> Agregar</button>
+                  <label class="form-label perm-label docs-uploader-label mb-0">Imagen {{ i + 1 }}</label>
+                  <div class="d-flex flex-wrap gap-1 justify-content-end">
+                    <button type="button" class="docs-uploader-inline-btn" mat-stroked-button color="warn"
+                      (click)="eliminarFotoGaleria(i)" *ngIf="galeriaImagenesFormArray.length >= 2"
+                      title="Eliminar imagen" aria-label="Eliminar imagen">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                    <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
+                      (click)="agregarFotoGaleria()" *ngIf="i === galeriaImagenesFormArray.length - 1">
+                      <mat-icon>add</mat-icon> Agregar
+                    </button>
+                  </div>
                 </div>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
@@ -628,17 +765,24 @@
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
                       <div class="uploader__cta">
                         <button mat-flat-button color="primary" type="button"
-                          (click)="abrirSelectorGaleria(galeriaInput0)">Seleccionar</button>
-                        <span class="uploader__badge" [class.uploader__badge--file]="galeriaGrupo(0).get('nombre')?.value">
-                          {{ galeriaGrupo(0).get('nombre')?.value || 'PNG · JPG · JPEG' }}
+                          (click)="abrirSelectorGaleria(galLoop)">Seleccionar</button>
+                        <button *ngIf="galCtrl.get('url')?.value"
+                          mat-flat-button class="bg-warn docs-uploader-ver-btn" type="button"
+                          (click)="verArchivoRemoto(galCtrl.get('url')?.value, galCtrl.get('nombre')?.value || ('Imagen ' + (i + 1)))">
+                          <mat-icon>visibility</mat-icon><span>Ver</span>
+                        </button>
+                        <span class="uploader__badge"
+                          [class.uploader__badge--file]="galCtrl.get('nombre')?.value || galCtrl.get('url')?.value">
+                          {{ galCtrl.get('nombre')?.value || etiquetaSoloImagenes }}
                         </span>
                       </div>
-                      <input #galeriaInput0 type="file" accept="image/png,image/jpeg,image/jpg" class="uploader__input"
-                        (change)="onGaleriaFileSelected($event, 0)" />
+                      <input #galLoop type="file" [accept]="acceptSoloImagenes" class="uploader__input"
+                        (change)="onGaleriaFileSelected($event, i)" />
                     </div>
                   </div>
                 </div>
               </div>
+              </ng-container>
 
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label" id="label-csf-rep-legal">Constancia De
@@ -744,7 +888,7 @@
                         <div
                           class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
                           <div class="d-flex align-items-center flex-wrap gap-2">
-                            <span class="socios-live-name" *ngIf="primerNombreSocio">{{ 'Socio: ' + primerNombreSocio }}</span>
+                            <span class="socios-live-name" *ngIf="nombreSocioEnIndice(i)">{{ 'Socio: ' + nombreSocioEnIndice(i) }}</span>
                           </div>
                           <button class="arrend-fa-btn-remove" mat-stroked-button color="warn" type="button"
                             (click)="eliminarSocio(i)" *ngIf="sociosFormArray.length >= 2">
@@ -770,7 +914,7 @@
                               <span class="input-group-text socios-input-group-icon"><mat-icon
                                   aria-hidden="true">badge</mat-icon></span>
                               <div class="form-floating flex-grow-1">
-                                <input type="text" class="form-control" formControlName="rfcSocio"
+                                <input type="text" class="form-control" formControlName="rfcSocio" maxlength="13"
                                   placeholder="RFC del socio" />
                                 <label>Rfc Del Socio</label>
                               </div>
@@ -862,53 +1006,8 @@
                 </div>
               </div>
 
-              <div class="col-12 arrend-fa-section mt-5 pt-3" *ngIf="galeriaImagenesFormArray.length > 1">
-                <div class="arrend-fa-hero">
-                  <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>collections</mat-icon></div>
-                  <div class="arrend-fa-hero__body">
-                    <div class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3">
-                      <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
-                        <h6 class="arrend-fa-section-title m-0">Más imágenes</h6>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="row g-1 mt-0">
-                  <ng-container *ngFor="let galCtrl of galeriaImagenesFormArray.controls; let i = index">
-                    <div class="col-12 col-md-6 col-lg-4" *ngIf="i > 0">
-                      <div class="arrend-fa-item" [formGroup]="galeriaGrupo(i)">
-                        <div
-                          class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                          <span class="arrend-fa-idx">Imagen {{ i + 1 }}</span>
-                          <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn"
-                            (click)="eliminarFotoGaleria(i)"
-                            *ngIf="galeriaImagenesFormArray.length >= 2"><mat-icon>delete_outline</mat-icon>
-                            Eliminar</button>
-                        </div>
-                        <div class="uploader-hero">
-                          <div class="uploader">
-                            <div class="uploader__glow"></div>
-                            <div class="uploader__body">
-                              <div class="uploader__icon"><mat-icon>image</mat-icon></div>
-                              <h6 class="uploader__title">Sube imagen</h6>
-                              <p class="uploader__subtitle">Arrastra y suelta o</p>
-                              <div class="uploader__cta">
-                                <button mat-flat-button color="primary" type="button"
-                                  (click)="abrirSelectorGaleria(galExtra)">Seleccionar</button>
-                                <span class="uploader__badge" [class.uploader__badge--file]="galCtrl.get('nombre')?.value">
-                                  {{ galCtrl.get('nombre')?.value || 'PNG · JPG · JPEG' }}
-                                </span>
-                              </div>
-                              <input #galExtra type="file" accept="image/png,image/jpeg,image/jpg"
-                                class="uploader__input" (change)="onGaleriaFileSelected($event, i)" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </ng-container>
-                </div>
-              </div>
+
+
             </div>
           </div>
         </div>

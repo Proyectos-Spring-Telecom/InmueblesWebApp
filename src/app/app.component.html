@@ -1,1 +1,8 @@
 <router-outlet></router-outlet>
+@if (authTransition.revealActive()) {
+  <div
+    class="auth-app-reveal"
+    [class.auth-app-reveal--fade]="authTransition.revealFade()"
+    aria-hidden="true"
+  ></div>
+}

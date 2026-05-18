@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, debounceTime, finalize, forkJoin, map, of, Subscription, switchMap, tap } from 'rxjs';
@@ -147,6 +147,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     private clientesService: ClientesService,
     private inmueblesService: InmueblesService,
     private catServiciosService: CatServiciosService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -1283,11 +1284,12 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   /** Abre el mapa desde el botón de ubicación (conserva lat/lng del formulario si existen). */
   abrirModalMapa(): void {
     this.mostrarModalMapa = true;
+    this.cdr.detectChanges();
     setTimeout(() => {
-      this.loadGoogleMaps()
+      void this.loadGoogleMaps()
         .then(() => this.initMapModal())
         .catch((err) => console.error('No se pudo cargar Google Maps', err));
-    }, 0);
+    }, 100);
   }
 
   /** Tras validar el formulario: mapa obligatorio antes de POST. */
@@ -1295,11 +1297,12 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
     this.mostrarModalMapa = true;
+    this.cdr.detectChanges();
     setTimeout(() => {
-      this.loadGoogleMaps()
+      void this.loadGoogleMaps()
         .then(() => this.initMapModal())
         .catch((err) => console.error('No se pudo cargar Google Maps', err));
-    }, 0);
+    }, 100);
   }
 
   /** Solo vía botón Cancelar: cierra y reinicia el mapa sin guardar. */

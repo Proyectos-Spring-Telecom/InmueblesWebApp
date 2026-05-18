@@ -16,7 +16,7 @@ interface LoginResponse {
 
 /**
  * Refresh del JWT: no hay temporizadores ni refresh proactivo.
- * `refreshToken()` solo debe llamarse desde `AuthInterceptor` cuando una petición recibe 401.
+ * `refreshToken()` solo debe llamarse desde `AuthInterceptor` cuando una petición recibe 401 (y en algunos casos 403 con Bearer).
  */
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService extends BaseServicesService {
@@ -58,7 +58,7 @@ export class AuthenticationService extends BaseServicesService {
     );
   }
 
-  /** Únicamente por 401 → interceptor. Sin `setTimeout` / timers. */
+  /** Solo desde `AuthInterceptor` ante 401/403 de recurso (no timers). */
   public refreshToken(): Observable<LoginResponse> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
@@ -119,8 +119,12 @@ export class AuthenticationService extends BaseServicesService {
     this.refreshBlocked = false;
   }
 
+  /**
+   * Sesión activa en cliente: access y/o refresh guardados (normalizados).
+   * El access puede estar expirado en el servidor; el interceptor renueva ante 401/403 con Bearer.
+   */
   public isAuthenticated(): boolean {
-    return !!this.getToken();
+    return !!(this.getToken() || this.getRefreshToken());
   }
 
   private blockRefresh(): void {
@@ -241,19 +245,36 @@ export class AuthenticationService extends BaseServicesService {
     this.authenticationChanged.next(this.isAuthenticated());
   }
 
+  /**
+   * Algunos endpoints envuelven credenciales en `data` y otras claves van en la raíz.
+   * Si `data` existe pero no trae JWT, hay que leer también el objeto raíz (si no, nunca se guarda refresh).
+   */
   private extractToken(payload: any): string {
-    const source = payload?.data ?? payload;
     return (
-      source?.token ||
-      source?.accessToken ||
-      source?.access_token ||
+      this.readAccessToken(payload?.data) ||
+      this.readAccessToken(payload) ||
       ''
     );
   }
 
   private extractRefreshToken(payload: any): string {
-    const source = payload?.data ?? payload;
-    return source?.refreshToken || source?.refresh_token || '';
+    return (
+      this.readRefreshToken(payload?.data) ||
+      this.readRefreshToken(payload) ||
+      ''
+    );
+  }
+
+  private readAccessToken(source: any): string {
+    if (!source || typeof source !== 'object') return '';
+    const v = source.token || source.accessToken || source.access_token || '';
+    return typeof v === 'string' ? v : '';
+  }
+
+  private readRefreshToken(source: any): string {
+    if (!source || typeof source !== 'object') return '';
+    const v = source.refreshToken || source.refresh_token || '';
+    return typeof v === 'string' ? v : '';
   }
 
   private setStorageUser(value: any): void {

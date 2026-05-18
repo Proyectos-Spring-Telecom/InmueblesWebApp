@@ -1,0 +1,426 @@
+@import '../../inmuebles/lista-inmuebles-detalle/lista-inmuebles-detalle.component.scss';
+
+/* Socios */
+.arr-socios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.arr-socio-card {
+  text-align: left;
+  background: rgba(12, 18, 28, 0.92);
+  border: 1px solid rgba(130, 160, 255, 0.28);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
+}
+
+.arr-socio-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 0.65rem;
+}
+
+.arr-socio-card__avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(89, 109, 255, 0.2);
+  border: 1px solid rgba(130, 160, 255, 0.35);
+  color: #a8b8ff;
+  font-size: 1.35rem;
+}
+
+.arr-socio-card__identity {
+  min-width: 0;
+}
+
+.arr-socio-card__nombre {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  color: #f4f6ff;
+  line-height: 1.25;
+}
+
+.arr-socio-card__rfc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c5cef5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(14, 20, 32, 0.75);
+}
+
+.arr-socio-card__rfc-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+}
+
+.arr-socio-card__hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  color: #8f9bc4;
+  line-height: 1.45;
+}
+
+.arr-socio-card__docs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.arr-socio-card__docs li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid rgba(130, 160, 255, 0.15);
+  background: rgba(8, 12, 20, 0.65);
+}
+
+.arr-socio-doc__label {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: #dce3ff;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.arr-socio-doc__label i {
+  opacity: 0.85;
+  color: #8ea5ff;
+}
+
+.arr-socio-doc__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.arr-socio-doc__btn.mat-mdc-unelevated-button {
+  border-radius: 999px !important;
+  min-height: 30px;
+  padding: 0 0.65rem !important;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.arr-socio-doc__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Contratos */
+.arr-contratos-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  align-items: center;
+}
+
+.arr-contrato {
+  width: 100%;
+  max-width: 920px;
+  border-radius: 18px;
+  border: 1px solid rgba(130, 160, 255, 0.28);
+  background: linear-gradient(165deg, rgba(18, 26, 42, 0.96) 0%, rgba(10, 14, 22, 0.92) 100%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+}
+
+.arr-contrato__hero {
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid rgba(130, 160, 255, 0.14);
+  background: rgba(89, 109, 255, 0.06);
+}
+
+.arr-contrato__hero-main {
+  text-align: center;
+}
+
+.arr-contrato__eyebrow {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8f9bc4;
+  margin-bottom: 0.35rem;
+}
+
+.arr-contrato__period {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  color: #f4f6ff;
+}
+
+.arr-contrato__sep {
+  margin: 0 0.35rem;
+  opacity: 0.65;
+}
+
+.arr-contrato__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.arr-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+}
+
+.arr-chip--accent {
+  background: rgba(89, 109, 255, 0.22);
+  border: 1px solid rgba(130, 160, 255, 0.45);
+  color: #e8ecff;
+}
+
+.arr-chip--muted {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #aeb9d9;
+  background: rgba(14, 20, 32, 0.72);
+}
+
+.arr-chip--outline {
+  border: 1px solid rgba(130, 160, 255, 0.35);
+  color: #c8d2f0;
+  background: transparent;
+}
+
+.arr-chip--small {
+  font-size: 0.68rem;
+  padding: 0.18rem 0.55rem;
+}
+
+.arr-contrato__inmueble {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  padding: 1.1rem 1.2rem;
+  border-bottom: 1px solid rgba(130, 160, 255, 0.12);
+  width: 100%;
+}
+
+.arr-contrato-inm__icon {
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.4rem;
+  color: #9eb2ff;
+  background: rgba(14, 20, 32, 0.85);
+  border: 1px solid rgba(130, 160, 255, 0.22);
+}
+
+.arr-contrato-inm__strip {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.arr-contrato-inm__eyebrow {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9eb2ff;
+}
+
+.arr-contrato-inm__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1.1rem;
+  width: 100%;
+}
+
+.arr-contrato-inm__cell {
+  min-width: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  color: #dce3ff;
+}
+
+.arr-contrato-inm__cell + .arr-contrato-inm__cell {
+  border-left: 1px solid rgba(130, 160, 255, 0.22);
+  padding-left: 1.1rem;
+  margin-left: 0.15rem;
+}
+
+.arr-contrato-inm__title {
+  flex: 1 1 12rem;
+  color: #f4f6ff;
+  font-size: 1.12rem;
+}
+
+.arr-contrato-inm__addr {
+  flex: 2 1 14rem;
+  color: #aeb9d9;
+  font-size: 0.92rem;
+}
+
+.arr-contrato-inm__contact {
+  flex: 1 1 11rem;
+  color: #aeb9d9;
+  font-size: 0.92rem;
+}
+
+.arr-contrato-inm__contact i,
+.arr-contrato-inm__addr i {
+  margin-right: 0.35rem;
+  opacity: 0.9;
+  color: #8ea5ff;
+}
+
+.arr-contrato-inm__phone-sep {
+  margin: 0 0.35rem;
+  opacity: 0.85;
+}
+
+.arr-contrato-inm__badge-wrap {
+  flex: 0 0 auto;
+  margin-left: auto;
+  border-left: none !important;
+  padding-left: 0 !important;
+}
+
+.arr-contrato-inm__badge {
+  font-size: 0.78rem;
+  padding: 0.22rem 0.65rem;
+}
+
+@media (max-width: 767.98px) {
+  .arr-contrato__inmueble {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .arr-contrato-inm__strip {
+    flex: 1 1 calc(100% - 4rem);
+  }
+
+  .arr-contrato-inm__row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .arr-contrato-inm__cell + .arr-contrato-inm__cell {
+    border-left: 0;
+    padding-left: 0;
+    margin-left: 0;
+    padding-top: 0.45rem;
+    border-top: 1px solid rgba(130, 160, 255, 0.14);
+  }
+
+  .arr-contrato-inm__badge-wrap {
+    margin-left: 0;
+  }
+
+  .arr-contrato-inm__title {
+    flex: 1 1 auto;
+    font-size: 1.05rem;
+  }
+}
+
+.arr-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.55rem;
+  padding: 1rem 1.15rem;
+}
+
+.arr-metric {
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid rgba(130, 160, 255, 0.12);
+  background: rgba(8, 12, 20, 0.55);
+  text-align: center;
+}
+
+.arr-metric__label {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8f9bc4;
+  margin-bottom: 0.28rem;
+}
+
+.arr-metric__value {
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: #ecefff;
+}
+
+.arr-contrato__obs {
+  padding: 0 1.15rem 1.15rem;
+}
+
+.arr-contrato__obs-label {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8f9bc4;
+  margin-bottom: 0.35rem;
+}
+
+.arr-contrato__obs-text {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(151, 162, 204, 0.35);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: #dce3ff;
+  line-height: 1.5;
+  background: rgba(10, 14, 22, 0.55);
+}

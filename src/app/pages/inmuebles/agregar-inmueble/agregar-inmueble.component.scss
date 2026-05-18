@@ -756,7 +756,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  /* Por encima de header, sidebar, footer fijo y capas del layout */
+  z-index: 100000;
 }
 
 .docs-modal {

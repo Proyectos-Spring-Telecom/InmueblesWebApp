@@ -159,3 +159,8 @@
     align-items: flex-start;
   }
 }
+
+/* Mapa en lista: por encima del layout (import de documento-preview trae z-index 9999) */
+.docs-backdrop {
+  z-index: 100000;
+}

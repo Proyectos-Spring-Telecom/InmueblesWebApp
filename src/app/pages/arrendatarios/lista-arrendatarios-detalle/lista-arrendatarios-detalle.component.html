@@ -1,0 +1,313 @@
+<div class="inm-detalle" *ngIf="row">
+  <nav class="inm-detalle__tabs" aria-label="Detalle del arrendatario">
+    <button
+      type="button"
+      class="inm-detalle__tab"
+      [class.inm-detalle__tab--active]="detalleTab === 0"
+      (click)="detalleTab = 0"
+    >
+      Servicios ({{ servicios.length }})
+    </button>
+    <button
+      type="button"
+      class="inm-detalle__tab"
+      [class.inm-detalle__tab--active]="detalleTab === 1"
+      (click)="detalleTab = 1"
+    >
+      Documentos ({{ archivos.length }})
+    </button>
+    <button
+      type="button"
+      class="inm-detalle__tab"
+      [class.inm-detalle__tab--active]="detalleTab === 2"
+      (click)="detalleTab = 2"
+    >
+      Socios ({{ socios.length }})
+    </button>
+    <button
+      type="button"
+      class="inm-detalle__tab"
+      [class.inm-detalle__tab--active]="detalleTab === 3"
+      (click)="detalleTab = 3"
+    >
+      Contratos ({{ contratos.length }})
+    </button>
+  </nav>
+
+  <!-- Servicios -->
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 0">
+    <div class="inm-servicios-grid" *ngIf="servicios.length; else sinServicios">
+      <article class="inm-servicio-card" *ngFor="let s of servicios">
+        <div class="inm-servicio-card__icon"><i class="fa fa-bolt"></i></div>
+        <div class="inm-servicio-card__body">
+          <h4>{{ nombreTipoServicio(s) }}</h4>
+          <p *ngIf="s['numeroContrato']">Contrato: {{ s['numeroContrato'] }}</p>
+          <p *ngIf="s['fechaPago']">Pago: {{ formatearFecha($any(s['fechaPago'])) }}</p>
+          <p *ngIf="s['ultimoDiaPago']">
+            Último día: {{ formatearFecha($any(s['ultimoDiaPago'])) }}
+          </p>
+        </div>
+        <button
+          *ngIf="urlComprobanteServicio(s)"
+          type="button"
+          mat-flat-button
+          class="bg-warn inm-servicio-card__btn"
+          (click)="abrirDocumento(urlComprobanteServicio(s), 'Comprobante de pago')"
+        >
+          <i class="fa fa-eye"></i> Ver
+        </button>
+      </article>
+    </div>
+    <ng-template #sinServicios>
+      <p class="inm-empty">Sin servicios registrados.</p>
+    </ng-template>
+  </div>
+
+  <!-- Documentos -->
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
+    <div class="inm-docs-grid" *ngIf="archivos.length; else sinDocs">
+      <article class="inm-doc-card" *ngFor="let a of archivos">
+        <div
+          class="inm-doc-card__thumb"
+          *ngIf="a['url'] && esImagenArchivo($any(a['url']), $any(a['nombre']))"
+        >
+          <img [src]="a['url']" [attr.alt]="(a['nombre'] || 'Documento') + ''" loading="lazy" />
+        </div>
+        <div
+          class="inm-doc-card__thumb inm-doc-card__thumb--pdf"
+          *ngIf="
+            a['url'] &&
+            esPdfArchivo($any(a['url']), $any(a['nombre'])) &&
+            urlVistaPreviaPdf($any(a['url']))
+          "
+        >
+          <iframe
+            [src]="urlVistaPreviaPdf($any(a['url']))!"
+            [title]="a['nombre'] || 'Documento PDF'"
+            loading="lazy"
+          ></iframe>
+        </div>
+        <div
+          class="inm-doc-card__icon"
+          *ngIf="
+            !a['url'] ||
+            (!esImagenArchivo($any(a['url']), $any(a['nombre'])) &&
+              !esPdfArchivo($any(a['url']), $any(a['nombre'])))
+          "
+        >
+          <i class="fa" [ngClass]="iconoArchivo($any(a['url']), $any(a['nombre']))"></i>
+        </div>
+        <div class="inm-doc-card__info">
+          <span class="inm-doc-card__name">{{ a['nombre'] || 'Documento' }}</span>
+        </div>
+        <div class="inm-doc-card__actions">
+          <button
+            type="button"
+            mat-flat-button
+            class="bg-warn inm-doc-pill"
+            [title]="a['nombre'] || 'Documento'"
+            (click)="abrirDocumento($any(a['url']), $any(a['nombre']) || 'Documento')"
+            [disabled]="!a['url']"
+          >
+            <i class="fa fa-eye"></i> Ver
+          </button>
+          <a
+            *ngIf="a['url']"
+            class="bg-success inm-doc-pill inm-doc-pill--link"
+            [href]="a['url']"
+            target="_blank"
+            rel="noopener noreferrer"
+            [title]="a['nombre'] || 'Documento'"
+            [attr.download]="a['nombre'] || null"
+          >
+            <i class="fa fa-download"></i> Descargar
+          </a>
+        </div>
+      </article>
+    </div>
+    <ng-template #sinDocs>
+      <p class="inm-empty">Sin documentos adjuntos.</p>
+    </ng-template>
+  </div>
+
+  <!-- Socios -->
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 2">
+    <div class="arr-socios-grid" *ngIf="socios.length; else sinSocios">
+      <article class="arr-socio-card" *ngFor="let so of socios; let si = index">
+        <header class="arr-socio-card__head">
+          <div class="arr-socio-card__avatar" aria-hidden="true">
+            <i class="fa fa-users"></i>
+          </div>
+          <div class="arr-socio-card__identity">
+            <h4 class="arr-socio-card__nombre">{{ so['nombre'] || 'Socio ' + (si + 1) }}</h4>
+            <span class="arr-socio-card__rfc" *ngIf="so['rfc']">
+              <span class="arr-socio-card__rfc-label">RFC</span>
+              {{ so['rfc'] }}
+            </span>
+          </div>
+        </header>
+        <p class="arr-socio-card__hint">
+          Documentación del socio (constancia fiscal, domicilio e identificación).
+        </p>
+        <ul class="arr-socio-card__docs" aria-label="Documentos del socio">
+          <li *ngIf="textoSocioDoc(so['constanciaSituacionFiscal'])">
+            <span class="arr-socio-doc__label"><i class="fa fa-file-text-o"></i> Constancia fiscal</span>
+            <div class="arr-socio-doc__actions">
+              <button
+                type="button"
+                mat-flat-button
+                class="bg-warn arr-socio-doc__btn"
+                (click)="
+                  abrirDocumento(
+                    $any(so['constanciaSituacionFiscal']),
+                    'Constancia situación fiscal'
+                  )
+                "
+              >
+                <i class="fa fa-eye"></i> Ver
+              </button>
+              <a
+                class="bg-success arr-socio-doc__link"
+                [href]="$any(so['constanciaSituacionFiscal'])"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i class="fa fa-external-link"></i>
+              </a>
+            </div>
+          </li>
+          <li *ngIf="textoSocioDoc(so['comprobanteDomicilio'])">
+            <span class="arr-socio-doc__label"><i class="fa fa-home"></i> Comprobante domicilio</span>
+            <div class="arr-socio-doc__actions">
+              <button
+                type="button"
+                mat-flat-button
+                class="bg-warn arr-socio-doc__btn"
+                (click)="abrirDocumento($any(so['comprobanteDomicilio']), 'Comprobante de domicilio')"
+              >
+                <i class="fa fa-eye"></i> Ver
+              </button>
+              <a
+                class="bg-success arr-socio-doc__link"
+                [href]="$any(so['comprobanteDomicilio'])"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i class="fa fa-external-link"></i>
+              </a>
+            </div>
+          </li>
+          <li *ngIf="textoSocioDoc(so['identificacionOficial'])">
+            <span class="arr-socio-doc__label"><i class="fa fa-id-card-o"></i> Identificación oficial</span>
+            <div class="arr-socio-doc__actions">
+              <button
+                type="button"
+                mat-flat-button
+                class="bg-warn arr-socio-doc__btn"
+                (click)="abrirDocumento($any(so['identificacionOficial']), 'Identificación oficial')"
+              >
+                <i class="fa fa-eye"></i> Ver
+              </button>
+              <a
+                class="bg-success arr-socio-doc__link"
+                [href]="$any(so['identificacionOficial'])"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i class="fa fa-external-link"></i>
+              </a>
+            </div>
+          </li>
+        </ul>
+      </article>
+    </div>
+    <ng-template #sinSocios>
+      <p class="inm-empty">Sin socios registrados.</p>
+    </ng-template>
+  </div>
+
+  <!-- Contratos -->
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 3">
+    <div class="arr-contratos-stack" *ngIf="contratos.length; else sinContratos">
+      <article class="arr-contrato" *ngFor="let c of contratos; let ci = index">
+        <header class="arr-contrato__hero">
+          <div class="arr-contrato__hero-main">
+            <span class="arr-contrato__eyebrow">Contrato {{ ci + 1 }}</span>
+            <h3 class="arr-contrato__period">
+              {{ formatearFecha($any(c['fechaInicioContrato'])) }}
+              <span class="arr-contrato__sep">→</span>
+              {{ formatearFecha($any(c['fechaTerminoContrato'])) }}
+            </h3>
+            <div class="arr-contrato__badges">
+              <span class="arr-chip arr-chip--accent" *ngIf="c['moneda']">
+                {{ c['moneda'] }}
+              </span>
+              <span class="arr-chip arr-chip--muted" *ngIf="c['rentaTotal'] != null">
+                Renta total: {{ formatearMoneda(c['rentaTotal']) }}
+              </span>
+              <span class="arr-chip arr-chip--muted" *ngIf="c['mantenimientoTotal'] != null">
+                Mantenimiento: {{ formatearMoneda(c['mantenimientoTotal']) }}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <section class="arr-contrato__inmueble" *ngIf="inmuebleDesdeContrato(c) as inm">
+          <div class="arr-contrato-inm__icon" aria-hidden="true">
+            <i class="fa fa-building-o"></i>
+          </div>
+          <div class="arr-contrato-inm__strip">
+            <span class="arr-contrato-inm__eyebrow">Inmueble</span>
+            <div
+              class="arr-contrato-inm__row"
+              role="group"
+              [attr.aria-label]="'Inmueble vinculado al contrato: ' + (inm['inmueble'] || '—')"
+            >
+              <span class="arr-contrato-inm__cell arr-contrato-inm__title">{{ inm['inmueble'] || '—' }}</span>
+              <span class="arr-contrato-inm__cell arr-contrato-inm__addr" *ngIf="inm['direccionFiscal']">
+                <i class="fa fa-map-marker" aria-hidden="true"></i> {{ inm['direccionFiscal'] }}
+              </span>
+              <span
+                class="arr-contrato-inm__cell arr-contrato-inm__contact"
+                *ngIf="inm['nombreRepresentante'] || inm['telefonoRepresentante']"
+              >
+                <span *ngIf="inm['nombreRepresentante']">
+                  <i class="fa fa-user" aria-hidden="true"></i> {{ inm['nombreRepresentante'] }}
+                </span>
+                <span
+                  *ngIf="inm['nombreRepresentante'] && inm['telefonoRepresentante']"
+                  class="arr-contrato-inm__phone-sep"
+                  aria-hidden="true"
+                  >·</span
+                >
+                <span *ngIf="inm['telefonoRepresentante']">{{ inm['telefonoRepresentante'] }}</span>
+              </span>
+              <span class="arr-contrato-inm__cell arr-contrato-inm__badge-wrap">
+                <span class="arr-chip arr-chip--outline arr-chip--small arr-contrato-inm__badge">
+                  {{ etiquetaEstatusInmuebleEmpresa(inm['estatusInmueble']) }}
+                </span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <div class="arr-metric-grid">
+          <div class="arr-metric" *ngFor="let m of metricasContrato(c)">
+            <span class="arr-metric__label">{{ m.label }}</span>
+            <span class="arr-metric__value">{{ m.value }}</span>
+          </div>
+        </div>
+
+        <footer class="arr-contrato__obs" *ngIf="c['observaciones']">
+          <span class="arr-contrato__obs-label">Observaciones</span>
+          <p class="arr-contrato__obs-text">{{ c['observaciones'] }}</p>
+        </footer>
+      </article>
+    </div>
+    <ng-template #sinContratos>
+      <p class="inm-empty">Sin contratos registrados.</p>
+    </ng-template>
+  </div>
+</div>
+
+<app-documento-preview #docPreview eyebrow="Documento del arrendatario"></app-documento-preview>

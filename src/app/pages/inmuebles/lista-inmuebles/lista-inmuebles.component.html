@@ -27,9 +27,9 @@
     <div class="mt-3">
       <dx-data-grid #gridContainer id="gridInmuebles" class="inm-data-grid" [columnHidingEnabled]="true"
         [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
-        [rowAlternationEnabled]="true"
-        [dataSource]="listaInmuebles" [keyExpr]="'id'" [width]="'100%'" [remoteOperations]="{ paging: true }"
-        [paging]="{ pageSize: pageSize }" [noDataText]="'Sin registros para mostrar'" [pager]="{
+        [rowAlternationEnabled]="true" [dataSource]="listaInmuebles" [keyExpr]="'id'" [width]="'100%'"
+        [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'" [pager]="{
           showPageSizeSelector: true,
           allowedPageSizes: [20],
           showInfo: true,
@@ -44,20 +44,30 @@
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-sorting mode="multiple"></dxo-sorting>
 
-        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="150" alignment="center" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
-        <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false" [allowFiltering]="false" [visible]="false"></dxi-column>
+        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="150" alignment="center"
+          [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+        <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
+          [allowFiltering]="false" [visible]="false"></dxi-column>
         <dxi-column dataField="numZonas" caption="Zonas" [visible]="false"></dxi-column>
         <dxi-column dataField="numServicios" caption="Servicios" [visible]="false"></dxi-column>
         <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
-        <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="center" [width]="200" [allowFiltering]="true"></dxi-column>
-        <dxi-column dataField="direccionFiscal" caption="Dirección fiscal" [width]="250" alignment="center"></dxi-column>
+        <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="center" [width]="200"
+          [allowFiltering]="true"></dxi-column>
+        <dxi-column dataField="direccionFiscal" caption="Dirección fiscal" [width]="250"
+          alignment="center"></dxi-column>
         <dxi-column dataField="arrendadorNombre" caption="Arrendador" [width]="170" alignment="center"></dxi-column>
-        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="200" alignment="center"></dxi-column>
-        <dxi-column caption="Representante Legal" cellTemplate="representanteTpl" [width]="200" alignment="center" [allowSorting]="false" [allowFiltering]="false"></dxi-column>
-        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" [width]="120" alignment="center"></dxi-column>
-        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false" alignment="center"></dxi-column>
-        <dxi-column dataField="correoRepresentante" caption="Correo representante" [visible]="false" alignment="center"></dxi-column>
-        <dxi-column dataField="telefonoRepresentante" caption="Teléfono representante" [visible]="false" alignment="center"></dxi-column>
+        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="200"
+          alignment="center"></dxi-column>
+        <dxi-column caption="Representante Legal" cellTemplate="representanteTpl" [width]="200" alignment="center"
+          [allowSorting]="false" [allowFiltering]="false"></dxi-column>
+        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" [width]="120"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="correoRepresentante" caption="Correo representante" [visible]="false"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="telefonoRepresentante" caption="Teléfono representante" [visible]="false"
+          alignment="center"></dxi-column>
 
         <div *dxTemplate="let cell of 'inmuebleTpl'">
           <div class="inm-row-card inm-row-card--nombre">
@@ -157,7 +167,8 @@
         <div class="row docs-modal__body">
           <div class="col-12">
             <div class="docs-modal__viewer docs-modal__viewer--map" *ngIf="mostrarModalMapa">
-              <div id="mapListaInmueble" class="lista-inmuebles-map-host" role="region" aria-label="Mapa de ubicación del inmueble"></div>
+              <div id="mapListaInmueble" class="lista-inmuebles-map-host" role="region"
+                aria-label="Mapa de ubicación del inmueble"></div>
             </div>
           </div>
         </div>

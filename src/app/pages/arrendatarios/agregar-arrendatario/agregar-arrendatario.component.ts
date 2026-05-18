@@ -1,7 +1,7 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, debounceTime, forkJoin, of, Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
@@ -24,7 +24,7 @@ import {
   standalone: false,
   animations: [routeAnimation],
 })
-export class AgregarArrendatarioComponent implements OnInit {
+export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   public title = 'Agregar Arrendatario';
   public submitButton: string = 'Guardar';
   public arrendatarioForm: FormGroup;
@@ -34,7 +34,11 @@ export class AgregarArrendatarioComponent implements OnInit {
   public listaInmuebles: { id: number; etiqueta: string }[] = [];
   public listaCatServicios: CatServicioItem[] = [];
   loadingSubmit = false;
+  /** Obligatorios sólo cuando el ``estatusInmueble`` es Rentado (alineado con inmueble). */
+  public mostrarCamposRenta = false;
   mostrarModalMapa = false;
+  /** Índice del slot de galería para animación de entrada (una vez). */
+  indiceGaleriaAnimando: number | null = null;
   private readonly mapaCentroCuernavaca = { lat: 18.9186, lng: -99.2341 };
   private readonly mapaZoomCuernavaca = 11;
   private map: unknown = null;
@@ -45,6 +49,8 @@ export class AgregarArrendatarioComponent implements OnInit {
   private readonly pinUrl = 'assets/images/logos/marker_spring.webp';
   readonly acceptPdfImagenes = 'application/pdf,image/png,image/jpeg,image/jpg';
   readonly etiquetaPdfImagenes = 'PDF · PNG · JPG · JPEG';
+  readonly acceptSoloImagenes = 'image/png,image/jpeg,image/jpg';
+  readonly etiquetaSoloImagenes = 'PNG · JPG · JPEG';
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
@@ -54,8 +60,24 @@ export class AgregarArrendatarioComponent implements OnInit {
   comprobanteDomicilioNombre: string | null = null;
   actaConstitutivaNombre: string | null = null;
   ineRepresentanteNombre: string | null = null;
+  /** Boleta predial y recibo (paridad documentos ``agregar-inmueble``). */
+  boletaPredialNombre: string | null = null;
+  reciboAguaServiciosNombre: string | null = null;
+  archivoEscrituraUrl: string | null = null;
+  imagenLicenciaUrl: string | null = null;
+  imagenPlanoUrl: string | null = null;
+  contratoRentaUrl: string | null = null;
+  constanciaFiscalUrl: string | null = null;
+  constanciaRepLegalUrl: string | null = null;
+  comprobanteDomicilioUrl: string | null = null;
+  ineRepresentanteUrl: string | null = null;
+  boletaPredialUrl: string | null = null;
   resaltarAutocargaContrato = false;
+  resaltarAutocargaDocs = false;
   private promptAutocargaMostrado = false;
+  private readonly debounceLogMs = 400;
+  private formValueLogSub?: Subscription;
+  private estatusInmuebleSub?: Subscription;
 
   @ViewChild('archivoEscrituraInput') archivoEscrituraInput?: ElementRef<HTMLInputElement>;
   @ViewChild('imagenLicenciaInput') imagenLicenciaInput?: ElementRef<HTMLInputElement>;
@@ -67,7 +89,11 @@ export class AgregarArrendatarioComponent implements OnInit {
   @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
-  @ViewChild('autocargaContratoCard') autocargaContratoCard?: ElementRef<HTMLElement>;
+  @ViewChild('autocargaEscrituraCard') autocargaEscrituraCard?: ElementRef<HTMLElement>;
+  @ViewChild('docsSectionArrendatario') docsSectionArrendatario?: ElementRef<HTMLElement>;
+  @ViewChild('boletaPredialInput') boletaPredialInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('reciboAguaServiciosInput')
+  reciboAguaServiciosInput?: ElementRef<HTMLInputElement>;
 
   constructor(
     private fb: FormBuilder,
@@ -77,11 +103,22 @@ export class AgregarArrendatarioComponent implements OnInit {
     private catServiciosService: CatServiciosService,
     private inmueblesService: InmueblesService,
     private arrendatariosService: ArrendatariosService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     this.initTipoPersonaLogic();
+    this.initEstatusInmuebleLogic();
+    this.formValueLogSub = this.arrendatarioForm.valueChanges
+      .pipe(debounceTime(this.debounceLogMs))
+      .subscribe(() => {
+        // Mismo criterio que `agregar-inmueble`: log tras pausa de escritura (incluye valores actuales).
+        console.log('[agregar-arrendatario] valor del formulario (tras pausa de escritura)', {
+          value: this.arrendatarioForm.getRawValue(),
+          mostrarCamposRenta: this.mostrarCamposRenta,
+        });
+      });
 
     forkJoin({
       clientes: this.clientesService.obtenerClientes().pipe(catchError(() => of(null))),
@@ -122,6 +159,48 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.formValueLogSub?.unsubscribe();
+    this.estatusInmuebleSub?.unsubscribe();
+  }
+
+  private initEstatusInmuebleLogic(): void {
+    const estatusCtrl = this.arrendatarioForm.get('estatusInmueble');
+    if (!estatusCtrl) return;
+    this.aplicarValidadoresEstatus(estatusCtrl.value);
+    this.estatusInmuebleSub = estatusCtrl.valueChanges.subscribe((value) =>
+      this.aplicarValidadoresEstatus(value),
+    );
+  }
+
+  /** Renta, tiempo de renta y contrato sólo cuando el estatus es Rentado (paridad ``agregar-inmueble``). */
+  private aplicarValidadoresEstatus(raw: unknown): void {
+    const v = String(raw ?? '').toUpperCase().trim();
+    const rentado = v === 'RENTADO';
+    this.mostrarCamposRenta = rentado;
+
+    const rentaCtrl = this.arrendatarioForm.get('rentaMxn');
+    const tiempoCtrl = this.arrendatarioForm.get('tiempoRentaAnios');
+    const contratoCtrl = this.arrendatarioForm.get('documentoContratoRenta');
+    if (!rentaCtrl || !tiempoCtrl) return;
+
+    if (rentado) {
+      rentaCtrl.setValidators([Validators.required]);
+      tiempoCtrl.setValidators([Validators.required]);
+    } else {
+      rentaCtrl.clearValidators();
+      tiempoCtrl.clearValidators();
+      rentaCtrl.setValue('', { emitEvent: false });
+      tiempoCtrl.setValue('', { emitEvent: false });
+      contratoCtrl?.setValue(null, { emitEvent: false });
+      this.contratoRentaNombre = null;
+      this.contratoRentaUrl = null;
+    }
+
+    rentaCtrl.updateValueAndValidity({ emitEvent: false });
+    tiempoCtrl.updateValueAndValidity({ emitEvent: false });
+  }
+
   private mostrarPromptAutocargaContrato(): void {
     if (this.promptAutocargaMostrado) return;
     this.promptAutocargaMostrado = true;
@@ -130,7 +209,7 @@ export class AgregarArrendatarioComponent implements OnInit {
       color: '#ffffff',
       icon: 'question',
       title: '¿Quieres Intentar Completar El Formulario Con Un Archivo?',
-      text: 'Te llevaremos a la sección de Contrato De Renta para subir el archivo y extraer algunos datos.',
+      text: 'Te llevaremos a la sección de Escrituras o Título para subir el archivo y extraer algunos datos.',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#6b7280',
@@ -144,10 +223,16 @@ export class AgregarArrendatarioComponent implements OnInit {
 
   private enfocarAutocargaContrato(): void {
     setTimeout(() => {
-      const target = this.autocargaContratoCard?.nativeElement;
-      if (!target) return;
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      this.resaltarAutocargaContrato = true;
+      const esc = this.autocargaEscrituraCard?.nativeElement;
+      if (esc) {
+        esc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        this.resaltarAutocargaContrato = true;
+        return;
+      }
+      const docs = this.docsSectionArrendatario?.nativeElement;
+      if (!docs) return;
+      docs.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      this.resaltarAutocargaDocs = true;
     }, 120);
   }
 
@@ -155,17 +240,21 @@ export class AgregarArrendatarioComponent implements OnInit {
     this.arrendatarioForm = this.fb.group({
       nombreInmueble: ['', Validators.required],
       tipoPersona: [null as number | null, Validators.required],
-      rentaMxn: ['', Validators.required],
-      direccionInmueble: ['', Validators.required],
+      rentaMxn: [''],
+      /** Solo UI / notas; no van en JSON `arrendatario` del Swagger POST /arrendatarios. */
+      direccionInmueble: [''],
       vigenciaAnios: [''],
       fechaInicio: ['', Validators.required],
       fechaFin: ['', Validators.required],
       idArrendador: [null as number | null, Validators.required],
-      tiempoRentaAnios: ['', Validators.required],
+      /** Controla visibilidad de renta/contrato; no obligatorio y no se envía al API si no está en el contrato OpenAPI. */
+      estatusInmueble: [null as string | null],
+      tiempoRentaAnios: [''],
       nombreRepresentanteLegal: ['', Validators.required],
       telefonoRepresentanteLegal: ['', Validators.required],
       correoRepresentanteLegal: ['', [Validators.required, Validators.email]],
-      idInmueble: [null as number | null, Validators.required],
+      /** Opcional según Swagger: `contratoArrendatario` es opcional. */
+      idInmueble: [null as number | null],
       lat: [''],
       lng: [''],
       fechaInicioContrato: [''],
@@ -188,6 +277,8 @@ export class AgregarArrendatarioComponent implements OnInit {
       mantenimientoTotal: [''],
       observaciones: [''],
       documentoEscritura: [null],
+      documentoBoletaPredial: [null],
+      documentoReciboAguaServicios: [null],
       documentoLicencia: [null],
       documentoPlano: [null],
       documentoContratoRenta: [null],
@@ -199,12 +290,13 @@ export class AgregarArrendatarioComponent implements OnInit {
       documentoActaConstitutiva: [null],
       ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
+      /** Dos filas por defecto: Renta y Mantenimiento (`syncServiciosIdsDesdeCatalogo`). */
       servicios: this.fb.array([this.crearServicioFormGroup(), this.crearServicioFormGroup()]),
-      zonas: this.fb.array([this.crearZonaFormGroup()]),
-      estacionamientos: this.fb.array([this.crearEstacionamientoFormGroup()]),
+      pagos: this.fb.array([]),
       socios: this.fb.array([this.crearSocioFormGroup()]),
       locales: this.fb.array([this.crearLocalFormGroup()]),
     });
+    this.aplicarValidadoresEstatus(this.arrendatarioForm.get('estatusInmueble')?.value);
   }
 
   private initTipoPersonaLogic(): void {
@@ -254,7 +346,7 @@ export class AgregarArrendatarioComponent implements OnInit {
 
   private crearSocioFormGroup(): FormGroup {
     return this.fb.group({
-      nombreSocio: ['', Validators.required],
+      nombreSocio: [''],
       rfcSocio: [null],
       socioConstanciaSituacionFiscal: [null],
       socioConstanciaSituacionFiscalNombre: [''],
@@ -275,7 +367,7 @@ export class AgregarArrendatarioComponent implements OnInit {
 
   private crearServicioFormGroup(): FormGroup {
     return this.fb.group({
-      idTipoServicio: [null as number | null, Validators.required],
+      idTipoServicio: [null as number | null],
       servicioNumeroContrato: [''],
       servicioFechaPago: [''],
       servicioUltimoDiaPago: [''],
@@ -285,19 +377,11 @@ export class AgregarArrendatarioComponent implements OnInit {
     });
   }
 
-  private crearZonaFormGroup(): FormGroup {
+  private crearPagoFormGroup(): FormGroup {
     return this.fb.group({
-      zonaPrincipal: [''],
-      zonaSuperficieM2: [''],
-      superficieDisponiblePredioM2: [''],
-    });
-  }
-
-  private crearEstacionamientoFormGroup(): FormGroup {
-    return this.fb.group({
-      estacionamientoPensionado: [''],
-      estacionamientoTarjeta: [''],
-      estacionamientoArrendatario: [''],
+      pagoConcepto: [''],
+      pagoFecha: [''],
+      pagoMonto: [''],
     });
   }
 
@@ -354,12 +438,8 @@ export class AgregarArrendatarioComponent implements OnInit {
     return this.arrendatarioForm.get('servicios') as FormArray;
   }
 
-  get zonasFormArray(): FormArray {
-    return this.arrendatarioForm.get('zonas') as FormArray;
-  }
-
-  get estacionamientosFormArray(): FormArray {
-    return this.arrendatarioForm.get('estacionamientos') as FormArray;
+  get pagosFormArray(): FormArray {
+    return this.arrendatarioForm.get('pagos') as FormArray;
   }
 
   get sociosFormArray(): FormArray {
@@ -413,24 +493,16 @@ export class AgregarArrendatarioComponent implements OnInit {
     if (input) input.value = '';
   }
 
-  abrirModalMapa(): void {
-    this.mostrarModalMapa = true;
-    setTimeout(() => {
-      this.loadGoogleMaps()
-        .then(() => this.initMapaArrendatarioModal())
-        .catch((err) => console.error('No se pudo cargar Google Maps', err));
-    }, 0);
-  }
-
   private abrirModalMapaParaGuardar(): void {
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
     this.mostrarModalMapa = true;
+    this.cdr.detectChanges();
     setTimeout(() => {
-      this.loadGoogleMaps()
+      void this.loadGoogleMaps()
         .then(() => this.initMapaArrendatarioModal())
         .catch((err) => console.error('No se pudo cargar Google Maps', err));
-    }, 0);
+    }, 100);
   }
 
   cancelarModalMapa(): void {
@@ -601,22 +673,13 @@ export class AgregarArrendatarioComponent implements OnInit {
     this.serviciosFormArray.removeAt(index);
   }
 
-  agregarZona(): void {
-    this.zonasFormArray.push(this.crearZonaFormGroup());
+  agregarPago(): void {
+    this.pagosFormArray.push(this.crearPagoFormGroup());
   }
 
-  eliminarZona(index: number): void {
-    if (this.zonasFormArray.length === 1) return;
-    this.zonasFormArray.removeAt(index);
-  }
-
-  agregarEstacionamiento(): void {
-    this.estacionamientosFormArray.push(this.crearEstacionamientoFormGroup());
-  }
-
-  eliminarEstacionamiento(index: number): void {
-    if (this.estacionamientosFormArray.length === 1) return;
-    this.estacionamientosFormArray.removeAt(index);
+  eliminarPago(index: number): void {
+    if (this.pagosFormArray.length === 1) return;
+    this.pagosFormArray.removeAt(index);
   }
 
   onServicioPagoFileSelected(event: Event, index: number): void {
@@ -648,7 +711,16 @@ export class AgregarArrendatarioComponent implements OnInit {
   }
 
   agregarFotoGaleria(): void {
+    const nuevoIndice = this.galeriaImagenesFormArray.length;
     this.galeriaImagenesFormArray.push(this.crearGaleriaImagenFormGroup());
+    this.indiceGaleriaAnimando = nuevoIndice;
+    setTimeout(() => this.finalizarAnimacionGaleria(nuevoIndice), 450);
+  }
+
+  finalizarAnimacionGaleria(indice: number): void {
+    if (this.indiceGaleriaAnimando === indice) {
+      this.indiceGaleriaAnimando = null;
+    }
   }
 
   eliminarFotoGaleria(index: number): void {
@@ -681,10 +753,14 @@ export class AgregarArrendatarioComponent implements OnInit {
       | 'constanciaRepLegal'
       | 'comprobanteDomicilio'
       | 'actaConstitutiva'
-      | 'ineRepresentante',
+      | 'ineRepresentante'
+      | 'boletaPredial'
+      | 'reciboAgua',
   ): void {
     const map = {
       escritura: this.archivoEscrituraInput,
+      boletaPredial: this.boletaPredialInput,
+      reciboAgua: this.reciboAguaServiciosInput,
       licencia: this.imagenLicenciaInput,
       plano: this.imagenPlanoInput,
       contratoRenta: this.contratoRentaInput,
@@ -703,18 +779,49 @@ export class AgregarArrendatarioComponent implements OnInit {
     this.arrendatarioForm.get(controlName)?.setValue(file);
 
     const name = file?.name ?? null;
-    if (controlName === 'documentoEscritura') this.archivoEscrituraNombre = name;
-    if (controlName === 'documentoLicencia') this.imagenLicenciaNombre = name;
-    if (controlName === 'documentoPlano') this.imagenPlanoNombre = name;
+    if (controlName === 'documentoEscritura') {
+      this.archivoEscrituraNombre = name;
+      this.archivoEscrituraUrl = null;
+    }
+    if (controlName === 'documentoLicencia') {
+      this.imagenLicenciaNombre = name;
+      this.imagenLicenciaUrl = null;
+    }
+    if (controlName === 'documentoPlano') {
+      this.imagenPlanoNombre = name;
+      this.imagenPlanoUrl = null;
+    }
     if (controlName === 'documentoContratoRenta') {
       this.contratoRentaNombre = name;
-      if (file) this.resaltarAutocargaContrato = false;
+      this.contratoRentaUrl = null;
     }
-    if (controlName === 'documentoConstanciaFiscal') this.constanciaFiscalNombre = name;
-    if (controlName === 'constanciaSituacionFiscalRepresentanteLegal') this.constanciaRepLegalNombre = name;
-    if (controlName === 'documentoComprobanteDomicilio') this.comprobanteDomicilioNombre = name;
+    if (controlName === 'documentoConstanciaFiscal') {
+      this.constanciaFiscalNombre = name;
+      this.constanciaFiscalUrl = null;
+    }
+    if (controlName === 'constanciaSituacionFiscalRepresentanteLegal') {
+      this.constanciaRepLegalNombre = name;
+      this.constanciaRepLegalUrl = null;
+    }
+    if (controlName === 'documentoComprobanteDomicilio') {
+      this.comprobanteDomicilioNombre = name;
+      this.comprobanteDomicilioUrl = null;
+    }
     if (controlName === 'documentoActaConstitutiva') this.actaConstitutivaNombre = name;
-    if (controlName === 'ineRepresentanteLegal') this.ineRepresentanteNombre = name;
+    if (controlName === 'ineRepresentanteLegal') {
+      this.ineRepresentanteNombre = name;
+      this.ineRepresentanteUrl = null;
+    }
+    if (controlName === 'documentoBoletaPredial') {
+      this.boletaPredialNombre = name;
+      this.boletaPredialUrl = null;
+    }
+    if (controlName === 'documentoReciboAguaServicios') this.reciboAguaServiciosNombre = name;
+    if (controlName === 'documentoEscritura' && file) {
+      this.resaltarAutocargaContrato = false;
+      this.resaltarAutocargaDocs = false;
+    }
+    if (controlName === 'documentoContratoRenta' && file) this.resaltarAutocargaContrato = false;
   }
 
   private cargarDemoEdicion(id: number): void {
@@ -758,13 +865,14 @@ export class AgregarArrendatarioComponent implements OnInit {
       {
         nombreInmueble: arrendatarioNombre,
         tipoPersona: 2,
+        estatusInmueble: 'RENTADO',
         rentaMxn: localDemo?.mensualidadMxn ?? '',
         direccionInmueble: demoLocal?.inmueble.direccion ?? '',
-        vigenciaAnios: '',
+        vigenciaAnios: '5',
         fechaInicio: localDemo?.fechaInicio ?? '',
         fechaFin: localDemo?.fechaTermino ?? '',
         idArrendador: 1,
-        tiempoRentaAnios: '',
+        tiempoRentaAnios: '3',
         nombreRepresentanteLegal: nombreRepresentante,
         telefonoRepresentanteLegal: telefonoRep,
         correoRepresentanteLegal: correoRep,
@@ -824,6 +932,7 @@ export class AgregarArrendatarioComponent implements OnInit {
       );
     }
 
+    this.aplicarValidadoresEstatus(this.arrendatarioForm.get('estatusInmueble')?.value);
     this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
   }
 
@@ -832,6 +941,7 @@ export class AgregarArrendatarioComponent implements OnInit {
       {
         nombreInmueble: data.arrendatario || 'Arrendatario Demo',
         tipoPersona: 2,
+        estatusInmueble: 'RENTADO',
         rentaMxn: data.mensualidadMxn || 25000,
         direccionInmueble: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
         vigenciaAnios: 3,
@@ -898,32 +1008,6 @@ export class AgregarArrendatarioComponent implements OnInit {
     servicios.push(servicioMtto);
     this.syncServiciosIdsDesdeCatalogo();
 
-    const zonas = this.arrendatarioForm.get('zonas') as FormArray;
-    zonas.clear();
-    const zona = this.crearZonaFormGroup();
-    zona.patchValue(
-      {
-        zonaPrincipal: 'Zona Comercial',
-        zonaSuperficieM2: data.superficieM2 || 100,
-        superficieDisponiblePredioM2: 50,
-      },
-      { emitEvent: false },
-    );
-    zonas.push(zona);
-
-    const estacionamientos = this.arrendatarioForm.get('estacionamientos') as FormArray;
-    estacionamientos.clear();
-    const estacionamiento = this.crearEstacionamientoFormGroup();
-    estacionamiento.patchValue(
-      {
-        estacionamientoPensionado: '10',
-        estacionamientoTarjeta: '0',
-        estacionamientoArrendatario: '0',
-      },
-      { emitEvent: false },
-    );
-    estacionamientos.push(estacionamiento);
-
     const socios = this.arrendatarioForm.get('socios') as FormArray;
     socios.clear();
     socios.push(this.crearSocioFormGroup());
@@ -968,6 +1052,7 @@ export class AgregarArrendatarioComponent implements OnInit {
     );
     galeria.push(imagen);
 
+    this.aplicarValidadoresEstatus(this.arrendatarioForm.get('estatusInmueble')?.value);
     this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
   }
 
@@ -1044,9 +1129,8 @@ export class AgregarArrendatarioComponent implements OnInit {
   }
 
   private readonly controlesExcluidosValidacion = new Set<string>([
-    'zonas',
     'locales',
-    'estacionamientos',
+    'pagos',
     'servicios',
     'socios',
     'galeriaImagenes',
@@ -1058,6 +1142,8 @@ export class AgregarArrendatarioComponent implements OnInit {
     'documentoCurp',
     'constanciaSituacionFiscalRepresentanteLegal',
     'documentoComprobanteDomicilio',
+    'documentoBoletaPredial',
+    'documentoReciboAguaServicios',
     'documentoEstadoCuentaBancario',
     'documentoActaConstitutiva',
     'ineRepresentanteLegal',
@@ -1070,6 +1156,7 @@ export class AgregarArrendatarioComponent implements OnInit {
     tipoPersona: 'Tipo de persona',
     rentaMxn: 'Renta (MXN)',
     direccionInmueble: 'Dirección fiscal',
+    estatusInmueble: 'Estatus del arrendamiento',
     vigenciaAnios: 'Vigencia (años)',
     fechaInicio: 'Fecha de inicio',
     fechaFin: 'Fecha de fin',
@@ -1101,6 +1188,9 @@ export class AgregarArrendatarioComponent implements OnInit {
   };
 
   private validarFormularioAntesMapa(): boolean {
+    this.aplicarValidadoresEstatus(this.arrendatarioForm.get('estatusInmueble')?.value);
+    this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
+
     this.arrendatarioForm.markAllAsTouched();
     this.serviciosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
     this.sociosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
@@ -1124,7 +1214,8 @@ export class AgregarArrendatarioComponent implements OnInit {
       title: '¡Revise el formulario!',
       html: `
         <p style="text-align: center; font-size: 15px; margin-bottom: 16px; color: white">
-          Faltan los siguientes campos obligatorios. Las imágenes y documentos opcionales no bloquean el envío.
+          Faltan campos obligatorios según el contrato vigente del formulario y del API.
+          Los campos ocultos (según estatus o tipo de persona) no se marcan como obligatorios.
         </p>
         <div style="max-height: 350px; overflow-y: auto;">${lista}</div>
       `,
@@ -1138,10 +1229,19 @@ export class AgregarArrendatarioComponent implements OnInit {
     return false;
   }
 
+  /** Fila de servicios considerada «en uso»: si eligieron tipo de servicio, deben completar datos mínimos. */
+  private servicioFilaActiva(grupo: FormGroup): boolean {
+    const raw = grupo.get('idTipoServicio')?.value;
+    if (raw == null || raw === '') return false;
+    return Number.isFinite(Number(raw));
+  }
+
   private recopilarCamposFaltantes(): string[] {
     const faltantes: string[] = [];
     Object.keys(this.arrendatarioForm.controls).forEach((key) => {
       if (this.controlesExcluidosValidacion.has(key)) return;
+      if (!this.mostrarCamposRenta && (key === 'rentaMxn' || key === 'tiempoRentaAnios')) return;
+
       const control = this.arrendatarioForm.get(key);
       if (!control || control.disabled) return;
       if (control.invalid) {
@@ -1149,48 +1249,19 @@ export class AgregarArrendatarioComponent implements OnInit {
       }
     });
 
-    const etiquetasServicio: Record<string, string> = {
-      idTipoServicio: 'Tipo de servicio',
-      servicioNumeroContrato: 'Número de contrato',
-      servicioFechaPago: 'Fecha de pago',
-      servicioUltimoDiaPago: 'Último día de pago',
-    };
     this.serviciosFormArray.controls.forEach((ctrl, i) => {
       const g = ctrl as FormGroup;
-      Object.keys(g.controls).forEach((key) => {
-        if (
-          key === 'servicioComprobantePago' ||
-          key === 'servicioComprobantePagoNombre' ||
-          key === 'servicioComprobantePagoUrl'
-        ) {
-          return;
-        }
-        const c = g.get(key);
-        if (c?.invalid) {
-          faltantes.push(`Servicio ${i + 1}: ${etiquetasServicio[key] ?? key}`);
-        }
-      });
+      if (!this.servicioFilaActiva(g)) return;
+      const etiquetaPref = `Servicio ${i + 1}`;
+      const nc = String(g.get('servicioNumeroContrato')?.value ?? '').trim();
+      const fp = String(g.get('servicioFechaPago')?.value ?? '').trim();
+      const ulp = String(g.get('servicioUltimoDiaPago')?.value ?? '').trim();
+      if (!nc) faltantes.push(`${etiquetaPref}: número de contrato`);
+      if (!fp) faltantes.push(`${etiquetaPref}: fecha de pago`);
+      if (!ulp) faltantes.push(`${etiquetaPref}: último día de pago`);
     });
 
-    this.sociosFormArray.controls.forEach((ctrl, i) => {
-      const g = ctrl as FormGroup;
-      Object.keys(g.controls).forEach((key) => {
-        if (
-          key === 'socioConstanciaSituacionFiscal' ||
-          key === 'socioConstanciaSituacionFiscalNombre' ||
-          key === 'socioComprobanteDomicilio' ||
-          key === 'socioComprobanteDomicilioNombre' ||
-          key === 'socioActaConstitutiva' ||
-          key === 'socioActaConstitutivaNombre'
-        ) {
-          return;
-        }
-        const c = g.get(key);
-        if (c?.invalid) {
-          faltantes.push(`Socio ${i + 1}: ${key === 'nombreSocio' ? 'Nombre' : key}`);
-        }
-      });
-    });
+    /** Socios: sin validadores en filas vacías; no se bloquean filas incompletas. */
 
     return faltantes;
   }
@@ -1202,39 +1273,35 @@ export class AgregarArrendatarioComponent implements OnInit {
     fd.append(key, String(Math.trunc(n)));
   }
 
-  private appendValorNumerico(fd: FormData, key: string, value: unknown): void {
-    if (value == null || value === '') return;
-    const n = Number(value);
-    if (!Number.isFinite(n)) return;
-    fd.append(key, String(n));
-  }
-
   private numJson(value: unknown): number | undefined {
     if (value == null || value === '') return undefined;
     const n = Number(value);
     return Number.isFinite(n) ? n : undefined;
   }
 
-  private construirFormDataArrendatario(): FormData {
-    const fd = new FormData();
-    const v = this.arrendatarioForm.getRawValue() as Record<string, unknown>;
-
+  /** JSON `arrendatario`: sólo los campos del Swagger POST /arrendatarios (string en multipart). */
+  private construirJsonArrendatarioSwagger(v: Record<string, unknown>): string {
     const dto: Record<string, unknown> = {
       fechaInicio: String(v['fechaInicio'] ?? '').trim(),
       fechaFin: String(v['fechaFin'] ?? '').trim(),
       arrendatario: String(v['nombreInmueble'] ?? '').trim(),
-      renta: this.numJson(v['rentaMxn']),
-      tiempoRenta: String(v['tiempoRentaAnios'] ?? '').trim(),
       correoRepresentante: String(v['correoRepresentanteLegal'] ?? '').trim(),
       telefonoRepresentante: String(v['telefonoRepresentanteLegal'] ?? '').trim(),
       representanteLegal: String(v['nombreRepresentanteLegal'] ?? '').trim(),
-      tipoPersona: v['tipoPersona'] != null ? Number(v['tipoPersona']) : undefined,
-      idArrendador: v['idArrendador'] != null ? Number(v['idArrendador']) : undefined,
     };
-    const dir = String(v['direccionInmueble'] ?? '').trim();
-    if (dir) dto['direccionFiscal'] = dir;
-    const vig = String(v['vigenciaAnios'] ?? '').trim();
-    if (vig) dto['vigenciaAnios'] = vig;
+
+    const tp = Number(v['tipoPersona']);
+    if (Number.isFinite(tp)) dto['tipoPersona'] = Math.trunc(tp);
+
+    const idArr = Number(v['idArrendador']);
+    if (Number.isFinite(idArr)) dto['idArrendador'] = Math.trunc(idArr);
+
+    if (this.mostrarCamposRenta) {
+      const rentaNum = this.numJson(v['rentaMxn']);
+      if (rentaNum !== undefined) dto['renta'] = rentaNum;
+      const tr = String(v['tiempoRentaAnios'] ?? '').trim();
+      if (tr) dto['tiempoRenta'] = tr;
+    }
 
     const lat = Number(v['lat']);
     const lng = Number(v['lng']);
@@ -1243,38 +1310,70 @@ export class AgregarArrendatarioComponent implements OnInit {
       dto['lng'] = lng;
     }
 
-    fd.append('arrendatario', JSON.stringify(dto));
+    return JSON.stringify(dto);
+  }
+
+  private logMultipartArrendatario(fd: FormData): void {
+    const entradas: Record<string, string> = {};
+    fd.forEach((value, key) => {
+      if (value instanceof File) entradas[key] = `[File: ${value.name} (${value.size} B)]`;
+      else entradas[key] = value;
+    });
+    console.log('[agregar-arrendatario] POST /arrendatarios multipart (clave → valor)', entradas);
+  }
+
+  private construirFormDataArrendatario(): FormData {
+    const fd = new FormData();
+    const v = this.arrendatarioForm.getRawValue() as Record<string, unknown>;
+
+    fd.append('arrendatario', this.construirJsonArrendatarioSwagger(v));
 
     const idInmRaw = v['idInmueble'];
     const idInm =
       idInmRaw != null && String(idInmRaw).trim() !== '' ? Number(idInmRaw) : Number.NaN;
-    if (Number.isFinite(idInm)) {
-      const contrato: Record<string, unknown> = {
-        idInmueble: idInm,
-        fechaInicioContrato: String(v['fechaInicioContrato'] ?? '').trim() || undefined,
-        fechaTerminoContrato: String(v['fechaTerminoContrato'] ?? '').trim() || undefined,
-        moneda: String(v['tipoMoneda'] ?? '').trim() || undefined,
-        observaciones: String(v['observaciones'] ?? '').trim() || undefined,
-        metrosRentados: this.numJson(v['metrosRentados']),
-        costoM2: this.numJson(v['costoPorM2']),
-        porcentajeMantenimiento: this.numJson(v['pctMantenimiento']),
-        mesesDeposito: this.numJson(v['mesesDeposito']),
-        montoDeposito: this.numJson(v['montoDeposito']),
-        mesesAdelanto: this.numJson(v['mesesAdelanto']),
-        montoAdelanto: this.numJson(v['montoAdelanto']),
-        aniosForzososArrendador: this.numJson(v['anosForzososArrendador']),
-        aniosForzososArrendatario: this.numJson(v['anosForzososArrendatario']),
-        subTotalRenta: this.numJson(v['subtotalRenta']),
-        ivaRenta: this.numJson(v['ivaRenta']),
-        rentaTotal: this.numJson(v['rentaTotal']),
-        subTotalMantenimiento: this.numJson(v['subtotalMantenimiento']),
-        ivaMantenimiento: this.numJson(v['ivaMantenimiento']),
-        mantenimientoTotal: this.numJson(v['mantenimientoTotal']),
-      };
-      Object.keys(contrato).forEach((k) => {
-        const val = contrato[k];
-        if (val === undefined || val === '') delete contrato[k];
-      });
+
+    const contrato: Record<string, unknown> = {};
+    if (Number.isFinite(idInm)) contrato['idInmueble'] = Math.trunc(idInm);
+    const fiC = String(v['fechaInicioContrato'] ?? '').trim();
+    if (fiC) contrato['fechaInicioContrato'] = fiC;
+    const ftC = String(v['fechaTerminoContrato'] ?? '').trim();
+    if (ftC) contrato['fechaTerminoContrato'] = ftC;
+    const moneda = String(v['tipoMoneda'] ?? '').trim();
+    if (moneda) contrato['moneda'] = moneda;
+    const obs = String(v['observaciones'] ?? '').trim();
+    if (obs) contrato['observaciones'] = obs;
+    const mr = this.numJson(v['metrosRentados']);
+    if (mr !== undefined) contrato['metrosRentados'] = mr;
+    const cm2 = this.numJson(v['costoPorM2']);
+    if (cm2 !== undefined) contrato['costoM2'] = cm2;
+    const pct = this.numJson(v['pctMantenimiento']);
+    if (pct !== undefined) contrato['porcentajeMantenimiento'] = pct;
+    const mdMes = this.numJson(v['mesesDeposito']);
+    if (mdMes !== undefined) contrato['mesesDeposito'] = mdMes;
+    const mdMon = this.numJson(v['montoDeposito']);
+    if (mdMon !== undefined) contrato['montoDeposito'] = mdMon;
+    const maMes = this.numJson(v['mesesAdelanto']);
+    if (maMes !== undefined) contrato['mesesAdelanto'] = maMes;
+    const maMon = this.numJson(v['montoAdelanto']);
+    if (maMon !== undefined) contrato['montoAdelanto'] = maMon;
+    const afa = this.numJson(v['anosForzososArrendador']);
+    if (afa !== undefined) contrato['aniosForzososArrendador'] = afa;
+    const afAt = this.numJson(v['anosForzososArrendatario']);
+    if (afAt !== undefined) contrato['aniosForzososArrendatario'] = afAt;
+    const str = this.numJson(v['subtotalRenta']);
+    if (str !== undefined) contrato['subTotalRenta'] = str;
+    const ivaR = this.numJson(v['ivaRenta']);
+    if (ivaR !== undefined) contrato['ivaRenta'] = ivaR;
+    const rt = this.numJson(v['rentaTotal']);
+    if (rt !== undefined) contrato['rentaTotal'] = rt;
+    const stm = this.numJson(v['subtotalMantenimiento']);
+    if (stm !== undefined) contrato['subTotalMantenimiento'] = stm;
+    const ivaM = this.numJson(v['ivaMantenimiento']);
+    if (ivaM !== undefined) contrato['ivaMantenimiento'] = ivaM;
+    const mt = this.numJson(v['mantenimientoTotal']);
+    if (mt !== undefined) contrato['mantenimientoTotal'] = mt;
+
+    if (Object.keys(contrato).length > 0) {
       fd.append('contratoArrendatario', JSON.stringify(contrato));
     }
 
@@ -1308,10 +1407,14 @@ export class AgregarArrendatarioComponent implements OnInit {
       }
     };
 
-    pushArchivo(v['documentoEscritura'], 'Escrituras o título de propiedad');
+    if (this.mostrarCamposRenta) {
+      pushArchivo(v['documentoContratoRenta'], 'Contrato de renta');
+    }
     pushArchivo(v['documentoConstanciaFiscal'], 'Constancia de situación fiscal');
     pushArchivo(v['documentoComprobanteDomicilio'], 'Comprobante de domicilio');
-    pushArchivo(v['documentoContratoRenta'], 'Contrato de renta');
+    pushArchivo(v['documentoEscritura'], 'Escrituras o título de propiedad');
+    pushArchivo(v['documentoBoletaPredial'], 'Boleta predial vigente');
+    pushArchivo(v['documentoReciboAguaServicios'], 'Recibo de agua o servicios');
     pushArchivo(v['documentoCurp'], 'CURP');
     pushArchivo(v['constanciaSituacionFiscalRepresentanteLegal'], 'Constancia fiscal representante legal');
     pushArchivo(v['documentoActaConstitutiva'], 'Acta constitutiva');
@@ -1394,6 +1497,7 @@ export class AgregarArrendatarioComponent implements OnInit {
     const inicio = Date.now();
     this.abrirSwalCargando();
     const fd = this.construirFormDataArrendatario();
+    this.logMultipartArrendatario(fd);
 
     const req =
       this.idArrendatario != null && Number.isFinite(Number(this.idArrendatario))

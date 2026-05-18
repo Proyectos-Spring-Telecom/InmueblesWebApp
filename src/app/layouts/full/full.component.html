@@ -3,22 +3,15 @@
   'sidebarNav-horizontal': options.horizontal,
   cardBorder: options.cardBorder,
 }" class="page-container" [dir]="options.dir!">
-  <!-- ============================================================== -->
-  <!-- VerticalHeader -->
-  <!-- ============================================================== -->
   @if(!options.horizontal) {
   <app-header [showToggle]="!isOver" (toggleCollapsed)="toggleCollapsed()" (toggleMobileNav)="sidenav.toggle()"
     (toggleMobileFilterNav)="filterNavRight.toggle()" (optionsChange)="receiveOptions($event)"></app-header>
   } @else {
-  <!-- horizontal header -->
   <app-horizontal-header (toggleMobileNav)="sidenav.toggle()" (toggleMobileFilterNav)="filterNavRight.toggle()"
     (optionsChange)="receiveOptions($event)"></app-horizontal-header>
   }
 
   <mat-sidenav-container class="mainWrapper">
-    <!-- ============================================================== -->
-    <!-- Vertical Sidebar -->
-    <!-- ============================================================== -->
     @if(!options.horizontal) {
     <mat-sidenav align="start" #leftsidenav [mode]="isOver ? 'over' : 'side'" [opened]="
         options.navPos === 'side' &&
@@ -38,9 +31,6 @@
     </mat-sidenav>
     }
 
-    <!-- ============================================================== -->
-    <!-- horizontal Sidebar -->
-    <!-- ============================================================== -->
     @if(resView && options.horizontal) {
     <mat-sidenav #leftsidenav [mode]="'over'" [opened]="options.sidenavOpened && !isTablet"
       (openedChange)="onSidenavOpenedChange($event)" (closedStart)="onSidenavClosedStart()" class="sidebarNav">
@@ -56,9 +46,6 @@
     </mat-sidenav>
     }
 
-    <!-- ============================================================== -->
-    <!-- Main Content -->
-    <!-- ============================================================== -->
     <mat-sidenav-content class="contentWrapper layout-content-column">
       <div #mainScroll class="layout-content-scroll">
         @if(options.horizontal) {
@@ -68,15 +55,7 @@
         <main class="pageWrapper" [ngClass]="{
             maxWidth: options.boxed
           }">
-          <!-- ============================================================== -->
-          <!-- Outlet -->
-          <!-- ============================================================== -->
           <router-outlet></router-outlet>
-          <!-- <div class="customizerBtn">
-          <button mat-fab class="bg-primary text-white" (click)="customizerRight.toggle()">
-            <mat-icon>settings</mat-icon>
-          </button>
-        </div> -->
         </main>
       </div>
       <footer
@@ -113,9 +92,7 @@
 
       <app-assistant-chat></app-assistant-chat>
     </mat-sidenav-content>
-    <!-- ============================================================== -->
-    <!-- Customizer -->
-    <!-- ============================================================== -->
+
     <mat-sidenav #customizerRight mode="over" position="end" class="customizer-fixed">
       <div class="p-x-16 p-y-10 d-flex align-items-center justify-content-between b-b-1">
         <h3 class="f-s-21 f-w-600">Settings</h3>
@@ -129,9 +106,7 @@
     </mat-sidenav>
 
   </mat-sidenav-container>
-  <!-- ------------------------------------------------------------------
-  Mobile Apps Sidebar
-  ------------------------------------------------------------------ -->
+
   <mat-drawer #filterNavRight mode="over" position="end" class="filter-sidebar">
     <div>
       <div class="d-flex justify-content-between align-items-center p-16">
