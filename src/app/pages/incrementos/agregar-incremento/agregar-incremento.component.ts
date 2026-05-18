@@ -1,5 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import {
@@ -7,7 +14,35 @@ import {
   IncrementosService,
 } from 'src/app/services/moduleService/incrementos.service';
 import Swal from 'sweetalert2';
-import { buscarInpcHistoricoPorId, MESES_INPC, mesNombreANumero } from '../inpc-historico.data';
+import {
+  mapInpcApiItemToRow,
+  MESES_INPC,
+  mesNombreANumero,
+} from '../inpc-historico.data';
+import {
+  countDigitosAntesCursor,
+  cursorPosicionTrasFormatoMiles,
+  formatMilesAlEscribir,
+  formatMilesDesdeNumero,
+  parseValorNumerico,
+} from 'src/app/shared/valor-miles-format';
+
+const valorInpcValidador: ValidatorFn = (c: AbstractControl): ValidationErrors | null => {
+  const raw = String(c.value ?? '').trim();
+  if (!raw) return { required: true };
+  const n = parseValorNumerico(raw);
+  if (!Number.isFinite(n) || n < 0) return { min: true };
+  return null;
+};
+
+/** Año: exactamente 4 dígitos y entre 1990 y 2040 (el valor del control es string). */
+const anioCuatroDigitosValidador: ValidatorFn = (c: AbstractControl): ValidationErrors | null => {
+  const s = String(c.value ?? '').trim();
+  if (!/^\d{4}$/.test(s)) return { pattern: true };
+  const n = Number(s);
+  if (!Number.isFinite(n) || n < 1990 || n > 2040) return { anioFueraRango: true };
+  return null;
+};
 
 @Component({
   selector: 'app-agregar-incremento',
@@ -49,42 +84,75 @@ export class AgregarIncrementoComponent implements OnInit {
   obtenerIncremento() {
     if (this.idIncremento == null) return;
 
-    const local = buscarInpcHistoricoPorId(this.idIncremento);
-    if (local) {
-      this.incrementoForm.patchValue(
-        {
-          anio: local.anio,
-          mes: local.mes,
-          valorInpc: local.valorInpc,
-        },
-        { emitEvent: false },
-      );
-      this.incrementoForm.markAsPristine();
-      return;
-    }
-
-    this.incrementosService.obtenerIncremento(this.idIncremento).subscribe((res: any) => {
-      const data = res?.data ?? res ?? {};
-      this.incrementoForm.patchValue(
-        {
-          anio: data?.anio ?? new Date().getFullYear(),
-          mes: data?.mes ?? '',
-          valorInpc: data?.valorInpc ?? data?.porcentaje ?? 0,
-        },
-        { emitEvent: false },
-      );
-      this.incrementoForm.markAsPristine();
+    this.incrementosService.obtenerIncremento(this.idIncremento).subscribe({
+      next: (res: any) => {
+        const raw = res?.data ?? res ?? {};
+        const row = mapInpcApiItemToRow(raw);
+        this.incrementoForm.patchValue(
+          {
+            anio: String(row.anio || new Date().getFullYear()).replace(/\D/g, '').slice(0, 4),
+            mes: row.mes || '',
+            valorInpc: formatMilesDesdeNumero(row.valorInpc),
+          },
+          { emitEvent: false },
+        );
+        this.incrementoForm.markAsPristine();
+      },
+      error: () => {
+        Swal.fire({
+          title: '¡Ops!',
+          text: `No se pudo cargar el registro de INPC.`,
+          icon: 'error',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'Confirmar',
+          background: '#141a21',
+          color: '#ffffff',
+        });
+        this.regresar();
+      },
     });
   }
 
   initForm() {
     this.incrementoForm = this.fb.group({
       anio: [
-        new Date().getFullYear(),
-        [Validators.required, Validators.min(1990), Validators.max(2040)],
+        String(new Date().getFullYear()),
+        [Validators.required, anioCuatroDigitosValidador],
       ],
       mes: ['', Validators.required],
-      valorInpc: [0, [Validators.required, Validators.min(0)]],
+      valorInpc: ['', [Validators.required, valorInpcValidador]],
+    });
+  }
+
+  onAnioInput(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const solo = input.value.replace(/\D/g, '').slice(0, 4);
+    const ctrl = this.incrementoForm.get('anio');
+    ctrl?.setValue(solo, { emitEvent: false });
+    ctrl?.updateValueAndValidity({ emitEvent: false });
+    if (input.value !== solo) {
+      input.value = solo;
+    }
+  }
+
+  onValorInpcInput(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const before = input.value;
+    const cursor = input.selectionStart ?? before.length;
+    const digitsBefore = countDigitosAntesCursor(before, cursor);
+
+    const formatted = formatMilesAlEscribir(before);
+    const ctrl = this.incrementoForm.get('valorInpc');
+    ctrl?.setValue(formatted, { emitEvent: false });
+    ctrl?.updateValueAndValidity({ emitEvent: false });
+
+    if (input.value !== formatted) {
+      input.value = formatted;
+    }
+
+    const newPos = cursorPosicionTrasFormatoMiles(formatted, digitsBefore);
+    requestAnimationFrame(() => {
+      input.setSelectionRange(newPos, newPos);
     });
   }
 
@@ -145,18 +213,14 @@ export class AgregarIncrementoComponent implements OnInit {
 
   private buildPayload(): IncrementoPayload {
     const v = this.incrementoForm.value;
-    const anio = Number(v.anio);
+    const anio = Number(String(v.anio ?? '').replace(/\D/g, '').slice(0, 4));
     const mesNombre = (v.mes ?? '').toString().trim();
-    const valor = Number(v.valorInpc);
+    const valor = parseValorNumerico(v.valorInpc);
     const mesNum = mesNombreANumero(mesNombre);
     return {
-      nombre: `INPC ${mesNombre} ${anio}`.trim(),
-      porcentaje: Number.isFinite(valor) ? valor : 0,
-      descripcion: `Registro histórico INPC (${anio}, ${mesNombre})`,
-      tipoInmueble: 'COMERCIAL',
-      periodicidad: 'MENSUAL',
-      mesAplicacion: mesNum,
-      indiceReferencia: `INPC ${anio}`,
+      anio,
+      mes: mesNum,
+      inpc: Number.isFinite(valor) ? valor : 0,
     };
   }
 
@@ -166,12 +230,12 @@ export class AgregarIncrementoComponent implements OnInit {
       return;
     }
     const payload = this.buildPayload();
-    this.incrementosService.agregarIncremento(payload).subscribe(
-      () => {
+    this.incrementosService.agregarIncremento(payload).subscribe({
+      next: () => {
         this.submitButton = 'Guardar';
         this.loading = false;
         Swal.fire({
-          title: '¡Operación Exitosa!',
+          title: '¡Operación exitosa!',
           text: `Se agregó un nuevo registro de INPC de manera exitosa.`,
           icon: 'success',
           confirmButtonColor: '#3085d6',
@@ -181,7 +245,7 @@ export class AgregarIncrementoComponent implements OnInit {
         });
         this.regresar();
       },
-      () => {
+      error: () => {
         this.submitButton = 'Guardar';
         this.loading = false;
         Swal.fire({
@@ -194,7 +258,7 @@ export class AgregarIncrementoComponent implements OnInit {
           color: '#ffffff',
         });
       },
-    );
+    });
   }
 
   actualizar() {
@@ -208,12 +272,12 @@ export class AgregarIncrementoComponent implements OnInit {
       return;
     }
     const payload = this.buildPayload();
-    this.incrementosService.actualizarIncremento(this.idIncremento, payload).subscribe(
-      () => {
+    this.incrementosService.actualizarIncremento(this.idIncremento, payload).subscribe({
+      next: () => {
         this.submitButton = 'Actualizar';
         this.loading = false;
         Swal.fire({
-          title: '¡Operación Exitosa!',
+          title: '¡Operación exitosa!',
           text: `Los datos del registro de INPC se actualizaron correctamente.`,
           icon: 'success',
           confirmButtonColor: '#3085d6',
@@ -223,7 +287,7 @@ export class AgregarIncrementoComponent implements OnInit {
         });
         this.regresar();
       },
-      () => {
+      error: () => {
         this.submitButton = 'Actualizar';
         this.loading = false;
         Swal.fire({
@@ -236,7 +300,7 @@ export class AgregarIncrementoComponent implements OnInit {
           color: '#ffffff',
         });
       },
-    );
+    });
   }
 
   regresar() {

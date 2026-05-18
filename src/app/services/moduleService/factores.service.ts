@@ -1,31 +1,28 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+/** POST/PATCH `/factores`. */
 export interface FactorPayload {
-  nombre: string;
-  valor: number;
-  /** Detalle del factor (ubicación, mercado, uso del suelo, etc.) */
+  variable: string;
+  valor: string;
   descripcion?: string | null;
-  /** Categoría del factor en valuación o renta */
-  categoria?: string | null;
-  /** Zona, colonia, corredor o mercado de referencia */
-  zonaReferencia?: string | null;
-  /** Cómo se interpreta el valor numérico */
-  unidad?: string | null;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class FactoresService {
-  private readonly base = `${environment.API_SECURITY}/cat-factores`;
+  private readonly base = `${environment.API_SECURITY}/factores`;
 
   constructor(private http: HttpClient) {}
 
   obtenerFactoresData(page: number, limit: number): Observable<any> {
-    return this.http.get(`${this.base}/paginated?page=${page}&limit=${limit}`);
+    const params = new HttpParams()
+      .set('page', String(page))
+      .set('limit', String(limit));
+    return this.http.get(`${this.base}/paginated`, { params });
   }
 
   obtenerFactor(id: number): Observable<any> {

@@ -34,9 +34,11 @@
       <dx-data-grid
         #gridContainer
         id="gridIncrementos"
+        class="inm-data-grid"
         [columnHidingEnabled]="false"
+        [hoverStateEnabled]="false"
         [showBorders]="true"
-        [showColumnLines]="true"
+        [showColumnLines]="false"
         [showRowLines]="true"
         [rowAlternationEnabled]="true"
         [dataSource]="listaIncrementos"
@@ -47,7 +49,7 @@
         [noDataText]="'Sin registros para mostrar'"
         [pager]="{
           showPageSizeSelector: true,
-          allowedPageSizes: [10, 20, 50],
+          allowedPageSizes: [20],
           showInfo: true,
           showNavigationButtons: true,
           visible: true
@@ -66,17 +68,25 @@
           alignment="center"
           *appHasPermission="['46', '48', '54', '56']"
           dataType="string"
-          [width]="120"
+          [width]="180"
         ></dxi-column>
         <dxi-column dataField="anio" caption="Año" alignment="center" dataType="number"></dxi-column>
         <dxi-column dataField="mes" caption="Mes" alignment="center" dataType="string"></dxi-column>
         <dxi-column
-          dataField="valorInpc"
+          dataField="valorInpcFmt"
           caption="INPC"
           alignment="center"
-          dataType="number"
-          format=",##0.000"
+          dataType="string"
         ></dxi-column>
+        <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="estInpc" dataType="string">
+          <div *dxTemplate="let f of 'estInpc'">
+            @if (f.data.estatus === 1) {
+              <span class="estatus estatus-activo">Activo</span>
+            } @else {
+              <span class="estatus estatus-inactivo">Inactivo</span>
+            }
+          </div>
+        </dxi-column>
         <div *dxTemplate="let row of 'Acciones'" class="d-flex gap-3 justify-content-center">
           <div *appHasPermission="['46', '54']">
             <button
@@ -86,10 +96,16 @@
               <i class="fa fa-edit"></i>
             </button>
           </div>
-          <div>
-            <button type="button" id="deleteButton" class="btnAcciones" title="Eliminar">
-              <i class="fa fa-times"></i>
-            </button>
+          <div *appHasPermission="['48', '56']">
+            @if (row.data.estatus === 0) {
+              <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
+                  <i class="fa fa-arrow-up"></i>
+              </button>
+              } @else {
+              <button id="deleteButton" class="btnAcciones" (click)="desactivar(row.data)">
+                  <i class="fa fa-arrow-down"></i>
+              </button>
+              }
           </div>
         </div>
         <dxo-export

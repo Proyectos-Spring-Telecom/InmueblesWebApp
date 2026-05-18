@@ -81,8 +81,7 @@ body {
 
 .layout-app-footer {
   flex: 0 0 auto;
-  /* No usar Bootstrap .w-100 aquí: width:100% !important + left fijo desborda y recorta el texto a la derecha */
-  width: auto;
+  /* No usar Bootstrap .w-100: desborda con left+right fijos */
   max-width: none;
   box-sizing: border-box;
   background-color: var(--mat-sys-secondary);
@@ -94,7 +93,9 @@ body {
   right: 0;
   bottom: 0;
   left: $sidenav-desktop;
-  overflow: visible;
+  /* Ancho explícito: evita huecos y scroll horizontal al contraer sidebar */
+  width: calc(100% - #{$sidenav-desktop});
+  overflow: hidden;
   /* Permite apilar el footer según el ancho real del bloque (p. ej. con sidebar), no solo el viewport */
   container-type: inline-size;
   container-name: app-footer;
@@ -375,16 +376,19 @@ body {
 /* Sidebar mini: footer arranca después del menú colapsado */
 .page-container.sidebarNav-mini .layout-app-footer {
   left: $sidenav-mini;
+  width: calc(100% - #{$sidenav-mini});
 }
 
 /* Horizontal o móvil/tablet: footer a todo el ancho */
 .page-container.sidebarNav-horizontal .layout-app-footer {
   left: 0;
+  width: 100%;
 }
 
 @media (max-width: 1023px) {
   .layout-app-footer {
     left: 0;
+    width: 100%;
   }
 
   .layout-content-scroll {

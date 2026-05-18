@@ -1,1 +1,13 @@
-// Estilos específicos del componente si son necesarios
+/* Select con label flotante: padding compatible con Bootstrap (.form-floating > .form-select).
+   El padding vertical chico rompía la superposición etiqueta / valor seleccionado. */
+.perm-form-nc .perm-ig.input-group-lg .perm-select-floating > select.form-select {
+  font-size: 1rem;
+  line-height: 1.5;
+  padding-top: 1.625rem;
+  padding-bottom: 0.625rem;
+  min-height: calc(3.5rem + 2px);
+}
+
+.perm-form-nc .perm-ig.input-group-lg .perm-select-floating > select.form-select option {
+  padding: 0.35rem 0.65rem;
+}

@@ -1,3 +1,5 @@
+@import '../../../shared/documento-preview/documento-preview.component.scss';
+
 :host {
   display: block;
 }
@@ -273,18 +275,124 @@
   padding-inline: clamp(0.55rem, 0.48rem + 0.28vw, 0.82rem);
 }
 
-.docs-uploader-inline-btn {
+@keyframes docs-galeria-card-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(12px);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.03) translateY(0);
+    box-shadow: 0 0 28px rgba(59, 130, 246, 0.5);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    box-shadow: none;
+  }
+}
+
+.docs-upload-card.docs-galeria-card-enter {
+  animation: docs-galeria-card-enter 0.42s cubic-bezier(0.34, 1.25, 0.64, 1) both;
+  transform-origin: center top;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .docs-upload-card.docs-galeria-card-enter {
+    animation-duration: 0.01ms;
+  }
+}
+
+.uploader-wrap .uploader__cta {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.docs-uploader-ver-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
   flex: 0 0 auto;
-  min-height: 2rem !important;
-  padding: 0 0.65rem !important;
-  font-size: 0.75rem !important;
-  line-height: 1 !important;
+  min-height: 2rem;
+  padding: 0 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  text-transform: capitalize;
 
   mat-icon {
     font-size: 1rem;
     width: 1rem;
     height: 1rem;
-    margin-right: 0.15rem;
+    margin: 0;
+  }
+}
+
+/* Edición por id: archivo remoto → botones centrados, nombre debajo */
+.uploader-wrap .uploader__cta.uploader__cta--archivo-remoto,
+.srv-pago-uploader__row--archivo-remoto {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.uploader__cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.uploader__cta--archivo-remoto .uploader__badge,
+.srv-pago-uploader__row--archivo-remoto .srv-pago-uploader__formats {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  text-align: center;
+  justify-content: center;
+  white-space: normal;
+}
+
+.srv-pago-uploader__row .docs-uploader-ver-btn {
+  align-self: center;
+}
+
+.docs-uploader-inline-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto;
+  min-height: 2rem !important;
+  padding-block: 0 !important;
+  padding-inline: 0.65rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1 !important;
+  text-align: center;
+
+  .mdc-button__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    line-height: 1;
+  }
+
+  mat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
   }
 }
 
@@ -648,7 +756,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  /* Por encima de header, sidebar, footer fijo y capas del layout */
+  z-index: 100000;
 }
 
 .docs-modal {

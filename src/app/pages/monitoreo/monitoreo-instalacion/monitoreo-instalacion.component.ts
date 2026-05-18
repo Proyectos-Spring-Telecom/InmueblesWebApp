@@ -24,6 +24,7 @@ import { ClientesService } from 'src/app/services/moduleService/clientes.service
 import { ContratosService } from 'src/app/services/moduleService/contratos.service';
 import { InstalacionService } from 'src/app/services/moduleService/instalaciones.service';
 import { InstalacionCentral } from 'src/app/services/moduleService/instalacionesCentral.service';
+import { PagoInmuebleService } from 'src/app/services/moduleService/pago-inmueble.service';
 
 const IVA_CONTRATO = 0.16;
 
@@ -73,6 +74,33 @@ interface MonitoreoExpedienteDoc {
 }
 
 type PagoEstatus = 'Pagado' | 'Pendiente' | 'Cancelado';
+
+/** API `estatus`: 2 Pendiente, 1 Pagado, 0 Cancelado (Swagger). */
+function estatusPagoToApi(estatus: PagoEstatus): number {
+  switch (estatus) {
+    case 'Pagado':
+      return 1;
+    case 'Pendiente':
+      return 2;
+    case 'Cancelado':
+      return 0;
+    default:
+      return 2;
+  }
+}
+
+/**
+ * Mapeo provisional de etiqueta → `idMetodoPago` hasta existir catálogo en API.
+ * Ajustar si el backend usa otros IDs.
+ */
+const ID_METODO_PAGO_POR_ETIQUETA: Record<string, number> = {
+  Transferencia: 1,
+  SPEI: 2,
+  Tarjeta: 3,
+  Efectivo: 4,
+  Depósito: 5,
+  Cheque: 6,
+};
 
 interface PagoRow {
   id: number;
@@ -134,6 +162,11 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   vistaEntidad: 'inmueble' | 'local' = 'inmueble';
   /** Contrato asociado en URL (`?idContrato=`) para cargar el mismo modelo que el formulario de contratos. */
   idContratoQuery: number | null = null;
+  /**
+   * Inmueble asociado (`?idInmueble=`), inyectado al abrir el detalle desde el mapa.
+   * Requerido para POST `/pago` (sin selector en UI).
+   */
+  idInmuebleContext: number | null = null;
   inmuebleEsRenta = true;
   localEstatus: 'ocupado' | 'libre' = 'ocupado';
   detalleTitulo = 'San Cristóbal';
@@ -144,6 +177,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   mostrarModalContratoLocal = false;
   mostrarModalPago = false;
   pagoForm!: FormGroup;
+  /** Deshabilita el botón Agregar mientras corre POST /pago. */
+  pagoGuardando = false;
   contratoModalLoading = false;
   contratoModalError: string | null = null;
   contratoModal: VistaContratoLocalModal | null = null;
@@ -348,6 +383,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private fb: FormBuilder,
     private sanitizer: DomSanitizer,
+    private pagoInmuebleService: PagoInmuebleService,
   ) {}
 
   ngOnDestroy(): void {
@@ -387,6 +423,10 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     const idn = idRaw != null && String(idRaw).trim() !== '' ? Number(idRaw) : NaN;
     this.idContratoQuery =
       Number.isFinite(idn) && idn > 0 ? Math.floor(idn) : null;
+    const idInmRaw = (qp.get('idInmueble') ?? '').trim();
+    const idInmNum = idInmRaw !== '' ? Number(idInmRaw) : NaN;
+    this.idInmuebleContext =
+      Number.isFinite(idInmNum) && idInmNum > 0 ? Math.floor(idInmNum) : null;
     this.refrescarServiciosDataSource();
     this.cdr.markForCheck();
   }
@@ -1231,7 +1271,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       monto: ['', Validators.required],
       metodo: ['', Validators.required],
       estatus: ['Pendiente' as PagoEstatus, Validators.required],
-      comprobantePago: [null as File | null],
+      comprobantePago: [null as File | null, Validators.required],
       comprobantePagoNombre: [''],
     });
   }
@@ -1277,11 +1317,26 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         color: '#ffffff',
         icon: 'warning',
         title: 'Faltan datos',
-        text: 'Completa los campos obligatorios para agregar el pago.',
+        text: 'Completa los campos obligatorios, incluido el comprobante de pago.',
         confirmButtonText: 'Entendido',
       });
       return;
     }
+
+    if (this.idInmuebleContext == null) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'info',
+        title: 'Falta el inmueble en contexto',
+        html:
+          'No hay <code>idInmueble</code> en la URL de esta pantalla, así que no se puede registrar el pago contra el API. ' +
+          'Abre este detalle desde el mapa de monitoreo (o agrega <code>?idInmueble=…</code> al entrar).',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    const idInmueble = this.idInmuebleContext;
 
     const v = this.pagoForm.value as {
       concepto: string;
@@ -1306,23 +1361,116 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const nextId =
-      this.pagosData.reduce((max, r) => Math.max(max, r.id), 0) + 1;
-    const fechaPagoStr = String(v.fechaPago ?? '').trim();
-    const nuevo: PagoRow = {
-      id: nextId,
-      concepto: String(v.concepto ?? '').trim(),
-      fechaPago: fechaPagoStr,
-      fechaLimitePago: this.fechaIsoMasDias(fechaPagoStr, 10),
-      monto: montoN,
-      metodo: String(v.metodo ?? '').trim(),
-      estatus: (v.estatus ?? 'Pendiente') as PagoEstatus,
-    };
+    const archivo = v.comprobantePago;
+    if (!(archivo instanceof File)) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'warning',
+        title: 'Comprobante obligatorio',
+        text: 'El API requiere adjuntar el archivo del comprobante.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
 
-    this.pagosData = [nuevo, ...this.pagosData];
-    this.refrescarMesesFiltroPagosOpciones();
-    this.aplicarFiltroPagosGrid();
-    this.cerrarModalPago();
+    const fd = this.construirFormDataPago(idInmueble, v, montoN, archivo);
+
+    this.pagoGuardando = true;
+    this.cdr.markForCheck();
+
+    this.pagoInmuebleService
+      .registrarPago(fd)
+      .pipe(
+        finalize(() => {
+          this.pagoGuardando = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          const fechaPagoStr = String(v.fechaPago ?? '').trim();
+          const nextId =
+            this.pagosData.reduce((max, r) => Math.max(max, r.id), 0) + 1;
+          const nuevo: PagoRow = {
+            id: nextId,
+            concepto: String(v.concepto ?? '').trim(),
+            fechaPago: fechaPagoStr,
+            fechaLimitePago: this.fechaIsoMasDias(fechaPagoStr, 10),
+            monto: montoN,
+            metodo: String(v.metodo ?? '').trim(),
+            estatus: (v.estatus ?? 'Pendiente') as PagoEstatus,
+          };
+          this.pagosData = [nuevo, ...this.pagosData];
+          this.refrescarMesesFiltroPagosOpciones();
+          this.aplicarFiltroPagosGrid();
+          this.cerrarModalPago();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'success',
+            title: 'Pago registrado',
+            text: 'El pago y el comprobante se enviaron correctamente.',
+            confirmButtonText: 'Listo',
+          });
+        },
+        error: (err: unknown) => {
+          const msg = this.mensajeErrorHttp(err);
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'error',
+            title: 'No se pudo registrar el pago',
+            text: msg,
+            confirmButtonText: 'Entendido',
+          });
+        },
+      });
+  }
+
+  private construirFormDataPago(
+    idInmueble: number,
+    v: {
+      concepto: string;
+      fechaPago: string;
+      monto: string;
+      metodo: string;
+      estatus: PagoEstatus;
+    },
+    montoN: number,
+    comprobante: File,
+  ): FormData {
+    const fd = new FormData();
+    const fecha = String(v.fechaPago ?? '').trim();
+    const fechaPagoApi = fecha.length === 10 ? `${fecha}T12:00:00` : fecha;
+
+    fd.append('idInmueble', String(idInmueble));
+    fd.append('concepto', String(v.concepto ?? '').trim());
+    fd.append('fechaPago', fechaPagoApi);
+    fd.append('monto', String(montoN));
+    fd.append('estatus', String(estatusPagoToApi(v.estatus)));
+
+    const metodoLabel = String(v.metodo ?? '').trim();
+    const idMetodo = ID_METODO_PAGO_POR_ETIQUETA[metodoLabel];
+    if (idMetodo != null) {
+      fd.append('idMetodoPago', String(idMetodo));
+    }
+
+    fd.append('ComprobantePagoArchivo', comprobante, comprobante.name);
+    return fd;
+  }
+
+  private mensajeErrorHttp(err: unknown): string {
+    const e = err as {
+      error?: { message?: string } | string;
+      message?: string;
+    };
+    if (e?.error && typeof e.error === 'object' && typeof e.error.message === 'string') {
+      return e.error.message;
+    }
+    if (typeof e?.error === 'string' && e.error) return e.error;
+    if (typeof e?.message === 'string' && e.message) return e.message;
+    return 'Ocurrió un error al enviar el pago. Intenta de nuevo.';
   }
 
   onMontoKeydown(ev: KeyboardEvent): void {

@@ -1,3 +1,38 @@
+@import '../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
+
 :host {
   display: block;
+  min-width: 0;
 }
+
+.inm-lista {
+  min-width: 0;
+}
+
+.inm-lista .surface {
+  min-width: 0;
+}
+
+.inm-lista__toolbar {
+  gap: 0.5rem !important;
+}
+
+@media (max-width: 767.98px) {
+  .inm-lista__toolbar {
+    justify-content: center !important;
+  }
+
+  .inm-lista__toolbar .mat-mdc-unelevated-button,
+  .inm-lista__toolbar button.mat-mdc-button-base {
+    flex: 1 1 auto;
+    min-width: min(100%, 200px);
+  }
+}
+
+@media (max-width: 480px) {
+  .inm-lista__toolbar .mat-mdc-unelevated-button,
+  .inm-lista__toolbar button.mat-mdc-button-base {
+    min-width: 100%;
+  }
+}
+

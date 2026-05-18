@@ -1,33 +1,28 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+/** Cuerpo de POST/PATCH `/inpc`. */
 export interface IncrementoPayload {
-  nombre: string;
-  porcentaje: number;
-  /** Descripción del criterio de aplicación (contrato, cláusula, etc.) */
-  descripcion?: string | null;
-  /** Comercial, residencial, estacionamiento u otro */
-  tipoInmueble?: string | null;
-  /** Frecuencia del incremento pactada */
-  periodicidad?: string | null;
-  /** Mes del año en que aplica la renovación (1–12), si aplica */
-  mesAplicacion?: number | null;
-  /** Referencia legal o índice (p. ej. INPC, IPC) */
-  indiceReferencia?: string | null;
+  anio: number;
+  mes: number;
+  inpc: number;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class IncrementosService {
-  private readonly base = `${environment.API_SECURITY}/cat-incrementos`;
+  private readonly base = `${environment.API_SECURITY}/inpc`;
 
   constructor(private http: HttpClient) {}
 
   obtenerIncrementosData(page: number, limit: number): Observable<any> {
-    return this.http.get(`${this.base}/paginated?page=${page}&limit=${limit}`);
+    const params = new HttpParams()
+      .set('page', String(page))
+      .set('limit', String(limit));
+    return this.http.get(`${this.base}/paginated`, { params });
   }
 
   obtenerIncremento(id: number): Observable<any> {

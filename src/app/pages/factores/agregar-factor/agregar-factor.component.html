@@ -45,28 +45,35 @@
               <div class="form-floating flex-grow-1">
                 <input
                   type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
                   formControlName="valor"
                   class="form-control"
                   id="facValor"
-                  placeholder="Ej.: variable o 100"
+                  placeholder=" "
+                  (input)="onValorInput($event)"
                 />
-                <label for="facValor">Valor mostrado en el grid</label>
+                <label for="facValor">Ej.: 1.25 o 127,000</label>
               </div>
             </div>
           </div>
-          <div class="col-12">
+          <div class="col-12 col-md-6">
             <label for="facDescripcion" class="form-label perm-label">Descripción (opcional)</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">notes</mat-icon>
               </span>
-              <input
-                type="text"
-                formControlName="descripcion"
-                class="form-control"
-                id="facDescripcion"
+              <div class="form-floating flex-grow-1">
+                <input
+                  type="text"
+                  formControlName="descripcion"
+                  class="form-control"
+                  id="facDescripcion"
                 placeholder="Criterios de aplicación del factor en rentas o avalúos…"
-              />
+                  required
+                />
+                <label for="facVariable">Nombre de variable mostrado en el grid</label>
+              </div>
             </div>
           </div>
         </div>

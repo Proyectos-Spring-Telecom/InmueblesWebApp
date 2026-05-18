@@ -2,8 +2,10 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
+import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { INPC_HISTORICO_DEMO } from '../inpc-historico.data';
+import { IncrementosService } from 'src/app/services/moduleService/incrementos.service';
+import { mapInpcApiItemToRow } from '../inpc-historico.data';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -23,7 +25,7 @@ export class ListaIncrementosComponent implements OnInit {
   public loadingMessage: string = 'Cargando...';
   public paginaActual: number = 1;
   public totalRegistros: number = 0;
-  public pageSize: number = 10;
+  public pageSize: number = 20;
   public totalPaginas: number = 0;
   @ViewChild(DxDataGridComponent, { static: false })
   dataGrid: DxDataGridComponent;
@@ -32,13 +34,15 @@ export class ListaIncrementosComponent implements OnInit {
   public paginaActualData: any[] = [];
   public filtroActivo: string = '';
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private incrementosService: IncrementosService,
+  ) {
     this.showFilterRow = true;
     this.showHeaderFilter = true;
   }
 
   ngOnInit() {
-    this.paginaActualData = [...INPC_HISTORICO_DEMO];
     this.setupDataSource();
   }
 
@@ -50,6 +54,92 @@ export class ListaIncrementosComponent implements OnInit {
     this.router.navigateByUrl('/incrementos/editar-incremento/' + idIncremento);
   }
 
+  activar(rowData: any) {
+    Swal.fire({
+      title: '¡Activar!',
+      html: `¿Confirma dar de alta el registro INPC: <strong>${rowData.mes} ${rowData.anio}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.incrementosService.updateEstatusActivar(rowData.id, 1).subscribe({
+          next: () => {
+            Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Confirmación realizada!',
+              html: `El registro INPC ha sido activado.`,
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+            this.setupDataSource();
+            this.dataGrid?.instance?.refresh();
+          },
+          error: (error) => {
+            Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Ops!',
+              html: `${error}`,
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+          },
+        });
+    });
+  }
+
+  desactivar(rowData: any) {
+    Swal.fire({
+      title: '¡Desactivar!',
+      html: `¿Confirma dar de baja el registro INPC: <strong>${rowData.mes} ${rowData.anio}</strong>?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+      background: '#141a21',
+      color: '#ffffff',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.incrementosService.updateEstatusDesactivar(rowData.id, 0).subscribe({
+          next: () => {
+            Swal.fire({
+              title: '¡Confirmación realizada!',
+              html: `El registro INPC ha sido desactivado.`,
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+              background: '#141a21',
+              color: '#ffffff',
+            });
+            this.setupDataSource();
+            this.dataGrid?.instance?.refresh();
+          },
+          error: (error) => {
+            Swal.fire({
+              title: '¡Ops!',
+              html: `${error}`,
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+              background: '#141a21',
+              color: '#ffffff',
+            });
+          },
+        });
+    });
+  }
+
   onPageIndexChanged(e: any) {
     const pageIndex = e.component.pageIndex();
     this.paginaActual = pageIndex + 1;
@@ -58,28 +148,56 @@ export class ListaIncrementosComponent implements OnInit {
 
   setupDataSource() {
     this.loading = true;
-    const total = INPC_HISTORICO_DEMO.length;
+    const defaultPageSize = this.pageSize || 10;
 
     this.listaIncrementos = new CustomStore({
       key: 'id',
       load: async (loadOptions: any) => {
-        const take = Number(loadOptions?.take) ?? this.pageSize;
-        const skip = Number(loadOptions?.skip) ?? 0;
-        const page = Math.floor(skip / take) + 1;
+        const skipValue = Number(loadOptions?.skip) || 0;
+        const takeValue = Number(loadOptions?.take) || defaultPageSize;
+        const page = Math.floor(skipValue / takeValue) + 1;
 
-        this.loading = false;
-        const slice = INPC_HISTORICO_DEMO.slice(skip, skip + take);
-        this.totalRegistros = total;
-        this.paginaActual = page;
-        this.totalPaginas = Math.max(1, Math.ceil(total / take));
-        this.paginaActualData = [...INPC_HISTORICO_DEMO];
+        try {
+          const resp: any = await lastValueFrom(
+            this.incrementosService.obtenerIncrementosData(page, takeValue),
+          );
+          this.loading = false;
 
-        return {
-          data: slice,
-          totalCount: total,
-        };
+          const rowsRaw: any[] = Array.isArray(resp?.data) ? resp.data : [];
+          const meta = resp?.paginated || {};
+
+          const totalRegistros =
+            toNum(meta.total) ?? toNum(resp?.total) ?? rowsRaw.length;
+          const paginaActual = toNum(meta.page) ?? toNum(resp?.page) ?? page;
+          const totalPaginasCalc =
+            toNum(meta.lastPage) ??
+            toNum(resp?.pages) ??
+            Math.max(1, Math.ceil(totalRegistros / takeValue));
+
+          const dataTransformada = rowsRaw.map((item: any) =>
+            mapInpcApiItemToRow(item),
+          );
+
+          this.totalRegistros = totalRegistros;
+          this.paginaActual = paginaActual;
+          this.totalPaginas = totalPaginasCalc;
+          this.paginaActualData = dataTransformada;
+
+          return {
+            data: dataTransformada,
+            totalCount: totalRegistros,
+          };
+        } catch (_error) {
+          this.loading = false;
+          return { data: [], totalCount: 0 };
+        }
       },
     });
+
+    function toNum(v: any): number | null {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
   }
 
   onGridOptionChanged(e: any) {
@@ -120,7 +238,11 @@ export class ListaIncrementosComponent implements OnInit {
       const hitEnColumnas = dataFields.some((df) =>
         normalizar(row?.[df]).includes(texto),
       );
-      const extras = [normalizar(row?.id)];
+      const extras = [
+        normalizar(row?.id),
+        normalizar(row?.valorInpc),
+        normalizar(String(row?.valorInpcFmt ?? '').replace(/,/g, '')),
+      ];
 
       return hitEnColumnas || extras.some((s) => s.includes(texto));
     });

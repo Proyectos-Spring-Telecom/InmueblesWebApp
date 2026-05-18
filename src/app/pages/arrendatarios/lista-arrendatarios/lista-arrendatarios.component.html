@@ -1,14 +1,12 @@
-<div [@routeAnimation] class="card card--panel perm-wrapper">
+<div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
   <header class="perm-head" role="region" aria-label="Sección: Arrendatarios">
     <div class="perm-head__icon" aria-hidden="true">
       <mat-icon>storefront</mat-icon>
     </div>
-
     <div class="perm-head__text">
       <span class="eyebrow">Sección</span>
       <h2>Arrendatarios</h2>
     </div>
-
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Operación</span>
       <span class="sep">/</span>
@@ -17,69 +15,173 @@
   </header>
 
   <div class="surface">
-    <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
-      <div *appHasPermission="'3'">
-        <button (click)="agregarArrendatario()" mat-flat-button class="bg-secondary">
-          <i class="fa fa-plus"></i> Agregar
-        </button>
-      </div>
-      <button (click)="limpiarVista()" mat-flat-button class="bg-success">
-        <i class="fa fa-eraser"></i>
-        Limpiar
+    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
+      <button (click)="agregarArrendatario()" mat-flat-button class="bg-secondary">
+        <i class="fa fa-plus"></i> Agregar
       </button>
-      <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
-        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
-        {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+      <button (click)="limpiarVista()" mat-flat-button class="bg-success">
+        <i class="fa fa-eraser"></i> Limpiar
       </button>
     </div>
 
     <div class="mt-3">
-      <dx-data-grid #dataGridRef id="gridArrendatariosLocales" [dataSource]="rows" [keyExpr]="'idLocal'"
-        [showBorders]="true" [showRowLines]="true" [showColumnLines]="true" [rowAlternationEnabled]="true"
-        [columnAutoWidth]="true" [wordWrapEnabled]="true">
-        <dxo-search-panel [visible]="true" [width]="260" placeholder="Buscar..."></dxo-search-panel>
-        <dxo-header-filter [visible]="true"></dxo-header-filter>
-        <dxo-filter-row [visible]="true"></dxo-filter-row>
-        <dxo-paging [pageSize]="15"></dxo-paging>
-        <dxo-pager [visible]="true" [showPageSizeSelector]="true" [allowedPageSizes]="[20]"
-          [showInfo]="true"></dxo-pager>
+      <dx-data-grid #gridContainer id="gridArrendatarios" class="inm-data-grid" [columnHidingEnabled]="true"
+        [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+        [rowAlternationEnabled]="true" [dataSource]="listaArrendatarios" [keyExpr]="'id'" [width]="'100%'"
+        [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'" [pager]="{
+          showPageSizeSelector: true,
+          allowedPageSizes: [20],
+          showInfo: true,
+          infoText: 'Página {0} de {1}',
+          visible: true
+        }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
+        <dxo-search-panel [visible]="true" [width]="240"
+          placeholder="Buscar arrendatario, arrendador, inmueble..."></dxo-search-panel>
+        <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+        <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+        <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
+        <dxo-sorting mode="multiple"></dxo-sorting>
 
-        <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" *appHasPermission="['2', '4']"
-          [width]="150"></dxi-column>
-        <dxi-column alignment="center" dataField="inmueble" caption="Inmueble" [minWidth]="220"></dxi-column>
-        <dxi-column alignment="center" dataField="local" caption="Local" [width]="160"></dxi-column>
-        <dxi-column alignment="center" dataField="nivel" caption="Nivel" [width]="140"></dxi-column>
-        <dxi-column alignment="center" dataField="superficieM2" caption="Superficie (m²)" dataType="number"
-          format="#,##0.##" alignment="center" [width]="150"></dxi-column>
-        <dxi-column alignment="center" dataField="estado" caption="Estado" [width]="120"></dxi-column>
-        <dxi-column alignment="center" dataField="giroActividad" caption="Giro" [minWidth]="180"></dxi-column>
-        <dxi-column alignment="center" dataField="mensualidadMxn" caption="Mensualidad (MXN)" dataType="number"
-          format="currency" alignment="center" [width]="180"></dxi-column>
-        <dxi-column alignment="center" dataField="vigenciaHasta" caption="Vigencia" [width]="140"></dxi-column>
-        <dxi-column alignment="center" dataField="numeroContrato" caption="Contrato" [width]="140"></dxi-column>
-        <dxi-column alignment="center" dataField="arrendatario" caption="Arrendatario" [minWidth]="220"></dxi-column>
-        <dxi-column alignment="center" dataField="correoContacto" caption="Correo" [minWidth]="220"></dxi-column>
-        <dxi-column alignment="center" dataField="telefonoContacto" caption="Teléfono" [width]="150"></dxi-column>
-        <dxi-column alignment="center" dataField="arrendador" caption="Arrendador" [minWidth]="220"></dxi-column>
-        <div *dxTemplate="let row of 'acciones'" class="d-flex gap-3 justify-content-center">
-          <div *appHasPermission="'2'">
-            <button valueExpr="id" id="actualizarButton" class="btnAcciones" (click)="editarArrendatario(row.data)">
+        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="150" alignment="center"
+          [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+        <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
+          [allowFiltering]="false" [visible]="false"></dxi-column>
+        <dxi-column dataField="numServicios" caption="Servicios" [visible]="false"></dxi-column>
+        <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
+        <dxi-column dataField="numSocios" caption="Socios" [visible]="false"></dxi-column>
+        <dxi-column dataField="numContratos" caption="Contratos" [visible]="false"></dxi-column>
+        <dxi-column dataField="arrendatario" caption="Arrendatario" cellTemplate="arrendatarioTpl" alignment="center"
+          [width]="220" [allowFiltering]="true"></dxi-column>
+        <dxi-column dataField="tipoPersonaLabel" caption="Tipo persona" alignment="center" [width]="130"></dxi-column>
+        <dxi-column dataField="rentaFmt" caption="Renta" alignment="center" [width]="120"></dxi-column>
+        <dxi-column caption="Vigencia" cellTemplate="vigenciaTpl" alignment="center" [width]="200"
+          [allowSorting]="false" [allowFiltering]="false"></dxi-column>
+        <dxi-column dataField="arrendadorNombre" caption="Arrendador" alignment="center" [width]="170"></dxi-column>
+        <dxi-column dataField="inmuebleVinculado" caption="Inmueble" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="direccionInmuebleVinculado" caption="Dirección inmueble" alignment="center" [width]="220"
+          [visible]="false"></dxi-column>
+        <dxi-column caption="Representante legal" cellTemplate="representanteTpl" alignment="center" [width]="200"
+          [allowSorting]="false" [allowFiltering]="false"></dxi-column>
+        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" alignment="center"
+          [width]="110"></dxi-column>
+        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="140"
+          [visible]="false"></dxi-column>
+        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="correoRepresentante" caption="Correo" [visible]="false" alignment="center"></dxi-column>
+        <dxi-column dataField="telefonoRepresentante" caption="Teléfono" [visible]="false"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="id" caption="ID" alignment="center" [width]="72" [visible]="false"></dxi-column>
+        <dxi-column dataField="etiquetaBusqueda" caption="Texto (búsqueda)" [visible]="false"
+          [allowSorting]="false"></dxi-column>
+
+        <div *dxTemplate="let cell of 'arrendatarioTpl'">
+          <div class="inm-row-card inm-row-card--nombre">
+            <div class="inm-row-card__icon" aria-hidden="true">
+              <mat-icon>storefront</mat-icon>
+            </div>
+            <span class="inm-row-card__title">{{ cell.data.arrendatario }}</span>
+          </div>
+        </div>
+
+        <div *dxTemplate="let cell of 'vigenciaTpl'">
+          <div class="inm-cell-stack inm-cell-stack--center">
+            <span class="inm-cell-line" *ngIf="cell.data.tiempoRentaTexto !== '—'">
+              Tiempo renta: {{ cell.data.tiempoRentaTexto }}
+            </span>
+            <span class="inm-cell-line inm-cell-line--muted">
+              {{ cell.data.fechaInicioFmt }} – {{ cell.data.fechaFinFmt }}
+            </span>
+          </div>
+        </div>
+
+        <div *dxTemplate="let cell of 'estatusTpl'">
+          <span [ngClass]="cell.data.estatusClass">{{ cell.data.estatusLabel }}</span>
+        </div>
+
+        <div *dxTemplate="let cell of 'representanteTpl'">
+          <div class="inm-cell-stack">
+            <span class="inm-cell-line">{{ cell.data.representanteNombre }}</span>
+            <span class="inm-cell-line inm-cell-line--muted" *ngIf="cell.data.telefonoRepresentante !== '—'">
+              <i class="fa fa-phone"></i> {{ cell.data.telefonoRepresentante }}
+            </span>
+            <span class="inm-cell-line inm-cell-line--muted" *ngIf="cell.data.correoRepresentante !== '—'">
+              <i class="fa fa-envelope-o"></i> {{ cell.data.correoRepresentante }}
+            </span>
+          </div>
+        </div>
+
+        <div *dxTemplate="let cell of 'chipsTpl'">
+          <div class="inm-row-chips">
+            <span class="inm-chip inm-chip--muted">
+              <i class="fa fa-bolt"></i> {{ cell.data.numServicios }}
+              {{ cell.data.numServicios === 1 ? 'Servicio' : 'Servicios' }}
+            </span>
+            <span class="inm-chip inm-chip--muted">
+              <i class="fa fa-paperclip"></i> {{ cell.data.numArchivos }}
+              {{ cell.data.numArchivos === 1 ? 'Documento' : 'Documentos' }}
+            </span>
+            <span class="inm-chip inm-chip--muted">
+              <i class="fa fa-users"></i> {{ cell.data.numSocios }}
+              {{ cell.data.numSocios === 1 ? 'Socio' : 'Socios' }}
+            </span>
+            <span class="inm-chip inm-chip--muted">
+              <i class="fa fa-file-text-o"></i> {{ cell.data.numContratos }}
+              {{ cell.data.numContratos === 1 ? 'Contrato' : 'Contratos' }}
+            </span>
+          </div>
+        </div>
+
+        <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
+          <div>
+            <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
+              (click)="editarArrendatario(row.data); $event.stopPropagation()">
               <i class="fa fa-edit"></i>
             </button>
           </div>
-          <div *appHasPermission="'4'">
-            @if (row.data.estatus === 0) {
-            <button id="pinButton" class="btnAcciones">
-              <i class="fa fa-arrow-up"></i>
+          <div *ngIf="row.data.tieneMapa">
+            <button type="button" id="pinButton" class="btnAcciones" title="Ubicación"
+              (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
+              <i class="fa fa-map-marker"></i>
             </button>
-            } @else {
-            <button id="deleteButton" class="btnAcciones">
-              <i class="fa fa-arrow-down"></i>
-            </button>
-            }
           </div>
         </div>
+
+        <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
+          <app-lista-arrendatarios-detalle [row]="row.data"></app-lista-arrendatarios-detalle>
+        </div>
+        <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
       </dx-data-grid>
+    </div>
+
+    <div class="docs-backdrop" *ngIf="mostrarModalMapa" (click)="cerrarModalMapa()">
+      <div class="docs-modal" (click)="$event.stopPropagation()">
+        <div class="row docs-modal__header">
+          <div class="col-10 col-md-11">
+            <span class="docs-modal__eyebrow">Ubicación del arrendatario</span>
+            <h3 class="docs-modal__title">{{ mapaTitulo }}</h3>
+          </div>
+          <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
+            <button type="button" class="docs-modal__close" (click)="cerrarModalMapa()">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <div class="row docs-modal__body">
+          <div class="col-12">
+            <div class="docs-modal__viewer docs-modal__viewer--map" *ngIf="mostrarModalMapa">
+              <div id="mapListaArrendatario" class="lista-inmuebles-map-host" role="region"
+                aria-label="Mapa de ubicación del arrendatario"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row docs-modal__footer">
+          <div class="col-12 d-flex justify-content-end">
+            <button type="button" class="docs-modal__btn" (click)="cerrarModalMapa()">Cerrar</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

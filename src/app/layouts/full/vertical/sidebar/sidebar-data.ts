@@ -56,6 +56,10 @@ export const navItems: NavItem[] = [
           Permiso.CONSULTAR_FACTORES,
         ], */
       },
+      {
+        displayName: 'Servicios',
+        route: '/servicios',
+      },
       // {
       //   displayName: 'Bitácora',
       //   iconName: 'date',

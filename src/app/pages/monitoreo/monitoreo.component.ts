@@ -2585,7 +2585,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       ins?.idInstalacion ??
       ins?.idDepartamento ??
       ins?.idInstalacionDepartamento;
-    if (esVistaLocal && parentId != null && String(parentId).trim() !== '') {
+    if (parentId != null && String(parentId).trim() !== '') {
       qp['idInmueble'] = String(parentId).trim();
     }
     const central = payload?.central;

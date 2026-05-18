@@ -27,15 +27,15 @@
               </span>
               <div class="form-floating flex-grow-1">
                 <input
-                  type="number"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="4"
+                  autocomplete="off"
                   formControlName="anio"
                   class="form-control"
                   id="incAnio"
-                  placeholder="Año"
-                  min="1990"
-                  max="2040"
-                  step="1"
-                  required
+                  placeholder=" "
+                  (input)="onAnioInput($event)"
                 />
                 <label for="incAnio">Ej.: 2017</label>
               </div>
@@ -47,10 +47,13 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">event</mat-icon>
               </span>
-              <select class="form-select flex-grow-1" formControlName="mes" id="incMes" required>
-                <option value="" disabled>Seleccione…</option>
-                <option *ngFor="let m of mesesOpciones" [value]="m">{{ m }}</option>
-              </select>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="incMes" formControlName="mes" required>
+                  <option value="" disabled>Seleccione…</option>
+                  <option *ngFor="let m of mesesOpciones" [value]="m">{{ m }}</option>
+                </select>
+                <label for="incMes">Seleccione mes</label>
+              </div>
             </div>
           </div>
           <div class="col-12 col-md-4">
@@ -61,14 +64,14 @@
               </span>
               <div class="form-floating flex-grow-1">
                 <input
-                  type="number"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
                   formControlName="valorInpc"
                   class="form-control"
                   id="incValorInpc"
-                  placeholder="0.000"
-                  min="0"
-                  step="0.001"
-                  required
+                  placeholder=" "
+                  (input)="onValorInpcInput($event)"
                 />
                 <label for="incValorInpc">Valor del índice (ej.: 126.091)</label>
               </div>

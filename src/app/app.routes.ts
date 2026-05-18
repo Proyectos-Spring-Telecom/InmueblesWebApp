@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
+import { AuthGuard } from './pages/authentication/side-login/Guard/auth.guard';
+import { NoAuthGuard } from './pages/authentication/side-login/Guard/no-auth.guard';
 
 export const routes: Routes = [
   // Redirección inicial al login
@@ -8,7 +10,8 @@ export const routes: Routes = [
 
   {
     path: '',
-    component: BlankComponent, // Login y demás páginas "en blanco"
+    component: BlankComponent,
+    canActivate: [NoAuthGuard], // ← Si ya tiene sesión, no puede volver al login
     children: [
       {
         path: '',
@@ -22,7 +25,8 @@ export const routes: Routes = [
 
   {
     path: '',
-    component: FullComponent, // Tu layout principal
+    component: FullComponent,
+    canActivate: [AuthGuard], // ← Si no tiene sesión, regresa al login
     children: [
       {
         path: '',
@@ -110,6 +114,11 @@ export const routes: Routes = [
           import('./pages/factores/factores.module').then((m) => m.FactoresModule),
       },
       {
+        path: 'servicios',
+        loadChildren: () =>
+          import('./pages/servicios/servicios.module').then((m) => m.ServiciosModule),
+      },
+      {
         path: 'monitoreo',
         loadChildren: () =>
           import('./pages/monitoreo/monitoreo.module').then((m) => m.MonitoreoModule),
@@ -127,7 +136,9 @@ export const routes: Routes = [
       {
         path: 'instalaciones-centrales',
         loadChildren: () =>
-          import('./pages/instalaciones-centrales/instalaciones-centrales.module').then((m) => m.InstalacionesCentralesModule),
+          import('./pages/instalaciones-centrales/instalaciones-centrales.module').then(
+            (m) => m.InstalacionesCentralesModule
+          ),
       },
       {
         path: 'instalaciones',
@@ -137,11 +148,12 @@ export const routes: Routes = [
       {
         path: 'estacionamiento',
         loadChildren: () =>
-          import('./pages/estacionamiento/estacionamiento.module').then((m) => m.EstacionamientoModule),
+          import('./pages/estacionamiento/estacionamiento.module').then(
+            (m) => m.EstacionamientoModule
+          ),
       },
     ],
   },
 
-  // Cualquier ruta no encontrada debe volver al login
   { path: '**', redirectTo: '/login' },
 ];

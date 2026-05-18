@@ -1,9 +1,32 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { FactorPayload, FactoresService } from 'src/app/services/moduleService/factores.service';
+import {
+  countDigitosAntesCursor,
+  cursorPosicionTrasFormatoMiles,
+  formatMilesAlEscribir,
+  formatValorMilesParaLista,
+  parseValorNumerico,
+  valorSinComasParaApi,
+} from 'src/app/shared/valor-miles-format';
 import Swal from 'sweetalert2';
+
+const factorValorValidador: ValidatorFn = (c: AbstractControl): ValidationErrors | null => {
+  const raw = String(c.value ?? '').trim();
+  if (!raw) return { required: true };
+  const n = parseValorNumerico(raw);
+  if (!Number.isFinite(n) || n < 0) return { min: true };
+  return null;
+};
 
 @Component({
   selector: 'app-agregar-factor',
@@ -16,7 +39,7 @@ export class AgregarFactorComponent implements OnInit {
   public submitButton: string = 'Guardar';
   public loading: boolean = false;
   public factorForm: FormGroup;
-  public idFactor: number;
+  public idFactor: number | null = null;
   public title = 'Agregar Factor';
 
   constructor(
@@ -29,41 +52,82 @@ export class AgregarFactorComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.activatedRouted.params.subscribe((params) => {
-      this.idFactor = params['idFactor'];
-      if (this.idFactor) {
+      const raw = params['idFactor'];
+      const idn = raw != null && String(raw).trim() !== '' ? Number(raw) : NaN;
+      this.idFactor = Number.isFinite(idn) && idn > 0 ? Math.floor(idn) : null;
+      if (this.idFactor != null) {
         this.title = 'Actualizar Factor';
         this.obtenerFactor();
+      } else {
+        this.title = 'Agregar Factor';
       }
     });
   }
 
   obtenerFactor() {
-    this.factoresService.obtenerFactor(this.idFactor).subscribe((res: any) => {
-      const data = res?.data ?? res ?? {};
-      this.factorForm.patchValue(
-        {
-          variable: data?.variable ?? data?.nombre ?? '',
-          valor: data?.valor ?? '',
-          descripcion: data?.descripcion ?? '',
-        },
-        { emitEvent: false },
-      );
-      this.factorForm.markAsPristine();
+    if (this.idFactor == null) return;
+
+    this.factoresService.obtenerFactor(this.idFactor).subscribe({
+      next: (res: any) => {
+        const data = res?.data ?? res ?? {};
+        this.factorForm.patchValue(
+          {
+            variable: data?.variable ?? data?.nombre ?? '',
+            valor: formatValorMilesParaLista(data?.valor ?? ''),
+            descripcion: data?.descripcion ?? '',
+          },
+          { emitEvent: false },
+        );
+        this.factorForm.markAsPristine();
+      },
+      error: () => {
+        Swal.fire({
+          title: '¡Ops!',
+          text: `No se pudo cargar el factor.`,
+          icon: 'error',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'Confirmar',
+          background: '#141a21',
+          color: '#ffffff',
+        });
+        this.regresar();
+      },
     });
   }
 
   initForm() {
     this.factorForm = this.fb.group({
       variable: ['', Validators.required],
-      valor: ['', Validators.required],
+      valor: ['', [Validators.required, factorValorValidador]],
       descripcion: ['', [Validators.maxLength(2000)]],
+    });
+  }
+
+  onValorInput(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const before = input.value;
+    const cursor = input.selectionStart ?? before.length;
+    const digitsBefore = countDigitosAntesCursor(before, cursor);
+
+    const formatted = formatMilesAlEscribir(before);
+    const ctrl = this.factorForm.get('valor');
+    ctrl?.setValue(formatted, { emitEvent: false });
+    ctrl?.updateValueAndValidity({ emitEvent: false });
+
+    if (input.value !== formatted) {
+      input.value = formatted;
+    }
+
+    const newPos = cursorPosicionTrasFormatoMiles(formatted, digitsBefore);
+    requestAnimationFrame(() => {
+      input.setSelectionRange(newPos, newPos);
     });
   }
 
   submit() {
     this.submitButton = 'Cargando...';
     this.loading = true;
-    if (this.idFactor) {
+    if (this.idFactor != null) {
       this.actualizar();
     } else {
       this.agregar();
@@ -117,13 +181,11 @@ export class AgregarFactorComponent implements OnInit {
 
   private buildPayload(): FactorPayload {
     const v = this.factorForm.value;
+    const desc = (v.descripcion ?? '').toString().trim();
     return {
-      nombre: (v.variable ?? '').trim(),
-      valor: Number(v.valor) || 0,
-      descripcion: (v.descripcion ?? '').trim() || null,
-      categoria: null,
-      zonaReferencia: null,
-      unidad: null,
+      variable: (v.variable ?? '').trim(),
+      valor: valorSinComasParaApi(v.valor),
+      descripcion: desc.length ? desc : null,
     };
   }
 
@@ -133,8 +195,8 @@ export class AgregarFactorComponent implements OnInit {
       return;
     }
     const payload = this.buildPayload();
-    this.factoresService.agregarFactor(payload).subscribe(
-      () => {
+    this.factoresService.agregarFactor(payload).subscribe({
+      next: () => {
         this.submitButton = 'Guardar';
         this.loading = false;
         Swal.fire({
@@ -148,7 +210,7 @@ export class AgregarFactorComponent implements OnInit {
         });
         this.regresar();
       },
-      () => {
+      error: () => {
         this.submitButton = 'Guardar';
         this.loading = false;
         Swal.fire({
@@ -161,17 +223,22 @@ export class AgregarFactorComponent implements OnInit {
           color: '#ffffff',
         });
       },
-    );
+    });
   }
 
   actualizar() {
+    if (this.idFactor == null) {
+      this.submitButton = 'Actualizar';
+      this.loading = false;
+      return;
+    }
     if (this.factorForm.invalid) {
       this.mostrarErroresValidacion(true);
       return;
     }
     const payload = this.buildPayload();
-    this.factoresService.actualizarFactor(this.idFactor, payload).subscribe(
-      () => {
+    this.factoresService.actualizarFactor(this.idFactor, payload).subscribe({
+      next: () => {
         this.submitButton = 'Actualizar';
         this.loading = false;
         Swal.fire({
@@ -185,7 +252,7 @@ export class AgregarFactorComponent implements OnInit {
         });
         this.regresar();
       },
-      () => {
+      error: () => {
         this.submitButton = 'Actualizar';
         this.loading = false;
         Swal.fire({
@@ -198,7 +265,7 @@ export class AgregarFactorComponent implements OnInit {
           color: '#ffffff',
         });
       },
-    );
+    });
   }
 
   regresar() {

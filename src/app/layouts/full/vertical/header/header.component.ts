@@ -3,6 +3,7 @@ import {
   Output,
   EventEmitter,
   Input,
+  OnInit,
   ViewEncapsulation,
 } from '@angular/core';
 import { CoreService } from 'src/app/services/core.service';
@@ -23,6 +24,21 @@ import {
   ContratoDetalleDialogComponent,
   ContratoDetalleDialogData,
 } from './contrato-detalle-dialog/contrato-detalle-dialog.component';
+import {
+  NotificacionesService,
+  NotificacionesResponse,
+  PagoSeguimientoDto,
+  PagoServicioInmuebleDto,
+  VencimientoRenovacionContratoDto,
+} from 'src/app/services/moduleService/notificaciones.service';
+import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
+import { nombreArrendador } from 'src/app/pages/inmuebles/inmuebles-list.mapper';
+import {
+  extraerArrendatarioDetalleApi,
+  primerInmuebleContrato,
+} from 'src/app/pages/arrendatarios/arrendatarios-list.mapper';
+import { finalize } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 
 /** Rutas mostradas en Panel de accesos para ítems que en sidebar usan `/menu-level`. */
 const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
@@ -76,6 +92,8 @@ function buildPanelAccessItems(items: NavItem[]): NavItem[] {
 /** Mensajes / avisos (contratos, alertas generales) */
 interface AvisoNotificacion {
   id: number;
+  /** Para GET `/arrendatarios/{id}` al abrir el modal (vencimientos). */
+  idArrendatario?: number;
   title: string;
   subtitle: string;
   /** Semáforo: success = bien (verde), warning = próximo (amarillo), danger = crítico (rojo). */
@@ -129,7 +147,7 @@ interface quicklinks {
   templateUrl: './header.component.html',
   encapsulation: ViewEncapsulation.None,
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   titleCase(input: unknown): string {
     const s = String(input ?? '').trim();
     if (!s) return '';
@@ -203,6 +221,8 @@ export class HeaderComponent {
     private translate: TranslateService,
     private users: AuthenticationService,
     private router: Router,
+    private notificacionesService: NotificacionesService,
+    private arrendatariosService: ArrendatariosService,
   ) {
     const user = this.users.getUser();
     this.showNombre = user?.nombre;
@@ -211,12 +231,136 @@ export class HeaderComponent {
     this.showRol = user?.rolNombre;
     this.showEmail = user?.userName;
     translate.setDefaultLang('en');
+  }
 
-    // Semáforo: asignar tonos para avisos con daysLeft.
-    this.avisosLista = this.avisosLista.map((a) => ({
-      ...a,
-      tone: a.tone ?? this.toneByDaysLeft(a.daysLeft),
-    }));
+  ngOnInit(): void {
+    this.notificacionesService.obtenerNotificaciones().subscribe({
+      next: (data) => this.aplicarNotificacionesDesdeApi(data),
+      error: (err) => {
+        console.error('[notificaciones]', err);
+        this.aplicarNotificacionesDesdeApi({
+          vencimientosRenovacionesContrato: [],
+          pagoServiciosInmuebles: [],
+          pagosSeguimiento: [],
+        });
+      },
+    });
+  }
+
+  private aplicarNotificacionesDesdeApi(data: NotificacionesResponse): void {
+    const v = data.vencimientosRenovacionesContrato ?? [];
+    const p = data.pagoServiciosInmuebles ?? [];
+    const s = data.pagosSeguimiento ?? [];
+
+    this.avisosLista = v.map((item) => this.mapVencimientoAviso(item));
+    this.recibosInmuebles = p.map((item) => this.mapPagoServicioRecibo(item));
+    this.recibosPredios = s.map((item) => this.mapSeguimientoRecibo(item));
+
+    this.avisosCount = this.avisosLista.length;
+    this.inmueblesNotifCount = this.recibosInmuebles.length;
+    this.prediosNotifCount = this.recibosPredios.length;
+  }
+
+  private mapVencimientoAviso(v: VencimientoRenovacionContratoDto): AvisoNotificacion {
+    const inmueble = String(v.inmueble ?? '').trim() || 'Inmueble';
+    const arrendatario = String(v.arrendatario ?? '').trim() || '—';
+    const dias = Number(v.diasFaltantes);
+    const diasTxt = Number.isFinite(dias) ? `${dias}` : '—';
+    const termino = this.formatNotifyDate(v.fechaTerminoContrato);
+    const tone = this.tonePorDiasFaltantesNotificacion(dias);
+    const idArrRaw = Number(v.idArrendatario);
+    const idArrendatario =
+      Number.isFinite(idArrRaw) && idArrRaw > 0 ? Math.floor(idArrRaw) : undefined;
+
+    return {
+      id: v.id,
+      idArrendatario,
+      title: 'Vencimiento de contrato',
+      subtitle: `Inmueble: ${inmueble} — Arrendatario: ${arrendatario} — Término: ${termino} — Días: ${diasTxt}`,
+      daysLeft: Number.isFinite(dias) ? dias : undefined,
+      tone,
+      detalle: {
+        inmueble,
+        arrendatario,
+        fechaTermino: termino,
+      },
+    };
+  }
+
+  private mapPagoServicioRecibo(p: PagoServicioInmuebleDto): ReciboEstadoItem {
+    const inm = String(p.inmueble ?? '').trim() || '—';
+    const tipo = String(p.tipoServicio ?? '').trim() || 'Servicio';
+    const contrato = String(p.numeroContrato ?? '').trim() || '—';
+    const dias = Number(p.diasFaltantes);
+    const diasTxt = Number.isFinite(dias) ? `${dias}` : '—';
+    const fechaPago = this.formatNotifyDate(p.fechaPago);
+    const tone = this.tonePorDiasFaltantesNotificacion(dias);
+
+    return {
+      id: String(p.id),
+      tone,
+      icon: this.iconForReciboTone(tone),
+      label: `${tipo} — ${inm}`,
+      detail: `Contrato: ${contrato} — Fecha de pago: ${fechaPago} — Días: ${diasTxt}`,
+    };
+  }
+
+  private mapSeguimientoRecibo(s: PagoSeguimientoDto): ReciboEstadoItem {
+    const nombre = String(s.arrendatario ?? '').trim() || 'Arrendatario';
+    const dias = Number(s.diasFaltantes);
+    const diasTxt = Number.isFinite(dias) ? `${dias}` : '—';
+    const fin = this.formatNotifyDate(s.fechaFin);
+    const tone = this.tonePorDiasFaltantesNotificacion(dias);
+
+    return {
+      id: String(s.id),
+      tone,
+      icon: this.iconForReciboTone(tone),
+      label: nombre,
+      detail: `Fin: ${fin} — Días restantes: ${diasTxt}`,
+    };
+  }
+
+  /**
+   * Semáforo para las tres bandejas (vencimientos, pagos servicio, seguimiento).
+   * ≤2 días → rojo, ≤6 → amarillo, ≤15 → naranja, resto → verde.
+   * Días negativos (vencido) entran en rojo.
+   */
+  private tonePorDiasFaltantesNotificacion(
+    dias: number | undefined | null,
+  ): 'success' | 'warning' | 'amber' | 'danger' {
+    const d = Number(dias);
+    if (!Number.isFinite(d)) return 'success';
+    if (d <= 2) return 'danger';
+    if (d <= 6) return 'amber';
+    if (d <= 15) return 'warning';
+    return 'success';
+  }
+
+  private formatNotifyDate(iso: string | undefined | null): string {
+    if (iso == null || String(iso).trim() === '') return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso);
+    return d.toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  private iconForReciboTone(tone: ReciboEstadoItem['tone']): string {
+    switch (tone) {
+      case 'danger':
+        return 'x';
+      case 'warning':
+        return 'alert-circle';
+      case 'amber':
+        return 'thumb-up';
+      case 'success':
+        return 'check';
+      default:
+        return 'receipt';
+    }
   }
 
   openDialog() {
@@ -253,12 +397,52 @@ export class HeaderComponent {
 
   onAvisoContratoClick(a: AvisoNotificacion, event: Event): void {
     event.stopPropagation();
-    this.openContratoDetalleDialog(this.buildDetalleFromAviso(a));
+    const idArr = a.idArrendatario;
+    if (idArr == null || !Number.isFinite(idArr) || idArr <= 0) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'warning',
+        title: 'Sin arrendatario asociado',
+        text: 'Esta notificación no incluye id de arrendatario para cargar el detalle.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    void Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      title: 'Cargando arrendatario…',
+      allowOutsideClick: false,
+      showConfirmButton: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    this.arrendatariosService
+      .obtenerArrendatario(idArr)
+      .pipe(finalize(() => Swal.close()))
+      .subscribe({
+        next: (raw) => {
+          const data = this.buildDetalleDesdeArrendatarioApi(raw, a);
+          this.openContratoDetalleDialog(data);
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'error',
+            title: 'No se pudo cargar el arrendatario',
+            text: 'Verifica tu conexión o vuelve a intentar.',
+            confirmButtonText: 'Entendido',
+          });
+        },
+      });
   }
 
-  onReciboContratoClick(r: ReciboEstadoItem, event: Event): void {
+  /** Pagos de servicios y seguimiento de arrendatarios: no abren modal. */
+  onReciboContratoClick(_r: ReciboEstadoItem, event: Event): void {
     event.stopPropagation();
-    this.openContratoDetalleDialog(this.buildDetalleFromRecibo(r));
   }
 
   /** Pie del menú Contratos: lista completa de contratos. */
@@ -298,174 +482,64 @@ export class HeaderComponent {
     };
   }
 
-  private buildDetalleFromAviso(a: AvisoNotificacion): ContratoDetalleDialogData {
+  private buildDetalleDesdeArrendatarioApi(
+    raw: unknown,
+    aviso: AvisoNotificacion,
+  ): ContratoDetalleDialogData {
+    const item = extraerArrendatarioDetalleApi(raw);
     const base = this.defaultContratoDetalle();
-    const parsed = this.parseSubtitleContrato(a.subtitle);
+    const inv = primerInmuebleContrato(item);
+    const arrendatarioAviso = String(aviso.detalle?.arrendatario ?? '').trim();
+    const terminoAviso = String(aviso.detalle?.fechaTermino ?? '').trim();
+    const arrNombre = String(item['arrendatario'] ?? '').trim();
+
     return {
-      titulo: 'Detalles de Contrato',
-      ...base,
-      ...a.detalle,
-      contrato: a.detalle?.contrato ?? parsed.codigo ?? base.contrato,
-      arrendatario: a.detalle?.arrendatario ?? parsed.razonSocial ?? base.arrendatario,
+      titulo: 'Vencimientos y renovaciones',
+      predio: inv.direccion !== '—' ? inv.direccion : base.predio,
+      inmueble:
+        inv.nombre !== '—'
+          ? inv.nombre
+          : String(aviso.detalle?.inmueble ?? base.inmueble),
+      arrendatario: arrendatarioAviso || arrNombre || base.arrendatario,
+      arrendador: nombreArrendador(item['arrendador'] as Record<string, unknown> | undefined),
+      contrato: this.primerNumeroContratoArrendatario(item),
+      fechaInicio: this.formatNotifyDate(
+        item['fechaInicio'] != null ? String(item['fechaInicio']) : undefined,
+      ),
+      fechaTermino:
+        terminoAviso && terminoAviso !== '—'
+          ? terminoAviso
+          : this.formatNotifyDate(
+              item['fechaFin'] != null ? String(item['fechaFin']) : undefined,
+            ),
     };
   }
 
-  private buildDetalleFromRecibo(r: ReciboEstadoItem): ContratoDetalleDialogData {
-    const base = this.defaultContratoDetalle();
-    const codigo = r.detail?.match(/Contrato\s*:\s*([\w-]+)/i)?.[1];
-    const servicio = r.detail?.split(/[—\-]/)[0]?.trim();
-    return {
-      titulo: 'Detalles de Contrato',
-      ...base,
-      contrato: codigo ?? base.contrato,
-      inmueble: servicio && servicio !== codigo ? servicio : base.inmueble,
-    };
+  private primerNumeroContratoArrendatario(item: Record<string, unknown>): string {
+    const contratos = item['contratos'];
+    if (!Array.isArray(contratos) || contratos.length === 0) return '—';
+    const c0 = contratos[0] as Record<string, unknown>;
+    const n = c0?.['numeroContrato'] ?? c0?.['numero_contrato'] ?? c0?.['numero'];
+    const s = String(n ?? '').trim();
+    return s || '—';
   }
 
-  private parseSubtitleContrato(subtitle: string): { codigo?: string; razonSocial?: string } {
-    const m = subtitle.match(/Contrato\s*:\s*([^\s-]+)\s*[-\u2014]\s*(.+)/i);
-    if (m) {
-      return { codigo: m[1].trim(), razonSocial: m[2].trim() };
-    }
-    const m2 = subtitle.match(/Contrato\s*:\s*(\S+)/i);
-    if (m2) {
-      return { codigo: m2[1].trim() };
-    }
-    return {};
-  }
+  /** Contador sobre el ícono (se llena desde GET /notificaciones). */
+  avisosCount = 0;
+  inmueblesNotifCount = 0;
+  prediosNotifCount = 0;
 
-  /** Contador sobre el ícono de sobre (demo; enlazar a API cuando exista) */
-  avisosCount = 13;
-  /** Re-usamos estos contadores para: Arrendadores / Arrendatarios (sin tocar estilos del header). */
-  inmueblesNotifCount = 5;
-  prediosNotifCount = 5;
-
-  private toneByDaysLeft(daysLeft?: number): 'success' | 'warning' | 'amber' | 'danger' {
-    const n = Number(daysLeft);
-    if (!Number.isFinite(n)) return 'success';
-    // Reglas (semáforo):
-    // - Mayor a 30 días: verde
-    // - Menor a 15 días: naranja
-    // - Menor a 7 días: amarillo
-    // - Menor a 3 días: rojo
-    if (n < 3) return 'danger';
-    if (n < 7) return 'amber';
-    if (n < 15) return 'warning';
-    return 'success';
-  }
-
-  avisosLista: AvisoNotificacion[] = [
-    {
-      id: 1,
-      title: 'Contratos próximos a vencer',
-      subtitle: 'Contrato: PC-0001 — Arrendatario: Prestalana SA de CV — Vence: 12 días',
-      daysLeft: 12,
-    },
-    {
-      id: 2,
-      title: 'Renovación pendiente',
-      subtitle: 'Contrato: PC-0006 — Arrendatatario: Estilos QIU Home SA de CV — Documentación pendiente',
-      daysLeft: 2,
-      detalle: {
-        contrato: 'PC-0006',
-        arrendatario: 'Estilos QIU Home SA de CV',
-        inmueble: 'Showroom y bodega — Zona industrial',
-      },
-    },
-    {
-      id: 3,
-      title: 'Contrato actualizado',
-      subtitle: 'Contrato: PC-0012 — Logística Norte SA de CV — Vigencia registrada en sistema',
-      daysLeft: 40,
-      detalle: {
-        contrato: 'PC-0012',
-        arrendatario: 'Logística Norte SA de CV',
-        fechaInicio: '01/03/2025',
-        fechaTermino: '28/02/2028',
-      },
-    },
-    {
-      id: 4,
-      title: 'Aviso urgente',
-      subtitle: 'Contrato: PC-0020 — Inmobiliaria del Valle — Vence: 1 día',
-      daysLeft: 1,
-      detalle: {
-        contrato: 'PC-0020',
-        arrendatario: 'Inmobiliaria del Valle',
-        predio: 'Parque logístico Valle — Lote 12',
-      },
-    },
-  ];
+  avisosLista: AvisoNotificacion[] = [];
 
   /**
-   * Misma estructura visual (notify-hub-recibo), pero con información de:
+   * Misma estructura visual (notify-hub-recibo):
    * - Pagos de servicios (menuNotifInmuebles)
-   * - Arrendatarios (menuNotifPredios)
+   * - Arrendatarios / seguimiento (menuNotifPredios)
    */
-  private readonly recibosCategoriasPlantilla: ReciboEstadoItem[] = [
-    {
-      id: 'critico',
-      tone: 'danger',
-      icon: 'x',
-      label: 'Pagos vencidos',
-      detail: 'Servicio: Agua — Contrato: SV-1020 — Último día: 25/04/2026',
-    },
-    {
-      id: 'proximos',
-      tone: 'warning',
-      icon: 'alert-circle',
-      label: 'Pagos por vencer',
-      detail: 'Servicio: Luz — Último día: 02/05/2026 — Comprobante pendiente',
-    },
-    {
-      id: 'estables',
-      tone: 'amber',
-      icon: 'thumb-up',
-      label: 'Pagos en revisión',
-      detail: 'Servicio: Mantenimiento — 2 comprobantes por validar',
-    },
-    {
-      id: 'ok',
-      tone: 'success',
-      icon: 'check',
-      label: 'Pagos al corriente',
-      detail: 'Último pago registrado: 28/04/2026',
-    },
-  ];
+  recibosInmuebles: ReciboEstadoItem[] = [];
 
-  /** Menu "inmuebles" -> ahora Pagos de servicios */
-  recibosInmuebles: ReciboEstadoItem[] = [...this.recibosCategoriasPlantilla];
-  /** Menu "predios" -> ahora Arrendatarios */
-  recibosPredios: ReciboEstadoItem[] = [
-    {
-      id: 'critico-loc',
-      tone: 'danger',
-      icon: 'x',
-      label: 'Arrendatarios con adeudo',
-      detail: 'Arrendatario: Servicios Urbanos — Servicio: Renta — Último día: 25/04/2026',
-    },
-    {
-      id: 'prox-loc',
-      tone: 'warning',
-      icon: 'alert-circle',
-      label: 'Pagos próximos de arrendatarios',
-      detail: 'Arrendatario: Prestalana SA de CV — Servicio: Mantenimiento — Último día: 02/05/2026',
-    },
-    {
-      id: 'mid-loc',
-      tone: 'amber',
-      icon: 'thumb-up',
-      label: 'Renovaciones en proceso',
-      detail: 'Arrendatario: Logística Norte — 1 renovación en validación',
-    },
-    {
-      id: 'ok-loc',
-      tone: 'success',
-      icon: 'check',
-      label: 'Arrendatarios al corriente',
-      detail: 'Último pago registrado: 28/04/2026',
-    },
-  ];
+  /** Menu "predios" → pagos / seguimiento de arrendatarios */
+  recibosPredios: ReciboEstadoItem[] = [];
 
   profiledd: profiledd[] = [
     {

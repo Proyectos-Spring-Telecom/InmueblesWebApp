@@ -685,8 +685,13 @@
                     <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalPago()">
                       Cancelar
                     </button>
-                    <button type="button" class="button-success mono-pago-form-btn" (click)="guardarPagoDesdeModal()">
-                      Agregar
+                    <button
+                      type="button"
+                      class="button-success mono-pago-form-btn"
+                      (click)="guardarPagoDesdeModal()"
+                      [disabled]="pagoGuardando"
+                    >
+                      {{ pagoGuardando ? 'Enviando…' : 'Agregar' }}
                     </button>
                   </div>
                 </div>

@@ -1,9 +1,13 @@
+import { formatValorMilesParaLista } from 'src/app/shared/valor-miles-format';
+
 /** Fila de histórico INPC (grid + formulario). */
 export interface InpcHistoricoItem {
   id: number;
   anio: number;
   mes: string;
   valorInpc: number;
+  /** INPC con separador de miles (coma), igual que en el formulario de alta */
+  valorInpcFmt: string;
   estatus: number;
 }
 
@@ -27,56 +31,44 @@ export function mesNombreANumero(mes: string): number {
   return i >= 0 ? i + 1 : 1;
 }
 
-function round3(n: number): number {
-  return Math.round(n * 1000) / 1000;
+export function mesNumeroANombre(mes: number): string {
+  if (mes >= 1 && mes <= 12) return MESES_INPC[mes - 1];
+  return '';
 }
 
-/** Primeras filas según captura; el resto continúa hacia atrás en el tiempo. */
-export const INPC_HISTORICO_DEMO: InpcHistoricoItem[] = (() => {
-  const seed: Array<Pick<InpcHistoricoItem, 'anio' | 'mes' | 'valorInpc'>> = [
-    { anio: 2017, mes: 'Mayo', valorInpc: 126.091 },
-    { anio: 2017, mes: 'Abril', valorInpc: 126.242 },
-    { anio: 2017, mes: 'Marzo', valorInpc: 126.087 },
-    { anio: 2017, mes: 'Febrero', valorInpc: 125.318 },
-    { anio: 2017, mes: 'Enero', valorInpc: 124.598 },
-    { anio: 2016, mes: 'Diciembre', valorInpc: 122.515 },
-    { anio: 2016, mes: 'Noviembre', valorInpc: 121.953 },
-    { anio: 2016, mes: 'Octubre', valorInpc: 121.007 },
-    { anio: 2016, mes: 'Septiembre', valorInpc: 120.277 },
-    { anio: 2016, mes: 'Agosto', valorInpc: 119.547 },
-  ];
-
-  const rows: InpcHistoricoItem[] = seed.map((r, idx) => ({
-    id: idx + 1,
-    anio: r.anio,
-    mes: r.mes,
-    valorInpc: r.valorInpc,
-    estatus: 1,
-  }));
-
-  let y = 2016;
-  let mIdx = 6; // Julio (mes anterior a Agosto 2016 en la semilla)
-  let v = 119.12;
-  for (let id = 11; id <= 41; id++) {
-    rows.push({
-      id,
-      anio: y,
-      mes: MESES_INPC[mIdx],
-      valorInpc: round3(v),
-      estatus: 1,
-    });
-    if (mIdx === 0) {
-      mIdx = 11;
-      y--;
-    } else {
-      mIdx--;
-    }
-    v = Math.max(95, v - 0.22 - ((id * 11) % 17) / 200);
+/** Normaliza respuesta de `/inpc/paginated` o `/inpc/{id}` hacia la forma del grid/formulario. */
+export function mapInpcApiItemToRow(item: any): InpcHistoricoItem {
+  const id = Number(item?.Id ?? item?.id);
+  const anio = Number(item?.anio ?? item?.Anio ?? 0);
+  const mesRaw = item?.mes ?? item?.Mes;
+  let mes: string;
+  if (typeof mesRaw === 'number' && Number.isFinite(mesRaw)) {
+    mes = mesNumeroANombre(mesRaw) || String(mesRaw);
+  } else {
+    mes = String(mesRaw ?? '').trim();
   }
+  const fuenteInpc =
+    item?.inpc ??
+    item?.Inpc ??
+    item?.valorInpc ??
+    item?.ValorInpc ??
+    item?.porcentaje ??
+    item?.Porcentaje ??
+    null;
 
-  return rows;
-})();
+  const valorInpc = Number(String(fuenteInpc ?? '').replace(/,/g, '').trim());
+  const valorInpcSafe = Number.isFinite(valorInpc) ? valorInpc : 0;
+  const valorInpcFmt = formatValorMilesParaLista(fuenteInpc);
 
-export function buscarInpcHistoricoPorId(id: number): InpcHistoricoItem | undefined {
-  return INPC_HISTORICO_DEMO.find((r) => r.id === id);
+  const estatus = Number(item?.estatus ?? item?.Estatus ?? 1);
+  return {
+    id,
+    anio,
+    mes,
+    valorInpc: valorInpcSafe,
+    valorInpcFmt,
+    estatus: Number.isFinite(estatus) ? estatus : 1,
+  };
 }
+
+export { formatValorMilesParaLista as formatInpcValorParaLista } from 'src/app/shared/valor-miles-format';

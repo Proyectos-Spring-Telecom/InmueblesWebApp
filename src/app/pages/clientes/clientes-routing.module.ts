@@ -7,10 +7,12 @@ import { AuthGuard } from '../authentication/side-login/Guard/auth.guard';
 const routes: Routes = 
 [
   { path: '',
-    component: ListaClientesComponent
+    component: ListaClientesComponent,
+    canActivate: [AuthGuard],
   },
   { path: 'agregar-cliente',
-    component: AgregarClienteComponent
+    component: AgregarClienteComponent,
+    canActivate: [AuthGuard],
   },
   {
     path: 'editar-cliente/:idCliente',
