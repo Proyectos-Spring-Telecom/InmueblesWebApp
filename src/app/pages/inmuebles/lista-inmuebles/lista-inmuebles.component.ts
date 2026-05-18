@@ -159,6 +159,14 @@ export class ListaInmueblesComponent implements OnInit {
     grid?.option('dataSource', dataFiltrada);
   }
 
+  formatoMoneda(e: any) {
+    if (!e.value) return '$0.00';
+    return '$' + Number(e.value).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
   limpiarVista(): void {
     const inst = this.dataGrid?.instance;
     if (!inst) return;
