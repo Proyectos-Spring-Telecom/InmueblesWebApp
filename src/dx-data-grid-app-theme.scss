@@ -1,0 +1,78 @@
+// Tema unificado DevExtreme DataGrid (referencia: lista-inmuebles).
+// Aplicar `class="inm-data-grid"` en cada dx-data-grid. No usar en monitoreo si tiene estilos propios.
+
+.inm-data-grid .dx-datagrid-headers {
+  background: #131920;
+  border-bottom: 1px solid rgba(130, 160, 255, 0.2);
+}
+
+.inm-data-grid .dx-datagrid-rowsview .dx-row {
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.inm-data-grid .dx-datagrid-rowsview .dx-data-row.dx-state-hover > td,
+.inm-data-grid .dx-datagrid-rowsview .dx-data-row.dx-row-hover > td {
+  background-color: transparent !important;
+}
+
+.inm-data-grid .dx-datagrid-rowsview .dx-row-alt.dx-state-hover > td,
+.inm-data-grid .dx-datagrid-rowsview .dx-row-alt.dx-row-hover > td {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+.inm-data-grid .dx-master-detail-row.dx-state-hover > td,
+.inm-data-grid .dx-master-detail-row:hover > td {
+  background-color: rgba(8, 12, 20, 0.92) !important;
+}
+
+.inm-data-grid .dx-datagrid-rowsview .dx-data-row > td {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  vertical-align: middle;
+  font-size: 0.78rem;
+}
+
+.inm-data-grid .dx-datagrid-rowsview .dx-data-row > td .btnAcciones {
+  flex-shrink: 0;
+}
+
+.inm-data-grid .dx-master-detail-row > .dx-master-detail-cell {
+  background: rgba(8, 12, 20, 0.92);
+  border-top: 1px solid rgba(130, 160, 255, 0.15);
+  padding: 0.5rem 1rem 1rem;
+}
+
+.inm-data-grid .dx-datagrid-search-panel {
+  max-width: 100%;
+}
+
+.inm-data-grid .dx-datagrid-headers .dx-datagrid-table {
+  min-width: 640px;
+}
+
+@media (max-width: 576px) {
+  .inm-data-grid .dx-datagrid-search-panel .dx-texteditor {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .inm-data-grid .dx-datagrid-rowsview .dx-data-row > td {
+    font-size: 0.82rem;
+  }
+
+  .inm-master-detail {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .inm-data-grid .dx-master-detail-row > .dx-master-detail-cell {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+.inm-master-detail {
+  width: 100%;
+}

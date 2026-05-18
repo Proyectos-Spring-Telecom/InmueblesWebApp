@@ -13,13 +13,6 @@
   min-width: 0;
 }
 
-.inm-lista__grid-wrap {
-  width: 100%;
-  min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
 .inm-lista__toolbar {
   gap: 0.5rem !important;
 }
@@ -43,34 +36,3 @@
   }
 }
 
-/* Panel de búsqueda y tabla: usable en viewport estrecho */
-.inm-data-grid ::ng-deep .dx-datagrid-search-panel {
-  max-width: 100%;
-}
-
-@media (max-width: 576px) {
-  .inm-data-grid ::ng-deep .dx-datagrid-search-panel .dx-texteditor {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-}
-
-.inm-data-grid ::ng-deep .dx-datagrid-headers .dx-datagrid-table {
-  min-width: 640px;
-}
-
-@media (max-width: 767.98px) {
-  .inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row > td {
-    font-size: 0.82rem;
-  }
-
-  .inm-master-detail {
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .inm-data-grid ::ng-deep .dx-master-detail-row > .dx-master-detail-cell {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-}

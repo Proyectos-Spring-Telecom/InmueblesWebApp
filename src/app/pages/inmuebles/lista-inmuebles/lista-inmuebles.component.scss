@@ -4,59 +4,6 @@
 
 @import '../../../shared/documento-preview/documento-preview.component.scss';
 
-.inm-lista__grid-wrap {
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid rgba(130, 160, 255, 0.18);
-  background: rgba(10, 14, 22, 0.55);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-}
-
-.inm-data-grid ::ng-deep .dx-datagrid-headers {
-  background: rgba(14, 20, 32, 0.95);
-  border-bottom: 1px solid rgba(130, 160, 255, 0.2);
-}
-
-.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-row {
-  border-color: rgba(255, 255, 255, 0.04);
-}
-
-.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row.dx-state-hover > td,
-.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row.dx-row-hover > td {
-  background-color: transparent !important;
-}
-
-.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-row-alt.dx-state-hover > td,
-.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-row-alt.dx-row-hover > td {
-  background-color: rgba(255, 255, 255, 0.02) !important;
-}
-
-.inm-data-grid ::ng-deep .dx-master-detail-row.dx-state-hover > td,
-.inm-data-grid ::ng-deep .dx-master-detail-row:hover > td {
-  background-color: rgba(8, 12, 20, 0.92) !important;
-}
-
-.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row > td {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  vertical-align: middle;
-  font-size: 0.78rem;
-}
-
-.inm-data-grid ::ng-deep .dx-datagrid-rowsview .dx-data-row > td .btnAcciones {
-  flex-shrink: 0;
-}
-
-.inm-data-grid ::ng-deep .dx-master-detail-row > .dx-master-detail-cell {
-  background: rgba(8, 12, 20, 0.92);
-  border-top: 1px solid rgba(130, 160, 255, 0.15);
-  padding: 0.5rem 1rem 1rem;
-}
-
-.inm-master-detail {
-  width: 100%;
-}
-
 .inm-row-card {
   display: flex;
   align-items: center;

@@ -168,8 +168,9 @@
       <div class="col-12">
         <div class="box p-3">
           <div class="title mb-2">Registro de Incidencias</div>
-          <dx-data-grid [dataSource]="registros" [columnHidingEnabled]="true" [showBorders]="true"
-            [showColumnLines]="true" [showRowLines]="true" [rowAlternationEnabled]="true" [height]="500">
+          <dx-data-grid class="inm-data-grid" [dataSource]="registros" [columnHidingEnabled]="true"
+            [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+            [rowAlternationEnabled]="true" [height]="500">
             <dxo-group-panel [visible]="true"
               [emptyPanelText]="'Arrastre un encabezado de columna aquí para agrupar por esa columna'"></dxo-group-panel>
             <dxo-search-panel [visible]="true" [width]="260" [placeholder]="'Buscar...'"></dxo-search-panel>

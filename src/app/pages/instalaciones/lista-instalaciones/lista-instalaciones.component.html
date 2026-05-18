@@ -31,8 +31,9 @@
             </button>
         </div>
         <div class="mt-3">
-            <dx-data-grid #gridContainer id="gridContainer" [columnHidingEnabled]="true" [showBorders]="true"
-                [showColumnLines]="true" [showRowLines]="true" [rowAlternationEnabled]="true"
+            <dx-data-grid #gridContainer id="gridContainer" class="inm-data-grid" [columnHidingEnabled]="true"
+                [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+                [rowAlternationEnabled]="true"
                 [dataSource]="listaInstalaciones" [keyExpr]="'id'" [width]="'100%'"
                 [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
                 [noDataText]="'Sin registros para mostrar'" [pager]="{ 

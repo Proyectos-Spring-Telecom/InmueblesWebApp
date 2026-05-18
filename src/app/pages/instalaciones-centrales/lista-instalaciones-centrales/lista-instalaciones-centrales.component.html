@@ -33,8 +33,9 @@
             </button>
         </div>
         <div class="mt-3">
-            <dx-data-grid #gridContainer id="gridContainer" [columnHidingEnabled]="true" [showBorders]="true"
-                [showColumnLines]="true" [showRowLines]="true" [rowAlternationEnabled]="true"
+            <dx-data-grid #gridContainer id="gridContainer" class="inm-data-grid" [columnHidingEnabled]="true"
+                [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+                [rowAlternationEnabled]="true"
                 [dataSource]="listaInstalaciones" [keyExpr]="'id'" [width]="'100%'"
                 [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
                 [noDataText]="'Sin registros para mostrar'" [pager]="{ 
@@ -90,8 +91,9 @@
                 </dxi-column>
 
                 <div *dxTemplate="let row of 'detail'" class="p-2">
-                    <dx-data-grid [dataSource]="row?.data?.instalaciones || []" [keyExpr]="'idEquipo'"
-                        [showBorders]="true" [columnHidingEnabled]="true" [rowAlternationEnabled]="true"
+                    <dx-data-grid class="inm-data-grid" [dataSource]="row?.data?.instalaciones || []" [keyExpr]="'idEquipo'"
+                        [hoverStateEnabled]="false" [showBorders]="true" [columnHidingEnabled]="true" [showColumnLines]="false"
+                        [showRowLines]="true" [rowAlternationEnabled]="true"
                         [noDataText]="'Sin instalaciones para mostrar'">
                         <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
                         <dxo-paging [pageSize]="10"></dxo-paging>

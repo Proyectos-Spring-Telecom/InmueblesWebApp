@@ -30,8 +30,9 @@
             </button>
         </div>
         <div class="mt-3">
-            <dx-data-grid id="gridContainer" [columnHidingEnabled]="true" [showBorders]="true" [showColumnLines]="true"
-                [showRowLines]="true" [rowAlternationEnabled]="true" [dataSource]="listaRoles" [keyExpr]="'id'"
+            <dx-data-grid id="gridContainer" class="inm-data-grid" [columnHidingEnabled]="true" [showBorders]="true"
+                [hoverStateEnabled]="false" [showColumnLines]="false" [showRowLines]="true"
+                [rowAlternationEnabled]="true" [dataSource]="listaRoles" [keyExpr]="'id'"
                 [remoteOperations]="{ paging: true }" [width]="'100%'" [paging]="{ pageSize: pageSize }" [pager]="{ 
                                 showPageSizeSelector: true, 
                                 allowedPageSizes: [50], 
