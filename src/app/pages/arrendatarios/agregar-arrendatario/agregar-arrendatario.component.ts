@@ -1261,7 +1261,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       if (!ulp) faltantes.push(`${etiquetaPref}: último día de pago`);
     });
 
-    /** Socios: sin validadores en filas vacías; no se bloquean filas incompletas. */
+    /** Socios: sin validadores en filas vacías; no se bloquean filas incompletasssss. */
 
     return faltantes;
   }
