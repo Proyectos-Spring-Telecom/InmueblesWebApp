@@ -77,15 +77,6 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-4"><label for="vigenciaAnios" class="form-label perm-label">Vigencia
-              (años)</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="vigenciaAnios" type="number" class="form-control"
-                  formControlName="vigenciaAnios" placeholder="Años de vigencia" /><label for="vigenciaAnios">Años de
-                  vigencia</label></div>
-            </div>
-          </div>
           <div class="col-12 col-md-4"><label for="fechaInicio" class="form-label perm-label">Inicio de vigencia</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
@@ -814,27 +805,6 @@
                                     <div class="uploader__filename">{{ socioCtrl.get('socioComprobanteDomicilioNombre')?.value || socioCtrl.get('socioComprobanteDomicilio')?.value }}</div>
                                   </div>
                                   <input #socioCompInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onSocioFileSelected($event, i, 'socioComprobanteDomicilio', 'socioComprobanteDomicilioNombre')" />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="col-12 col-md-4">
-                            <label class="form-label perm-label d-block mb-2">Acta Constitutiva</label>
-                            <div class="uploader-hero">
-                              <div class="uploader">
-                                <div class="uploader__glow"></div>
-                                <div class="uploader__body">
-                                  <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                                  <h6 class="uploader__title">Sube archivo</h6>
-                                  <p class="uploader__subtitle">Arrastra y suelta o</p>
-                                  <div class="uploader__cta">
-                                    <button mat-flat-button color="primary" type="button" (click)="openSocioFilePicker(socioActaInput)">Seleccionar</button>
-                                    <span class="uploader__badge">PDF · PNG · JPG</span>
-                                  </div>
-                                  <div class="uploader__status" *ngIf="socioCtrl.get('socioActaConstitutivaNombre')?.value || socioCtrl.get('socioActaConstitutiva')?.value">
-                                    <div class="uploader__filename">{{ socioCtrl.get('socioActaConstitutivaNombre')?.value || socioCtrl.get('socioActaConstitutiva')?.value }}</div>
-                                  </div>
-                                  <input #socioActaInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input" (change)="onSocioFileSelected($event, i, 'socioActaConstitutiva', 'socioActaConstitutivaNombre')" />
                                 </div>
                               </div>
                             </div>

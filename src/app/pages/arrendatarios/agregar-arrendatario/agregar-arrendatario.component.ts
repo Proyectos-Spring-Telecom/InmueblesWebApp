@@ -21,6 +21,13 @@ import {
   ARRENDATARIOS_FORM_DEMO,
   INMUEBLES_ARRENDATARIOS_DEMO,
 } from '../arrendatarios-demo.data';
+import { extraerArrendatarioDetalleApi } from '../arrendatarios-list.mapper';
+import {
+  fechaParaInputDate,
+  separarArchivosInmueble,
+  type InmuebleArchivoApi,
+  type SlotDocumentoInmueble,
+} from '../../inmuebles/inmuebles-list.mapper';
 
 @Component({
   selector: 'app-agregar-arrendatario',
@@ -46,13 +53,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   public submitButton: string = 'Guardar';
   public arrendatarioForm: FormGroup;
   /** Id del arrendatario en modo edición (ruta), no confundir con `idArrendador` del formulario. */
-  public idArrendatario: number;
+  public idArrendatario?: number;
+  /** Carga del GET `/arrendatarios/{id}` en curso. */
+  cargandoDetalle = false;
   public listaClientes: { id: number; nombre?: string; apellidoPaterno?: string; apellidoMaterno?: string }[] = [];
   public listaInmuebles: { id: number; etiqueta: string }[] = [];
   public listaCatServicios: CatServicioItem[] = [];
   loadingSubmit = false;
-  /** Obligatorios sólo cuando el ``estatusInmueble`` es Rentado (alineado con inmueble). */
-  public mostrarCamposRenta = false;
   mostrarModalMapa = false;
   /** Índice del slot de galería para animación de entrada (una vez). */
   indiceGaleriaAnimando: number | null = null;
@@ -82,7 +89,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   constanciaFiscalNombre: string | null = null;
   constanciaRepLegalNombre: string | null = null;
   comprobanteDomicilioNombre: string | null = null;
-  actaConstitutivaNombre: string | null = null;
   ineRepresentanteNombre: string | null = null;
   imagenPlanoUrl: string | null = null;
   contratoRentaUrl: string | null = null;
@@ -97,14 +103,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private promptAutocargaMostrado = false;
   private readonly debounceLogMs = 400;
   private formValueLogSub?: Subscription;
-  private estatusInmuebleSub?: Subscription;
 
   @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
   @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('constanciaFiscalInput') constanciaFiscalInput?: ElementRef<HTMLInputElement>;
   @ViewChild('constanciaRepLegalInput') constanciaRepLegalInput?: ElementRef<HTMLInputElement>;
   @ViewChild('comprobanteDomicilioInput') comprobanteDomicilioInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
   @ViewChild('autocargaCsfCardArrendatario') autocargaCsfCardArrendatario?: ElementRef<HTMLElement>;
@@ -126,14 +130,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
     this.initTipoPersonaLogic();
-    this.initEstatusInmuebleLogic();
     this.formValueLogSub = this.arrendatarioForm.valueChanges
       .pipe(debounceTime(this.debounceLogMs))
       .subscribe(() => {
         // Mismo criterio que `agregar-inmueble`: log tras pausa de escritura (incluye valores actuales).
         console.log('[agregar-arrendatario] valor del formulario (tras pausa de escritura)', {
           value: this.arrendatarioForm.getRawValue(),
-          mostrarCamposRenta: this.mostrarCamposRenta,
         });
       });
 
@@ -165,11 +167,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       return;
     }
     this.activatedRoute.params.subscribe((params) => {
-      this.idArrendatario = Number(params['id'] ?? params['idArrendatario']);
-      if (this.idArrendatario) {
+      const raw = params['id'] ?? params['idArrendatario'];
+      const id = raw != null && String(raw).trim() !== '' ? Number(raw) : Number.NaN;
+      this.idArrendatario = Number.isFinite(id) && id > 0 ? Math.trunc(id) : undefined;
+      if (this.idArrendatario != null) {
         this.title = 'Actualizar Arrendatario';
         this.submitButton = 'Actualizar';
-        this.cargarDemoEdicion(this.idArrendatario);
+        this.cargarArrendatarioParaEdicionDesdeApi(this.idArrendatario);
       } else {
         this.mostrarPromptAutocargaContrato();
       }
@@ -178,44 +182,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.formValueLogSub?.unsubscribe();
-    this.estatusInmuebleSub?.unsubscribe();
-  }
-
-  private initEstatusInmuebleLogic(): void {
-    const estatusCtrl = this.arrendatarioForm.get('estatusInmueble');
-    if (!estatusCtrl) return;
-    this.aplicarValidadoresEstatus(estatusCtrl.value);
-    this.estatusInmuebleSub = estatusCtrl.valueChanges.subscribe((value) =>
-      this.aplicarValidadoresEstatus(value),
-    );
-  }
-
-  /** Renta, tiempo de renta y contrato sólo cuando el estatus es Rentado (paridad ``agregar-inmueble``). */
-  private aplicarValidadoresEstatus(raw: unknown): void {
-    const v = String(raw ?? '').toUpperCase().trim();
-    const rentado = v === 'RENTADO';
-    this.mostrarCamposRenta = rentado;
-
-    const rentaCtrl = this.arrendatarioForm.get('renta');
-    const tiempoCtrl = this.arrendatarioForm.get('tiempoRenta');
-    const contratoCtrl = this.arrendatarioForm.get('documentoContratoRenta');
-    if (!rentaCtrl || !tiempoCtrl) return;
-
-    if (rentado) {
-      rentaCtrl.setValidators([Validators.required]);
-      tiempoCtrl.setValidators([Validators.required]);
-    } else {
-      rentaCtrl.clearValidators();
-      tiempoCtrl.clearValidators();
-      rentaCtrl.setValue('', { emitEvent: false });
-      tiempoCtrl.setValue('', { emitEvent: false });
-      contratoCtrl?.setValue(null, { emitEvent: false });
-      this.contratoRentaNombre = null;
-      this.contratoRentaUrl = null;
-    }
-
-    rentaCtrl.updateValueAndValidity({ emitEvent: false });
-    tiempoCtrl.updateValueAndValidity({ emitEvent: false });
   }
 
   private mostrarPromptAutocargaContrato(): void {
@@ -399,15 +365,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.arrendatarioForm = this.fb.group({
       arrendatario: ['', Validators.required],
       tipoPersona: [null as number | null, Validators.required],
-      renta: [''],
+      renta: ['', Validators.required],
       direccionFiscal: [''],
-      vigenciaAnios: [''],
       fechaInicio: ['', Validators.required],
       fechaFin: ['', Validators.required],
       idArrendador: [null as number | null, Validators.required],
-      /** Controla visibilidad de renta/contrato; no obligatorio y no se envía al API si no está en el contrato OpenAPI. */
+      /** Sin selector en UI; puede venir de demos u otras rutas. */
       estatusInmueble: [null as string | null],
-      tiempoRenta: [''],
+      tiempoRenta: ['', Validators.required],
       representanteLegal: ['', Validators.required],
       telefonoRepresentante: ['', Validators.required],
       correoRepresentante: ['', [Validators.required, Validators.email]],
@@ -439,7 +404,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       documentoConstanciaFiscal: [null],
       constanciaSituacionFiscalRepresentanteLegal: [null],
       documentoComprobanteDomicilio: [null],
-      documentoActaConstitutiva: [null],
       ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
       /** Dos filas por defecto: Renta y Mantenimiento (`syncServiciosIdsDesdeCatalogo`). */
@@ -448,7 +412,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       socios: this.fb.array([this.crearSocioFormGroup()]),
       locales: this.fb.array([this.crearLocalFormGroup()]),
     });
-    this.aplicarValidadoresEstatus(this.arrendatarioForm.get('estatusInmueble')?.value);
   }
 
   private initTipoPersonaLogic(): void {
@@ -821,14 +784,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.docPreview?.abrir(url, titulo, subtitulo);
   }
 
-  /** Edición con comprobante ya guardado en el servidor (URL remota). */
+  /** Edición con archivo ya guardado en el servidor (URL remota). Misma regla que `agregar-inmueble` (id + URL). */
   layoutArchivoRemoto(url: string | null | undefined): boolean {
-    return (
-      this.idArrendatario != null &&
-      Number.isFinite(Number(this.idArrendatario)) &&
-      Number(this.idArrendatario) > 0 &&
-      !!String(url ?? '').trim()
-    );
+    return this.idArrendatario != null && !!String(url ?? '').trim();
   }
 
   agregarFotoGaleria(): void {
@@ -871,7 +829,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       constanciaFiscal: this.constanciaFiscalInput,
       constanciaRepLegal: this.constanciaRepLegalInput,
       comprobanteDomicilio: this.comprobanteDomicilioInput,
-      actaConstitutiva: this.actaConstitutivaInput,
       ineRepresentante: this.ineRepresentanteInput,
     };
     map[ref]?.nativeElement?.click();
@@ -929,7 +886,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.comprobanteDomicilioNombre = name;
       this.comprobanteDomicilioUrl = null;
     }
-    if (controlName === 'documentoActaConstitutiva') this.actaConstitutivaNombre = name;
     if (controlName === 'ineRepresentanteLegal') {
       this.ineRepresentanteNombre = name;
       this.ineRepresentanteUrl = null;
@@ -981,7 +937,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         estatusInmueble: 'RENTADO',
         renta: localDemo?.mensualidadMxn ?? '',
         direccionFiscal: demoLocal?.inmueble.direccion ?? '',
-        vigenciaAnios: '5',
         fechaInicio: localDemo?.fechaInicio ?? '',
         fechaFin: localDemo?.fechaTermino ?? '',
         idArrendador: 1,
@@ -1045,7 +1000,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       );
     }
 
-    this.aplicarValidadoresEstatus(this.arrendatarioForm.get('estatusInmueble')?.value);
     this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
   }
 
@@ -1057,7 +1011,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         estatusInmueble: 'RENTADO',
         renta: data.mensualidadMxn || 25000,
         direccionFiscal: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
-        vigenciaAnios: 3,
         fechaInicio: '2024-01-01',
         fechaFin: '2027-01-01',
         idArrendador: 1,
@@ -1165,8 +1118,299 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     );
     galeria.push(imagen);
 
-    this.aplicarValidadoresEstatus(this.arrendatarioForm.get('estatusInmueble')?.value);
     this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
+  }
+
+  private cargarArrendatarioParaEdicionDesdeApi(id: number): void {
+    this.cargandoDetalle = true;
+    this.abrirSwalCargando();
+    this.arrendatariosService
+      .obtenerArrendatario(id)
+      .pipe(
+        finalize(() => {
+          Swal.close();
+          this.cargandoDetalle = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (resp) => {
+          const item = extraerArrendatarioDetalleApi(resp);
+          if (!item || Object.keys(item).length === 0) {
+            void Swal.fire({
+              title: 'Sin datos',
+              text: 'No se encontró información del arrendatario.',
+              icon: 'warning',
+              confirmButtonColor: '#3085d6',
+              background: '#141a21',
+              color: '#ffffff',
+            });
+            return;
+          }
+          this.poblarFormularioDesdeDetalleApi(item);
+        },
+        error: (err: unknown) => {
+          const e = err as { error?: { message?: string }; message?: string };
+          const text =
+            e?.error?.message ??
+            e?.message ??
+            'No se pudo cargar el arrendatario. Intenta de nuevo.';
+          void Swal.fire({
+            title: 'Error al cargar',
+            text: String(text),
+            icon: 'error',
+            confirmButtonColor: '#3085d6',
+            background: '#141a21',
+            color: '#ffffff',
+          });
+        },
+      });
+  }
+
+  private poblarFormularioDesdeDetalleApi(item: Record<string, unknown>): void {
+    const lat = this.numOptLocal(item['lat']);
+    const lng = this.numOptLocal(item['lng']);
+    const idArr = this.idArrendadorDesdeItem(item);
+    const tp = this.numOptLocal(item['tipoPersona']);
+
+    this.arrendatarioForm.patchValue(
+      {
+        arrendatario: this.strApi(item['arrendatario'] ?? item['nombre']),
+        tipoPersona: tp != null && tp > 0 ? tp : null,
+        renta: this.numForm(item['renta']),
+        direccionFiscal: this.strApi(item['direccionFiscal']),
+        fechaInicio: fechaParaInputDate(String(item['fechaInicio'] ?? '')),
+        fechaFin: fechaParaInputDate(String(item['fechaFin'] ?? '')),
+        idArrendador: idArr,
+        estatusInmueble:
+          item['estatusInmueble'] != null && String(item['estatusInmueble']).trim() !== ''
+            ? String(item['estatusInmueble'])
+            : item['estatus'] != null && String(item['estatus']).trim() !== ''
+              ? String(item['estatus'])
+              : null,
+        tiempoRenta: this.strApi(item['tiempoRenta']),
+        representanteLegal: this.strApi(item['representanteLegal']),
+        telefonoRepresentante: this.strApi(item['telefonoRepresentante']),
+        correoRepresentante: this.strApi(item['correoRepresentante']),
+        lat: lat != null ? String(lat) : '',
+        lng: lng != null ? String(lng) : '',
+      },
+      { emitEvent: false },
+    );
+
+    const c = this.primerContratoRegistro(item);
+    if (c) {
+      const idIm = this.idInmuebleDesdeContrato(c);
+      this.arrendatarioForm.patchValue(
+        {
+          idInmueble: idIm,
+          fechaInicioContrato: fechaParaInputDate(String(c['fechaInicioContrato'] ?? '')),
+          fechaTerminoContrato: fechaParaInputDate(String(c['fechaTerminoContrato'] ?? '')),
+          tipoMoneda: this.strApi(c['moneda'] ?? c['tipoMoneda']) || 'MXN',
+          metrosRentados: this.numForm(c['metrosRentados']),
+          costoPorM2: this.numForm(c['costoM2'] ?? c['costoPorM2']),
+          pctMantenimiento: this.numForm(c['porcentajeMantenimiento'] ?? c['pctMantenimiento']),
+          mesesDeposito: this.numForm(c['mesesDeposito']),
+          montoDeposito: this.numForm(c['montoDeposito']),
+          mesesAdelanto: this.numForm(c['mesesAdelanto']),
+          montoAdelanto: this.numForm(c['montoAdelanto']),
+          anosForzososArrendador: this.numForm(
+            c['aniosForzososArrendador'] ?? c['anosForzososArrendador'],
+          ),
+          anosForzososArrendatario: this.numForm(
+            c['aniosForzososArrendatario'] ?? c['anosForzososArrendatario'],
+          ),
+          subtotalRenta: this.numForm(c['subTotalRenta'] ?? c['subtotalRenta']),
+          ivaRenta: this.numForm(c['ivaRenta']),
+          rentaTotal: this.numForm(c['rentaTotal']),
+          subtotalMantenimiento: this.numForm(c['subTotalMantenimiento'] ?? c['subtotalMantenimiento']),
+          ivaMantenimiento: this.numForm(c['ivaMantenimiento']),
+          mantenimientoTotal: this.numForm(c['mantenimientoTotal']),
+          observaciones: this.strApi(c['observaciones']),
+        },
+        { emitEvent: false },
+      );
+    }
+
+    const serviciosRaw = item['servicios'];
+    this.serviciosFormArray.clear();
+    if (Array.isArray(serviciosRaw) && serviciosRaw.length > 0) {
+      for (const raw of serviciosRaw) {
+        const s = raw as Record<string, unknown>;
+        const g = this.crearServicioFormGroup();
+        const idTipo = Number(s['idTipoServicio']);
+        g.patchValue(
+          {
+            idTipoServicio: Number.isFinite(idTipo) && idTipo > 0 ? Math.trunc(idTipo) : null,
+            servicioNumeroContrato: this.strApi(s['numeroContrato']),
+            servicioFechaPago: fechaParaInputDate(String(s['fechaPago'] ?? '')),
+            servicioUltimoDiaPago: fechaParaInputDate(String(s['ultimoDiaPago'] ?? '')),
+            servicioComprobantePago: null,
+            servicioComprobantePagoNombre: '',
+            servicioComprobantePagoUrl: this.strApi(s['urlComprobante'] ?? s['url']),
+          },
+          { emitEvent: false },
+        );
+        this.serviciosFormArray.push(g);
+      }
+    } else {
+      this.serviciosFormArray.push(this.crearServicioFormGroup());
+      this.serviciosFormArray.push(this.crearServicioFormGroup());
+      this.syncServiciosIdsDesdeCatalogo();
+    }
+
+    this.sociosFormArray.clear();
+    const sociosRaw = item['socios'];
+    if (Array.isArray(sociosRaw) && sociosRaw.length > 0) {
+      for (const raw of sociosRaw) {
+        const s = raw as Record<string, unknown>;
+        const g = this.crearSocioFormGroup();
+        g.patchValue(
+          {
+            nombre: this.strApi(s['nombre']),
+            rfc: this.strApi(s['rfc']),
+            constanciaFiscalArchivo: null,
+            comprobanteDomicilioArchivo: null,
+            identificacionOficialArchivo: null,
+          },
+          { emitEvent: false },
+        );
+        this.sociosFormArray.push(g);
+      }
+    } else {
+      this.sociosFormArray.push(this.crearSocioFormGroup());
+    }
+
+    this.localesFormArray.clear();
+    this.localesFormArray.push(this.crearLocalFormGroup());
+
+    this.aplicarArchivosEImagenesDesdeDetalle(item);
+
+    this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
+    this.cdr.markForCheck();
+  }
+
+  private aplicarArchivosEImagenesDesdeDetalle(item: Record<string, unknown>): void {
+    const archivos = (Array.isArray(item['archivos']) ? item['archivos'] : []) as InmuebleArchivoApi[];
+    const imagenes = (Array.isArray(item['imagenes']) ? item['imagenes'] : []) as InmuebleArchivoApi[];
+    const { documentos, galeria } = separarArchivosInmueble(archivos, imagenes);
+    this.resetVistasDocumentosEnlaces();
+    this.aplicarDocumentosClasificadosArrendatario(documentos);
+
+    this.galeriaImagenesFormArray.clear();
+    if (galeria.length > 0) {
+      for (const im of galeria) {
+        const gg = this.crearGaleriaImagenFormGroup();
+        const url = String(im.url ?? '').trim();
+        const nombre =
+          String(im.nombre ?? '').trim() ||
+          (url ? (url.split('/').pop() ?? '').split('?')[0] ?? '' : '');
+        gg.patchValue({ archivo: null, nombre, url }, { emitEvent: false });
+        this.galeriaImagenesFormArray.push(gg);
+      }
+    } else {
+      this.galeriaImagenesFormArray.push(this.crearGaleriaImagenFormGroup());
+    }
+  }
+
+  private resetVistasDocumentosEnlaces(): void {
+    this.imagenPlanoNombre = null;
+    this.imagenPlanoUrl = null;
+    this.contratoRentaNombre = null;
+    this.contratoRentaUrl = null;
+    this.constanciaFiscalNombre = null;
+    this.constanciaFiscalUrl = null;
+    this.constanciaRepLegalNombre = null;
+    this.constanciaRepLegalUrl = null;
+    this.comprobanteDomicilioNombre = null;
+    this.comprobanteDomicilioUrl = null;
+    this.ineRepresentanteNombre = null;
+    this.ineRepresentanteUrl = null;
+  }
+
+  private aplicarDocumentosClasificadosArrendatario(
+    documentos: Partial<Record<SlotDocumentoInmueble, InmuebleArchivoApi>>,
+  ): void {
+    const url = (d?: InmuebleArchivoApi): string => String(d?.url ?? '').trim();
+    const nom = (d: InmuebleArchivoApi | undefined, fb: string): string => {
+      const n = String(d?.nombre ?? '').trim();
+      return n || fb;
+    };
+    const has = (d?: InmuebleArchivoApi): boolean => url(d).length > 0;
+
+    if (has(documentos.contratoRenta)) {
+      this.contratoRentaUrl = url(documentos.contratoRenta);
+      this.contratoRentaNombre = nom(documentos.contratoRenta, 'Contrato de renta');
+    }
+    if (has(documentos.constanciaFiscal)) {
+      this.constanciaFiscalUrl = url(documentos.constanciaFiscal);
+      this.constanciaFiscalNombre = nom(documentos.constanciaFiscal, 'Constancia de situación fiscal');
+    }
+    if (has(documentos.comprobanteDomicilio)) {
+      this.comprobanteDomicilioUrl = url(documentos.comprobanteDomicilio);
+      this.comprobanteDomicilioNombre = nom(documentos.comprobanteDomicilio, 'Comprobante de domicilio');
+    }
+    if (has(documentos.constanciaRepLegal)) {
+      this.constanciaRepLegalUrl = url(documentos.constanciaRepLegal);
+      this.constanciaRepLegalNombre = nom(
+        documentos.constanciaRepLegal,
+        'Constancia fiscal representante legal',
+      );
+    }
+    if (has(documentos.ineRepresentante)) {
+      this.ineRepresentanteUrl = url(documentos.ineRepresentante);
+      this.ineRepresentanteNombre = nom(documentos.ineRepresentante, 'Identificación oficial');
+    }
+    if (has(documentos.fachada)) {
+      this.imagenPlanoUrl = url(documentos.fachada);
+      this.imagenPlanoNombre = nom(documentos.fachada, 'Fachada');
+    }
+  }
+
+  private primerContratoRegistro(item: Record<string, unknown>): Record<string, unknown> | null {
+    const contratos = item['contratos'];
+    if (!Array.isArray(contratos) || contratos.length === 0) return null;
+    const c0 = contratos[0];
+    if (c0 == null || typeof c0 !== 'object') return null;
+    return c0 as Record<string, unknown>;
+  }
+
+  private idInmuebleDesdeContrato(c: Record<string, unknown>): number | null {
+    const direct = Number(c['idInmueble']);
+    if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
+    const inm = c['inmueble'];
+    if (inm != null && typeof inm === 'object') {
+      const id = Number((inm as Record<string, unknown>)['id']);
+      if (Number.isFinite(id) && id > 0) return Math.trunc(id);
+    }
+    return null;
+  }
+
+  private idArrendadorDesdeItem(item: Record<string, unknown>): number | null {
+    const direct = Number(item['idArrendador']);
+    if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
+    const arr = item['arrendador'];
+    if (arr != null && typeof arr === 'object') {
+      const id = Number((arr as Record<string, unknown>)['id']);
+      if (Number.isFinite(id) && id > 0) return Math.trunc(id);
+    }
+    return null;
+  }
+
+  private numOptLocal(v: unknown): number | null {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  private strApi(v: unknown): string {
+    if (v == null) return '';
+    return String(v).trim();
+  }
+
+  private numForm(v: unknown): string | number {
+    if (v == null || v === '') return '';
+    const n = Number(v);
+    return Number.isFinite(n) ? n : '';
   }
 
   private asignarListaClientes(res: unknown): void {
@@ -1252,7 +1496,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     'documentoConstanciaFiscal',
     'constanciaSituacionFiscalRepresentanteLegal',
     'documentoComprobanteDomicilio',
-    'documentoActaConstitutiva',
     'ineRepresentanteLegal',
     'lat',
     'lng',
@@ -1264,7 +1507,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     renta: 'Renta',
     direccionFiscal: 'Dirección fiscal',
     estatusInmueble: 'Estatus del arrendamiento',
-    vigenciaAnios: 'Vigencia (años)',
     fechaInicio: 'Fecha de inicio',
     fechaFin: 'Fecha de fin',
     idArrendador: 'Arrendador',
@@ -1295,7 +1537,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   };
 
   private validarFormularioAntesMapa(): boolean {
-    this.aplicarValidadoresEstatus(this.arrendatarioForm.get('estatusInmueble')?.value);
     this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
 
     this.arrendatarioForm.markAllAsTouched();
@@ -1321,8 +1562,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       title: '¡Revise el formulario!',
       html: `
         <p style="text-align: center; font-size: 15px; margin-bottom: 16px; color: white">
-          Faltan campos obligatorios según el contrato vigente del formulario y del API.
-          Los campos ocultos (según estatus o tipo de persona) no se marcan como obligatorios.
+          Faltan campos obligatorios según el formulario y el API.
+          Los campos excluidos de validación (documentos, coordenadas, etc.) no se listan aquí.
         </p>
         <div style="max-height: 350px; overflow-y: auto;">${lista}</div>
       `,
@@ -1347,7 +1588,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const faltantes: string[] = [];
     Object.keys(this.arrendatarioForm.controls).forEach((key) => {
       if (this.controlesExcluidosValidacion.has(key)) return;
-      if (!this.mostrarCamposRenta && (key === 'renta' || key === 'tiempoRenta')) return;
 
       const control = this.arrendatarioForm.get(key);
       if (!control || control.disabled) return;
@@ -1406,12 +1646,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const idArr = Number(v['idArrendador']);
     if (Number.isFinite(idArr)) dto['idArrendador'] = Math.trunc(idArr);
 
-    if (this.mostrarCamposRenta) {
-      const rentaNum = this.numJson(v['renta']);
-      if (rentaNum !== undefined) dto['renta'] = rentaNum;
-      const tr = String(v['tiempoRenta'] ?? '').trim();
-      if (tr) dto['tiempoRenta'] = tr;
-    }
+    const rentaNum = this.numJson(v['renta']);
+    if (rentaNum !== undefined) dto['renta'] = rentaNum;
+    const tr = String(v['tiempoRenta'] ?? '').trim();
+    if (tr) dto['tiempoRenta'] = tr;
 
     const lat = Number(v['lat']);
     const lng = Number(v['lng']);
@@ -1449,7 +1687,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       nombre: 'Constancia fiscal representante legal',
       coleccion: 'archivos',
     },
-    { control: 'documentoActaConstitutiva', nombre: 'Acta constitutiva', coleccion: 'archivos' },
     {
       control: 'ineRepresentanteLegal',
       nombre: 'Identificación oficial representante legal',

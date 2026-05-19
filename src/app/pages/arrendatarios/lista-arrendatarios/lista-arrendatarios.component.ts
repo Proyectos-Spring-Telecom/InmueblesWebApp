@@ -169,13 +169,6 @@ export class ListaArrendatariosComponent implements OnInit {
     grid?.option('dataSource', dataFiltrada);
   }
 
-  editarArrendatario(data: ArrendatarioLocalGridRow): void {
-    this.router.navigate(
-      ['/arrendatarios/agregar-arrendatario', data.idLocal],
-      { state: { arrendatario: data } },
-    );
-  }
-
   limpiarVista(): void {
     const inst = this.dataGrid?.instance;
     if (!inst) return;

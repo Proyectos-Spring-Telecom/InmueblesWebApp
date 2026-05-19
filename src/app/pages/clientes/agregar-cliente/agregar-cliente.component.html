@@ -24,6 +24,20 @@
                         </button>
                       </div>
                     <div class="col-12 col-md-4">
+                        <label for="idPadre" class="form-label perm-label">Id cliente padre (opcional)</label>
+                        <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">account_tree</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                                <input type="number" formControlName="idPadre" class="form-control" id="idPadre"
+                                    placeholder="Vacío si no aplica" />
+                                <label for="idPadre">Vacío si no aplica</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
                         <label for="rfc" class="form-label perm-label">RFC</label>
                         <div class="input-group input-group-lg perm-ig">
                             <span class="input-group-text fw-bold">
@@ -342,31 +356,20 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openLogoFilePicker()">Seleccionar</button>
-                                            <span class="uploader__badge"
+                                            <a *ngIf="urlLogotipoRemoto"
+                                                class="uploader__badge uploader__badge--file"
+                                                [href]="urlLogotipoRemoto"
+                                                target="_blank" rel="noopener noreferrer"
+                                                (click)="$event.stopPropagation()">
+                                                {{ etiquetaLogotipoUploader() }}
+                                            </a>
+                                            <span *ngIf="!urlLogotipoRemoto" class="uploader__badge"
                                                 [class.uploader__badge--file]="clienteForm.get('logotipo')?.value?.name || clienteForm.get('logotipo')?.value">
-                                                {{
-                                                clienteForm.get('logotipo')?.value?.name ||
-                                                clienteForm.get('logotipo')?.value ||
-                                                'PNG · JPG · JPEG'
-                                                }}
+                                                {{ etiquetaLogotipoUploader() }}
                                             </span>
                                         </div>
 
-                                        <div class="uploader__status"
-                                            *ngIf="clienteForm.get('logotipo')?.value && !clienteForm.get('logotipo')?.value?.name">
-                                            <div class="uploader__filename"
-                                                *ngIf="clienteForm.get('logotipo')?.value?.name">
-                                                {{ clienteForm.get('logotipo')?.value?.name }}
-                                            </div>
-                                            <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!clienteForm.get('logotipo')?.value?.name"
-                                                [href]="clienteForm.get('logotipo')?.value" target="_blank"
-                                                rel="noopener noreferrer">
-                                                {{ clienteForm.get('logotipo')?.value }}
-                                            </a>
-                                        </div>
-
-                                        <input #logoFileInput type="file" accept="image/png,image/jpeg,image/jpg"
+                                        <input #logoFileInput type="file" accept="image/png,image/jpeg,image/jpg,application/pdf"
                                             (change)="onLogoFileSelected($event)" class="uploader__input" />
                                     </div>
                                 </div>
@@ -842,7 +845,7 @@
                                                         </span>
                                                         <div class="form-floating flex-grow-1">
                                                             <input type="text" class="form-control"
-                                                                formControlName="nombreSocio"
+                                                                formControlName="nombre"
                                                                 placeholder="Nombre del socio" />
                                                             <label>Nombre del socio</label>
                                                         </div>
@@ -857,7 +860,8 @@
                                                         </span>
                                                         <div class="form-floating flex-grow-1">
                                                             <input type="text" class="form-control"
-                                                                formControlName="rfcSocio"
+                                                                formControlName="rfc"
+                                                                maxlength="13"
                                                                 placeholder="RFC del socio" />
                                                             <label>RFC del socio</label>
                                                         </div>
@@ -886,19 +890,25 @@
                                                                     <button mat-flat-button color="primary"
                                                                         type="button"
                                                                         (click)="openSocioFilePicker(socioCsfInput)">Seleccionar</button>
+                                                                    <button *ngIf="socioCtrl.get('constanciaFiscalUrl')?.value"
+                                                                        mat-flat-button type="button"
+                                                                        class="bg-warn docs-uploader-ver-btn"
+                                                                        (click)="verArchivoRemoto(socioCtrl.get('constanciaFiscalUrl')?.value, socioCtrl.get('constanciaFiscalNombre')?.value || 'Constancia fiscal del socio')">
+                                                                        <mat-icon>visibility</mat-icon><span>Ver</span>
+                                                                    </button>
                                                                     <span class="uploader__badge"
-                                                                        [class.uploader__badge--file]="socioCtrl.get('socioConstanciaSituacionFiscalNombre')?.value || socioCtrl.get('socioConstanciaSituacionFiscal')?.value">
+                                                                        [class.uploader__badge--file]="socioCtrl.get('constanciaFiscalNombre')?.value || socioCtrl.get('constanciaFiscalUrl')?.value">
                                                                         {{
-                                                                        socioCtrl.get('socioConstanciaSituacionFiscalNombre')?.value
+                                                                        socioCtrl.get('constanciaFiscalNombre')?.value
                                                                         ||
-                                                                        socioCtrl.get('socioConstanciaSituacionFiscal')?.value
+                                                                        socioCtrl.get('constanciaFiscalUrl')?.value
                                                                         || 'PDF · PNG · JPG' }}
                                                                     </span>
                                                                 </div>
                                                                 <input #socioCsfInput type="file"
                                                                     accept="application/pdf,image/png,image/jpeg,image/jpg"
                                                                     class="uploader__input"
-                                                                    (change)="onSocioFileSelected($event, i, 'socioConstanciaSituacionFiscal', 'socioConstanciaSituacionFiscalNombre')" />
+                                                                    (change)="onSocioFileSelected($event, i, 'constanciaFiscalArchivo')" />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -919,19 +929,25 @@
                                                                     <button mat-flat-button color="primary"
                                                                         type="button"
                                                                         (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
+                                                                    <button *ngIf="socioCtrl.get('comprobanteDomicilioUrl')?.value"
+                                                                        mat-flat-button type="button"
+                                                                        class="bg-warn docs-uploader-ver-btn"
+                                                                        (click)="verArchivoRemoto(socioCtrl.get('comprobanteDomicilioUrl')?.value, socioCtrl.get('comprobanteDomicilioNombre')?.value || 'Comprobante del socio')">
+                                                                        <mat-icon>visibility</mat-icon><span>Ver</span>
+                                                                    </button>
                                                                     <span class="uploader__badge"
-                                                                        [class.uploader__badge--file]="socioCtrl.get('socioComprobanteDomicilioNombre')?.value || socioCtrl.get('socioComprobanteDomicilio')?.value">
+                                                                        [class.uploader__badge--file]="socioCtrl.get('comprobanteDomicilioNombre')?.value || socioCtrl.get('comprobanteDomicilioUrl')?.value">
                                                                         {{
-                                                                        socioCtrl.get('socioComprobanteDomicilioNombre')?.value
+                                                                        socioCtrl.get('comprobanteDomicilioNombre')?.value
                                                                         ||
-                                                                        socioCtrl.get('socioComprobanteDomicilio')?.value
+                                                                        socioCtrl.get('comprobanteDomicilioUrl')?.value
                                                                         || 'PDF · PNG · JPG' }}
                                                                     </span>
                                                                 </div>
                                                                 <input #socioCompInput type="file"
                                                                     accept="application/pdf,image/png,image/jpeg,image/jpg"
                                                                     class="uploader__input"
-                                                                    (change)="onSocioFileSelected($event, i, 'socioComprobanteDomicilio', 'socioComprobanteDomicilioNombre')" />
+                                                                    (change)="onSocioFileSelected($event, i, 'comprobanteDomicilioArchivo')" />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -939,7 +955,7 @@
 
                                                 <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
                                                     <label class="form-label perm-label d-block mb-2">Identificación
-                                                        Oficial</label>
+                                                        oficial del socio</label>
                                                     <div class="uploader-hero flex-grow-1">
                                                         <div class="uploader">
                                                             <div class="uploader__glow"></div>
@@ -951,20 +967,26 @@
                                                                 <div class="uploader__cta">
                                                                     <button mat-flat-button color="primary"
                                                                         type="button"
-                                                                        (click)="openSocioFilePicker(socioActaInput)">Seleccionar</button>
+                                                                        (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
+                                                                    <button *ngIf="socioCtrl.get('identificacionOficialUrl')?.value"
+                                                                        mat-flat-button type="button"
+                                                                        class="bg-warn docs-uploader-ver-btn"
+                                                                        (click)="verArchivoRemoto(socioCtrl.get('identificacionOficialUrl')?.value, socioCtrl.get('identificacionOficialNombre')?.value || 'Identificación del socio')">
+                                                                        <mat-icon>visibility</mat-icon><span>Ver</span>
+                                                                    </button>
                                                                     <span class="uploader__badge"
-                                                                        [class.uploader__badge--file]="socioCtrl.get('socioActaConstitutivaNombre')?.value || socioCtrl.get('socioActaConstitutiva')?.value">
+                                                                        [class.uploader__badge--file]="socioCtrl.get('identificacionOficialNombre')?.value || socioCtrl.get('identificacionOficialUrl')?.value">
                                                                         {{
-                                                                        socioCtrl.get('socioActaConstitutivaNombre')?.value
+                                                                        socioCtrl.get('identificacionOficialNombre')?.value
                                                                         ||
-                                                                        socioCtrl.get('socioActaConstitutiva')?.value ||
+                                                                        socioCtrl.get('identificacionOficialUrl')?.value ||
                                                                         'PDF · PNG · JPG' }}
                                                                     </span>
                                                                 </div>
-                                                                <input #socioActaInput type="file"
+                                                                <input #socioIneInput type="file"
                                                                     accept="application/pdf,image/png,image/jpeg,image/jpg"
                                                                     class="uploader__input"
-                                                                    (change)="onSocioFileSelected($event, i, 'socioActaConstitutiva', 'socioActaConstitutivaNombre')" />
+                                                                    (change)="onSocioFileSelected($event, i, 'identificacionOficialArchivo')" />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -988,3 +1010,5 @@
         </section>
     </div>
 </div>
+
+<app-documento-preview #docPreview eyebrow="Documento del cliente"></app-documento-preview>

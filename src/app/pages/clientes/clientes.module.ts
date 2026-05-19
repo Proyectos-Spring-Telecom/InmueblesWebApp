@@ -9,10 +9,11 @@ import { MaterialModule } from 'src/app/material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AgregarClienteComponent } from './agregar-cliente/agregar-cliente.component';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
-
+import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documento-preview.module';
+import { ListaClientesDetalleComponent } from './lista-clientes-detalle/lista-clientes-detalle.component';
 
 @NgModule({
-  declarations: [ListaClientesComponent, AgregarClienteComponent],
+  declarations: [ListaClientesComponent, AgregarClienteComponent, ListaClientesDetalleComponent],
   imports: [
     CommonModule,
     ClientesRoutingModule,
@@ -22,7 +23,8 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
     MaterialModule,
     ReactiveFormsModule,
     FormsModule,
-    HasPermissionDirective
+    HasPermissionDirective,
+    DocumentoPreviewModule,
   ]
 })
 export class ClientesModule { }

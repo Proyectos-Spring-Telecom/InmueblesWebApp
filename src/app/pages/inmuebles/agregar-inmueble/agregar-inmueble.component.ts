@@ -81,7 +81,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   constanciaFiscalNombre: string | null = null;
   constanciaRepLegalNombre: string | null = null;
   comprobanteDomicilioNombre: string | null = null;
-  actaConstitutivaNombre: string | null = null;
   ineRepresentanteNombre: string | null = null;
   boletaPredialNombre: string | null = null;
   reciboAguaServiciosNombre: string | null = null;
@@ -109,7 +108,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     rentaMxn: 'Renta (MXN)',
     direccionInmueble: 'Dirección fiscal',
     estatusInmueble: 'Estatus del inmueble',
-    vigenciaAnios: 'Vigencia (años)',
     fechaInicio: 'Inicio de vigencia',
     fechaFin: 'Fin de vigencia',
     tiempoRentaAnios: 'Tiempo de renta (años)',
@@ -129,7 +127,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     'documentoConstanciaFiscal',
     'constanciaSituacionFiscalRepresentanteLegal',
     'documentoComprobanteDomicilio',
-    'documentoActaConstitutiva',
     'ineRepresentanteLegal',
     'galeriaImagenes',
     'servicios',
@@ -159,7 +156,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   @ViewChild('constanciaFiscalInput') constanciaFiscalInput?: ElementRef<HTMLInputElement>;
   @ViewChild('constanciaRepLegalInput') constanciaRepLegalInput?: ElementRef<HTMLInputElement>;
   @ViewChild('comprobanteDomicilioInput') comprobanteDomicilioInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
   @ViewChild('boletaPredialInput') boletaPredialInput?: ElementRef<HTMLInputElement>;
   @ViewChild('reciboAguaServiciosInput')
@@ -332,7 +328,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       nombreInmueble: ['', Validators.required],
       rentaMxn: [''],
       direccionInmueble: ['', Validators.required],
-      vigenciaAnios: ['', Validators.required],
       fechaInicio: ['', Validators.required],
       fechaFin: ['', Validators.required],
       idArrendador: [null as number | null, Validators.required],
@@ -350,7 +345,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       documentoConstanciaFiscal: [null],
       constanciaSituacionFiscalRepresentanteLegal: [null],
       documentoComprobanteDomicilio: [null],
-      documentoActaConstitutiva: [null],
       ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
       servicios: this.fb.array([this.crearServicioFormGroup()]),
@@ -407,8 +401,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       socioConstanciaSituacionFiscalNombre: [''],
       socioComprobanteDomicilio: [null],
       socioComprobanteDomicilioNombre: [''],
-      socioActaConstitutiva: [null],
-      socioActaConstitutivaNombre: [''],
     });
   }
 
@@ -547,14 +539,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   onSocioFileSelected(
     event: Event,
     index: number,
-    field:
-      | 'socioConstanciaSituacionFiscal'
-      | 'socioComprobanteDomicilio'
-      | 'socioActaConstitutiva',
-    nameField:
-      | 'socioConstanciaSituacionFiscalNombre'
-      | 'socioComprobanteDomicilioNombre'
-      | 'socioActaConstitutivaNombre',
+    field: 'socioConstanciaSituacionFiscal' | 'socioComprobanteDomicilio',
+    nameField: 'socioConstanciaSituacionFiscalNombre' | 'socioComprobanteDomicilioNombre',
   ): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -708,7 +694,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       | 'constanciaFiscal'
       | 'constanciaRepLegal'
       | 'comprobanteDomicilio'
-      | 'actaConstitutiva'
       | 'ineRepresentante'
       | 'boletaPredial'
       | 'reciboAgua',
@@ -723,7 +708,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       constanciaFiscal: this.constanciaFiscalInput,
       constanciaRepLegal: this.constanciaRepLegalInput,
       comprobanteDomicilio: this.comprobanteDomicilioInput,
-      actaConstitutiva: this.actaConstitutivaInput,
       ineRepresentante: this.ineRepresentanteInput,
     };
     map[ref]?.nativeElement?.click();
@@ -789,7 +773,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       this.comprobanteDomicilioNombre = name;
       this.comprobanteDomicilioUrl = null;
     }
-    if (controlName === 'documentoActaConstitutiva') this.actaConstitutivaNombre = name;
     if (controlName === 'ineRepresentanteLegal') {
       this.ineRepresentanteNombre = name;
       this.ineRepresentanteUrl = null;
@@ -946,7 +929,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         estatusInmueble: estatusStr,
         rentaMxn: renta ?? '',
         tiempoRentaAnios: tiempoRenta ?? '',
-        vigenciaAnios: item.vigenciaAnios != null ? String(item.vigenciaAnios) : '',
         fechaInicio: fechaParaInputDate(item.fechaInicio),
         fechaFin: fechaParaInputDate(item.fechaFin),
         nombreRepresentanteLegal: String(item.nombreRepresentante ?? '').trim(),
@@ -1352,9 +1334,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
     const estatusNum = this.estatusInmuebleANumero(v['estatusInmueble']);
     if (estatusNum != null) this.appendEntero(fd, 'estatusInmueble', estatusNum);
-
-    const vig = v['vigenciaAnios'];
-    if (vig != null && String(vig).trim() !== '') fd.append('vigenciaAnios', String(vig).trim());
 
     const fi = String(v['fechaInicio'] ?? '').trim();
     if (fi) fd.append('fechaInicio', fi);

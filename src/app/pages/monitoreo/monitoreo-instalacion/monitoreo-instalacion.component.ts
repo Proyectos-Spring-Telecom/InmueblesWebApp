@@ -245,10 +245,6 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       detalle: 'Comprobante de domicilio fiscal actualizado.',
     },
     {
-      etiqueta: 'Acta Constitutiva',
-      detalle: 'Acta constitutiva de la razón social titular.',
-    },
-    {
       etiqueta: 'Constancia de situación fiscal del representante legal',
       detalle: 'Constancia fiscal del representante legal registrado.',
     },
@@ -283,10 +279,6 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     {
       etiqueta: 'Licencia de funcionamiento',
       detalle: 'Permiso municipal alineado al giro del local.',
-    },
-    {
-      etiqueta: 'Acta constitutiva o poder',
-      detalle: 'Personalidad jurídica o facultades para obligarse.',
     },
     {
       etiqueta: 'Anexo de obligaciones / uso de áreas',

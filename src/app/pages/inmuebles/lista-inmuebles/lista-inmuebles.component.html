@@ -80,9 +80,6 @@
 
         <div *dxTemplate="let cell of 'vigenciaTpl'">
           <div class="inm-cell-stack inm-cell-stack--center">
-            <span class="inm-cell-line" *ngIf="cell.data.vigenciaAnios !== '—'">
-              {{ cell.data.vigenciaAnios }} años
-            </span>
             <span class="inm-cell-line inm-cell-line--muted">
               {{ cell.data.fechaInicioFmt }} – {{ cell.data.fechaFinFmt }}
             </span>

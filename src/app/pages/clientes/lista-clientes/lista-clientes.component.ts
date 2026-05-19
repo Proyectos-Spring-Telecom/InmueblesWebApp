@@ -1,5 +1,4 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
@@ -8,6 +7,10 @@ import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import Swal from 'sweetalert2';
+import {
+  ClienteGridRow,
+  mapClientesApiToGridRows,
+} from '../clientes-list.mapper';
 
 @Component({
   selector: 'app-lista-clientes',
@@ -35,13 +38,12 @@ export class ListaClientesComponent implements OnInit {
   dataGrid: DxDataGridComponent;
   public autoExpandAllGroups: boolean = true;
   isGrouped: boolean = false;
-  public paginaActualData: any[] = [];
+  public paginaActualData: ClienteGridRow[] = [];
   public filtroActivo: string = '';
 
   constructor(
     private cliService: ClientesService,
     private route: Router,
-    private sanitizer: DomSanitizer,
     private auth: AuthenticationService
   ) {
     this.showFilterRow = true;
@@ -97,48 +99,8 @@ export class ListaClientesComponent implements OnInit {
           this.totalRegistros = totalRegistros;
           this.totalPaginas = totalPaginas;
 
-          const dataTransformada = (
-            Array.isArray(response?.data) ? response.data : []
-          ).map((item: any) => {
-            const nombre = item?.nombre || '';
-            const paterno = item?.apellidoPaterno || '';
-            const materno = item?.apellidoMaterno || '';
-            const direccionCompleta = [
-              item?.calle ? `Calle ${item.calle}` : '',
-              item?.numeroExterior ? `#${item.numeroExterior}` : '',
-              item?.numeroInterior ? `Int. ${item.numeroInterior}` : '',
-              item?.colonia || '',
-              item?.municipio || '',
-              item?.estado || '',
-              item?.cp ? `CP ${item.cp}` : '',
-              item?.entreCalles ? `(Entre calles: ${item.entreCalles})` : '',
-            ]
-              .filter(Boolean)
-              .join(', ');
-
-            const estatus =
-              item?.estatusCliente ?? item?.estatus ?? 0;
-
-            return {
-              ...item,
-              id: Number(item?.id),
-              estatus: Number(estatus),
-              estatusCliente: Number(estatus),
-              tipoPersona:
-                item?.tipoPersona == 1
-                  ? 'Físico'
-                  : item?.tipoPersona == 2
-                  ? 'Moral'
-                  : 'Desconocido',
-              idRol: item?.idRol != null ? Number(item.idRol) : null,
-              idCliente:
-                item?.idCliente != null ? Number(item.idCliente) : null,
-              NombreCompleto: [nombre, paterno, materno]
-                .filter(Boolean)
-                .join(' '),
-              direccionCompleta,
-            };
-          });
+          const raw = Array.isArray(response?.data) ? response.data : [];
+          const dataTransformada = mapClientesApiToGridRows(raw);
 
           this.paginaActualData = dataTransformada;
 
@@ -159,69 +121,54 @@ export class ListaClientesComponent implements OnInit {
     if (e.fullName !== 'searchPanel.text') return;
 
     const grid = this.dataGrid?.instance;
-    const qRaw = (e.value ?? '').toString().trim();
-    if (!qRaw) {
+    const texto = (e.value ?? '').toString().trim().toLowerCase();
+    if (!texto) {
       this.filtroActivo = '';
       grid?.option('dataSource', this.listaClientes);
       return;
     }
-    this.filtroActivo = qRaw;
+    this.filtroActivo = texto;
 
-    const norm = (v: any) =>
-      (v == null ? '' : String(v))
+    let columnas: { dataField?: string }[] = [];
+    try {
+      const colsOpt = grid?.option('columns') as unknown;
+      if (Array.isArray(colsOpt) && colsOpt.length) columnas = colsOpt as { dataField?: string }[];
+    } catch {
+      /* noop */
+    }
+    if (!columnas.length && grid?.getVisibleColumns) {
+      columnas = grid.getVisibleColumns() as { dataField?: string }[];
+    }
+    const dataFields: string[] = columnas
+      .map((c) => c?.dataField)
+      .filter((df): df is string => typeof df === 'string' && df.trim().length > 0);
+
+    const normalizar = (val: unknown): string => {
+      if (val === null || val === undefined) return '';
+      return String(val)
         .normalize('NFD')
         .replace(/\p{Diacritic}/gu, '')
         .toLowerCase();
+    };
 
-    const q = norm(qRaw);
-
-    let columnas: any[] = [];
-    try {
-      const colsOpt = grid?.option('columns');
-      if (Array.isArray(colsOpt) && colsOpt.length) columnas = colsOpt;
-    } catch {}
-    if (!columnas.length && grid?.getVisibleColumns)
-      columnas = grid.getVisibleColumns();
-
-    const dataFields: string[] = columnas
-      .map((c: any) => c?.dataField)
-      .filter((df: any) => typeof df === 'string' && df.trim().length > 0);
-
-    const getByPath = (obj: any, path: string) =>
-      !obj || !path
-        ? undefined
-        : path.split('.').reduce((acc, k) => acc?.[k], obj);
-
-    let qStatusNum: number | null = null;
-    if (q === '1' || q === 'activo') qStatusNum = 1;
-    else if (q === '0' || q === 'inactivo') qStatusNum = 0;
-
-    const dataFiltrada = (this.paginaActualData || []).filter((row: any) => {
-      const hitCols = dataFields.some((df) =>
-        norm(getByPath(row, df)).includes(q)
+    const dataFiltrada = (this.paginaActualData || []).filter((row: ClienteGridRow) => {
+      const hitEnColumnas = dataFields.some((df) =>
+        normalizar((row as unknown as Record<string, unknown>)?.[df]).includes(
+          texto,
+        ),
       );
-
-      const estNum = Number(row?.estatus);
-      const estHit =
-        Number.isFinite(estNum) &&
-        (qStatusNum !== null
-          ? estNum === qStatusNum
-          : String(estNum).toLowerCase().includes(q));
-
-      const hitExtras = [
-        norm(row?.id),
-        norm(row?.NombreCompleto),
-        norm(row?.telefono),
-        norm(row?.rfc),
-        norm(row?.correo),
-        norm(row?.tipoPersona),
-        norm(row?.nombreEncargado),
-        norm(row?.telefonoEncargado),
-        norm(row?.correoEncargado),
-        norm(row?.direccionCompleta),
-      ].some((s) => s.includes(q));
-
-      return hitCols || estHit || hitExtras;
+      const extras = [
+        normalizar(row.etiquetaBusqueda),
+        normalizar(row.NombreCompleto),
+        normalizar(row.rfc),
+        normalizar(row.correo),
+        normalizar(row.telefono),
+        normalizar(row.tipoPersona),
+        normalizar(row.nombreEncargado),
+        normalizar(row.direccionCompleta),
+        normalizar(row.id),
+      ];
+      return hitEnColumnas || extras.some((s) => s.includes(texto));
     });
 
     grid?.option('dataSource', dataFiltrada);
@@ -233,10 +180,10 @@ export class ListaClientesComponent implements OnInit {
     e.component.refresh();
   }
 
-  actualizarCliente(cliente: any) {
+  actualizarCliente(cliente: ClienteGridRow) {
     this.route.navigate(
       ['/clientes/editar-cliente', cliente.id],
-      { state: { cliente } }
+      { state: { cliente: cliente.detalle ?? cliente } }
     );
   }
 
@@ -374,60 +321,6 @@ export class ListaClientesComponent implements OnInit {
     // console.log('Desactivar:', rowData);
   }
 
-  pdfPopupVisible = false;
-  pdfTitle = 'Documento';
-  pdfPopupWidth = 500;
-  pdfUrlSafe: SafeResourceUrl | null = null;
-  pdfRawUrl: string | null = null;
-  pdfLoading = false;
-  pdfLoaded = false;
-  pdfError = false;
-  pdfErrorMsg = '';
-
-  onPdfLoaded() {
-    this.pdfLoaded = true;
-    this.pdfLoading = false;
-  }
-
-  abrirEnNuevaPestana() {
-    if (this.pdfRawUrl) window.open(this.pdfRawUrl, '_blank');
-  }
-
-  async descargarPdfForzada() {
-    if (!this.pdfRawUrl) return;
-    try {
-      const resp = await fetch(this.pdfRawUrl, { mode: 'cors' });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const base = (this.pdfTitle || 'documento')
-        .toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^\w\-]+/g, '');
-      a.href = url;
-      a.download = base.endsWith('.pdf') ? base : base + '.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch {
-      try {
-        const u = new URL(this.pdfRawUrl!);
-        u.searchParams.set(
-          'response-content-disposition',
-          `attachment; filename="${(this.pdfTitle || 'documento').replace(
-            /\s+/g,
-            '_'
-          )}.pdf"`
-        );
-        window.open(u.toString(), '_self');
-      } catch {
-        window.open(this.pdfRawUrl!, '_blank');
-      }
-    }
-  }
-
   toggleExpandGroups() {
     const groupedColumns = this.dataGrid.instance
       .getVisibleColumns()
@@ -451,35 +344,16 @@ export class ListaClientesComponent implements OnInit {
   }
 
   limpiarCampos() {
-    this.dataGrid.instance.clearGrouping();
-    this.dataGrid.instance.pageIndex(0);
-    this.dataGrid.instance.refresh();
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    inst.clearGrouping();
+    inst.clearFilter();
+    inst.pageIndex(0);
+    inst.option('searchPanel.text', '');
+    this.filtroActivo = '';
+    inst.option('dataSource', this.listaClientes);
+    inst.refresh();
     this.isGrouped = false;
   }
 
-  mostrarModalDoc = false;
-  docTitulo = '';
-  docUrl = '';
-  docSafeUrl: SafeResourceUrl | null = null;
-  docCliente: any = null;
-
-  previsualizar(url: string, titulo: string, data: any): void {
-    if (!url) {
-      return;
-    }
-
-    this.docUrl = url;
-    this.docTitulo = titulo;
-    this.docCliente = data;
-    this.docSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-    this.mostrarModalDoc = true;
-  }
-
-  cerrarModalDoc(): void {
-    this.mostrarModalDoc = false;
-    this.docSafeUrl = null;
-    this.docUrl = '';
-    this.docTitulo = '';
-    this.docCliente = null;
-  }
 }
