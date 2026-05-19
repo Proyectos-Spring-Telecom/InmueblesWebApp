@@ -60,6 +60,10 @@ export const navItems: NavItem[] = [
         displayName: 'Servicios',
         route: '/servicios',
       },
+      {
+        displayName: 'Métodos de pago',
+        route: '/metodos-pago',
+      },
       // {
       //   displayName: 'Bitácora',
       //   iconName: 'date',

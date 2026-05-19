@@ -1,5 +1,12 @@
 import { BreakpointObserver, MediaMatcher } from '@angular/cdk/layout';
-import { Component, ElementRef, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatSidenav } from '@angular/material/sidenav';
 import { CoreService } from 'src/app/services/core.service';
@@ -24,6 +31,7 @@ import { AppAuthBrandingComponent } from './vertical/sidebar/auth-branding.compo
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { NavItem } from './vertical/sidebar/nav-item/nav-item';
 import { AssistantChatComponent } from './shared/assistant-chat/assistant-chat.component';
+import { LayoutScrollService } from 'src/app/services/layout-scroll.service';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -67,7 +75,7 @@ interface quicklinks {
   styleUrls: [],
   encapsulation: ViewEncapsulation.None,
 })
-export class FullComponent implements OnInit {
+export class FullComponent implements OnInit, AfterViewInit {
   navItems: NavItem[] = [];
 
   @ViewChild('leftsidenav')
@@ -201,7 +209,8 @@ export class FullComponent implements OnInit {
     private router: Router,
     private breakpointObserver: BreakpointObserver,
     private navService: NavService,
-    private authService: AuthenticationService
+    private authService: AuthenticationService,
+    private layoutScroll: LayoutScrollService,
   ) {
     this.htmlElement = document.querySelector('html')!;
     this.layoutChangesSubscription = this.breakpointObserver
@@ -225,17 +234,16 @@ export class FullComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Ensure `content` is available after view initialization
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
-        queueMicrotask(() => {
-          const el = this.mainScroll?.nativeElement;
-          if (el) {
-            el.scrollTo({ top: 0, left: 0 });
-          }
-        });
+        queueMicrotask(() => this.layoutScroll.scrollToTop('auto'));
       });
+  }
+
+  ngAfterViewInit(): void {
+    const el = this.mainScroll?.nativeElement;
+    if (el) this.layoutScroll.register(el);
   }
 
   ngOnDestroy() {

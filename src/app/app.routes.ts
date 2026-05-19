@@ -119,6 +119,11 @@ export const routes: Routes = [
           import('./pages/servicios/servicios.module').then((m) => m.ServiciosModule),
       },
       {
+        path: 'metodos-pago',
+        loadChildren: () =>
+          import('./pages/metodos-pago/metodos-pago.module').then((m) => m.MetodosPagoModule),
+      },
+      {
         path: 'monitoreo',
         loadChildren: () =>
           import('./pages/monitoreo/monitoreo.module').then((m) => m.MonitoreoModule),

@@ -20,6 +20,16 @@ interface LoginResponse {
  */
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService extends BaseServicesService {
+  private static readonly TOKEN_KEY = 'token';
+  private static readonly REFRESH_KEY = 'refreshToken';
+  private static readonly AUTH_STORAGE_KEYS = [
+    'token',
+    'refreshToken',
+    'user',
+    'permissions',
+    'coordinates',
+  ] as const;
+
   private authenticationChanged = new Subject<boolean>();
   private user: User | null = null;
   /** Tras un refresh rechazado (401), no volver a llamar /login/refresh ni redirigir. */
@@ -94,11 +104,10 @@ export class AuthenticationService extends BaseServicesService {
       );
   }
 
-  /** Limpia sesión sin navegar (p. ej. refresh 401: el usuario no debe ser expulsado al login). */
+  /** Limpia credenciales sin navegar (solo logout explícito debe redirigir al login). */
   public clearSessionOnly(): void {
     this.user = null;
     this.cleanSession();
-    localStorage.clear();
     this.authenticationChanged.next(false);
     this.blockRefresh();
   }
@@ -127,7 +136,7 @@ export class AuthenticationService extends BaseServicesService {
     return !!(this.getToken() || this.getRefreshToken());
   }
 
-  private blockRefresh(): void {
+  public blockRefresh(): void {
     this.refreshBlocked = true;
   }
 
@@ -152,13 +161,11 @@ export class AuthenticationService extends BaseServicesService {
   }
 
   public getToken(): string {
-    const raw = sessionStorage.getItem('token');
-    return this.normalizeStorageValue(raw);
+    return this.readAuthStorage(AuthenticationService.TOKEN_KEY);
   }
 
   public getRefreshToken(): string {
-    const raw = sessionStorage.getItem('refreshToken');
-    return this.normalizeStorageValue(raw);
+    return this.readAuthStorage(AuthenticationService.REFRESH_KEY);
   }
 
   public setData(data: User): void {
@@ -184,11 +191,15 @@ export class AuthenticationService extends BaseServicesService {
   }
 
   public cleanSession(): void {
-    sessionStorage.clear();
+    for (const key of AuthenticationService.AUTH_STORAGE_KEYS) {
+      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
+    }
   }
 
   public getUser(): User | null {
-    const user = sessionStorage.getItem('user');
+    const user =
+      sessionStorage.getItem('user') ?? localStorage.getItem('user');
     if (!user) return null;
     return JSON.parse(user);
   }
@@ -200,7 +211,9 @@ export class AuthenticationService extends BaseServicesService {
   }
 
   public getPermissions(): string[] {
-    const permissions = sessionStorage.getItem('permissions');
+    const permissions =
+      sessionStorage.getItem('permissions') ??
+      localStorage.getItem('permissions');
     if (!permissions) return [];
     return JSON.parse(permissions);
   }
@@ -237,12 +250,29 @@ export class AuthenticationService extends BaseServicesService {
   private persistTokens(payload: LoginResponse | User): void {
     const token = this.extractToken(payload);
     const refreshToken = this.extractRefreshToken(payload);
-    if (token) sessionStorage.setItem('token', token);
-    if (refreshToken) sessionStorage.setItem('refreshToken', refreshToken);
+    if (token) {
+      this.writeAuthStorage(AuthenticationService.TOKEN_KEY, token);
+    }
+    if (refreshToken) {
+      this.writeAuthStorage(AuthenticationService.REFRESH_KEY, refreshToken);
+    }
     if (token || refreshToken) {
       this.refreshBlocked = false;
     }
     this.authenticationChanged.next(this.isAuthenticated());
+  }
+
+  private readAuthStorage(key: string): string {
+    const fromSession = this.normalizeStorageValue(sessionStorage.getItem(key));
+    if (fromSession) {
+      return fromSession;
+    }
+    return this.normalizeStorageValue(localStorage.getItem(key));
+  }
+
+  private writeAuthStorage(key: string, value: string): void {
+    sessionStorage.setItem(key, value);
+    localStorage.setItem(key, value);
   }
 
   /**
@@ -278,7 +308,9 @@ export class AuthenticationService extends BaseServicesService {
   }
 
   private setStorageUser(value: any): void {
-    sessionStorage.setItem('user', JSON.stringify(value));
+    const serialized = JSON.stringify(value);
+    sessionStorage.setItem('user', serialized);
+    localStorage.setItem('user', serialized);
   }
 
   private setStoragePermissions(permissions: any[]): void {
@@ -289,7 +321,9 @@ export class AuthenticationService extends BaseServicesService {
       return String(perm);
     });
 
-    sessionStorage.setItem('permissions', JSON.stringify(permissionIds));
+    const serialized = JSON.stringify(permissionIds);
+    sessionStorage.setItem('permissions', serialized);
+    localStorage.setItem('permissions', serialized);
   }
 
   private normalizeStorageValue(raw: string | null): string {

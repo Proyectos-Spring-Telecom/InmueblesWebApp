@@ -25,6 +25,22 @@ import { ContratosService } from 'src/app/services/moduleService/contratos.servi
 import { InstalacionService } from 'src/app/services/moduleService/instalaciones.service';
 import { InstalacionCentral } from 'src/app/services/moduleService/instalacionesCentral.service';
 import { PagoInmuebleService } from 'src/app/services/moduleService/pago-inmueble.service';
+import {
+  CatMetodoPagoItem,
+  CatMetodosPagoService,
+} from 'src/app/services/moduleService/cat-metodos-pago.service';
+import {
+  CatServicioItem,
+  CatServiciosService,
+} from 'src/app/services/moduleService/cat-servicios.service';
+import {
+  contarMontoSimbolosAntesCursor,
+  cursorMontoTrasFormato,
+  extraerMontoRawDesdeDisplay,
+  formatMonedaDesdeNumero,
+  formatearMonedaDesdeLimpia,
+  parseMonedaNumerico,
+} from 'src/app/shared/valor-miles-format';
 
 const IVA_CONTRATO = 0.16;
 
@@ -88,19 +104,6 @@ function estatusPagoToApi(estatus: PagoEstatus): number {
       return 2;
   }
 }
-
-/**
- * Mapeo provisional de etiqueta → `idMetodoPago` hasta existir catálogo en API.
- * Ajustar si el backend usa otros IDs.
- */
-const ID_METODO_PAGO_POR_ETIQUETA: Record<string, number> = {
-  Transferencia: 1,
-  SPEI: 2,
-  Tarjeta: 3,
-  Efectivo: 4,
-  Depósito: 5,
-  Cheque: 6,
-};
 
 interface PagoRow {
   id: number;
@@ -177,6 +180,15 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   mostrarModalContratoLocal = false;
   mostrarModalPago = false;
   pagoForm!: FormGroup;
+  listaCatMetodosPago: CatMetodoPagoItem[] = [];
+  metodosPagoCargando = false;
+  /** Catálogo GET `/cat-servicios/paginated` para el select de servicio. */
+  listaCatServicios: CatServicioItem[] = [];
+  catServiciosCargando = false;
+  /** Etiqueta de inmueble/local en contexto para el campo `idInmueble` del POST /pago. */
+  inmueblePagoEtiqueta = '';
+  /** Valor real del monto: solo dígitos y punto (ej. `5325.50`). El input solo muestra formato. */
+  private pagoMontoRaw = '';
   /** Deshabilita el botón Agregar mientras corre POST /pago. */
   pagoGuardando = false;
   contratoModalLoading = false;
@@ -369,6 +381,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   @ViewChild('gridRef', { static: false }) gridRef: DxDataGridComponent;
   @ViewChild('pagoComprobanteInput', { static: false })
   pagoComprobanteInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('pagoMontoInput', { static: false })
+  pagoMontoInput?: ElementRef<HTMLInputElement>;
 
   private socket!: Socket;
   constructor(
@@ -384,6 +398,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private sanitizer: DomSanitizer,
     private pagoInmuebleService: PagoInmuebleService,
+    private catMetodosPagoService: CatMetodosPagoService,
+    private catServiciosService: CatServiciosService,
   ) {}
 
   ngOnDestroy(): void {
@@ -1208,6 +1224,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initPagoForm();
+    this.cargarCatalogoMetodosPago();
     this.numeroSerie = this.route.snapshot.paramMap.get('numeroSerie') ?? '';
     this.applyVistaDesdeQuery(this.route.snapshot.queryParamMap);
     this.vistaQuerySub = this.route.queryParamMap.subscribe((qp) =>
@@ -1266,23 +1283,166 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
 
   private initPagoForm(): void {
     this.pagoForm = this.fb.group({
-      concepto: ['', Validators.required],
+      idServicioInmueble: [null as number | null],
+      concepto: [''],
       fechaPago: ['', Validators.required],
       monto: ['', Validators.required],
-      metodo: ['', Validators.required],
-      estatus: ['Pendiente' as PagoEstatus, Validators.required],
+      idMetodoPago: [null as number | null],
+      estatus: ['Pendiente' as PagoEstatus],
       comprobantePago: [null as File | null, Validators.required],
       comprobantePagoNombre: [''],
     });
   }
 
+  etiquetaCatMetodoPago(item: CatMetodoPagoItem): string {
+    const nombre = item.nombre;
+    if (nombre != null && String(nombre).trim() !== '') return String(nombre).trim();
+    return `Método ${item.id}`;
+  }
+
+  etiquetaCatServicio(item: CatServicioItem): string {
+    const nombre = item.nombre ?? item.servicio ?? item.descripcion;
+    if (nombre != null && String(nombre).trim() !== '') return String(nombre).trim();
+    return `Servicio ${item.id}`;
+  }
+
+  etiquetaCatServicioPorId(id: number | null | undefined): string {
+    if (id == null || !Number.isFinite(Number(id))) return '';
+    const hit = this.listaCatServicios.find((s) => s.id === Number(id));
+    return hit ? this.etiquetaCatServicio(hit) : '';
+  }
+
+  etiquetaCatMetodoPagoPorId(id: number | null | undefined): string {
+    if (id == null || !Number.isFinite(Number(id))) return '—';
+    const hit = this.listaCatMetodosPago.find((m) => m.id === Number(id));
+    return hit ? this.etiquetaCatMetodoPago(hit) : `Método ${id}`;
+  }
+
+  private cargarCatalogoMetodosPago(): void {
+    this.metodosPagoCargando = true;
+    this.catMetodosPagoService.obtenerMetodosPagoPaginados(1, 100).subscribe({
+      next: (res) => {
+        this.listaCatMetodosPago = this.extraerFilasCatMetodosPago(res).filter(
+          (m) => m.estatus == null || m.estatus === 1,
+        );
+        this.metodosPagoCargando = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.listaCatMetodosPago = [];
+        this.metodosPagoCargando = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private extraerFilasCatMetodosPago(res: unknown): CatMetodoPagoItem[] {
+    const r = res as { data?: unknown } | unknown[] | null;
+    if (r == null) return [];
+    let rows: unknown = Array.isArray(r) ? r : (r as { data?: unknown }).data;
+    if (rows != null && typeof rows === 'object' && !Array.isArray(rows)) {
+      const bag = rows as Record<string, unknown>;
+      rows = bag['items'] ?? bag['rows'] ?? bag['content'] ?? bag['data'];
+    }
+    if (!Array.isArray(rows)) return [];
+    return rows
+      .map((item) => {
+        const row = item as Record<string, unknown>;
+        const id = Number(row['id'] ?? row['idCatMetodoPago']);
+        if (!Number.isFinite(id)) return null;
+        let estatus: number | undefined;
+        if (typeof row['activo'] === 'boolean') {
+          estatus = row['activo'] ? 1 : 0;
+        } else if (row['estatus'] != null) {
+          const n = Number(row['estatus']);
+          estatus = n === 1 ? 1 : 0;
+        }
+        return {
+          id,
+          nombre: row['nombre'] != null ? String(row['nombre']) : undefined,
+          estatus,
+        } as CatMetodoPagoItem;
+      })
+      .filter((item): item is CatMetodoPagoItem => item != null);
+  }
+
+  /** Etiqueta de entidad (inmueble o local) según `vistaEntidad` y `idInmueble` en URL. */
+  private actualizarEtiquetaEntidadPago(): void {
+    if (this.idInmuebleContext == null) {
+      this.inmueblePagoEtiqueta = '';
+      return;
+    }
+    const id = this.idInmuebleContext;
+    const esLocal = this.vistaEntidad === 'local';
+    const tipo = esLocal ? 'Local' : 'Inmueble';
+    const nombre = esLocal
+      ? this.detalleLocalNombre || this.detalleTitulo
+      : this.detalleInmuebleNombre || this.detalleTitulo;
+    this.inmueblePagoEtiqueta = `${tipo}: ${nombre} (#${id})`;
+  }
+
+  private cargarCatalogoServiciosPago(): void {
+    this.catServiciosCargando = true;
+    this.catServiciosService.obtenerServiciosPaginados(1, 100).subscribe({
+      next: (res) => {
+        this.listaCatServicios = this.extraerFilasCatServicios(res).filter(
+          (s) => s.estatus == null || s.estatus === 1,
+        );
+        this.catServiciosCargando = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.listaCatServicios = [];
+        this.catServiciosCargando = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private extraerFilasCatServicios(res: unknown): CatServicioItem[] {
+    const r = res as { data?: unknown } | unknown[] | null;
+    if (r == null) return [];
+    let rows: unknown = Array.isArray(r) ? r : (r as { data?: unknown }).data;
+    if (rows != null && typeof rows === 'object' && !Array.isArray(rows)) {
+      const bag = rows as Record<string, unknown>;
+      rows = bag['items'] ?? bag['rows'] ?? bag['content'] ?? bag['data'];
+    }
+    if (!Array.isArray(rows)) return [];
+    return rows
+      .map((item) => {
+        const row = item as Record<string, unknown>;
+        const id = Number(row['id'] ?? row['idTipoServicio'] ?? row['idCatServicio']);
+        if (!Number.isFinite(id)) return null;
+        let estatus: number | undefined;
+        if (typeof row['activo'] === 'boolean') {
+          estatus = row['activo'] ? 1 : 0;
+        } else if (row['estatus'] != null) {
+          const n = Number(row['estatus']);
+          estatus = n === 1 ? 1 : 0;
+        }
+        return {
+          id: Math.floor(id),
+          nombre: row['nombre'] != null ? String(row['nombre']) : undefined,
+          servicio: row['servicio'] != null ? String(row['servicio']) : undefined,
+          descripcion: row['descripcion'] != null ? String(row['descripcion']) : undefined,
+          estatus,
+        } as CatServicioItem;
+      })
+      .filter((item): item is CatServicioItem => item != null);
+  }
+
   abrirModalPago(): void {
     this.mostrarModalPago = true;
+    this.actualizarEtiquetaEntidadPago();
+    this.cargarCatalogoMetodosPago();
+    this.cargarCatalogoServiciosPago();
+    this.pagoMontoRaw = '';
     this.pagoForm?.reset({
+      idServicioInmueble: null,
       concepto: '',
       fechaPago: '',
       monto: '',
-      metodo: '',
+      idMetodoPago: null,
       estatus: 'Pendiente' as PagoEstatus,
       comprobantePago: null,
       comprobantePagoNombre: '',
@@ -1291,6 +1451,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       const el = this.pagoComprobanteInput?.nativeElement;
       if (el) el.value = '';
+      const montoEl = this.pagoMontoInput?.nativeElement;
+      if (montoEl) montoEl.value = '';
     });
   }
 
@@ -1317,7 +1479,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         color: '#ffffff',
         icon: 'warning',
         title: 'Faltan datos',
-        text: 'Completa los campos obligatorios, incluido el comprobante de pago.',
+        text: 'Completa los campos obligatorios: inmueble en contexto, fecha, monto y comprobante.',
         confirmButtonText: 'Entendido',
       });
       return;
@@ -1328,10 +1490,10 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         background: '#141a21',
         color: '#ffffff',
         icon: 'info',
-        title: 'Falta el inmueble en contexto',
+        title: 'Falta la entidad en contexto',
         html:
-          'No hay <code>idInmueble</code> en la URL de esta pantalla, así que no se puede registrar el pago contra el API. ' +
-          'Abre este detalle desde el mapa de monitoreo (o agrega <code>?idInmueble=…</code> al entrar).',
+          'No hay <code>idInmueble</code> en la URL de esta pantalla (vista de inmueble o local), así que no se puede registrar el pago. ' +
+          'Abre el detalle desde el mapa de monitoreo o agrega <code>?idInmueble=…</code> a la URL.',
         confirmButtonText: 'Entendido',
       });
       return;
@@ -1339,16 +1501,17 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     const idInmueble = this.idInmuebleContext;
 
     const v = this.pagoForm.value as {
+      idServicioInmueble: number | null;
       concepto: string;
       fechaPago: string;
       monto: string;
-      metodo: string;
+      idMetodoPago: number | null;
       estatus: PagoEstatus;
       comprobantePago: File | null;
       comprobantePagoNombre: string;
     };
 
-    const montoN = this.parseMontoToNumber(v.monto);
+    const montoN = parseMonedaNumerico(v.monto);
     if (!Number.isFinite(montoN)) {
       void Swal.fire({
         background: '#141a21',
@@ -1394,11 +1557,14 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
             this.pagosData.reduce((max, r) => Math.max(max, r.id), 0) + 1;
           const nuevo: PagoRow = {
             id: nextId,
-            concepto: String(v.concepto ?? '').trim(),
+            concepto:
+              String(v.concepto ?? '').trim() ||
+              this.etiquetaCatServicioPorId(v.idServicioInmueble) ||
+              'Pago',
             fechaPago: fechaPagoStr,
             fechaLimitePago: this.fechaIsoMasDias(fechaPagoStr, 10),
             monto: montoN,
-            metodo: String(v.metodo ?? '').trim(),
+            metodo: this.etiquetaCatMetodoPagoPorId(v.idMetodoPago),
             estatus: (v.estatus ?? 'Pendiente') as PagoEstatus,
           };
           this.pagosData = [nuevo, ...this.pagosData];
@@ -1431,10 +1597,11 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   private construirFormDataPago(
     idInmueble: number,
     v: {
+      idServicioInmueble: number | null;
       concepto: string;
       fechaPago: string;
       monto: string;
-      metodo: string;
+      idMetodoPago: number | null;
       estatus: PagoEstatus;
     },
     montoN: number,
@@ -1442,18 +1609,31 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   ): FormData {
     const fd = new FormData();
     const fecha = String(v.fechaPago ?? '').trim();
-    const fechaPagoApi = fecha.length === 10 ? `${fecha}T12:00:00` : fecha;
+    const fechaPagoApi =
+      fecha.length === 10 ? `${fecha}T12:00:00.000Z` : fecha;
 
     fd.append('idInmueble', String(idInmueble));
-    fd.append('concepto', String(v.concepto ?? '').trim());
+
+    const idServicio = Number(v.idServicioInmueble);
+    if (Number.isFinite(idServicio) && idServicio > 0) {
+      fd.append('idServicioInmueble', String(Math.floor(idServicio)));
+    }
+
+    const concepto = String(v.concepto ?? '').trim();
+    if (concepto) {
+      fd.append('concepto', concepto);
+    }
+
     fd.append('fechaPago', fechaPagoApi);
     fd.append('monto', String(montoN));
-    fd.append('estatus', String(estatusPagoToApi(v.estatus)));
 
-    const metodoLabel = String(v.metodo ?? '').trim();
-    const idMetodo = ID_METODO_PAGO_POR_ETIQUETA[metodoLabel];
-    if (idMetodo != null) {
-      fd.append('idMetodoPago', String(idMetodo));
+    const idMetodo = Number(v.idMetodoPago);
+    if (Number.isFinite(idMetodo) && idMetodo > 0) {
+      fd.append('idMetodoPago', String(Math.floor(idMetodo)));
+    }
+
+    if (v.estatus != null) {
+      fd.append('estatus', String(estatusPagoToApi(v.estatus)));
     }
 
     fd.append('ComprobantePagoArchivo', comprobante, comprobante.name);
@@ -1473,85 +1653,153 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     return 'Ocurrió un error al enviar el pago. Intenta de nuevo.';
   }
 
+  /** Índice en `pagoMontoRaw` según la posición del cursor en el texto visible. */
+  private indiceRawDesdeCursorEnInput(input: HTMLInputElement, cursor: number): number {
+    return contarMontoSimbolosAntesCursor(input.value, cursor);
+  }
+
+  private puedeInsertarDigitoEnRaw(indice: number): boolean {
+    const dot = this.pagoMontoRaw.indexOf('.');
+    if (dot === -1) return true;
+    if (indice <= dot) return true;
+    return this.pagoMontoRaw.length - dot - 1 < 2;
+  }
+
+  private aplicarVistaMontoInput(input: HTMLInputElement, cursorEnRaw: number): void {
+    const visible = formatearMonedaDesdeLimpia(this.pagoMontoRaw);
+    input.value = visible;
+    this.pagoForm.get('monto')?.setValue(this.pagoMontoRaw, { emitEvent: false });
+    this.pagoForm.get('monto')?.updateValueAndValidity({ emitEvent: false });
+    const pos = cursorMontoTrasFormato(
+      visible,
+      Math.max(0, Math.min(cursorEnRaw, this.pagoMontoRaw.length)),
+    );
+    requestAnimationFrame(() => input.setSelectionRange(pos, pos));
+  }
+
   onMontoKeydown(ev: KeyboardEvent): void {
-    const allowedKeys = new Set([
-      'Backspace',
-      'Delete',
+    const input = ev.target as HTMLInputElement | null;
+    if (!input || !this.pagoForm) return;
+
+    const nav = new Set([
       'Tab',
       'Escape',
       'Enter',
       'ArrowLeft',
       'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
       'Home',
       'End',
     ]);
-    if (allowedKeys.has(ev.key)) return;
+    if (nav.has(ev.key)) return;
     if (ev.ctrlKey || ev.metaKey) return;
-    if (ev.key >= '0' && ev.key <= '9') return;
-    if (ev.key === '.') return;
+
+    const cur = input.selectionStart ?? 0;
+    const end = input.selectionEnd ?? cur;
+    const tieneSeleccion = cur !== end;
+
+    if (ev.key === 'Backspace' || ev.key === 'Delete') {
+      ev.preventDefault();
+      if (tieneSeleccion) {
+        const i0 = this.indiceRawDesdeCursorEnInput(input, Math.min(cur, end));
+        const i1 = this.indiceRawDesdeCursorEnInput(input, Math.max(cur, end));
+        this.pagoMontoRaw = this.pagoMontoRaw.slice(0, i0) + this.pagoMontoRaw.slice(i1);
+        this.aplicarVistaMontoInput(input, i0);
+        return;
+      }
+      if (ev.key === 'Backspace') {
+        const idx = this.indiceRawDesdeCursorEnInput(input, cur);
+        if (idx > 0) {
+          this.pagoMontoRaw =
+            this.pagoMontoRaw.slice(0, idx - 1) + this.pagoMontoRaw.slice(idx);
+          this.aplicarVistaMontoInput(input, idx - 1);
+        }
+        return;
+      }
+      const idx = this.indiceRawDesdeCursorEnInput(input, cur);
+      if (idx < this.pagoMontoRaw.length) {
+        this.pagoMontoRaw =
+          this.pagoMontoRaw.slice(0, idx) + this.pagoMontoRaw.slice(idx + 1);
+        this.aplicarVistaMontoInput(input, idx);
+      }
+      return;
+    }
+
+    if (ev.key >= '0' && ev.key <= '9') {
+      ev.preventDefault();
+      if (tieneSeleccion) {
+        const i0 = this.indiceRawDesdeCursorEnInput(input, Math.min(cur, end));
+        const i1 = this.indiceRawDesdeCursorEnInput(input, Math.max(cur, end));
+        if (!this.puedeInsertarDigitoEnRaw(i0)) return;
+        const merged = this.pagoMontoRaw.slice(0, i0) + ev.key + this.pagoMontoRaw.slice(i1);
+        this.pagoMontoRaw = extraerMontoRawDesdeDisplay(merged);
+        this.aplicarVistaMontoInput(input, i0 + 1);
+        return;
+      }
+      const idx = this.indiceRawDesdeCursorEnInput(input, cur);
+      if (!this.puedeInsertarDigitoEnRaw(idx)) return;
+      this.pagoMontoRaw =
+        this.pagoMontoRaw.slice(0, idx) + ev.key + this.pagoMontoRaw.slice(idx);
+      this.aplicarVistaMontoInput(input, idx + 1);
+      return;
+    }
+
+    if (ev.key === '.' || ev.key === ',' || ev.key === 'Decimal') {
+      ev.preventDefault();
+      if (this.pagoMontoRaw.includes('.')) return;
+      if (tieneSeleccion) {
+        const i0 = this.indiceRawDesdeCursorEnInput(input, Math.min(cur, end));
+        const i1 = this.indiceRawDesdeCursorEnInput(input, Math.max(cur, end));
+        this.pagoMontoRaw =
+          this.pagoMontoRaw.slice(0, i0) + '.' + this.pagoMontoRaw.slice(i1);
+        this.aplicarVistaMontoInput(input, i0 + 1);
+        return;
+      }
+      const idx = this.indiceRawDesdeCursorEnInput(input, cur);
+      this.pagoMontoRaw =
+        this.pagoMontoRaw.slice(0, idx) + '.' + this.pagoMontoRaw.slice(idx);
+      this.aplicarVistaMontoInput(input, idx + 1);
+      return;
+    }
+
     ev.preventDefault();
   }
 
-  onMontoInput(ev: Event): void {
+  onMontoPaste(ev: ClipboardEvent): void {
+    ev.preventDefault();
     const input = ev.target as HTMLInputElement | null;
     if (!input || !this.pagoForm) return;
-    const formatted = this.formatMontoTyping(input.value);
-    this.pagoForm.get('monto')?.setValue(formatted, { emitEvent: false });
+
+    const texto = ev.clipboardData?.getData('text') ?? '';
+    const pegado = extraerMontoRawDesdeDisplay(texto);
+    if (!pegado) return;
+
+    const cur = input.selectionStart ?? 0;
+    const end = input.selectionEnd ?? cur;
+    const i0 = this.indiceRawDesdeCursorEnInput(input, Math.min(cur, end));
+    const i1 = this.indiceRawDesdeCursorEnInput(input, Math.max(cur, end));
+    const merged = this.pagoMontoRaw.slice(0, i0) + pegado + this.pagoMontoRaw.slice(i1);
+    this.pagoMontoRaw = extraerMontoRawDesdeDisplay(merged);
+    this.aplicarVistaMontoInput(input, i0 + pegado.length);
   }
 
   onMontoBlur(): void {
-    const raw = String(this.pagoForm?.get('monto')?.value ?? '');
-    const n = this.parseMontoToNumber(raw);
+    const input = this.pagoMontoInput?.nativeElement;
+    const raw =
+      this.pagoMontoRaw || String(this.pagoForm?.get('monto')?.value ?? '').trim();
+    const n = parseMonedaNumerico(raw);
     if (!Number.isFinite(n)) {
+      this.pagoMontoRaw = '';
       this.pagoForm?.get('monto')?.setValue('', { emitEvent: false });
+      if (input) input.value = '';
       return;
     }
-    this.pagoForm?.get('monto')?.setValue(this.formatCurrencyFixed(n), {
-      emitEvent: false,
-    });
-  }
-
-  private parseMontoToNumber(raw: string): number {
-    const s = String(raw ?? '')
-      .replace(/[^\d.]/g, '')
-      .trim();
-    if (!s) return NaN;
-    const parts = s.split('.');
-    const intPart = parts[0] ?? '';
-    const decPart = (parts[1] ?? '').slice(0, 2);
-    const num = Number(decPart ? `${intPart}.${decPart}` : intPart);
-    return Number.isFinite(num) ? num : NaN;
-  }
-
-  private formatMontoTyping(raw: string): string {
-    const cleaned = String(raw ?? '').replace(/[^\d.]/g, '');
-    if (!cleaned) return '';
-
-    const firstDot = cleaned.indexOf('.');
-    const intRaw = firstDot === -1 ? cleaned : cleaned.slice(0, firstDot);
-    const decRaw =
-      firstDot === -1 ? '' : cleaned.slice(firstDot + 1).replace(/\./g, '');
-
-    const intDigits = (intRaw || '0').replace(/^0+(?=\d)/, '') || '0';
-    const intNum = Number(intDigits);
-    const intFmt = Number.isFinite(intNum)
-      ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
-          intNum,
-        )
-      : '0';
-
-    const decPart = decRaw.slice(0, 2);
-    if (firstDot !== -1) return `$${intFmt}.${decPart}`;
-    return `$${intFmt}`;
-  }
-
-  private formatCurrencyFixed(n: number): string {
-    const num = Math.round(n * 100) / 100;
-    const fmt = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(num);
-    return `$${fmt}`;
+    this.pagoMontoRaw = String(n);
+    this.pagoForm?.get('monto')?.setValue(this.pagoMontoRaw, { emitEvent: false });
+    if (input) {
+      input.value = formatMonedaDesdeNumero(n);
+    }
   }
 
   cambiarEstatusPago(row: PagoRow): void {
