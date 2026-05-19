@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, debounceTime, forkJoin, of, Subscription } from 'rxjs';
+import { catchError, debounceTime, finalize, forkJoin, of, Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
@@ -12,6 +12,11 @@ import {
 } from 'src/app/services/moduleService/cat-servicios.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
+import { PdfOcrService } from 'src/app/services/moduleService/pdf-ocr.service';
+import {
+  extraerConstanciaDeRespuestaOcr,
+  mapearConstanciaAArrendatario,
+} from 'src/app/shared/constancia-fiscal-ocr.mapper';
 import {
   ARRENDATARIOS_FORM_DEMO,
   INMUEBLES_ARRENDATARIOS_DEMO,
@@ -25,6 +30,18 @@ import {
   animations: [routeAnimation],
 })
 export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
+  private readonly swalToastOcrExito = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: 'Información aplicada en formulario.',
+    showConfirmButton: false,
+    timer: 4200,
+    timerProgressBar: true,
+    background: '#141a21',
+    color: '#ffffff',
+  });
+
   public title = 'Agregar Arrendatario';
   public submitButton: string = 'Guardar';
   public arrendatarioForm: FormGroup;
@@ -49,10 +66,17 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private readonly pinUrl = 'assets/images/logos/marker_spring.webp';
   readonly acceptPdfImagenes = 'application/pdf,image/png,image/jpeg,image/jpg';
   readonly etiquetaPdfImagenes = 'PDF · PNG · JPG · JPEG';
+  readonly acceptSoloPdf = 'application/pdf';
+  readonly etiquetaSoloPdf = 'PDF';
   readonly acceptSoloImagenes = 'image/png,image/jpeg,image/jpg';
   readonly etiquetaSoloImagenes = 'PNG · JPG · JPEG';
-  archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
+  imagenLicenciaUrl: string | null = null;
+  archivoEscrituraNombre: string | null = null;
+  archivoEscrituraUrl: string | null = null;
+  boletaPredialNombre: string | null = null;
+  boletaPredialUrl: string | null = null;
+  reciboAguaServiciosNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
   contratoRentaNombre: string | null = null;
   constanciaFiscalNombre: string | null = null;
@@ -60,27 +84,21 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   comprobanteDomicilioNombre: string | null = null;
   actaConstitutivaNombre: string | null = null;
   ineRepresentanteNombre: string | null = null;
-  /** Boleta predial y recibo (paridad documentos ``agregar-inmueble``). */
-  boletaPredialNombre: string | null = null;
-  reciboAguaServiciosNombre: string | null = null;
-  archivoEscrituraUrl: string | null = null;
-  imagenLicenciaUrl: string | null = null;
   imagenPlanoUrl: string | null = null;
   contratoRentaUrl: string | null = null;
   constanciaFiscalUrl: string | null = null;
   constanciaRepLegalUrl: string | null = null;
   comprobanteDomicilioUrl: string | null = null;
   ineRepresentanteUrl: string | null = null;
-  boletaPredialUrl: string | null = null;
   resaltarAutocargaContrato = false;
   resaltarAutocargaDocs = false;
+  autocargaCsfPendiente = false;
+  private procesandoConstanciaOcr = false;
   private promptAutocargaMostrado = false;
   private readonly debounceLogMs = 400;
   private formValueLogSub?: Subscription;
   private estatusInmuebleSub?: Subscription;
 
-  @ViewChild('archivoEscrituraInput') archivoEscrituraInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('imagenLicenciaInput') imagenLicenciaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
   @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('constanciaFiscalInput') constanciaFiscalInput?: ElementRef<HTMLInputElement>;
@@ -89,12 +107,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   @ViewChild('actaConstitutivaInput') actaConstitutivaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('ineRepresentanteInput') ineRepresentanteInput?: ElementRef<HTMLInputElement>;
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
-  @ViewChild('autocargaEscrituraCard') autocargaEscrituraCard?: ElementRef<HTMLElement>;
+  @ViewChild('autocargaCsfCardArrendatario') autocargaCsfCardArrendatario?: ElementRef<HTMLElement>;
+  @ViewChild('topFormularioArrendatario') topFormularioArrendatario?: ElementRef<HTMLElement>;
+  @ViewChild('inicioFormularioArrendatario') inicioFormularioArrendatario?: ElementRef<HTMLElement>;
   @ViewChild('docsSectionArrendatario') docsSectionArrendatario?: ElementRef<HTMLElement>;
-  @ViewChild('boletaPredialInput') boletaPredialInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('reciboAguaServiciosInput')
-  reciboAguaServiciosInput?: ElementRef<HTMLInputElement>;
-
   constructor(
     private fb: FormBuilder,
     private activatedRoute: ActivatedRoute,
@@ -103,6 +119,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     private catServiciosService: CatServiciosService,
     private inmueblesService: InmueblesService,
     private arrendatariosService: ArrendatariosService,
+    private pdfOcrService: PdfOcrService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -179,8 +196,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const rentado = v === 'RENTADO';
     this.mostrarCamposRenta = rentado;
 
-    const rentaCtrl = this.arrendatarioForm.get('rentaMxn');
-    const tiempoCtrl = this.arrendatarioForm.get('tiempoRentaAnios');
+    const rentaCtrl = this.arrendatarioForm.get('renta');
+    const tiempoCtrl = this.arrendatarioForm.get('tiempoRenta');
     const contratoCtrl = this.arrendatarioForm.get('documentoContratoRenta');
     if (!rentaCtrl || !tiempoCtrl) return;
 
@@ -209,7 +226,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       color: '#ffffff',
       icon: 'question',
       title: '¿Quieres Intentar Completar El Formulario Con Un Archivo?',
-      text: 'Te llevaremos a la sección de Escrituras o Título para subir el archivo y extraer algunos datos.',
+      text: 'Te llevaremos a la sección de Constancia de Situación Fiscal para subir el PDF y extraer algunos datos.',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#6b7280',
@@ -217,42 +234,183 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       cancelButtonText: 'No, Continuar Manualmente',
     }).then((res) => {
       if (!res.isConfirmed) return;
-      this.enfocarAutocargaContrato();
+      this.autocargaCsfPendiente = true;
+      this.enfocarAutocargaCsf();
     });
   }
 
-  private enfocarAutocargaContrato(): void {
+  private scrollSuaveAElemento(
+    elemento: HTMLElement | undefined,
+    block: ScrollLogicalPosition,
+  ): void {
+    if (!elemento) return;
     setTimeout(() => {
-      const esc = this.autocargaEscrituraCard?.nativeElement;
-      if (esc) {
-        esc.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        this.resaltarAutocargaContrato = true;
-        return;
-      }
-      const docs = this.docsSectionArrendatario?.nativeElement;
-      if (!docs) return;
-      docs.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      this.resaltarAutocargaDocs = true;
+      elemento.scrollIntoView({ behavior: 'smooth', block });
     }, 120);
+  }
+
+  private enfocarAutocargaCsf(): void {
+    const csfCard = this.autocargaCsfCardArrendatario?.nativeElement;
+    if (csfCard) {
+      this.scrollSuaveAElemento(csfCard, 'center');
+      this.resaltarAutocargaContrato = true;
+      return;
+    }
+    const docs = this.docsSectionArrendatario?.nativeElement;
+    if (!docs) return;
+    this.scrollSuaveAElemento(docs, 'center');
+    this.resaltarAutocargaDocs = true;
+  }
+
+  private scrollArribaTrasOcrExitoso(): void {
+    const arriba =
+      this.topFormularioArrendatario?.nativeElement ??
+      this.inicioFormularioArrendatario?.nativeElement;
+    this.scrollSuaveAElemento(arriba, 'start');
+  }
+
+  /** Quita resaltados tras OCR; mantiene autocarga activa para reemplazar el PDF. */
+  private finalizarAutocargaCsf(): void {
+    this.resaltarAutocargaContrato = false;
+    this.resaltarAutocargaDocs = false;
+  }
+
+  private esArchivoPdf(file: File): boolean {
+    const tipo = (file.type || '').toLowerCase();
+    if (tipo === 'application/pdf') return true;
+    return /\.pdf$/i.test(file.name || '');
+  }
+
+  private aplicarDatosConstanciaAlFormulario(
+    patch: ReturnType<typeof mapearConstanciaAArrendatario>,
+  ): void {
+    const valores: Record<string, unknown> = {};
+    if (patch.nombreInmueble) valores['arrendatario'] = patch.nombreInmueble;
+    if (patch.direccionInmueble) valores['direccionFiscal'] = patch.direccionInmueble;
+    if (patch.tipoPersona != null) valores['tipoPersona'] = patch.tipoPersona;
+
+    if (Object.keys(valores).length === 0) return;
+
+    this.arrendatarioForm.patchValue(valores);
+    if (valores['tipoPersona'] != null) {
+      this.aplicarValidadoresTipoPersona(valores['tipoPersona']);
+    }
+  }
+
+  private mensajeErrorOcrHttp(err: unknown): string {
+    const e = err as {
+      error?: { message?: string };
+      message?: string;
+      status?: number;
+    };
+    const delApi = String(e?.error?.message ?? '').trim();
+    if (delApi) return delApi;
+    const generico = String(e?.message ?? '').trim();
+    if (generico && !generico.startsWith('Http failure')) return generico;
+    if (e?.status) return `El servidor respondió con el código ${e.status}.`;
+    return 'No fue posible conectar con el servicio de lectura del PDF.';
+  }
+
+  private escapeHtmlSwal(texto: string): string {
+    return texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  private mostrarAlertaOcrFallido(detalleError: string): void {
+    const detalle = detalleError.trim() || 'No se obtuvo un detalle del error.';
+    void Swal.fire({
+      title: 'No pudimos leer la constancia automáticamente',
+      html: `
+        <p style="margin:0 0 0.75rem;text-align:left;"><strong>Qué ocurrió:</strong> ${this.escapeHtmlSwal(detalle)}</p>
+        <p style="margin:0;text-align:left;">
+          Tu PDF de la constancia <strong>sigue adjunto</strong> en el formulario y se enviará al guardar como siempre.
+          Por favor, continúa capturando los datos <strong>a mano</strong>; cuando termines, podrás guardar con normalidad.
+        </p>
+      `,
+      icon: 'info',
+      confirmButtonText: 'Entendido, continuaré manualmente',
+      confirmButtonColor: '#3085d6',
+      background: '#141a21',
+      color: '#ffffff',
+    });
+  }
+
+  private completarOcrConstanciaExitoso(
+    constancia: NonNullable<ReturnType<typeof extraerConstanciaDeRespuestaOcr>>,
+  ): void {
+    Swal.close();
+    this.aplicarDatosConstanciaAlFormulario(mapearConstanciaAArrendatario(constancia));
+    this.finalizarAutocargaCsf();
+    this.cdr.detectChanges();
+    this.scrollArribaTrasOcrExitoso();
+    void this.swalToastOcrExito.fire();
+  }
+
+  private procesarConstanciaFiscalOcr(file: File): void {
+    if (this.procesandoConstanciaOcr) return;
+    this.procesandoConstanciaOcr = true;
+
+    void Swal.fire({
+      title: 'Leyendo constancia fiscal…',
+      text: 'Extrayendo datos del PDF, por favor espera.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      background: '#141a21',
+      color: '#ffffff',
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    this.pdfOcrService
+      .extraerConstanciaFiscal(file)
+      .pipe(
+        finalize(() => {
+          this.procesandoConstanciaOcr = false;
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          const constancia = extraerConstanciaDeRespuestaOcr(res);
+          if (String(res?.status ?? '').toLowerCase() !== 'success' || !constancia) {
+            Swal.close();
+            this.finalizarAutocargaCsf();
+            this.mostrarAlertaOcrFallido(
+              res?.message ||
+                'El servicio no devolvió información usable de la constancia fiscal.',
+            );
+            return;
+          }
+          this.completarOcrConstanciaExitoso(constancia);
+        },
+        error: (err) => {
+          Swal.close();
+          this.finalizarAutocargaCsf();
+          this.mostrarAlertaOcrFallido(this.mensajeErrorOcrHttp(err));
+        },
+      });
   }
 
   private initForm(): void {
     this.arrendatarioForm = this.fb.group({
-      nombreInmueble: ['', Validators.required],
+      arrendatario: ['', Validators.required],
       tipoPersona: [null as number | null, Validators.required],
-      rentaMxn: [''],
-      /** Solo UI / notas; no van en JSON `arrendatario` del Swagger POST /arrendatarios. */
-      direccionInmueble: [''],
+      renta: [''],
+      direccionFiscal: [''],
       vigenciaAnios: [''],
       fechaInicio: ['', Validators.required],
       fechaFin: ['', Validators.required],
       idArrendador: [null as number | null, Validators.required],
       /** Controla visibilidad de renta/contrato; no obligatorio y no se envía al API si no está en el contrato OpenAPI. */
       estatusInmueble: [null as string | null],
-      tiempoRentaAnios: [''],
-      nombreRepresentanteLegal: ['', Validators.required],
-      telefonoRepresentanteLegal: ['', Validators.required],
-      correoRepresentanteLegal: ['', [Validators.required, Validators.email]],
+      tiempoRenta: [''],
+      representanteLegal: ['', Validators.required],
+      telefonoRepresentante: ['', Validators.required],
+      correoRepresentante: ['', [Validators.required, Validators.email]],
       /** Opcional según Swagger: `contratoArrendatario` es opcional. */
       idInmueble: [null as number | null],
       lat: [''],
@@ -276,17 +434,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       ivaMantenimiento: [''],
       mantenimientoTotal: [''],
       observaciones: [''],
-      documentoEscritura: [null],
-      documentoBoletaPredial: [null],
-      documentoReciboAguaServicios: [null],
-      documentoLicencia: [null],
       documentoPlano: [null],
       documentoContratoRenta: [null],
       documentoConstanciaFiscal: [null],
-      documentoCurp: [null],
       constanciaSituacionFiscalRepresentanteLegal: [null],
       documentoComprobanteDomicilio: [null],
-      documentoEstadoCuentaBancario: [null],
       documentoActaConstitutiva: [null],
       ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
@@ -306,27 +458,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     ctrl.valueChanges.subscribe((v) => this.aplicarValidadoresTipoPersona(v));
   }
 
-  private aplicarValidadoresTipoPersona(raw: unknown): void {
-    const tipo = Number(raw);
-    const curp = this.arrendatarioForm.get('documentoCurp');
-    const acta = this.arrendatarioForm.get('documentoActaConstitutiva');
-    const estadoCta = this.arrendatarioForm.get('documentoEstadoCuentaBancario');
-    if (!curp || !acta || !estadoCta) return;
-
-    curp.clearValidators();
-    acta.clearValidators();
-    estadoCta.clearValidators();
-
-    if (tipo === 1) {
-      curp.setValidators([Validators.required]);
-      estadoCta.setValidators([Validators.required]);
-    } else if (tipo === 2) {
-      acta.setValidators([Validators.required]);
-    }
-
-    curp.updateValueAndValidity({ emitEvent: false });
-    acta.updateValueAndValidity({ emitEvent: false });
-    estadoCta.updateValueAndValidity({ emitEvent: false });
+  private aplicarValidadoresTipoPersona(_raw: unknown): void {
+    // Documentos del arrendatario: mismos para física y moral; sin validación por tipo.
   }
 
   onTipoPersonaChange(_event: Event): void {
@@ -344,16 +477,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     return Number(this.arrendatarioForm?.get('tipoPersona')?.value) === 2;
   }
 
+  /** Campos alineados con Swagger `socios[]`: nombre, rfc y tres archivos por socio. */
   private crearSocioFormGroup(): FormGroup {
     return this.fb.group({
-      nombreSocio: [''],
-      rfcSocio: [null],
-      socioConstanciaSituacionFiscal: [null],
-      socioConstanciaSituacionFiscalNombre: [''],
-      socioComprobanteDomicilio: [null],
-      socioComprobanteDomicilioNombre: [''],
-      socioActaConstitutiva: [null],
-      socioActaConstitutivaNombre: [''],
+      nombre: [''],
+      rfc: [''],
+      constanciaFiscalArchivo: [null],
+      comprobanteDomicilioArchivo: [null],
+      identificacionOficialArchivo: [null],
     });
   }
 
@@ -447,13 +578,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   get primerNombreSocio(): string {
-    const raw = this.sociosFormArray?.at(0)?.get('nombreSocio')?.value;
+    const raw = this.sociosFormArray?.at(0)?.get('nombre')?.value;
     if (raw == null) return '';
     return String(raw).trim();
   }
 
   nombreSocioEnIndice(index: number): string {
-    const raw = this.sociosFormArray?.at(index)?.get('nombreSocio')?.value;
+    const raw = this.sociosFormArray?.at(index)?.get('nombre')?.value;
     if (raw == null) return '';
     return String(raw).trim();
   }
@@ -474,22 +605,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   onSocioFileSelected(
     event: Event,
     index: number,
-    field:
-      | 'socioConstanciaSituacionFiscal'
-      | 'socioComprobanteDomicilio'
-      | 'socioActaConstitutiva',
-    nameField:
-      | 'socioConstanciaSituacionFiscalNombre'
-      | 'socioComprobanteDomicilioNombre'
-      | 'socioActaConstitutivaNombre',
+    field: 'constanciaFiscalArchivo' | 'comprobanteDomicilioArchivo' | 'identificacionOficialArchivo',
   ): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     const group = this.sociosFormArray.at(index) as FormGroup;
-    group.patchValue({
-      [field]: file,
-      [nameField]: file?.name ?? '',
-    });
+    group.patchValue({ [field]: file });
     if (input) input.value = '';
   }
 
@@ -696,7 +817,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   verArchivoRemoto(url: string | null | undefined, titulo: string): void {
     if (!url?.trim()) return;
-    const subtitulo = String(this.arrendatarioForm.get('nombreInmueble')?.value ?? '').trim();
+    const subtitulo = String(this.arrendatarioForm.get('arrendatario')?.value ?? '').trim();
     this.docPreview?.abrir(url, titulo, subtitulo);
   }
 
@@ -743,25 +864,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     });
   }
 
-  abrirSelectorArchivo(
-    ref:
-      | 'escritura'
-      | 'licencia'
-      | 'plano'
-      | 'contratoRenta'
-      | 'constanciaFiscal'
-      | 'constanciaRepLegal'
-      | 'comprobanteDomicilio'
-      | 'actaConstitutiva'
-      | 'ineRepresentante'
-      | 'boletaPredial'
-      | 'reciboAgua',
-  ): void {
-    const map = {
-      escritura: this.archivoEscrituraInput,
-      boletaPredial: this.boletaPredialInput,
-      reciboAgua: this.reciboAguaServiciosInput,
-      licencia: this.imagenLicenciaInput,
+  abrirSelectorArchivo(ref: string): void {
+    const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
       plano: this.imagenPlanoInput,
       contratoRenta: this.contratoRentaInput,
       constanciaFiscal: this.constanciaFiscalInput,
@@ -776,17 +880,31 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   onFileSelected(event: Event, controlName: string): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
+
+    if (
+      controlName === 'documentoConstanciaFiscal' &&
+      file &&
+      this.autocargaCsfPendiente
+    ) {
+      if (!this.esArchivoPdf(file)) {
+        input.value = '';
+        this.arrendatarioForm.get(controlName)?.setValue(null);
+        this.constanciaFiscalNombre = null;
+        void Swal.fire({
+          title: 'Solo se acepta PDF',
+          text: 'Para completar el formulario automáticamente debes subir la Constancia de Situación Fiscal en formato PDF.',
+          icon: 'warning',
+          confirmButtonColor: '#3085d6',
+          background: '#141a21',
+          color: '#ffffff',
+        });
+        return;
+      }
+    }
+
     this.arrendatarioForm.get(controlName)?.setValue(file);
 
     const name = file?.name ?? null;
-    if (controlName === 'documentoEscritura') {
-      this.archivoEscrituraNombre = name;
-      this.archivoEscrituraUrl = null;
-    }
-    if (controlName === 'documentoLicencia') {
-      this.imagenLicenciaNombre = name;
-      this.imagenLicenciaUrl = null;
-    }
     if (controlName === 'documentoPlano') {
       this.imagenPlanoNombre = name;
       this.imagenPlanoUrl = null;
@@ -798,6 +916,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (controlName === 'documentoConstanciaFiscal') {
       this.constanciaFiscalNombre = name;
       this.constanciaFiscalUrl = null;
+      if (file && this.autocargaCsfPendiente) {
+        this.procesarConstanciaFiscalOcr(file);
+        return;
+      }
     }
     if (controlName === 'constanciaSituacionFiscalRepresentanteLegal') {
       this.constanciaRepLegalNombre = name;
@@ -811,15 +933,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (controlName === 'ineRepresentanteLegal') {
       this.ineRepresentanteNombre = name;
       this.ineRepresentanteUrl = null;
-    }
-    if (controlName === 'documentoBoletaPredial') {
-      this.boletaPredialNombre = name;
-      this.boletaPredialUrl = null;
-    }
-    if (controlName === 'documentoReciboAguaServicios') this.reciboAguaServiciosNombre = name;
-    if (controlName === 'documentoEscritura' && file) {
-      this.resaltarAutocargaContrato = false;
-      this.resaltarAutocargaDocs = false;
     }
     if (controlName === 'documentoContratoRenta' && file) this.resaltarAutocargaContrato = false;
   }
@@ -863,19 +976,19 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     this.arrendatarioForm.patchValue(
       {
-        nombreInmueble: arrendatarioNombre,
+        arrendatario: arrendatarioNombre,
         tipoPersona: 2,
         estatusInmueble: 'RENTADO',
-        rentaMxn: localDemo?.mensualidadMxn ?? '',
-        direccionInmueble: demoLocal?.inmueble.direccion ?? '',
+        renta: localDemo?.mensualidadMxn ?? '',
+        direccionFiscal: demoLocal?.inmueble.direccion ?? '',
         vigenciaAnios: '5',
         fechaInicio: localDemo?.fechaInicio ?? '',
         fechaFin: localDemo?.fechaTermino ?? '',
         idArrendador: 1,
-        tiempoRentaAnios: '3',
-        nombreRepresentanteLegal: nombreRepresentante,
-        telefonoRepresentanteLegal: telefonoRep,
-        correoRepresentanteLegal: correoRep,
+        tiempoRenta: '12',
+        representanteLegal: nombreRepresentante,
+        telefonoRepresentante: telefonoRep,
+        correoRepresentante: correoRep,
         idInmueble: localDemo?.idInmueble ?? null,
         lat: '',
         lng: '',
@@ -886,8 +999,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const socio0 = this.sociosFormArray.at(0) as FormGroup;
     socio0?.patchValue(
       {
-        nombreSocio: registro?.razonSocial ?? arrendatarioNombre,
-        rfcSocio: registro?.rfc ?? null,
+        nombre: registro?.razonSocial ?? arrendatarioNombre,
+        rfc: registro?.rfc ?? '',
       },
       { emitEvent: false },
     );
@@ -939,21 +1052,21 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private cargarDesdeGrid(data: any): void {
     this.arrendatarioForm.patchValue(
       {
-        nombreInmueble: data.arrendatario || 'Arrendatario Demo',
+        arrendatario: data.arrendatario || 'Arrendatario Demo',
         tipoPersona: 2,
         estatusInmueble: 'RENTADO',
-        rentaMxn: data.mensualidadMxn || 25000,
-        direccionInmueble: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
+        renta: data.mensualidadMxn || 25000,
+        direccionFiscal: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
         vigenciaAnios: 3,
         fechaInicio: '2024-01-01',
         fechaFin: '2027-01-01',
         idArrendador: 1,
-        tiempoRentaAnios: 3,
-        nombreRepresentanteLegal: this.resolverNombreRepresentanteDemo(
+        tiempoRenta: '12',
+        representanteLegal: this.resolverNombreRepresentanteDemo(
           data.arrendatario || '',
         ),
-        telefonoRepresentanteLegal: data.telefonoContacto || '7770000000',
-        correoRepresentanteLegal: data.correoContacto || 'demo@correo.com',
+        telefonoRepresentante: data.telefonoContacto || '7770000000',
+        correoRepresentante: data.correoContacto || 'demo@correo.com',
         idInmueble: 1,
         lat: '',
         lng: '',
@@ -1013,8 +1126,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     socios.push(this.crearSocioFormGroup());
     socios.at(0).patchValue(
       {
-        nombreSocio: 'Carlos Ramírez',
-        rfcSocio: 'CARL900101ABC',
+        nombre: 'Carlos Ramírez',
+        rfc: 'CARL900101ABC',
       },
       { emitEvent: false },
     );
@@ -1134,17 +1247,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     'servicios',
     'socios',
     'galeriaImagenes',
-    'documentoEscritura',
-    'documentoLicencia',
     'documentoPlano',
     'documentoContratoRenta',
     'documentoConstanciaFiscal',
-    'documentoCurp',
     'constanciaSituacionFiscalRepresentanteLegal',
     'documentoComprobanteDomicilio',
-    'documentoBoletaPredial',
-    'documentoReciboAguaServicios',
-    'documentoEstadoCuentaBancario',
     'documentoActaConstitutiva',
     'ineRepresentanteLegal',
     'lat',
@@ -1152,19 +1259,19 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   ]);
 
   private readonly etiquetasCampos: Record<string, string> = {
-    nombreInmueble: 'Nombre del arrendatario',
+    arrendatario: 'Nombre del arrendatario',
     tipoPersona: 'Tipo de persona',
-    rentaMxn: 'Renta (MXN)',
-    direccionInmueble: 'Dirección fiscal',
+    renta: 'Renta',
+    direccionFiscal: 'Dirección fiscal',
     estatusInmueble: 'Estatus del arrendamiento',
     vigenciaAnios: 'Vigencia (años)',
     fechaInicio: 'Fecha de inicio',
     fechaFin: 'Fecha de fin',
     idArrendador: 'Arrendador',
-    tiempoRentaAnios: 'Tiempo de renta (años)',
-    nombreRepresentanteLegal: 'Representante legal',
-    telefonoRepresentanteLegal: 'Teléfono del representante',
-    correoRepresentanteLegal: 'Correo del representante',
+    tiempoRenta: 'Tiempo de renta',
+    representanteLegal: 'Representante legal',
+    telefonoRepresentante: 'Teléfono del representante',
+    correoRepresentante: 'Correo del representante',
     idInmueble: 'Inmueble (contrato)',
     fechaInicioContrato: 'Inicio de contrato',
     fechaTerminoContrato: 'Término de contrato',
@@ -1240,7 +1347,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const faltantes: string[] = [];
     Object.keys(this.arrendatarioForm.controls).forEach((key) => {
       if (this.controlesExcluidosValidacion.has(key)) return;
-      if (!this.mostrarCamposRenta && (key === 'rentaMxn' || key === 'tiempoRentaAnios')) return;
+      if (!this.mostrarCamposRenta && (key === 'renta' || key === 'tiempoRenta')) return;
 
       const control = this.arrendatarioForm.get(key);
       if (!control || control.disabled) return;
@@ -1279,16 +1386,19 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     return Number.isFinite(n) ? n : undefined;
   }
 
-  /** JSON `arrendatario`: sólo los campos del Swagger POST /arrendatarios (string en multipart). */
+  /** JSON `arrendatario`: campos ArrendatarioJsonDto (string en multipart FormData). */
   private construirJsonArrendatarioSwagger(v: Record<string, unknown>): string {
     const dto: Record<string, unknown> = {
       fechaInicio: String(v['fechaInicio'] ?? '').trim(),
       fechaFin: String(v['fechaFin'] ?? '').trim(),
-      arrendatario: String(v['nombreInmueble'] ?? '').trim(),
-      correoRepresentante: String(v['correoRepresentanteLegal'] ?? '').trim(),
-      telefonoRepresentante: String(v['telefonoRepresentanteLegal'] ?? '').trim(),
-      representanteLegal: String(v['nombreRepresentanteLegal'] ?? '').trim(),
+      arrendatario: String(v['arrendatario'] ?? '').trim(),
+      correoRepresentante: String(v['correoRepresentante'] ?? '').trim(),
+      telefonoRepresentante: String(v['telefonoRepresentante'] ?? '').trim(),
+      representanteLegal: String(v['representanteLegal'] ?? '').trim(),
     };
+
+    const df = String(v['direccionFiscal'] ?? '').trim();
+    if (df) dto['direccionFiscal'] = df;
 
     const tp = Number(v['tipoPersona']);
     if (Number.isFinite(tp)) dto['tipoPersona'] = Math.trunc(tp);
@@ -1297,9 +1407,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (Number.isFinite(idArr)) dto['idArrendador'] = Math.trunc(idArr);
 
     if (this.mostrarCamposRenta) {
-      const rentaNum = this.numJson(v['rentaMxn']);
+      const rentaNum = this.numJson(v['renta']);
       if (rentaNum !== undefined) dto['renta'] = rentaNum;
-      const tr = String(v['tiempoRentaAnios'] ?? '').trim();
+      const tr = String(v['tiempoRenta'] ?? '').trim();
       if (tr) dto['tiempoRenta'] = tr;
     }
 
@@ -1320,6 +1430,111 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       else entradas[key] = value;
     });
     console.log('[agregar-arrendatario] POST /arrendatarios multipart (clave → valor)', entradas);
+  }
+
+  /**
+   * Archivos de la sección «Documentos e Imágenes» (whitelist).
+   * Socios, servicios y contrato van por sus propias claves en multipart; no mezclar aquí.
+   */
+  private readonly documentosMultipartArrendatario: ReadonlyArray<{
+    control: string;
+    nombre: string;
+    coleccion: 'archivos' | 'imagenes';
+  }> = [
+    { control: 'documentoContratoRenta', nombre: 'Contrato de renta', coleccion: 'archivos' },
+    { control: 'documentoConstanciaFiscal', nombre: 'Constancia de situación fiscal', coleccion: 'archivos' },
+    { control: 'documentoComprobanteDomicilio', nombre: 'Comprobante de domicilio', coleccion: 'archivos' },
+    {
+      control: 'constanciaSituacionFiscalRepresentanteLegal',
+      nombre: 'Constancia fiscal representante legal',
+      coleccion: 'archivos',
+    },
+    { control: 'documentoActaConstitutiva', nombre: 'Acta constitutiva', coleccion: 'archivos' },
+    {
+      control: 'ineRepresentanteLegal',
+      nombre: 'Identificación oficial representante legal',
+      coleccion: 'archivos',
+    },
+    { control: 'documentoPlano', nombre: 'Fachada', coleccion: 'imagenes' },
+  ];
+
+  /**
+   * Swagger `socios[]`: `socios[i].nombre`, `rfc`, `constanciaFiscalArchivo`,
+   * `comprobanteDomicilioArchivo`, `identificacionOficialArchivo` (multipart).
+   */
+  private adjuntarSociosMultipart(fd: FormData): void {
+    let i = 0;
+    this.sociosFormArray.controls.forEach((ctrl) => {
+      const g = ctrl as FormGroup;
+      const nombre = String(g.get('nombre')?.value ?? '').trim();
+      const rfc = String(g.get('rfc')?.value ?? '').trim();
+      const constancia = g.get('constanciaFiscalArchivo')?.value;
+      const comprobante = g.get('comprobanteDomicilioArchivo')?.value;
+      const identificacion = g.get('identificacionOficialArchivo')?.value;
+
+      const tieneFila =
+        !!nombre ||
+        !!rfc ||
+        constancia instanceof File ||
+        comprobante instanceof File ||
+        identificacion instanceof File;
+      if (!tieneFila) return;
+
+      fd.append(`socios[${i}].nombre`, nombre || 'Socio');
+      if (rfc) fd.append(`socios[${i}].rfc`, rfc);
+      if (constancia instanceof File) {
+        fd.append(`socios[${i}].constanciaFiscalArchivo`, constancia, constancia.name);
+      }
+      if (comprobante instanceof File) {
+        fd.append(`socios[${i}].comprobanteDomicilioArchivo`, comprobante, comprobante.name);
+      }
+      if (identificacion instanceof File) {
+        fd.append(`socios[${i}].identificacionOficialArchivo`, identificacion, identificacion.name);
+      }
+      i += 1;
+    });
+  }
+
+  private adjuntarDocumentosPermitidosArrendatario(
+    fd: FormData,
+    v: Record<string, unknown>,
+  ): void {
+    let ai = 0;
+    let ii = 0;
+
+    const pushArchivo = (file: unknown, nombre: string): void => {
+      if (!(file instanceof File)) return;
+      fd.append(`archivos[${ai}].nombre`, nombre);
+      fd.append(`archivos[${ai}].archivo`, file, file.name);
+      ai += 1;
+    };
+
+    const pushImagen = (file: unknown, nombre: string): void => {
+      if (!(file instanceof File)) return;
+      fd.append(`imagenes[${ii}].nombre`, nombre || file.name);
+      fd.append(`imagenes[${ii}].archivo`, file, file.name);
+      ii += 1;
+    };
+
+    for (const doc of this.documentosMultipartArrendatario) {
+      const file = v[doc.control];
+      if (doc.coleccion === 'archivos') {
+        pushArchivo(file, doc.nombre);
+      } else {
+        pushImagen(file, doc.nombre);
+      }
+    }
+
+    this.galeriaImagenesFormArray.controls.forEach((galCtrl, index) => {
+      const g = galCtrl as FormGroup;
+      const f = g.get('archivo')?.value;
+      const nom = String(g.get('nombre')?.value ?? '').trim();
+      if (f instanceof File) {
+        fd.append(`imagenes[${ii}].nombre`, nom || f.name || `Imagen ${index + 1}`);
+        fd.append(`imagenes[${ii}].archivo`, f, f.name);
+        ii += 1;
+      }
+    });
   }
 
   private construirFormDataArrendatario(): FormData {
@@ -1393,78 +1608,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       if (fp) fd.append(`servicios[${si}].fechaPago`, fp);
       const ulp = String(g.get('servicioUltimoDiaPago')?.value ?? '').trim();
       if (ulp) fd.append(`servicios[${si}].ultimoDiaPago`, ulp);
-      const arch = g.get('servicioComprobantePago')?.value;
-      if (arch instanceof File) fd.append(`servicios[${si}].archivo`, arch, arch.name);
       si += 1;
     });
 
-    let ai = 0;
-    const pushArchivo = (file: unknown, nombre: string): void => {
-      if (file instanceof File) {
-        fd.append(`archivos[${ai}].nombre`, nombre);
-        fd.append(`archivos[${ai}].archivo`, file, file.name);
-        ai += 1;
-      }
-    };
-
-    if (this.mostrarCamposRenta) {
-      pushArchivo(v['documentoContratoRenta'], 'Contrato de renta');
-    }
-    pushArchivo(v['documentoConstanciaFiscal'], 'Constancia de situación fiscal');
-    pushArchivo(v['documentoComprobanteDomicilio'], 'Comprobante de domicilio');
-    pushArchivo(v['documentoEscritura'], 'Escrituras o título de propiedad');
-    pushArchivo(v['documentoBoletaPredial'], 'Boleta predial vigente');
-    pushArchivo(v['documentoReciboAguaServicios'], 'Recibo de agua o servicios');
-    pushArchivo(v['documentoCurp'], 'CURP');
-    pushArchivo(v['constanciaSituacionFiscalRepresentanteLegal'], 'Constancia fiscal representante legal');
-    pushArchivo(v['documentoActaConstitutiva'], 'Acta constitutiva');
-    pushArchivo(v['ineRepresentanteLegal'], 'Identificación oficial representante legal');
-    pushArchivo(v['documentoEstadoCuentaBancario'], 'Estado de cuenta bancario');
-
-    let ii = 0;
-    const pushImagen = (file: unknown, nombre: string): void => {
-      if (file instanceof File) {
-        fd.append(`imagenes[${ii}].nombre`, nombre || file.name);
-        fd.append(`imagenes[${ii}].archivo`, file, file.name);
-        ii += 1;
-      }
-    };
-    pushImagen(v['documentoLicencia'], 'Licencia o uso de suelo');
-    pushImagen(v['documentoPlano'], 'Fachada');
-    this.galeriaImagenesFormArray.controls.forEach((galCtrl) => {
-      const g = galCtrl as FormGroup;
-      const f = g.get('archivo')?.value;
-      const nom = String(g.get('nombre')?.value ?? '').trim();
-      if (f instanceof File) {
-        fd.append(`imagenes[${ii}].nombre`, nom || f.name);
-        fd.append(`imagenes[${ii}].archivo`, f, f.name);
-        ii += 1;
-      }
-    });
-
-    let socI = 0;
-    this.sociosFormArray.controls.forEach((ctrl) => {
-      const g = ctrl as FormGroup;
-      const nombre = String(g.get('nombreSocio')?.value ?? '').trim();
-      const rfc = String(g.get('rfcSocio')?.value ?? '').trim();
-      const c1 = g.get('socioConstanciaSituacionFiscal')?.value;
-      const c2 = g.get('socioComprobanteDomicilio')?.value;
-      const c3 = g.get('socioActaConstitutiva')?.value;
-      if (!nombre && !(c1 instanceof File) && !(c2 instanceof File) && !(c3 instanceof File)) return;
-
-      fd.append(`socios[${socI}].nombre`, nombre || 'Socio');
-      if (rfc) fd.append(`socios[${socI}].rfc`, rfc);
-      if (c1 instanceof File) {
-        fd.append(`socios[${socI}].constanciaFiscalArchivo`, c1, c1.name);
-      }
-      if (c2 instanceof File) {
-        fd.append(`socios[${socI}].comprobanteDomicilioArchivo`, c2, c2.name);
-      }
-      if (c3 instanceof File) {
-        fd.append(`socios[${socI}].identificacionOficialArchivo`, c3, c3.name);
-      }
-      socI += 1;
-    });
+    this.adjuntarDocumentosPermitidosArrendatario(fd, v);
+    this.adjuntarSociosMultipart(fd);
 
     return fd;
   }

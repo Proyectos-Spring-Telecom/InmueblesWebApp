@@ -1,4 +1,4 @@
-<div [@routeAnimation] class="card card--panel perm-wrapper">
+<div [@routeAnimation] class="card card--panel perm-wrapper" #topFormularioCliente>
     <header class="perm-head perm-head--left" role="region" aria-label="Sección: Permisos">
         <div class="perm-head__icon" aria-hidden="true">
             <mat-icon>supervisor_account</mat-icon>
@@ -16,7 +16,7 @@
     <div class="surface">
         <section class="perm-form-nc container-fluid py-4">
             <form [formGroup]="clienteForm" class="perm-form-body">
-                <div class="row g-4">
+                <div class="row g-4" #inicioFormularioCliente>
                     <div class="d-flex justify-content-end">
                         <button type="button" class="hero-header__back-btn" (click)="regresar()">
                           <mat-icon>arrow_back</mat-icon>
@@ -313,7 +313,9 @@
                         </div>
                     </div>
 
-                    <div class="docs-hero mt-5">
+                    <div class="docs-hero mt-5"
+                        #docsSectionCliente
+                        [class.autocarga-docs-highlight]="resaltarAutocargaDocs">
                         <div class="docs-hero__icon" aria-hidden="true"><mat-icon>folder_copy</mat-icon></div>
                         <div class="docs-hero__body">
                             <div
@@ -371,7 +373,9 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                            #autocargaCsfCardCliente
+                            [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
                             <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="csfDragging" (dragover)="onCsfDragOver($event)"
@@ -381,6 +385,9 @@
                                         <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                                         <h6 class="uploader__title">Sube tu PDF</h6>
                                         <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
+                                            Sube Aquí El PDF De La Constancia Para Intentar Completar El Formulario.
+                                        </p>
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openCsfFilePicker()">Seleccionar</button>
@@ -389,7 +396,7 @@
                                                 {{ csfFileName ||
                                                 clienteForm.get('constanciaSituacionFiscal')?.value?.name ||
                                                 clienteForm.get('constanciaSituacionFiscal')?.value ||
-                                                'PDF · Máx. 3 MB'
+                                                (autocargaCsfPendiente ? 'PDF' : 'PDF · Máx. 3 MB')
                                                 }}
                                             </span>
                                         </div>
@@ -409,7 +416,8 @@
                                             </a>
                                         </div>
 
-                                        <input #csfFileInput type="file" accept="application/pdf"
+                                        <input #csfFileInput type="file"
+                                            [accept]="autocargaCsfPendiente ? 'application/pdf' : 'application/pdf'"
                                             (change)="onCsfFileSelected($event)" class="uploader__input" />
                                     </div>
                                 </div>

@@ -26,6 +26,8 @@ export interface InmuebleApiItem {
 }
 
 export interface InmuebleServicioApi {
+  id?: number;
+  idServicioInmueble?: number;
   idTipoServicio?: number;
   numeroContrato?: string;
   fechaPago?: string;

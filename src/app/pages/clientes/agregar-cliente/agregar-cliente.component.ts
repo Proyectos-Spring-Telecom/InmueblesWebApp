@@ -1,11 +1,16 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
+import { PdfOcrService } from 'src/app/services/moduleService/pdf-ocr.service';
 import { UsuariosService } from 'src/app/services/moduleService/usuario.service';
+import {
+  extraerConstanciaDeRespuestaOcr,
+  mapearConstanciaACliente,
+} from 'src/app/shared/constancia-fiscal-ocr.mapper';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -16,6 +21,18 @@ import Swal from 'sweetalert2';
   animations: [routeAnimation],
 })
 export class AgregarClienteComponent implements OnInit {
+  private readonly swalToastOcrExito = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: 'Información aplicada en formulario.',
+    showConfirmButton: false,
+    timer: 4200,
+    timerProgressBar: true,
+    background: '#141a21',
+    color: '#ffffff',
+  });
+
   public submitButton: string = 'Guardar';
   public loading: boolean = false;
   public clienteForm: FormGroup;
@@ -28,6 +45,16 @@ export class AgregarClienteComponent implements OnInit {
   ineFileName: string | null = null;
   inePreviewUrl: string | ArrayBuffer | null = null;
   ineDragging = false;
+  resaltarAutocargaContrato = false;
+  resaltarAutocargaDocs = false;
+  autocargaCsfPendiente = false;
+  private procesandoConstanciaOcr = false;
+  private promptAutocargaMostrado = false;
+
+  @ViewChild('autocargaCsfCardCliente') autocargaCsfCardCliente?: ElementRef<HTMLElement>;
+  @ViewChild('topFormularioCliente') topFormularioCliente?: ElementRef<HTMLElement>;
+  @ViewChild('inicioFormularioCliente') inicioFormularioCliente?: ElementRef<HTMLElement>;
+  @ViewChild('docsSectionCliente') docsSectionCliente?: ElementRef<HTMLElement>;
 
   constructor(
     private fb: FormBuilder,
@@ -35,7 +62,9 @@ export class AgregarClienteComponent implements OnInit {
     private activatedRouted: ActivatedRoute,
     private route: Router,
     private usuaService: UsuariosService,
-    private users: AuthenticationService
+    private users: AuthenticationService,
+    private pdfOcrService: PdfOcrService,
+    private cdr: ChangeDetectorRef,
   ) {
     const user = this.users.getUser();
   }
@@ -95,6 +124,7 @@ export class AgregarClienteComponent implements OnInit {
     } else {
       this.title = 'Agregar Arrendador';
       this.submitButton = 'Guardar';
+      this.mostrarPromptAutocargaContrato();
     }
   }
 
@@ -1091,6 +1121,206 @@ export class AgregarClienteComponent implements OnInit {
       });
   }
 
+  private mostrarPromptAutocargaContrato(): void {
+    if (this.promptAutocargaMostrado) return;
+    this.promptAutocargaMostrado = true;
+    void Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      icon: 'question',
+      title: '¿Quieres Intentar Completar El Formulario Con Un Archivo?',
+      text: 'Te llevaremos a la sección de Constancia de Situación Fiscal para subir el PDF y extraer algunos datos.',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, Llevarme',
+      cancelButtonText: 'No, Continuar Manualmente',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.autocargaCsfPendiente = true;
+      this.enfocarAutocargaCsf();
+    });
+  }
+
+  private scrollSuaveAElemento(
+    elemento: HTMLElement | undefined,
+    block: ScrollLogicalPosition,
+  ): void {
+    if (!elemento) return;
+    setTimeout(() => {
+      elemento.scrollIntoView({ behavior: 'smooth', block });
+    }, 120);
+  }
+
+  private enfocarAutocargaCsf(): void {
+    const csfCard = this.autocargaCsfCardCliente?.nativeElement;
+    if (csfCard) {
+      this.scrollSuaveAElemento(csfCard, 'center');
+      this.resaltarAutocargaContrato = true;
+      return;
+    }
+    const docs = this.docsSectionCliente?.nativeElement;
+    if (!docs) return;
+    this.scrollSuaveAElemento(docs, 'center');
+    this.resaltarAutocargaDocs = true;
+  }
+
+  private scrollArribaTrasOcrExitoso(): void {
+    const arriba =
+      this.topFormularioCliente?.nativeElement ??
+      this.inicioFormularioCliente?.nativeElement;
+    this.scrollSuaveAElemento(arriba, 'start');
+  }
+
+  /** Quita resaltados tras OCR; mantiene autocarga activa para reemplazar el PDF. */
+  private finalizarAutocargaCsf(): void {
+    this.resaltarAutocargaContrato = false;
+    this.resaltarAutocargaDocs = false;
+  }
+
+  private esArchivoPdf(file: File): boolean {
+    const tipo = (file.type || '').toLowerCase();
+    if (tipo === 'application/pdf') return true;
+    return /\.pdf$/i.test(file.name || '');
+  }
+
+  private aplicarDatosConstanciaAlFormulario(
+    patch: ReturnType<typeof mapearConstanciaACliente>,
+  ): void {
+    const valores: Record<string, unknown> = {};
+    const claves: (keyof ReturnType<typeof mapearConstanciaACliente>)[] = [
+      'rfc',
+      'tipoPersona',
+      'nombre',
+      'apellidoPaterno',
+      'apellidoMaterno',
+      'estado',
+      'municipio',
+      'colonia',
+      'calle',
+      'entreCalles',
+      'numeroExterior',
+      'numeroInterior',
+      'cp',
+    ];
+
+    for (const key of claves) {
+      const valor = patch[key];
+      if (valor == null || String(valor).trim() === '') continue;
+      valores[key] = valor;
+    }
+
+    if (patch.tipoPersona === 2) {
+      valores['apellidoPaterno'] = '';
+      valores['apellidoMaterno'] = '';
+    }
+
+    if (Object.keys(valores).length === 0) return;
+
+    this.clienteForm.patchValue(valores);
+    if (valores['tipoPersona'] != null) {
+      this.onTipoPersonaChange(null);
+    }
+  }
+
+  private mensajeErrorOcrHttp(err: unknown): string {
+    const e = err as {
+      error?: { message?: string };
+      message?: string;
+      status?: number;
+    };
+    const delApi = String(e?.error?.message ?? '').trim();
+    if (delApi) return delApi;
+    const generico = String(e?.message ?? '').trim();
+    if (generico && !generico.startsWith('Http failure')) return generico;
+    if (e?.status) return `El servidor respondió con el código ${e.status}.`;
+    return 'No fue posible conectar con el servicio de lectura del PDF.';
+  }
+
+  private escapeHtmlSwal(texto: string): string {
+    return texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  private mostrarAlertaOcrFallido(detalleError: string): void {
+    const detalle = detalleError.trim() || 'No se obtuvo un detalle del error.';
+    void Swal.fire({
+      title: 'No pudimos leer la constancia automáticamente',
+      html: `
+        <p style="margin:0 0 0.75rem;text-align:left;"><strong>Qué ocurrió:</strong> ${this.escapeHtmlSwal(detalle)}</p>
+        <p style="margin:0;text-align:left;">
+          Tu PDF de la constancia <strong>sigue adjunto</strong> en el formulario y se enviará al guardar como siempre.
+          Por favor, continúa capturando los datos <strong>a mano</strong>; cuando termines, podrás guardar con normalidad.
+        </p>
+      `,
+      icon: 'info',
+      confirmButtonText: 'Entendido, continuaré manualmente',
+      confirmButtonColor: '#3085d6',
+      background: '#141a21',
+      color: '#ffffff',
+    });
+  }
+
+  private completarOcrConstanciaExitoso(
+    constancia: NonNullable<ReturnType<typeof extraerConstanciaDeRespuestaOcr>>,
+  ): void {
+    Swal.close();
+    this.aplicarDatosConstanciaAlFormulario(mapearConstanciaACliente(constancia));
+    this.finalizarAutocargaCsf();
+    this.cdr.detectChanges();
+    this.scrollArribaTrasOcrExitoso();
+    void this.swalToastOcrExito.fire();
+  }
+
+  private procesarConstanciaFiscalOcr(file: File): void {
+    if (this.procesandoConstanciaOcr) return;
+    this.procesandoConstanciaOcr = true;
+
+    void Swal.fire({
+      title: 'Leyendo constancia fiscal…',
+      text: 'Extrayendo datos del PDF, por favor espera.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      background: '#141a21',
+      color: '#ffffff',
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    this.pdfOcrService
+      .extraerConstanciaFiscal(file)
+      .pipe(
+        finalize(() => {
+          this.procesandoConstanciaOcr = false;
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          const constancia = extraerConstanciaDeRespuestaOcr(res);
+          if (String(res?.status ?? '').toLowerCase() !== 'success' || !constancia) {
+            Swal.close();
+            this.finalizarAutocargaCsf();
+            this.mostrarAlertaOcrFallido(
+              res?.message ||
+                'El servicio no devolvió información usable de la constancia fiscal.',
+            );
+            return;
+          }
+          this.completarOcrConstanciaExitoso(constancia);
+        },
+        error: (err) => {
+          Swal.close();
+          this.finalizarAutocargaCsf();
+          this.mostrarAlertaOcrFallido(this.mensajeErrorOcrHttp(err));
+        },
+      });
+  }
+
   openCsfFilePicker() {
     this.csfFileInput.nativeElement.click();
   }
@@ -1106,12 +1336,12 @@ export class AgregarClienteComponent implements OnInit {
     e.preventDefault();
     this.csfDragging = false;
     const f = e.dataTransfer?.files?.[0] || null;
-    if (f) this.handleCsfFile(f);
+    if (f) this.handleCsfFile(f, this.csfFileInput?.nativeElement);
   }
   onCsfFileSelected(e: Event) {
     const input = e.target as HTMLInputElement;
     const f = input.files?.[0] || null;
-    if (f) this.handleCsfFile(f);
+    if (f) this.handleCsfFile(f, input);
     if (input) input.value = '';
   }
   clearCsfFile(e: Event) {
@@ -1124,7 +1354,22 @@ export class AgregarClienteComponent implements OnInit {
     });
     this.clienteForm.get('constanciaSituacionFiscal')?.setErrors(null);
   }
-  private handleCsfFile(file: File) {
+  private handleCsfFile(file: File, input?: HTMLInputElement) {
+    if (this.autocargaCsfPendiente && !this.esArchivoPdf(file)) {
+      if (input) input.value = '';
+      this.clienteForm.get('constanciaSituacionFiscal')?.setValue(null);
+      this.csfFileName = null;
+      void Swal.fire({
+        title: 'Solo se acepta PDF',
+        text: 'Para completar el formulario automáticamente debes subir la Constancia de Situación Fiscal en formato PDF.',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
+        background: '#141a21',
+        color: '#ffffff',
+      });
+      return;
+    }
+
     if (!this.isAllowedDoc(file)) {
       this.clienteForm
         .get('constanciaSituacionFiscal')
@@ -1135,6 +1380,10 @@ export class AgregarClienteComponent implements OnInit {
     this.loadPreview(file, (url) => (this.csfPreviewUrl = url));
     this.clienteForm.patchValue({ constanciaSituacionFiscal: file });
     this.clienteForm.get('constanciaSituacionFiscal')?.setErrors(null);
+
+    if (this.autocargaCsfPendiente) {
+      this.procesarConstanciaFiscalOcr(file);
+    }
   }
   private uploadingCsf = false;
   private uploadCsf(file: File): void {

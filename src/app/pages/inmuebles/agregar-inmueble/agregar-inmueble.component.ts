@@ -23,6 +23,11 @@ import {
 } from 'src/app/services/moduleService/cat-servicios.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
+import { PdfOcrService } from 'src/app/services/moduleService/pdf-ocr.service';
+import {
+  extraerConstanciaDeRespuestaOcr,
+  mapearConstanciaAInmueble,
+} from 'src/app/shared/constancia-fiscal-ocr.mapper';
 
 @Component({
   selector: 'app-agregar-inmueble',
@@ -32,12 +37,30 @@ import { InmueblesService } from 'src/app/services/moduleService/inmuebles.servi
   animations: [routeAnimation],
 })
 export class AgregarInmuebleComponent implements OnInit, OnDestroy {
+  private readonly swalToastOcrExito = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: 'Información aplicada en formulario.',
+    showConfirmButton: false,
+    timer: 4200,
+    timerProgressBar: true,
+    background: '#141a21',
+    color: '#ffffff',
+  });
+
   public title = 'Agregar Inmueble';
   public submitButton: string = 'Guardar';
   public inmuebleForm!: FormGroup;
   public idInmueble?: number;
   /** Catálogo de clientes (arrendadores) para `idArrendador`. */
-  public listaClientes: { id: number; nombre?: string; apellidoPaterno?: string; apellidoMaterno?: string }[] = [];
+  public listaClientes: {
+    id: number;
+    nombre?: string;
+    apellidoPaterno?: string;
+    apellidoMaterno?: string;
+    rfc?: string;
+  }[] = [];
   /** Catálogo GET `/cat-servicios/paginated` para el select de servicios. */
   public listaCatServicios: CatServicioItem[] = [];
   public loadingSubmit = false;
@@ -49,6 +72,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   /** Resto de documentos y comprobantes. */
   readonly acceptPdfImagenes = 'application/pdf,image/png,image/jpeg,image/jpg';
   readonly etiquetaPdfImagenes = 'PDF · PNG · JPG · JPEG';
+  readonly acceptSoloPdf = 'application/pdf';
+  readonly etiquetaSoloPdf = 'PDF';
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
@@ -71,6 +96,9 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   boletaPredialUrl: string | null = null;
   resaltarAutocargaContrato = false;
   resaltarAutocargaDocs = false;
+  /** Usuario aceptó completar el formulario con la constancia fiscal. */
+  autocargaCsfPendiente = false;
+  private procesandoConstanciaOcr = false;
   private promptAutocargaMostrado = false;
   /** Log del formulario tras pausa de escritura (ms); se cancela al destruir el componente. */
   private readonly debounceLogMs = 400;
@@ -136,7 +164,9 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   @ViewChild('boletaPredialInput') boletaPredialInput?: ElementRef<HTMLInputElement>;
   @ViewChild('reciboAguaServiciosInput')
   reciboAguaServiciosInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('autocargaContratoCardInmueble') autocargaContratoCardInmueble?: ElementRef<HTMLElement>;
+  @ViewChild('autocargaCsfCardInmueble') autocargaCsfCardInmueble?: ElementRef<HTMLElement>;
+  @ViewChild('topFormularioInmueble') topFormularioInmueble?: ElementRef<HTMLElement>;
+  @ViewChild('inicioFormularioInmueble') inicioFormularioInmueble?: ElementRef<HTMLElement>;
   @ViewChild('docsSectionInmueble') docsSectionInmueble?: ElementRef<HTMLElement>;
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
 
@@ -147,6 +177,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     private clientesService: ClientesService,
     private inmueblesService: InmueblesService,
     private catServiciosService: CatServiciosService,
+    private pdfOcrService: PdfOcrService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -251,7 +282,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       color: '#ffffff',
       icon: 'question',
       title: '¿Quieres Intentar Completar El Formulario Con Un Archivo?',
-      text: 'Te llevaremos a la sección de Escrituras o Título para subir el archivo y extraer algunos datos.',
+      text: 'Te llevaremos a la sección de Constancia de Situación Fiscal para subir el PDF y extraer algunos datos.',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#6b7280',
@@ -259,23 +290,41 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       cancelButtonText: 'No, Continuar Manualmente',
     }).then((res) => {
       if (!res.isConfirmed) return;
-      this.enfocarAutocargaContrato();
+      this.autocargaCsfPendiente = true;
+      this.enfocarAutocargaCsf();
     });
   }
 
-  private enfocarAutocargaContrato(): void {
+  /** Mismo scroll suave que «Sí, Llévame» (`scrollIntoView`). */
+  private scrollSuaveAElemento(
+    elemento: HTMLElement | undefined,
+    block: ScrollLogicalPosition,
+  ): void {
+    if (!elemento) return;
     setTimeout(() => {
-      const archivoClaveCard = this.autocargaContratoCardInmueble?.nativeElement;
-      if (archivoClaveCard) {
-        archivoClaveCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        this.resaltarAutocargaContrato = true;
-        return;
-      }
-      const docs = this.docsSectionInmueble?.nativeElement;
-      if (!docs) return;
-      docs.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      this.resaltarAutocargaDocs = true;
+      elemento.scrollIntoView({ behavior: 'smooth', block });
     }, 120);
+  }
+
+  private enfocarAutocargaCsf(): void {
+    const csfCard = this.autocargaCsfCardInmueble?.nativeElement;
+    if (csfCard) {
+      this.scrollSuaveAElemento(csfCard, 'center');
+      this.resaltarAutocargaContrato = true;
+      return;
+    }
+    const docs = this.docsSectionInmueble?.nativeElement;
+    if (!docs) return;
+    this.scrollSuaveAElemento(docs, 'center');
+    this.resaltarAutocargaDocs = true;
+  }
+
+  /** Tras OK del OCR: mismo scroll que «Sí, Llévame», hacia arriba (inicio del formulario). */
+  private scrollArribaTrasOcrExitoso(): void {
+    const arriba =
+      this.topFormularioInmueble?.nativeElement ??
+      this.inicioFormularioInmueble?.nativeElement;
+    this.scrollSuaveAElemento(arriba, 'start');
   }
 
   private initForm(): void {
@@ -683,6 +732,28 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   onFileSelected(event: Event, controlName: string): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
+
+    if (
+      controlName === 'documentoConstanciaFiscal' &&
+      file &&
+      this.autocargaCsfPendiente
+    ) {
+      if (!this.esArchivoPdf(file)) {
+        input.value = '';
+        this.inmuebleForm.get(controlName)?.setValue(null);
+        this.constanciaFiscalNombre = null;
+        void Swal.fire({
+          title: 'Solo se acepta PDF',
+          text: 'Para completar el formulario automáticamente debes subir la Constancia de Situación Fiscal en formato PDF.',
+          icon: 'warning',
+          confirmButtonColor: '#3085d6',
+          background: '#141a21',
+          color: '#ffffff',
+        });
+        return;
+      }
+    }
+
     this.inmuebleForm.get(controlName)?.setValue(file);
 
     const name = file?.name ?? null;
@@ -705,6 +776,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     if (controlName === 'documentoConstanciaFiscal') {
       this.constanciaFiscalNombre = name;
       this.constanciaFiscalUrl = null;
+      if (file && this.autocargaCsfPendiente) {
+        this.procesarConstanciaFiscalOcr(file);
+        return;
+      }
     }
     if (controlName === 'constanciaSituacionFiscalRepresentanteLegal') {
       this.constanciaRepLegalNombre = name;
@@ -729,6 +804,125 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       this.resaltarAutocargaContrato = false;
       this.resaltarAutocargaDocs = false;
     }
+  }
+
+  private esArchivoPdf(file: File): boolean {
+    const tipo = (file.type || '').toLowerCase();
+    if (tipo === 'application/pdf') return true;
+    return /\.pdf$/i.test(file.name || '');
+  }
+
+  /** Quita resaltados tras OCR; mantiene autocarga activa para reemplazar el PDF. */
+  private finalizarAutocargaCsf(): void {
+    this.resaltarAutocargaContrato = false;
+    this.resaltarAutocargaDocs = false;
+  }
+
+  private completarOcrConstanciaExitoso(
+    constancia: NonNullable<ReturnType<typeof extraerConstanciaDeRespuestaOcr>>,
+  ): void {
+    Swal.close();
+    this.aplicarDatosConstanciaAlFormulario(mapearConstanciaAInmueble(constancia));
+    this.finalizarAutocargaCsf();
+    this.cdr.detectChanges();
+    this.scrollArribaTrasOcrExitoso();
+    void this.swalToastOcrExito.fire();
+  }
+
+  private aplicarDatosConstanciaAlFormulario(
+    patch: ReturnType<typeof mapearConstanciaAInmueble>,
+  ): void {
+    if (patch.direccionInmueble) {
+      this.inmuebleForm.patchValue({ direccionInmueble: patch.direccionInmueble });
+    }
+  }
+
+  private mensajeErrorOcrHttp(err: unknown): string {
+    const e = err as {
+      error?: { message?: string };
+      message?: string;
+      status?: number;
+    };
+    const delApi = String(e?.error?.message ?? '').trim();
+    if (delApi) return delApi;
+    const generico = String(e?.message ?? '').trim();
+    if (generico && !generico.startsWith('Http failure')) return generico;
+    if (e?.status) return `El servidor respondió con el código ${e.status}.`;
+    return 'No fue posible conectar con el servicio de lectura del PDF.';
+  }
+
+  private mostrarAlertaOcrFallido(detalleError: string): void {
+    const detalle = detalleError.trim() || 'No se obtuvo un detalle del error.';
+    void Swal.fire({
+      title: 'No pudimos leer la constancia automáticamente',
+      html: `
+        <p style="margin:0 0 0.75rem;text-align:left;"><strong>Qué ocurrió:</strong> ${this.escapeHtmlSwal(detalle)}</p>
+        <p style="margin:0;text-align:left;">
+          Tu PDF de la constancia <strong>sigue adjunto</strong> en el formulario y se enviará al guardar como siempre.
+          Por favor, continúa capturando los datos <strong>a mano</strong>; cuando termines, podrás guardar con normalidad.
+        </p>
+      `,
+      icon: 'info',
+      confirmButtonText: 'Entendido, continuaré manualmente',
+      confirmButtonColor: '#3085d6',
+      background: '#141a21',
+      color: '#ffffff',
+    });
+  }
+
+  private escapeHtmlSwal(texto: string): string {
+    return texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  private procesarConstanciaFiscalOcr(file: File): void {
+    if (this.procesandoConstanciaOcr) return;
+    this.procesandoConstanciaOcr = true;
+
+    void Swal.fire({
+      title: 'Leyendo constancia fiscal…',
+      text: 'Extrayendo datos del PDF, por favor espera.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      background: '#141a21',
+      color: '#ffffff',
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    this.pdfOcrService
+      .extraerConstanciaFiscal(file)
+      .pipe(
+        finalize(() => {
+          this.procesandoConstanciaOcr = false;
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          const constancia = extraerConstanciaDeRespuestaOcr(res);
+          if (String(res?.status ?? '').toLowerCase() !== 'success' || !constancia) {
+            Swal.close();
+            this.finalizarAutocargaCsf();
+            this.mostrarAlertaOcrFallido(
+              res?.message ||
+                'El servicio no devolvió información usable de la constancia fiscal.',
+            );
+            return;
+          }
+
+          this.completarOcrConstanciaExitoso(constancia);
+        },
+        error: (err) => {
+          Swal.close();
+          this.finalizarAutocargaCsf();
+          this.mostrarAlertaOcrFallido(this.mensajeErrorOcrHttp(err));
+        },
+      });
   }
 
   private poblarFormularioDesdeApi(item: InmuebleApiItem): void {

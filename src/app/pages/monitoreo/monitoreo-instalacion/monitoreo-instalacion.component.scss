@@ -2427,17 +2427,37 @@ $darkText: #0f172a;
   margin-top: 0.1rem;
 }
 
+.contract-docs-modal .docs-modal__close-col {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 0.15rem;
+}
+
 .contract-docs-modal .docs-modal__close {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #dbe7ff;
   width: 34px;
   height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  margin: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 10px;
   transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.contract-docs-modal .docs-modal__close mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  display: block;
 }
 
 .contract-docs-modal .docs-modal__close:hover {
