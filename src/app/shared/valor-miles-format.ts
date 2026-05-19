@@ -78,3 +78,98 @@ export function parseValorNumerico(value: unknown): number {
 export function valorSinComasParaApi(display: unknown): string {
   return String(display ?? '').replace(/,/g, '').trim();
 }
+
+/**
+ * Extrae solo dígitos y un punto decimal (máx. 2 decimales).
+ * Ej.: `"$5,325.50"` → `"5325.50"` (mismo valor numérico, solo vista).
+ */
+export function extraerMontoRawDesdeDisplay(display: string): string {
+  let out = '';
+  let dot = false;
+  for (const ch of display) {
+    if (ch >= '0' && ch <= '9') {
+      if (dot) {
+        const dec = out.split('.')[1] ?? '';
+        if (dec.length >= 2) continue;
+      }
+      out += ch;
+    } else if ((ch === '.' || ch === ',') && !dot) {
+      out += '.';
+      dot = true;
+    }
+  }
+  return out;
+}
+
+/** Solo presentación: `$` + comas de miles; no cambia el valor de `raw`. */
+export function formatearMonedaDesdeLimpia(raw: string): string {
+  if (!raw) return '';
+
+  const dot = raw.indexOf('.');
+  if (dot === -1) {
+    const intComma = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return `$${intComma}`;
+  }
+
+  const intRaw = raw.slice(0, dot);
+  const decRaw = raw.slice(dot + 1);
+  const intComma = (intRaw === '' ? '0' : intRaw).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (decRaw.length > 0) return `$${intComma}.${decRaw}`;
+  return `$${intComma}.`;
+}
+
+/** Cuenta dígitos y el punto antes del cursor (para no moverlo al formatear). */
+export function contarMontoSimbolosAntesCursor(display: string, cursor: number): number {
+  let n = 0;
+  const end = Math.min(cursor, display.length);
+  for (let i = 0; i < end; i++) {
+    const ch = display[i];
+    if ((ch >= '0' && ch <= '9') || ch === '.') n++;
+  }
+  return n;
+}
+
+export function cursorMontoTrasFormato(display: string, simbolosAntes: number): number {
+  if (simbolosAntes <= 0) return display.startsWith('$') ? 1 : 0;
+  let n = 0;
+  for (let i = 0; i < display.length; i++) {
+    const ch = display[i];
+    if ((ch >= '0' && ch <= '9') || ch === '.') {
+      n++;
+      if (n >= simbolosAntes) return i + 1;
+    }
+  }
+  return display.length;
+}
+
+/**
+ * Moneda MXN al escribir: `$3,500.65` (coma miles, hasta 2 decimales).
+ * No altera el valor numérico enviado al API (usar `parseMonedaNumerico`).
+ */
+export function formatMonedaAlEscribir(raw: string): string {
+  return formatearMonedaDesdeLimpia(extraerMontoRawDesdeDisplay(raw));
+}
+
+/** Parsea texto con `$` y comas a número para POST (ej. monto del pago). */
+export function parseMonedaNumerico(value: unknown): number {
+  const s = String(value ?? '')
+    .replace(/\$/g, '')
+    .replace(/,/g, '')
+    .trim();
+  if (!s) return NaN;
+  const parts = s.split('.');
+  const intPart = parts[0] ?? '';
+  const decPart = (parts[1] ?? '').slice(0, 2);
+  const num = Number(decPart ? `${intPart}.${decPart}` : intPart);
+  return Number.isFinite(num) ? num : NaN;
+}
+
+/** Vista final del input (p. ej. al salir del campo): siempre 2 decimales. */
+export function formatMonedaDesdeNumero(n: number): string {
+  if (!Number.isFinite(n)) return '';
+  const fmt = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n);
+  return `$${fmt}`;
+}

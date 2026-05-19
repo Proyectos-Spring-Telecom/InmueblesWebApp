@@ -1,4 +1,4 @@
-<div [@routeAnimation] class="card card--panel perm-wrapper">
+<div [@routeAnimation] class="card card--panel perm-wrapper" #topFormularioInmueble>
   <header class="perm-head perm-head--left" role="region" aria-label="Sección: Inmuebles">
     <div class="perm-head__icon" aria-hidden="true"><mat-icon>apartment</mat-icon></div>
     <div class="perm-head__text"><span class="eyebrow">Sección</span>
@@ -10,7 +10,7 @@
   <div class="surface">
     <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="inmuebleForm" class="perm-form-body">
-        <div class="row g-4 inmueble-main-grid">
+        <div class="row g-4 inmueble-main-grid" #inicioFormularioInmueble>
           <div class="d-flex justify-content-end">
             <button type="button" class="hero-header__back-btn" (click)="regresar()">
               <mat-icon>arrow_back</mat-icon>
@@ -500,7 +500,9 @@
                 </div>
               </div>
 
-              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                #autocargaCsfCardInmueble
+                [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
                 <label class="form-label perm-label docs-uploader-label">Constancia de Situación Fiscal</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
@@ -509,15 +511,20 @@
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
+                        Sube Aquí El PDF De La Constancia Para Intentar Completar El Formulario.
+                      </p>
                       <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
                         url: constanciaFiscalUrl,
                         nombreRemoto: constanciaFiscalNombre,
                         controlName: 'documentoConstanciaFiscal',
-                        placeholder: etiquetaPdfImagenes,
+                        placeholder: autocargaCsfPendiente ? etiquetaSoloPdf : etiquetaPdfImagenes,
                         tituloVer: constanciaFiscalNombre || 'Constancia de situación fiscal',
                         selector: 'constanciaFiscal'
                       }"></ng-container>
-                      <input #constanciaFiscalInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
+                      <input #constanciaFiscalInput type="file"
+                        [accept]="autocargaCsfPendiente ? acceptSoloPdf : acceptPdfImagenes"
+                        class="uploader__input"
                         (change)="onFileSelected($event, 'documentoConstanciaFiscal')" />
                     </div>
                   </div>
@@ -643,9 +650,7 @@
                 </div>
               </div>
 
-              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
-                #autocargaContratoCardInmueble
-                [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Escrituras O Título De Propiedad</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
@@ -654,9 +659,6 @@
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
-                        Sube Aquí La Escritura O Título Para Intentar Completar El Formulario.
-                      </p>
                       <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
                         url: archivoEscrituraUrl,
                         nombreRemoto: archivoEscrituraNombre,

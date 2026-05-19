@@ -543,8 +543,13 @@
             <h3 class="docs-modal__title" id="mono-pago-modal-title">Agregar Pago</h3>
             <p class="docs-modal__subtitle">Captura el pago y administra su estatus.</p>
           </div>
-          <div class="col-2 col-md-1 d-flex justify-content-end align-items-start" style="display: flex; align-items: center; justify-content: center;">
-            <button type="button" class="docs-modal__close" (click)="cerrarModalPago()">
+          <div class="col-2 col-md-1 docs-modal__close-col">
+            <button
+              type="button"
+              class="docs-modal__close"
+              (click)="cerrarModalPago()"
+              aria-label="Cerrar modal de pago"
+            >
               <mat-icon aria-hidden="true">close</mat-icon>
             </button>
           </div>
@@ -555,6 +560,67 @@
             <div class="perm-form-nc">
             <form [formGroup]="pagoForm" class="perm-form-body mono-pago-form">
               <div class="row g-3 align-items-end">
+                <div class="col-12 col-lg-4">
+                  <label for="pagoIdInmueble" class="form-label perm-label">
+                    {{ vistaEntidad === 'local' ? 'Local' : 'Inmueble' }}
+                    <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">{{
+                        vistaEntidad === 'local' ? 'storefront' : 'apartment'
+                      }}</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input
+                        id="pagoIdInmueble"
+                        type="text"
+                        class="form-control"
+                        readonly
+                        [value]="
+                          inmueblePagoEtiqueta ||
+                          (vistaEntidad === 'local'
+                            ? 'Sin local en contexto (idInmueble)'
+                            : 'Sin inmueble en contexto (idInmueble)')
+                        "
+                        tabindex="-1"
+                      />
+                      <label for="pagoIdInmueble">idInmueble</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoServicioInmueble" class="form-label perm-label">Servicio</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">design_services</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select
+                        id="pagoServicioInmueble"
+                        class="form-select"
+                        formControlName="idServicioInmueble"
+                        [disabled]="catServiciosCargando"
+                      >
+                        <option [ngValue]="null">
+                          {{
+                            catServiciosCargando
+                              ? 'Cargando servicios…'
+                              : listaCatServicios.length
+                                ? 'Seleccione servicio (opcional)'
+                                : 'Sin servicios en catálogo'
+                          }}
+                        </option>
+                        <option *ngFor="let srv of listaCatServicios" [ngValue]="srv.id">
+                          {{ etiquetaCatServicio(srv) }}
+                        </option>
+                      </select>
+                      <label for="pagoServicioInmueble">Catálogo de servicios</label>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="col-12 col-lg-4">
                   <label for="pagoConcepto" class="form-label perm-label">Concepto</label>
                   <div class="input-group input-group-lg perm-ig">
@@ -567,15 +633,15 @@
                         type="text"
                         class="form-control"
                         formControlName="concepto"
-                        placeholder="Ej.: Mantenimiento"
+                        placeholder="Ej.: Renta mensual"
                       />
-                      <label for="pagoConcepto">Ej.: Mantenimiento</label>
+                      <label for="pagoConcepto">Ej.: Renta mensual</label>
                     </div>
                   </div>
                 </div>
 
                 <div class="col-12 col-lg-4">
-                  <label for="pagoFecha" class="form-label perm-label">Fecha de Pago</label>
+                  <label for="pagoFecha" class="form-label perm-label">Fecha de pago <span class="text-danger">*</span></label>
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">event</mat-icon>
@@ -588,25 +654,26 @@
                 </div>
 
                 <div class="col-12 col-lg-4">
-                  <label for="pagoMonto" class="form-label perm-label">Monto</label>
+                  <label for="pagoMonto" class="form-label perm-label">Monto <span class="text-danger">*</span></label>
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">payments</mat-icon>
                     </span>
                     <div class="form-floating flex-grow-1">
                       <input
+                        #pagoMontoInput
                         id="pagoMonto"
                         type="text"
                         inputmode="decimal"
                         class="form-control"
-                        formControlName="monto"
-                        placeholder="$0.00"
+                        placeholder=" "
                         autocomplete="off"
                         (keydown)="onMontoKeydown($event)"
-                        (input)="onMontoInput($event)"
+                        (paste)="onMontoPaste($event)"
                         (blur)="onMontoBlur()"
+                        aria-label="Monto del pago"
                       />
-                      <label for="pagoMonto">$0.00</label>
+                      <label for="pagoMonto">Monto</label>
                     </div>
                   </div>
                 </div>
@@ -618,16 +685,20 @@
                       <mat-icon aria-hidden="true">credit_card</mat-icon>
                     </span>
                     <div class="form-floating flex-grow-1">
-                      <select id="pagoMetodo" class="form-select" formControlName="metodo">
-                        <option value="" disabled selected hidden>Métodos de pago</option>
-                        <option value="Transferencia">Transferencia</option>
-                        <option value="SPEI">SPEI</option>
-                        <option value="Tarjeta">Tarjeta</option>
-                        <option value="Efectivo">Efectivo</option>
-                        <option value="Depósito">Depósito</option>
-                        <option value="Cheque">Cheque</option>
+                      <select
+                        id="pagoMetodo"
+                        class="form-select"
+                        formControlName="idMetodoPago"
+                        [disabled]="metodosPagoCargando"
+                      >
+                        <option [ngValue]="null" disabled hidden>
+                          {{ metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago' }}
+                        </option>
+                        <option *ngFor="let mp of listaCatMetodosPago" [ngValue]="mp.id">
+                          {{ etiquetaCatMetodoPago(mp) }}
+                        </option>
                       </select>
-                      <label for="pagoMetodo">Métodos de pago</label>
+                      <label for="pagoMetodo">Método de pago</label>
                     </div>
                   </div>
                 </div>
@@ -650,7 +721,7 @@
                 </div>
 
                 <div class="col-12 col-lg-4">
-                  <label class="form-label perm-label d-block mb-2">Comprobante De Pago</label>
+                  <label class="form-label perm-label d-block mb-2">Comprobante de pago <span class="text-danger">*</span></label>
                   <div class="uploader-hero srv-pago-uploader">
                     <div class="uploader srv-pago-uploader__card">
                       <div class="uploader__glow"></div>
