@@ -3,7 +3,6 @@ export interface InmuebleApiItem {
   inmueble?: string;
   direccionFiscal?: string;
   estatusInmueble?: number;
-  vigenciaAnios?: string | number;
   fechaInicio?: string;
   fechaFin?: string;
   nombreRepresentante?: string;
@@ -58,7 +57,6 @@ export interface InmuebleGridRow {
   estatusInmueble: number | null;
   estatusLabel: string;
   estatusClass: string;
-  vigenciaAnios: string;
   fechaInicioFmt: string;
   fechaFinFmt: string;
   telefonoRepresentante: string;
@@ -212,10 +210,6 @@ export function mapInmueblesApiToGridRows(items: unknown[]): InmuebleGridRow[] {
       estatusInmueble: Number.isFinite(estatus as number) ? (estatus as number) : null,
       estatusLabel: etiquetaEstatusInmueble(estatus),
       estatusClass: claseEstatusInmueble(estatus),
-      vigenciaAnios:
-        item.vigenciaAnios != null && String(item.vigenciaAnios).trim() !== ''
-          ? String(item.vigenciaAnios).trim()
-          : '—',
       fechaInicioFmt: formatearFecha(item.fechaInicio) || '—',
       fechaFinFmt: formatearFecha(item.fechaFin) || '—',
       telefonoRepresentante: String(item.telefonoRepresentante ?? '—').trim(),
@@ -260,11 +254,9 @@ export function claseEstatusInmueble(estatus: number | null): string {
 }
 
 export function textoVigencia(item: InmuebleApiItem): string {
-  const anios = item.vigenciaAnios;
   const fi = formatearFecha(item.fechaInicio);
   const ff = formatearFecha(item.fechaFin);
   if (fi && ff) return `${fi} → ${ff}`;
-  if (anios != null && String(anios).trim() !== '') return `${anios} años`;
   return '—';
 }
 

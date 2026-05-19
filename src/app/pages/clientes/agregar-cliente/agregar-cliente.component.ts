@@ -11,6 +11,12 @@ import {
   extraerConstanciaDeRespuestaOcr,
   mapearConstanciaACliente,
 } from 'src/app/shared/constancia-fiscal-ocr.mapper';
+import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
+import {
+  extraerClienteDetalleApi,
+  nombreDeArchivoApi,
+  urlOCadenaDeArchivoApi,
+} from '../clientes-list.mapper';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -36,7 +42,7 @@ export class AgregarClienteComponent implements OnInit {
   public submitButton: string = 'Guardar';
   public loading: boolean = false;
   public clienteForm: FormGroup;
-  public idCliente: number;
+  public idCliente?: number;
   public title = 'Agregar Arrendador';
   public listaClientes: any[] = [];
   selectedFileName: string = '';
@@ -55,6 +61,7 @@ export class AgregarClienteComponent implements OnInit {
   @ViewChild('topFormularioCliente') topFormularioCliente?: ElementRef<HTMLElement>;
   @ViewChild('inicioFormularioCliente') inicioFormularioCliente?: ElementRef<HTMLElement>;
   @ViewChild('docsSectionCliente') docsSectionCliente?: ElementRef<HTMLElement>;
+  @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
 
   constructor(
     private fb: FormBuilder,
@@ -70,93 +77,237 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
-    // 🔹 1. Inicializar formulario
     this.initForm();
-  
-    // 🔹 2. Obtener data
-    const data = history.state?.cliente;
-  
-    if (data && data.id) {
-  
-      const tipoPersona = data.tipoPersona === 'Moral' || data.tipoPersona === 2 ? 2 : 1;
-  
-      // 🔥 PATCH PRINCIPAL
-      this.clienteForm.patchValue({
-        rfc: data.rfc || '',
-        tipoPersona: tipoPersona,
-  
-        nombre: data.NombreCompleto || '',
-        apellidoPaterno: data.apellidoPaterno || '',
-        apellidoMaterno: data.apellidoMaterno || '',
-  
-        telefono: data.telefono || '',
-        correo: data.correo || '',
-  
-        // 🔥 Dirección completa (ya bien)
-        estado: data.estado || 'Morelos',
-        municipio: data.municipio || 'Cuernavaca',
-        colonia: data.colonia || 'Vista Hermosa',
-        calle: data.calle || 'Río Balsas',
-        entreCalles: data.entreCalles || 'Calle 1 y Calle 2',
-        cp: data.cp || '62290',
-        numeroExterior: data.numeroExterior || '106',
-        numeroInterior: data.numeroInterior || 'A',
-  
-        nombreEncargado: data.nombreEncargado || 'Osvaldo Martínez',
-        telefonoEncargado: data.telefonoEncargado || '7779876543',
-        correoEncargado: data.correoEncargado || 'osvaldo.martinez@hac.com',
-  
-        sitioWeb: data.sitioWeb || 'https://hac.com'
-      });
-  
-      // 🔥 IMPORTANTE → dispara render de ngIf
-      this.clienteForm.get('tipoPersona')?.updateValueAndValidity();
-  
-      // 🔥 SOCIOS (FormArray)
-      if (tipoPersona === 2) {
-        this.setSociosMock();
-      }
-  
+
+    const raw =
+      this.activatedRouted.snapshot.paramMap.get('idCliente') ??
+      this.activatedRouted.snapshot.paramMap.get('id');
+    const idRoute =
+      raw != null && String(raw).trim() !== '' ? Number(raw) : Number.NaN;
+
+    if (Number.isFinite(idRoute) && idRoute > 0) {
+      this.idCliente = Math.trunc(idRoute);
       this.title = 'Editar Arrendador';
       this.submitButton = 'Actualizar';
-  
-    } else {
-      this.title = 'Agregar Arrendador';
-      this.submitButton = 'Guardar';
-      this.mostrarPromptAutocargaContrato();
+      this.cargarClienteParaEdicionDesdeApi(this.idCliente);
+      return;
     }
+
+    const data = history.state?.cliente;
+    if (data && data.id) {
+      this.idCliente = Number(data.id);
+      this.title = 'Editar Arrendador';
+      this.submitButton = 'Actualizar';
+      this.cargarClienteParaEdicionDesdeApi(Number(this.idCliente));
+      return;
+    }
+
+    this.title = 'Agregar Arrendador';
+    this.submitButton = 'Guardar';
+    this.mostrarPromptAutocargaContrato();
+  }
+
+  private strApi(v: unknown): string {
+    if (v == null) return '';
+    return String(v).trim();
+  }
+
+  private cargarClienteParaEdicionDesdeApi(id: number): void {
+    this.loading = true;
+    this.clieService
+      .obtenerCliente(id)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (resp) => {
+          const d = extraerClienteDetalleApi(resp);
+          if (!d || Object.keys(d).length === 0) {
+            void Swal.fire({
+              title: 'Sin datos',
+              text: 'No se encontró información del cliente.',
+              icon: 'warning',
+              confirmButtonColor: '#3085d6',
+              background: '#141a21',
+              color: '#ffffff',
+            });
+            return;
+          }
+          this.poblarFormularioDesdeDetalleApi(d);
+          this.onTipoPersonaChange(null);
+        },
+        error: (err: unknown) => {
+          const e = err as { error?: { message?: string }; message?: string };
+          const text =
+            e?.error?.message ??
+            e?.message ??
+            'No se pudo cargar el cliente. Intenta de nuevo.';
+          void Swal.fire({
+            title: 'Error al cargar',
+            text: String(text),
+            icon: 'error',
+            confirmButtonColor: '#3085d6',
+            background: '#141a21',
+            color: '#ffffff',
+          });
+        },
+      });
+  }
+
+  private poblarFormularioDesdeDetalleApi(d: Record<string, unknown>): void {
+    this.clienteForm.patchValue(
+      {
+        idPadre: d['idPadre'] != null ? Number(d['idPadre']) : null,
+        rfc: this.strApi(d['rfc']),
+        tipoPersona:
+          d['tipoPersona'] != null && String(d['tipoPersona']).trim() !== ''
+            ? Number(d['tipoPersona'])
+            : null,
+        estatus:
+          d['estatus'] != null && String(d['estatus']).trim() !== ''
+            ? Number(d['estatus'])
+            : 1,
+        logotipo: urlOCadenaDeArchivoApi(d['logotipo']) || null,
+        nombre: this.strApi(d['nombre']),
+        apellidoPaterno:
+          d['apellidoPaterno'] != null && String(d['apellidoPaterno']).trim() !== ''
+            ? String(d['apellidoPaterno'])
+            : null,
+        apellidoMaterno:
+          d['apellidoMaterno'] != null && String(d['apellidoMaterno']).trim() !== ''
+            ? String(d['apellidoMaterno'])
+            : null,
+        telefono: this.strApi(d['telefono']),
+        correo: this.strApi(d['correo']),
+        estado: this.strApi(d['estado']),
+        municipio: this.strApi(d['municipio']),
+        colonia: this.strApi(d['colonia']),
+        calle: this.strApi(d['calle']),
+        entreCalles: this.strApi(d['entreCalles']),
+        numeroExterior: this.strApi(d['numeroExterior']),
+        numeroInterior: this.strApi(d['numeroInterior']),
+        cp: this.strApi(d['cp']),
+        nombreEncargado: this.strApi(d['nombreEncargado']),
+        telefonoEncargado: this.strApi(d['telefonoEncargado']),
+        correoEncargado: this.strApi(d['correoEncargado']),
+        sitioWeb: this.strApi(d['sitioWeb']),
+        constanciaSituacionFiscal: urlOCadenaDeArchivoApi(d['constanciaSituacionFiscal']) || null,
+        comprobanteDomicilio: urlOCadenaDeArchivoApi(d['comprobanteDomicilio']) || null,
+        licenciaFuncionamiento: urlOCadenaDeArchivoApi(d['licenciaFuncionamiento']) || null,
+        constanciaProteccionCivil: urlOCadenaDeArchivoApi(d['constanciaProteccionCivil']) || null,
+        usoSuelo: urlOCadenaDeArchivoApi(d['usoSuelo']) || null,
+        planoCatastral: urlOCadenaDeArchivoApi(d['planoCatastral']) || null,
+        actaConstitutiva: urlOCadenaDeArchivoApi(d['actaConstitutiva']) || null,
+        poderRepresentanteLegal: urlOCadenaDeArchivoApi(d['poderRepresentanteLegal']) || null,
+        ineRepresentanteLegal: urlOCadenaDeArchivoApi(d['ineRepresentanteLegal']) || null,
+      },
+      { emitEvent: false },
+    );
+
+    const logoUrl = urlOCadenaDeArchivoApi(d['logotipo']);
+    this.logoPreviewUrl = logoUrl && this.isImageUrl(logoUrl) ? logoUrl : null;
+
+    this.csfFileName = nombreDeArchivoApi(d['constanciaSituacionFiscal'], 'Constancia');
+    this.compDomFileName = nombreDeArchivoApi(d['comprobanteDomicilio'], 'Comprobante');
+    this.actaFileName = nombreDeArchivoApi(d['actaConstitutiva'], 'Acta');
+    this.poderFileName = nombreDeArchivoApi(d['poderRepresentanteLegal'], 'Poder');
+    this.ineFileName = nombreDeArchivoApi(d['ineRepresentanteLegal'], 'INE');
+    this.licenciaFileName = nombreDeArchivoApi(d['licenciaFuncionamiento'], 'Licencia');
+    this.proteccionCivilFileName = nombreDeArchivoApi(d['constanciaProteccionCivil'], 'Protección civil');
+    this.usoSueloFileName = nombreDeArchivoApi(d['usoSuelo'], 'Uso de suelo');
+    this.planoCatastralFileName = nombreDeArchivoApi(d['planoCatastral'], 'Plano');
+
+    this.originalDocs = {
+      logotipo: logoUrl,
+      constanciaSituacionFiscal: urlOCadenaDeArchivoApi(d['constanciaSituacionFiscal']),
+      comprobanteDomicilio: urlOCadenaDeArchivoApi(d['comprobanteDomicilio']),
+      licenciaFuncionamiento: urlOCadenaDeArchivoApi(d['licenciaFuncionamiento']),
+      constanciaProteccionCivil: urlOCadenaDeArchivoApi(d['constanciaProteccionCivil']),
+      usoSuelo: urlOCadenaDeArchivoApi(d['usoSuelo']),
+      planoCatastral: urlOCadenaDeArchivoApi(d['planoCatastral']),
+      actaConstitutiva: urlOCadenaDeArchivoApi(d['actaConstitutiva']),
+      poderRepresentanteLegal: urlOCadenaDeArchivoApi(d['poderRepresentanteLegal']),
+      ineRepresentanteLegal: urlOCadenaDeArchivoApi(d['ineRepresentanteLegal']),
+    };
+
+    this.sociosFormArray.clear();
+    const sociosRaw = d['socios'];
+    if (Array.isArray(sociosRaw) && sociosRaw.length > 0) {
+      for (const raw of sociosRaw) {
+        const s = raw as Record<string, unknown>;
+        const g = this.crearSocioFormGroup();
+        g.patchValue(
+          {
+            nombre: this.strApi(s['nombre']),
+            rfc: this.strApi(s['rfc']),
+            constanciaFiscalArchivo: null,
+            comprobanteDomicilioArchivo: null,
+            identificacionOficialArchivo: null,
+            constanciaFiscalUrl: urlOCadenaDeArchivoApi(s['constanciaFiscalArchivo']),
+            constanciaFiscalNombre: nombreDeArchivoApi(s['constanciaFiscalArchivo'], 'Constancia fiscal'),
+            comprobanteDomicilioUrl: urlOCadenaDeArchivoApi(s['comprobanteDomicilioArchivo']),
+            comprobanteDomicilioNombre: nombreDeArchivoApi(s['comprobanteDomicilioArchivo'], 'Comprobante'),
+            identificacionOficialUrl: urlOCadenaDeArchivoApi(s['identificacionOficialArchivo']),
+            identificacionOficialNombre: nombreDeArchivoApi(s['identificacionOficialArchivo'], 'Identificación'),
+          },
+          { emitEvent: false },
+        );
+        this.sociosFormArray.push(g);
+      }
+    } else {
+      this.sociosFormArray.push(this.crearSocioFormGroup());
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  verArchivoRemoto(url: string | null | undefined, titulo: string): void {
+    if (!url?.trim()) return;
+    const subtitulo = String(this.clienteForm.get('nombre')?.value ?? '').trim();
+    this.docPreview?.abrir(url, titulo, subtitulo);
+  }
+
+  /** Documentos remotos del GET: mismo criterio que inmuebles/arrendatarios (id + URL). */
+  layoutArchivoRemoto(url: string | null | undefined): boolean {
+    return this.idCliente != null && !!String(url ?? '').trim();
   }
 
   setSociosMock() {
-
     const sociosArray = this.clienteForm.get('socios') as FormArray;
     sociosArray.clear();
-  
+
     const sociosMock = [
       {
-        nombreSocio: 'Carlos Ramírez',
-        rfcSocio: 'CARL900101ABC',
-        socioConstanciaSituacionFiscal: 'https://example.com/csf1.pdf',
-        socioConstanciaSituacionFiscalNombre: 'csf1.pdf',
-        socioComprobanteDomicilio: 'https://example.com/domicilio1.pdf',
-        socioComprobanteDomicilioNombre: 'domicilio1.pdf',
-        socioActaConstitutiva: 'https://example.com/ine1.pdf',
-        socioActaConstitutivaNombre: 'ine1.pdf'
+        nombre: 'Carlos Ramírez',
+        rfc: 'CARL900101ABC',
+        constanciaFiscalUrl: 'https://example.com/csf1.pdf',
+        constanciaFiscalNombre: 'csf1.pdf',
+        comprobanteDomicilioUrl: 'https://example.com/domicilio1.pdf',
+        comprobanteDomicilioNombre: 'domicilio1.pdf',
+        identificacionOficialUrl: 'https://example.com/ine1.pdf',
+        identificacionOficialNombre: 'ine1.pdf',
       },
     ];
-  
-    sociosMock.forEach(socio => {
-      sociosArray.push(this.fb.group({
-        nombreSocio: [socio.nombreSocio],
-        rfcSocio: [socio.rfcSocio],
-        socioConstanciaSituacionFiscal: [socio.socioConstanciaSituacionFiscal],
-        socioConstanciaSituacionFiscalNombre: [socio.socioConstanciaSituacionFiscalNombre],
-        socioComprobanteDomicilio: [socio.socioComprobanteDomicilio],
-        socioComprobanteDomicilioNombre: [socio.socioComprobanteDomicilioNombre],
-        socioActaConstitutiva: [socio.socioActaConstitutiva],
-        socioActaConstitutivaNombre: [socio.socioActaConstitutivaNombre]
-      }));
+
+    sociosMock.forEach((socio) => {
+      sociosArray.push(
+        this.fb.group({
+          nombre: [socio.nombre],
+          rfc: [socio.rfc],
+          constanciaFiscalArchivo: [null],
+          comprobanteDomicilioArchivo: [null],
+          identificacionOficialArchivo: [null],
+          constanciaFiscalUrl: [socio.constanciaFiscalUrl],
+          constanciaFiscalNombre: [socio.constanciaFiscalNombre],
+          comprobanteDomicilioUrl: [socio.comprobanteDomicilioUrl],
+          comprobanteDomicilioNombre: [socio.comprobanteDomicilioNombre],
+          identificacionOficialUrl: [socio.identificacionOficialUrl],
+          identificacionOficialNombre: [socio.identificacionOficialNombre],
+        }),
+      );
     });
   }
 
@@ -167,61 +318,6 @@ export class AgregarClienteComponent implements OnInit {
         id: Number(c.id),
       }));
     });
-  }
-
-  obtenerClienteID() {
-    this.clieService
-      .obtenerCliente(this.idCliente)
-      .subscribe((response: any) => {
-        const d = response?.data ?? {};
-
-        this.clienteForm.patchValue({
-          idPadre: Number(d.idPadre ?? 0),
-          rfc: d.rfc ?? '',
-          tipoPersona: d.tipoPersona ?? null,
-          estatus: d.estatus ?? 1,
-          logotipo: d.logotipo ?? null,
-          nombre: d.nombre ?? '',
-          apellidoPaterno: d.apellidoPaterno ?? null,
-          apellidoMaterno: d.apellidoMaterno ?? null,
-          telefono: d.telefono ?? '',
-          correo: d.correo ?? '',
-          estado: d.estado ?? '',
-          municipio: d.municipio ?? '',
-          colonia: d.colonia ?? '',
-          calle: d.calle ?? '',
-          entreCalles: d.entreCalles ?? '',
-          numeroExterior: d.numeroExterior ?? '',
-          numeroInterior: d.numeroInterior ?? '',
-          cp: d.cp ?? '',
-          nombreEncargado: d.nombreEncargado ?? '',
-          telefonoEncargado: d.telefonoEncargado ?? '',
-          correoEncargado: d.correoEncargado ?? '',
-          sitioWeb: d.sitioWeb ?? '',
-          constanciaSituacionFiscal: d.constanciaSituacionFiscal ?? null,
-          comprobanteDomicilio: d.comprobanteDomicilio ?? null,
-          licenciaFuncionamiento: d.licenciaFuncionamiento ?? null,
-          constanciaProteccionCivil: d.constanciaProteccionCivil ?? null,
-          usoSuelo: d.usoSuelo ?? null,
-          planoCatastral: d.planoCatastral ?? null,
-          actaConstitutiva: d.actaConstitutiva ?? null,
-          poderRepresentanteLegal: d.poderRepresentanteLegal ?? null,
-          ineRepresentanteLegal: d.ineRepresentanteLegal ?? null,
-        });
-        this.onTipoPersonaChange(null);
-        this.originalDocs = {
-          logotipo: d.logotipo ?? '',
-          constanciaSituacionFiscal: d.constanciaSituacionFiscal ?? '',
-          comprobanteDomicilio: d.comprobanteDomicilio ?? '',
-          licenciaFuncionamiento: d.licenciaFuncionamiento ?? '',
-          constanciaProteccionCivil: d.constanciaProteccionCivil ?? '',
-          usoSuelo: d.usoSuelo ?? '',
-          planoCatastral: d.planoCatastral ?? '',
-          actaConstitutiva: d.actaConstitutiva ?? '',
-          poderRepresentanteLegal: d.poderRepresentanteLegal ?? '',
-          ineRepresentanteLegal: d.ineRepresentanteLegal ?? '',
-        };
-      });
   }
 
   onFileSelected(event: any) {
@@ -333,14 +429,17 @@ export class AgregarClienteComponent implements OnInit {
       const g0 = this.sociosFormArray.at(0) as FormGroup;
       g0?.reset(
         {
-          nombreSocio: '',
-          rfcSocio: null,
-          socioConstanciaSituacionFiscal: null,
-          socioConstanciaSituacionFiscalNombre: '',
-          socioComprobanteDomicilio: null,
-          socioComprobanteDomicilioNombre: '',
-          socioActaConstitutiva: null,
-          socioActaConstitutivaNombre: '',
+          nombre: '',
+          rfc: null,
+          constanciaFiscalArchivo: null,
+          comprobanteDomicilioArchivo: null,
+          identificacionOficialArchivo: null,
+          constanciaFiscalUrl: '',
+          constanciaFiscalNombre: '',
+          comprobanteDomicilioUrl: '',
+          comprobanteDomicilioNombre: '',
+          identificacionOficialUrl: '',
+          identificacionOficialNombre: '',
         },
         { emitEvent: false },
       );
@@ -355,7 +454,7 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   private setSocioNombreRequerido(group: FormGroup | null, required: boolean): void {
-    const n = group?.get('nombreSocio');
+    const n = group?.get('nombre');
     if (!n) return;
     if (required) n.setValidators([Validators.required]);
     else n.clearValidators();
@@ -383,11 +482,11 @@ export class AgregarClienteComponent implements OnInit {
 
   initForm() {
     this.clienteForm = this.fb.group({
-      idPadre: [null, Validators.required],
+      idPadre: [null as number | null],
       rfc: ['', Validators.required],
       tipoPersona: [null, Validators.required],
-      estatus: [1, Validators.required],
-      logotipo: [null, Validators.required],
+      estatus: [1],
+      logotipo: [null],
       constanciaSituacionFiscal: [null, Validators.required],
       comprobanteDomicilio: [null, Validators.required],
       licenciaFuncionamiento: [null],
@@ -420,14 +519,17 @@ export class AgregarClienteComponent implements OnInit {
 
   private crearSocioFormGroup(): FormGroup {
     return this.fb.group({
-      nombreSocio: [''],
-      rfcSocio: [null],
-      socioConstanciaSituacionFiscal: [null],
-      socioConstanciaSituacionFiscalNombre: [''],
-      socioComprobanteDomicilio: [null],
-      socioComprobanteDomicilioNombre: [''],
-      socioActaConstitutiva: [null],
-      socioActaConstitutivaNombre: [''],
+      nombre: [''],
+      rfc: [''],
+      constanciaFiscalArchivo: [null],
+      comprobanteDomicilioArchivo: [null],
+      identificacionOficialArchivo: [null],
+      constanciaFiscalUrl: [''],
+      constanciaFiscalNombre: [''],
+      comprobanteDomicilioUrl: [''],
+      comprobanteDomicilioNombre: [''],
+      identificacionOficialUrl: [''],
+      identificacionOficialNombre: [''],
     });
   }
 
@@ -437,13 +539,13 @@ export class AgregarClienteComponent implements OnInit {
 
   /** Nombre del primer socio (se muestra junto al título “Socios” mientras escriben). */
   get primerNombreSocio(): string {
-    const raw = this.sociosFormArray?.at(0)?.get('nombreSocio')?.value;
+    const raw = this.sociosFormArray?.at(0)?.get('nombre')?.value;
     if (raw == null) return '';
     return String(raw).trim();
   }
 
   nombreSocioEnIndice(index: number): string {
-    const raw = this.sociosFormArray?.at(index)?.get('nombreSocio')?.value;
+    const raw = this.sociosFormArray?.at(index)?.get('nombre')?.value;
     if (raw == null) return '';
     return String(raw).trim();
   }
@@ -466,22 +568,29 @@ export class AgregarClienteComponent implements OnInit {
   onSocioFileSelected(
     event: Event,
     index: number,
-    field:
-      | 'socioConstanciaSituacionFiscal'
-      | 'socioComprobanteDomicilio'
-      | 'socioActaConstitutiva',
-    nameField:
-      | 'socioConstanciaSituacionFiscalNombre'
-      | 'socioComprobanteDomicilioNombre'
-      | 'socioActaConstitutivaNombre',
+    field: 'constanciaFiscalArchivo' | 'comprobanteDomicilioArchivo' | 'identificacionOficialArchivo',
   ): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     const group = this.sociosFormArray.at(index) as FormGroup;
 
+    const nombreKey =
+      field === 'constanciaFiscalArchivo'
+        ? 'constanciaFiscalNombre'
+        : field === 'comprobanteDomicilioArchivo'
+          ? 'comprobanteDomicilioNombre'
+          : 'identificacionOficialNombre';
+    const urlKey =
+      field === 'constanciaFiscalArchivo'
+        ? 'constanciaFiscalUrl'
+        : field === 'comprobanteDomicilioArchivo'
+          ? 'comprobanteDomicilioUrl'
+          : 'identificacionOficialUrl';
+
     group.patchValue({
       [field]: file,
-      [nameField]: file?.name ?? '',
+      [nombreKey]: file?.name ?? '',
+      [urlKey]: '',
     });
     if (input) input.value = '';
   }
@@ -489,11 +598,138 @@ export class AgregarClienteComponent implements OnInit {
   submit() {
     this.submitButton = 'Cargando...';
     this.loading = true;
-    if (this.idCliente) {
+    if (this.idCliente != null && Number(this.idCliente) > 0) {
       this.actualizar();
     } else {
       this.agregar();
     }
+  }
+
+  private appendSociosMultipartCliente(fd: FormData): void {
+    let i = 0;
+    this.sociosFormArray.controls.forEach((ctrl) => {
+      const g = ctrl as FormGroup;
+      const nombre = String(g.get('nombre')?.value ?? '').trim();
+      const rfc = String(g.get('rfc')?.value ?? '').trim();
+      const cf = g.get('constanciaFiscalArchivo')?.value;
+      const cd = g.get('comprobanteDomicilioArchivo')?.value;
+      const idoc = g.get('identificacionOficialArchivo')?.value;
+      const tieneFila =
+        !!nombre ||
+        !!rfc ||
+        cf instanceof File ||
+        cd instanceof File ||
+        idoc instanceof File;
+      if (!tieneFila) return;
+      fd.append(`socios[${i}].nombre`, nombre || 'Socio');
+      if (rfc) fd.append(`socios[${i}].rfc`, rfc);
+      if (cf instanceof File) {
+        fd.append(`socios[${i}].constanciaFiscalArchivo`, cf, cf.name);
+      }
+      if (cd instanceof File) {
+        fd.append(`socios[${i}].comprobanteDomicilioArchivo`, cd, cd.name);
+      }
+      if (idoc instanceof File) {
+        fd.append(`socios[${i}].identificacionOficialArchivo`, idoc, idoc.name);
+      }
+      i += 1;
+    });
+  }
+
+  /** Multipart alineado con Swagger (cliente + archivos + `socios[i].*`). */
+  private construirFormDataCliente(): FormData {
+    const v = this.clienteForm.getRawValue() as Record<string, unknown>;
+    const tipoRaw = v['tipoPersona'];
+    const tipo = tipoRaw != null && String(tipoRaw).trim() !== '' ? Number(tipoRaw) : null;
+
+    const fd = new FormData();
+
+    const idPadre = v['idPadre'];
+    if (idPadre !== undefined && idPadre !== null && String(idPadre).trim() !== '') {
+      const n = Number(idPadre);
+      if (Number.isFinite(n)) fd.append('idPadre', String(Math.trunc(n)));
+    }
+
+    if (v['rfc'] != null) fd.append('rfc', String(v['rfc']).trim());
+    if (tipo != null && Number.isFinite(tipo)) {
+      fd.append('tipoPersona', String(Math.trunc(tipo)));
+    }
+
+    const estatusRaw = v['estatus'];
+    const estatusNum =
+      estatusRaw != null && String(estatusRaw).trim() !== '' && Number.isFinite(Number(estatusRaw))
+        ? Math.trunc(Number(estatusRaw))
+        : 1;
+    fd.append('estatus', String(estatusNum));
+
+    const str = (x: unknown): string | null =>
+      x != null && String(x).trim() !== '' ? String(x).trim() : null;
+
+    const app = (key: string, val: unknown): void => {
+      const s = str(val);
+      if (s != null) fd.append(key, s);
+    };
+
+    app('nombre', v['nombre']);
+    app('apellidoPaterno', v['apellidoPaterno']);
+    app('apellidoMaterno', v['apellidoMaterno']);
+    app('telefono', v['telefono']);
+    app('correo', v['correo']);
+    app('sitioWeb', v['sitioWeb']);
+    app('estado', v['estado']);
+    app('municipio', v['municipio']);
+    app('colonia', v['colonia']);
+    app('calle', v['calle']);
+    app('entreCalles', v['entreCalles']);
+    app('numeroExterior', v['numeroExterior']);
+    app('numeroInterior', v['numeroInterior']);
+    app('cp', v['cp']);
+
+    const logotipo = v['logotipo'];
+    const csf = v['constanciaSituacionFiscal'];
+    const comp = v['comprobanteDomicilio'];
+    const acta = v['actaConstitutiva'];
+    const poder = v['poderRepresentanteLegal'];
+    const ine = v['ineRepresentanteLegal'];
+
+    if (tipo === 2) {
+      app('nombreEncargado', v['nombreEncargado']);
+      app('telefonoEncargado', v['telefonoEncargado']);
+      app('correoEncargado', v['correoEncargado']);
+      if (acta instanceof File) {
+        fd.append('actaConstitutiva', acta, acta.name);
+      }
+      if (poder instanceof File) {
+        fd.append('poderRepresentanteLegal', poder, poder.name);
+      }
+      if (ine instanceof File) {
+        fd.append('ineRepresentanteLegal', ine, ine.name);
+      }
+    }
+
+    if (logotipo instanceof File) {
+      fd.append('logotipo', logotipo, logotipo.name);
+    }
+    if (csf instanceof File) {
+      fd.append('constanciaSituacionFiscal', csf, csf.name);
+    }
+    if (comp instanceof File) {
+      fd.append('comprobanteDomicilio', comp, comp.name);
+    }
+
+    const lic = v['licenciaFuncionamiento'];
+    const pciv = v['constanciaProteccionCivil'];
+    const uso = v['usoSuelo'];
+    const plano = v['planoCatastral'];
+    if (lic instanceof File) fd.append('licenciaFuncionamiento', lic, lic.name);
+    if (pciv instanceof File) {
+      fd.append('constanciaProteccionCivil', pciv, pciv.name);
+    }
+    if (uso instanceof File) fd.append('usoSuelo', uso, uso.name);
+    if (plano instanceof File) fd.append('planoCatastral', plano, plano.name);
+
+    this.appendSociosMultipartCliente(fd);
+    return fd;
   }
 
   agregar() {
@@ -506,8 +742,8 @@ export class AgregarClienteComponent implements OnInit {
       this.submitButton = 'Guardar';
       this.loading = false;
 
-      const etiquetas: any = {
-        idPadre: 'Cliente',
+      const etiquetas: Record<string, string> = {
+        idPadre: 'Cliente padre',
         rfc: 'RFC',
         tipoPersona: 'Tipo de Persona',
         estatus: 'Estatus',
@@ -570,88 +806,8 @@ export class AgregarClienteComponent implements OnInit {
     }
 
     if (this.clienteForm.contains('id')) this.clienteForm.removeControl('id');
-    const v = this.clienteForm.value;
-    v.tipoPersona = v.tipoPersona != null ? Number(v.tipoPersona) : null;
 
-    const formData = new FormData();
-
-    if (v.idPadre !== undefined && v.idPadre !== null) {
-      formData.append('idPadre', String(v.idPadre));
-    }
-    if (v.rfc != null) formData.append('rfc', v.rfc);
-    if (v.tipoPersona != null)
-      formData.append('tipoPersona', String(v.tipoPersona));
-    if (v.estatus != null) formData.append('estatus', String(v.estatus));
-
-    if (v.nombre != null) formData.append('nombre', v.nombre);
-    if (v.apellidoPaterno != null)
-      formData.append('apellidoPaterno', v.apellidoPaterno);
-    if (v.apellidoMaterno != null)
-      formData.append('apellidoMaterno', v.apellidoMaterno);
-    if (v.telefono != null) formData.append('telefono', v.telefono);
-    if (v.correo != null) formData.append('correo', v.correo);
-    if (v.estado != null) formData.append('estado', v.estado);
-    if (v.municipio != null) formData.append('municipio', v.municipio);
-    if (v.colonia != null) formData.append('colonia', v.colonia);
-    if (v.calle != null) formData.append('calle', v.calle);
-    if (v.entreCalles != null) formData.append('entreCalles', v.entreCalles);
-    if (v.numeroExterior != null)
-      formData.append('numeroExterior', v.numeroExterior);
-    if (v.numeroInterior != null)
-      formData.append('numeroInterior', v.numeroInterior);
-    if (v.cp != null) formData.append('cp', v.cp);
-    if (v.sitioWeb != null) formData.append('sitioWeb', v.sitioWeb);
-
-    const logotipo = v.logotipo;
-    const csf = v.constanciaSituacionFiscal;
-    const comp = v.comprobanteDomicilio;
-    const acta = v.actaConstitutiva;
-    const poder = v.poderRepresentanteLegal;
-    const ine = v.ineRepresentanteLegal;
-
-    if (Number(v.tipoPersona) === 2) {
-      if (v.nombreEncargado != null)
-        formData.append('nombreEncargado', v.nombreEncargado);
-      if (v.telefonoEncargado != null)
-        formData.append('telefonoEncargado', v.telefonoEncargado);
-      if (v.correoEncargado != null)
-        formData.append('correoEncargado', v.correoEncargado);
-      if (acta instanceof File) {
-        formData.append('actaConstitutiva', acta, acta.name);
-      }
-      if (poder instanceof File) {
-        formData.append('poderRepresentanteLegal', poder, poder.name);
-      }
-      if (ine instanceof File) {
-        formData.append('ineRepresentanteLegal', ine, ine.name);
-      }
-    }
-
-    if (logotipo instanceof File) {
-      formData.append('logotipo', logotipo, logotipo.name);
-    }
-    if (csf instanceof File) {
-      formData.append('constanciaSituacionFiscal', csf, csf.name);
-    }
-    if (comp instanceof File) {
-      formData.append('comprobanteDomicilio', comp, comp.name);
-    }
-    const lic = v.licenciaFuncionamiento;
-    const pciv = v.constanciaProteccionCivil;
-    const uso = v.usoSuelo;
-    const plano = v.planoCatastral;
-    if (lic instanceof File) {
-      formData.append('licenciaFuncionamiento', lic, lic.name);
-    }
-    if (pciv instanceof File) {
-      formData.append('constanciaProteccionCivil', pciv, pciv.name);
-    }
-    if (uso instanceof File) {
-      formData.append('usoSuelo', uso, uso.name);
-    }
-    if (plano instanceof File) {
-      formData.append('planoCatastral', plano, plano.name);
-    }
+    const formData = this.construirFormDataCliente();
 
     this.clieService.agregarCliente(formData).subscribe(
       () => {
@@ -694,8 +850,8 @@ export class AgregarClienteComponent implements OnInit {
       this.submitButton = 'Actualizar';
       this.loading = false;
 
-      const etiquetas: any = {
-        idPadre: 'Cliente',
+      const etiquetas: Record<string, string> = {
+        idPadre: 'Cliente padre',
         rfc: 'RFC',
         tipoPersona: 'Tipo de Persona',
         estatus: 'Estatus',
@@ -756,94 +912,9 @@ export class AgregarClienteComponent implements OnInit {
       return;
     }
 
-    const v = this.clienteForm.value;
-    v.tipoPersona = v.tipoPersona != null ? Number(v.tipoPersona) : null;
+    const formData = this.construirFormDataCliente();
 
-    const formData = new FormData();
-
-    if (v.idPadre !== undefined && v.idPadre !== null) {
-      formData.append('idPadre', String(v.idPadre));
-    }
-    if (v.rfc != null) formData.append('rfc', v.rfc);
-    if (v.tipoPersona != null)
-      formData.append('tipoPersona', String(v.tipoPersona));
-    if (v.estatus != null) formData.append('estatus', String(v.estatus));
-
-    if (v.nombre != null) formData.append('nombre', v.nombre);
-    if (v.apellidoPaterno != null)
-      formData.append('apellidoPaterno', v.apellidoPaterno);
-    if (v.apellidoMaterno != null)
-      formData.append('apellidoMaterno', v.apellidoMaterno);
-    if (v.telefono != null) formData.append('telefono', v.telefono);
-    if (v.correo != null) formData.append('correo', v.correo);
-    if (v.estado != null) formData.append('estado', v.estado);
-    if (v.municipio != null) formData.append('municipio', v.municipio);
-    if (v.colonia != null) formData.append('colonia', v.colonia);
-    if (v.calle != null) formData.append('calle', v.calle);
-    if (v.entreCalles != null) formData.append('entreCalles', v.entreCalles);
-    if (v.numeroExterior != null)
-      formData.append('numeroExterior', v.numeroExterior);
-    if (v.numeroInterior != null)
-      formData.append('numeroInterior', v.numeroInterior);
-    if (v.cp != null) formData.append('cp', v.cp);
-    if (v.sitioWeb != null) formData.append('sitioWeb', v.sitioWeb);
-
-    const logotipo = v.logotipo;
-    const csf = v.constanciaSituacionFiscal;
-    const comp = v.comprobanteDomicilio;
-    const acta = v.actaConstitutiva;
-    const poderDoc = v.poderRepresentanteLegal;
-    const ine = v.ineRepresentanteLegal;
-
-    if (Number(v.tipoPersona) === 2) {
-      if (v.nombreEncargado != null)
-        formData.append('nombreEncargado', v.nombreEncargado);
-      if (v.telefonoEncargado != null)
-        formData.append('telefonoEncargado', v.telefonoEncargado);
-      if (v.correoEncargado != null)
-        formData.append('correoEncargado', v.correoEncargado);
-      if (acta instanceof File) {
-        formData.append('actaConstitutiva', acta, acta.name);
-      }
-      if (poderDoc instanceof File) {
-        formData.append(
-          'poderRepresentanteLegal',
-          poderDoc,
-          poderDoc.name,
-        );
-      }
-      if (ine instanceof File) {
-        formData.append('ineRepresentanteLegal', ine, ine.name);
-      }
-    }
-
-    if (logotipo instanceof File) {
-      formData.append('logotipo', logotipo, logotipo.name);
-    }
-    if (csf instanceof File) {
-      formData.append('constanciaSituacionFiscal', csf, csf.name);
-    }
-    if (comp instanceof File) {
-      formData.append('comprobanteDomicilio', comp, comp.name);
-    }
-    const lic2 = v.licenciaFuncionamiento;
-    const pciv2 = v.constanciaProteccionCivil;
-    const uso2 = v.usoSuelo;
-    const plano2 = v.planoCatastral;
-    if (lic2 instanceof File) {
-      formData.append('licenciaFuncionamiento', lic2, lic2.name);
-    }
-    if (pciv2 instanceof File) {
-      formData.append('constanciaProteccionCivil', pciv2, pciv2.name);
-    }
-    if (uso2 instanceof File) {
-      formData.append('usoSuelo', uso2, uso2.name);
-    }
-    if (plano2 instanceof File) {
-      formData.append('planoCatastral', plano2, plano2.name);
-    }
-
-    this.clieService.actualizarCliente(this.idCliente, formData).subscribe(
+    this.clieService.actualizarCliente(Number(this.idCliente), formData).subscribe(
       () => {
         this.submitButton = 'Actualizar';
         this.loading = false;
@@ -939,7 +1010,7 @@ export class AgregarClienteComponent implements OnInit {
   usoSueloPreviewUrl: string | ArrayBuffer | null = null;
   planoCatastralPreviewUrl: string | ArrayBuffer | null = null;
 
-  private readonly MAX_MB = 3;
+  private readonly MAX_MB = 10;
 
   private isImage(file: File): boolean {
     if (!file?.type) return /\.(png|jpe?g|webp)$/i.test(file.name);
@@ -969,7 +1040,7 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   private isAllowedLogo(file: File): boolean {
-    const okType = this.isLogoImage(file);
+    const okType = this.isLogoImage(file) || this.isPdf(file);
     const okSize = file.size <= this.MAX_MB * 1024 * 1024;
     return okType && okSize;
   }
@@ -995,6 +1066,34 @@ export class AgregarClienteComponent implements OnInit {
   openLogoFilePicker() {
     this.logoFileInput.nativeElement.click();
   }
+
+  /** URL remota del logotipo (el API devuelve string). Si eligieron archivo local, es instancia de `File`. */
+  get urlLogotipoRemoto(): string | null {
+    const v = this.clienteForm.get('logotipo')?.value;
+    return typeof v === 'string' && v.trim() ? v : null;
+  }
+
+  /** Texto del badge: nombre local o último segmento de la URL (evita repetir la URL completa dos veces en pantalla). */
+  etiquetaLogotipoUploader(): string {
+    const v = this.clienteForm.get('logotipo')?.value;
+    if (v instanceof File) return v.name;
+    if (typeof v === 'string' && v.trim()) {
+      return this.nombreArchivoDesdeUrlRemota(v) || v;
+    }
+    return 'PNG · JPG · JPEG';
+  }
+
+  private nombreArchivoDesdeUrlRemota(urlStr: string): string {
+    try {
+      const u = new URL(urlStr);
+      const parts = u.pathname.split('/').filter(Boolean);
+      const last = parts[parts.length - 1];
+      return last ? decodeURIComponent(last) : '';
+    } catch {
+      return '';
+    }
+  }
+
   onLogoDragOver(e: DragEvent) {
     e.preventDefault();
     this.logoDragging = true;
@@ -1022,61 +1121,22 @@ export class AgregarClienteComponent implements OnInit {
   private handleLogoFile(file: File) {
     if (!this.isAllowedLogo(file)) {
       this.clienteForm.get('logotipo')?.setErrors({ invalid: true });
-      if (!this.isLogoImage(file)) {
-        Swal.fire({
+      if (!this.isLogoImage(file) && !this.isPdf(file)) {
+        void Swal.fire({
           color: '#ffffff',
           background: '#141a21',
           icon: 'warning',
           title: 'Formato no permitido',
-          text: 'El logotipo solo acepta PNG, JPG o JPEG.'
+          text: 'El logotipo acepta PNG, JPG, JPEG o PDF (máx. 10 MB).',
         });
       }
       return;
     }
 
-    this.validateLogoDimensions(file, 799, 286).then(isValid => {
-      if (!isValid) {
-        this.logoPreviewUrl = null;
-        this.clienteForm.patchValue({ logotipo: null });
-        this.clienteForm.get('logotipo')?.setErrors({ invalidDimensions: true });
-
-        Swal.fire({
-          color: '#ffffff',
-          background: '#141a21',
-          icon: 'warning',
-          title: '¡Dimensiones Inválidas!',
-          text: 'El logotipo debe medir exactamente 799 x 286 px.'
-        });
-
-        return;
-      }
-
-      this.loadPreview(file, (url) => (this.logoPreviewUrl = url));
-      this.clienteForm.patchValue({ logotipo: file });
-      this.clienteForm.get('logotipo')?.setErrors(null);
-    });
+    this.loadPreview(file, (url) => (this.logoPreviewUrl = url));
+    this.clienteForm.patchValue({ logotipo: file });
+    this.clienteForm.get('logotipo')?.setErrors(null);
   }
-
-  private validateLogoDimensions(file: File, width: number, height: number): Promise<boolean> {
-    return new Promise(resolve => {
-      const img = new Image();
-      const objectUrl = URL.createObjectURL(file);
-
-      img.onload = () => {
-        const isValid = img.width === width && img.height === height;
-        URL.revokeObjectURL(objectUrl);
-        resolve(isValid);
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        resolve(false);
-      };
-
-      img.src = objectUrl;
-    });
-  }
-
 
 
 

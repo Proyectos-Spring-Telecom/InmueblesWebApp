@@ -1,4 +1,4 @@
-<div [@routeAnimation] class="card card--panel perm-wrapper">
+<div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
     <header class="perm-head" role="region" aria-label="Sección: Arrendadores">
         <div class="perm-head__icon" aria-hidden="true">
             <mat-icon>contacts</mat-icon>
@@ -17,7 +17,7 @@
     </header>
 
     <div class="surface">
-        <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
+        <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
             <div *appHasPermission="'3'">
                 <button (click)="agregarCliente()" mat-flat-button class="bg-secondary">
                     <i class="fa fa-plus"></i> Agregar
@@ -38,74 +38,47 @@
                 [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
                 [rowAlternationEnabled]="true"
                 [dataSource]="listaClientes" [keyExpr]="'id'" [width]="'100%'" [remoteOperations]="{ paging: true }"
-                [paging]="{ pageSize: pageSize }" [pager]="{
+                [paging]="{ pageSize: pageSize }"
+                [noDataText]="'Sin registros para mostrar'"
+                [pager]="{
           showPageSizeSelector: true,
-          allowedPageSizes: [50],
+          allowedPageSizes: [20],
           showInfo: true,
           infoText: 'Página {0} de {1}',
           visible: true
         }" (onPageIndexChanged)=" onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
-                <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+                <dxo-search-panel [visible]="true" [width]="240"
+                    placeholder="Buscar arrendador, RFC, socio, documento..."></dxo-search-panel>
                 <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
                 <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
                 <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
                 <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
                 <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
+                <dxo-sorting mode="multiple"></dxo-sorting>
 
-                <!-- <dxi-column dataField="Logotipo" caption="Logotipo" alignment="center" cellTemplate="cellTemplate">
-          <ng-template *dxTemplate="let d of 'cellTemplate'">
-            <img [src]="d.data.Logotipo" alt="Logo" width="50">
-          </ng-template>
-        </dxi-column> -->
                 <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" *appHasPermission="['2', '4']"
-                    [width]="150"></dxi-column>
-                <dxi-column dataField="logotipo" caption="Imagen" cellTemplate="imagen" [width]="200"
-                    alignment="center">
-                    <dxo-header-filter [allowSearch]="true"></dxo-header-filter>
-                </dxi-column>
-                <div *dxTemplate="let data of 'imagen'" style="text-align: center;">
-                    <img *ngIf="data.value" style="max-width: 100px;" [src]="data.value" />
-                    <img *ngIf="data.value == null" style="max-width: 100px;"
-                        src="https://analiticadevideo.s3.us-east-1.amazonaws.com/Usuarios/d9ad9d73-b046-43a2-a4a0-d5fc2f3e3597.png" />
-                </div>
-                <dxi-column caption="Acta Constitutiva" [width]="150" alignment="center" [allowSorting]="false"
-                    [allowFiltering]="false" cellTemplate="actConts">
-                </dxi-column>
-                <div *dxTemplate="let f of 'actConts'">
-                    <button type="button" class="btn btn-primary btn-sm" style="border-radius: 5px;"
-                        (click)="previsualizar(f?.data?.actaConstitutiva, 'Acta Constitutiva', f?.data)">
-                        <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
-                    </button>
-                </div>
-                <dxi-column caption="Comprobante de Domicilio" [width]="150" alignment="center" [allowSorting]="false"
-                    [allowFiltering]="false" cellTemplate="poliz">
-                </dxi-column>
-                <div *dxTemplate="let f of 'poliz'">
-                    <button type="button" class="btn btn-success btn-sm" style="border-radius: 5px;"
-                        (click)="previsualizar(f?.data?.comprobanteDomicilio, 'Comprobante de Domicilio', f?.data)">
-                        <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
-                    </button>
-                </div>
-                <dxi-column caption="Constancia Situación Fiscal" [width]="150" alignment="center"
-                    [allowSorting]="false" [allowFiltering]="false" cellTemplate="concesip">
-                </dxi-column>
-                <div *dxTemplate="let f of 'concesip'">
-                    <button type="button" class="btn btn-warning btn-sm" style="border-radius: 5px;"
-                        (click)="previsualizar(f?.data?.constanciaSituacionFiscal, 'Constancia Situación Fiscal', f?.data)">
-                        <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
-                    </button>
-                </div>
-                <dxi-column dataField="NombreCompleto" caption="Nombre" alignment="center"
-                    dataType="string"></dxi-column>
+                    [width]="150" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+
+                <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="240" alignment="center"
+                    [allowSorting]="false" [allowFiltering]="false" [visible]="false"></dxi-column>
+                <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
+                <dxi-column dataField="numSocios" caption="Socios" [visible]="false"></dxi-column>
+
+                <dxi-column dataField="NombreCompleto" caption="Arrendador" cellTemplate="clienteTpl"
+                    alignment="center" [width]="220" [allowFiltering]="true"></dxi-column>
+
                 <dxi-column dataField="telefono" caption="Teléfono" alignment="center" dataType="string"></dxi-column>
                 <dxi-column dataField="rfc" caption="RFC" alignment="center" dataType="string"></dxi-column>
                 <dxi-column dataField="correo" caption="Correo" alignment="center" dataType="string"></dxi-column>
-                <dxi-column dataField="tipoPersona" caption="Tipo Persona" alignment="center"
+                <dxi-column dataField="tipoPersona" caption="Tipo persona" alignment="center"
                     dataType="string"></dxi-column>
-                <dxi-column dataField="nombreEncargado" caption="Nombre Encargado" alignment="center"></dxi-column>
-                <dxi-column dataField="telefonoEncargado" caption="Teléfono Encargado" alignment="center"></dxi-column>
-                <dxi-column dataField="correoEncargado" caption="Email Encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="nombreEncargado" caption="Nombre encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="telefonoEncargado" caption="Teléfono encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="correoEncargado" caption="Email encargado" alignment="center"></dxi-column>
                 <dxi-column dataField="direccionCompleta" caption="Dirección"></dxi-column>
+                <dxi-column dataField="etiquetaBusqueda" caption="Texto (búsqueda)" [visible]="false"
+                    [allowSorting]="false"></dxi-column>
+
                 <dxo-export [enabled]="false" [allowExportSelectedData]="true" [texts]="{
             exportAll: 'Exportar todos los datos a Excel',
             exportSelectedRows: 'Exportar filas seleccionadas a Excel'
@@ -121,6 +94,29 @@
                         }
                     </div>
                 </dxi-column>
+
+                <div *dxTemplate="let cell of 'clienteTpl'">
+                    <div class="inm-row-card inm-row-card--nombre">
+                        <div class="inm-row-card__icon" aria-hidden="true">
+                            <mat-icon>business</mat-icon>
+                        </div>
+                        <span class="inm-row-card__title">{{ cell.data.NombreCompleto }}</span>
+                    </div>
+                </div>
+
+                <div *dxTemplate="let cell of 'chipsTpl'">
+                    <div class="inm-row-chips">
+                        <span class="inm-chip inm-chip--muted">
+                            <i class="fa fa-paperclip"></i> {{ cell.data.numArchivos }}
+                            {{ cell.data.numArchivos === 1 ? 'Documento' : 'Documentos' }}
+                        </span>
+                        <span class="inm-chip inm-chip--muted">
+                            <i class="fa fa-users"></i> {{ cell.data.numSocios }}
+                            {{ cell.data.numSocios === 1 ? 'Socio' : 'Socios' }}
+                        </span>
+                    </div>
+                </div>
+
                 <div *dxTemplate="let row of 'acciones'" class="d-flex gap-3 justify-content-center">
                     <div *appHasPermission="'2'">
                         <button valueExpr="id" id="actualizarButton" class="btnAcciones"
@@ -140,52 +136,12 @@
                         }
                     </div>
                 </div>
-            </dx-data-grid>
-        </div>
 
-        <div class="docs-backdrop" *ngIf="mostrarModalDoc" (click)="cerrarModalDoc()">
-            <div class="docs-modal" (click)="$event.stopPropagation()">
-                <div class="row docs-modal__header">
-                    <div class="col-10 col-md-11">
-                        <span class="docs-modal__eyebrow">Documento del arrendador</span>
-                        <h3 class="docs-modal__title">
-                            {{ docTitulo }}
-                        </h3>
-                        <!-- <p class="docs-modal__subtitle">
-              {{ docCliente?.NombreCompleto || docCliente?.nombre || '' }}
-            </p> -->
-                    </div>
-                    <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
-                        <button type="button" class="docs-modal__close" (click)="cerrarModalDoc()">
-                            <i class="fa fa-times"></i>
-                        </button>
-                    </div>
+                <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
+                    <app-lista-clientes-detalle [row]="row.data"></app-lista-clientes-detalle>
                 </div>
-                <div class="row docs-modal__body">
-                    <div class="col-12">
-                        <div class="docs-modal__viewer" *ngIf="docSafeUrl">
-                            <iframe [src]="docSafeUrl" frameborder="0"></iframe>
-                        </div>
-                        <div class="docs-modal__fallback" *ngIf="!docSafeUrl">
-                            <p>No se pudo cargar el archivo.</p>
-                            <a [href]="docUrl" target="_blank" rel="noopener noreferrer">
-                                Abrir en otra pestaña
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="row docs-modal__footer">
-                    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <a class="docs-modal__link" [href]="docUrl" target="_blank" rel="noopener noreferrer">
-                            <i class="fa fa-external-link"></i>
-                            <span>Abrir en nueva pestaña</span>
-                        </a>
-                        <button type="button" class="docs-modal__btn" (click)="cerrarModalDoc()">
-                            Cerrar
-                        </button>
-                    </div>
-                </div>
-            </div>
+                <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
+            </dx-data-grid>
         </div>
     </div>
 </div>

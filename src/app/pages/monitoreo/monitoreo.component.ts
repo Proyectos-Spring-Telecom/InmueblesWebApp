@@ -689,7 +689,6 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
           direccion: inmueble.direccion,
           arrendador: inmueble.arrendador,
           estatusInmueble: 'RENTADO',
-          vigenciaAnios: 5,
           tiempoRentaAnios: 5,
           fechaInicio: '2024-01-01',
           fechaFin: '2029-01-01',
