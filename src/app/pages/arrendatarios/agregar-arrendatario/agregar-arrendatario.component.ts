@@ -58,6 +58,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   cargandoDetalle = false;
   public listaClientes: { id: number; nombre?: string; apellidoPaterno?: string; apellidoMaterno?: string }[] = [];
   public listaInmuebles: { id: number; etiqueta: string }[] = [];
+  public listaLocalesLibres: { id: number; etiqueta: string }[] = [];
+  cargandoLocalesLibres = false;
   public listaCatServicios: CatServicioItem[] = [];
   loadingSubmit = false;
   mostrarModalMapa = false;
@@ -103,6 +105,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private promptAutocargaMostrado = false;
   private readonly debounceLogMs = 400;
   private formValueLogSub?: Subscription;
+  private idInmuebleChangeSub?: Subscription;
 
   @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
   @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
@@ -130,6 +133,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
     this.initTipoPersonaLogic();
+    this.initContratoInmuebleLocalLogic();
     this.formValueLogSub = this.arrendatarioForm.valueChanges
       .pipe(debounceTime(this.debounceLogMs))
       .subscribe(() => {
@@ -182,6 +186,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.formValueLogSub?.unsubscribe();
+    this.idInmuebleChangeSub?.unsubscribe();
   }
 
   private mostrarPromptAutocargaContrato(): void {
@@ -378,6 +383,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       correoRepresentante: ['', [Validators.required, Validators.email]],
       /** Opcional según Swagger: `contratoArrendatario` es opcional. */
       idInmueble: [null as number | null],
+      idLocal: [{ value: null as number | null, disabled: true }],
       lat: [''],
       lng: [''],
       fechaInicioContrato: [''],
@@ -419,6 +425,115 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (!ctrl) return;
     this.aplicarValidadoresTipoPersona(ctrl.value);
     ctrl.valueChanges.subscribe((v) => this.aplicarValidadoresTipoPersona(v));
+  }
+
+  private initContratoInmuebleLocalLogic(): void {
+    const ctrl = this.arrendatarioForm.get('idInmueble');
+    if (!ctrl) return;
+    this.idInmuebleChangeSub = ctrl.valueChanges.subscribe((raw) => {
+      this.arrendatarioForm.patchValue({ idLocal: null }, { emitEvent: false });
+      const id =
+        raw != null && String(raw).trim() !== '' ? Number(raw) : Number.NaN;
+      if (Number.isFinite(id) && id > 0) {
+        this.cargarLocalesLibres(Math.trunc(id));
+        return;
+      }
+      this.listaLocalesLibres = [];
+      this.actualizarEstadoControlIdLocal();
+    });
+  }
+
+  private cargarLocalesLibres(idInmueble: number, idLocalPreservar?: number | null): void {
+    this.cargandoLocalesLibres = true;
+    this.listaLocalesLibres = [];
+    this.actualizarEstadoControlIdLocal();
+    this.inmueblesService
+      .obtenerLocalesLibres(idInmueble)
+      .pipe(
+        catchError(() => of(null)),
+        finalize(() => {
+          this.cargandoLocalesLibres = false;
+          this.actualizarEstadoControlIdLocal();
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe((res) => {
+        this.asignarListaLocalesLibres(res);
+        const preserve =
+          idLocalPreservar != null && Number.isFinite(Number(idLocalPreservar))
+            ? Math.trunc(Number(idLocalPreservar))
+            : null;
+        if (
+          preserve != null &&
+          this.listaLocalesLibres.some((l) => l.id === preserve)
+        ) {
+          this.arrendatarioForm.patchValue({ idLocal: preserve }, { emitEvent: false });
+        }
+        this.actualizarEstadoControlIdLocal();
+      });
+  }
+
+  private actualizarEstadoControlIdLocal(): void {
+    const ctrl = this.arrendatarioForm.get('idLocal');
+    if (!ctrl) return;
+    const idInm = Number(this.arrendatarioForm.get('idInmueble')?.value);
+    const puedeElegir =
+      Number.isFinite(idInm) &&
+      idInm > 0 &&
+      !this.cargandoLocalesLibres &&
+      this.listaLocalesLibres.length > 0;
+    if (puedeElegir) {
+      ctrl.enable({ emitEvent: false });
+    } else {
+      ctrl.disable({ emitEvent: false });
+    }
+  }
+
+  private asignarListaLocalesLibres(res: unknown): void {
+    if (res == null) {
+      this.listaLocalesLibres = [];
+      return;
+    }
+    let rows: unknown = res;
+    if (typeof res === 'object' && !Array.isArray(res)) {
+      const bag = res as Record<string, unknown>;
+      rows = bag['data'] ?? bag['locales'] ?? bag['items'] ?? bag['content'];
+    }
+    if (!Array.isArray(rows)) {
+      this.listaLocalesLibres = [];
+      return;
+    }
+    const items = rows
+      .map((raw) => {
+        const row = raw as Record<string, unknown>;
+        const id = Number(row['id'] ?? row['idLocal']);
+        if (!Number.isFinite(id) || id <= 0) return null;
+        return { id: Math.trunc(id), etiqueta: this.etiquetaLocalLibre(row) };
+      })
+      .filter((x): x is { id: number; etiqueta: string } => x != null);
+    items.sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es'));
+    this.listaLocalesLibres = items;
+  }
+
+  private etiquetaLocalLibre(row: Record<string, unknown>): string {
+    const idRef = row['id'] ?? row['idLocal'];
+    const nombre = String(row['nombre'] ?? row['nombreLocal'] ?? '').trim();
+    const mensualidadRaw = row['mensualidad'];
+    const mensualidad =
+      mensualidadRaw != null && String(mensualidadRaw).trim() !== ''
+        ? String(mensualidadRaw).trim()
+        : '';
+    const zonaObj = row['zona'];
+    const zonaPrincipal =
+      zonaObj != null && typeof zonaObj === 'object'
+        ? String((zonaObj as Record<string, unknown>)['zonaPrincipal'] ?? '').trim()
+        : String(row['zonaPrincipal'] ?? row['nivel'] ?? '').trim();
+    const parts = [
+      nombre || (idRef != null ? `Local ${idRef}` : 'Local'),
+      mensualidad,
+      zonaPrincipal,
+    ].filter(Boolean);
+    return parts.join(' — ');
   }
 
   private aplicarValidadoresTipoPersona(_raw: unknown): void {
@@ -950,6 +1065,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       },
       { emitEvent: false },
     );
+    if (localDemo?.idInmueble != null) {
+      this.cargarLocalesLibres(localDemo.idInmueble, localDemo.idLocal ?? null);
+    }
 
     const socio0 = this.sociosFormArray.at(0) as FormGroup;
     socio0?.patchValue(
@@ -1201,6 +1319,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const c = this.primerContratoRegistro(item);
     if (c) {
       const idIm = this.idInmuebleDesdeContrato(c);
+      const idLoc = this.idLocalDesdeContrato(c);
       this.arrendatarioForm.patchValue(
         {
           idInmueble: idIm,
@@ -1230,6 +1349,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         },
         { emitEvent: false },
       );
+      if (idIm != null) {
+        this.cargarLocalesLibres(idIm, idLoc);
+      }
     }
 
     const serviciosRaw = item['servicios'];
@@ -1386,6 +1508,17 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  private idLocalDesdeContrato(c: Record<string, unknown>): number | null {
+    const direct = Number(c['idLocal']);
+    if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
+    const loc = c['local'];
+    if (loc != null && typeof loc === 'object') {
+      const id = Number((loc as Record<string, unknown>)['id'] ?? (loc as Record<string, unknown>)['idLocal']);
+      if (Number.isFinite(id) && id > 0) return Math.trunc(id);
+    }
+    return null;
+  }
+
   private idArrendadorDesdeItem(item: Record<string, unknown>): number | null {
     const direct = Number(item['idArrendador']);
     if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
@@ -1515,6 +1648,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     telefonoRepresentante: 'Teléfono del representante',
     correoRepresentante: 'Correo del representante',
     idInmueble: 'Inmueble (contrato)',
+    idLocal: 'Local (contrato)',
     fechaInicioContrato: 'Inicio de contrato',
     fechaTerminoContrato: 'Término de contrato',
     tipoMoneda: 'Moneda',
@@ -1786,6 +1920,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     const contrato: Record<string, unknown> = {};
     if (Number.isFinite(idInm)) contrato['idInmueble'] = Math.trunc(idInm);
+    const idLocRaw = v['idLocal'];
+    const idLoc =
+      idLocRaw != null && String(idLocRaw).trim() !== '' ? Number(idLocRaw) : Number.NaN;
+    if (Number.isFinite(idLoc)) contrato['idLocal'] = Math.trunc(idLoc);
     const fiC = String(v['fechaInicioContrato'] ?? '').trim();
     if (fiC) contrato['fechaInicioContrato'] = fiC;
     const ftC = String(v['fechaTerminoContrato'] ?? '').trim();

@@ -1,7 +1,7 @@
 <div class="inm-detalle" *ngIf="row">
   <nav class="inm-detalle__tabs" aria-label="Secciones del inmueble">
     <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
-      (click)="detalleTab = 0">Zonas ({{ zonas.length }})</button>
+      (click)="detalleTab = 0">Zonas ({{ zonas.length }}) · Locales ({{ totalLocales() }})</button>
     <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 1"
       (click)="detalleTab = 1">Servicios ({{ servicios.length }})</button>
     <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 2"
@@ -15,6 +15,10 @@
       </span>
       <span class="inm-chip inm-chip--muted">
         <i class="fa fa-square-o"></i> Disponible: {{ superficieDisponibleTotal() | number:'1.0-2' }} m²
+      </span>
+      <span class="inm-chip inm-chip--muted">
+        <i class="fa fa-store"></i> {{ totalLocales() }}
+        {{ totalLocales() === 1 ? 'Local' : 'Locales' }}
       </span>
     </div>
     <div class="inm-zonas-grid" *ngIf="zonas.length; else sinZonas">
@@ -33,6 +37,23 @@
             <strong>{{ z.superficieDisponibleM2 ?? '—' }} m²</strong>
           </div>
         </div>
+        <div class="inm-zona-card__locales" *ngIf="localesZona(z).length">
+          <span class="inm-zona-card__locales-title">Locales ({{ localesZona(z).length }})</span>
+          <ul class="inm-locales-list">
+            <li class="inm-local-item" *ngFor="let loc of localesZona(z)">
+              <span class="inm-local-item__nombre">{{ loc.nombre || 'Sin nombre' }}</span>
+              <span class="inm-chip inm-chip--muted" *ngIf="loc.areaM2 != null && loc.areaM2 !== ''">
+                {{ loc.areaM2 }} m²
+              </span>
+              <span class="inm-chip inm-chip--muted">{{ etiquetaEstatusLocal(loc.estatus) }}</span>
+              <span class="inm-chip inm-chip--muted" *ngIf="loc.mensualidad != null && loc.mensualidad !== ''">
+                {{ formatearMoneda(loc.mensualidad) }}
+              </span>
+              <span class="inm-chip inm-chip--muted" *ngIf="loc.giro">{{ loc.giro }}</span>
+            </li>
+          </ul>
+        </div>
+        <p class="inm-empty inm-empty--inline" *ngIf="!localesZona(z).length">Sin locales en esta zona.</p>
       </article>
     </div>
     <ng-template #sinZonas>

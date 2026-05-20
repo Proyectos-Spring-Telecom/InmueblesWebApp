@@ -14,7 +14,7 @@
       [class.inm-detalle__tab--active]="detalleTab === 1"
       (click)="detalleTab = 1"
     >
-      Socios arrendadores ({{ socios.length }})
+      Socios Arrendadores ({{ socios.length }})
     </button>
   </nav>
 
@@ -85,8 +85,9 @@
   </div>
 
   <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
-    <div class="arr-socios-grid" *ngIf="socios.length; else sinSocios">
-      <article class="arr-socio-card" *ngFor="let so of socios; let si = index">
+    <div class="row g-3 arr-socios-grid" *ngIf="socios.length; else sinSocios">
+      <div class="col-12 col-md-6 col-xl-4 d-flex" *ngFor="let so of socios; let si = index">
+        <article class="arr-socio-card w-100">
         <header class="arr-socio-card__head">
           <div class="arr-socio-card__avatar" aria-hidden="true">
             <i class="fa fa-users"></i>
@@ -99,13 +100,16 @@
             </span>
           </div>
         </header>
-        <p class="arr-socio-card__hint">
+        <!-- <p class="arr-socio-card__hint">
           Documentación del socio (constancia fiscal, domicilio e identificación).
-        </p>
+        </p> -->
         <ul class="arr-socio-card__docs" aria-label="Documentos del socio">
           <li *ngIf="textoSocioDoc(so['constanciaSituacionFiscal'])">
-            <span class="arr-socio-doc__label"><i class="fa fa-file-text-o"></i> Constancia fiscal</span>
-            <div class="arr-socio-doc__actions">
+            <div class="row g-2 align-items-center mx-0">
+              <span class="col-12 col-sm arr-socio-doc__label">
+                <i class="fa fa-file-text-o"></i> Constancia fiscal
+              </span>
+              <div class="col-12 col-sm-auto arr-socio-doc__actions d-flex flex-wrap justify-content-sm-end">
               <button
                 type="button"
                 mat-flat-button
@@ -125,13 +129,17 @@
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <i class="fa fa-external-link"></i>
+                <i class="fa fa-external-link"></i> Abrir
               </a>
+              </div>
             </div>
           </li>
           <li *ngIf="textoSocioDoc(so['comprobanteDomicilio'])">
-            <span class="arr-socio-doc__label"><i class="fa fa-home"></i> Comprobante domicilio</span>
-            <div class="arr-socio-doc__actions">
+            <div class="row g-2 align-items-center mx-0">
+              <span class="col-12 col-sm arr-socio-doc__label">
+                <i class="fa fa-home"></i> Comprobante domicilio
+              </span>
+              <div class="col-12 col-sm-auto arr-socio-doc__actions d-flex flex-wrap justify-content-sm-end">
               <button
                 type="button"
                 mat-flat-button
@@ -146,13 +154,17 @@
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <i class="fa fa-external-link"></i>
+                <i class="fa fa-external-link"></i> Abrir
               </a>
+              </div>
             </div>
           </li>
           <li *ngIf="textoSocioDoc(so['identificacionOficial'])">
-            <span class="arr-socio-doc__label"><i class="fa fa-id-card-o"></i> Identificación oficial</span>
-            <div class="arr-socio-doc__actions">
+            <div class="row g-2 align-items-center mx-0">
+              <span class="col-12 col-sm arr-socio-doc__label">
+                <i class="fa fa-id-card-o"></i> Identificación oficial
+              </span>
+              <div class="col-12 col-sm-auto arr-socio-doc__actions d-flex flex-wrap justify-content-sm-end">
               <button
                 type="button"
                 mat-flat-button
@@ -167,12 +179,14 @@
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <i class="fa fa-external-link"></i>
+                <i class="fa fa-external-link"></i> Abrir
               </a>
+              </div>
             </div>
           </li>
         </ul>
-      </article>
+        </article>
+      </div>
     </div>
     <ng-template #sinSocios>
       <p class="inm-empty">Sin socios arrendadores registrados.</p>

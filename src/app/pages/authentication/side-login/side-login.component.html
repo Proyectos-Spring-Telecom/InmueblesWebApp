@@ -1,8 +1,4 @@
-<div
-  class="ul-root auth-anim-root"
-  [@authViewAnimation]="authAnimState"
-  (@authViewAnimation.done)="onAuthAnimDone($event)"
->
+<div class="ul-root auth-anim-root" [@authViewAnimation]>
   <div class="ul-bg auth-anim-bg" aria-hidden="true">
     <div class="ul-bg__wash"></div>
     <div class="ul-bg__ring ul-bg__ring--a"></div>
@@ -111,7 +107,6 @@
             [disabled]="isDisabled"
             class="ul-submit w-100"
             [class.ul-submit--loading]="loading"
-            [class.ul-submit--success]="authAnimState === 'success'"
           >
             <span class="ul-submit__content">
               <span class="ul-submit__spinner" aria-hidden="true"></span>

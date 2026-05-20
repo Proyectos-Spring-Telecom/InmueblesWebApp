@@ -151,6 +151,22 @@
                 </div>
               </div>
               <div class="col-12 col-md-4">
+                <label for="idLocal" class="form-label perm-label">Local (contrato)</label>
+                <div class="input-group input-group-lg perm-ig"><span
+                    class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
+                  <div class="form-floating flex-grow-1 perm-select-floating">
+                    <select id="idLocal" class="form-select" formControlName="idLocal"
+                      aria-label="Local del contrato">
+                      <option [ngValue]="null" disabled></option>
+                      <option *ngFor="let loc of listaLocalesLibres" [ngValue]="loc.id">
+                        {{ loc.etiqueta }}
+                      </option>
+                    </select>
+                    <label for="idLocal">{{ cargandoLocalesLibres ? 'Cargando locales…' : 'Selecciona local' }}</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4">
                 <label for="fechaInicioContrato" class="form-label perm-label">Fecha de Inicio</label>
                 <div class="input-group input-group-lg perm-ig"><span
                     class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
@@ -315,7 +331,7 @@
                   </div>
                 </div>
               </div>
-              <div class="col-12 col-md-8">
+              <div class="col-12 col-md-4 col-xl-3">
                 <label for="observaciones" class="form-label perm-label">Observaciones</label>
                 <div class="input-group input-group-lg perm-ig"><span
                     class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span>

@@ -48,7 +48,10 @@
             </div>
             <div class="card-body insta-body" [@monitorListSwap]="viewMode">
               <ng-container *ngIf="zonasViewActive">
-                <ng-container *ngIf="localesParaListaZonas.length > 0">
+                <div class="text-center py-4 text-muted" *ngIf="cargandoLocalesInmueble">
+                  Cargando locales…
+                </div>
+                <ng-container *ngIf="!cargandoLocalesInmueble && localesParaListaZonas.length > 0">
                   <div class="insta-item instalacion"
                     *ngFor="let loc of localesParaListaZonas; let li = index; trackBy: trackByLocalEnZonas"
                     [@monitorItemIn] [attr.id]="idAtributoFilaListaLocal(loc, li)"
@@ -59,7 +62,7 @@
                         <div class="inmueble-content-grid local-zona-content-grid">
                           <div class="inmueble-media">
                             <img [src]="getImagenLocalLista(loc, li)"
-                              [alt]="'Imagen del local ' + getNombreLocalEnLista(loc)" />
+                              [attr.alt]="'Fachada — ' + getNombreLocalEnLista(loc)" />
                             <span class="inmueble-status" [ngClass]="getEstadoChipClassLista(loc)">
                               {{ getOcupacionEtiquetaLista(loc) }}
                             </span>
@@ -68,25 +71,35 @@
                           <div class="inmueble-info">
                             <div class="inmueble-top">
                               <div class="inmueble-name text-truncate">{{ getNombreLocalEnLista(loc) }}</div>
-                              <div class="inmueble-renta" *ngIf="getMensualidadLocalLista(loc) as mensualidad">
-                                <span>Mensualidad</span>
-                                <strong>{{ mensualidad }}</strong>
+                              <div class="inmueble-estatus-pill" *ngIf="loc.estatusLabel && loc.estatusLabel !== '—'"
+                                [class.inmueble-estatus-pill--activo]="loc.estatus === 1"
+                                [class.inmueble-estatus-pill--inactivo]="loc.estatus === 0">
+                                <span>{{ loc.estatusLabel }}</span>
                               </div>
                             </div>
-                            <div class="inmueble-line mt-1" *ngIf="getZonaNombreLocalLista(loc) as zona">
-                              <strong>Zona:</strong> {{ zona }}
+                            <div class="inmueble-line mt-1" *ngIf="loc.rentaFmt">
+                              <strong>Renta:</strong> {{ loc.rentaFmt }}
+                              <ng-container *ngIf="loc.monedaContrato"> ({{ loc.monedaContrato }})</ng-container>
                             </div>
-                            <div class="inmueble-line" *ngIf="getOcupanteLocalLista(loc) as ocupante">
-                              <strong>Ocupante:</strong> {{ ocupante }}
+                            <div class="inmueble-line" *ngIf="loc.rentaTotalFmt">
+                              <strong>Total contrato:</strong> {{ loc.rentaTotalFmt }}
                             </div>
-                            <div class="inmueble-line" *ngIf="getGiroActividadLocalLista(loc) as giro">
-                              <strong>Giro:</strong> {{ giro }}
+                            <div class="inmueble-line" *ngIf="loc.vigenciaTexto">
+                              <strong>Vigencia:</strong> {{ loc.vigenciaTexto }}
                             </div>
-                            <div class="inmueble-line" *ngIf="getMedidaLocalLista(loc) as medida">
-                              <strong>Medida:</strong> {{ medida }}
+                            <div class="inmueble-line" *ngIf="loc.representanteLegal">
+                              <mat-icon>badge</mat-icon>
+                              <span>{{ loc.representanteLegal }}</span>
                             </div>
-                            <div class="inmueble-line" *ngIf="getVigenciaContratoLocalLista(loc) as vig">
-                              <strong>Contrato hasta:</strong> {{ vig }}
+                            <div class="inmueble-line" *ngIf="loc.telefonoRepresentante">
+                              <mat-icon>phone</mat-icon>
+                              <span>{{ loc.telefonoRepresentante }}</span>
+                            </div>
+                            <div class="inmueble-line" *ngIf="loc.metrosRentadosTexto">
+                              <strong>Superficie rentada:</strong> {{ loc.metrosRentadosTexto }}
+                            </div>
+                            <div class="inmueble-line" *ngIf="loc.tipoPersonaLabel && loc.tipoPersonaLabel !== '—'">
+                              <strong>Tipo:</strong> {{ loc.tipoPersonaLabel }}
                             </div>
                           </div>
                         </div>
@@ -106,7 +119,7 @@
                     </div>
                   </div>
                 </ng-container>
-                <div class="insta-empty" *ngIf="localesParaListaZonas.length === 0">
+                <div class="insta-empty" *ngIf="!cargandoLocalesInmueble && localesParaListaZonas.length === 0">
                   <div class="insta-empty-icon">
                     <mat-icon>storefront</mat-icon>
                   </div>
@@ -117,7 +130,10 @@
                 </div>
               </ng-container>
 
-              <ng-container *ngIf="!zonasViewActive && listaVisible.length > 0; else noInstalacionesTpl">
+              <div class="text-center py-4 text-muted" *ngIf="!zonasViewActive && cargandoInmueblesArrendador">
+                Cargando inmuebles…
+              </div>
+              <ng-container *ngIf="!zonasViewActive && !cargandoInmueblesArrendador && listaVisible.length > 0; else noInstalacionesTpl">
                 <div class="insta-item" *ngFor="let item of listaVisible; let i = index" [@monitorItemIn]
                   [class.central]="viewMode === 'centrales'" [class.instalacion]="viewMode === 'instalaciones'"
                   [class.active]="viewMode === 'centrales' && item.id === selectedId"
@@ -125,7 +141,8 @@
                   <div class="inmueble-card-shell">
                     <div class="inmueble-content-grid">
                       <div class="inmueble-media">
-                        <img [src]="getImagenInmuebleCard(item, i)" alt="Imagen del inmueble" />
+                        <img [src]="getImagenInmuebleCard(item, i)"
+                          [attr.alt]="'Fachada — ' + (item.nombreDepartamento || item.nombreInstalacion || 'Inmueble')" />
                       </div>
 
                       <div class="inmueble-info">
@@ -133,27 +150,42 @@
                           <div class="inmueble-name">
                             {{ item.nombreDepartamento || item.nombreInstalacion || 'Inmueble' }}
                           </div>
-                          <div class="inmueble-renta">
-                            <span>Renta</span>
-                            <strong>{{ (item.mensualidadMxn ?? item.rentaMxn ?? 120000) | currency:'MXN':'symbol':'1.0-0' }}</strong>
+                          <div class="inmueble-estatus-pill" *ngIf="item.estatusLabel && item.estatusLabel !== '—'"
+                            [class.inmueble-estatus-pill--activo]="item.estatus === 1"
+                            [class.inmueble-estatus-pill--inactivo]="item.estatus === 0">
+                            <span>{{ item.estatusLabel }}</span>
                           </div>
                         </div>
-                        <div class="inmueble-line mt-1">
-                          <strong>Dirección del inmueble:</strong>
-                          {{ item.direccion || selectedCentral?.direccion || 'Río Balsas 106, Cuernavaca' }}
+                        <div class="inmueble-line mt-1" *ngIf="item.direccion">
+                          <strong>Dirección:</strong> {{ item.direccion }}
                         </div>
-                        <div class="inmueble-line">
-                          <strong>Inicio:</strong> {{ item.fechaInicio || '2024-01-01' }}
-                          <span class="m-x-8">|</span>
-                          <strong>Fin:</strong> {{ item.fechaFin || '2029-01-01' }}
+                        <div class="inmueble-line" *ngIf="item.fechaInicio || item.fechaFin || vigenciaInmuebleCard(item)">
+                          <strong>Vigencia: </strong> 
+                          <ng-container *ngIf="item.fechaInicio">{{ item.fechaInicio }}</ng-container>
+                          <span class="m-x-8" *ngIf="item.fechaInicio && item.fechaFin">|</span>
+                          <ng-container *ngIf="item.fechaFin">{{ item.fechaFin }}</ng-container>
+                          <ng-container *ngIf="vigenciaInmuebleCard(item) as vig">
+                            <span class="m-x-8" *ngIf="item.fechaInicio || item.fechaFin">·</span>
+                            {{ vig }} {{ vig === '1' ? 'año' : 'años' }}
+                          </ng-container>
                         </div>
                         <div class="inmueble-line">
                           <mat-icon>person</mat-icon>
-                          <span>Arrendador: {{ item.arrendador || selectedCentral?.nombreCliente || 'Inmuebles y Desarrollos HAC S.A de C.V.' }}</span>
+                          <span>Arrendador: {{ item.arrendador || selectedCentral?.nombreCliente || '—' }}</span>
                         </div>
-                        <div class="inmueble-line">
-                          <mat-icon>calendar_today</mat-icon>
-                          <span>Tiempo de renta: {{ item.tiempoRentaAnios || 5 }} años</span>
+                        <div class="inmueble-line"
+                          *ngIf="item.estatusInmuebleTipoLabel && item.estatusInmuebleTipoLabel !== 'Sin estatus'">
+                          <mat-icon>home_work</mat-icon>
+                          <span>Tipo: {{ item.estatusInmuebleTipoLabel }}</span>
+                        </div>
+                        <div class="inmueble-line" *ngIf="item.nombreRepresentante">
+                          <mat-icon>badge</mat-icon>
+                          <span>Representante: {{ item.nombreRepresentante }}</span>
+                        </div>
+                        <div class="inmueble-line"
+                          *ngIf="item.numZonas != null || item.numServicios != null">
+                          <mat-icon>layers</mat-icon>
+                          <span>{{ item.numZonas ?? 0 }} zona(s) · {{ item.numServicios ?? 0 }} servicio(s)</span>
                         </div>
                       </div>
                     </div>
@@ -338,14 +370,42 @@
 
     <ng-template #clientesFlowTpl>
       <div class="p-3">
-        <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap mb-2 clientes-flow-head">
-          <div class="clientes-search-wrap">
-            <input type="text" class="form-control form-control-sm clientes-search-input"
-              placeholder="Buscar por nombre del cliente..." [(ngModel)]="clienteSearchTerm" />
+        <div class="clientes-flow-head mb-2">
+          <div class="clientes-search" role="search">
+            <label class="clientes-search-label" for="clientesSearchInput">Buscar arrendador</label>
+            <div class="clientes-search-field">
+              <span class="clientes-search-icon" aria-hidden="true">
+                <mat-icon>search</mat-icon>
+              </span>
+              <input id="clientesSearchInput" type="search" class="clientes-search-input"
+                placeholder="Nombre, encargado o ubicación…" [(ngModel)]="clienteSearchTerm"
+                autocomplete="off" spellcheck="false" />
+              <button type="button" class="clientes-search-clear"
+                *ngIf="clienteSearchTerm.trim().length > 0" (click)="limpiarBusquedaClientes()"
+                aria-label="Limpiar búsqueda">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <!-- <p class="clientes-search-meta" *ngIf="!cargandoClientes && listaInstalaciones.length > 0">
+              <span>{{ clientesFiltrados.length }}</span>
+              de {{ listaInstalaciones.length }} arrendadores
+            </p> -->
           </div>
         </div>
-        <div class="row g-3">
-          <div class="col-12 col-md-6 col-xl-4" *ngFor="let cliente of clientesFiltrados; let ci = index">
+        <div class="text-center py-4 text-muted" *ngIf="cargandoClientes">
+          Cargando arrendadores…
+        </div>
+        <div class="insta-empty" *ngIf="!cargandoClientes && clientesFiltrados.length === 0">
+          <div class="insta-empty-icon">
+            <mat-icon>business</mat-icon>
+          </div>
+          <div class="insta-empty-text">
+            <h6>Sin arrendadores</h6>
+            <p>No hay arrendadores que coincidan con la búsqueda.</p>
+          </div>
+        </div>
+        <div [ngClass]="clientesGridRowClass" *ngIf="!cargandoClientes && clientesFiltrados.length > 0">
+          <div [ngClass]="clienteCardColClass" *ngFor="let cliente of clientesFiltrados; let ci = index">
             <div class="inmueble-card-shell cliente-grid-card cliente-card-v2">
               <header class="cliente-card-head">
                 <div class="cliente-card-media">
@@ -353,7 +413,7 @@
                     [attr.alt]="'Logo — ' + (cliente?.nombreCliente || cliente?.nombre || 'Arrendador')" />
                 </div>
                 <div class="cliente-card-head-main">
-                  <span class="cliente-card-role-label">Arrendatario</span>
+                  <span class="cliente-card-role-label">Arrendador</span>
                   <h3 class="cliente-card-title">{{ cliente?.nombreCliente || cliente?.nombre || 'Arrendador' }}</h3>
                 </div>
               </header>
@@ -372,15 +432,9 @@
 
               <section class="cliente-card-block cliente-card-block--tight cliente-card-block--ubicacion">
                 <div class="cliente-ubicacion-grid">
-                  <div class="cliente-ubicacion-text">
-                    <span class="cliente-ubicacion-label">Ubicación</span>
-                    <p class="cliente-meta-value cliente-meta-value--lead cliente-meta-value--direccion">
-                      {{ cliente?.direccion || 'Sin dirección' }}
-                    </p>
-                  </div>
                   <div class="cliente-ubicacion-actions">
                     <button type="button" class="btn cliente-action-btn cliente-inmuebles-btn"
-                      (click)="seleccionarCliente(cliente)">
+                      [disabled]="cargandoInmueblesArrendador" (click)="seleccionarCliente(cliente)">
                       Propiedades
                     </button>
                   </div>

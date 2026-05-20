@@ -341,6 +341,19 @@
                         </div>
                     </div>
 
+                    <ng-template #btnVerClienteDoc let-url="url" let-titulo="titulo">
+                        <button
+                            *ngIf="layoutArchivoRemoto(url)"
+                            type="button"
+                            mat-flat-button
+                            class="bg-warn docs-uploader-ver-btn"
+                            (click)="verArchivoRemoto(url, titulo)"
+                        >
+                            <mat-icon>visibility</mat-icon>
+                            <span>Ver</span>
+                        </button>
+                    </ng-template>
+
                     <div class="row g-3 g-lg-4 mt-0 uploader-wrap docs-uploader-docs-row align-items-stretch">
                         <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                             <label class="form-label perm-label d-block mb-2">Logotipo</label>
@@ -356,6 +369,8 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openLogoFilePicker()">Seleccionar</button>
+                                            <ng-container
+                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlLogotipoRemoto, titulo: 'Logotipo' }"></ng-container>
                                             <a *ngIf="urlLogotipoRemoto"
                                                 class="uploader__badge uploader__badge--file"
                                                 [href]="urlLogotipoRemoto"
@@ -394,6 +409,8 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openCsfFilePicker()">Seleccionar</button>
+                                            <ng-container
+                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('constanciaSituacionFiscal'), titulo: 'Constancia De Situación Fiscal' }"></ng-container>
                                             <span class="uploader__badge"
                                                 [class.uploader__badge--file]="csfFileName || clienteForm.get('constanciaSituacionFiscal')?.value?.name || clienteForm.get('constanciaSituacionFiscal')?.value">
                                                 {{ csfFileName ||
@@ -441,6 +458,8 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openCompDomFilePicker()">Seleccionar</button>
+                                            <ng-container
+                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('comprobanteDomicilio'), titulo: 'Comprobante De Domicilio Fiscal' }"></ng-container>
                                             <span class="uploader__badge"
                                                 [class.uploader__badge--file]="compDomFileName || clienteForm.get('comprobanteDomicilio')?.value?.name || clienteForm.get('comprobanteDomicilio')?.value">
                                                 {{ compDomFileName ||
@@ -486,6 +505,8 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openLicenciaFilePicker()">Seleccionar</button>
+                                            <ng-container
+                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('licenciaFuncionamiento'), titulo: 'Licencia De Funcionamiento' }"></ng-container>
                                             <span class="uploader__badge"
                                                 [class.uploader__badge--file]="licenciaFileName || clienteForm.get('licenciaFuncionamiento')?.value?.name || clienteForm.get('licenciaFuncionamiento')?.value">
                                                 {{ licenciaFileName ||
@@ -532,6 +553,8 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openProteccionCivilFilePicker()">Seleccionar</button>
+                                            <ng-container
+                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('constanciaProteccionCivil'), titulo: 'Constancia De Protección Civil' }"></ng-container>
                                             <span class="uploader__badge"
                                                 [class.uploader__badge--file]="proteccionCivilFileName || clienteForm.get('constanciaProteccionCivil')?.value?.name || clienteForm.get('constanciaProteccionCivil')?.value">
                                                 {{ proteccionCivilFileName ||
@@ -577,6 +600,8 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openUsoSueloFilePicker()">Seleccionar</button>
+                                            <ng-container
+                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('usoSuelo'), titulo: 'Uso De Suelo' }"></ng-container>
                                             <span class="uploader__badge"
                                                 [class.uploader__badge--file]="usoSueloFileName || clienteForm.get('usoSuelo')?.value?.name || clienteForm.get('usoSuelo')?.value">
                                                 {{
@@ -624,6 +649,8 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openPlanoCatastralFilePicker()">Seleccionar</button>
+                                            <ng-container
+                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('planoCatastral'), titulo: 'Plano Catastral' }"></ng-container>
                                             <span class="uploader__badge"
                                                 [class.uploader__badge--file]="planoCatastralFileName || clienteForm.get('planoCatastral')?.value?.name || clienteForm.get('planoCatastral')?.value">
                                                 {{ planoCatastralFileName ||
@@ -670,6 +697,8 @@
                                             <div class="uploader__cta">
                                                 <button mat-flat-button color="primary" type="button"
                                                     (click)="openActaFilePicker()">Seleccionar</button>
+                                                <ng-container
+                                                    *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('actaConstitutiva'), titulo: 'Acta Constitutiva' }"></ng-container>
                                                 <span class="uploader__badge"
                                                     [class.uploader__badge--file]="actaFileName || clienteForm.get('actaConstitutiva')?.value?.name || clienteForm.get('actaConstitutiva')?.value">
                                                     {{ actaFileName ||
@@ -716,6 +745,8 @@
                                             <div class="uploader__cta">
                                                 <button mat-flat-button color="primary" type="button"
                                                     (click)="openPoderFilePicker()">Seleccionar</button>
+                                                <ng-container
+                                                    *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('poderRepresentanteLegal'), titulo: 'Poder Del Rep. Legal' }"></ng-container>
                                                 <span class="uploader__badge"
                                                     [class.uploader__badge--file]="poderFileName || clienteForm.get('poderRepresentanteLegal')?.value?.name || clienteForm.get('poderRepresentanteLegal')?.value">
                                                     {{ poderFileName ||
@@ -763,6 +794,8 @@
                                             <div class="uploader__cta">
                                                 <button mat-flat-button color="primary" type="button"
                                                     (click)="openIneFilePicker()">Seleccionar</button>
+                                                <ng-container
+                                                    *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('ineRepresentanteLegal'), titulo: 'Identificación Oficial Del Rep. Legal' }"></ng-container>
                                                 <span class="uploader__badge"
                                                     [class.uploader__badge--file]="ineFileName || clienteForm.get('ineRepresentanteLegal')?.value?.name || clienteForm.get('ineRepresentanteLegal')?.value">
                                                     {{

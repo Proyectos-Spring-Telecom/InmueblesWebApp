@@ -3,19 +3,16 @@
         <div class="perm-head__icon" aria-hidden="true">
             <mat-icon>contacts</mat-icon>
         </div>
-
         <div class="perm-head__text">
             <span class="eyebrow">Sección</span>
             <h2>Arrendadores</h2>
         </div>
-
         <nav class="perm-head__crumbs" aria-label="Ruta">
             <span class="crumb">Operación</span>
             <span class="sep">/</span>
             <span class="crumb active">Arrendadores</span>
         </nav>
     </header>
-
     <div class="surface">
         <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
             <div *appHasPermission="'3'">
@@ -32,60 +29,79 @@
                 {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
             </button>
         </div>
-
         <div class="mt-3">
             <dx-data-grid #gridContainer id="gridContainer" class="inm-data-grid" [columnHidingEnabled]="true"
                 [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
-                [rowAlternationEnabled]="true"
-                [dataSource]="listaClientes" [keyExpr]="'id'" [width]="'100%'" [remoteOperations]="{ paging: true }"
-                [paging]="{ pageSize: pageSize }"
-                [noDataText]="'Sin registros para mostrar'"
-                [pager]="{
-          showPageSizeSelector: true,
-          allowedPageSizes: [20],
-          showInfo: true,
-          infoText: 'Página {0} de {1}',
-          visible: true
-        }" (onPageIndexChanged)=" onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
-                <dxo-search-panel [visible]="true" [width]="240"
-                    placeholder="Buscar arrendador, RFC, socio, documento..."></dxo-search-panel>
+                [rowAlternationEnabled]="true" [dataSource]="listaClientes" [keyExpr]="'id'" [width]="'100%'"
+                [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+                [noDataText]="'Sin registros para mostrar'" [pager]="{
+                showPageSizeSelector: true,
+                allowedPageSizes: [20],
+                showInfo: true,
+                infoText: 'Página {0} de {1}',
+                visible: true
+                }" (onPageIndexChanged)=" onPageIndexChanged($event)"
+                (onOptionChanged)="onGridOptionChanged($event)">
+                <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar arrendador, RFC, socio, documento..."></dxo-search-panel>
                 <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
                 <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
                 <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
                 <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
                 <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
                 <dxo-sorting mode="multiple"></dxo-sorting>
-
                 <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" *appHasPermission="['2', '4']"
-                    [width]="150" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
-
+                    [width]="150" [allowFiltering]="false" [allowSorting]="false">
+                </dxi-column>
+                <dxi-column dataField="logotipo" caption="Imagen" cellTemplate="imagen" [width]="200"
+                    alignment="center">
+                    <dxo-header-filter [allowSearch]="true"></dxo-header-filter>
+                </dxi-column>
+                <div *dxTemplate="let data of 'imagen'" class="inm-lista-logo" style="text-align: center;">
+                    <img
+                        *ngIf="data.value && esLogotipoImagen(data.value)"
+                        class="inm-lista-logo__img"
+                        style="max-width: 100px;"
+                        [src]="data.value"
+                        [attr.alt]="'Logotipo de ' + (data.data.NombreCompleto || 'arrendador')"
+                        loading="lazy"
+                    />
+                    <a
+                        *ngIf="data.value && !esLogotipoImagen(data.value)"
+                        class="inm-lista-logo__link"
+                        [href]="data.value"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Ver logotipo"
+                    >
+                        <i class="fa fa-file-o" aria-hidden="true"></i>
+                    </a>
+                    <img
+                        *ngIf="!data.value"
+                        class="inm-lista-logo__img inm-lista-logo__img--placeholder"
+                        style="max-width: 100px;"
+                        [src]="urlLogotipoPorDefecto"
+                        alt=""
+                    />
+                </div>
                 <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="240" alignment="center"
-                    [allowSorting]="false" [allowFiltering]="false" [visible]="false"></dxi-column>
+                    [allowSorting]="false" [allowFiltering]="false" [visible]="false">
+                </dxi-column>
                 <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
                 <dxi-column dataField="numSocios" caption="Socios" [visible]="false"></dxi-column>
-
-                <dxi-column dataField="NombreCompleto" caption="Arrendador" cellTemplate="clienteTpl"
-                    alignment="center" [width]="220" [allowFiltering]="true"></dxi-column>
-
+                <dxi-column dataField="NombreCompleto" caption="Arrendador" cellTemplate="clienteTpl" alignment="center" [width]="220" [allowFiltering]="true"></dxi-column>
                 <dxi-column dataField="telefono" caption="Teléfono" alignment="center" dataType="string"></dxi-column>
                 <dxi-column dataField="rfc" caption="RFC" alignment="center" dataType="string"></dxi-column>
-                <dxi-column dataField="correo" caption="Correo" alignment="center" dataType="string"></dxi-column>
-                <dxi-column dataField="tipoPersona" caption="Tipo persona" alignment="center"
-                    dataType="string"></dxi-column>
-                <dxi-column dataField="nombreEncargado" caption="Nombre encargado" alignment="center"></dxi-column>
-                <dxi-column dataField="telefonoEncargado" caption="Teléfono encargado" alignment="center"></dxi-column>
-                <dxi-column dataField="correoEncargado" caption="Email encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="correo" caption="Correo Electrónico" alignment="center" dataType="string"></dxi-column>
+                <dxi-column dataField="tipoPersona" caption="Tipo Persona" alignment="center" dataType="string"></dxi-column>
+                <dxi-column dataField="nombreEncargado" caption="Nombre Encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="telefonoEncargado" caption="Teléfono Encargado" alignment="center"></dxi-column>
+                <dxi-column dataField="correoEncargado" caption="Email Encargado" alignment="center"></dxi-column>
                 <dxi-column dataField="direccionCompleta" caption="Dirección"></dxi-column>
-                <dxi-column dataField="etiquetaBusqueda" caption="Texto (búsqueda)" [visible]="false"
-                    [allowSorting]="false"></dxi-column>
-
+                <dxi-column dataField="etiquetaBusqueda" caption="Texto (búsqueda)" [visible]="false" [allowSorting]="false"></dxi-column>
                 <dxo-export [enabled]="false" [allowExportSelectedData]="true" [texts]="{
-            exportAll: 'Exportar todos los datos a Excel',
-            exportSelectedRows: 'Exportar filas seleccionadas a Excel'
-          }">
+                    exportAll: 'Exportar todos los datos a Excel', exportSelectedRows: 'Exportar filas seleccionadas a Excel' }">
                 </dxo-export>
-                <dxi-column dataField="estatusCliente" caption="Estatus" alignment="center" cellTemplate="est"
-                    dataType="string">
+                <dxi-column dataField="estatusCliente" caption="Estatus" alignment="center" cellTemplate="est" dataType="string">
                     <div *dxTemplate="let f of 'est'">
                         @if (f.data.estatusCliente === 1) {
                         <span class="estatus estatus-activo">Activo</span>
@@ -94,16 +110,14 @@
                         }
                     </div>
                 </dxi-column>
-
                 <div *dxTemplate="let cell of 'clienteTpl'">
                     <div class="inm-row-card inm-row-card--nombre">
-                        <div class="inm-row-card__icon" aria-hidden="true">
+                        <!-- <div class="inm-row-card__icon" aria-hidden="true">
                             <mat-icon>business</mat-icon>
-                        </div>
+                        </div> -->
                         <span class="inm-row-card__title">{{ cell.data.NombreCompleto }}</span>
                     </div>
                 </div>
-
                 <div *dxTemplate="let cell of 'chipsTpl'">
                     <div class="inm-row-chips">
                         <span class="inm-chip inm-chip--muted">
@@ -116,7 +130,6 @@
                         </span>
                     </div>
                 </div>
-
                 <div *dxTemplate="let row of 'acciones'" class="d-flex gap-3 justify-content-center">
                     <div *appHasPermission="'2'">
                         <button valueExpr="id" id="actualizarButton" class="btnAcciones"
@@ -136,7 +149,6 @@
                         }
                     </div>
                 </div>
-
                 <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
                     <app-lista-clientes-detalle [row]="row.data"></app-lista-clientes-detalle>
                 </div>

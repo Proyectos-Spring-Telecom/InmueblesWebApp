@@ -15,12 +15,25 @@ import {
   transition,
   trigger,
 } from '@angular/animations';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { catchError, map, of } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { AuthenticationService } from 'src/app/services/auth.service';
-import { InstalacionCentral } from 'src/app/services/moduleService/instalacionesCentral.service';
-import { INMUEBLES_ARRENDATARIOS_DEMO } from '../arrendatarios/arrendatarios-demo.data';
+import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
+import { ClientesService } from 'src/app/services/moduleService/clientes.service';
+import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
+import {
+  extraerArrendatariosInmuebleApi,
+  mapArrendatariosInmuebleToLocalesMonitoreo,
+} from './monitoreo-arrendatarios.mapper';
+import {
+  extraerFilasListadoApi,
+  extraerInmueblesListadoApi,
+  mapClienteMonitoreoCentral,
+  mapInmuebleMonitoreoInstalacion,
+  nombreClienteMonitoreo,
+} from './monitoreo-clientes.mapper';
 
 declare const google: any;
 
@@ -215,6 +228,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Imagen default de locales cuando no llega foto del API. */
   readonly imagenLocalListaDefault = this.imagenesLocales[0];
   clienteSearchTerm = '';
+  cargandoClientes = false;
+  cargandoInmueblesArrendador = false;
+  cargandoLocalesInmueble = false;
   listaInstalaciones: any[] = [];
   selectedId?: number;
   viewMode: ViewMode = 'centrales';
@@ -299,6 +315,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     'estatus',
     'instalaciones',
     'nombre',
+    'logotipo',
+    'imagenUrl',
+    'detalle',
   ]);
 
   get listaVisible(): any[] {
@@ -314,11 +333,32 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.flowMode !== 'clientes') return list;
     const q = this.clienteSearchTerm.trim().toLowerCase();
     if (!q) return list;
-    return list.filter((cliente: any) =>
-      String(cliente?.nombreCliente ?? cliente?.nombre ?? '')
-        .toLowerCase()
-        .includes(q)
-    );
+    return list.filter((cliente: any) => {
+      const haystack = [
+        cliente?.nombreCliente,
+        cliente?.nombre,
+        cliente?.nombreEncargado,
+        cliente?.direccion,
+      ]
+        .map((v) => String(v ?? '').toLowerCase())
+        .join(' ');
+      return haystack.includes(q);
+    });
+  }
+
+  /** 1–2 arrendadores: mitad de fila (`col-6`); 3 o más: tercio (`col-4`). */
+  get clienteCardColClass(): string {
+    return this.clientesFiltrados.length > 2 ? 'col-12 col-md-4' : 'col-12 col-md-6';
+  }
+
+  get clientesGridRowClass(): string {
+    return this.clientesFiltrados.length === 1
+      ? 'row g-3 justify-content-center'
+      : 'row g-3';
+  }
+
+  limpiarBusquedaClientes(): void {
+    this.clienteSearchTerm = '';
   }
 
   /** Locales mostrados en la lista izquierda en vista Zonas (API o representación del diagrama). */
@@ -358,6 +398,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getImagenLocalLista(local: any, index = 0): string {
+    const fachada = String(local?.imagenFachada ?? '').trim();
+    if (fachada) return fachada;
+
     const u =
       local?.imagenUrl ??
       local?.urlImagen ??
@@ -409,13 +452,22 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.pickImageBySeed(seed, this.imagenesLocales, this.imagenLocalListaDefault);
   }
 
-  getImagenInmuebleCard(inmueble: any, index: number): string {
-    const seed = inmueble?.id ?? inmueble?.idInstalacion ?? inmueble?.nombreDepartamento ?? index;
-    return this.pickImageBySeed(seed, this.imagenesInmuebles, this.imagenesInmuebles[0]);
+  getImagenInmuebleCard(inmueble: any, _index = 0): string {
+    const fachada = String(inmueble?.imagenFachada ?? '').trim();
+    if (fachada) return fachada;
+    return this.imagenListaInmuebleMonitoreo;
+  }
+
+  vigenciaInmuebleCard(inmueble: any): string {
+    const v = String(
+      inmueble?.vigenciaAnios ?? inmueble?.tiempoRentaAnios ?? '',
+    ).trim();
+    return v;
   }
 
   getImagenClienteCard(cliente: any, index: number): string {
     const u =
+      cliente?.logotipo ??
       cliente?.imagenUrl ??
       cliente?.urlImagen ??
       cliente?.foto ??
@@ -510,6 +562,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getOcupacionEtiquetaLista(local: any): string {
+    const registro = String(local?.estatusLabel ?? '').trim();
+    if (registro && registro !== '—') return registro;
+
     const e = String(local?.estado ?? '').toLowerCase().trim();
     const map: Record<string, string> = {
       libre: 'Libre',
@@ -523,6 +578,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getEstadoChipClassLista(local: any): string {
+    if (local?.estatus === 1) return 'local-status--ocupado';
+    if (local?.estatus === 0) return 'local-status--inactivo';
+
     const e = String(local?.estado ?? 'libre').toLowerCase().trim();
     if (e === 'ocupado') return 'local-status--ocupado';
     if (e === 'reservado') return 'local-status--reservado';
@@ -630,7 +688,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   constructor(
-    private insService: InstalacionCentral,
+    private clientesService: ClientesService,
+    private inmueblesService: InmueblesService,
+    private arrendatariosService: ArrendatariosService,
     private router: Router,
     private route: ActivatedRoute,
     private toastr: ToastrService,
@@ -671,39 +731,56 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     };
   }
 
-  obtenerInstalacionesCentral() {
-    const data = [
-      {
-        id: 1,
-        idCliente: 1,
-        nombreCliente: 'Inmuebles y Desarrollos HAC S.A de C.V.',
-        nombreEncargado: 'Osvaldo Martínez',
-        direccion: 'C. San Cristóbal 4, San Cristobal, 62250 Cuernavaca, Mor.',
-        lat: 18.953177342874035,
-        lng: -99.23588919868236,
-        instalaciones: INMUEBLES_ARRENDATARIOS_DEMO.map((inmueble) => ({
-          id: inmueble.idInmueble,
-          idInstalacion: inmueble.idInmueble,
-          nombreDepartamento: inmueble.nombreInmueble,
-          nombreInstalacion: inmueble.nombreInmueble,
-          direccion: inmueble.direccion,
-          arrendador: inmueble.arrendador,
-          estatusInmueble: 'RENTADO',
-          tiempoRentaAnios: 5,
-          fechaInicio: '2024-01-01',
-          fechaFin: '2029-01-01',
-          mensualidadMxn: inmueble.locales.reduce((acc, local) => acc + (Number(local.mensualidadMxn) || 0), 0),
-          lat: 18.953177342874035,
-          lng: -99.23588919868236,
-          locales: inmueble.locales.map((local) => ({
-            ...local,
-            id: local.idLocal,
-            nombre: local.nombreLocal,
-          })),
-        })),
-      },
-    ];
+  obtenerInstalacionesCentral(): void {
+    this.cargandoClientes = true;
 
+    this.clientesService
+      .obtenerClientes()
+      .pipe(
+        catchError((err) => {
+          console.error('Error al cargar arrendadores:', err);
+          this.toastr.error('No se pudo cargar la lista de arrendadores.', 'Monitoreo');
+          return of(null);
+        }),
+      )
+      .subscribe({
+        next: (clientes) => {
+          this.cargandoClientes = false;
+
+          const filasCliente = extraerFilasListadoApi(clientes);
+          const centrales = filasCliente
+            .map((fila) => mapClienteMonitoreoCentral(fila, []))
+            .filter((c) => Number(c['id']) > 0);
+
+          this.aplicarCentralesMonitoreo(this.resolverCentralesParaUsuario(centrales));
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.cargandoClientes = false;
+          console.error('Error al cargar monitoreo:', err);
+          this.toastr.error('No se pudo cargar el monitoreo.', 'Monitoreo');
+          this.listaInstalaciones = [];
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  private resolverCentralesParaUsuario(centrales: any[]): any[] {
+    if (this.isRol1 || !centrales.length) {
+      return centrales;
+    }
+    const u = this.auth.getUser() as Record<string, unknown> | null;
+    const idUserCliente = Number(u?.['IdCliente'] ?? u?.['idCliente']);
+    if (Number.isFinite(idUserCliente) && idUserCliente > 0) {
+      const found = centrales.find(
+        (c) => Number(c?.idCliente ?? c?.id) === idUserCliente,
+      );
+      if (found) return [found];
+    }
+    return [centrales[0]];
+  }
+
+  private aplicarCentralesMonitoreo(data: any[]): void {
     if (this.isRol1) {
       this.listaInstalaciones = data;
       this.viewMode = 'centrales';
@@ -716,8 +793,100 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       this.flowMode = 'inmuebles';
     }
 
-    if (this.map && this.flowMode === 'inmuebles') this.renderAccordingMode();
+    if (this.map && this.flowMode === 'inmuebles' && !this.cargandoInmueblesArrendador) {
+      this.renderAccordingMode();
+    }
+
+    if (!this.isRol1 && this.selectedCentral) {
+      this.cargarYMostrarInmueblesArrendador(this.selectedCentral, () =>
+        this.aplicarRetornoDesdeDetalleSiCorresponde(),
+      );
+      return;
+    }
+
     this.aplicarRetornoDesdeDetalleSiCorresponde();
+  }
+
+  private idArrendadorDesdeCentral(central: any): number | null {
+    const id = Number(central?.idCliente ?? central?.id);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
+
+  private sincronizarInstalacionesEnLista(
+    central: any,
+    instalaciones: Record<string, unknown>[],
+  ): any {
+    const id = this.idArrendadorDesdeCentral(central);
+    const actualizado = { ...central, instalaciones };
+    if (id == null) {
+      return actualizado;
+    }
+    const idx = this.listaInstalaciones.findIndex(
+      (c) => Number(c?.idCliente ?? c?.id) === id,
+    );
+    if (idx >= 0) {
+      this.listaInstalaciones[idx] = {
+        ...this.listaInstalaciones[idx],
+        instalaciones,
+      };
+      return this.listaInstalaciones[idx];
+    }
+    return actualizado;
+  }
+
+  /**
+   * GET `/inmuebles/arrendador/{id}` y vista de inmuebles del arrendador seleccionado.
+   */
+  cargarYMostrarInmueblesArrendador(
+    central: any,
+    onListo?: () => void,
+    mostrarVista = true,
+  ): void {
+    const id = this.idArrendadorDesdeCentral(central);
+    if (id == null) {
+      this.toastr.warning('Arrendador sin identificador válido.', 'Monitoreo');
+      return;
+    }
+
+    this.cargandoInmueblesArrendador = true;
+    const nombre = String(central?.nombreCliente ?? 'Arrendador');
+
+    this.inmueblesService
+      .obtenerInmueblesPorArrendador(id)
+      .pipe(
+        map((resp) =>
+          extraerInmueblesListadoApi(resp).map((item) =>
+            mapInmuebleMonitoreoInstalacion(item, nombre),
+          ),
+        ),
+        catchError((err) => {
+          console.error('Error al cargar inmuebles del arrendador:', err);
+          this.toastr.error(
+            'No se pudieron cargar los inmuebles del arrendador.',
+            'Monitoreo',
+          );
+          return of([] as Record<string, unknown>[]);
+        }),
+      )
+      .subscribe((instalaciones) => {
+        this.cargandoInmueblesArrendador = false;
+        const actualizado = this.sincronizarInstalacionesEnLista(
+          central,
+          instalaciones,
+        );
+
+        if (mostrarVista) {
+          this.verInstalacionesDeCentral(actualizado);
+        } else {
+          this.selectedCentral = actualizado;
+          if (this.map && this.flowMode === 'inmuebles') {
+            this.renderAccordingMode();
+          }
+        }
+
+        onListo?.();
+        this.cdr.markForCheck();
+      });
   }
 
   /** Al volver desde detalle instalación/local: restaurar lista de inmuebles o de locales. */
@@ -733,9 +902,17 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         (x: any) => String(x?.idCliente ?? x?.id ?? '') === idStr,
       );
       if (c) {
-        this.verInstalacionesDeCentral(c);
+        this.cargarYMostrarInmueblesArrendador(c, () =>
+          this.continuarRetornoDesdeDetalle(retorno, qp),
+        );
+        return;
       }
     }
+
+    this.continuarRetornoDesdeDetalle(retorno, qp);
+  }
+
+  private continuarRetornoDesdeDetalle(retorno: string, qp: ParamMap): void {
 
     if (retorno === 'inmuebles') {
       this.cerrarVistaZonasSinDirtyConfirm();
@@ -1213,8 +1390,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.ensureMapReadyAndRender();
   }
 
-  seleccionarCliente(central: any) {
-    this.verInstalacionesDeCentral(central);
+  seleccionarCliente(central: any): void {
+    this.cargarYMostrarInmueblesArrendador(central);
   }
 
   getClienteInfoEntries(
@@ -1302,15 +1479,75 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /** Botón Zonas en la card de inmueble: lista de locales + diagrama. */
-  abrirZonasInmueble(inmueble: any): void {
-    this.selectedInmuebleForLocales = inmueble;
+  private idInmuebleDesdeInstalacion(inmueble: any): number | null {
+    const id = Number(
+      inmueble?.id ?? inmueble?.idInstalacion ?? inmueble?.idDepartamento,
+    );
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
+
+  private sincronizarLocalesEnInmueble(
+    inmueble: any,
+    locales: Record<string, unknown>[],
+  ): void {
+    const id = this.idInmuebleDesdeInstalacion(inmueble);
+    if (id == null || !this.selectedCentral) return;
+    const insts = Array.isArray(this.selectedCentral.instalaciones)
+      ? this.selectedCentral.instalaciones
+      : [];
+    const idx = insts.findIndex(
+      (x: any) => Number(x?.id ?? x?.idInstalacion) === id,
+    );
+    if (idx >= 0) {
+      this.selectedCentral.instalaciones[idx] = {
+        ...this.selectedCentral.instalaciones[idx],
+        locales,
+      };
+    }
+  }
+
+  /** Botón Zonas: GET `/arrendatarios/inmueble/{idInmueble}` → lista de locales + diagrama. */
+  abrirZonasInmueble(inmueble: any, event?: Event): void {
+    event?.stopPropagation();
+
+    const idInmueble = this.idInmuebleDesdeInstalacion(inmueble);
+    if (idInmueble == null) {
+      this.toastr.warning('Inmueble sin identificador válido.', 'Monitoreo');
+      return;
+    }
+
+    this.selectedInmuebleForLocales = { ...inmueble, locales: [] };
     this.zonasViewActive = true;
     this.selectedLocalForMap = null;
     this.clearPin();
     this.rightPanelMode = 'locales';
     this.mapScopeMode = 'locales';
-    this.loadVisualLayout();
+    this.cargandoLocalesInmueble = true;
+
+    this.arrendatariosService
+      .obtenerArrendatariosPorInmueble(idInmueble)
+      .pipe(
+        map((resp) => {
+          const filas = extraerArrendatariosInmuebleApi(resp);
+          return mapArrendatariosInmuebleToLocalesMonitoreo(filas);
+        }),
+        catchError((err) => {
+          console.error('Error al cargar arrendatarios del inmueble:', err);
+          this.toastr.error(
+            'No se pudieron cargar los locales del inmueble.',
+            'Monitoreo',
+          );
+          return of([] as Record<string, unknown>[]);
+        }),
+      )
+      .subscribe((locales) => {
+        this.cargandoLocalesInmueble = false;
+        const actualizado = { ...inmueble, locales };
+        this.selectedInmuebleForLocales = actualizado;
+        this.sincronizarLocalesEnInmueble(inmueble, locales);
+        this.loadVisualLayout();
+        this.cdr.markForCheck();
+      });
   }
 
   volverDiagramaDesdeMapaLocal(): void {

@@ -17,6 +17,7 @@ export interface InmuebleApiItem {
   renta?: number | string;
   tiempoRentaAnios?: number | string;
   tiempoRenta?: number | string;
+  vigenciaAnios?: number | string;
   arrendador?: Record<string, unknown>;
   servicios?: InmuebleServicioApi[];
   zonas?: InmuebleZonaApi[];
@@ -35,14 +36,28 @@ export interface InmuebleServicioApi {
   tipoServicio?: { nombre?: string; servicio?: string };
 }
 
+export interface InmuebleLocalApi {
+  id?: number;
+  nombre?: string;
+  areaM2?: string | number;
+  estatus?: number;
+  mensualidad?: string | number;
+  giro?: string;
+  idZona?: number;
+}
+
 export interface InmuebleZonaApi {
+  id?: number;
+  idInmueble?: number;
   zonaPrincipal?: string;
   superficieZonaM2?: string | number;
   superficieDisponibleM2?: string | number;
   numeroZona?: number;
+  locales?: InmuebleLocalApi[];
 }
 
 export interface InmuebleArchivoApi {
+  id?: number;
   url?: string;
   nombre?: string;
 }
@@ -65,6 +80,7 @@ export interface InmuebleGridRow {
   estatusRegistroLabel: string;
   estatusRegistroClass: string;
   numZonas: number;
+  numLocales: number;
   numServicios: number;
   numArchivos: number;
   tieneMapa: boolean;
@@ -218,6 +234,7 @@ export function mapInmueblesApiToGridRows(items: unknown[]): InmuebleGridRow[] {
       estatusRegistroLabel: etiquetaEstatusRegistro(item.estatus),
       estatusRegistroClass: claseEstatusRegistro(item.estatus),
       numZonas: Array.isArray(item.zonas) ? item.zonas.length : 0,
+      numLocales: contarLocalesInmueble(item),
       numServicios: Array.isArray(item.servicios) ? item.servicios.length : 0,
       numArchivos: archivos.length,
       tieneMapa: item.lat != null && item.lng != null && Number.isFinite(Number(item.lat)),
@@ -239,6 +256,25 @@ export function nombreArrendador(arrendador?: Record<string, unknown>): string {
     .join(' ')
     .trim();
   return compuesto || String(arrendador['razonSocial'] ?? '—');
+}
+
+export function localesDeZona(zona: InmuebleZonaApi): InmuebleLocalApi[] {
+  const locales = zona.locales;
+  return Array.isArray(locales) ? locales : [];
+}
+
+export function contarLocalesInmueble(item: InmuebleApiItem): number {
+  if (!Array.isArray(item.zonas)) return 0;
+  return item.zonas.reduce((sum, z) => sum + localesDeZona(z).length, 0);
+}
+
+export function etiquetaEstatusLocal(estatus: unknown): string {
+  const n = Number(estatus);
+  if (n === 0) return 'Baja';
+  if (n === 1) return 'Disponible';
+  if (n === 2) return 'Ocupado';
+  if (n === 3) return 'Apartado';
+  return '—';
 }
 
 export function etiquetaEstatusInmueble(estatus: number | null): string {

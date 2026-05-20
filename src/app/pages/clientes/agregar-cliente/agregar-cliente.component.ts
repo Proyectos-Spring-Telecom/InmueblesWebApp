@@ -234,10 +234,25 @@ export class AgregarClienteComponent implements OnInit {
     };
 
     this.sociosFormArray.clear();
-    const sociosRaw = d['socios'];
+    const sociosRaw = d['sociosArrendadores'] ?? d['socios'];
     if (Array.isArray(sociosRaw) && sociosRaw.length > 0) {
       for (const raw of sociosRaw) {
         const s = raw as Record<string, unknown>;
+        const csfUrl = this.urlDocSocioApi(
+          s,
+          'constanciaSituacionFiscal',
+          'constanciaFiscalArchivo',
+        );
+        const compUrl = this.urlDocSocioApi(
+          s,
+          'comprobanteDomicilio',
+          'comprobanteDomicilioArchivo',
+        );
+        const ineUrl = this.urlDocSocioApi(
+          s,
+          'identificacionOficial',
+          'identificacionOficialArchivo',
+        );
         const g = this.crearSocioFormGroup();
         g.patchValue(
           {
@@ -246,12 +261,21 @@ export class AgregarClienteComponent implements OnInit {
             constanciaFiscalArchivo: null,
             comprobanteDomicilioArchivo: null,
             identificacionOficialArchivo: null,
-            constanciaFiscalUrl: urlOCadenaDeArchivoApi(s['constanciaFiscalArchivo']),
-            constanciaFiscalNombre: nombreDeArchivoApi(s['constanciaFiscalArchivo'], 'Constancia fiscal'),
-            comprobanteDomicilioUrl: urlOCadenaDeArchivoApi(s['comprobanteDomicilioArchivo']),
-            comprobanteDomicilioNombre: nombreDeArchivoApi(s['comprobanteDomicilioArchivo'], 'Comprobante'),
-            identificacionOficialUrl: urlOCadenaDeArchivoApi(s['identificacionOficialArchivo']),
-            identificacionOficialNombre: nombreDeArchivoApi(s['identificacionOficialArchivo'], 'Identificación'),
+            constanciaFiscalUrl: csfUrl,
+            constanciaFiscalNombre: nombreDeArchivoApi(
+              csfUrl || s['constanciaSituacionFiscal'] || s['constanciaFiscalArchivo'],
+              'Constancia fiscal',
+            ),
+            comprobanteDomicilioUrl: compUrl,
+            comprobanteDomicilioNombre: nombreDeArchivoApi(
+              compUrl || s['comprobanteDomicilio'] || s['comprobanteDomicilioArchivo'],
+              'Comprobante',
+            ),
+            identificacionOficialUrl: ineUrl,
+            identificacionOficialNombre: nombreDeArchivoApi(
+              ineUrl || s['identificacionOficial'] || s['identificacionOficialArchivo'],
+              'Identificación',
+            ),
           },
           { emitEvent: false },
         );
@@ -268,6 +292,24 @@ export class AgregarClienteComponent implements OnInit {
     if (!url?.trim()) return;
     const subtitulo = String(this.clienteForm.get('nombre')?.value ?? '').trim();
     this.docPreview?.abrir(url, titulo, subtitulo);
+  }
+
+  /** URL remota en control del formulario (edición por id). */
+  urlRemotoControl(controlName: string): string | null {
+    const v = this.clienteForm.get(controlName)?.value;
+    if (typeof v === 'string' && v.trim()) return v.trim();
+    return null;
+  }
+
+  private urlDocSocioApi(
+    socio: Record<string, unknown>,
+    ...keys: string[]
+  ): string {
+    for (const key of keys) {
+      const url = urlOCadenaDeArchivoApi(socio[key]);
+      if (url) return url;
+    }
+    return '';
   }
 
   /** Documentos remotos del GET: mismo criterio que inmuebles/arrendatarios (id + URL). */
@@ -370,7 +412,7 @@ export class AgregarClienteComponent implements OnInit {
       nombreCtrl?.setValidators([Validators.required]);
       if (value === 1) {
         apPat?.setValidators([Validators.required]);
-        apMat?.setValidators([Validators.required]);
+        apMat?.clearValidators();
       } else {
         apPat?.clearValidators();
         apMat?.clearValidators();
