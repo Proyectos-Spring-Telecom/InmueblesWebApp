@@ -1,7 +1,4 @@
-import {
-  etiquetaEstatusArrendatarioRegistro,
-  etiquetaTipoPersonaArrendatario,
-} from '../arrendatarios/arrendatarios-list.mapper';
+import { etiquetaEstatusArrendatarioRegistro } from '../arrendatarios/arrendatarios-list.mapper';
 import { extraerFilasListadoApi } from './monitoreo-clientes.mapper';
 import {
   fechaParaInputDate,
@@ -121,7 +118,6 @@ export function mapArrendatarioInmuebleToLocalMonitoreo(
     estatus: estatusNum,
     estatusLabel,
     estado: estatusNum === 0 ? 'inactivo' : 'ocupado',
-    tipoPersonaLabel: etiquetaTipoPersonaArrendatario(item['tipoPersona']),
     rentaFmt: rentaFmt !== '—' ? rentaFmt : '',
     rentaTotalFmt: rentaTotalFmt !== '—' ? rentaTotalFmt : '',
     mensualidadMxn: Number(item['renta']),

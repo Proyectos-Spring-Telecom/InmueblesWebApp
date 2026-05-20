@@ -255,7 +255,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
           if (idInmueble != null) {
             this.cargandoDetalle = true;
-            this.abrirSwalCargando();
           }
 
           return forkJoin({
@@ -269,10 +268,9 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
               idInmueble != null
                 ? this.inmueblesService.obtenerInmueble(idInmueble).pipe(catchError((err) => of({ __error: err })))
                 : of(null),
-          }).pipe(
+          }          ).pipe(
             finalize(() => {
               if (idInmueble != null) {
-                Swal.close();
                 this.cargandoDetalle = false;
               }
             }),
@@ -517,12 +515,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.localesZonaFormArray(zonaIndex).push(this.crearLocalZonaFormGroup());
   }
 
-  eliminarLocalZona(zonaIndex: number, localIndex: number): void {
-    const arr = this.localesZonaFormArray(zonaIndex);
-    if (arr.length <= 1) return;
-    arr.removeAt(localIndex);
-  }
-
   private crearEstacionamientoFormGroup(): FormGroup {
     return this.fb.group({
       estacionamientoPensionado: [''],
@@ -618,11 +610,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.sociosFormArray.push(this.crearSocioFormGroup());
   }
 
-  eliminarSocio(index: number): void {
-    if (this.sociosFormArray.length === 1) return;
-    this.sociosFormArray.removeAt(index);
-  }
-
   openSocioFilePicker(input: HTMLInputElement): void {
     input.click();
   }
@@ -688,18 +675,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       .filter((item): item is CatServicioItem => item != null);
   }
 
-  eliminarServicio(index: number): void {
-    if (this.serviciosFormArray.length === 1) return;
-    this.serviciosFormArray.removeAt(index);
-  }
-
   agregarZona(): void {
     this.zonasFormArray.push(this.crearZonaFormGroup());
-  }
-
-  eliminarZona(index: number): void {
-    if (this.zonasFormArray.length === 1) return;
-    this.zonasFormArray.removeAt(index);
   }
 
   agregarEstacionamiento(): void {
@@ -713,11 +690,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   agregarPago(): void {
     this.pagosFormArray.push(this.crearPagoFormGroup());
-  }
-
-  eliminarPago(index: number): void {
-    if (this.pagosFormArray.length === 1) return;
-    this.pagosFormArray.removeAt(index);
   }
 
   onServicioPagoFileSelected(event: Event, index: number): void {
@@ -743,11 +715,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     if (this.indiceGaleriaAnimando === indice) {
       this.indiceGaleriaAnimando = null;
     }
-  }
-
-  eliminarFotoGaleria(index: number): void {
-    if (this.galeriaImagenesFormArray.length === 1) return;
-    this.galeriaImagenesFormArray.removeAt(index);
   }
 
   abrirSelectorGaleria(input: HTMLInputElement): void {
@@ -895,7 +862,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private completarOcrConstanciaExitoso(
     constancia: NonNullable<ReturnType<typeof extraerConstanciaDeRespuestaOcr>>,
   ): void {
-    Swal.close();
     this.aplicarDatosConstanciaAlFormulario(mapearConstanciaAInmueble(constancia));
     this.finalizarAutocargaCsf();
     this.cdr.detectChanges();
@@ -956,19 +922,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     if (this.procesandoConstanciaOcr) return;
     this.procesandoConstanciaOcr = true;
 
-    void Swal.fire({
-      title: 'Leyendo constancia fiscal…',
-      text: 'Extrayendo datos del PDF, por favor espera.',
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      background: '#141a21',
-      color: '#ffffff',
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
-
     this.pdfOcrService
       .extraerConstanciaFiscal(file)
       .pipe(
@@ -980,7 +933,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         next: (res) => {
           const constancia = extraerConstanciaDeRespuestaOcr(res);
           if (String(res?.status ?? '').toLowerCase() !== 'success' || !constancia) {
-            Swal.close();
             this.finalizarAutocargaCsf();
             this.mostrarAlertaOcrFallido(
               res?.message ||
@@ -992,7 +944,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           this.completarOcrConstanciaExitoso(constancia);
         },
         error: (err) => {
-          Swal.close();
           this.finalizarAutocargaCsf();
           this.mostrarAlertaOcrFallido(this.mensajeErrorOcrHttp(err));
         },
@@ -1498,28 +1449,26 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private ejecutarActualizacionInmueble(): void {
     if (this.idInmueble == null) return;
     this.loadingSubmit = true;
-    const inicioPeticion = Date.now();
-    this.abrirSwalCargando();
     const fd = this.construirFormDataInmueble();
     this.inmueblesService.actualizarInmueble(this.idInmueble, fd).subscribe({
       next: () => {
-        this.cerrarSwalCargandoYRedirigirInmuebles(inicioPeticion);
+        this.mostrarExitoInmuebleYRedirigir(true);
       },
       error: (err: unknown) => {
-        Swal.close();
         this.loadingSubmit = false;
         const e = err as { error?: { message?: string }; message?: string };
         const text =
           e?.error?.message ??
           e?.message ??
           'No se pudo actualizar el inmueble. Verifique la información e intente de nuevo.';
-        Swal.fire({
-          title: 'No se pudo guardar',
+        void Swal.fire({
+          color: '#ffffff',
+          background: '#141a21',
+          title: '¡Ops!',
           text: String(text),
           icon: 'error',
           confirmButtonColor: '#3085d6',
-          background: '#141a21',
-          color: '#ffffff',
+          confirmButtonText: 'Confirmar',
         });
       },
     });
@@ -1527,55 +1476,48 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   private ejecutarCreacionInmueble(): void {
     this.loadingSubmit = true;
-    const inicioPeticion = Date.now();
-    this.abrirSwalCargando();
     const fd = this.construirFormDataInmueble();
     this.inmueblesService.crearInmueble(fd).subscribe({
       next: () => {
-        this.cerrarSwalCargandoYRedirigirInmuebles(inicioPeticion);
+        this.mostrarExitoInmuebleYRedirigir(false);
       },
       error: (err: unknown) => {
-        Swal.close();
         this.loadingSubmit = false;
         const e = err as { error?: { message?: string }; message?: string };
         const text =
           e?.error?.message ??
           e?.message ??
           'No se pudo registrar el inmueble. Verifique la información e intente de nuevo.';
-        Swal.fire({
-          title: 'No se pudo guardar',
+        void Swal.fire({
+          color: '#ffffff',
+          background: '#141a21',
+          title: '¡Ops!',
           text: String(text),
           icon: 'error',
           confirmButtonColor: '#3085d6',
-          background: '#141a21',
-          color: '#ffffff',
+          confirmButtonText: 'Confirmar',
         });
       },
     });
   }
 
-  private abrirSwalCargando(): void {
+  /** Muestra el mismo éxito que en el resto del sistema; luego navega. */
+  private mostrarExitoInmuebleYRedirigir(esActualizacion: boolean): void {
+    this.loadingSubmit = false;
+    const text = esActualizacion
+      ? 'Los datos del inmueble se actualizaron correctamente.'
+      : 'Se registró el inmueble de manera exitosa.';
     void Swal.fire({
-      title: 'Cargando...',
-      background: '#141a21',
       color: '#ffffff',
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
-  }
-
-  /** Oculta el spinner tras al menos 2 s desde el inicio y navega a la lista. */
-  private cerrarSwalCargandoYRedirigirInmuebles(inicioPeticion: number): void {
-    const restanteMs = Math.max(0, 2000 - (Date.now() - inicioPeticion));
-    setTimeout(() => {
-      Swal.close();
-      this.loadingSubmit = false;
+      background: '#141a21',
+      title: '¡Operación Exitosa!',
+      text,
+      icon: 'success',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Confirmar',
+    }).then(() => {
       void this.router.navigateByUrl('/inmuebles');
-    }, restanteMs);
+    });
   }
 
   /** Entero en FormData: solo dígitos (evita `""` o decimales en campos int del API). */

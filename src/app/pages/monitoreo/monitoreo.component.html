@@ -88,18 +88,13 @@
                               <strong>Vigencia:</strong> {{ loc.vigenciaTexto }}
                             </div>
                             <div class="inmueble-line" *ngIf="loc.representanteLegal">
-                              <mat-icon>badge</mat-icon>
-                              <span>{{ loc.representanteLegal }}</span>
+                              <span><strong>Representante legal:</strong> {{ loc.representanteLegal }}</span>
                             </div>
                             <div class="inmueble-line" *ngIf="loc.telefonoRepresentante">
-                              <mat-icon>phone</mat-icon>
-                              <span>{{ loc.telefonoRepresentante }}</span>
+                              <span><strong>Teléfono del representante:</strong> {{ loc.telefonoRepresentante }}</span>
                             </div>
                             <div class="inmueble-line" *ngIf="loc.metrosRentadosTexto">
                               <strong>Superficie rentada:</strong> {{ loc.metrosRentadosTexto }}
-                            </div>
-                            <div class="inmueble-line" *ngIf="loc.tipoPersonaLabel && loc.tipoPersonaLabel !== '—'">
-                              <strong>Tipo:</strong> {{ loc.tipoPersonaLabel }}
                             </div>
                           </div>
                         </div>

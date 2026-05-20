@@ -38,6 +38,20 @@ body {
   height: 100%;
 }
 
+/*
+ * NO BORRAR — Z-index para modales de documento/mapa/pdf (.docs-backdrop).
+ * El backdrop vive dentro de mat-drawer-content; en modo overlay el sidenav gana como hermano
+ * y el modal quedaría detrás sin esto. Sólo aplica :has(...) mientras el modal está abierto.
+ */
+html body .mat-drawer-container:has(.docs-backdrop) > .mat-drawer.sidebarNav {
+  z-index: 119998 !important;
+}
+
+html body .mat-drawer-container:has(.docs-backdrop) > .mat-drawer-content {
+  position: relative;
+  z-index: 119999 !important;
+}
+
 .container {
   max-width: $boxedWidth;
   padding-left: 24px;
