@@ -65,17 +65,16 @@
           >
             <i class="fa fa-eye"></i> Ver
           </button>
-          <a
-            *ngIf="a.url"
-            class="bg-success inm-doc-pill inm-doc-pill--link"
-            [href]="a.url"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            mat-flat-button
+            class="bg-success inm-doc-pill"
             [title]="a.nombre || 'Documento'"
-            [attr.download]="a.nombre || null"
+            [disabled]="!a.url"
+            (click)="descargarDocumento(a.url, a.nombre || 'Documento', $event)"
           >
-            <i class="fa fa-download"></i> Descargar
-          </a>
+            <i class="fa fa-download"></i> Descarga
+          </button>
         </div>
       </article>
     </div>
@@ -86,105 +85,111 @@
 
   <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
     <div class="row g-3 arr-socios-grid" *ngIf="socios.length; else sinSocios">
-      <div class="col-12 col-md-6 col-xl-4 d-flex" *ngFor="let so of socios; let si = index">
-        <article class="arr-socio-card w-100">
-        <header class="arr-socio-card__head">
-          <div class="arr-socio-card__avatar" aria-hidden="true">
-            <i class="fa fa-users"></i>
-          </div>
-          <div class="arr-socio-card__identity">
-            <h4 class="arr-socio-card__nombre">{{ so['nombre'] || 'Socio ' + (si + 1) }}</h4>
-            <span class="arr-socio-card__rfc" *ngIf="so['rfc']">
-              <span class="arr-socio-card__rfc-label">RFC</span>
-              {{ so['rfc'] }}
-            </span>
-          </div>
-        </header>
-        <!-- <p class="arr-socio-card__hint">
-          Documentación del socio (constancia fiscal, domicilio e identificación).
-        </p> -->
-        <ul class="arr-socio-card__docs" aria-label="Documentos del socio">
-          <li *ngIf="textoSocioDoc(so['constanciaSituacionFiscal'])">
-            <div class="row g-2 align-items-center mx-0">
-              <span class="col-12 col-sm arr-socio-doc__label">
+      <div class="col-12 col-md-6 col-xl-4" *ngFor="let so of socios; let si = index">
+        <article class="arr-socio-card">
+          <header class="arr-socio-card__head">
+            <div class="arr-socio-card__avatar" aria-hidden="true">
+              <i class="fa fa-users"></i>
+            </div>
+            <div class="arr-socio-card__identity">
+              <h4 class="arr-socio-card__nombre">{{ so['nombre'] || 'Socio ' + (si + 1) }}</h4>
+              <span class="arr-socio-card__rfc" *ngIf="so['rfc']">
+                <span class="arr-socio-card__rfc-label">RFC</span>
+                {{ so['rfc'] }}
+              </span>
+            </div>
+          </header>
+          <ul class="arr-socio-card__docs" aria-label="Documentos del socio">
+            <li *ngIf="textoSocioDoc(so['constanciaSituacionFiscal'])">
+              <span class="arr-socio-doc__label">
                 <i class="fa fa-file-text-o"></i> Constancia fiscal
               </span>
-              <div class="col-12 col-sm-auto arr-socio-doc__actions d-flex flex-wrap justify-content-sm-end">
-              <button
-                type="button"
-                mat-flat-button
-                class="bg-warn arr-socio-doc__btn"
-                (click)="
-                  abrirDocumento(
-                    $any(so['constanciaSituacionFiscal']),
-                    'Constancia situación fiscal'
-                  )
-                "
-              >
-                <i class="fa fa-eye"></i> Ver
-              </button>
-              <a
-                class="bg-success arr-socio-doc__link"
-                [href]="$any(so['constanciaSituacionFiscal'])"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <i class="fa fa-external-link"></i> Abrir
-              </a>
+              <div class="arr-socio-doc__actions">
+                <button
+                  type="button"
+                  mat-flat-button
+                  class="bg-warn arr-socio-doc__btn"
+                  (click)="
+                    abrirDocumento(
+                      $any(so['constanciaSituacionFiscal']),
+                      'Constancia situación fiscal'
+                    )
+                  "
+                >
+                  <i class="fa fa-eye"></i> Ver
+                </button>
+                <button
+                  type="button"
+                  class="bg-success arr-socio-doc__link"
+                  (click)="
+                    descargarDocumento(
+                      $any(so['constanciaSituacionFiscal']),
+                      'Constancia situación fiscal',
+                      $event
+                    )
+                  "
+                >
+                  <i class="fa fa-download"></i> Descarga
+                </button>
               </div>
-            </div>
-          </li>
-          <li *ngIf="textoSocioDoc(so['comprobanteDomicilio'])">
-            <div class="row g-2 align-items-center mx-0">
-              <span class="col-12 col-sm arr-socio-doc__label">
+            </li>
+            <li *ngIf="textoSocioDoc(so['comprobanteDomicilio'])">
+              <span class="arr-socio-doc__label">
                 <i class="fa fa-home"></i> Comprobante domicilio
               </span>
-              <div class="col-12 col-sm-auto arr-socio-doc__actions d-flex flex-wrap justify-content-sm-end">
-              <button
-                type="button"
-                mat-flat-button
-                class="bg-warn arr-socio-doc__btn"
-                (click)="abrirDocumento($any(so['comprobanteDomicilio']), 'Comprobante de domicilio')"
-              >
-                <i class="fa fa-eye"></i> Ver
-              </button>
-              <a
-                class="bg-success arr-socio-doc__link"
-                [href]="$any(so['comprobanteDomicilio'])"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <i class="fa fa-external-link"></i> Abrir
-              </a>
+              <div class="arr-socio-doc__actions">
+                <button
+                  type="button"
+                  mat-flat-button
+                  class="bg-warn arr-socio-doc__btn"
+                  (click)="abrirDocumento($any(so['comprobanteDomicilio']), 'Comprobante de domicilio')"
+                >
+                  <i class="fa fa-eye"></i> Ver
+                </button>
+                <button
+                  type="button"
+                  class="bg-success arr-socio-doc__link"
+                  (click)="
+                    descargarDocumento(
+                      $any(so['comprobanteDomicilio']),
+                      'Comprobante de domicilio',
+                      $event
+                    )
+                  "
+                >
+                  <i class="fa fa-download"></i> Descarga
+                </button>
               </div>
-            </div>
-          </li>
-          <li *ngIf="textoSocioDoc(so['identificacionOficial'])">
-            <div class="row g-2 align-items-center mx-0">
-              <span class="col-12 col-sm arr-socio-doc__label">
+            </li>
+            <li *ngIf="textoSocioDoc(so['identificacionOficial'])">
+              <span class="arr-socio-doc__label">
                 <i class="fa fa-id-card-o"></i> Identificación oficial
               </span>
-              <div class="col-12 col-sm-auto arr-socio-doc__actions d-flex flex-wrap justify-content-sm-end">
-              <button
-                type="button"
-                mat-flat-button
-                class="bg-warn arr-socio-doc__btn"
-                (click)="abrirDocumento($any(so['identificacionOficial']), 'Identificación oficial')"
-              >
-                <i class="fa fa-eye"></i> Ver
-              </button>
-              <a
-                class="bg-success arr-socio-doc__link"
-                [href]="$any(so['identificacionOficial'])"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <i class="fa fa-external-link"></i> Abrir
-              </a>
+              <div class="arr-socio-doc__actions">
+                <button
+                  type="button"
+                  mat-flat-button
+                  class="bg-warn arr-socio-doc__btn"
+                  (click)="abrirDocumento($any(so['identificacionOficial']), 'Identificación oficial')"
+                >
+                  <i class="fa fa-eye"></i> Ver
+                </button>
+                <button
+                  type="button"
+                  class="bg-success arr-socio-doc__link"
+                  (click)="
+                    descargarDocumento(
+                      $any(so['identificacionOficial']),
+                      'Identificación oficial',
+                      $event
+                    )
+                  "
+                >
+                  <i class="fa fa-download"></i> Descarga
+                </button>
               </div>
-            </div>
-          </li>
-        </ul>
+            </li>
+          </ul>
         </article>
       </div>
     </div>

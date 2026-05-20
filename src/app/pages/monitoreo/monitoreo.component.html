@@ -51,17 +51,23 @@
                 <div class="text-center py-4 text-muted" *ngIf="cargandoLocalesInmueble">
                   Cargando locales…
                 </div>
-                <ng-container *ngIf="!cargandoLocalesInmueble && localesParaListaZonas.length > 0">
+                <ng-container *ngIf="!cargandoLocalesInmueble && localesZonasLista.length > 0">
                   <div class="insta-item instalacion"
-                    *ngFor="let loc of localesParaListaZonas; let li = index; trackBy: trackByLocalEnZonas"
+                    *ngFor="let loc of localesZonasLista; let li = index; trackBy: trackByLocalEnZonas"
                     [@monitorItemIn] [attr.id]="idAtributoFilaListaLocal(loc, li)"
                     [class.local-zona-row--selected]="isLocalResaltadoEnListaZonas(loc, li)"
                     (click)="onListaLocalRowClick(loc, li)">
                     <div class="inmueble-card-shell local-zona-list-card">
                       <div [@localCardInfo]="localListaAnimKey(loc, li)">
                         <div class="inmueble-content-grid local-zona-content-grid">
-                          <div class="inmueble-media">
-                            <img [src]="getImagenLocalLista(loc, li)"
+                          <div class="inmueble-media"
+                            [class.inmueble-media--icon]="localMuestraIconoDisponible(loc)">
+                            <span *ngIf="localMuestraIconoDisponible(loc)" class="local-zona-media-icon"
+                              aria-hidden="true">
+                              <mat-icon>storefront</mat-icon>
+                            </span>
+                            <img *ngIf="!localMuestraIconoDisponible(loc)"
+                              [src]="getImagenFachadaLocalLista(loc)"
                               [attr.alt]="'Fachada — ' + getNombreLocalEnLista(loc)" />
                             <span class="inmueble-status" [ngClass]="getEstadoChipClassLista(loc)">
                               {{ getOcupacionEtiquetaLista(loc) }}
@@ -71,56 +77,74 @@
                           <div class="inmueble-info">
                             <div class="inmueble-top">
                               <div class="inmueble-name text-truncate">{{ getNombreLocalEnLista(loc) }}</div>
-                              <div class="inmueble-estatus-pill" *ngIf="loc.estatusLabel && loc.estatusLabel !== '—'"
-                                [class.inmueble-estatus-pill--activo]="loc.estatus === 1"
-                                [class.inmueble-estatus-pill--inactivo]="loc.estatus === 0">
-                                <span>{{ loc.estatusLabel }}</span>
+                            </div>
+                            <div class="local-zona-meta-wrap">
+                              <div class="inmueble-line" *ngIf="getOcupanteLocalLista(loc) as arrendatarioNom">
+                                <strong>Arrendatario:</strong> {{ arrendatarioNom }}
                               </div>
-                            </div>
-                            <div class="inmueble-line mt-1" *ngIf="loc.rentaFmt">
-                              <strong>Renta:</strong> {{ loc.rentaFmt }}
-                              <ng-container *ngIf="loc.monedaContrato"> ({{ loc.monedaContrato }})</ng-container>
-                            </div>
-                            <div class="inmueble-line" *ngIf="loc.rentaTotalFmt">
-                              <strong>Total contrato:</strong> {{ loc.rentaTotalFmt }}
-                            </div>
-                            <div class="inmueble-line" *ngIf="loc.vigenciaTexto">
-                              <strong>Vigencia:</strong> {{ loc.vigenciaTexto }}
-                            </div>
-                            <div class="inmueble-line" *ngIf="loc.representanteLegal">
-                              <span><strong>Representante legal:</strong> {{ loc.representanteLegal }}</span>
-                            </div>
-                            <div class="inmueble-line" *ngIf="loc.telefonoRepresentante">
-                              <span><strong>Teléfono del representante:</strong> {{ loc.telefonoRepresentante }}</span>
-                            </div>
-                            <div class="inmueble-line" *ngIf="loc.metrosRentadosTexto">
-                              <strong>Superficie rentada:</strong> {{ loc.metrosRentadosTexto }}
+                              <div class="inmueble-line" *ngIf="loc.zonaPrincipal">
+                                <strong>Zona:</strong> {{ loc.zonaPrincipal }}
+                              </div>
+                              <div class="inmueble-line" *ngIf="loc.giro">
+                                <strong>Giro:</strong> {{ loc.giro }}
+                              </div>
+                              <div class="inmueble-line" *ngIf="loc.rentaFmt">
+                                <strong>{{ localTieneInformacion(loc) ? 'Renta:' : 'Mensualidad:' }}</strong>
+                                {{ loc.rentaFmt }}
+                                <ng-container *ngIf="localTieneInformacion(loc) && loc.monedaContrato">
+                                  ({{ loc.monedaContrato }})
+                                </ng-container>
+                              </div>
+                              <div class="inmueble-line" *ngIf="localTieneInformacion(loc) && loc.rentaTotalFmt">
+                                <strong>Total contrato:</strong> {{ loc.rentaTotalFmt }}
+                              </div>
+                              <div class="inmueble-line" *ngIf="localTieneInformacion(loc) && loc.vigenciaTexto">
+                                <strong>Vigencia:</strong> {{ loc.vigenciaTexto }}
+                              </div>
+                              <div class="inmueble-line" *ngIf="localTieneInformacion(loc) && loc.representanteLegal">
+                                <strong>Representante legal:</strong> {{ loc.representanteLegal }}
+                              </div>
+                              <div class="inmueble-line"
+                                *ngIf="localTieneInformacion(loc) && loc.telefonoRepresentante">
+                                <strong>Teléfono del representante:</strong> {{ loc.telefonoRepresentante }}
+                              </div>
+                              <div class="inmueble-line" *ngIf="loc.metrosRentadosTexto">
+                                <strong>{{ localTieneInformacion(loc) ? 'Superficie rentada:' : 'Superficie:' }}</strong>
+                                {{ loc.metrosRentadosTexto }}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                       <div class="inmueble-footer d-flex flex-wrap gap-2 mt-2 justify-content-end">
-                        <!-- <button *ngIf="zonasViewActive && rightPanelMode === 'mapa' && mapScopeMode === 'locales'"
-                          type="button" class="btn btn-sm" (click)="centrarMapaEnLocal(loc, li, $event)">
-                          Centrar
-                        </button> -->
                         <button type="button" class="btn btn-sm monitor-list-btn monitor-list-btn--efectivo"
                           (click)="toggleVistaLocal(loc, li, $event)">
                           {{ isLocalVisibleEnMapa(loc, li) ? 'Diagrama' : 'Mapa' }}
                         </button>
-                        <button type="button" class="btn btn-sm monitor-list-btn monitor-list-btn--credito"
+                        <button *ngIf="localTieneInformacion(loc)" type="button"
+                          class="btn btn-sm monitor-list-btn monitor-list-btn--credito"
                           (click)="onInfoLocal(loc, $event)">Información</button>
                       </div>
                     </div>
                   </div>
                 </ng-container>
-                <div class="insta-empty" *ngIf="!cargandoLocalesInmueble && localesParaListaZonas.length === 0">
-                  <div class="insta-empty-icon">
-                    <mat-icon>storefront</mat-icon>
+                <div class="empty-inmuebles-arrendador"
+                  *ngIf="!cargandoLocalesInmueble && localesZonasLista.length === 0"
+                  role="status" aria-live="polite">
+                  <div class="empty-inmuebles-arrendador__glow" aria-hidden="true"></div>
+                  <div class="empty-inmuebles-arrendador__art" aria-hidden="true">
+                    <span class="empty-inmuebles-arrendador__ring"></span>
+                    <span class="empty-inmuebles-arrendador__ring empty-inmuebles-arrendador__ring--mid"></span>
+                    <span class="empty-inmuebles-arrendador__icon-wrap">
+                      <mat-icon class="empty-inmuebles-arrendador__icon">maps_home_work</mat-icon>
+                    </span>
                   </div>
-                  <div class="insta-empty-text">
-                    <h6>Sin locales</h6>
-                    <p>No hay locales para mostrar en este inmueble.</p>
+                  <div class="empty-inmuebles-arrendador__text">
+                    <p class="empty-inmuebles-arrendador__title">Tu lista de locales está vacía</p>
+                    <p class="empty-inmuebles-arrendador__lead">
+                      Los registros aparecerán automáticamente en esta sección conforme se agreguen locales al inmueble
+                      <strong>{{ nombreInmuebleCabeceraLocales }}</strong>
+                    </p>
                   </div>
                 </div>
               </ng-container>
@@ -132,7 +156,7 @@
                 <div class="insta-item" *ngFor="let item of listaVisible; let i = index" [@monitorItemIn]
                   [class.central]="viewMode === 'centrales'" [class.instalacion]="viewMode === 'instalaciones'"
                   [class.active]="viewMode === 'centrales' && item.id === selectedId"
-                  (click)="selectInstalacion(item, i)">
+                  (click)="viewMode === 'instalaciones' ? irADetalleInmueble(item, $event) : selectInstalacion(item, i)">
                   <div class="inmueble-card-shell">
                     <div class="inmueble-content-grid">
                       <div class="inmueble-media">
@@ -239,13 +263,15 @@
               <div class="locales-card">
                 <div class="locales-card__head">
                   <h5 class="m-0">Locales del Inmueble</h5>
-                  <div class="locales-actions d-flex gap-2">
-                    <button type="button" class="btn btn-sm" [disabled]="!uiState.dirty || uiState.saving"
-                      (click)="saveLayout()">
-                      {{ uiState.saving ? 'Guardando...' : 'Guardar' }}
+                  <div class="locales-layout-actions d-flex flex-wrap gap-2">
+                    <button type="button"
+                      class="btn btn-sm monitor-list-btn monitor-list-btn--efectivo locales-layout-btn locales-layout-btn--save"
+                      [disabled]="diagramaMapaVacio || !uiState.dirty || uiState.saving" (click)="saveLayout()">
+                      {{ uiState.saving ? 'Guardando…' : 'Guardar' }}
                     </button>
-                    <button type="button" class="btn btn-sm" [disabled]="!uiState.dirty"
-                      (click)="restoreLastSavedLayout()">
+                    <button type="button"
+                      class="btn btn-sm monitor-list-btn locales-layout-btn locales-layout-btn--restore"
+                      [disabled]="!uiState.dirty || uiState.saving" (click)="restoreLastSavedLayout()">
                       Restaurar
                     </button>
                   </div>
@@ -266,71 +292,54 @@
                   </div> -->
                   <div class="locales-error" *ngIf="uiState.error">{{ uiState.error }}</div>
 
-                  <div class="locales-board" (mousedown)="startPan($event)" (mousemove)="onDragMove($event)"
-                    (mouseup)="onDragEnd(); endPan()" (mouseleave)="onDragEnd(); endPan()"
-                    (wheel)="onLayoutWheel($event)" (click)="clearSelection(); closeInlineEditors()">
-                    <div class="locales-floating-controls">
-                      <div class="locales-controls-row">
-                        <div class="locales-inline-editor" [@inlineEditorPop] *ngIf="showZoneNameEditor"
-                          (click)="$event.stopPropagation()">
-                          <input type="text" class="form-control form-control-sm"
-                            placeholder="Ej. Planta baja, Piso 1, Piso 2…" [(ngModel)]="zoneNameDraft"
-                            (keydown.enter)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()" />
-                          <div class="d-flex gap-1 mt-1">
-                            <button type="button" class="btn btn-sm" [disabled]="!zoneNameDraft.trim()"
-                              (click)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()">
-                              {{ isRenamingZone ? 'Renombrar' : 'Crear zona' }}
-                            </button>
-                            <button type="button" class="btn btn-sm" (click)="cancelAddZona()">Cancelar</button>
-                          </div>
-                        </div>
-                        <div class="locales-inline-editor" [@inlineEditorPop] *ngIf="showLocalNameEditor"
-                          (click)="$event.stopPropagation()">
-                          <input type="text" class="form-control form-control-sm" placeholder="Nombre del local"
-                            [(ngModel)]="localNameDraft" (keydown.enter)="confirmAddLocal()" />
-                          <div class="d-flex gap-1 mt-1">
-                            <button type="button" class="btn btn-sm" [disabled]="!localNameDraft.trim()"
-                              (click)="confirmAddLocal()">Crear local</button>
-                            <button type="button" class="btn btn-sm" (click)="cancelAddLocal()">Cancelar</button>
-                          </div>
-                        </div>
-                        <div class="locales-create-row">
-                          <button type="button" class="btn btn-sm btn-create-zona"
-                            (click)="addZona(); $event.stopPropagation()">Agregar Zona</button>
-                          <button type="button" class="btn btn-sm btn-create-local"
-                            (click)="addLocal(); $event.stopPropagation()">Agregar Local</button>
-                        </div>
-                        <div class="locales-zoom-stack">
-                          <button type="button" class="btn btn-sm locales-zoom-btn"
-                            (click)="zoomIn(); $event.stopPropagation()">+</button>
-                          <button type="button" class="btn btn-sm locales-zoom-btn"
-                            (click)="zoomOut(); $event.stopPropagation()">-</button>
+                  <div class="locales-board" (mousedown)="!diagramaMapaVacio && startPan($event)"
+                    (mousemove)="onDragMove($event)" (mouseup)="onDragEnd(); endPan()"
+                    (mouseleave)="onDragEnd(); endPan()" (wheel)="!diagramaMapaVacio && onLayoutWheel($event)"
+                    (click)="clearSelection(); closeInlineEditors()">
+                    <div class="locales-board-loading text-muted" *ngIf="uiState.loading" role="status">
+                      Cargando plano del inmueble…
+                    </div>
+                    <div class="locales-board-empty" *ngIf="!uiState.loading && diagramaMapaVacio"
+                      role="status" aria-live="polite">
+                      <mat-icon class="locales-board-empty__icon" aria-hidden="true">maps_home_work</mat-icon>
+                      <p class="locales-board-empty__title">Sin zonas ni locales</p>
+                      <p class="locales-board-empty__lead">
+                        Este inmueble aún no tiene zonas ni locales en el catálogo.
+                        Cuando se registren, podrá armar el diagrama desde esta vista.
+                      </p>
+                    </div>
+                    <div class="locales-board-hint" *ngIf="!uiState.loading && diagramaPlanoDesdeCatalogo"
+                      role="note">
+                      <mat-icon aria-hidden="true">touch_app</mat-icon>
+                      <p>
+                        Aún no hay plano guardado. Ordene las zonas y locales en el diagrama
+                        y pulse <strong>Guardar</strong> para conservar el diseño.
+                      </p>
+                    </div>
+                    <div class="locales-floating-controls" *ngIf="!diagramaMapaVacio && !uiState.loading">
+                      <div class="locales-inline-editor" [@inlineEditorPop] *ngIf="showZoneNameEditor"
+                        (click)="$event.stopPropagation()">
+                        <input type="text" class="form-control form-control-sm"
+                          placeholder="Nombre de la zona" [(ngModel)]="zoneNameDraft"
+                          (keydown.enter)="applyRenameZonaSelected()" />
+                        <div class="d-flex gap-1 mt-1">
+                          <button type="button" class="btn btn-sm monitor-list-btn monitor-list-btn--efectivo"
+                            [disabled]="!zoneNameDraft.trim()" (click)="applyRenameZonaSelected()">
+                            Renombrar
+                          </button>
+                          <button type="button" class="btn btn-sm monitor-list-btn"
+                            (click)="closeInlineEditors()">Cancelar</button>
                         </div>
                       </div>
-                    </div>
-                    <div class="locales-inline-editor locales-inline-editor--mobile" [@inlineEditorPop]
-                      *ngIf="showZoneNameEditor || showLocalNameEditor" (click)="$event.stopPropagation()">
-                      <input *ngIf="showZoneNameEditor" type="text" class="form-control form-control-sm"
-                        placeholder="Ej. Planta baja, Piso 1…" [(ngModel)]="zoneNameDraft"
-                        (keydown.enter)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()" />
-                      <input *ngIf="showLocalNameEditor" type="text" class="form-control form-control-sm"
-                        placeholder="Nombre del local" [(ngModel)]="localNameDraft"
-                        (keydown.enter)="confirmAddLocal()" />
-                      <div class="d-flex gap-1 mt-1">
-                        <button *ngIf="showZoneNameEditor" type="button" class="btn btn-sm"
-                          [disabled]="!zoneNameDraft.trim()"
-                          (click)="isRenamingZone ? applyRenameZonaSelected() : confirmAddZona()">
-                          {{ isRenamingZone ? 'Renombrar' : 'Crear zona' }}
-                        </button>
-                        <button *ngIf="showZoneNameEditor" type="button" class="btn btn-sm"
-                          (click)="cancelAddZona()">Cancelar</button>
-                        <button *ngIf="showLocalNameEditor" type="button" class="btn btn-sm"
-                          [disabled]="!localNameDraft.trim()" (click)="confirmAddLocal()">Crear local</button>
-                        <button *ngIf="showLocalNameEditor" type="button" class="btn btn-sm"
-                          (click)="cancelAddLocal()">Cancelar</button>
+                      <div class="locales-zoom-stack">
+                        <button type="button" class="btn btn-sm locales-zoom-btn"
+                          (click)="zoomIn(); $event.stopPropagation()">+</button>
+                        <button type="button" class="btn btn-sm locales-zoom-btn"
+                          (click)="zoomOut(); $event.stopPropagation()">-</button>
                       </div>
                     </div>
-                    <div class="locales-stage" [style.width.px]="visualLayout.canvas.width"
+                    <div class="locales-stage" *ngIf="!diagramaMapaVacio && !uiState.loading"
+                      [style.width.px]="visualLayout.canvas.width"
                       [style.height.px]="visualLayout.canvas.height"
                       [style.transform]="'translate(' + pan.x + 'px,' + pan.y + 'px) scale(' + zoom + ')'">
                       <div class="zona-item" *ngFor="let zona of visualLayout.zonas; trackBy: trackByZona"

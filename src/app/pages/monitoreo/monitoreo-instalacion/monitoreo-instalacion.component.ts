@@ -30,10 +30,6 @@ import {
   CatMetodosPagoService,
 } from 'src/app/services/moduleService/cat-metodos-pago.service';
 import {
-  CatServicioItem,
-  CatServiciosService,
-} from 'src/app/services/moduleService/cat-servicios.service';
-import {
   contarMontoSimbolosAntesCursor,
   cursorMontoTrasFormato,
   extraerMontoRawDesdeDisplay,
@@ -41,6 +37,54 @@ import {
   formatearMonedaDesdeLimpia,
   parseMonedaNumerico,
 } from 'src/app/shared/valor-miles-format';
+import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
+import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
+import {
+  InmuebleApiItem,
+  nombreServicio,
+} from '../../inmuebles/inmuebles-list.mapper';
+import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
+import {
+  arrendadorNombreDesdeApi,
+  buildArchivosInmuebleLista,
+  buildServiciosMonitoreoInmueble,
+  buildZonasMonitoreoInmueble,
+  coordenadasInmuebleDesdeApi,
+  esRentaDesdeEstatusInmueble,
+  extraerInmuebleDetalleApi,
+  MonitoreoExpedienteDoc,
+  MonitoreoZonaFila,
+  superficieDisponiblePredioTexto,
+  tituloInmuebleDesdeApi,
+  urlLicenciaInmueble,
+  urlPdfTarjetaInmueble,
+  urlPlanoInmueble,
+  urlImagenTarjetaInmueble,
+  urlsGaleriaInmueble,
+} from '../monitoreo-inmueble.mapper';
+import {
+  extraerPagoDetalleApi,
+  mapPagosApiToGridRows,
+  mapPagoApiToVistaDetalle,
+  PagoGridRow,
+  extraerFilasPagosApi,
+  VistaPagoDetalleModal,
+} from '../monitoreo-pagos.mapper';
+import {
+  ArrendatarioApiItem,
+  buildExpedienteArrendatarioLista,
+  buildServiciosMonitoreoArrendatario,
+  extraerArrendatarioDetalleApi,
+  estatusLocalDesdeArrendatario,
+  nombreArrendadorDesdeArrendatarioApi,
+  seleccionarContratoArrendatario,
+  serviciosArrendatarioPagoOpciones,
+  tituloLocalDesdeArrendatario,
+  urlContratoRentaArrendatario,
+  archivoContratoRentaArrendatario,
+  documentacionLocalEsPdf,
+  urlsGaleriaArrendatario,
+} from '../monitoreo-arrendatario-detalle.mapper';
 
 const IVA_CONTRATO = 0.16;
 
@@ -79,17 +123,18 @@ interface ServicioDetalle {
   contrato: string;
   fechaPago: string;
   fechaLimitePago: string;
+  urlComprobante?: string;
 }
 
 type FrecuenciaPago = 'mensual' | 'bimestral-impar' | 'bimestral-par' | 'anual-marzo';
 
-/** Fila de expediente en detalle de inmueble (mismas categorías que el formulario de alta). */
-interface MonitoreoExpedienteDoc {
-  etiqueta: string;
-  detalle: string;
-}
 
 type PagoEstatus = 'Pagado' | 'Pendiente' | 'Cancelado';
+
+interface ServicioInmueblePagoOpcion {
+  id: number;
+  nombre: string;
+}
 
 /** API `estatus`: 2 Pendiente, 1 Pagado, 0 Cancelado (Swagger). */
 function estatusPagoToApi(estatus: PagoEstatus): number {
@@ -103,16 +148,6 @@ function estatusPagoToApi(estatus: PagoEstatus): number {
     default:
       return 2;
   }
-}
-
-interface PagoRow {
-  id: number;
-  concepto: string;
-  fechaPago: string;
-  fechaLimitePago: string;
-  monto: number;
-  metodo: string;
-  estatus: PagoEstatus;
 }
 
 @Component({
@@ -170,6 +205,14 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
    * Requerido para POST `/pago` (sin selector en UI).
    */
   idInmuebleContext: number | null = null;
+  /** Arrendatario del local (`?idArrendatario=`). GET `/arrendatarios/{id}`. */
+  idArrendatarioContext: number | null = null;
+  /** Local en contexto (`?idLocal=`) para elegir contrato en el detalle. */
+  idLocalContext: number | null = null;
+  private inmuebleApi: InmuebleApiItem | null = null;
+  private arrendatarioApi: ArrendatarioApiItem | null = null;
+  cargandoInmuebleDetalle = false;
+  cargandoArrendatarioDetalle = false;
   inmuebleEsRenta = true;
   localEstatus: 'ocupado' | 'libre' = 'ocupado';
   detalleTitulo = 'San Cristóbal';
@@ -179,14 +222,15 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   detalleArrendatario = 'Laboratorios Chopo';
   mostrarModalContratoLocal = false;
   mostrarModalPago = false;
+  mostrarModalPagoDetalle = false;
+  pagoDetalleModalLoading = false;
+  pagoDetalleModalError: string | null = null;
+  pagoDetalleModal: VistaPagoDetalleModal | null = null;
   pagoForm!: FormGroup;
   listaCatMetodosPago: CatMetodoPagoItem[] = [];
   metodosPagoCargando = false;
-  /** Catálogo GET `/cat-servicios/paginated` para el select de servicio. */
-  listaCatServicios: CatServicioItem[] = [];
-  catServiciosCargando = false;
-  /** Etiqueta de inmueble/local en contexto para el campo `idInmueble` del POST /pago. */
-  inmueblePagoEtiqueta = '';
+  /** Servicios del inmueble cargado (`id` = `idServicioInmueble` en POST /pago). */
+  serviciosInmueblePago: ServicioInmueblePagoOpcion[] = [];
   /** Valor real del monto: solo dígitos y punto (ej. `5325.50`). El input solo muestra formato. */
   private pagoMontoRaw = '';
   /** Deshabilita el botón Agregar mientras corre POST /pago. */
@@ -198,93 +242,43 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   private inmueblesNombreMap: Map<number, string> | null = null;
   private vistaQuerySub?: Subscription;
   now = new Date();
-  readonly ubicacionLat = 18.953177342874035;
-  readonly ubicacionLng = -99.23588919868236;
+  ubicacionLat = 18.953177342874035;
+  ubicacionLng = -99.23588919868236;
   galleryIndex = 0;
-  readonly galleryImages: string[] = [
+  galleryImages: string[] = [];
+  private readonly galleryImagesDemo: string[] = [
     'https://lh3.googleusercontent.com/gps-cs-s/APNQkAFlG1RuIX_TUTB944PQtcU_VhwJBKarAk6AZl61hj8-4Pes7T6n4kUQicm-qp8DtXMazia1NU7pjij4ziIozMFwvKH6Lbr1r60PIedWpOhP9ouysXVnE2gjY2rWj212L9kc7r3D=s680-w680-h510-rw',
     'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?panoid=qjL0kL4w35FZ37eF-rx7AQ&cb_client=search.gws-prod.gps&w=408&h=240&yaw=61.73827&pitch=0&thumbfov=100',
     'https://joyeriafinaonline.com.mx/wp-content/uploads/2022/07/10-Cuernavaca2.jpg',
   ];
   /** Imagen de plano (tarjeta «Plano» en detalle de inmueble). */
-  readonly imagenPlanoInmueble =
+  imagenPlanoInmueble =
     'https://images.homify.com/v1558386691/p/photo/image/3062344/plano_3.jpg';
-  /** Imagen de documentación del predio (vista local). */
-  readonly imagenDocumentacionLocal =
-    'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?panoid=qjL0kL4w35FZ37eF-rx7AQ&cb_client=search.gws-prod.gps&w=408&h=240&yaw=61.73827&pitch=0&thumbfov=100';
+  imagenLicenciaFuncionamiento =
+    'https://imgv2-1-f.scribdassets.com/img/document/655514658/original/1a00c65260/1?v=1';
+  licenciaTarjetaUsaIframe = false;
+  licenciaEmbedUrl: SafeResourceUrl | null = null;
+  mapaEmbedSafeUrl: SafeResourceUrl | null = null;
+  streetViewEmbedSafeUrl: SafeResourceUrl | null = null;
+  private embedCoordsKey = '';
+  private ultimoInmuebleApiIdCargado: number | null = null;
+  private inmuebleCargaPendienteId: number | null = null;
+  private ultimoArrendatarioApiIdCargado: number | null = null;
+  private arrendatarioCargaPendienteId: number | null = null;
+  superficieDisponiblePredioTexto = '0.00 m²';
+  /** Tarjeta Documentación (vista local): «Contrato de renta» u otro archivo. */
+  imagenDocumentacionLocal = '';
+  documentacionLocalUsaIframe = false;
+  documentacionLocalEmbedUrl: SafeResourceUrl | null = null;
+  documentacionLocalTitulo = 'Contrato de renta';
   /** Nombre mostrado en vista Local (contrato); independiente del expediente del inmueble. */
   readonly nombreArchivoContratoLocalDemo = 'Contrato local vigente (texto informativo)';
 
-  /**
-   * Expediente digital alineado con «Documentos e imágenes» del formulario de inmuebles.
-   * Demo: cada rubro con archivo (URLs locales / PDF demo).
-   */
-  readonly expedienteDocumentosInmueble: MonitoreoExpedienteDoc[] = [
-    {
-      etiqueta: 'Escritura del inmueble (PDF)',
-      detalle: 'Documento base del predio registrado y vigente.',
-    },
-    {
-      etiqueta: 'Licencia / uso de suelo',
-      detalle: 'Licencia municipal y validación de uso de suelo.',
-    },
-    {
-      etiqueta: 'Fachada',
-      detalle: 'Evidencia fotográfica de fachada principal del inmueble.',
-    },
-    {
-      etiqueta: 'Contrato de renta',
-      detalle: 'Contrato principal de arrendamiento con vigencia activa.',
-    },
-    {
-      etiqueta: 'Constancia de Situación Fiscal',
-      detalle: 'Constancia fiscal del contribuyente asociado al inmueble.',
-    },
-    {
-      etiqueta: 'Comprobante de Domicilio',
-      detalle: 'Comprobante de domicilio fiscal actualizado.',
-    },
-    {
-      etiqueta: 'Constancia de situación fiscal del representante legal',
-      detalle: 'Constancia fiscal del representante legal registrado.',
-    },
-    {
-      etiqueta: 'INE Representante Legal',
-      detalle: 'Identificación oficial vigente del representante legal.',
-    },
-    {
-      etiqueta: 'Imagen 1 (galería del inmueble)',
-      detalle: 'Imagen de referencia de interiores para expediente.',
-    },
-  ];
+  /** Expediente digital alineado con «Documentos e imágenes» del formulario de inmuebles. */
+  expedienteDocumentosInmueble: MonitoreoExpedienteDoc[] = [];
 
-  /** Expediente demo para vista local (misma checklist que alta de arrendatario). */
-  readonly expedienteDocumentosLocal: MonitoreoExpedienteDoc[] = [
-    {
-      etiqueta: 'Contrato de renta del local',
-      detalle: 'Contrato vigente entre arrendador y arrendatario.',
-    },
-    {
-      etiqueta: 'Constancia de situación fiscal (arrendatario)',
-      detalle: 'RFC y datos fiscales del arrendatario.',
-    },
-    {
-      etiqueta: 'Identificación oficial del representante',
-      detalle: 'INE o documento vigente del firmante.',
-    },
-    {
-      etiqueta: 'Comprobante de domicilio del negocio',
-      detalle: 'Reciente y coincidente con el domicilio fiscal.',
-    },
-    {
-      etiqueta: 'Licencia de funcionamiento',
-      detalle: 'Permiso municipal alineado al giro del local.',
-    },
-    {
-      etiqueta: 'Anexo de obligaciones / uso de áreas',
-      detalle: 'Condiciones de mantenimiento y zonas comunes.',
-    },
-  ];
+  /** Expediente del arrendatario (GET `/arrendatarios/{id}` → `archivos`). */
+  expedienteDocumentosLocal: MonitoreoExpedienteDoc[] = [];
   private readonly referenciasServicioBase: Record<string, string> = {
     Agua: 'SRV-AGUA-54035',
     Luz: 'SRV-LUZ-348150305391',
@@ -296,17 +290,14 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     Mantenimiento: 'CON-MNT-2026-004',
     Predio: 'IMP-PRED-110009829001',
   };
-  readonly zonas = [
-    { zona: 'Planta baja San Cristóbal', superficie: '200.00 m²' },
-    { zona: 'Segundo piso San Cristóbal', superficie: '200.00 m²' },
-  ];
+  zonas: MonitoreoZonaFila[] = [];
   readonly estacionamientosInmueble = [
     { nombrePensionado: 'Carlos Ramírez', numeroTarjeta: 'TAR-1001', arrendatario: 'Laboratorios Chopo' },
     { nombrePensionado: 'Luis Hernández', numeroTarjeta: 'TAR-1042', arrendatario: 'Inglés Individual' },
     { nombrePensionado: 'Marta López', numeroTarjeta: 'TAR-1108', arrendatario: 'Poder Judicial del Estado' },
   ];
-  pagosData: PagoRow[] = [];
-  pagosDataGrid: PagoRow[] = [];
+  pagosData: PagoGridRow[] = [];
+  pagosDataGrid: PagoGridRow[] = [];
   mesFiltroPagosSeleccionado = '__all__';
   mesesFiltroPagosOpciones: Array<{ value: string; label: string }> = [
     { value: '__all__', label: 'Todos los meses' },
@@ -375,6 +366,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   pagoComprobanteInput?: ElementRef<HTMLInputElement>;
   @ViewChild('pagoMontoInput', { static: false })
   pagoMontoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('docPreview', { static: false })
+  docPreview?: DocumentoPreviewComponent;
 
   private socket!: Socket;
   constructor(
@@ -391,7 +384,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private pagoInmuebleService: PagoInmuebleService,
     private catMetodosPagoService: CatMetodosPagoService,
-    private catServiciosService: CatServiciosService,
+    private inmueblesService: InmueblesService,
+    private arrendatariosService: ArrendatariosService,
   ) {}
 
   ngOnDestroy(): void {
@@ -433,10 +427,371 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       Number.isFinite(idn) && idn > 0 ? Math.floor(idn) : null;
     const idInmRaw = (qp.get('idInmueble') ?? '').trim();
     const idInmNum = idInmRaw !== '' ? Number(idInmRaw) : NaN;
-    this.idInmuebleContext =
+    const nuevoIdInmueble =
       Number.isFinite(idInmNum) && idInmNum > 0 ? Math.floor(idInmNum) : null;
+    if (nuevoIdInmueble !== this.idInmuebleContext) {
+      this.ultimoInmuebleApiIdCargado = null;
+      this.inmuebleApi = null;
+    }
+    this.idInmuebleContext = nuevoIdInmueble;
+
+    const idArrRaw = (qp.get('idArrendatario') ?? '').trim();
+    const idArrNum = idArrRaw !== '' ? Number(idArrRaw) : NaN;
+    const nuevoIdArrendatario =
+      Number.isFinite(idArrNum) && idArrNum > 0 ? Math.floor(idArrNum) : null;
+    if (nuevoIdArrendatario !== this.idArrendatarioContext) {
+      this.ultimoArrendatarioApiIdCargado = null;
+      this.arrendatarioApi = null;
+    }
+    this.idArrendatarioContext = nuevoIdArrendatario;
+
+    const idLocRaw = (qp.get('idLocal') ?? '').trim();
+    const idLocNum = idLocRaw !== '' ? Number(idLocRaw) : NaN;
+    this.idLocalContext =
+      Number.isFinite(idLocNum) && idLocNum > 0 ? Math.floor(idLocNum) : null;
+
     this.refrescarServiciosDataSource();
+    this.cargarPagosGrid();
+    this.maybeCargarInmuebleDesdeApi();
+    this.maybeCargarArrendatarioDesdeApi();
     this.cdr.markForCheck();
+  }
+
+  private maybeCargarArrendatarioDesdeApi(): void {
+    if (this.vistaEntidad !== 'local' || this.idArrendatarioContext == null) {
+      return;
+    }
+    const id = this.idArrendatarioContext;
+    if (
+      this.ultimoArrendatarioApiIdCargado === id &&
+      this.arrendatarioApi != null &&
+      !this.cargandoArrendatarioDetalle
+    ) {
+      return;
+    }
+    if (
+      this.cargandoArrendatarioDetalle &&
+      this.arrendatarioCargaPendienteId === id
+    ) {
+      return;
+    }
+    this.cargarArrendatarioDesdeApi(id);
+  }
+
+  private cargarArrendatarioDesdeApi(idArrendatario: number): void {
+    this.arrendatarioCargaPendienteId = idArrendatario;
+    this.cargandoArrendatarioDetalle = true;
+    this.arrendatariosService
+      .obtenerArrendatario(idArrendatario)
+      .pipe(
+        map((resp) => extraerArrendatarioDetalleApi(resp)),
+        catchError((err) => {
+          console.error('Error al cargar arrendatario:', err);
+          void Swal.fire({
+            title: 'No se pudo cargar el local',
+            text: 'Verifique su conexión e intente de nuevo.',
+            icon: 'error',
+          });
+          return of(null);
+        }),
+      )
+      .subscribe((item) => {
+        this.cargandoArrendatarioDetalle = false;
+        this.arrendatarioCargaPendienteId = null;
+        if (item?.id != null) {
+          this.arrendatarioApi = item;
+          this.ultimoArrendatarioApiIdCargado = idArrendatario;
+          this.aplicarArrendatarioApiAlDetalle(item);
+        }
+        this.cdr.markForCheck();
+      });
+  }
+
+  private aplicarTarjetaDocumentacionLocal(item: ArrendatarioApiItem): void {
+    const doc = archivoContratoRentaArrendatario(item);
+    this.documentacionLocalTitulo = doc?.nombre ?? 'Contrato de renta';
+    this.documentacionLocalUsaIframe = false;
+    this.documentacionLocalEmbedUrl = null;
+    this.imagenDocumentacionLocal = '';
+
+    const url = String(doc?.url ?? '').trim();
+    if (!url) return;
+
+    if (documentacionLocalEsPdf(url, this.documentacionLocalTitulo)) {
+      const pdfUrl = urlPdfTarjetaInmueble(url, this.documentacionLocalTitulo);
+      if (pdfUrl) {
+        this.documentacionLocalUsaIframe = true;
+        this.documentacionLocalEmbedUrl =
+          this.sanitizer.bypassSecurityTrustResourceUrl(pdfUrl);
+        return;
+      }
+    }
+
+    this.imagenDocumentacionLocal = url;
+  }
+
+  private aplicarArrendatarioApiAlDetalle(item: ArrendatarioApiItem): void {
+    const nombreArr = String(item.arrendatario ?? '').trim();
+    if (nombreArr) {
+      this.detalleArrendatario = nombreArr;
+    }
+
+    this.detalleArrendador = nombreArrendadorDesdeArrendatarioApi(item);
+
+    this.detalleLocalNombre = tituloLocalDesdeArrendatario(
+      item,
+      this.idContratoQuery,
+      this.idLocalContext,
+      this.detalleLocalNombre,
+    );
+    this.detalleTitulo = this.detalleLocalNombre;
+
+    this.localEstatus = estatusLocalDesdeArrendatario(
+      item,
+      this.idContratoQuery,
+      this.idLocalContext,
+    );
+
+    const contrato = seleccionarContratoArrendatario(
+      item,
+      this.idContratoQuery,
+      this.idLocalContext,
+    );
+    const idInm = Number(contrato?.idInmueble);
+    if (Number.isFinite(idInm) && idInm > 0) {
+      const idInmFloor = Math.floor(idInm);
+      if (idInmFloor !== this.idInmuebleContext) {
+        this.idInmuebleContext = idInmFloor;
+        this.cargarPagosGrid();
+      }
+    }
+
+    this.expedienteDocumentosLocal = buildExpedienteArrendatarioLista(item);
+
+    this.aplicarTarjetaDocumentacionLocal(item);
+
+    const lat = Number(item.lat);
+    const lng = Number(item.lng);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      this.ubicacionLat = lat;
+      this.ubicacionLng = lng;
+      this.actualizarEmbedsMapa(lat, lng);
+    }
+
+    const galeria = urlsGaleriaArrendatario(item);
+    if (galeria.length) {
+      this.galleryImages = galeria;
+      if (this.galleryIndex >= this.galleryImages.length) {
+        this.galleryIndex = 0;
+      }
+    }
+
+    this.refrescarServiciosDataSource();
+    this.sincronizarServiciosPagoDesdeInmueble();
+  }
+
+  private maybeCargarInmuebleDesdeApi(): void {
+    if (this.vistaEntidad !== 'inmueble' || this.idInmuebleContext == null) {
+      return;
+    }
+    const id = this.idInmuebleContext;
+    if (
+      this.ultimoInmuebleApiIdCargado === id &&
+      this.inmuebleApi != null &&
+      !this.cargandoInmuebleDetalle
+    ) {
+      return;
+    }
+    if (this.cargandoInmuebleDetalle && this.inmuebleCargaPendienteId === id) {
+      return;
+    }
+    this.cargarInmuebleDesdeApi(id);
+  }
+
+  private cargarInmuebleDesdeApi(idInmueble: number): void {
+    this.inmuebleCargaPendienteId = idInmueble;
+    this.cargandoInmuebleDetalle = true;
+    this.inmueblesService
+      .obtenerInmueble(idInmueble)
+      .pipe(
+        map((resp) => extraerInmuebleDetalleApi(resp)),
+        catchError((err) => {
+          console.error('Error al cargar inmueble:', err);
+          Swal.fire({
+            title: 'No se pudo cargar el inmueble',
+            text: 'Verifique su conexión e intente de nuevo.',
+            icon: 'error',
+          });
+          return of({} as InmuebleApiItem);
+        }),
+      )
+      .subscribe((item) => {
+        this.cargandoInmuebleDetalle = false;
+        this.inmuebleCargaPendienteId = null;
+        if (item?.id != null || item?.inmueble != null) {
+          this.inmuebleApi = item;
+          this.ultimoInmuebleApiIdCargado = idInmueble;
+          this.aplicarInmuebleApiAlDetalle(item);
+        }
+        this.cdr.markForCheck();
+      });
+  }
+
+  /** Evita recrear SafeResourceUrl en cada CD (el iframe de Street View dejaba de parpadear). */
+  private actualizarEmbedsMapa(lat: number, lng: number): void {
+    const key = `${lat},${lng}`;
+    if (this.embedCoordsKey === key) return;
+    this.embedCoordsKey = key;
+    const mapaUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+    const streetUrl = `https://maps.google.com/maps?q=&layer=c&cbll=${lat},${lng}&cbp=11,0,0,0,0&output=svembed`;
+    this.mapaEmbedSafeUrl =
+      this.sanitizer.bypassSecurityTrustResourceUrl(mapaUrl);
+    this.streetViewEmbedSafeUrl =
+      this.sanitizer.bypassSecurityTrustResourceUrl(streetUrl);
+  }
+
+  private aplicarTarjetasPlanoYLicencia(item: InmuebleApiItem): void {
+    const planoUrl = urlPlanoInmueble(item);
+    const planoImg = urlImagenTarjetaInmueble(planoUrl, 'Plano');
+    if (planoImg) {
+      this.imagenPlanoInmueble = planoImg;
+    }
+
+    const licenciaUrl = urlLicenciaInmueble(item);
+    const licenciaPdf = urlPdfTarjetaInmueble(
+      licenciaUrl,
+      'Licencia o uso de suelo',
+    );
+    if (licenciaPdf) {
+      this.licenciaTarjetaUsaIframe = true;
+      this.licenciaEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+        licenciaPdf,
+      );
+      return;
+    }
+
+    const licenciaImg = urlImagenTarjetaInmueble(
+      licenciaUrl,
+      'Licencia o uso de suelo',
+    );
+    this.licenciaTarjetaUsaIframe = false;
+    this.licenciaEmbedUrl = null;
+    if (licenciaImg) {
+      this.imagenLicenciaFuncionamiento = licenciaImg;
+    }
+  }
+
+  private aplicarInmuebleApiAlDetalle(item: InmuebleApiItem): void {
+    const titulo = tituloInmuebleDesdeApi(item);
+    this.detalleInmuebleNombre = titulo;
+    this.detalleTitulo = titulo;
+    this.detalleArrendador = arrendadorNombreDesdeApi(item);
+    this.inmuebleEsRenta = esRentaDesdeEstatusInmueble(item.estatusInmueble);
+
+    this.expedienteDocumentosInmueble = buildArchivosInmuebleLista(item);
+    this.zonas = buildZonasMonitoreoInmueble(item);
+    this.superficieDisponiblePredioTexto = superficieDisponiblePredioTexto(item);
+
+    const coords = coordenadasInmuebleDesdeApi(
+      item,
+      this.ubicacionLat,
+      this.ubicacionLng,
+    );
+    this.ubicacionLat = coords.lat;
+    this.ubicacionLng = coords.lng;
+    this.actualizarEmbedsMapa(coords.lat, coords.lng);
+
+    const galeria = urlsGaleriaInmueble(item);
+    this.galleryImages = galeria.length ? galeria : [...this.galleryImagesDemo];
+    if (this.galleryIndex >= this.galleryImages.length) {
+      this.galleryIndex = 0;
+    }
+
+    this.aplicarTarjetasPlanoYLicencia(item);
+
+    this.refrescarServiciosDataSource();
+    this.sincronizarServiciosPagoDesdeInmueble();
+    this.cargarPagosGrid();
+    if (!this.listaCatMetodosPago.length) {
+      this.cargarCatalogoMetodosPago();
+    }
+  }
+
+  visualizarExpedienteDoc(fila: MonitoreoExpedienteDoc): void {
+    const url = String(fila?.url ?? '').trim();
+    if (!url) return;
+    const nombre = fila.nombreArchivo ?? fila.etiqueta;
+    const previewUrl =
+      urlPdfTarjetaInmueble(url, nombre) ?? url;
+    this.docPreview?.abrir(previewUrl, fila.etiqueta, this.detalleTitulo);
+  }
+
+  trackZonaMonitoreo(_: number, z: { zonaPrincipal: string }): string {
+    return z.zonaPrincipal;
+  }
+
+  trackLocalMonitoreo(_: number, loc: { nombre: string }): string {
+    return loc.nombre;
+  }
+
+  descargarExpedienteDoc(fila: MonitoreoExpedienteDoc): void {
+    const url = String(fila?.url ?? '').trim();
+    if (!url) return;
+    const nombre = fila.nombreArchivo ?? fila.etiqueta ?? 'documento';
+    this.descargarArchivoPorUrl(url, nombre);
+  }
+
+  private descargarArchivoPorUrl(url: string, nombre: string): void {
+    this.http
+      .get(url, { responseType: 'blob' })
+      .pipe(take(1))
+      .subscribe({
+        next: (blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = objectUrl;
+          a.download = nombre;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(objectUrl);
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'error',
+            title: 'No se pudo descargar',
+            text: 'No se obtuvo el archivo. Verifica la URL o el proxy en desarrollo.',
+            confirmButtonText: 'Entendido',
+          });
+        },
+      });
+  }
+
+  private sincronizarServiciosPagoDesdeInmueble(): void {
+    if (this.vistaEntidad === 'local' && this.arrendatarioApi) {
+      this.serviciosInmueblePago = serviciosArrendatarioPagoOpciones(
+        this.arrendatarioApi,
+      );
+      return;
+    }
+    const servicios =
+      this.inmuebleApi && Array.isArray(this.inmuebleApi.servicios)
+        ? this.inmuebleApi.servicios
+        : [];
+    this.serviciosInmueblePago = servicios
+      .map((s) => {
+        const id = Number(s.id);
+        if (!Number.isFinite(id) || id <= 0) return null;
+        const nombre = nombreServicio(s);
+        return {
+          id: Math.floor(id),
+          nombre: nombre || `Servicio ${id}`,
+        } as ServicioInmueblePagoOpcion;
+      })
+      .filter((x): x is ServicioInmueblePagoOpcion => x != null);
   }
 
   /**
@@ -447,29 +802,67 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
 
   private refrescarServiciosDataSource(): void {
     this.serviciosDataSource = this.buildServiciosLista();
-    this.pagosData = this.buildPagosDesdeServicios(this.serviciosDataSource);
-    this.refrescarMesesFiltroPagosOpciones();
-    this.aplicarFiltroPagosGrid();
   }
 
-  private buildPagosDesdeServicios(servicios: ServicioDetalle[]): PagoRow[] {
-    const metodos = ['Transferencia', 'Tarjeta', 'SPEI', 'Domiciliado'];
-    const basePorConceptoInmueble: Record<string, number> = {
-      Agua: 900,
-      Luz: 1850,
-      'Licencia funcionamiento': 650,
-      Seguridad: 2400,
-      Limpieza: 1600,
-      Internet: 750,
-      Renta: 32000,
-      Mantenimiento: 4200,
-      Predio: 1200,
-    };
-    const basePorConceptoArrendatario: Record<string, number> = {
-      Renta: 18500,
-      Mantenimiento: 2100,
-    };
-    const calendarioPagoPorConceptoInmueble: Record<
+  private cargarPagosGrid(): void {
+    if (this.idInmuebleContext == null) {
+      this.pagosData = [];
+      this.refrescarMesesFiltroPagosOpciones();
+      return;
+    }
+
+    this.pagoInmuebleService
+      .obtenerPagosPaginados(1, 200)
+      .pipe(
+        take(1),
+        finalize(() => this.cdr.markForCheck()),
+      )
+      .subscribe({
+        next: (res) => {
+          const filas = extraerFilasPagosApi(res);
+          this.pagosData = mapPagosApiToGridRows(
+            filas,
+            this.idInmuebleContext,
+            (id) => this.etiquetaCatMetodoPagoPorId(id),
+          );
+          this.refrescarMesesFiltroPagosOpciones();
+        },
+        error: () => {
+          this.pagosData = [];
+          this.refrescarMesesFiltroPagosOpciones();
+        },
+      });
+  }
+
+  private buildServiciosLista(): ServicioDetalle[] {
+    if (this.vistaEntidad === 'local') {
+      if (this.arrendatarioApi) {
+        return buildServiciosMonitoreoArrendatario(this.arrendatarioApi);
+      }
+      return [];
+    }
+
+    if (
+      this.inmuebleApi &&
+      Array.isArray(this.inmuebleApi.servicios) &&
+      this.inmuebleApi.servicios.length
+    ) {
+      return buildServiciosMonitoreoInmueble(this.inmuebleApi);
+    }
+
+    const comunes = [
+      'Agua',
+      'Luz',
+      'Licencia funcionamiento',
+      'Seguridad',
+      'Limpieza',
+      'Internet',
+    ];
+    const conceptos = this.inmuebleEsRenta
+      ? [...comunes, 'Renta', 'Mantenimiento']
+      : [...comunes, 'Predio'];
+
+    const calendarioPagoPorConcepto: Record<
       string,
       { diaPago: number; diaLimite: number }
     > = {
@@ -483,144 +876,17 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       'Licencia funcionamiento': { diaPago: 3, diaLimite: 15 },
       Predio: { diaPago: 10, diaLimite: 17 },
     };
-    const calendarioPagoPorConceptoArrendatario: Record<
-      string,
-      { diaPago: number; diaLimite: number }
-    > = {
-      Renta: { diaPago: 1, diaLimite: 5 },
-      Mantenimiento: { diaPago: 1, diaLimite: 10 },
+    const frecuenciaPorConcepto: Record<string, FrecuenciaPago> = {
+      Renta: 'mensual',
+      Mantenimiento: 'mensual',
+      Agua: 'mensual',
+      Luz: 'bimestral-par',
+      Internet: 'mensual',
+      Seguridad: 'mensual',
+      Limpieza: 'mensual',
+      'Licencia funcionamiento': 'anual-marzo',
+      Predio: 'bimestral-impar',
     };
-    const basePorConcepto =
-      this.vistaEntidad === 'local'
-        ? basePorConceptoArrendatario
-        : basePorConceptoInmueble;
-    const calendarioPagoPorConcepto =
-      this.vistaEntidad === 'local'
-        ? calendarioPagoPorConceptoArrendatario
-        : calendarioPagoPorConceptoInmueble;
-    const frecuenciaPorConcepto: Record<string, FrecuenciaPago> =
-      this.vistaEntidad === 'local'
-        ? {
-            Renta: 'mensual',
-            Mantenimiento: 'mensual',
-          }
-        : {
-            Renta: 'mensual',
-            Mantenimiento: 'mensual',
-            Agua: 'mensual',
-            Luz: 'bimestral-par',
-            Internet: 'mensual',
-            Seguridad: 'mensual',
-            Limpieza: 'mensual',
-            'Licencia funcionamiento': 'anual-marzo',
-            Predio: 'bimestral-impar',
-          };
-    const hoy = new Date();
-    const ciclos = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
-      return {
-        anio: d.getFullYear(),
-        mes: d.getMonth() + 1,
-      };
-    });
-
-    const fechaIso = (anio: number, mes: number, dia: number): string => {
-      const ultimoDia = new Date(anio, mes, 0).getDate();
-      const d = String(Math.min(dia, ultimoDia)).padStart(2, '0');
-      return `${anio}-${String(mes).padStart(2, '0')}-${d}`;
-    };
-
-    const rows: PagoRow[] = [];
-    let id = 1;
-    ciclos.forEach((ciclo, cicloIndex) => {
-      servicios.forEach((servicio, servicioIndex) => {
-        const frecuencia = frecuenciaPorConcepto[servicio.concepto] ?? 'mensual';
-        if (!this.esMesProgramado(ciclo.mes, frecuencia)) return;
-        const base = basePorConcepto[servicio.concepto] ?? 3500;
-        const calendario =
-          calendarioPagoPorConcepto[servicio.concepto] ?? {
-            diaPago: 5,
-            diaLimite: 12,
-          };
-        const fechaPago = fechaIso(ciclo.anio, ciclo.mes, calendario.diaPago);
-        const fechaLimitePago = fechaIso(
-          ciclo.anio,
-          ciclo.mes,
-          calendario.diaLimite,
-        );
-        const variacion = ((servicioIndex + 1) * 38.5) + (cicloIndex * 21.75);
-        rows.push({
-          id: id++,
-          concepto: servicio.concepto,
-          fechaPago,
-          fechaLimitePago,
-          monto: Number((base + variacion).toFixed(2)),
-          metodo: metodos[(cicloIndex + servicioIndex) % metodos.length],
-          estatus: cicloIndex >= ciclos.length - 2 ? 'Pendiente' : 'Pagado',
-        });
-      });
-    });
-    rows.sort((a, b) => {
-      const fa = String(a.fechaPago ?? '');
-      const fb = String(b.fechaPago ?? '');
-      return fb.localeCompare(fa);
-    });
-    return rows;
-  }
-
-  private buildServiciosLista(): ServicioDetalle[] {
-    const comunes = [
-      'Agua',
-      'Luz',
-      'Licencia funcionamiento',
-      'Seguridad',
-      'Limpieza',
-      'Internet',
-    ];
-    const conceptos =
-      this.vistaEntidad === 'local'
-        ? ['Renta', 'Mantenimiento']
-        : this.inmuebleEsRenta
-          ? [...comunes, 'Renta', 'Mantenimiento']
-          : [...comunes, 'Predio'];
-
-    const calendarioPagoPorConcepto: Record<
-      string,
-      { diaPago: number; diaLimite: number }
-    > =
-      this.vistaEntidad === 'local'
-        ? {
-            Renta: { diaPago: 1, diaLimite: 5 },
-            Mantenimiento: { diaPago: 1, diaLimite: 10 },
-          }
-        : {
-            Renta: { diaPago: 1, diaLimite: 5 },
-            Mantenimiento: { diaPago: 1, diaLimite: 10 },
-            Agua: { diaPago: 8, diaLimite: 17 },
-            Luz: { diaPago: 12, diaLimite: 20 },
-            Internet: { diaPago: 10, diaLimite: 18 },
-            Seguridad: { diaPago: 5, diaLimite: 12 },
-            Limpieza: { diaPago: 5, diaLimite: 12 },
-            'Licencia funcionamiento': { diaPago: 3, diaLimite: 15 },
-            Predio: { diaPago: 10, diaLimite: 17 },
-          };
-    const frecuenciaPorConcepto: Record<string, FrecuenciaPago> =
-      this.vistaEntidad === 'local'
-        ? {
-            Renta: 'mensual',
-            Mantenimiento: 'mensual',
-          }
-        : {
-            Renta: 'mensual',
-            Mantenimiento: 'mensual',
-            Agua: 'mensual',
-            Luz: 'bimestral-par',
-            Internet: 'mensual',
-            Seguridad: 'mensual',
-            Limpieza: 'mensual',
-            'Licencia funcionamiento': 'anual-marzo',
-            Predio: 'bimestral-impar',
-          };
     const fechaIso = (anio: number, mes: number, dia: number): string => {
       const ultimoDia = new Date(anio, mes, 0).getDate();
       const d = String(Math.min(dia, ultimoDia)).padStart(2, '0');
@@ -669,9 +935,70 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     return { anio: anioRef, mes: mesRef };
   }
 
-  verComprobanteImagenPago(_row: PagoRow): void {}
+  abrirModalPagoDetalle(row: PagoGridRow): void {
+    const id = Number(row?.id);
+    if (!Number.isFinite(id) || id <= 0) return;
 
-  verComprobanteImagenServicio(_row: ServicioDetalle): void {}
+    this.mostrarModalPagoDetalle = true;
+    this.pagoDetalleModal = null;
+    this.pagoDetalleModalError = null;
+    this.pagoDetalleModalLoading = true;
+    this.cdr.markForCheck();
+
+    this.pagoInmuebleService
+      .obtenerPagoPorId(Math.floor(id))
+      .pipe(
+        take(1),
+        finalize(() => {
+          this.pagoDetalleModalLoading = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          const item = extraerPagoDetalleApi(res);
+          if (!item) {
+            this.pagoDetalleModalError = 'No se encontró el pago.';
+            return;
+          }
+          this.pagoDetalleModal = mapPagoApiToVistaDetalle(item, {
+            resolverMetodo: (idMetodo) => this.etiquetaCatMetodoPagoPorId(idMetodo),
+            resolverServicio: (idSrv) => this.etiquetaServicioInmueblePorId(idSrv),
+          });
+          if (!this.pagoDetalleModal) {
+            this.pagoDetalleModalError = 'No se pudo interpretar el pago.';
+          }
+        },
+        error: () => {
+          this.pagoDetalleModalError =
+            'No se pudo cargar el pago. Verifique su conexión e intente de nuevo.';
+        },
+      });
+  }
+
+  cerrarModalPagoDetalle(): void {
+    this.mostrarModalPagoDetalle = false;
+    this.pagoDetalleModalLoading = false;
+    this.pagoDetalleModalError = null;
+    this.pagoDetalleModal = null;
+    this.cdr.markForCheck();
+  }
+
+  verComprobantePagoDetalleModal(): void {
+    const url = String(this.pagoDetalleModal?.urlComprobante ?? '').trim();
+    if (!url) return;
+    const titulo = this.pagoDetalleModal?.concepto ?? 'Comprobante';
+    const previewUrl = urlPdfTarjetaInmueble(url, titulo) ?? url;
+    this.docPreview?.abrir(previewUrl, titulo, this.detalleTitulo);
+  }
+
+  verComprobanteImagenServicio(row: ServicioDetalle): void {
+    const url = String(row?.urlComprobante ?? '').trim();
+    if (!url) return;
+    const previewUrl =
+      urlPdfTarjetaInmueble(url, row.concepto) ?? url;
+    this.docPreview?.abrir(previewUrl, row.concepto, this.detalleTitulo);
+  }
 
   /** Clases de etiqueta para la columna Estatus del grid de pagos. */
   clasesEstatusPago(estatus: unknown): Record<string, boolean> {
@@ -830,6 +1157,21 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   }
 
   private cargarContenidoModalContrato(): void {
+    if (this.vistaEntidad === 'local' && this.arrendatarioApi) {
+      const vista = this.buildVistaContratoDesdeArrendatario();
+      this.contratoModalLoading = false;
+      if (vista) {
+        this.contratoModal = vista;
+        this.contratoModalError = null;
+      } else {
+        this.contratoModal = null;
+        this.contratoModalError =
+          'No hay contrato asociado a este local en el arrendatario.';
+      }
+      this.cdr.markForCheck();
+      return;
+    }
+
     if (this.idContratoQuery) {
       this.getCatalogosMaps$()
         .pipe(
@@ -1158,6 +1500,108 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     );
   }
 
+  irAEditarInmueble(): void {
+    if (this.vistaEntidad === 'local') {
+      if (this.idArrendatarioContext == null) return;
+      void this.router.navigate([
+        '/arrendatarios/editar-arrendatario',
+        this.idArrendatarioContext,
+      ]);
+      return;
+    }
+    if (this.idInmuebleContext == null) return;
+    void this.router.navigate([
+      '/inmuebles/editar-inmueble',
+      this.idInmuebleContext,
+    ]);
+  }
+
+  private buildVistaContratoDesdeArrendatario(): VistaContratoLocalModal | null {
+    const item = this.arrendatarioApi;
+    if (!item) return null;
+    const c = seleccionarContratoArrendatario(
+      item,
+      this.idContratoQuery,
+      this.idLocalContext,
+    );
+    if (!c) return null;
+
+    const tipoMoneda = String(c.moneda ?? 'MXN');
+    const m = Number(c.metrosRentados) || 0;
+    const costo = Number(c.costoM2) || 0;
+    const pct = Number(c.porcentajeMantenimiento) || 0;
+    const t = this.calcTotalesContrato(m, costo, pct);
+
+    return {
+      tipoModificacion: 'Contrato vigente',
+      numeroContrato:
+        c.id != null ? `Contrato #${c.id}` : '—',
+      arrendador: nombreArrendadorDesdeArrendatarioApi(item),
+      arrendatario: String(item.arrendatario ?? '').trim() || '—',
+      inmuebles: String(c.inmueble?.inmueble ?? '').trim() || '—',
+      fechaInicio: this.toDateDisplay(c.fechaInicioContrato),
+      fechaTermino: this.toDateDisplay(c.fechaTerminoContrato),
+      tipoMoneda,
+      metrosRentados: this.formatoNumero(m, 2),
+      costoPorM2: this.formatoNumero(costo, 4),
+      mesesDeposito: this.mesesCatalogoTexto(c.mesesDeposito),
+      montoDeposito: this.formatoImporte(
+        c.montoDeposito != null ? Number(c.montoDeposito) : null,
+        tipoMoneda,
+      ),
+      pctMantenimiento:
+        c.porcentajeMantenimiento != null &&
+        Number.isFinite(Number(c.porcentajeMantenimiento))
+          ? `${Number(c.porcentajeMantenimiento).toLocaleString('es-MX', { maximumFractionDigits: 2 })}%`
+          : '—',
+      anosForzososArrendador: this.anosForzososTexto(c.aniosForzososArrendador),
+      anosForzososArrendatario: this.anosForzososTexto(
+        c.aniosForzososArrendatario,
+      ),
+      mesesAdelanto: this.mesesCatalogoTexto(c.mesesAdelanto),
+      montoAdelanto: this.formatoImporte(
+        c.montoAdelanto != null ? Number(c.montoAdelanto) : null,
+        tipoMoneda,
+      ),
+      subtotalRenta: this.formatoImporte(
+        c.subTotalRenta != null ? Number(c.subTotalRenta) : t.subtotalRenta,
+        tipoMoneda,
+      ),
+      ivaRenta: this.formatoImporte(
+        c.ivaRenta != null ? Number(c.ivaRenta) : t.ivaRenta,
+        tipoMoneda,
+      ),
+      rentaTotal: this.formatoImporte(
+        c.rentaTotal != null ? Number(c.rentaTotal) : t.rentaTotal,
+        tipoMoneda,
+      ),
+      subtotalMantenimiento: this.formatoImporte(
+        c.subTotalMantenimiento != null
+          ? Number(c.subTotalMantenimiento)
+          : t.subtotalMantenimiento,
+        tipoMoneda,
+      ),
+      ivaMantenimiento: this.formatoImporte(
+        c.ivaMantenimiento != null
+          ? Number(c.ivaMantenimiento)
+          : t.ivaMantenimiento,
+        tipoMoneda,
+      ),
+      mantenimientoTotal: this.formatoImporte(
+        c.mantenimientoTotal != null
+          ? Number(c.mantenimientoTotal)
+          : t.mantenimientoTotal,
+        tipoMoneda,
+      ),
+      observaciones:
+        c.observaciones != null && String(c.observaciones).trim() !== ''
+          ? String(c.observaciones)
+          : '—',
+      documentoUrl: urlContratoRentaArrendatario(item),
+      esDemo: false,
+    };
+  }
+
   regresar() {
     const qp = this.route.snapshot.queryParamMap;
     const retorno = (qp.get('retorno') ?? '').toLowerCase();
@@ -1204,24 +1648,19 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.galleryIndex = index;
   }
 
-  get mapaUbicacionEmbedUrl(): SafeResourceUrl {
-    const url = `https://maps.google.com/maps?q=${this.ubicacionLat},${this.ubicacionLng}&z=16&output=embed`;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
-  }
-
-  get streetViewEmbedUrl(): SafeResourceUrl {
-    const url = `https://maps.google.com/maps?q=&layer=c&cbll=${this.ubicacionLat},${this.ubicacionLng}&cbp=11,0,0,0,0&output=svembed`;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
-  }
-
   ngOnInit(): void {
     this.initPagoForm();
     this.cargarCatalogoMetodosPago();
     this.numeroSerie = this.route.snapshot.paramMap.get('numeroSerie') ?? '';
-    this.applyVistaDesdeQuery(this.route.snapshot.queryParamMap);
+    const lat0 = this.ubicacionLat;
+    const lng0 = this.ubicacionLng;
+    this.actualizarEmbedsMapa(lat0, lng0);
     this.vistaQuerySub = this.route.queryParamMap.subscribe((qp) =>
       this.applyVistaDesdeQuery(qp),
     );
+    if (!this.galleryImages.length) {
+      this.galleryImages = [...this.galleryImagesDemo];
+    }
 
     // Fecha fin: hoy a la hora actual
     this.fechaFin = new Date();
@@ -1292,16 +1731,30 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     return `Método ${item.id}`;
   }
 
-  etiquetaCatServicio(item: CatServicioItem): string {
-    const nombre = item.nombre ?? item.servicio ?? item.descripcion;
-    if (nombre != null && String(nombre).trim() !== '') return String(nombre).trim();
-    return `Servicio ${item.id}`;
+  etiquetaServicioInmueblePorId(id: number | null | undefined): string {
+    if (id == null || !Number.isFinite(Number(id))) return '';
+    const numId = Number(id);
+    const hit = this.serviciosInmueblePago.find((s) => s.id === numId);
+    if (hit?.nombre) return hit.nombre;
+    if (this.arrendatarioApi) {
+      const srv = (this.arrendatarioApi.servicios ?? []).find(
+        (s) => Number(s.id) === numId,
+      );
+      const nombre = srv?.tipoServicio?.nombre;
+      if (nombre) return String(nombre).trim();
+    }
+    return '';
   }
 
-  etiquetaCatServicioPorId(id: number | null | undefined): string {
-    if (id == null || !Number.isFinite(Number(id))) return '';
-    const hit = this.listaCatServicios.find((s) => s.id === Number(id));
-    return hit ? this.etiquetaCatServicio(hit) : '';
+  onPagoServicioInmuebleChange(): void {
+    const id = Number(this.pagoForm?.get('idServicioInmueble')?.value);
+    if (!Number.isFinite(id) || id <= 0) return;
+    const etiqueta = this.etiquetaServicioInmueblePorId(id);
+    if (!etiqueta) return;
+    const conceptoActual = String(this.pagoForm?.get('concepto')?.value ?? '').trim();
+    if (conceptoActual) return;
+    this.pagoForm?.patchValue({ concepto: etiqueta });
+    this.cdr.markForCheck();
   }
 
   etiquetaCatMetodoPagoPorId(id: number | null | undefined): string {
@@ -1358,76 +1811,21 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       .filter((item): item is CatMetodoPagoItem => item != null);
   }
 
-  /** Etiqueta de entidad (inmueble o local) según `vistaEntidad` y `idInmueble` en URL. */
-  private actualizarEtiquetaEntidadPago(): void {
+  abrirModalPago(): void {
     if (this.idInmuebleContext == null) {
-      this.inmueblePagoEtiqueta = '';
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'info',
+        title: 'Sin inmueble en contexto',
+        text: 'Abre el detalle desde monitoreo para registrar un pago.',
+        confirmButtonText: 'Entendido',
+      });
       return;
     }
-    const id = this.idInmuebleContext;
-    const esLocal = this.vistaEntidad === 'local';
-    const tipo = esLocal ? 'Local' : 'Inmueble';
-    const nombre = esLocal
-      ? this.detalleLocalNombre || this.detalleTitulo
-      : this.detalleInmuebleNombre || this.detalleTitulo;
-    this.inmueblePagoEtiqueta = `${tipo}: ${nombre} (#${id})`;
-  }
-
-  private cargarCatalogoServiciosPago(): void {
-    this.catServiciosCargando = true;
-    this.catServiciosService.obtenerServiciosPaginados(1, 100).subscribe({
-      next: (res) => {
-        this.listaCatServicios = this.extraerFilasCatServicios(res).filter(
-          (s) => s.estatus == null || s.estatus === 1,
-        );
-        this.catServiciosCargando = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.listaCatServicios = [];
-        this.catServiciosCargando = false;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  private extraerFilasCatServicios(res: unknown): CatServicioItem[] {
-    const r = res as { data?: unknown } | unknown[] | null;
-    if (r == null) return [];
-    let rows: unknown = Array.isArray(r) ? r : (r as { data?: unknown }).data;
-    if (rows != null && typeof rows === 'object' && !Array.isArray(rows)) {
-      const bag = rows as Record<string, unknown>;
-      rows = bag['items'] ?? bag['rows'] ?? bag['content'] ?? bag['data'];
-    }
-    if (!Array.isArray(rows)) return [];
-    return rows
-      .map((item) => {
-        const row = item as Record<string, unknown>;
-        const id = Number(row['id'] ?? row['idTipoServicio'] ?? row['idCatServicio']);
-        if (!Number.isFinite(id)) return null;
-        let estatus: number | undefined;
-        if (typeof row['activo'] === 'boolean') {
-          estatus = row['activo'] ? 1 : 0;
-        } else if (row['estatus'] != null) {
-          const n = Number(row['estatus']);
-          estatus = n === 1 ? 1 : 0;
-        }
-        return {
-          id: Math.floor(id),
-          nombre: row['nombre'] != null ? String(row['nombre']) : undefined,
-          servicio: row['servicio'] != null ? String(row['servicio']) : undefined,
-          descripcion: row['descripcion'] != null ? String(row['descripcion']) : undefined,
-          estatus,
-        } as CatServicioItem;
-      })
-      .filter((item): item is CatServicioItem => item != null);
-  }
-
-  abrirModalPago(): void {
+    this.sincronizarServiciosPagoDesdeInmueble();
     this.mostrarModalPago = true;
-    this.actualizarEtiquetaEntidadPago();
     this.cargarCatalogoMetodosPago();
-    this.cargarCatalogoServiciosPago();
     this.pagoMontoRaw = '';
     this.pagoForm?.reset({
       idServicioInmueble: null,
@@ -1471,7 +1869,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         color: '#ffffff',
         icon: 'warning',
         title: 'Faltan datos',
-        text: 'Completa los campos obligatorios: inmueble en contexto, fecha, monto y comprobante.',
+        text: 'Completa los campos obligatorios: fecha, monto y comprobante.',
         confirmButtonText: 'Entendido',
       });
       return;
@@ -1544,25 +1942,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          const fechaPagoStr = String(v.fechaPago ?? '').trim();
-          const nextId =
-            this.pagosData.reduce((max, r) => Math.max(max, r.id), 0) + 1;
-          const nuevo: PagoRow = {
-            id: nextId,
-            concepto:
-              String(v.concepto ?? '').trim() ||
-              this.etiquetaCatServicioPorId(v.idServicioInmueble) ||
-              'Pago',
-            fechaPago: fechaPagoStr,
-            fechaLimitePago: this.fechaIsoMasDias(fechaPagoStr, 10),
-            monto: montoN,
-            metodo: this.etiquetaCatMetodoPagoPorId(v.idMetodoPago),
-            estatus: (v.estatus ?? 'Pendiente') as PagoEstatus,
-          };
-          this.pagosData = [nuevo, ...this.pagosData];
-          this.refrescarMesesFiltroPagosOpciones();
-          this.aplicarFiltroPagosGrid();
           this.cerrarModalPago();
+          this.cargarPagosGrid();
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
@@ -1794,7 +2175,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     }
   }
 
-  cambiarEstatusPago(row: PagoRow): void {
+  cambiarEstatusPago(row: PagoGridRow): void {
     void Swal.fire({
       background: '#141a21',
       color: '#ffffff',

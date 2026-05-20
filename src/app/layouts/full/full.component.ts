@@ -218,7 +218,8 @@ export class FullComponent implements OnInit, AfterViewInit {
       .subscribe((state) => {
         // SidenavOpened must be reset true when layout changes
         this.options.sidenavOpened = true;
-        this.isMobileScreen = state.breakpoints[BELOWMONITOR];
+        // Solo móvil real: overlay. Tablet (769–1023) empuja layout como desktop.
+        this.isMobileScreen = state.breakpoints[MOBILE_VIEW];
         if (this.options.sidenavCollapsed == false) {
           this.options.sidenavCollapsed = state.breakpoints[TABLET_VIEW];
         }

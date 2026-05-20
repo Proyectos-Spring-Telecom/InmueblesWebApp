@@ -57,6 +57,19 @@ export class ListaInmueblesComponent implements OnInit {
     void this.router.navigate(['/inmuebles/editar-inmueble', row.id]);
   }
 
+  recargarInmueblesPaginated(): void {
+    const grid = this.dataGrid?.instance;
+    if (!grid) return;
+
+    if (this.filtroActivo) {
+      grid.option('dataSource', this.listaInmuebles);
+      this.filtroActivo = '';
+      grid.option('searchPanel.text', '');
+    }
+
+    grid.refresh();
+  }
+
   onPageIndexChanged(e: any): void {
     const pageIndex = e.component.pageIndex();
     this.paginaActual = pageIndex + 1;

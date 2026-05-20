@@ -13,9 +13,14 @@
   }
 }
 
+/* Anula .d-none global de helpers cuando Bootstrap usa d-md-flex (p. ej. branding) */
 @media (min-width: 768px) {
   body {
     .d-sm-flex {
+      display: flex !important;
+    }
+
+    .d-md-flex {
       display: flex !important;
     }
   }

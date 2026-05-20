@@ -42,7 +42,16 @@
                 Arrendatario: {{ detalleArrendatario }}
               </span>
             </div>
-            <button type="button" class="hero-header__edit-btn">
+            <button
+              type="button"
+              class="hero-header__edit-btn"
+              (click)="irAEditarInmueble()"
+              [disabled]="
+                vistaEntidad === 'local'
+                  ? idArrendatarioContext == null
+                  : idInmuebleContext == null
+              "
+            >
               <mat-icon>edit</mat-icon>
               <span>Editar</span>
             </button>
@@ -122,11 +131,13 @@
                 </div>
               </div>
               <div class="mono-docs__row-actions">
-                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--view">
+                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--view"
+                  (click)="visualizarExpedienteDoc(fila)">
                   <mat-icon aria-hidden="true">visibility</mat-icon>
                   <span>Visualizar</span>
                 </button>
-                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--download">
+                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--download"
+                  (click)="descargarExpedienteDoc(fila)">
                   <mat-icon aria-hidden="true">download</mat-icon>
                   <span>Descargar</span>
                 </button>
@@ -170,11 +181,19 @@
                 </div>
               </div>
               <div class="mono-docs__row-actions">
-                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--view">
+                <button
+                  type="button"
+                  class="mono-docs__action-btn mono-docs__action-btn--view"
+                  (click)="visualizarExpedienteDoc(fila)"
+                >
                   <mat-icon aria-hidden="true">visibility</mat-icon>
-                  <span>Ver</span>
+                  <span>Visualizar</span>
                 </button>
-                <button type="button" class="mono-docs__action-btn mono-docs__action-btn--download">
+                <button
+                  type="button"
+                  class="mono-docs__action-btn mono-docs__action-btn--download"
+                  (click)="descargarExpedienteDoc(fila)"
+                >
                   <mat-icon aria-hidden="true">download</mat-icon>
                   <span>Descargar</span>
                 </button>
@@ -272,7 +291,7 @@
               ></dxi-column>
               <dxi-column dataField="concepto" caption="Concepto" alignment="center"></dxi-column>
               <dxi-column dataField="fechaPago" caption="Fecha de pago" dataType="date" alignment="center"></dxi-column>
-              <dxi-column dataField="fechaLimitePago" caption="Fecha límite de pago" dataType="date" alignment="center"></dxi-column>
+              <!-- <dxi-column dataField="fechaLimitePago" caption="Fecha límite de pago" dataType="date" alignment="center"></dxi-column> -->
               <dxi-column
                 dataField="monto"
                 caption="Monto"
@@ -294,10 +313,10 @@
                 <button
                   type="button"
                   class="mono-grid-row-action-btn mono-grid-row-action-btn--icon"
-                  (click)="verComprobanteImagenPago(row.data)"
-                  aria-label="Ver comprobante"
+                  (click)="abrirModalPagoDetalle(row.data)"
+                  aria-label="Ver detalle del pago"
                 >
-                  <mat-icon aria-hidden="true">image</mat-icon>
+                  <mat-icon aria-hidden="true">visibility</mat-icon>
                 </button>
               </div>
             </dx-data-grid>
@@ -310,19 +329,69 @@
       <article class="mono-block__card" *ngIf="vistaEntidad !== 'local'">
         <header class="mono-block__head d-flex align-items-center justify-content-between flex-wrap gap-2">
           <h5 class="m-0">Zonas</h5>
-          <div class="mono-zonas-total">Superficie disponible del predio: <strong>1,000.00 m²</strong></div>
+          <div class="mono-zonas-total">Superficie disponible del predio: <strong>{{ superficieDisponiblePredioTexto }}</strong></div>
         </header>
         <div class="mono-block__body">
-          <div class="mono-block__panel">
-            <table class="table table-borderless mono-table m-0">
-              <tbody>
-                <tr *ngFor="let zona of zonas">
-                  <td>{{ zona.zona }}</td>
-                  <td class="text-end">{{ zona.superficie }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="mono-block__panel mono-block__panel--zonas" *ngIf="zonas.length; else sinZonasMonitoreo">
+            <div class="mono-zonas-list">
+              <article
+                class="mono-zona-block"
+                *ngFor="let zona of zonas; trackBy: trackZonaMonitoreo"
+              >
+                <header class="mono-zona-block__head">
+                  <h6 class="mono-zona-block__title m-0">{{ zona.zonaPrincipal }}</h6>
+                  <div class="mono-zona-block__meta">
+                    <span class="mono-zona-block__stat">
+                      <span class="mono-zona-block__stat-label">Superficie zona</span>
+                      <span class="mono-zona-block__stat-value">{{ zona.superficieZonaM2 }}</span>
+                    </span>
+                    <span class="mono-zona-block__stat">
+                      <span class="mono-zona-block__stat-label">Superficie disponible</span>
+                      <span class="mono-zona-block__stat-value">{{ zona.superficieDisponibleM2 }}</span>
+                    </span>
+                    <span class="mono-zona-block__stat">
+                      <span class="mono-zona-block__stat-label">Locales</span>
+                      <span class="mono-zona-block__stat-value">{{ zona.locales.length }}</span>
+                    </span>
+                  </div>
+                </header>
+                <div class="mono-zona-block__body" *ngIf="zona.locales.length; else sinLocalesZonaMonitoreo">
+                  <div class="mono-locales-table-wrap">
+                    <table class="table table-borderless mono-table mono-table--locales m-0">
+                      <thead>
+                        <tr>
+                          <th scope="col">Local</th>
+                          <th scope="col">Área</th>
+                          <th scope="col">Estatus</th>
+                          <th scope="col">Mensualidad</th>
+                          <th scope="col">Giro</th>
+                          <th scope="col">Registro</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let loc of zona.locales; trackBy: trackLocalMonitoreo">
+                          <td>{{ loc.nombre }}</td>
+                          <td>{{ loc.areaM2 }}</td>
+                          <td>
+                            <span [ngClass]="loc.estatusClass">{{ loc.estatusLabel }}</span>
+                          </td>
+                          <td>{{ loc.mensualidad }}</td>
+                          <td>{{ loc.giro }}</td>
+                          <td>{{ loc.fhRegistro }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <ng-template #sinLocalesZonaMonitoreo>
+                  <p class="mono-zona-block__empty m-0">Sin locales en esta zona.</p>
+                </ng-template>
+              </article>
+            </div>
           </div>
+          <ng-template #sinZonasMonitoreo>
+            <p class="mono-zona-block__empty m-0 px-2 py-3">Sin zonas registradas.</p>
+          </ng-template>
         </div>
       </article>
     </section>
@@ -335,12 +404,33 @@
               <h5 class="m-0">{{ vistaEntidad === 'local' ? 'Documentación' : 'Plano' }}</h5>
             </header>
             <div class="mono-card__body">
-              <div class="mono-doc-image">
-                <img
-                  [src]="vistaEntidad === 'local' ? imagenDocumentacionLocal : imagenPlanoInmueble"
-                  [alt]="vistaEntidad === 'local' ? 'Imagen del predio' : 'Plano de edificio (demostración)'"
-                />
-              </div>
+              <ng-container *ngIf="vistaEntidad === 'local'; else monoPlanoInmuebleCardTpl">
+                <div
+                  class="mono-map-shell"
+                  *ngIf="documentacionLocalUsaIframe && documentacionLocalEmbedUrl; else monoDocLocalImgTpl"
+                >
+                  <iframe
+                    class="mono-iframe"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    [src]="documentacionLocalEmbedUrl"
+                    [title]="documentacionLocalTitulo"
+                  ></iframe>
+                </div>
+                <ng-template #monoDocLocalImgTpl>
+                  <div class="mono-doc-image" *ngIf="imagenDocumentacionLocal">
+                    <img
+                      [src]="imagenDocumentacionLocal"
+                      [alt]="documentacionLocalTitulo"
+                    />
+                  </div>
+                </ng-template>
+              </ng-container>
+              <ng-template #monoPlanoInmuebleCardTpl>
+                <div class="mono-doc-image">
+                  <img [src]="imagenPlanoInmueble" alt="Plano de edificio" />
+                </div>
+              </ng-template>
             </div>
           </article>
         </div>
@@ -356,17 +446,28 @@
                   class="mono-iframe"
                   loading="lazy"
                   referrerpolicy="no-referrer-when-downgrade"
-                  [src]="mapaUbicacionEmbedUrl"
+                  [src]="mapaEmbedSafeUrl"
                   title="Ubicación del inmueble"
                 ></iframe>
               </div>
               <ng-template #licenciaFuncionamientoTpl>
-                <div class="mono-doc-image">
-                  <img
-                    src="https://imgv2-1-f.scribdassets.com/img/document/655514658/original/1a00c65260/1?v=1"
-                    alt="Licencia de funcionamiento de Cuernavaca (demostración)"
-                  />
+                <div class="mono-map-shell" *ngIf="licenciaTarjetaUsaIframe && licenciaEmbedUrl; else licenciaImgTpl">
+                  <iframe
+                    class="mono-iframe"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    [src]="licenciaEmbedUrl"
+                    title="Licencia o uso de suelo"
+                  ></iframe>
                 </div>
+                <ng-template #licenciaImgTpl>
+                  <div class="mono-doc-image">
+                    <img
+                      [src]="imagenLicenciaFuncionamiento"
+                      alt="Licencia de funcionamiento de Cuernavaca (demostración)"
+                    />
+                  </div>
+                </ng-template>
               </ng-template>
             </div>
           </article>
@@ -383,7 +484,7 @@
                   class="mono-iframe"
                   loading="lazy"
                   referrerpolicy="no-referrer-when-downgrade"
-                  [src]="streetViewEmbedUrl"
+                  [src]="streetViewEmbedSafeUrl"
                   title="Street View del inmueble"
                 ></iframe>
               </div>
@@ -527,6 +628,126 @@
     </div>
   </ng-container>
 
+  <ng-container *ngIf="mostrarModalPagoDetalle">
+    <div class="contract-page-dim" (click)="cerrarModalPagoDetalle()" [@contractDimAnim]></div>
+    <div
+      class="docs-backdrop contract-docs-backdrop"
+      [@contractModalAnim]
+      (click)="cerrarModalPagoDetalle()"
+    >
+      <div
+        class="docs-modal contract-docs-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mono-pago-detalle-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="row docs-modal__header">
+          <div class="col-10 col-md-11">
+            <span class="docs-modal__eyebrow">Pagos</span>
+            <h3 class="docs-modal__title" id="mono-pago-detalle-title">Detalle del pago</h3>
+            <!-- <p class="docs-modal__subtitle" *ngIf="pagoDetalleModal">
+              Folio {{ pagoDetalleModal.id }} · {{ pagoDetalleModal.concepto }}
+            </p> -->
+          </div>
+          <div class="col-2 col-md-1 docs-modal__close-col">
+            <button
+              type="button"
+              class="docs-modal__close"
+              (click)="cerrarModalPagoDetalle()"
+              aria-label="Cerrar detalle del pago"
+            >
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="row docs-modal__body">
+          <div class="col-12 contract-docs__scroll">
+            <div *ngIf="pagoDetalleModalLoading" class="contract-docs__loading">
+              <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+              <p>Obteniendo datos del pago…</p>
+            </div>
+
+            <div *ngIf="!pagoDetalleModalLoading && pagoDetalleModalError" class="contract-docs__alert">
+              <mat-icon>error_outline</mat-icon>
+              <p>{{ pagoDetalleModalError }}</p>
+            </div>
+
+            <ng-container *ngIf="!pagoDetalleModalLoading && pagoDetalleModal as pv">
+              <section class="contract-docs-shell">
+                <article class="contract-docs-card contract-docs-card--hero">
+                  <div class="contract-docs-card__hero-row">
+                    <div>
+                      <span class="contract-docs-card__kicker">Pago #{{ pv.id }}</span>
+                      <h4 class="contract-docs-card__hero-title">{{ pv.concepto }}</h4>
+                    </div>
+                    <span class="contract-docs-card__chip" [ngClass]="clasesEstatusPago(pv.estatus)">
+                      {{ pv.estatus }}
+                    </span>
+                  </div>
+                  <div class="contract-docs-card__hero-meta">
+                    <span><strong>Monto:</strong> {{ pv.monto }}</span>
+                    <span><strong>Método:</strong> {{ pv.metodo }}</span>
+                  </div>
+                </article>
+
+                <article class="contract-docs-card">
+                  <h5 class="contract-docs-card__title">Información del pago</h5>
+                  <div class="contract-docs-grid">
+                    <div class="contract-docs-field"><span>Servicio</span><p>{{ pv.servicio }}</p></div>
+                    <div class="contract-docs-field"><span>Fecha de pago</span><p>{{ pv.fechaPago }}</p></div>
+                    <div class="contract-docs-field"><span>Concepto</span><p>{{ pv.concepto }}</p></div>
+                    <div class="contract-docs-field"><span>Monto</span><p class="is-money">{{ pv.monto }}</p></div>
+                    <div class="contract-docs-field"><span>Método de pago</span><p>{{ pv.metodo }}</p></div>
+                    <div class="contract-docs-field">
+                      <span>Estatus</span>
+                      <p>
+                        <span class="mono-pago-estatus" [ngClass]="clasesEstatusPago(pv.estatus)">
+                          {{ pv.estatus }}
+                        </span>
+                      </p>
+                    </div>
+                    <div class="contract-docs-field">
+                      <span>Comprobante</span>
+                      <p *ngIf="!pv.tieneComprobante">Sin archivo</p>
+                      <button
+                        *ngIf="pv.tieneComprobante"
+                        type="button"
+                        class="docs-modal__btn docs-modal__btn--ghost d-inline-flex align-items-center gap-1"
+                        (click)="verComprobantePagoDetalleModal()"
+                      >
+                        <mat-icon aria-hidden="true">visibility</mat-icon>
+                        <span>Ver comprobante</span>
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              </section>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="row docs-modal__footer">
+          <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <button
+              type="button"
+              class="docs-modal__btn docs-modal__btn--ghost"
+              *ngIf="pagoDetalleModal?.tieneComprobante"
+              (click)="verComprobantePagoDetalleModal()"
+            >
+              Ver comprobante
+            </button>
+            <span *ngIf="!pagoDetalleModal?.tieneComprobante"></span>
+            <button type="button" class="docs-modal__btn" (click)="cerrarModalPagoDetalle()">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
   <ng-container *ngIf="mostrarModalPago">
     <div class="contract-page-dim" (click)="cerrarModalPago()" [@contractDimAnim]></div>
     <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalPago()">
@@ -561,36 +782,6 @@
             <form [formGroup]="pagoForm" class="perm-form-body mono-pago-form">
               <div class="row g-3 align-items-end">
                 <div class="col-12 col-lg-4">
-                  <label for="pagoIdInmueble" class="form-label perm-label">
-                    {{ vistaEntidad === 'local' ? 'Local' : 'Inmueble' }}
-                    <span class="text-danger">*</span>
-                  </label>
-                  <div class="input-group input-group-lg perm-ig">
-                    <span class="input-group-text fw-bold">
-                      <mat-icon aria-hidden="true">{{
-                        vistaEntidad === 'local' ? 'storefront' : 'apartment'
-                      }}</mat-icon>
-                    </span>
-                    <div class="form-floating flex-grow-1">
-                      <input
-                        id="pagoIdInmueble"
-                        type="text"
-                        class="form-control"
-                        readonly
-                        [value]="
-                          inmueblePagoEtiqueta ||
-                          (vistaEntidad === 'local'
-                            ? 'Sin local en contexto (idInmueble)'
-                            : 'Sin inmueble en contexto (idInmueble)')
-                        "
-                        tabindex="-1"
-                      />
-                      <label for="pagoIdInmueble">idInmueble</label>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-12 col-lg-4">
                   <label for="pagoServicioInmueble" class="form-label perm-label">Servicio</label>
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold">
@@ -601,22 +792,20 @@
                         id="pagoServicioInmueble"
                         class="form-select"
                         formControlName="idServicioInmueble"
-                        [disabled]="catServiciosCargando"
+                        (change)="onPagoServicioInmuebleChange()"
                       >
                         <option [ngValue]="null">
                           {{
-                            catServiciosCargando
-                              ? 'Cargando servicios…'
-                              : listaCatServicios.length
-                                ? 'Seleccione servicio (opcional)'
-                                : 'Sin servicios en catálogo'
+                            serviciosInmueblePago.length
+                              ? 'Seleccione servicio (opcional)'
+                              : 'Sin servicios en el inmueble'
                           }}
                         </option>
-                        <option *ngFor="let srv of listaCatServicios" [ngValue]="srv.id">
-                          {{ etiquetaCatServicio(srv) }}
+                        <option *ngFor="let srv of serviciosInmueblePago" [ngValue]="srv.id">
+                          {{ srv.nombre }}
                         </option>
                       </select>
-                      <label for="pagoServicioInmueble">Catálogo de servicios</label>
+                      <label for="pagoServicioInmueble">Servicio del inmueble</label>
                     </div>
                   </div>
                 </div>
@@ -775,3 +964,5 @@
     </div>
   </ng-container>
 </div>
+
+<app-documento-preview #docPreview eyebrow="Documento del inmueble"></app-documento-preview>

@@ -351,8 +351,8 @@
                                     <select class="form-select" formControlName="estatus"
                                       [attr.aria-label]="'Estatus del local ' + (j + 1)">
                                       <option [ngValue]="null" disabled></option>
-                                      <option [ngValue]="0">Baja</option>
-                                      <option [ngValue]="1">Disponible</option>
+                                      <option [ngValue]="0">Fuera de servicio</option>
+                                      <option [ngValue]="1">Disponible para renta</option>
                                       <option [ngValue]="2">Ocupado</option>
                                       <option [ngValue]="3">Apartado</option>
                                     </select>
@@ -375,6 +375,60 @@
                                   <div class="form-floating flex-grow-1"><input type="text" class="form-control"
                                       formControlName="giro" placeholder="Ej.: Restaurante" /><label>Ej.:
                                       Restaurante</label></div>
+                                </div>
+                              </div>
+                              <div class="col-12 col-md-8">
+                                <label class="form-label perm-label d-block mb-2">Fachada del local</label>
+                                <div class="uploader-hero srv-pago-uploader">
+                                  <div class="uploader srv-pago-uploader__card">
+                                    <div class="uploader__glow"></div>
+                                    <div class="uploader__body">
+                                      <ng-container
+                                        *ngIf="layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value); else localFachadaUploaderDefault">
+                                        <div class="srv-pago-uploader__row srv-pago-uploader__row--archivo-remoto">
+                                          <div class="uploader__cta-actions">
+                                            <button mat-flat-button color="primary" type="button"
+                                              (click)="localFachadaInput.click()">
+                                              Seleccionar
+                                            </button>
+                                            <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
+                                              url: localCtrl.get('fachadaUrl')?.value,
+                                              titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
+                                            }"></ng-container>
+                                          </div>
+                                          <span class="uploader__badge uploader__badge--file srv-pago-uploader__formats">
+                                            {{ localCtrl.get('fachadaNombre')?.value }}
+                                          </span>
+                                        </div>
+                                      </ng-container>
+                                      <ng-template #localFachadaUploaderDefault>
+                                        <div class="srv-pago-uploader__row">
+                                          <div class="srv-pago-uploader__left">
+                                            <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
+                                              <mat-icon>photo_camera</mat-icon>
+                                            </div>
+                                            <button mat-flat-button color="primary" type="button"
+                                              (click)="localFachadaInput.click()">
+                                              Selecciona una imagen
+                                            </button>
+                                          </div>
+                                          <span class="uploader__badge srv-pago-uploader__formats"
+                                            [class.uploader__badge--file]="localCtrl.get('fachadaNombre')?.value || localCtrl.get('fachadaUrl')?.value">
+                                            {{ localCtrl.get('fachadaNombre')?.value || etiquetaSoloImagenes }}
+                                          </span>
+                                          <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
+                                            url: localCtrl.get('fachadaUrl')?.value,
+                                            titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
+                                          }"></ng-container>
+                                        </div>
+                                      </ng-template>
+                                      <h6 class="uploader__title">Sube imagen</h6>
+                                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                      <input #localFachadaInput type="file" [accept]="acceptSoloImagenes"
+                                        class="uploader__input"
+                                        (change)="onLocalFachadaFileSelected($event, i, j)" />
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -520,14 +574,38 @@
                       <h6 class="uploader__title">Sube imagen</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
                       <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: imagenFachadaUrl,
+                        nombreRemoto: imagenFachadaNombre,
+                        controlName: 'documentoFachada',
+                        placeholder: etiquetaSoloImagenes,
+                        tituloVer: imagenFachadaNombre || 'Fachada',
+                        selector: 'fachada'
+                      }"></ng-container>
+                      <input #imagenFachadaInput type="file" [accept]="acceptSoloImagenes"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoFachada')" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                <label class="form-label perm-label docs-uploader-label">Plano</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>map</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
                         url: imagenPlanoUrl,
                         nombreRemoto: imagenPlanoNombre,
                         controlName: 'documentoPlano',
-                        placeholder: etiquetaSoloImagenes,
-                        tituloVer: imagenPlanoNombre || 'Fachada',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: imagenPlanoNombre || 'Plano',
                         selector: 'plano'
                       }"></ng-container>
-                      <input #imagenPlanoInput type="file" [accept]="acceptSoloImagenes"
+                      <input #imagenPlanoInput type="file" [accept]="acceptPdfImagenes"
                         class="uploader__input" (change)="onFileSelected($event, 'documentoPlano')" />
                     </div>
                   </div>

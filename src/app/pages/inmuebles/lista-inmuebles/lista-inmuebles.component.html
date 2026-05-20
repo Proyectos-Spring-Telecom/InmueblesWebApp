@@ -147,7 +147,8 @@
         </div>
 
         <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
-          <app-lista-inmuebles-detalle [row]="row.data"></app-lista-inmuebles-detalle>
+          <app-lista-inmuebles-detalle [row]="row.data"
+            (estatusLocalActualizado)="recargarInmueblesPaginated()"></app-lista-inmuebles-detalle>
         </div>
         <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
       </dx-data-grid>
