@@ -1,5 +1,8 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, Input, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { take } from 'rxjs';
+import Swal from 'sweetalert2';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import { ArrendatarioGridRow } from '../arrendatarios-list.mapper';
 import {
@@ -22,6 +25,17 @@ export class ListaArrendatariosDetalleComponent {
 
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
 
+  private readonly swalToastDescargaError = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    icon: 'error',
+    showConfirmButton: false,
+    timer: 5200,
+    timerProgressBar: true,
+    background: '#141a21',
+    color: '#ffffff',
+  });
+
   detalleTab = 0;
 
   esImagenArchivo = esImagenArchivo;
@@ -30,7 +44,10 @@ export class ListaArrendatariosDetalleComponent {
   formatearMoneda = formatearMoneda;
   nombreArrendador = nombreArrendador;
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(
+    private sanitizer: DomSanitizer,
+    private http: HttpClient,
+  ) {}
 
   get item(): Record<string, unknown> {
     return this.row?.detalle ?? {};
@@ -89,6 +106,55 @@ export class ListaArrendatariosDetalleComponent {
 
   textoSocioDoc(url: unknown): boolean {
     return typeof url === 'string' && url.trim().length > 0;
+  }
+
+  descargarDocumento(
+    url: string | undefined,
+    nombreFallback: string,
+    ev?: Event,
+  ): void {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    const urlTrim = url?.trim();
+    if (!urlTrim) return;
+    const nombre = this.nombreParaDescarga(urlTrim, nombreFallback);
+    this.http
+      .get(urlTrim, { responseType: 'blob' })
+      .pipe(take(1))
+      .subscribe({
+        next: (blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = objectUrl;
+          a.download = nombre;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(objectUrl);
+        },
+        error: () => {
+          void this.swalToastDescargaError.fire({
+            title: 'No se pudo descargar',
+            text: 'No se obtuvo el archivo. Verifica la URL o el acceso al almacenamiento.',
+          });
+        },
+      });
+  }
+
+  private nombreParaDescarga(url: string, fallback: string): string {
+    try {
+      const u = new URL(url);
+      const parts = u.pathname.split('/').filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last) return decodeURIComponent(last);
+    } catch {
+      const seg = url.split('/').pop()?.split('?')[0]?.split('#')[0] ?? '';
+      if (seg && seg.includes('.')) return decodeURIComponent(seg);
+    }
+    const ext = url.match(/\.(pdf|png|jpe?g|gif|webp|jfif)(\?|$|#)/i);
+    if (ext) return `${fallback}.${ext[1].toLowerCase()}`;
+    return fallback;
   }
 
   metricasContrato(c: Record<string, unknown>): { label: string; value: string }[] {

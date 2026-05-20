@@ -399,7 +399,8 @@ html body .mat-drawer-container:has(.docs-backdrop) > .mat-drawer-content {
   width: 100%;
 }
 
-@media (max-width: 1023px) {
+/* Solo móvil: footer a ancho completo (sidebar en overlay) */
+@media (max-width: 768px) {
   .layout-app-footer {
     left: 0;
     width: 100%;

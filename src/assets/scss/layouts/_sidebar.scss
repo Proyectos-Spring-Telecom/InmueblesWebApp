@@ -87,8 +87,9 @@
   .branding {
     justify-content: center;
 
-    a {
-      width: 45px;
+    .branding__link {
+      width: 100%;
+      justify-content: center;
       overflow: hidden;
     }
   }
@@ -228,7 +229,7 @@
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 769px) {
   .sidebarNav-mini {
     .contentWrapper {
       margin-left: $sidenav-mini !important;

@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { DxiValueAxisModule } from 'devextreme-angular/ui/nested';
 import { MonitoreoInstalacionComponent } from './monitoreo-instalacion/monitoreo-instalacion.component';
 import { MonitoreoLocalesPlanoComponent } from './locales-plano/monitoreo-locales-plano.component';
+import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documento-preview.module';
 
 
 @NgModule({
@@ -18,6 +19,7 @@ import { MonitoreoLocalesPlanoComponent } from './locales-plano/monitoreo-locale
   imports: [
     CommonModule,
     MonitoreoRoutingModule,
+    DocumentoPreviewModule,
     MatIconModule,
     DxDataGridModule,
     DxButtonModule,

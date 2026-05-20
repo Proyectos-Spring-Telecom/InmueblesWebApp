@@ -111,17 +111,16 @@
           >
             <i class="fa fa-eye"></i> Ver
           </button>
-          <a
-            *ngIf="a['url']"
-            class="bg-success inm-doc-pill inm-doc-pill--link"
-            [href]="a['url']"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            mat-flat-button
+            class="bg-success inm-doc-pill"
             [title]="a['nombre'] || 'Documento'"
-            [attr.download]="a['nombre'] || null"
+            [disabled]="!a['url']"
+            (click)="descargarDocumento($any(a['url']), $any(a['nombre']) || 'Documento', $event)"
           >
-            <i class="fa fa-download"></i> Descargar
-          </a>
+            <i class="fa fa-download"></i> Descarga
+          </button>
         </div>
       </article>
     </div>
@@ -166,14 +165,19 @@
               >
                 <i class="fa fa-eye"></i> Ver
               </button>
-              <a
+              <button
+                type="button"
                 class="bg-success arr-socio-doc__link"
-                [href]="$any(so['constanciaSituacionFiscal'])"
-                target="_blank"
-                rel="noopener noreferrer"
+                (click)="
+                  descargarDocumento(
+                    $any(so['constanciaSituacionFiscal']),
+                    'Constancia situación fiscal',
+                    $event
+                  )
+                "
               >
-                <i class="fa fa-external-link"></i>
-              </a>
+                <i class="fa fa-download"></i> Descarga
+              </button>
             </div>
           </li>
           <li *ngIf="textoSocioDoc(so['comprobanteDomicilio'])">
@@ -187,14 +191,19 @@
               >
                 <i class="fa fa-eye"></i> Ver
               </button>
-              <a
+              <button
+                type="button"
                 class="bg-success arr-socio-doc__link"
-                [href]="$any(so['comprobanteDomicilio'])"
-                target="_blank"
-                rel="noopener noreferrer"
+                (click)="
+                  descargarDocumento(
+                    $any(so['comprobanteDomicilio']),
+                    'Comprobante de domicilio',
+                    $event
+                  )
+                "
               >
-                <i class="fa fa-external-link"></i>
-              </a>
+                <i class="fa fa-download"></i> Descarga
+              </button>
             </div>
           </li>
           <li *ngIf="textoSocioDoc(so['identificacionOficial'])">
@@ -208,14 +217,19 @@
               >
                 <i class="fa fa-eye"></i> Ver
               </button>
-              <a
+              <button
+                type="button"
                 class="bg-success arr-socio-doc__link"
-                [href]="$any(so['identificacionOficial'])"
-                target="_blank"
-                rel="noopener noreferrer"
+                (click)="
+                  descargarDocumento(
+                    $any(so['identificacionOficial']),
+                    'Identificación oficial',
+                    $event
+                  )
+                "
               >
-                <i class="fa fa-external-link"></i>
-              </a>
+                <i class="fa fa-download"></i> Descarga
+              </button>
             </div>
           </li>
         </ul>

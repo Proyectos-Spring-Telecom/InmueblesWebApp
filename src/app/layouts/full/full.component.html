@@ -1,5 +1,5 @@
 <div autosize autoFocus [ngClass]="{
-  'sidebarNav-mini': options.sidenavCollapsed && options.navPos !== 'top' &&  !resView,
+  'sidebarNav-mini': options.sidenavCollapsed && options.navPos !== 'top' && !isOver,
   'sidebarNav-horizontal': options.horizontal,
   cardBorder: options.cardBorder,
 }" class="page-container" [dir]="options.dir!">
@@ -16,8 +16,7 @@
     <mat-sidenav align="start" #leftsidenav [mode]="isOver ? 'over' : 'side'" [opened]="
         options.navPos === 'side' &&
         options.sidenavOpened &&
-        !isOver &&
-        !resView
+        !isOver
       " (openedChange)="onSidenavOpenedChange($event)" (closedStart)="onSidenavClosedStart()" class="sidebarNav">
       <app-sidebar> </app-sidebar>
       <ng-scrollbar class="position-relative mini-scroll" style="height: calc(100vh - 230px)">

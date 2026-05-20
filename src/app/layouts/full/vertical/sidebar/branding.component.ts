@@ -8,11 +8,12 @@ import { CoreService } from 'src/app/services/core.service';
   standalone: true,
   imports: [RouterModule],
   template: `
-    <div class="branding d-none d-lg-flex align-items-center">
-      <a [routerLink]="['/']" class="d-flex">
+    <div class="branding d-flex align-items-center">
+      <a [routerLink]="['/']" class="d-flex align-items-center branding__link">
         <img
           [src]="showImage"
-          class="align-middle widthImage m-2"
+          (error)="onLogoError()"
+          class="branding__img m-2"
           alt="logo"
         />
       </a>
@@ -21,14 +22,25 @@ import { CoreService } from 'src/app/services/core.service';
 })
 export class BrandingComponent {
   options = this.settings.getOptions();
-  public showImage: any;
+  readonly defaultLogo = '/assets/images/logos/spring_white.png';
+  showImage = this.defaultLogo;
 
-  constructor(private settings: CoreService, private users: AuthenticationService,) {
-    const user = this.users.getUser();
-    if(user?.logo == 'null' || user?.logo == null){
-      this.showImage = 'assets/images/logos/spring_white.png'
-    } else{
-      this.showImage = user?.logo
+  constructor(private settings: CoreService, private users: AuthenticationService) {
+    this.showImage = this.resolveLogoUrl();
+  }
+
+  onLogoError(): void {
+    if (this.showImage !== this.defaultLogo) {
+      this.showImage = this.defaultLogo;
     }
+  }
+
+  private resolveLogoUrl(): string {
+    const logo = this.users.getUser()?.logo;
+    const value = logo == null ? '' : String(logo).trim();
+    if (!value || value === 'null' || value === 'undefined') {
+      return this.defaultLogo;
+    }
+    return value;
   }
 }

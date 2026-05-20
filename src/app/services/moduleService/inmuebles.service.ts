@@ -27,8 +27,27 @@ export class InmueblesService {
     return this.http.get(`${this.base}/${id}`);
   }
 
+  obtenerLocalesPorInmueble(idInmueble: number): Observable<unknown> {
+    return this.http.get(`${this.base}/locales/${idInmueble}`);
+  }
+
   obtenerLocalesLibres(idInmueble: number): Observable<unknown> {
     return this.http.get(`${this.base}/locales-libres/${idInmueble}`);
+  }
+
+  actualizarEstatusLocal(idLocal: number, estatus: number): Observable<unknown> {
+    return this.http.patch(`${this.base}/locales/${idLocal}/estatus`, {
+      estatus,
+    });
+  }
+
+  actualizarMapaInmueble(
+    idInmueble: number,
+    mapaInmueble: Record<string, unknown>,
+  ): Observable<unknown> {
+    return this.http.patch(`${this.base}/mapa/${idInmueble}`, {
+      mapaInmueble,
+    });
   }
 
   actualizarInmueble(id: number, data: FormData): Observable<unknown> {

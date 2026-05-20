@@ -17,16 +17,20 @@ import {
 } from '@angular/animations';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { catchError, map, of } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
+import { extraerArrendatariosInmuebleApi } from './monitoreo-arrendatarios.mapper';
 import {
-  extraerArrendatariosInmuebleApi,
-  mapArrendatariosInmuebleToLocalesMonitoreo,
-} from './monitoreo-arrendatarios.mapper';
+  buildMonitoreoLocalesZonasListaUnica,
+  extraerLocalesInmuebleApi,
+  localMonitoreoTieneInformacion,
+  urlFachadaDesdeArchivos,
+  urlFachadaLocalApi,
+} from './monitoreo-locales.mapper';
 import {
   extraerFilasListadoApi,
   extraerInmueblesListadoApi,
@@ -34,6 +38,12 @@ import {
   mapInmuebleMonitoreoInstalacion,
   nombreClienteMonitoreo,
 } from './monitoreo-clientes.mapper';
+import {
+  extraerMapaInmuebleApi,
+  mapaInmuebleTienePlano,
+  visualLayoutDesdeCatalogoInmueble,
+  visualLayoutDesdeMapaInmueble,
+} from './monitoreo-mapa.mapper';
 
 declare const google: any;
 
@@ -231,6 +241,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   cargandoClientes = false;
   cargandoInmueblesArrendador = false;
   cargandoLocalesInmueble = false;
+  /** Vista Zonas: una lista (catálogo + libres + ocupados). */
+  localesZonasLista: any[] = [];
   listaInstalaciones: any[] = [];
   selectedId?: number;
   viewMode: ViewMode = 'centrales';
@@ -278,10 +290,11 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   private zoneResizeState: ZoneResizeState | null = null;
   private zoneDragState: ZoneDragState | null = null;
   zoneNameDraft = '';
-  localNameDraft = '';
   showZoneNameEditor = false;
-  showLocalNameEditor = false;
-  isRenamingZone = false;
+  /** Sin elementos en el lienzo (ni mapa ni catálogo). */
+  diagramaMapaVacio = true;
+  /** Plano generado desde zonas/locales del catálogo; aún no guardado en `mapaInmueble`. */
+  diagramaPlanoDesdeCatalogo = false;
 
   /** Solo rol 1 ve la lista de Clientes; el resto solo sus Instalaciones. */
   isRol1 = false;
@@ -361,14 +374,13 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.clienteSearchTerm = '';
   }
 
-  /** Locales mostrados en la lista izquierda en vista Zonas (API o representación del diagrama). */
+  /** Locales en la lista izquierda y base del diagrama. */
   get localesParaListaZonas(): any[] {
     if (!this.zonasViewActive || !this.selectedInmuebleForLocales) return [];
+    if (this.localesZonasLista.length) return this.localesZonasLista;
     const ins = this.selectedInmuebleForLocales;
     const raw = Array.isArray(ins.locales) ? ins.locales : [];
     if (raw.length) return raw;
-    // Evita recrear un nuevo array/objetos en cada detección de cambios
-    // para que la lista no se re-renderice continuamente al hacer scroll.
     return this.visualLayout.locales;
   }
 
@@ -397,59 +409,30 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     return `${id}|${nom}|${occ}|${med}|${men}|${est}|${img}|${vista}|${zona}|${giro}|${vig}`;
   }
 
-  getImagenLocalLista(local: any, index = 0): string {
+  /** URL de fachada para la tarjeta (API `fachadaUrl` o respaldo en arrendatario). */
+  private urlFachadaEnListaLocal(local: any): string {
     const fachada = String(local?.imagenFachada ?? '').trim();
     if (fachada) return fachada;
+    const detLocal = local?.detalleLocal as Record<string, unknown> | undefined;
+    const desdeLocal = urlFachadaLocalApi(detLocal);
+    if (desdeLocal) return desdeLocal;
+    const detArr = local?.detalleArrendatario as Record<string, unknown> | undefined;
+    return urlFachadaDesdeArchivos(detArr) || '';
+  }
 
-    const u =
-      local?.imagenUrl ??
-      local?.urlImagen ??
-      local?.foto ??
-      local?.imagen ??
-      local?.photoUrl ??
-      local?.urlFoto;
-    const s = u != null ? String(u).trim() : '';
-    if (s.length) return s;
+  /** Sin `fachadaUrl`: icono; con URL válida: foto del local. */
+  localMuestraIconoDisponible(local: any): boolean {
+    return !this.urlFachadaEnListaLocal(local);
+  }
 
-    const identidad = String(
-      local?.arrendatario ??
-      local?.arrendatarioLocal ??
-      local?.ocupante ??
-      local?.ocupanteNombre ??
-      local?.nombreLocal ??
-      local?.local ??
-      '',
-    )
-      .toLowerCase()
-      .trim();
+  getImagenFachadaLocalLista(local: any): string {
+    return this.urlFachadaEnListaLocal(local) || this.imagenLocalListaDefault;
+  }
 
-    if (identidad.includes('little')) {
-      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRU5QgdZTMyLU4FQKJstMQCNelj4-KJQvqMlg&s';
-    }
-    if (identidad.includes('san pablo')) {
-      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKJR0tQXoD5ZaSEZZjfVAXlCWuU3EUGYvphA&s';
-    }
-    if (identidad.includes('nice')) {
-      return 'https://lh3.googleusercontent.com/gps-cs-s/APNQkAFRdzOnO_eCBYiNzIY5XKWz2H1fcCxQVme6VX1HTAmb_0E_MCiTeb5AznPRWGmma-Zbcub1n4f3i0bLuPF9sBNCiHFNWKlitrOmClUJJ4Gnz_GZqusoUGw8bV18ymQRCPpu1ukgqlNS_mw=s680-w680-h510-rw';
-    }
-    if (identidad.includes('spring')) {
-      return 'https://lh3.googleusercontent.com/gps-cs-s/APNQkAFlG1RuIX_TUTB944PQtcU_VhwJBKarAk6AZl61hj8-4Pes7T6n4kUQicm-qp8DtXMazia1NU7pjij4ziIozMFwvKH6Lbr1r60PIedWpOhP9ouysXVnE2gjY2rWj212L9kc7r3D=s680-w680-h510-rw';
-    }
-    if (identidad.includes('inglés individual') || identidad.includes('ingles individual')) {
-      return 'https://escuelasmexico.mx/wp-content/uploads/2024/08/Ingles-Individual-Cuernavaca-Vista-Hermosa-en-Cuernavaca.jpg';
-    }
-    if (identidad.includes('chopo')) {
-      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoG7Mwy-QiPc4n0i5-UL1ucJTAqtzOdRikSA&s';
-    }
-    if (identidad.includes('poder judicial')) {
-      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhU5VreFPfCZ6G2tYfgXy3igpgfvgq9mYpRg&s';
-    }
-    if (identidad.includes('clínica') || identidad.includes('clinica') || identidad.includes('médic')) {
-      return 'https://hospitalcenter.com.mx/images/site/galeria/habitaciones/HAB-4.jpg';
-    }
-
-    const seed = local?.id ?? local?.nombre ?? index;
-    return this.pickImageBySeed(seed, this.imagenesLocales, this.imagenLocalListaDefault);
+  /** @deprecated Usar {@link localMuestraIconoDisponible} y {@link getImagenFachadaLocalLista}. */
+  getImagenLocalLista(local: any, index = 0): string {
+    if (this.localMuestraIconoDisponible(local)) return '';
+    return this.getImagenFachadaLocalLista(local);
   }
 
   getImagenInmuebleCard(inmueble: any, _index = 0): string {
@@ -562,30 +545,68 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getOcupacionEtiquetaLista(local: any): string {
+    const catalogo = String(local?.estatusLocalLabel ?? '').trim();
+    if (catalogo && catalogo !== '—') {
+      return this.etiquetaOcupacionListaLocal(catalogo, local);
+    }
+
     const registro = String(local?.estatusLabel ?? '').trim();
-    if (registro && registro !== '—') return registro;
+    if (registro && registro !== '—') {
+      return this.etiquetaOcupacionListaLocal(registro, local);
+    }
 
     const e = String(local?.estado ?? '').toLowerCase().trim();
     const map: Record<string, string> = {
-      libre: 'Libre',
+      libre: 'Disponible',
       ocupado: 'Ocupado',
-      reservado: 'Reservado',
-      inactivo: 'Inactivo',
+      reservado: 'Apartado',
+      inactivo: 'Fuera de servicio',
     };
-    return map[e] ?? (local?.estado != null && String(local.estado).trim() !== ''
-      ? String(local.estado)
-      : 'Sin dato');
+    const fallback =
+      map[e] ??
+      (local?.estado != null && String(local.estado).trim() !== ''
+        ? String(local.estado)
+        : 'Sin dato');
+    return this.etiquetaOcupacionListaLocal(fallback, local);
+  }
+
+  /** Etiqueta breve en la lista de locales (p. ej. «Disponible» en lugar del texto del catálogo). */
+  private etiquetaOcupacionListaLocal(etiqueta: string, local: any): string {
+    const est =
+      local?.estatusLocal != null
+        ? Number(local.estatusLocal)
+        : Number(local?.estatus);
+    const e = String(local?.estado ?? '').toLowerCase().trim();
+    const esDisponible =
+      est === 1 ||
+      e === 'libre' ||
+      local?.disponible === true ||
+      /disponible/i.test(etiqueta);
+    if (esDisponible) return 'Disponible';
+    return etiqueta;
   }
 
   getEstadoChipClassLista(local: any): string {
-    if (local?.estatus === 1) return 'local-status--ocupado';
-    if (local?.estatus === 0) return 'local-status--inactivo';
+    const est =
+      local?.estatusLocal != null ? Number(local.estatusLocal) : Number(local?.estatus);
+    if (est === 2) return 'local-status--ocupado';
+    if (est === 3) return 'local-status--reservado';
+    if (est === 0) return 'local-status--inactivo';
+    if (est === 1) return 'local-status--libre';
+
+    if (local?.ocupado === true) return 'local-status--ocupado';
 
     const e = String(local?.estado ?? 'libre').toLowerCase().trim();
     if (e === 'ocupado') return 'local-status--ocupado';
     if (e === 'reservado') return 'local-status--reservado';
     if (e === 'inactivo') return 'local-status--inactivo';
     return 'local-status--libre';
+  }
+
+  localTieneInformacion(local: any): boolean {
+    return localMonitoreoTieneInformacion(
+      (local ?? {}) as Record<string, unknown>,
+    );
   }
 
   getMensualidadLocalLista(local: any): string | null {
@@ -954,6 +975,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Cierra vista Zonas sin diálogo de cambios sin guardar (vuelta desde detalle). */
   private cerrarVistaZonasSinDirtyConfirm(): void {
     this.zonasViewActive = false;
+    this.localesZonasLista = [];
     this.selectedInmuebleForLocales = null;
     this.selectedLocalForMap = null;
     this.closeInlineEditors();
@@ -1080,6 +1102,70 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  private iwLine(label: string, value: unknown): string {
+    const v = String(value ?? '').trim();
+    if (!v || v === '—') return '';
+    return `<div class="iw-line"><span class="iw-line__label">${this.escapeHtml(label)}</span><span class="iw-line__value">${this.escapeHtml(v)}</span></div>`;
+  }
+
+  private iwChipHtml(
+    text: string,
+    variant: 'activo' | 'inactivo' | 'tipo' | 'estado',
+  ): string {
+    const t = String(text ?? '').trim();
+    if (!t || t === '—') return '';
+    return `<span class="iw-chip iw-chip--${variant}">${this.escapeHtml(t)}</span>`;
+  }
+
+  private vigenciaTextoInmuebleIw(ins: any): string {
+    const ini = String(ins?.fechaInicio ?? '').trim();
+    const fin = String(ins?.fechaFin ?? '').trim();
+    const vig = this.vigenciaInmuebleCard(ins);
+    const parts: string[] = [];
+    if (ini && fin) parts.push(`${ini} – ${fin}`);
+    else if (ini) parts.push(ini);
+    else if (fin) parts.push(fin);
+    if (vig) {
+      parts.push(`${vig} ${vig === '1' ? 'año' : 'años'}`);
+    }
+    return parts.join(' · ');
+  }
+
+  private buildIwCardHtml(opts: {
+    title: string;
+    eyebrow?: string;
+    chipsHtml?: string;
+    bodyHtml: string;
+    addressHtml?: string;
+    actionLabel?: string;
+    actionBtnClass?: string;
+  }): string {
+    const chips = opts.chipsHtml?.trim()
+      ? `<div class="iw-card__chips">${opts.chipsHtml}</div>`
+      : '';
+    const addr = opts.addressHtml?.trim() ?? '';
+    const action = opts.actionLabel
+      ? `<div class="iw-card__footer"><button type="button" class="${opts.actionBtnClass ?? 'iw-action iw-action--credito'}">${this.escapeHtml(opts.actionLabel)}</button></div>`
+      : '';
+    const eyebrow = opts.eyebrow?.trim()
+      ? `<span class="iw-card__eyebrow">${this.escapeHtml(opts.eyebrow)}</span>`
+      : '';
+    return `
+    <div class="iw-card iw-enter">
+      <div class="iw-card__head">
+        <div class="iw-card__title-block">
+          ${eyebrow}
+          <h6 class="iw-card__title">${this.escapeHtml(opts.title)}</h6>
+        </div>
+        <button type="button" class="iw-close" aria-label="Cerrar">✕</button>
+      </div>
+      ${chips}
+      <div class="iw-card__body">${opts.bodyHtml}</div>
+      ${addr}
+      ${action}
+    </div>`;
   }
 
   /** Todos los locales del inmueble en el mapa. */
@@ -1506,7 +1592,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  /** Botón Zonas: GET `/arrendatarios/inmueble/{idInmueble}` → lista de locales + diagrama. */
+  /** Botón Zonas: una lista con `/locales`, `/locales-libres` y `/arrendatarios/inmueble`. */
   abrirZonasInmueble(inmueble: any, event?: Event): void {
     event?.stopPropagation();
 
@@ -1516,38 +1602,149 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.localesZonasLista = [];
     this.selectedInmuebleForLocales = { ...inmueble, locales: [] };
     this.zonasViewActive = true;
     this.selectedLocalForMap = null;
     this.clearPin();
     this.rightPanelMode = 'locales';
     this.mapScopeMode = 'locales';
-    this.cargandoLocalesInmueble = true;
 
-    this.arrendatariosService
-      .obtenerArrendatariosPorInmueble(idInmueble)
-      .pipe(
-        map((resp) => {
-          const filas = extraerArrendatariosInmuebleApi(resp);
-          return mapArrendatariosInmuebleToLocalesMonitoreo(filas);
-        }),
+    this.cargarLocalesZonasInmueble(inmueble, {
+      recargarDiagrama: true,
+      mostrarCargaLista: true,
+    });
+  }
+
+  /**
+   * Refresca la lista izquierda (y opcionalmente el diagrama) sin salir de la vista de zonas.
+   */
+  private cargarLocalesZonasInmueble(
+    inmueble: any,
+    opciones: { recargarDiagrama?: boolean; mostrarCargaLista?: boolean } = {},
+  ): void {
+    const idInmueble = this.idInmuebleDesdeInstalacion(inmueble);
+    if (idInmueble == null) return;
+
+    const recargarDiagrama = opciones.recargarDiagrama === true;
+    const mostrarCargaLista = opciones.mostrarCargaLista !== false;
+
+    if (mostrarCargaLista) {
+      this.cargandoLocalesInmueble = true;
+    }
+
+    forkJoin({
+      locales: this.inmueblesService.obtenerLocalesPorInmueble(idInmueble).pipe(
+        map((resp) => extraerLocalesInmuebleApi(resp)),
         catchError((err) => {
-          console.error('Error al cargar arrendatarios del inmueble:', err);
-          this.toastr.error(
-            'No se pudieron cargar los locales del inmueble.',
-            'Monitoreo',
-          );
+          console.error('Error al cargar locales del inmueble:', err);
+          if (mostrarCargaLista) {
+            this.toastr.error(
+              'No se pudieron cargar los locales del inmueble.',
+              'Monitoreo',
+            );
+          }
           return of([] as Record<string, unknown>[]);
         }),
-      )
-      .subscribe((locales) => {
+      ),
+      localesLibres: this.inmueblesService.obtenerLocalesLibres(idInmueble).pipe(
+        map((resp) => extraerLocalesInmuebleApi(resp)),
+        catchError((err) => {
+          console.error('Error al cargar locales libres:', err);
+          return of([] as Record<string, unknown>[]);
+        }),
+      ),
+      arrendatarios: this.arrendatariosService
+        .obtenerArrendatariosPorInmueble(idInmueble)
+        .pipe(
+          map((resp) => extraerArrendatariosInmuebleApi(resp)),
+          catchError((err) => {
+            console.error('Error al cargar arrendatarios del inmueble:', err);
+            return of([] as Record<string, unknown>[]);
+          }),
+        ),
+    }).subscribe(({ locales, localesLibres, arrendatarios }) => {
+      if (mostrarCargaLista) {
         this.cargandoLocalesInmueble = false;
-        const actualizado = { ...inmueble, locales };
-        this.selectedInmuebleForLocales = actualizado;
-        this.sincronizarLocalesEnInmueble(inmueble, locales);
+      }
+      const filas = buildMonitoreoLocalesZonasListaUnica(
+        locales,
+        localesLibres,
+        arrendatarios,
+        idInmueble,
+      );
+      this.localesZonasLista = filas;
+
+      const previo = this.selectedInmuebleForLocales ?? inmueble;
+      this.selectedInmuebleForLocales = {
+        ...previo,
+        ...inmueble,
+        locales: filas,
+        mapaInmueble:
+          (previo as Record<string, unknown>)['mapaInmueble'] ??
+          (inmueble as Record<string, unknown>)['mapaInmueble'],
+      };
+      this.sincronizarLocalesEnInmueble(inmueble, filas);
+
+      if (recargarDiagrama) {
         this.loadVisualLayout();
-        this.cdr.markForCheck();
-      });
+      } else {
+        this.actualizarMetadatosLocalesEnDiagrama(filas);
+      }
+      this.cdr.markForCheck();
+    });
+  }
+
+  /** Sincroniza nombres/estado de la lista con los locales ya colocados en el plano. */
+  private actualizarMetadatosLocalesEnDiagrama(
+    filas: Record<string, unknown>[],
+  ): void {
+    const porId = new Map<string, Record<string, unknown>>();
+    for (const f of filas) {
+      const id = String(f['id'] ?? f['idLocal'] ?? '').trim();
+      if (id) porId.set(id, f);
+    }
+    const locales = this.visualLayout.locales.map((local) => {
+      const fila = porId.get(String(local.id));
+      if (!fila) return local;
+      const nom = String(
+        fila['nombre'] ?? fila['nombreLocal'] ?? fila['local'] ?? '',
+      ).trim();
+      return {
+        ...local,
+        nombre: nom || local.nombre,
+        estado: this.normalizeLocalState(
+          fila['estado'] ?? fila['estatusLocal'] ?? fila['estatus'] ?? local.estado,
+        ),
+      };
+    });
+    this.visualLayout = { ...this.visualLayout, locales };
+  }
+
+  private sincronizarMapaEnInmueble(inmueble: any, mapaInmueble: unknown): void {
+    const id = this.idInmuebleDesdeInstalacion(inmueble);
+    if (id == null || !this.selectedCentral) return;
+    const insts = Array.isArray(this.selectedCentral.instalaciones)
+      ? this.selectedCentral.instalaciones
+      : [];
+    const idx = insts.findIndex(
+      (x: any) => Number(x?.id ?? x?.idInstalacion) === id,
+    );
+    if (idx >= 0) {
+      this.selectedCentral.instalaciones[idx] = {
+        ...this.selectedCentral.instalaciones[idx],
+        mapaInmueble,
+      };
+    }
+    if (
+      this.selectedInmuebleForLocales &&
+      this.idInmuebleDesdeInstalacion(this.selectedInmuebleForLocales) === id
+    ) {
+      this.selectedInmuebleForLocales = {
+        ...this.selectedInmuebleForLocales,
+        mapaInmueble,
+      };
+    }
   }
 
   volverDiagramaDesdeMapaLocal(): void {
@@ -1564,6 +1761,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!ok) return;
     }
     this.zonasViewActive = false;
+    this.localesZonasLista = [];
+    this.diagramaMapaVacio = true;
+    this.diagramaPlanoDesdeCatalogo = false;
     this.selectedInmuebleForLocales = null;
     this.selectedLocalForMap = null;
     this.closeInlineEditors();
@@ -1596,10 +1796,19 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onInfoLocal(local: any, event?: Event): void {
     event?.stopPropagation();
+    if (!this.localTieneInformacion(local)) return;
+
     const ins = this.selectedInmuebleForLocales;
     const parentInmuebleId =
       ins?.id ?? ins?.idInstalacion ?? ins?.idDepartamento ?? ins?.idInstalacionDepartamento;
-    const merged = { ...(ins || {}), ...(local || {}) };
+    const merged = {
+      ...(ins || {}),
+      ...(local || {}),
+      idContrato: local?.idContrato ?? local?.detalleContrato?.id,
+      nombreLocal: local?.nombre ?? local?.nombreLocal,
+      arrendatario:
+        local?.arrendatario ?? local?.ocupanteNombre ?? local?.nombreEmpresa,
+    };
     this.onInfoAction({
       central: this.selectedCentral,
       instalacion: merged,
@@ -1609,7 +1818,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   trackByLocalEnZonas(index: number, local: any): string {
-    return String(local?.id ?? local?.nombre ?? index);
+    return String(local?.idLocal ?? local?.id ?? local?.nombre ?? index);
   }
 
   isLocalVisibleEnMapa(local: any, index: number): boolean {
@@ -1688,7 +1897,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private resolveLocalIdParaLista(local: any, index: number): string | null {
-    if (local?.id != null) return String(local.id);
+    const idRaw = local?.idLocal ?? local?.id;
+    if (idRaw != null) return String(idRaw);
     const vl = this.visualLayout.locales[index];
     return vl?.id ?? null;
   }
@@ -1731,157 +1941,113 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   loadVisualLayout(): void {
     this.uiState = { ...this.uiState, loading: true, error: null };
     this.closeInlineEditors();
+    const mapa = extraerMapaInmuebleApi(this.selectedInmuebleForLocales);
+    const tieneMapaGuardado = mapaInmuebleTienePlano(mapa);
     const rawModel = this.mapBackendToCanvasModel(this.selectedInmuebleForLocales);
+    this.diagramaMapaVacio =
+      rawModel.zonas.length === 0 && rawModel.locales.length === 0;
+    this.diagramaPlanoDesdeCatalogo =
+      !tieneMapaGuardado && !this.diagramaMapaVacio;
     this.visualLayout = rawModel;
-    this.buildZonesAndLocales();
-    this.fitToContent();
-    requestAnimationFrame(() => this.fitToContent());
+    if (!this.diagramaMapaVacio) {
+      this.buildZonesAndLocales();
+      this.expandCanvasToContent();
+      this.fitToContent();
+      requestAnimationFrame(() => this.fitToContent());
+    } else {
+      this.zoom = this.layoutConfig.defaultZoom;
+      this.pan = { x: 0, y: 0 };
+    }
     this.lastSavedLayoutSerialized = this.serializeLayout();
     this.uiState = { ...this.uiState, loading: false, dirty: false };
   }
 
   mapBackendToCanvasModel(source: unknown): VisualLayoutModel {
-    const inmueble = source as Record<string, unknown> | null;
-    const rawLocales = Array.isArray(inmueble?.['locales'])
-      ? (inmueble?.['locales'] as Record<string, unknown>[])
-      : [];
-
-    if (!rawLocales.length) {
-      const fallbackLocales: LocalCanvasModel[] = Array.from({ length: 8 }).map((_, i) => {
-        const enPlantaBaja = i < 4;
-        const col = enPlantaBaja ? i : i - 4;
-        const estado: LocalVisualState =
-          i % 3 === 0 ? 'ocupado' : i % 4 === 0 ? 'reservado' : 'libre';
-        return {
-          id: `local-${i + 1}`,
-          nombre: `Local ${i + 1}`,
-          x: 60 + col * 120,
-          y: enPlantaBaja ? 70 : 400,
-          width: 92,
-          height: 72,
-          zonaId: enPlantaBaja ? 'zona-a' : 'zona-b',
-          estado,
-          bloqueado: false,
-          ocupanteNombre:
-            estado === 'ocupado'
-              ? i % 2 === 0
-                ? `Comercializadora Demo ${i + 1} SA`
-                : `Ing. María López ${i + 1}`
-              : undefined,
-          mensualidadMxn: 7800 + i * 420,
-          ...(estado === 'ocupado'
-            ? {
-                giroActividad:
-                  i % 2 === 0 ? 'Comercio minorista' : 'Servicios profesionales',
-                vigenciaHasta: `202${7 + (i % 2)}-0${(i % 6) + 1}-28`,
-              }
-            : estado === 'reservado'
-              ? { vigenciaHasta: '2026-04-15' }
-              : {}),
-        };
-      });
-
-      return {
-        canvas: { width: 1200, height: 760 },
-        zonas: [
-          { id: 'zona-a', nombre: 'Planta baja', x: 30, y: 35, width: 550, height: 320 },
-          { id: 'zona-b', nombre: 'Piso 1', x: 30, y: 380, width: 550, height: 320 },
-        ],
-        locales: fallbackLocales,
-      };
+    const mapa = extraerMapaInmuebleApi(source);
+    const desdeMapa = visualLayoutDesdeMapaInmueble(mapa);
+    if (desdeMapa) {
+      return this.enriquecerLayoutDiagramaConLista(desdeMapa, source);
     }
 
-    const mappedLocales: LocalCanvasModel[] = rawLocales.map((it, i) => {
-      const ocupanteRaw =
-        it['ocupanteNombre'] ??
-        it['nombreEmpresa'] ??
-        it['empresa'] ??
-        it['arrendatarioLocal'] ??
-        it['arrendatario'] ??
-        it['inquilino'];
-      const mensRaw =
-        it['mensualidadMxn'] ?? it['mensualidad'] ?? it['rentaMensual'] ?? it['pagoMensual'];
+    const inmueble = source as Record<string, unknown> | null;
+    const filas = Array.isArray(inmueble?.['locales'])
+      ? (inmueble?.['locales'] as Record<string, unknown>[])
+      : this.localesZonasLista;
+    const desdeCatalogo = visualLayoutDesdeCatalogoInmueble(source, filas);
+    if (desdeCatalogo) {
+      return this.enriquecerLayoutDiagramaConLista(desdeCatalogo, source);
+    }
+
+    return {
+      canvas: { width: 1200, height: 760 },
+      zonas: [],
+      locales: [],
+    };
+  }
+
+  /** Actualiza estado y datos de locales del plano con la lista unificada de la API. */
+  private enriquecerLayoutDiagramaConLista(
+    layout: ReturnType<typeof visualLayoutDesdeMapaInmueble>,
+    source: unknown,
+  ): VisualLayoutModel {
+    if (!layout) {
+      return { canvas: { width: 1200, height: 760 }, zonas: [], locales: [] };
+    }
+
+    const inmueble = source as Record<string, unknown> | null;
+    const filas = Array.isArray(inmueble?.['locales'])
+      ? (inmueble?.['locales'] as Record<string, unknown>[])
+      : this.localesZonasLista;
+
+    const porId = new Map<string, Record<string, unknown>>();
+    for (const f of filas) {
+      const id = String(f['id'] ?? f['idLocal'] ?? '').trim();
+      if (id) porId.set(id, f);
+    }
+
+    const zonas: ZonaCanvasModel[] = layout.zonas
+      .filter((z) => !this.esZonaAuxiliarDiagrama(z.id))
+      .map((z) => ({ ...z }));
+    const locales: LocalCanvasModel[] = layout.locales.map((local) => {
+      const fila = porId.get(String(local.id));
       const base: LocalCanvasModel = {
-        id: String(it['id'] ?? it['idLocal'] ?? `local-${i + 1}`),
-        nombre: String(it['nombre'] ?? it['nombreLocal'] ?? it['local'] ?? `Local ${i + 1}`),
-        x: Number(it['x'] ?? 0),
-        y: Number(it['y'] ?? 0),
-        width: Math.max(50, Number(it['width'] ?? 92)),
-        height: Math.max(50, Number(it['height'] ?? 72)),
-        zonaId:
-          it['zonaId'] != null
-            ? String(it['zonaId'])
-            : it['nivel'] != null
-              ? String(it['nivel'])
-              : null,
-        estado: this.normalizeLocalState(it['estado'] ?? it['estadoLocal']),
-        bloqueado: Boolean(it['bloqueado']),
+        id: local.id,
+        nombre: local.nombre,
+        x: local.x,
+        y: local.y,
+        width: local.width,
+        height: local.height,
+        zonaId: local.zonaId,
+        estado: this.normalizeLocalState(
+          fila?.['estado'] ?? fila?.['estatusLocal'] ?? fila?.['estatus'] ?? local.estado,
+        ),
+        bloqueado: Boolean(fila?.['bloqueado']),
       };
-      if (ocupanteRaw != null && String(ocupanteRaw).trim() !== '') {
-        base.ocupanteNombre = String(ocupanteRaw).trim();
-      }
-      const mn = Number(mensRaw);
-      if (isFinite(mn) && mn >= 0) base.mensualidadMxn = mn;
-      const giroRaw =
-        it['giroActividad'] ??
-        it['giro'] ??
-        it['rubro'] ??
-        it['actividad'] ??
-        it['giroComercial'] ??
-        it['tipoNegocio'] ??
-        it['descripcionGiro'];
-      if (giroRaw != null && String(giroRaw).trim() !== '') {
-        base.giroActividad = String(giroRaw).trim();
-      }
-      const vigRaw =
-        it['vigenciaHasta'] ??
-        it['fechaFinContrato'] ??
-        it['fechaFinVigencia'] ??
-        it['finContrato'] ??
-        it['vigenciaFin'];
-      if (vigRaw != null && String(vigRaw).trim() !== '') {
-        base.vigenciaHasta = String(vigRaw).trim();
+      if (fila) {
+        const nom = String(
+          fila['nombre'] ?? fila['nombreLocal'] ?? fila['local'] ?? '',
+        ).trim();
+        if (nom) base.nombre = nom;
+        const ocupante = this.getOcupanteLocalLista(fila);
+        if (ocupante) base.ocupanteNombre = ocupante;
+        const mn = Number(
+          fila['mensualidadMxn'] ?? fila['mensualidad'] ?? fila['rentaMensual'],
+        );
+        if (isFinite(mn) && mn >= 0) base.mensualidadMxn = mn;
+        const giro = String(fila['giro'] ?? fila['giroActividad'] ?? '').trim();
+        if (giro) base.giroActividad = giro;
+        const vig = String(
+          fila['vigenciaHasta'] ?? fila['vigenciaTexto'] ?? '',
+        ).trim();
+        if (vig) base.vigenciaHasta = vig;
       }
       return base;
     });
 
-    const zonas: ZonaCanvasModel[] = this.layoutInicialInmueble.zonas.map((z) => ({
-      id: z.id,
-      nombre: z.nombre,
-      x: z.x,
-      y: z.y,
-      width: z.width,
-      height: z.height,
-    }));
-
-    const posicionPorId = new Map(
-      this.layoutInicialInmueble.locales.map((l) => [String(l.id), l]),
-    );
-
-    const localesConLayoutInicial = mappedLocales.map((local, i) => {
-      const preset = posicionPorId.get(String(local.id));
-      if (!preset) {
-        return {
-          ...local,
-          x: 60 + (i % 4) * 120,
-          y: i < 4 ? 70 : 400,
-        };
-      }
-      return {
-        ...local,
-        x: preset.x,
-        y: preset.y,
-        width: preset.width,
-        height: preset.height,
-        zonaId: preset.zonaId,
-        estado: preset.estado,
-      };
-    });
-
     return {
-      canvas: { ...this.layoutInicialInmueble.canvas },
+      canvas: { ...layout.canvas },
       zonas,
-      locales: localesConLayoutInicial,
+      locales,
     };
   }
 
@@ -2036,16 +2202,20 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   fitToContent(): void {
     const board = document.querySelector('.locales-board') as HTMLElement | null;
-    const panelWidth = Math.max(320, board?.clientWidth ?? 860);
-    const panelHeight = Math.max(260, board?.clientHeight ?? 640);
+    if (!board || this.diagramaMapaVacio) return;
+    this.expandCanvasToContent();
+    const panelWidth = Math.max(320, board.clientWidth);
+    const panelHeight = Math.max(260, board.clientHeight);
     const bounds = this.getDiagramContentBounds();
+    const margin = 36;
     const contentWidth = Math.max(1, bounds.width);
     const contentHeight = Math.max(1, bounds.height);
-    const fitX = panelWidth / contentWidth;
-    const fitY = panelHeight / contentHeight;
+    const availW = Math.max(1, panelWidth - margin * 2);
+    const availH = Math.max(1, panelHeight - margin * 2);
+    const fitZoom = Math.min(availW / contentWidth, availH / contentHeight);
     this.zoom = Math.max(
       this.layoutConfig.minZoom,
-      Math.min(this.layoutConfig.maxZoom, Math.min(fitX, fitY))
+      Math.min(1, fitZoom * 0.92),
     );
     const contentCenterX = bounds.x + bounds.width / 2;
     const contentCenterY = bounds.y + bounds.height / 2;
@@ -2053,6 +2223,46 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       x: Math.round(panelWidth / 2 - contentCenterX * this.zoom),
       y: Math.round(panelHeight / 2 - contentCenterY * this.zoom),
     };
+  }
+
+  /** Ajusta el lienzo al contenido real (sin tope rígido al redimensionar zonas). */
+  private expandCanvasToContent(): void {
+    const pad = 64;
+    let maxX = 0;
+    let maxY = 0;
+    for (const z of this.visualLayout.zonas) {
+      maxX = Math.max(maxX, z.x + z.width);
+      maxY = Math.max(maxY, z.y + z.height);
+    }
+    for (const l of this.visualLayout.locales) {
+      maxX = Math.max(maxX, l.x + l.width);
+      maxY = Math.max(maxY, l.y + l.height);
+    }
+    const width = Math.max(400, Math.ceil(maxX + pad));
+    const height = Math.max(300, Math.ceil(maxY + pad));
+    if (
+      width === this.visualLayout.canvas.width &&
+      height === this.visualLayout.canvas.height
+    ) {
+      return;
+    }
+    this.visualLayout = {
+      ...this.visualLayout,
+      canvas: { width, height },
+    };
+  }
+
+  private esZonaAuxiliarDiagrama(zonaId: string): boolean {
+    return String(zonaId).startsWith('__');
+  }
+
+  private resolveZonaIdParaGuardar(local: LocalCanvasModel): string | null {
+    const directo = local.zonaId != null ? String(local.zonaId).trim() : '';
+    if (directo) return directo;
+    const zona = this.visualLayout.zonas.find((z) =>
+      this.isLocalInsideZone(local, z),
+    );
+    return zona?.id ?? null;
   }
 
   startPan(event: MouseEvent): void {
@@ -2117,8 +2327,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       if (isInvalidCoord) {
         errors.push(`El local ${local.nombre} tiene coordenadas inválidas.`);
       }
-      if (!local.zonaId) {
-        errors.push(`El local ${local.nombre} debe pertenecer a una zona.`);
+      if (!this.resolveZonaIdParaGuardar(local)) {
+        errors.push(
+          `El local ${local.nombre} debe estar dentro de una zona o tener zona asignada.`,
+        );
       }
     }
 
@@ -2170,24 +2382,111 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    const idInmueble = this.idInmuebleDesdeInstalacion(this.selectedInmuebleForLocales);
+    if (idInmueble == null) {
+      this.toastr.warning('No se identificó el inmueble para guardar el mapa.');
+      return;
+    }
+
+    this.expandCanvasToContent();
+    const mapaInmueble = this.buildMapaInmuebleFeatureCollection();
+    const snapshot = this.serializeLayout();
+
     this.uiState = { ...this.uiState, saving: true, error: null };
-    const payload = this.serializeLayout();
-    // Debug temporal: JSON listo para copiar/pegar en chat y reutilizar en carga.
-    console.log('MONITOREO_LAYOUT_JSON', JSON.parse(payload));
-    Promise.resolve(payload)
-      .then(() => {
-        this.lastSavedLayoutSerialized = payload;
+    this.inmueblesService.actualizarMapaInmueble(idInmueble, mapaInmueble).subscribe({
+      next: () => {
+        this.lastSavedLayoutSerialized = snapshot;
+        this.diagramaMapaVacio = false;
+        this.diagramaPlanoDesdeCatalogo = false;
+        this.sincronizarMapaEnInmueble(this.selectedInmuebleForLocales, mapaInmueble);
         this.uiState = { ...this.uiState, saving: false, dirty: false };
-        this.toastr.success('Layout de locales guardado correctamente.');
-      })
-      .catch(() => {
+        this.toastr.success('Mapa del inmueble guardado correctamente.');
+        if (this.selectedInmuebleForLocales) {
+          this.cargarLocalesZonasInmueble(this.selectedInmuebleForLocales, {
+            recargarDiagrama: false,
+            mostrarCargaLista: true,
+          });
+        }
+      },
+      error: () => {
         this.uiState = {
           ...this.uiState,
           saving: false,
-          error: 'No fue posible guardar el layout. Intente de nuevo.',
+          error: 'No fue posible guardar el mapa. Intente de nuevo.',
         };
-        this.toastr.error('No fue posible guardar el layout. Intente de nuevo.');
-      });
+        this.toastr.error('No fue posible guardar el mapa. Intente de nuevo.');
+      },
+    });
+  }
+
+  private buildMapaInmuebleFeatureCollection(): {
+    type: 'FeatureCollection';
+    features: Array<{
+      type: 'Feature';
+      geometry: { type: 'Polygon'; coordinates: number[][][] };
+      properties: Record<string, unknown>;
+    }>;
+  } {
+    const features: Array<{
+      type: 'Feature';
+      geometry: { type: 'Polygon'; coordinates: number[][][] };
+      properties: Record<string, unknown>;
+    }> = [];
+
+    for (const zona of this.visualLayout.zonas) {
+      if (this.esZonaAuxiliarDiagrama(zona.id)) continue;
+      features.push(
+        this.rectToMapFeature(zona, {
+          entityType: 'zona',
+          id: zona.id,
+          nombre: zona.nombre,
+        }),
+      );
+    }
+
+    for (const local of this.visualLayout.locales) {
+      const zonaId = this.resolveZonaIdParaGuardar(local);
+      features.push(
+        this.rectToMapFeature(local, {
+          entityType: 'local',
+          id: local.id,
+          nombre: local.nombre,
+          zonaId,
+          estado: local.estado,
+        }),
+      );
+    }
+
+    return { type: 'FeatureCollection', features };
+  }
+
+  private rectToMapFeature(
+    rect: { x: number; y: number; width: number; height: number },
+    properties: Record<string, unknown>,
+  ): {
+    type: 'Feature';
+    geometry: { type: 'Polygon'; coordinates: number[][][] };
+    properties: Record<string, unknown>;
+  } {
+    const x = Math.round(rect.x);
+    const y = Math.round(rect.y);
+    const w = Math.round(rect.width);
+    const h = Math.round(rect.height);
+    const ring: number[][] = [
+      [x, y],
+      [x + w, y],
+      [x + w, y + h],
+      [x, y + h],
+      [x, y],
+    ];
+    return {
+      type: 'Feature',
+      properties,
+      geometry: {
+        type: 'Polygon',
+        coordinates: [ring],
+      },
+    };
   }
 
   restoreLastSavedLayout(): void {
@@ -2251,107 +2550,13 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.setZoom(this.zoom + delta);
   }
 
-  addZona(): void {
-    this.showLocalNameEditor = false;
-    this.zoneNameDraft = '';
-    this.showZoneNameEditor = true;
-    this.isRenamingZone = false;
-  }
-
-  confirmAddZona(): void {
-    const zoneName = this.zoneNameDraft.trim();
-    if (!zoneName) {
-      this.uiState = {
-        ...this.uiState,
-        error: 'Indique el nombre del nivel o planta (ej. Planta baja, Piso 1).',
-      };
-      return;
-    }
-    const idx = this.visualLayout.zonas.length + 1;
-    const position = this.findAvailableZonePosition(260, 180);
-    if (!position) {
-      this.uiState = {
-        ...this.uiState,
-        error: 'No hay espacio libre para agregar otra zona sin solapamiento.',
-      };
-      return;
-    }
-    const zona: ZonaCanvasModel = {
-      id: `zona-${Date.now()}`,
-      nombre: zoneName,
-      x: position.x,
-      y: position.y,
-      width: 260,
-      height: 180,
-    };
-    this.visualLayout = {
-      ...this.visualLayout,
-      zonas: [...this.visualLayout.zonas, zona],
-    };
-    this.selectedZoneId = zona.id;
-    this.showZoneNameEditor = false;
-    this.isRenamingZone = false;
-    this.zoneNameDraft = '';
-    this.uiState = { ...this.uiState, error: null };
-    this.detectDirtyChanges();
-  }
-
-  cancelAddZona(): void {
-    this.showZoneNameEditor = false;
-    this.isRenamingZone = false;
-    this.zoneNameDraft = '';
-  }
-
-  addLocal(): void {
-    this.showZoneNameEditor = false;
-    this.localNameDraft = '';
-    this.showLocalNameEditor = true;
-  }
-
-  confirmAddLocal(): void {
-    const localName = this.localNameDraft.trim();
-    if (!localName) {
-      this.uiState = { ...this.uiState, error: 'Debe capturar el nombre del local.' };
-      return;
-    }
-    const idx = this.visualLayout.locales.length + 1;
-    const targetZona = this.visualLayout.zonas.find((z) => z.id === this.selectedZoneId);
-    const local: LocalCanvasModel = {
-      id: `local-${Date.now()}`,
-      nombre: localName || `Local ${idx}`,
-      x: targetZona ? targetZona.x + 20 : 100,
-      y: targetZona ? targetZona.y + 20 : 100,
-      width: 98,
-      height: 78,
-      zonaId: targetZona?.id ?? null,
-      estado: 'libre',
-      bloqueado: false,
-    };
-    this.visualLayout = {
-      ...this.visualLayout,
-      locales: [...this.visualLayout.locales, local],
-    };
-    this.selectLocal(local.id);
-    this.showLocalNameEditor = false;
-    this.localNameDraft = '';
-    this.uiState = { ...this.uiState, error: null };
-    this.detectDirtyChanges();
-  }
-
-  cancelAddLocal(): void {
-    this.showLocalNameEditor = false;
-    this.localNameDraft = '';
-  }
-
   closeInlineEditors(): void {
-    this.cancelAddZona();
-    this.cancelAddLocal();
+    this.showZoneNameEditor = false;
+    this.zoneNameDraft = '';
   }
 
   renameZona(zona: ZonaCanvasModel): void {
-    this.showLocalNameEditor = false;
     this.showZoneNameEditor = true;
-    this.isRenamingZone = true;
     this.zoneNameDraft = zona.nombre;
     this.selectedZoneId = zona.id;
   }
@@ -2365,9 +2570,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         z.id === this.selectedZoneId ? { ...z, nombre: zoneName } : z
       ),
     };
-    this.showZoneNameEditor = false;
-    this.isRenamingZone = false;
-    this.zoneNameDraft = '';
+    this.closeInlineEditors();
     this.detectDirtyChanges();
   }
 
@@ -2421,40 +2624,19 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private normalizeLocalState(raw: unknown): LocalVisualState {
+    const n = Number(raw);
+    if (n === 2) return 'ocupado';
+    if (n === 3) return 'reservado';
+    if (n === 0) return 'inactivo';
+    if (n === 1) return 'libre';
     const value = String(raw ?? '').toLowerCase();
-    if (value === 'ocupado' || value === 'reservado' || value === 'inactivo') return value;
+    if (value === 'ocupado' || value === 'reservado' || value === 'inactivo') {
+      return value;
+    }
     return 'libre';
   }
 
   private hasOverlap(a: LocalCanvasModel, b: LocalCanvasModel): boolean {
-    return !(
-      a.x + a.width <= b.x ||
-      b.x + b.width <= a.x ||
-      a.y + a.height <= b.y ||
-      b.y + b.height <= a.y
-    );
-  }
-
-  private findAvailableZonePosition(width: number, height: number): CanvasPoint | null {
-    const step = this.layoutConfig.gridSize;
-    const maxX = this.visualLayout.canvas.width - width;
-    const maxY = this.visualLayout.canvas.height - height;
-    for (let y = 20; y <= maxY; y += step) {
-      for (let x = 20; x <= maxX; x += step) {
-        const candidate = { x, y, width, height };
-        const overlapsZona = this.visualLayout.zonas.some((z) =>
-          this.hasZoneOverlap(candidate, z)
-        );
-        if (!overlapsZona) return { x, y };
-      }
-    }
-    return null;
-  }
-
-  private hasZoneOverlap(
-    a: { x: number; y: number; width: number; height: number },
-    b: { x: number; y: number; width: number; height: number }
-  ): boolean {
     return !(
       a.x + a.width <= b.x ||
       b.x + b.width <= a.x ||
@@ -2486,12 +2668,14 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       maxX = Math.max(maxX, r.x + r.width);
       maxY = Math.max(maxY, r.y + r.height);
     }
-    const padding = 48;
+    const padding = 40;
+    const x0 = Math.max(0, minX - padding);
+    const y0 = Math.max(0, minY - padding);
     return {
-      x: Math.max(0, minX - padding),
-      y: Math.max(0, minY - padding),
-      width: Math.min(this.visualLayout.canvas.width, maxX + padding) - Math.max(0, minX - padding),
-      height: Math.min(this.visualLayout.canvas.height, maxY + padding) - Math.max(0, minY - padding),
+      x: x0,
+      y: y0,
+      width: Math.max(1, maxX + padding - x0),
+      height: Math.max(1, maxY + padding - y0),
     };
   }
 
@@ -2529,6 +2713,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         };
       }),
     };
+    this.expandCanvasToContent();
     this.detectDirtyChanges();
   }
 
@@ -2549,7 +2734,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const current = this.toCanvasCoordinates(event);
     const dx = current.x - state.startMouse.x;
     const dy = current.y - state.startMouse.y;
-    const minSize = 120;
+    const minSize = 8;
 
     let nextX = state.startZone.x;
     let nextY = state.startZone.y;
@@ -2576,10 +2761,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       nextH = Math.max(minSize, snapSize.y);
     }
 
-    nextX = Math.max(0, Math.min(nextX, this.visualLayout.canvas.width - minSize));
-    nextY = Math.max(0, Math.min(nextY, this.visualLayout.canvas.height - minSize));
-    nextW = Math.min(nextW, this.visualLayout.canvas.width - nextX);
-    nextH = Math.min(nextH, this.visualLayout.canvas.height - nextY);
+    nextX = Math.max(0, nextX);
+    nextY = Math.max(0, nextY);
+    nextW = Math.max(minSize, nextW);
+    nextH = Math.max(minSize, nextH);
 
     this.visualLayout = {
       ...this.visualLayout,
@@ -2589,6 +2774,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
           : z
       ),
     };
+    this.expandCanvasToContent();
     this.detectDirtyChanges();
   }
 
@@ -2763,6 +2949,14 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  irADetalleInmueble(inmueble: any, event?: Event): void {
+    event?.stopPropagation();
+    this.onInfoAction({
+      central: this.selectedCentral,
+      instalacion: inmueble,
+    });
+  }
+
   onInfoAction(payload: any) {
     const numeroSerie =
       payload?.instalacion?.equipo?.numeroSerie ??
@@ -2812,8 +3006,32 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (estatusLocal === 'ocupado' || estatusLocal === 'libre') {
       qp['estatusLocal'] = estatusLocal;
     }
+    if (!esVistaLocal) {
+      const estInm = Number(
+        ins?.estatusInmueble ?? ins?.detalle?.estatusInmueble,
+      );
+      if (estInm === 1) {
+        qp['esRenta'] = 'true';
+      } else if (estInm === 2) {
+        qp['esRenta'] = 'false';
+      }
+    }
     if (esVistaLocal && Number.isFinite(idContratoNum) && idContratoNum > 0) {
       qp['idContrato'] = idContratoNum;
+    }
+    const idArrendatarioRaw = ins?.idArrendatario;
+    const idArrendatarioNum = Number(idArrendatarioRaw);
+    if (
+      esVistaLocal &&
+      Number.isFinite(idArrendatarioNum) &&
+      idArrendatarioNum > 0
+    ) {
+      qp['idArrendatario'] = Math.floor(idArrendatarioNum);
+    }
+    const idLocalRaw = ins?.idLocal ?? ins?.id;
+    const idLocalNum = Number(idLocalRaw);
+    if (esVistaLocal && Number.isFinite(idLocalNum) && idLocalNum > 0) {
+      qp['idLocal'] = Math.floor(idLocalNum);
     }
     const parentId =
       payload?.parentInmuebleId ??
@@ -2902,6 +3120,168 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         100% { opacity: 0; transform: translateY(6px) scale(0.95); filter: blur(1.5px); }
       }
+
+      .gm-style-iw-c {
+        max-width: none !important;
+      }
+
+      .iw-card {
+        background: #151f35;
+        color: #e5e7eb;
+        padding: 14px 18px 16px;
+        border-radius: 12px;
+        min-width: min(340px, 92vw);
+        max-width: min(400px, 94vw);
+        line-height: 1.35;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      }
+      .iw-card__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(130, 160, 255, 0.22);
+      }
+      .iw-card__title-block {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .iw-card__eyebrow {
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #9eb0d8;
+      }
+      .iw-card__title {
+        margin: 0;
+        font-size: clamp(1.05rem, 2.8vw, 1.2rem);
+        letter-spacing: 0.03em;
+        color: #f8fafc;
+        line-height: 1.25;
+        word-break: break-word;
+      }
+      .iw-close {
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        color: #fff;
+        font-size: 18px;
+        line-height: 1;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        flex-shrink: 0;
+      }
+      .iw-card__chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .iw-chip {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        line-height: 1.2;
+        color: #e8edf6;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .iw-chip--activo {
+        color: #bbf7d0;
+        border-color: rgba(74, 222, 128, 0.4);
+        background: rgba(20, 83, 45, 0.35);
+      }
+      .iw-chip--inactivo {
+        color: #fecaca;
+        border-color: rgba(248, 113, 113, 0.45);
+        background: rgba(127, 29, 29, 0.35);
+      }
+      .iw-chip--tipo {
+        color: #c8d2f0;
+        border-color: rgba(130, 160, 255, 0.35);
+        background: rgba(89, 109, 255, 0.16);
+      }
+      .iw-chip--estado {
+        color: #e8edff;
+        border-color: rgba(130, 160, 255, 0.28);
+        background: rgba(14, 20, 32, 0.88);
+      }
+      .iw-card__body {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .iw-line {
+        display: grid;
+        grid-template-columns: minmax(7.75rem, 38%) minmax(0, 1fr);
+        gap: 8px 12px;
+        font-size: clamp(0.78rem, 2vw, 0.86rem);
+        align-items: start;
+        padding: 2px 0;
+      }
+      .iw-line__label {
+        color: #c5d2ef;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        line-height: 1.35;
+        white-space: nowrap;
+      }
+      .iw-line__value {
+        color: #eef2f8;
+        word-break: break-word;
+        line-height: 1.4;
+      }
+      .iw-address {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        margin-top: 10px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: clamp(0.75rem, 2vw, 0.82rem);
+        color: #c6cfde;
+      }
+      .iw-address__dot {
+        margin-top: 5px;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(52, 152, 219, 0.9);
+        flex: 0 0 8px;
+      }
+      .iw-card__footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 10px;
+      }
+      .iw-action, .iw-detail-action {
+        color: #fff;
+        border: 1px solid transparent;
+        cursor: pointer;
+        border-radius: 10px;
+        padding: 8px 16px;
+        font-size: clamp(0.82rem, 2vw, 0.9rem);
+        letter-spacing: 0.02em;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+      .iw-action--credito, .iw-detail-action.iw-action--credito {
+        border-color: rgba(52, 152, 219, 0.55);
+        background: rgba(52, 152, 219, 0.22);
+      }
+      .iw-action--credito:hover {
+        border-color: rgba(52, 152, 219, 0.7);
+        background: rgba(52, 152, 219, 0.32);
+      }
     `;
     const style = document.createElement('style');
     style.setAttribute('data-iw-skin', 'true');
@@ -2942,136 +3322,96 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private buildInfoHtmlInmueblePunto(inmueble: any): string {
-    const nom = this.escapeHtml(
-      String(
-        inmueble?.nombreDepartamento ??
-          inmueble?.nombreInstalacion ??
-          'Inmueble'
-      )
-    );
-    return `
-    <div class="iw-card iw-enter" style="
-      background:#151f35; color:#e5e7eb;
-      padding:0px 18px 16px;
-      border-radius:12px; min-width:240px; max-width:300px; line-height:1.25rem;
-      box-shadow:0 12px 28px rgba(0,0,0,.20);
-    ">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;">
-        <h6 style="margin:0;font-size:1rem;color:#fff;">${nom}</h6>
-        <button class="iw-close" aria-label="Cerrar" style="background:transparent;border:0;cursor:pointer;color:#fff;font-size:18px;line-height:1;width:28px;height:28px;border-radius:8px;">✕</button>
-      </div>
-      <p style="margin:0;font-size:.85rem;color:#c6cfde;">Ubicación del inmueble.</p>
-    </div>
-    `;
+    const titulo =
+      inmueble?.nombreDepartamento ??
+      inmueble?.nombreInstalacion ??
+      'Inmueble';
+    const dir = String(inmueble?.direccion ?? '').trim();
+    const body = [
+      this.iwLine('Arrendador', inmueble?.arrendador),
+      this.iwLine('Vigencia', this.vigenciaTextoInmuebleIw(inmueble)),
+    ]
+      .filter(Boolean)
+      .join('');
+    const addressHtml = dir
+      ? `<div class="iw-address"><span class="iw-address__dot" aria-hidden="true"></span><span>${this.escapeHtml(dir)}</span></div>`
+      : '';
+    return this.buildIwCardHtml({
+      title: titulo,
+      bodyHtml: body || '<div class="iw-line"><span class="iw-line__value">Ubicación del inmueble en mapa.</span></div>',
+      addressHtml,
+    });
   }
 
   private buildInfoHtmlLocal(local: any, _index: number): string {
-    const nom = this.escapeHtml(this.getNombreLocalEnLista(local));
-    const nivel = this.getNombreNivelEnDiagramaParaLocal(local);
-    const nivelHtml = nivel
-      ? `<div><strong>Nivel:</strong> ${this.escapeHtml(nivel)}</div>`
-      : '';
-    const est = this.escapeHtml(this.getOcupacionEtiquetaLista(local));
-    const occ = this.getOcupanteLocalLista(local);
-    const occHtml = occ
-      ? `<div><strong>Ocupante:</strong> ${this.escapeHtml(occ)}</div>`
-      : '';
-    const med = this.getMedidaLocalLista(local);
-    const medHtml = med
-      ? `<div><strong>Medida:</strong> ${this.escapeHtml(med)}</div>`
-      : '';
-    const men = this.getMensualidadLocalLista(local);
-    const menHtml = men
-      ? `<div><strong>Mensualidad:</strong> ${this.escapeHtml(men)}</div>`
-      : '';
-    return `
-    <div class="iw-card iw-enter" style="
-      background:#151f35; color:#e5e7eb;
-      padding:0px 18px 16px;
-      border-radius:12px; min-width:260px; max-width:320px; line-height:1.25rem;
-      box-shadow:0 12px 28px rgba(0,0,0,.20);
-    ">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;">
-        <h6 style="margin:0;font-size:1rem;color:#fff;">${nom}</h6>
-        <button class="iw-close" aria-label="Cerrar" style="background:transparent;border:0;cursor:pointer;color:#fff;font-size:18px;line-height:1;width:28px;height:28px;border-radius:8px;">✕</button>
-      </div>
-      <hr style="border:none;height:1px;background:rgba(255,255,255,.10);margin:6px 0;" />
-      <div style="display:grid;grid-template-columns:1fr;gap:4px;font-size:.85rem;color:#c6cfde;">
-        <div><strong>Estado:</strong> ${est}</div>
-        ${nivelHtml}
-        ${occHtml}
-        ${medHtml}
-        ${menHtml}
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-        <button class="iw-action" style="
-          background:#681330; color:#fff; border:0; cursor:pointer;
-          border-radius:10px; padding:8px 12px; font-size:.85rem;
-        ">
-          Información
-        </button>
-      </div>
-    </div>
-  `;
+    const est = this.getOcupacionEtiquetaLista(local);
+    const chips = this.iwChipHtml(est, 'estado');
+    const body = [
+      this.iwLine('Zona', local?.zonaPrincipal),
+      this.iwLine('Arrendatario', this.getOcupanteLocalLista(local)),
+      this.iwLine('Superficie', this.getMedidaLocalLista(local)),
+      this.iwLine('Mensualidad', this.getMensualidadLocalLista(local)),
+      this.iwLine('Giro', local?.giro),
+    ]
+      .filter(Boolean)
+      .join('');
+    return this.buildIwCardHtml({
+      title: this.getNombreLocalEnLista(local),
+      chipsHtml: chips,
+      bodyHtml: body,
+      actionLabel: 'Información',
+      actionBtnClass: 'iw-action iw-action--credito',
+    });
   }
 
   private buildInfoHtmlInstalacion(c: any, ins: any): string {
-    const estatusOk = Number(ins?.estatus) === 1;
+    const titulo =
+      ins?.nombreDepartamento ?? ins?.nombreInstalacion ?? 'Inmueble';
+    const estatusReg = Number(ins?.estatus);
+    const chips: string[] = [];
+    if (ins?.estatusLabel && ins.estatusLabel !== '—') {
+      chips.push(
+        this.iwChipHtml(
+          ins.estatusLabel,
+          estatusReg === 1 ? 'activo' : 'inactivo',
+        ),
+      );
+    }
+    if (
+      ins?.estatusInmuebleTipoLabel &&
+      ins.estatusInmuebleTipoLabel !== 'Sin estatus'
+    ) {
+      chips.push(this.iwChipHtml(ins.estatusInmuebleTipoLabel, 'tipo'));
+    }
 
-    const numeroSerie = ins?.equipo?.numeroSerie ?? ins?.numeroSerie ?? '—';
+    const resumenZonas =
+      ins?.numZonas != null || ins?.numServicios != null
+        ? `${ins?.numZonas ?? 0} zona(s) · ${ins?.numServicios ?? 0} servicio(s)`
+        : '';
 
-    const fhRegFmt = this.formatDate(ins?.fhRegistro);
-    const fhActFmt = this.formatDate(ins?.fechaActualizacion);
-    const direccion = c?.direccion ?? '—';
+    const body = [
+      this.iwLine('Arrendador', ins?.arrendador ?? c?.nombreCliente),
+      this.iwLine('Vigencia', this.vigenciaTextoInmuebleIw(ins)),
+      this.iwLine('Representante', ins?.nombreRepresentante),
+      this.iwLine('Resumen', resumenZonas),
+    ]
+      .filter(Boolean)
+      .join('');
 
-    const nroPisoHtml = (ins?.nroPiso !== null && ins?.nroPiso !== undefined) 
-      ? `<div><strong>Número de Piso:</strong> ${ins.nroPiso}</div>` 
+    const dir = String(ins?.direccion ?? '').trim();
+    const addressHtml = dir
+      ? `<div class="iw-address"><span class="iw-address__dot" aria-hidden="true"></span><span>${this.escapeHtml(dir)}</span></div>`
       : '';
-    const nombreDepartamentoHtml = ins?.nombreDepartamento 
-      ? `<div><strong>Departamento:</strong> ${ins.nombreDepartamento}</div>` 
-      : '';
 
-    return `
-    <div class="iw-card iw-enter" style="
-      background:#151f35; color:#e5e7eb;
-      padding:0px 18px 16px;
-      border-radius:12px; min-width:260px; max-width:320px; line-height:1.25rem;
-      box-shadow:0 12px 28px rgba(0,0,0,.20);
-    ">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;">
-        <h6 style="margin:0;font-size:1rem;color:#fff;">Equipo: ${numeroSerie}</h6>
-        <button class="iw-close" aria-label="Cerrar" style="background:transparent;border:0;cursor:pointer;color:#fff;font-size:18px;line-height:1;width:28px;height:28px;border-radius:8px;">✕</button>
-      </div>
-      <hr style="border:none;height:1px;background:rgba(255,255,255,.10);margin:6px 0;" />
-      <div style="display:grid;grid-template-columns:1fr;gap:4px;font-size:.85rem;color:#c6cfde;">
-        ${nroPisoHtml}
-        ${nombreDepartamentoHtml}
-        <div><strong>Arrendador:</strong> ${c?.nombreCliente ?? '—'}</div>
-        <div>
-          <strong>Estatus:</strong>
-          <span style="
-            display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;
-            background:${estatusOk ? '#16a34a' : '#ef4444'}; color:#fff; font-size:.78rem;">
-            ${estatusOk ? 'Activo' : 'Inactivo'}
-          </span>
-        </div>
-        <div><strong>Registro:</strong> ${fhRegFmt}</div>
-        <div><strong>Actualización:</strong> ${fhActFmt}</div>
-      </div>
-      <div style="display:flex;gap:.5rem;align-items:flex-start;color:#c6cfde;margin-top:8px;">
-        <span style="margin-top:4px;width:8px;height:8px;border-radius:999px;background:#681330;display:inline-block;flex:0 0 8px;"></span>
-        <span>${direccion}</span>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-        <button class="iw-action" style="
-          background:#681330; color:#fff; border:0; cursor:pointer;
-          border-radius:10px; padding:8px 12px; font-size:.85rem;
-        ">
-          Información
-        </button>
-      </div>
-    </div>
-  `;
+    return this.buildIwCardHtml({
+      title: titulo,
+      eyebrow: 'Inmueble',
+      chipsHtml: chips.join(''),
+      bodyHtml: body,
+      addressHtml,
+      actionLabel: 'Información',
+      actionBtnClass: 'iw-action iw-action--credito',
+    });
   }
 
 

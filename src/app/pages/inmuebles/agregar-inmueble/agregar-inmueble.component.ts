@@ -46,6 +46,7 @@ interface SnapshotLocalEdicion {
   estatus: number | null;
   mensualidad: string;
   giro: string;
+  fachadaUrl: string;
 }
 
 interface SnapshotZonaEdicion {
@@ -123,7 +124,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   public loadingSubmit = false;
   public cargandoDetalle = false;
   public mostrarCamposRenta = false;
-  /** Fachada y galería: solo imágenes. */
+  /** Fachada y galería: solo imágenes. Plano: imágenes o PDF (como licencia). */
   readonly acceptSoloImagenes = 'image/png,image/jpeg,image/jpg';
   readonly etiquetaSoloImagenes = 'PNG · JPG · JPEG';
   /** Resto de documentos y comprobantes. */
@@ -133,6 +134,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   readonly etiquetaSoloPdf = 'PDF';
   archivoEscrituraNombre: string | null = null;
   imagenLicenciaNombre: string | null = null;
+  imagenFachadaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
   contratoRentaNombre: string | null = null;
   constanciaFiscalNombre: string | null = null;
@@ -142,6 +144,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   boletaPredialNombre: string | null = null;
   reciboAguaServiciosNombre: string | null = null;
   imagenLicenciaUrl: string | null = null;
+  imagenFachadaUrl: string | null = null;
   imagenPlanoUrl: string | null = null;
   contratoRentaUrl: string | null = null;
   constanciaFiscalUrl: string | null = null;
@@ -179,6 +182,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     'documentoBoletaPredial',
     'documentoReciboAguaServicios',
     'documentoLicencia',
+    'documentoFachada',
     'documentoPlano',
     'documentoContratoRenta',
     'documentoConstanciaFiscal',
@@ -210,6 +214,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   @ViewChild('archivoEscrituraInput') archivoEscrituraInput?: ElementRef<HTMLInputElement>;
   @ViewChild('imagenLicenciaInput') imagenLicenciaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenFachadaInput') imagenFachadaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
   @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('constanciaFiscalInput') constanciaFiscalInput?: ElementRef<HTMLInputElement>;
@@ -398,6 +403,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       documentoBoletaPredial: [null],
       documentoReciboAguaServicios: [null],
       documentoLicencia: [null],
+      documentoFachada: [null],
       documentoPlano: [null],
       documentoContratoRenta: [null],
       documentoConstanciaFiscal: [null],
@@ -504,6 +510,9 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       estatus: [null, Validators.required],
       mensualidad: [''],
       giro: [''],
+      fachada: [null],
+      fachadaNombre: [''],
+      fachadaUrl: [''],
     });
   }
 
@@ -704,6 +713,18 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     if (input) input.value = '';
   }
 
+  onLocalFachadaFileSelected(event: Event, zonaIndex: number, localIndex: number): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    const group = this.localesZonaFormArray(zonaIndex).at(localIndex) as FormGroup;
+    group.patchValue({
+      fachada: file,
+      fachadaNombre: file?.name ?? '',
+      fachadaUrl: '',
+    });
+    if (input) input.value = '';
+  }
+
   agregarFotoGaleria(): void {
     const nuevoIndice = this.galeriaImagenesFormArray.length;
     this.galeriaImagenesFormArray.push(this.crearGaleriaImagenFormGroup());
@@ -747,6 +768,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     ref:
       | 'escritura'
       | 'licencia'
+      | 'fachada'
       | 'plano'
       | 'contratoRenta'
       | 'constanciaFiscal'
@@ -761,6 +783,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       boletaPredial: this.boletaPredialInput,
       reciboAgua: this.reciboAguaServiciosInput,
       licencia: this.imagenLicenciaInput,
+      fachada: this.imagenFachadaInput,
       plano: this.imagenPlanoInput,
       contratoRenta: this.contratoRentaInput,
       constanciaFiscal: this.constanciaFiscalInput,
@@ -806,6 +829,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     if (controlName === 'documentoLicencia') {
       this.imagenLicenciaNombre = name;
       this.imagenLicenciaUrl = null;
+    }
+    if (controlName === 'documentoFachada') {
+      this.imagenFachadaNombre = name;
+      this.imagenFachadaUrl = null;
     }
     if (controlName === 'documentoPlano') {
       this.imagenPlanoNombre = name;
@@ -1047,6 +1074,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           ? Number(estatusRaw)
           : null;
       const idLocal = Number(l['id']);
+      const fachadaUrl = this.urlFachadaLocalDesdeApi(l);
       g.patchValue(
         {
           idLocal: Number.isFinite(idLocal) && idLocal > 0 ? idLocal : null,
@@ -1055,6 +1083,11 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           estatus: estatusNum,
           mensualidad: l['mensualidad'] ?? l['mensualidadMxn'] ?? '',
           giro: l['giro'] != null ? String(l['giro']) : '',
+          fachada: null,
+          fachadaNombre: fachadaUrl
+            ? this.nombreArchivoDesdeUrl(fachadaUrl, 'Fachada')
+            : '',
+          fachadaUrl,
         },
         { emitEvent: false },
       );
@@ -1131,6 +1164,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           this.imagenLicenciaUrl = url;
           break;
         case 'fachada':
+          this.imagenFachadaNombre = nombre;
+          this.imagenFachadaUrl = url;
+          break;
+        case 'plano':
           this.imagenPlanoNombre = nombre;
           this.imagenPlanoUrl = url;
           break;
@@ -1258,6 +1295,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
                 estatus: estatusNum,
                 mensualidad: String(l['mensualidad'] ?? l['mensualidadMxn'] ?? '').trim(),
                 giro: l['giro'] != null ? String(l['giro']).trim() : '',
+                fachadaUrl: this.urlFachadaLocalDesdeApi(l),
               });
             });
           }
@@ -1291,6 +1329,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private limpiarArchivosRemotos(): void {
     this.archivoEscrituraNombre = null;
     this.imagenLicenciaNombre = null;
+    this.imagenFachadaNombre = null;
     this.imagenPlanoNombre = null;
     this.contratoRentaNombre = null;
     this.constanciaFiscalNombre = null;
@@ -1300,6 +1339,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.boletaPredialNombre = null;
     this.archivoEscrituraUrl = null;
     this.imagenLicenciaUrl = null;
+    this.imagenFachadaUrl = null;
     this.imagenPlanoUrl = null;
     this.contratoRentaUrl = null;
     this.constanciaFiscalUrl = null;
@@ -1314,6 +1354,18 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const sinQuery = url.split('?')[0];
     const parte = sinQuery.split('/').pop();
     return parte?.trim() || fallback;
+  }
+
+  /** URL de fachada del local (GET) antes de subir archivo nuevo. */
+  private urlFachadaLocalDesdeApi(l: Record<string, unknown>): string {
+    const direct = String(l['urlFachada'] ?? l['imagenFachada'] ?? '').trim();
+    if (direct) return direct;
+    const fachada = l['fachada'];
+    if (fachada != null && typeof fachada === 'object' && !Array.isArray(fachada)) {
+      return String((fachada as Record<string, unknown>)['url'] ?? '').trim();
+    }
+    if (typeof fachada === 'string' && fachada.trim()) return fachada.trim();
+    return '';
   }
 
   submit(): void {
@@ -1433,6 +1485,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       localesArr?.controls.forEach((lCtrl, j) => {
         const lg = lCtrl as FormGroup;
         Object.keys(lg.controls).forEach((key) => {
+          if (key === 'fachada' || key === 'fachadaNombre' || key === 'fachadaUrl') return;
           const c = lg.get(key);
           if (c?.invalid) {
             faltantes.push(
@@ -1603,6 +1656,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
     const snap = snapZona?.locales.find((l) => l.id === idLocal);
     if (!snap) return true;
+    if (lg.get('fachada')?.value instanceof File) return true;
 
     return (
       !this.textoIgual(lg.get('nombre')?.value, snap.nombre) ||
@@ -1865,6 +1919,11 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           if (giro) fd.append(`zonas[${zi}].locales[${lj}].giro`, giro);
         }
 
+        const fachada = lg.get('fachada')?.value;
+        if (fachada instanceof File) {
+          fd.append(`zonas[${zi}].locales[${lj}].fachada`, fachada, fachada.name);
+        }
+
         lj += 1;
       });
 
@@ -1953,6 +2012,15 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       contadores,
       'fachada',
       'Fachada',
+      'documentoFachada',
+      this.imagenFachadaNombre,
+      true,
+    );
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'plano',
+      'Plano',
       'documentoPlano',
       this.imagenPlanoNombre,
       true,
@@ -2088,6 +2156,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           this.appendValorNumerico(fd, `zonas[${zi}].locales[${lj}].mensualidad`, mensualidad);
         }
         if (giro) fd.append(`zonas[${zi}].locales[${lj}].giro`, giro);
+        const fachada = lg.get('fachada')?.value;
+        if (fachada instanceof File) {
+          fd.append(`zonas[${zi}].locales[${lj}].fachada`, fachada, fachada.name);
+        }
         lj += 1;
       });
 
@@ -2124,7 +2196,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     };
 
     pushImagen(v['documentoLicencia'], 'Licencia o uso de suelo');
-    pushImagen(v['documentoPlano'], 'Fachada');
+    pushImagen(v['documentoFachada'], 'Fachada');
+    pushImagen(v['documentoPlano'], 'Plano');
 
     this.galeriaImagenesFormArray.controls.forEach((galCtrl) => {
       const g = galCtrl as FormGroup;

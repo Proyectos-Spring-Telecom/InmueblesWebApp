@@ -940,6 +940,114 @@
   font-size: 0.84rem;
 }
 
+.mono-block__panel--zonas {
+  padding: 0.5rem 0.65rem 0.75rem;
+}
+
+.mono-zonas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mono-zona-block {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(8, 18, 34, 0.55);
+}
+
+.mono-zona-block__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  padding: 0.72rem 0.95rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mono-zona-block__title {
+  color: #f1f6ff;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.mono-zona-block__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
+}
+
+.mono-zona-block__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 6.5rem;
+}
+
+.mono-zona-block__stat-label {
+  color: #9eb4d6;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mono-zona-block__stat-value {
+  color: #dbe8ff;
+  font-size: 0.84rem;
+}
+
+.mono-zona-block__body {
+  padding: 0.35rem 0.5rem 0.65rem;
+}
+
+.mono-zona-block__empty {
+  color: #9eb4d6;
+  font-size: 0.82rem;
+  padding: 0.55rem 0.95rem;
+}
+
+.mono-locales-table-wrap {
+  overflow-x: auto;
+}
+
+.mono-local-estatus {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e8edf6;
+}
+
+.mono-local-estatus--baja {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.28);
+}
+
+.mono-local-estatus--disponible {
+  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(20, 83, 45, 0.28);
+}
+
+.mono-local-estatus--ocupado {
+  color: #bfdbfe;
+  border-color: rgba(96, 165, 250, 0.45);
+  background: rgba(30, 58, 138, 0.32);
+}
+
+.mono-local-estatus--apartado {
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(120, 53, 15, 0.3);
+}
+
 .mono-table {
   margin: 0;
   background: transparent !important;

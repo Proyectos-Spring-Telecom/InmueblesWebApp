@@ -44,6 +44,9 @@ export interface InmuebleLocalApi {
   mensualidad?: string | number;
   giro?: string;
   idZona?: number;
+  urlFachada?: string;
+  imagenFachada?: string;
+  fachada?: string | InmuebleArchivoApi;
 }
 
 export interface InmuebleZonaApi {
@@ -139,6 +142,7 @@ export function idArrendadorDesdeApi(item: InmuebleApiItem): number | null {
 export type SlotDocumentoInmueble =
   | 'licencia'
   | 'fachada'
+  | 'plano'
   | 'contratoRenta'
   | 'constanciaFiscal'
   | 'comprobanteDomicilio'
@@ -172,6 +176,7 @@ export function clasificarDocumentoInmueble(
   if (n.includes('representante') && n.includes('fiscal')) return 'constanciaRepLegal';
   if (n.includes('licencia') || n.includes('uso de suelo')) return 'licencia';
   if (n === 'fachada' || n.startsWith('fachada')) return 'fachada';
+  if (n === 'plano' || n.startsWith('plano')) return 'plano';
   if (n.includes('comprobante') && n.includes('domicilio')) return 'comprobanteDomicilio';
   if (n.includes('escritura') || (n.includes('titulo') && n.includes('propiedad'))) return 'escritura';
   if (n.includes('boleta') && n.includes('predial')) return 'boletaPredial';
@@ -268,13 +273,29 @@ export function contarLocalesInmueble(item: InmuebleApiItem): number {
   return item.zonas.reduce((sum, z) => sum + localesDeZona(z).length, 0);
 }
 
+export const OPCIONES_ESTATUS_LOCAL: ReadonlyArray<{
+  value: number;
+  label: string;
+}> = [
+  { value: 0, label: 'Fuera de servicio' },
+  { value: 1, label: 'Disponible para renta' },
+  { value: 2, label: 'Ocupado' },
+  { value: 3, label: 'Apartado' },
+];
+
 export function etiquetaEstatusLocal(estatus: unknown): string {
   const n = Number(estatus);
-  if (n === 0) return 'Baja';
-  if (n === 1) return 'Disponible';
-  if (n === 2) return 'Ocupado';
-  if (n === 3) return 'Apartado';
-  return '—';
+  const op = OPCIONES_ESTATUS_LOCAL.find((o) => o.value === n);
+  return op?.label ?? '—';
+}
+
+export function claseChipEstatusLocal(estatus: unknown): string {
+  const n = Number(estatus);
+  if (n === 0) return 'inm-estatus-chip inm-estatus-chip--baja';
+  if (n === 1) return 'inm-estatus-chip inm-estatus-chip--disponible';
+  if (n === 2) return 'inm-estatus-chip inm-estatus-chip--ocupado';
+  if (n === 3) return 'inm-estatus-chip inm-estatus-chip--apartado';
+  return 'inm-estatus-chip';
 }
 
 export function etiquetaEstatusInmueble(estatus: number | null): string {

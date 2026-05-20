@@ -127,6 +127,8 @@ export function mapInmuebleMonitoreoInstalacion(
     locales: Array.isArray((item as Record<string, unknown>)['locales'])
       ? ((item as Record<string, unknown>)['locales'] as unknown[])
       : [],
+    mapaInmueble:
+      (item as Record<string, unknown>)['mapaInmueble'] ?? null,
     zonas: item.zonas,
     servicios: item.servicios,
     detalle: item,
