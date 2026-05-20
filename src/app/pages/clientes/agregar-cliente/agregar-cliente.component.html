@@ -852,22 +852,15 @@
                                 </div>
                             </div>
 
-                            <div formArrayName="socios" class="row g-3 mt-0">
+                            <div formArrayName="socios" class="row g-5 mt-0">
                                 <ng-container *ngFor="let socioCtrl of sociosFormArray.controls; let i = index"
                                     [formGroupName]="i">
                                     <div class="col-12">
                                         <div class="socios-socio">
                                             <div
-                                                class="socios-socio__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                                <div class="d-flex align-items-center flex-wrap gap-2">
-                                                    <span class="socios-live-name" *ngIf="primerNombreSocio">{{ 'Socio:
-                                                        ' + primerNombreSocio }}</span>
-                                                </div>
-                                                <button class="socios-btn-remove" mat-stroked-button color="warn"
-                                                    type="button" (click)="eliminarSocio(i)"
-                                                    *ngIf="sociosFormArray.length >= 2">
-                                                    <mat-icon>delete_outline</mat-icon> Eliminar
-                                                </button>
+                                                class="socios-socio__toolbar d-flex align-items-center flex-wrap gap-2">
+                                                <span class="socios-live-name" *ngIf="primerNombreSocio">{{ 'Socio:
+                                                    ' + primerNombreSocio }}</span>
                                             </div>
                                             <div class="row g-3 socios-identidad">
                                                 <div class="col-12 col-md-6">

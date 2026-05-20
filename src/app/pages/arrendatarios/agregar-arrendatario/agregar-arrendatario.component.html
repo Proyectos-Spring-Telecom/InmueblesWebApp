@@ -135,12 +135,12 @@
             </div>
             <div class="row g-4 mt-2">
               <div class="col-12 col-md-4">
-                <label for="idInmueble" class="form-label perm-label">Inmueble (contrato)</label>
+                <label for="idInmueble" class="form-label perm-label">Inmueble</label>
                 <div class="input-group input-group-lg perm-ig"><span
                     class="input-group-text fw-bold"><mat-icon>home</mat-icon></span>
                   <div class="form-floating flex-grow-1 perm-select-floating">
                     <select id="idInmueble" class="form-select" formControlName="idInmueble"
-                      aria-label="Inmueble del contrato">
+                      aria-label="Inmueble">
                       <option [ngValue]="null" disabled></option>
                       <option *ngFor="let inm of listaInmuebles" [ngValue]="inm.id">
                         {{ inm.etiqueta }}
@@ -151,20 +151,23 @@
                 </div>
               </div>
               <div class="col-12 col-md-4">
-                <label for="idLocal" class="form-label perm-label">Local (contrato)</label>
+                <label for="idLocal" class="form-label perm-label">Local</label>
                 <div class="input-group input-group-lg perm-ig"><span
                     class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
                   <div class="form-floating flex-grow-1 perm-select-floating">
                     <select id="idLocal" class="form-select" formControlName="idLocal"
-                      aria-label="Local del contrato">
+                      aria-label="Local">
                       <option [ngValue]="null" disabled></option>
                       <option *ngFor="let loc of listaLocalesLibres" [ngValue]="loc.id">
                         {{ loc.etiqueta }}
                       </option>
                     </select>
-                    <label for="idLocal">{{ cargandoLocalesLibres ? 'Cargando locales…' : 'Selecciona local' }}</label>
+                    <label for="idLocal">{{ etiquetaFloatingLocal }}</label>
                   </div>
                 </div>
+                <p *ngIf="mostrarAvisoLocalesLibresVacios" class="small mt-2 mb-0 text-warning" style="font-size: 12px;" role="status">
+                  No hay locales disponibles.
+                </p>
               </div>
               <div class="col-12 col-md-4">
                 <label for="fechaInicioContrato" class="form-label perm-label">Fecha de Inicio</label>
@@ -416,12 +419,8 @@
                 <div class="col-12">
                   <div class="arrend-fa-item">
                     <div
-                      class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
+                      class="arrend-fa-item__toolbar d-flex align-items-center flex-wrap gap-2">
                       <span class="arrend-fa-idx">Servicio {{ i + 1 }}</span>
-                      <button type="button" class="arrend-fa-btn-remove" mat-stroked-button color="warn"
-                        (click)="eliminarServicio(i)"
-                        *ngIf="serviciosFormArray.length >= 2"><mat-icon>delete_outline</mat-icon>
-                        Eliminar</button>
                     </div>
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
@@ -787,11 +786,6 @@
                   <div class="docs-uploader-label-row">
                     <label class="form-label perm-label docs-uploader-label mb-0">Imagen {{ i + 1 }}</label>
                     <div class="d-flex flex-wrap gap-1 justify-content-end">
-                      <button type="button" class="docs-uploader-inline-btn" mat-stroked-button color="warn"
-                        (click)="eliminarFotoGaleria(i)" *ngIf="galeriaImagenesFormArray.length >= 2"
-                        title="Eliminar imagen" aria-label="Eliminar imagen">
-                        <mat-icon>delete_outline</mat-icon>
-                      </button>
                       <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
                         (click)="agregarFotoGaleria()" *ngIf="i === galeriaImagenesFormArray.length - 1">
                         <mat-icon>add</mat-icon> Agregar
@@ -919,15 +913,11 @@
                     <div class="col-12">
                       <div class="arrend-fa-item">
                         <div
-                          class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
+                          class="arrend-fa-item__toolbar d-flex align-items-center flex-wrap gap-2">
                           <div class="d-flex align-items-center flex-wrap gap-2">
                             <span class="socios-live-name" *ngIf="nombreSocioEnIndice(i)">{{ 'Socio: ' +
                               nombreSocioEnIndice(i) }}</span>
                           </div>
-                          <button class="arrend-fa-btn-remove" mat-stroked-button color="warn" type="button"
-                            (click)="eliminarSocio(i)" *ngIf="sociosFormArray.length >= 2">
-                            <mat-icon>delete_outline</mat-icon> Eliminar
-                          </button>
                         </div>
                         <div class="row g-3 socios-identidad">
                           <div class="col-12 col-md-6">

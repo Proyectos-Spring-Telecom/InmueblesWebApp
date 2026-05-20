@@ -19,6 +19,16 @@ import {
 } from '../clientes-list.mapper';
 import Swal from 'sweetalert2';
 
+/** Línea base de socios al abrir edición (detectar cambios y no enviar `socios` si no hubo toques). */
+type SocioEdicionSnapshot = {
+  id: number | null;
+  nombre: string;
+  rfc: string;
+  constanciaFiscalUrl: string;
+  comprobanteDomicilioUrl: string;
+  identificacionOficialUrl: string;
+};
+
 @Component({
   selector: 'app-agregar-cliente',
   templateUrl: './agregar-cliente.component.html',
@@ -56,6 +66,8 @@ export class AgregarClienteComponent implements OnInit {
   autocargaCsfPendiente = false;
   private procesandoConstanciaOcr = false;
   private promptAutocargaMostrado = false;
+  /** Tras cargar cliente por id: copia para saber qué filas de socios cambiaron al actualizar. */
+  private sociosEdicionSnapshots: SocioEdicionSnapshot[] | null = null;
 
   @ViewChild('autocargaCsfCardCliente') autocargaCsfCardCliente?: ElementRef<HTMLElement>;
   @ViewChild('topFormularioCliente') topFormularioCliente?: ElementRef<HTMLElement>;
@@ -254,8 +266,13 @@ export class AgregarClienteComponent implements OnInit {
           'identificacionOficialArchivo',
         );
         const g = this.crearSocioFormGroup();
+        const idSocio =
+          s['id'] != null && String(s['id']).trim() !== '' && Number.isFinite(Number(s['id']))
+            ? Math.trunc(Number(s['id']))
+            : null;
         g.patchValue(
           {
+            id: idSocio,
             nombre: this.strApi(s['nombre']),
             rfc: this.strApi(s['rfc']),
             constanciaFiscalArchivo: null,
@@ -285,6 +302,7 @@ export class AgregarClienteComponent implements OnInit {
       this.sociosFormArray.push(this.crearSocioFormGroup());
     }
 
+    this.syncSociosEdicionSnapshotsDesdeFormulario();
     this.cdr.markForCheck();
   }
 
@@ -337,6 +355,7 @@ export class AgregarClienteComponent implements OnInit {
     sociosMock.forEach((socio) => {
       sociosArray.push(
         this.fb.group({
+          id: [null as number | null],
           nombre: [socio.nombre],
           rfc: [socio.rfc],
           constanciaFiscalArchivo: [null],
@@ -471,6 +490,7 @@ export class AgregarClienteComponent implements OnInit {
       const g0 = this.sociosFormArray.at(0) as FormGroup;
       g0?.reset(
         {
+          id: null,
           nombre: '',
           rfc: null,
           constanciaFiscalArchivo: null,
@@ -488,6 +508,7 @@ export class AgregarClienteComponent implements OnInit {
       this.sociosFormArray.controls.forEach((ctrl) =>
         this.setSocioNombreRequerido(ctrl as FormGroup, false),
       );
+      this.syncSociosEdicionSnapshotsDesdeFormulario();
     }
 
     [ne, te, ce, ac, poder, ine].forEach((c) =>
@@ -523,6 +544,7 @@ export class AgregarClienteComponent implements OnInit {
     'https://wallpapercat.com/w/full/9/5/a/945731-3840x2160-desktop-4k-matte-black-wallpaper-image.jpg';
 
   initForm() {
+    this.sociosEdicionSnapshots = null;
     this.clienteForm = this.fb.group({
       idPadre: [null as number | null],
       rfc: ['', Validators.required],
@@ -561,6 +583,7 @@ export class AgregarClienteComponent implements OnInit {
 
   private crearSocioFormGroup(): FormGroup {
     return this.fb.group({
+      id: [null as number | null],
       nombre: [''],
       rfc: [''],
       constanciaFiscalArchivo: [null],
@@ -586,21 +609,70 @@ export class AgregarClienteComponent implements OnInit {
     return String(raw).trim();
   }
 
-  nombreSocioEnIndice(index: number): string {
-    const raw = this.sociosFormArray?.at(index)?.get('nombre')?.value;
-    if (raw == null) return '';
-    return String(raw).trim();
+  private esEdicionCliente(): boolean {
+    return this.idCliente != null && Number(this.idCliente) > 0;
+  }
+
+  /** En alta siempre null; en edición, copia del formulario tras cargar o tras cambiar tipo persona moral. */
+  private syncSociosEdicionSnapshotsDesdeFormulario(): void {
+    if (!this.esEdicionCliente()) {
+      this.sociosEdicionSnapshots = null;
+      return;
+    }
+    this.sociosEdicionSnapshots = this.sociosFormArray.controls.map((ctrl) =>
+      this.snapshotSocioDesdeGrupo(ctrl as FormGroup),
+    );
+  }
+
+  private snapshotSocioDesdeGrupo(g: FormGroup): SocioEdicionSnapshot {
+    const idVal = g.get('id')?.value;
+    return {
+      id:
+        idVal != null && String(idVal).trim() !== '' && Number.isFinite(Number(idVal))
+          ? Math.trunc(Number(idVal))
+          : null,
+      nombre: String(g.get('nombre')?.value ?? '').trim(),
+      rfc: String(g.get('rfc')?.value ?? '').trim(),
+      constanciaFiscalUrl: String(g.get('constanciaFiscalUrl')?.value ?? '').trim(),
+      comprobanteDomicilioUrl: String(g.get('comprobanteDomicilioUrl')?.value ?? '').trim(),
+      identificacionOficialUrl: String(g.get('identificacionOficialUrl')?.value ?? '').trim(),
+    };
+  }
+
+  /** Comparado con la copia al abrir edición; sin snapshot no se marca tocado (no se envían socios). */
+  private socioModificadoVsSnapshotEdicion(g: FormGroup, filaIndex: number): boolean {
+    if (this.sociosEdicionSnapshots == null) return false;
+
+    const cf = g.get('constanciaFiscalArchivo')?.value;
+    const cd = g.get('comprobanteDomicilioArchivo')?.value;
+    const idoc = g.get('identificacionOficialArchivo')?.value;
+    if (cf instanceof File || cd instanceof File || idoc instanceof File) return true;
+
+    const base =
+      this.sociosEdicionSnapshots[filaIndex] ??
+      ({
+        id: null,
+        nombre: '',
+        rfc: '',
+        constanciaFiscalUrl: '',
+        comprobanteDomicilioUrl: '',
+        identificacionOficialUrl: '',
+      } satisfies SocioEdicionSnapshot);
+
+    const cur = this.snapshotSocioDesdeGrupo(g);
+    return (
+      cur.nombre !== base.nombre ||
+      cur.rfc !== base.rfc ||
+      cur.constanciaFiscalUrl !== base.constanciaFiscalUrl ||
+      cur.comprobanteDomicilioUrl !== base.comprobanteDomicilioUrl ||
+      cur.identificacionOficialUrl !== base.identificacionOficialUrl
+    );
   }
 
   agregarSocio(): void {
     const g = this.crearSocioFormGroup();
     this.sociosFormArray.push(g);
     if (this.esPersonaMoral()) this.setSocioNombreRequerido(g, true);
-  }
-
-  eliminarSocio(index: number): void {
-    if (this.sociosFormArray.length === 1) return;
-    this.sociosFormArray.removeAt(index);
   }
 
   openSocioFilePicker(input: HTMLInputElement): void {
@@ -647,22 +719,39 @@ export class AgregarClienteComponent implements OnInit {
     }
   }
 
-  private appendSociosMultipartCliente(fd: FormData): void {
+  private appendSociosMultipartCliente(
+    fd: FormData,
+    soloSociosModificadosEnEdicion: boolean,
+  ): void {
     let i = 0;
-    this.sociosFormArray.controls.forEach((ctrl) => {
+    this.sociosFormArray.controls.forEach((ctrl, index) => {
       const g = ctrl as FormGroup;
       const nombre = String(g.get('nombre')?.value ?? '').trim();
       const rfc = String(g.get('rfc')?.value ?? '').trim();
       const cf = g.get('constanciaFiscalArchivo')?.value;
       const cd = g.get('comprobanteDomicilioArchivo')?.value;
       const idoc = g.get('identificacionOficialArchivo')?.value;
+      const idServidor = g.get('id')?.value;
       const tieneFila =
         !!nombre ||
         !!rfc ||
         cf instanceof File ||
         cd instanceof File ||
         idoc instanceof File;
-      if (!tieneFila) return;
+
+      if (soloSociosModificadosEnEdicion) {
+        if (!this.socioModificadoVsSnapshotEdicion(g, index)) return;
+        const idNum =
+          idServidor != null && String(idServidor).trim() !== '' && Number.isFinite(Number(idServidor))
+            ? Math.trunc(Number(idServidor))
+            : null;
+        if (idNum != null) {
+          fd.append(`socios[${i}].id`, String(idNum));
+        }
+      } else if (!tieneFila) {
+        return;
+      }
+
       fd.append(`socios[${i}].nombre`, nombre || 'Socio');
       if (rfc) fd.append(`socios[${i}].rfc`, rfc);
       if (cf instanceof File) {
@@ -679,7 +768,7 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   /** Multipart alineado con Swagger (cliente + archivos + `socios[i].*`). */
-  private construirFormDataCliente(): FormData {
+  private construirFormDataCliente(esActualizacion = false): FormData {
     const v = this.clienteForm.getRawValue() as Record<string, unknown>;
     const tipoRaw = v['tipoPersona'];
     const tipo = tipoRaw != null && String(tipoRaw).trim() !== '' ? Number(tipoRaw) : null;
@@ -770,7 +859,8 @@ export class AgregarClienteComponent implements OnInit {
     if (uso instanceof File) fd.append('usoSuelo', uso, uso.name);
     if (plano instanceof File) fd.append('planoCatastral', plano, plano.name);
 
-    this.appendSociosMultipartCliente(fd);
+    const soloSociosModificados = esActualizacion && this.esEdicionCliente();
+    this.appendSociosMultipartCliente(fd, soloSociosModificados);
     return fd;
   }
 
@@ -849,7 +939,7 @@ export class AgregarClienteComponent implements OnInit {
 
     if (this.clienteForm.contains('id')) this.clienteForm.removeControl('id');
 
-    const formData = this.construirFormDataCliente();
+    const formData = this.construirFormDataCliente(false);
 
     this.clieService.agregarCliente(formData).subscribe(
       () => {
@@ -954,7 +1044,7 @@ export class AgregarClienteComponent implements OnInit {
       return;
     }
 
-    const formData = this.construirFormDataCliente();
+    const formData = this.construirFormDataCliente(true);
 
     this.clieService.actualizarCliente(Number(this.idCliente), formData).subscribe(
       () => {

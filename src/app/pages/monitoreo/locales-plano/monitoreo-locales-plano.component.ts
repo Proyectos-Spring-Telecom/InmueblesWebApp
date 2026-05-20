@@ -674,28 +674,6 @@ export class MonitoreoLocalesPlanoComponent
     return n;
   }
 
-  eliminarZona(z: ZonaVm): void {
-    Swal.fire({
-      title: '¿Eliminar zona?',
-      text: z.nombre,
-      icon: 'warning',
-      showCancelButton: true,
-      background: '#141a21',
-      color: '#fff',
-    }).then((r) => {
-      if (!r.isConfirmed) return;
-      for (const m of z.mesas) {
-        this.mesasSinZona.push({
-          idMesa: m.idMesa,
-          x: (this.mesasSinZona.length % 6) * 72,
-          y: 0,
-        });
-      }
-      this.zonas = this.zonas.filter((x) => x.id !== z.id);
-      this.schedulePersist();
-    });
-  }
-
   guardarNombreZonaDesdeModel(z: ZonaVm): void {
     const v = (z.nombre || '').trim();
     if (!v) return;
