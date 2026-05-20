@@ -207,18 +207,21 @@
                 </div>
               </ng-container>
               <ng-template #noInstalacionesTpl>
-                <!-- <div class="insta-empty" *ngIf="viewMode === 'instalaciones'">
-                  <div class="insta-empty-icon">
-                    <mat-icon>location_off</mat-icon>
+                <div class="empty-inmuebles-arrendador"
+                  *ngIf="!zonasViewActive && !cargandoInmueblesArrendador && listaVisible.length === 0 && selectedCentral">
+                  <div class="empty-inmuebles-arrendador__glow" aria-hidden="true"></div>
+                  <div class="empty-inmuebles-arrendador__art" aria-hidden="true">
+                    <span class="empty-inmuebles-arrendador__ring"></span>
+                    <span class="empty-inmuebles-arrendador__ring empty-inmuebles-arrendador__ring--mid"></span>
+                    <span class="empty-inmuebles-arrendador__icon-wrap">
+                      <mat-icon class="empty-inmuebles-arrendador__icon">maps_home_work</mat-icon>
+                    </span>
                   </div>
-                  <div class="insta-empty-text">
-                    <h6 *ngIf="!isRol1 && !selectedCentral">Sin oficina central asignada</h6>
-                    <h6 *ngIf="isRol1 || selectedCentral">Sin inmuebles registrados</h6>
-                    <p *ngIf="!isRol1 && !selectedCentral">No tiene asignada una oficina central para ver sus inmuebles.
-                    </p>
-                    <p *ngIf="selectedCentral">Este arrendador aún no tiene inmuebles registrados.</p>
+                  <div class="empty-inmuebles-arrendador__text">
+                    <p class="empty-inmuebles-arrendador__title">Tu lista de inmuebles está vacía</p>
+                    <p class="empty-inmuebles-arrendador__lead">Los registros aparecerán automáticamente en esta sección conforme se agreguen al sistema.</p>
                   </div>
-                </div> -->
+                </div>
               </ng-template>
             </div>
           </div>

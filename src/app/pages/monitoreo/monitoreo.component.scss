@@ -1163,6 +1163,138 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+/* Lista de inmuebles por arrendador: vacío (GET `/inmuebles/arrendador/{id}` → []) */
+.surface .empty-inmuebles-arrendador {
+  position: relative;
+  width: 100%;
+  min-height: min(320px, 52vh);
+  margin-top: 0.35rem;
+  padding: clamp(1.75rem, 5vw, 2.5rem) clamp(1.1rem, 4vw, 1.75rem);
+  box-sizing: border-box;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 55%, transparent);
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 0%,
+      color-mix(in srgb, var(--mat-sys-primary) 22%, transparent) 0%,
+      transparent 62%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--mat-sys-surface) 88%, #0a0f18) 0%,
+      color-mix(in srgb, var(--mat-sys-surface) 96%, #020617) 100%
+    );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 18px 40px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.1rem, 3.2vw, 1.5rem);
+  text-align: center;
+  overflow: hidden;
+}
+
+.surface .empty-inmuebles-arrendador__glow {
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 70%;
+  background: radial-gradient(
+    circle at 50% 80%,
+    color-mix(in srgb, var(--mat-sys-tertiary, var(--mat-sys-primary)) 14%, transparent),
+    transparent 55%
+  );
+  pointer-events: none;
+}
+
+.surface .empty-inmuebles-arrendador__art {
+  position: relative;
+  z-index: 1;
+  width: clamp(104px, 28vw, 132px);
+  height: clamp(104px, 28vw, 132px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.surface .empty-inmuebles-arrendador__ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-outline) 45%, transparent);
+  inset: 0;
+  opacity: 0.9;
+}
+
+.surface .empty-inmuebles-arrendador__ring--mid {
+  inset: 12%;
+  border-color: color-mix(in srgb, var(--mat-sys-primary) 35%, transparent);
+  opacity: 0.75;
+}
+
+.surface .empty-inmuebles-arrendador__icon-wrap {
+  position: relative;
+  z-index: 2;
+  width: clamp(52px, 14vw, 64px);
+  height: clamp(52px, 14vw, 64px);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--mat-sys-primary) 26%, #1a1418);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+    0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.surface .empty-inmuebles-arrendador__icon {
+  font-size: clamp(28px, 7vw, 34px);
+  width: clamp(28px, 7vw, 34px);
+  height: clamp(28px, 7vw, 34px);
+  color: color-mix(in srgb, #f8fafc 92%, var(--mat-sys-primary));
+}
+
+.surface .empty-inmuebles-arrendador__text {
+  position: relative;
+  z-index: 1;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+.surface .empty-inmuebles-arrendador__title {
+  margin: 0 0 0.55rem;
+  font-size: clamp(1rem, 2.8vw, 1.12rem);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--mat-sys-on-surface);
+  line-height: 1.35;
+}
+
+.surface .empty-inmuebles-arrendador__lead {
+  margin: 0 0 0.45rem;
+  font-size: clamp(0.82rem, 2.2vw, 0.9rem);
+  line-height: 1.55;
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.surface .empty-inmuebles-arrendador__hint {
+  margin: 0;
+  font-size: clamp(0.76rem, 2vw, 0.82rem);
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--mat-sys-on-surface-variant) 88%, var(--mat-sys-on-surface));
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 575.98px) {
+  .surface .empty-inmuebles-arrendador {
+    min-height: min(260px, 44vh);
+    padding-inline: 1rem;
+  }
+
+  .surface .empty-inmuebles-arrendador__text {
+    max-width: 100%;
+  }
+}
+
 /* Misma cápsula visual que .inmueble-card-shell (lista de inmuebles) */
 .surface .insta-item.central {
   background: #1b212a;
