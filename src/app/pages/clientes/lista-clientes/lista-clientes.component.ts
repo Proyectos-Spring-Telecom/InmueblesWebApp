@@ -11,6 +11,7 @@ import {
   ClienteGridRow,
   mapClientesApiToGridRows,
 } from '../clientes-list.mapper';
+import { esImagenArchivo } from '../../inmuebles/inmuebles-list.mapper';
 
 @Component({
   selector: 'app-lista-clientes',
@@ -40,6 +41,13 @@ export class ListaClientesComponent implements OnInit {
   isGrouped: boolean = false;
   public paginaActualData: ClienteGridRow[] = [];
   public filtroActivo: string = '';
+
+  readonly urlLogotipoPorDefecto =
+    'https://analiticadevideo.s3.us-east-1.amazonaws.com/Usuarios/d9ad9d73-b046-43a2-a4a0-d5fc2f3e3597.png';
+
+  esLogotipoImagen(url: string | undefined): boolean {
+    return !!url?.trim() && esImagenArchivo(url, 'logotipo');
+  }
 
   constructor(
     private cliService: ClientesService,
@@ -166,6 +174,7 @@ export class ListaClientesComponent implements OnInit {
         normalizar(row.tipoPersona),
         normalizar(row.nombreEncargado),
         normalizar(row.direccionCompleta),
+        normalizar(row.logotipo),
         normalizar(row.id),
       ];
       return hitEnColumnas || extras.some((s) => s.includes(texto));

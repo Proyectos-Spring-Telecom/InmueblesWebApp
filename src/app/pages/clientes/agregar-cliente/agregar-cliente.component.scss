@@ -315,6 +315,26 @@
   line-height: 1.35;
 }
 
+.docs-uploader-ver-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  flex: 0 0 auto;
+  min-height: 2rem;
+  padding: 0 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  text-transform: capitalize;
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+  }
+}
+
 .uploader-wrap .uploader__cta,
 .socios-docs .uploader__cta {
   display: flex;

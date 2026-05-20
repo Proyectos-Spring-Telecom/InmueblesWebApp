@@ -37,9 +37,12 @@ export function nombreDeArchivoApi(v: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Archivos planos en GET lista/detalle cliente (`string` URL). */
+export function urlLogotipoCliente(item: Record<string, unknown>): string {
+  return urlOCadenaDeArchivoApi(item['logotipo']);
+}
+
+/** Archivos planos en GET lista/detalle cliente (`string` URL), sin logotipo. */
 const CAMPOS_ARCHIVO_CLIENTE: { key: string; etiqueta: string }[] = [
-  { key: 'logotipo', etiqueta: 'Logotipo' },
   { key: 'constanciaSituacionFiscal', etiqueta: 'Constancia situación fiscal' },
   { key: 'comprobanteDomicilio', etiqueta: 'Comprobante domicilio' },
   { key: 'actaConstitutiva', etiqueta: 'Acta constitutiva' },
@@ -89,6 +92,7 @@ export interface ClienteGridRow {
   estatusCliente: number;
   numArchivos: number;
   numSocios: number;
+  logotipo: string;
   etiquetaBusqueda: string;
   /** Incluye `archivos` (derivados) y `sociosArrendadores` del API. */
   detalle: Record<string, unknown>;
@@ -129,6 +133,7 @@ function construirTextoBusquedaCliente(
   for (const { key } of CAMPOS_ARCHIVO_CLIENTE) {
     push(urlOCadenaDeArchivoApi(item[key]));
   }
+  push(urlLogotipoCliente(item));
 
   return parts.join(' ');
 }
@@ -206,6 +211,7 @@ export function mapClientesApiToGridRows(items: unknown[]): ClienteGridRow[] {
       estatusCliente: Number.isFinite(estatus) ? estatus : 0,
       numArchivos: archivos.length,
       numSocios: Array.isArray(socios) ? socios.length : 0,
+      logotipo: urlLogotipoCliente(item),
       etiquetaBusqueda: busqueda,
       detalle,
     };

@@ -3,7 +3,6 @@ import {
   group,
   query,
   stagger,
-  state,
   style,
   transition,
   trigger,
@@ -11,59 +10,12 @@ import {
 
 const easeOut = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const easeSpring = 'cubic-bezier(0.34, 1.26, 0.64, 1)';
-const easeIn = 'cubic-bezier(0.4, 0, 1, 1)';
 
 /**
- * Entrada y salida (éxito de login) de la vista de autenticación.
- * Plantilla: .auth-anim-bg, .auth-anim-hero, .auth-anim-panel; estado `success` al cerrar sesión.
+ * Entrada de la vista de autenticación.
+ * Plantilla: .auth-anim-bg, .auth-anim-hero, .auth-anim-panel.
  */
 export const authViewAnimation = trigger('authViewAnimation', [
-  state('idle', style({ opacity: 1, transform: 'none' })),
-  state('success', style({ opacity: 1, transform: 'none' })),
-  transition('idle => success', [
-    group([
-      query(
-        '.auth-anim-panel',
-        [
-          animate(
-            `520ms 0ms ${easeIn}`,
-            style({
-              opacity: 0,
-              transform: 'translate3d(72px, 28px, 0) scale(0.9) perspective(900px) rotateY(14deg)',
-              filter: 'blur(14px)',
-            })
-          ),
-        ],
-        { optional: true }
-      ),
-      query(
-        '.auth-anim-hero .ul-tile',
-        [
-          stagger('40ms', [
-            animate(
-              `280ms ${easeIn}`,
-              style({ opacity: 0, transform: 'translateY(-18px) scale(0.92)' })
-            ),
-          ]),
-        ],
-        { optional: true }
-      ),
-      query(
-        '.auth-anim-hero',
-        [
-          animate(
-            `480ms 60ms ${easeIn}`,
-            style({
-              opacity: 0,
-              transform: 'translate3d(-56px, 16px, 0) scale(0.9)',
-              filter: 'blur(12px)',
-            })
-          ),
-        ],
-        { optional: true }
-      ),
-    ]),
-  ]),
   transition(':enter', [
     group([
       query(

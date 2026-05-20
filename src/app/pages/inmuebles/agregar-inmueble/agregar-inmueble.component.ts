@@ -29,6 +29,63 @@ import {
   mapearConstanciaAInmueble,
 } from 'src/app/shared/constancia-fiscal-ocr.mapper';
 
+/** Estado inicial al editar (GET por id); el PUT solo envía lo que cambió. */
+interface SnapshotServicioEdicion {
+  id: number;
+  idTipoServicio: number | null;
+  numeroContrato: string;
+  fechaPago: string;
+  ultimoDiaPago: string;
+  urlComprobante: string;
+}
+
+interface SnapshotLocalEdicion {
+  id: number;
+  nombre: string;
+  areaM2: string;
+  estatus: number | null;
+  mensualidad: string;
+  giro: string;
+}
+
+interface SnapshotZonaEdicion {
+  id: number;
+  zonaPrincipal: string;
+  zonaSuperficieM2: string;
+  superficieDisponiblePredioM2: string;
+  numeroZona: number | null;
+  locales: SnapshotLocalEdicion[];
+}
+
+interface SnapshotArchivoEdicion {
+  id: number;
+  nombre: string;
+  url: string;
+}
+
+interface SnapshotEscalaresEdicion {
+  inmueble: string;
+  idArrendador: number | null;
+  direccionFiscal: string;
+  estatusInmueble: string | null;
+  vigenciaAnios: string;
+  fechaInicio: string;
+  fechaFin: string;
+  nombreRepresentanteLegal: string;
+  telefonoRepresentanteLegal: string;
+  correoRepresentanteLegal: string;
+  lat: string;
+  lng: string;
+}
+
+interface SnapshotEdicionInmueble {
+  escalares: SnapshotEscalaresEdicion;
+  servicios: SnapshotServicioEdicion[];
+  zonas: SnapshotZonaEdicion[];
+  slotsDocumento: Partial<Record<SlotDocumentoInmueble, SnapshotArchivoEdicion>>;
+  galeria: SnapshotArchivoEdicion[];
+}
+
 @Component({
   selector: 'app-agregar-inmueble',
   templateUrl: './agregar-inmueble.component.html',
@@ -137,6 +194,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     'pagos',
   ]);
   mostrarModalMapa = false;
+  /** Copia al cargar edición; base para enviar solo cambios en PUT. */
+  private snapshotEdicion: SnapshotEdicionInmueble | null = null;
   /** Índice del slot de galería que debe reproducir la animación de entrada (una sola vez). */
   indiceGaleriaAnimando: number | null = null;
   /** Vista inicial del modal: Cuernavaca, Morelos (sin coordenadas en formulario). */
@@ -251,6 +310,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
         this.title = 'Agregar Inmueble';
         this.submitButton = 'Guardar';
+        this.snapshotEdicion = null;
         this.mostrarPromptAutocargaContrato();
       });
   }
@@ -406,6 +466,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   private crearGaleriaImagenFormGroup(): FormGroup {
     return this.fb.group({
+      idArchivo: [null as number | null],
       archivo: [null],
       nombre: [''],
       url: [''],
@@ -414,6 +475,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   private crearServicioFormGroup(): FormGroup {
     return this.fb.group({
+      idServicio: [null as number | null],
       idTipoServicio: [null as number | null, Validators.required],
       servicioNumeroContrato: ['', Validators.required],
       servicioFechaPago: ['', Validators.required],
@@ -426,10 +488,39 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   private crearZonaFormGroup(): FormGroup {
     return this.fb.group({
+      idZona: [null as number | null],
       zonaPrincipal: ['', Validators.required],
       zonaSuperficieM2: ['', Validators.required],
       superficieDisponiblePredioM2: ['', Validators.required],
+      numeroZona: [null as number | null],
+      locales: this.fb.array([this.crearLocalZonaFormGroup()]),
     });
+  }
+
+  /** Local anidado en `zonas[i].locales[j]` (POST multipart). */
+  private crearLocalZonaFormGroup(): FormGroup {
+    return this.fb.group({
+      idLocal: [null as number | null],
+      nombre: ['', Validators.required],
+      areaM2: ['', Validators.required],
+      estatus: [null, Validators.required],
+      mensualidad: [''],
+      giro: [''],
+    });
+  }
+
+  localesZonaFormArray(zonaIndex: number): FormArray {
+    return (this.zonasFormArray.at(zonaIndex) as FormGroup).get('locales') as FormArray;
+  }
+
+  agregarLocalZona(zonaIndex: number): void {
+    this.localesZonaFormArray(zonaIndex).push(this.crearLocalZonaFormGroup());
+  }
+
+  eliminarLocalZona(zonaIndex: number, localIndex: number): void {
+    const arr = this.localesZonaFormArray(zonaIndex);
+    if (arr.length <= 1) return;
+    arr.removeAt(localIndex);
   }
 
   private crearEstacionamientoFormGroup(): FormGroup {
@@ -915,9 +1006,11 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         ? item.rentaMxn
         : item.renta;
     const tiempoRenta =
-      item.tiempoRentaAnios != null && String(item.tiempoRentaAnios).trim() !== ''
-        ? item.tiempoRentaAnios
-        : item.tiempoRenta;
+      item.vigenciaAnios != null && String(item.vigenciaAnios).trim() !== ''
+        ? item.vigenciaAnios
+        : item.tiempoRentaAnios != null && String(item.tiempoRentaAnios).trim() !== ''
+          ? item.tiempoRentaAnios
+          : item.tiempoRenta;
 
     const idArrendador = idArrendadorDesdeApi(item);
 
@@ -953,6 +1046,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const { documentos, galeria } = separarArchivosInmueble(item.archivos, item.imagenes);
     this.rellenarGaleriaDesdeApi(galeria);
     this.asignarDocumentosDesdeApi(documentos);
+    this.capturarSnapshotEdicion(item, documentos, galeria);
   }
 
   private rellenarServiciosDesdeApi(servicios?: InmuebleServicioApi[]): void {
@@ -966,8 +1060,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     lista.forEach((s) => {
       const g = this.crearServicioFormGroup();
       const nombreComprobante = this.nombreArchivoDesdeUrl(s.urlComprobante, 'Comprobante de pago');
+      const idServ = Number(s.id);
       g.patchValue(
         {
+          idServicio: Number.isFinite(idServ) && idServ > 0 ? idServ : null,
           idTipoServicio: s.idTipoServicio != null ? Number(s.idTipoServicio) : null,
           servicioNumeroContrato: s.numeroContrato ?? '',
           servicioFechaPago: fechaParaInputDate(s.fechaPago),
@@ -982,6 +1078,42 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     });
   }
 
+  private rellenarLocalesZonaDesdeApi(zonaGroup: FormGroup, localesApi: unknown): void {
+    const arr = zonaGroup.get('locales') as FormArray;
+    arr.clear();
+    const lista = Array.isArray(localesApi) ? localesApi : [];
+    if (!lista.length) {
+      arr.push(this.crearLocalZonaFormGroup());
+      return;
+    }
+    lista.forEach((raw) => {
+      if (raw == null || typeof raw !== 'object') return;
+      const l = raw as Record<string, unknown>;
+      const g = this.crearLocalZonaFormGroup();
+      const estatusRaw = l['estatus'];
+      const estatusNum =
+        estatusRaw != null && estatusRaw !== '' && Number.isFinite(Number(estatusRaw))
+          ? Number(estatusRaw)
+          : null;
+      const idLocal = Number(l['id']);
+      g.patchValue(
+        {
+          idLocal: Number.isFinite(idLocal) && idLocal > 0 ? idLocal : null,
+          nombre: l['nombre'] != null ? String(l['nombre']) : '',
+          areaM2: l['areaM2'] ?? l['superficieM2'] ?? '',
+          estatus: estatusNum,
+          mensualidad: l['mensualidad'] ?? l['mensualidadMxn'] ?? '',
+          giro: l['giro'] != null ? String(l['giro']) : '',
+        },
+        { emitEvent: false },
+      );
+      arr.push(g);
+    });
+    if (!arr.length) {
+      arr.push(this.crearLocalZonaFormGroup());
+    }
+  }
+
   private rellenarZonasDesdeApi(zonas?: InmuebleZonaApi[]): void {
     const arr = this.zonasFormArray;
     arr.clear();
@@ -992,14 +1124,20 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     }
     lista.forEach((z) => {
       const g = this.crearZonaFormGroup();
+      const idZona = Number(z.id);
+      const numZona = z.numeroZona != null ? Number(z.numeroZona) : null;
       g.patchValue(
         {
+          idZona: Number.isFinite(idZona) && idZona > 0 ? idZona : null,
           zonaPrincipal: z.zonaPrincipal ?? '',
           zonaSuperficieM2: z.superficieZonaM2 ?? '',
           superficieDisponiblePredioM2: z.superficieDisponibleM2 ?? '',
+          numeroZona: numZona != null && Number.isFinite(numZona) ? numZona : null,
         },
         { emitEvent: false },
       );
+      const localesApi = (z as Record<string, unknown>)['locales'];
+      this.rellenarLocalesZonaDesdeApi(g, localesApi);
       arr.push(g);
     });
   }
@@ -1014,8 +1152,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     }
     lista.forEach((img) => {
       const g = this.crearGaleriaImagenFormGroup();
+      const idArch = Number(img.id);
       g.patchValue(
         {
+          idArchivo: Number.isFinite(idArch) && idArch > 0 ? idArch : null,
           archivo: null,
           nombre: img.nombre || this.nombreArchivoDesdeUrl(img.url, 'Imagen'),
           url: img.url?.trim() ?? '',
@@ -1079,6 +1219,122 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     (Object.keys(documentos) as SlotDocumentoInmueble[]).forEach((slot) => {
       asignar(slot, documentos[slot]);
     });
+  }
+
+  private capturarSnapshotEdicion(
+    item: InmuebleApiItem,
+    documentos: Partial<Record<SlotDocumentoInmueble, InmuebleArchivoApi>>,
+    galeria: InmuebleArchivoApi[],
+  ): void {
+    if (this.idInmueble == null) {
+      this.snapshotEdicion = null;
+      return;
+    }
+
+    const estatusStr = estatusInmuebleDesdeApi(item.estatusInmueble);
+    const tiempoRenta =
+      item.vigenciaAnios != null && String(item.vigenciaAnios).trim() !== ''
+        ? String(item.vigenciaAnios).trim()
+        : item.tiempoRentaAnios != null && String(item.tiempoRentaAnios).trim() !== ''
+          ? String(item.tiempoRentaAnios).trim()
+          : String(item.tiempoRenta ?? '').trim();
+
+    const slotsDocumento: Partial<Record<SlotDocumentoInmueble, SnapshotArchivoEdicion>> = {};
+    (Object.keys(documentos) as SlotDocumentoInmueble[]).forEach((slot) => {
+      const a = documentos[slot];
+      const id = Number(a?.id);
+      if (!a?.url?.trim() || !Number.isFinite(id) || id <= 0) return;
+      slotsDocumento[slot] = {
+        id,
+        nombre: a.nombre || this.nombreArchivoDesdeUrl(a.url, 'Documento'),
+        url: a.url.trim(),
+      };
+    });
+
+    this.snapshotEdicion = {
+      escalares: {
+        inmueble: String(item.inmueble ?? '').trim(),
+        idArrendador: idArrendadorDesdeApi(item),
+        direccionFiscal: String(item.direccionFiscal ?? '').trim(),
+        estatusInmueble: estatusStr,
+        vigenciaAnios: tiempoRenta,
+        fechaInicio: fechaParaInputDate(item.fechaInicio),
+        fechaFin: fechaParaInputDate(item.fechaFin),
+        nombreRepresentanteLegal: String(item.nombreRepresentante ?? '').trim(),
+        telefonoRepresentanteLegal: String(item.telefonoRepresentante ?? '').trim(),
+        correoRepresentanteLegal: String(item.correoRepresentante ?? '').trim(),
+        lat: item.lat != null ? String(item.lat) : '',
+        lng: item.lng != null ? String(item.lng) : '',
+      },
+      servicios: (Array.isArray(item.servicios) ? item.servicios : [])
+        .map((s) => {
+          const id = Number(s.id);
+          if (!Number.isFinite(id) || id <= 0) return null;
+          return {
+            id,
+            idTipoServicio:
+              s.idTipoServicio != null ? Number(s.idTipoServicio) : null,
+            numeroContrato: String(s.numeroContrato ?? '').trim(),
+            fechaPago: fechaParaInputDate(s.fechaPago),
+            ultimoDiaPago: fechaParaInputDate(s.ultimoDiaPago),
+            urlComprobante: String(s.urlComprobante ?? '').trim(),
+          };
+        })
+        .filter((s): s is SnapshotServicioEdicion => s != null),
+      zonas: (Array.isArray(item.zonas) ? item.zonas : [])
+        .map((z) => {
+          const id = Number(z.id);
+          if (!Number.isFinite(id) || id <= 0) return null;
+          const localesApi = (z as Record<string, unknown>)['locales'];
+          const locales: SnapshotLocalEdicion[] = [];
+          if (Array.isArray(localesApi)) {
+            localesApi.forEach((raw) => {
+              if (raw == null || typeof raw !== 'object') return;
+              const l = raw as Record<string, unknown>;
+              const idLocal = Number(l['id']);
+              if (!Number.isFinite(idLocal) || idLocal <= 0) return;
+              const estatusRaw = l['estatus'];
+              const estatusNum =
+                estatusRaw != null &&
+                estatusRaw !== '' &&
+                Number.isFinite(Number(estatusRaw))
+                  ? Number(estatusRaw)
+                  : null;
+              locales.push({
+                id: idLocal,
+                nombre: l['nombre'] != null ? String(l['nombre']).trim() : '',
+                areaM2: String(l['areaM2'] ?? l['superficieM2'] ?? '').trim(),
+                estatus: estatusNum,
+                mensualidad: String(l['mensualidad'] ?? l['mensualidadMxn'] ?? '').trim(),
+                giro: l['giro'] != null ? String(l['giro']).trim() : '',
+              });
+            });
+          }
+          const numZona = z.numeroZona != null ? Number(z.numeroZona) : null;
+          return {
+            id,
+            zonaPrincipal: String(z.zonaPrincipal ?? '').trim(),
+            zonaSuperficieM2: String(z.superficieZonaM2 ?? '').trim(),
+            superficieDisponiblePredioM2: String(z.superficieDisponibleM2 ?? '').trim(),
+            numeroZona:
+              numZona != null && Number.isFinite(numZona) ? numZona : null,
+            locales,
+          };
+        })
+        .filter((z): z is SnapshotZonaEdicion => z != null),
+      slotsDocumento,
+      galeria: (Array.isArray(galeria) ? galeria : [])
+        .map((img) => {
+          const id = Number(img.id);
+          if (!img.url?.trim() || !Number.isFinite(id) || id <= 0) return null;
+          return {
+            id,
+            nombre: img.nombre || this.nombreArchivoDesdeUrl(img.url, 'Imagen'),
+            url: img.url.trim(),
+          };
+        })
+        .filter((g): g is SnapshotArchivoEdicion => g != null),
+    };
   }
 
   private limpiarArchivosRemotos(): void {
@@ -1206,13 +1462,33 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       zonaSuperficieM2: 'Superficie de zona (m²)',
       superficieDisponiblePredioM2: 'Superficie disponible predio (m²)',
     };
+    const etiquetasLocalZona: Record<string, string> = {
+      nombre: 'Nombre del local',
+      areaM2: 'Área (m²)',
+      estatus: 'Estatus del local',
+      mensualidad: 'Mensualidad',
+      giro: 'Giro',
+    };
     this.zonasFormArray.controls.forEach((ctrl, i) => {
       const g = ctrl as FormGroup;
       Object.keys(g.controls).forEach((key) => {
+        if (key === 'locales') return;
         const c = g.get(key);
         if (c?.invalid) {
           faltantes.push(`Zona ${i + 1}: ${etiquetasZona[key] ?? key}`);
         }
+      });
+      const localesArr = g.get('locales') as FormArray;
+      localesArr?.controls.forEach((lCtrl, j) => {
+        const lg = lCtrl as FormGroup;
+        Object.keys(lg.controls).forEach((key) => {
+          const c = lg.get(key);
+          if (c?.invalid) {
+            faltantes.push(
+              `Zona ${i + 1}, Local ${j + 1}: ${etiquetasLocalZona[key] ?? key}`,
+            );
+          }
+        });
       });
     });
 
@@ -1318,11 +1594,457 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     fd.append(key, String(n));
   }
 
+  private textoIgual(a: unknown, b: unknown): boolean {
+    return String(a ?? '').trim() === String(b ?? '').trim();
+  }
+
+  private appendIdRegistro(fd: FormData, key: string, id: unknown): void {
+    const n = Number(id);
+    if (Number.isFinite(n) && n > 0) {
+      fd.append(key, String(Math.trunc(n)));
+    }
+  }
+
+  private localZonaVacio(lg: FormGroup): boolean {
+    const nombre = String(lg.get('nombre')?.value ?? '').trim();
+    const area = lg.get('areaM2')?.value;
+    const estatus = lg.get('estatus')?.value;
+    const mensualidad = lg.get('mensualidad')?.value;
+    const giro = String(lg.get('giro')?.value ?? '').trim();
+    return (
+      !nombre &&
+      (area === '' || area == null) &&
+      (estatus === '' || estatus == null) &&
+      (mensualidad === '' || mensualidad == null) &&
+      !giro
+    );
+  }
+
+  private zonaVacia(g: FormGroup): boolean {
+    const zp = String(g.get('zonaPrincipal')?.value ?? '').trim();
+    const supZ = g.get('zonaSuperficieM2')?.value;
+    const supD = g.get('superficieDisponiblePredioM2')?.value;
+    return (
+      !zp &&
+      (supZ === '' || supZ == null) &&
+      (supD === '' || supD == null) &&
+      (g.get('locales') as FormArray).controls.every((c) =>
+        this.localZonaVacio(c as FormGroup),
+      )
+    );
+  }
+
+  private servicioRequiereEnvio(g: FormGroup): boolean {
+    const idTipo = g.get('idTipoServicio')?.value;
+    if (idTipo == null || idTipo === '') return false;
+
+    const idServ = Number(g.get('idServicio')?.value);
+    if (!Number.isFinite(idServ) || idServ <= 0) return true;
+
+    const snap = this.snapshotEdicion?.servicios.find((s) => s.id === idServ);
+    if (!snap) return true;
+    if (g.get('servicioComprobantePago')?.value instanceof File) return true;
+
+    return (
+      !this.textoIgual(g.get('idTipoServicio')?.value, snap.idTipoServicio) ||
+      !this.textoIgual(g.get('servicioNumeroContrato')?.value, snap.numeroContrato) ||
+      !this.textoIgual(g.get('servicioFechaPago')?.value, snap.fechaPago) ||
+      !this.textoIgual(g.get('servicioUltimoDiaPago')?.value, snap.ultimoDiaPago)
+    );
+  }
+
+  private localRequiereEnvio(lg: FormGroup, snapZona: SnapshotZonaEdicion | undefined): boolean {
+    if (this.localZonaVacio(lg)) return false;
+
+    const idLocal = Number(lg.get('idLocal')?.value);
+    if (!Number.isFinite(idLocal) || idLocal <= 0) return true;
+
+    const snap = snapZona?.locales.find((l) => l.id === idLocal);
+    if (!snap) return true;
+
+    return (
+      !this.textoIgual(lg.get('nombre')?.value, snap.nombre) ||
+      !this.textoIgual(lg.get('areaM2')?.value, snap.areaM2) ||
+      !this.textoIgual(lg.get('estatus')?.value, snap.estatus) ||
+      !this.textoIgual(lg.get('mensualidad')?.value, snap.mensualidad) ||
+      !this.textoIgual(lg.get('giro')?.value, snap.giro)
+    );
+  }
+
+  private zonaRequiereEnvio(g: FormGroup): boolean {
+    if (this.zonaVacia(g)) return false;
+
+    const idZona = Number(g.get('idZona')?.value);
+    if (!Number.isFinite(idZona) || idZona <= 0) return true;
+
+    const snap = this.snapshotEdicion?.zonas.find((z) => z.id === idZona);
+    if (!snap) return true;
+
+    if (
+      !this.textoIgual(g.get('zonaPrincipal')?.value, snap.zonaPrincipal) ||
+      !this.textoIgual(g.get('zonaSuperficieM2')?.value, snap.zonaSuperficieM2) ||
+      !this.textoIgual(
+        g.get('superficieDisponiblePredioM2')?.value,
+        snap.superficieDisponiblePredioM2,
+      ) ||
+      !this.textoIgual(g.get('numeroZona')?.value, snap.numeroZona)
+    ) {
+      return true;
+    }
+
+    const locales = g.get('locales') as FormArray;
+    return locales.controls.some((c) => this.localRequiereEnvio(c as FormGroup, snap));
+  }
+
+  private appendEscalaresActualizacion(fd: FormData, v: Record<string, unknown>): void {
+    const snap = this.snapshotEdicion!.escalares;
+    const inmueble = String(v['nombreInmueble'] ?? '').trim();
+    if (!this.textoIgual(inmueble, snap.inmueble) && inmueble) {
+      fd.append('inmueble', inmueble);
+    }
+
+    const idArr = v['idArrendador'];
+    if (!this.textoIgual(idArr, snap.idArrendador)) {
+      this.appendEntero(fd, 'idArrendador', idArr);
+    }
+
+    const dir = String(v['direccionInmueble'] ?? '').trim();
+    if (!this.textoIgual(dir, snap.direccionFiscal) && dir) {
+      fd.append('direccionFiscal', dir);
+    }
+
+    const estatusNum = this.estatusInmuebleANumero(v['estatusInmueble']);
+    const estatusSnap = this.estatusInmuebleANumero(snap.estatusInmueble);
+    if (estatusNum != null && estatusNum !== estatusSnap) {
+      this.appendEntero(fd, 'estatusInmueble', estatusNum);
+    }
+
+    const vigencia = String(v['tiempoRentaAnios'] ?? '').trim();
+    if (!this.textoIgual(vigencia, snap.vigenciaAnios) && vigencia) {
+      fd.append('vigenciaAnios', vigencia);
+    }
+
+    const fi = String(v['fechaInicio'] ?? '').trim();
+    if (!this.textoIgual(fi, snap.fechaInicio) && fi) fd.append('fechaInicio', fi);
+
+    const ff = String(v['fechaFin'] ?? '').trim();
+    if (!this.textoIgual(ff, snap.fechaFin) && ff) fd.append('fechaFin', ff);
+
+    const nomRep = String(v['nombreRepresentanteLegal'] ?? '').trim();
+    if (!this.textoIgual(nomRep, snap.nombreRepresentanteLegal) && nomRep) {
+      fd.append('nombreRepresentante', nomRep);
+    }
+
+    const telRep = String(v['telefonoRepresentanteLegal'] ?? '').trim();
+    if (!this.textoIgual(telRep, snap.telefonoRepresentanteLegal) && telRep) {
+      fd.append('telefonoRepresentante', telRep);
+    }
+
+    const mailRep = String(v['correoRepresentanteLegal'] ?? '').trim();
+    if (!this.textoIgual(mailRep, snap.correoRepresentanteLegal) && mailRep) {
+      fd.append('correoRepresentante', mailRep);
+    }
+
+    const lat = v['lat'];
+    const lng = v['lng'];
+    if (!this.textoIgual(lat, snap.lat)) this.appendValorNumerico(fd, 'lat', lat);
+    if (!this.textoIgual(lng, snap.lng)) this.appendValorNumerico(fd, 'lng', lng);
+  }
+
+  private appendDocumentoSlotActualizacion(
+    fd: FormData,
+    contadores: { archivos: number; imagenes: number },
+    slot: SlotDocumentoInmueble,
+    nombreCanonico: string,
+    controlName: string,
+    nombreUi: string | null,
+    esImagen: boolean,
+  ): void {
+    const file = this.inmuebleForm.get(controlName)?.value;
+    const hayArchivoNuevo = file instanceof File;
+    const snap = this.snapshotEdicion?.slotsDocumento[slot];
+    const nombreUiTrim = String(nombreUi ?? '').trim();
+
+    if (!snap && !hayArchivoNuevo) return;
+
+    if (snap && !hayArchivoNuevo && nombreUiTrim === snap.nombre) return;
+
+    const idx = esImagen ? contadores.imagenes++ : contadores.archivos++;
+    const pref = esImagen ? `imagenes[${idx}]` : `archivos[${idx}]`;
+
+    if (snap) this.appendIdRegistro(fd, `${pref}.id`, snap.id);
+
+    const nombreEnvio = hayArchivoNuevo
+      ? nombreCanonico
+      : nombreUiTrim || nombreCanonico;
+    fd.append(`${pref}.nombre`, nombreEnvio);
+
+    if (hayArchivoNuevo) {
+      fd.append(`${pref}.archivo`, file, file.name);
+    }
+  }
+
   /**
-   * Arma el cuerpo multipart alineado con POST `/inmuebles`:
-   * escalares, `servicios[i].*`, `zonas[i].*`, `archivos[i].*`, `imagenes[i].*`.
+   * PUT `/inmuebles/{id}`: solo campos y registros modificados; con `id` actualiza, sin `id` crea.
    */
-  private construirFormDataInmueble(): FormData {
+  private construirFormDataActualizacion(): FormData {
+    const fd = new FormData();
+    const v = this.inmuebleForm.getRawValue() as Record<string, unknown>;
+    this.appendEscalaresActualizacion(fd, v);
+
+    let si = 0;
+    this.serviciosFormArray.controls.forEach((ctrl) => {
+      const g = ctrl as FormGroup;
+      if (!this.servicioRequiereEnvio(g)) return;
+
+      const idServ = g.get('idServicio')?.value;
+      const snap = Number(idServ) > 0
+        ? this.snapshotEdicion?.servicios.find((s) => s.id === Number(idServ))
+        : undefined;
+
+      if (snap) this.appendIdRegistro(fd, `servicios[${si}].id`, snap.id);
+
+      const idTipo = g.get('idTipoServicio')?.value;
+      if (idTipo != null && idTipo !== '') {
+        this.appendEntero(fd, `servicios[${si}].idTipoServicio`, idTipo);
+      }
+
+      const nc = g.get('servicioNumeroContrato')?.value;
+      if (!snap || !this.textoIgual(nc, snap.numeroContrato)) {
+        if (nc != null && String(nc).trim() !== '') {
+          fd.append(`servicios[${si}].numeroContrato`, String(nc).trim());
+        }
+      }
+
+      const fp = String(g.get('servicioFechaPago')?.value ?? '').trim();
+      if (!snap || !this.textoIgual(fp, snap.fechaPago)) {
+        if (fp) fd.append(`servicios[${si}].fechaPago`, fp);
+      }
+
+      const ulp = String(g.get('servicioUltimoDiaPago')?.value ?? '').trim();
+      if (!snap || !this.textoIgual(ulp, snap.ultimoDiaPago)) {
+        if (ulp) fd.append(`servicios[${si}].ultimoDiaPago`, ulp);
+      }
+
+      const arch = g.get('servicioComprobantePago')?.value;
+      if (arch instanceof File) {
+        fd.append(`servicios[${si}].archivo`, arch, arch.name);
+      }
+
+      si += 1;
+    });
+
+    let zi = 0;
+    this.zonasFormArray.controls.forEach((ctrl) => {
+      const g = ctrl as FormGroup;
+      if (!this.zonaRequiereEnvio(g)) return;
+
+      const idZona = Number(g.get('idZona')?.value);
+      const snapZona =
+        Number.isFinite(idZona) && idZona > 0
+          ? this.snapshotEdicion?.zonas.find((z) => z.id === idZona)
+          : undefined;
+
+      if (snapZona) this.appendIdRegistro(fd, `zonas[${zi}].id`, snapZona.id);
+
+      const zp = String(g.get('zonaPrincipal')?.value ?? '').trim();
+      if (!snapZona || !this.textoIgual(zp, snapZona.zonaPrincipal)) {
+        if (zp) fd.append(`zonas[${zi}].zonaPrincipal`, zp);
+      }
+
+      const supZ = g.get('zonaSuperficieM2')?.value;
+      if (!snapZona || !this.textoIgual(supZ, snapZona.zonaSuperficieM2)) {
+        if (supZ !== '' && supZ != null && Number.isFinite(Number(supZ))) {
+          this.appendValorNumerico(fd, `zonas[${zi}].superficieZonaM2`, supZ);
+        }
+      }
+
+      const supD = g.get('superficieDisponiblePredioM2')?.value;
+      if (!snapZona || !this.textoIgual(supD, snapZona.superficieDisponiblePredioM2)) {
+        if (supD !== '' && supD != null && Number.isFinite(Number(supD))) {
+          this.appendValorNumerico(fd, `zonas[${zi}].superficieDisponibleM2`, supD);
+        }
+      }
+
+      const numZona = g.get('numeroZona')?.value;
+      if (!snapZona || !this.textoIgual(numZona, snapZona.numeroZona)) {
+        if (numZona != null && numZona !== '' && Number.isFinite(Number(numZona))) {
+          this.appendEntero(fd, `zonas[${zi}].numeroZona`, numZona);
+        }
+      } else if (!snapZona && numZona != null && numZona !== '') {
+        this.appendEntero(fd, `zonas[${zi}].numeroZona`, numZona);
+      }
+
+      let lj = 0;
+      const localesArr = g.get('locales') as FormArray;
+      localesArr.controls.forEach((lCtrl) => {
+        const lg = lCtrl as FormGroup;
+        if (!this.localRequiereEnvio(lg, snapZona)) return;
+
+        const idLocal = Number(lg.get('idLocal')?.value);
+        const snapLocal = snapZona?.locales.find((l) => l.id === idLocal);
+
+        if (snapLocal) {
+          this.appendIdRegistro(fd, `zonas[${zi}].locales[${lj}].id`, snapLocal.id);
+        }
+
+        const nombre = String(lg.get('nombre')?.value ?? '').trim();
+        if (!snapLocal || !this.textoIgual(nombre, snapLocal.nombre)) {
+          if (nombre) fd.append(`zonas[${zi}].locales[${lj}].nombre`, nombre);
+        }
+
+        const area = lg.get('areaM2')?.value;
+        if (!snapLocal || !this.textoIgual(area, snapLocal.areaM2)) {
+          if (area !== '' && area != null && Number.isFinite(Number(area))) {
+            this.appendValorNumerico(fd, `zonas[${zi}].locales[${lj}].areaM2`, area);
+          }
+        }
+
+        const estatus = lg.get('estatus')?.value;
+        if (!snapLocal || !this.textoIgual(estatus, snapLocal.estatus)) {
+          if (estatus !== '' && estatus != null && Number.isFinite(Number(estatus))) {
+            this.appendEntero(fd, `zonas[${zi}].locales[${lj}].estatus`, estatus);
+          }
+        }
+
+        const mensualidad = lg.get('mensualidad')?.value;
+        if (!snapLocal || !this.textoIgual(mensualidad, snapLocal.mensualidad)) {
+          if (mensualidad !== '' && mensualidad != null && Number.isFinite(Number(mensualidad))) {
+            this.appendValorNumerico(
+              fd,
+              `zonas[${zi}].locales[${lj}].mensualidad`,
+              mensualidad,
+            );
+          }
+        }
+
+        const giro = String(lg.get('giro')?.value ?? '').trim();
+        if (!snapLocal || !this.textoIgual(giro, snapLocal.giro)) {
+          if (giro) fd.append(`zonas[${zi}].locales[${lj}].giro`, giro);
+        }
+
+        lj += 1;
+      });
+
+      zi += 1;
+    });
+
+    const contadores = { archivos: 0, imagenes: 0 };
+
+    if (this.mostrarCamposRenta) {
+      this.appendDocumentoSlotActualizacion(
+        fd,
+        contadores,
+        'contratoRenta',
+        'Contrato de renta',
+        'documentoContratoRenta',
+        this.contratoRentaNombre,
+        false,
+      );
+    }
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'constanciaFiscal',
+      'Constancia de situación fiscal',
+      'documentoConstanciaFiscal',
+      this.constanciaFiscalNombre,
+      false,
+    );
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'comprobanteDomicilio',
+      'Comprobante de domicilio',
+      'documentoComprobanteDomicilio',
+      this.comprobanteDomicilioNombre,
+      false,
+    );
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'escritura',
+      'Escrituras o título de propiedad',
+      'documentoEscritura',
+      this.archivoEscrituraNombre,
+      false,
+    );
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'boletaPredial',
+      'Boleta predial vigente',
+      'documentoBoletaPredial',
+      this.boletaPredialNombre,
+      false,
+    );
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'constanciaRepLegal',
+      'Constancia fiscal representante legal',
+      'constanciaSituacionFiscalRepresentanteLegal',
+      this.constanciaRepLegalNombre,
+      false,
+    );
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'ineRepresentante',
+      'Identificación oficial representante legal',
+      'ineRepresentanteLegal',
+      this.ineRepresentanteNombre,
+      false,
+    );
+
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'licencia',
+      'Licencia o uso de suelo',
+      'documentoLicencia',
+      this.imagenLicenciaNombre,
+      true,
+    );
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'fachada',
+      'Fachada',
+      'documentoPlano',
+      this.imagenPlanoNombre,
+      true,
+    );
+
+    this.galeriaImagenesFormArray.controls.forEach((galCtrl) => {
+      const g = galCtrl as FormGroup;
+      const file = g.get('archivo')?.value;
+      const hayArchivoNuevo = file instanceof File;
+      const nom = String(g.get('nombre')?.value ?? '').trim();
+      const idArch = Number(g.get('idArchivo')?.value);
+      const snap =
+        Number.isFinite(idArch) && idArch > 0
+          ? this.snapshotEdicion?.galeria.find((x) => x.id === idArch)
+          : undefined;
+
+      if (!snap && !hayArchivoNuevo) return;
+      if (snap && !hayArchivoNuevo && nom === snap.nombre) return;
+
+      const idx = contadores.imagenes++;
+      if (snap) this.appendIdRegistro(fd, `imagenes[${idx}].id`, snap.id);
+      fd.append(`imagenes[${idx}].nombre`, nom || (hayArchivoNuevo ? file.name : 'Imagen'));
+      if (hayArchivoNuevo) {
+        fd.append(`imagenes[${idx}].archivo`, file, file.name);
+      }
+    });
+
+    return fd;
+  }
+
+  /**
+   * Arma el cuerpo multipart para POST `/inmuebles` (alta completa).
+   */
+  private construirFormDataCreacion(): FormData {
     const fd = new FormData();
     const v = this.inmuebleForm.getRawValue() as Record<string, unknown>;
 
@@ -1334,6 +2056,9 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
     const estatusNum = this.estatusInmuebleANumero(v['estatusInmueble']);
     if (estatusNum != null) this.appendEntero(fd, 'estatusInmueble', estatusNum);
+
+    const vigencia = String(v['tiempoRentaAnios'] ?? '').trim();
+    if (vigencia) fd.append('vigenciaAnios', vigencia);
 
     const fi = String(v['fechaInicio'] ?? '').trim();
     if (fi) fd.append('fechaInicio', fi);
@@ -1392,6 +2117,38 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         this.appendValorNumerico(fd, `zonas[${zi}].superficieDisponibleM2`, supD);
       }
       this.appendEntero(fd, `zonas[${zi}].numeroZona`, zi + 1);
+
+      let lj = 0;
+      const localesArr = g.get('locales') as FormArray;
+      localesArr?.controls.forEach((lCtrl) => {
+        const lg = lCtrl as FormGroup;
+        const nombre = String(lg.get('nombre')?.value ?? '').trim();
+        const area = lg.get('areaM2')?.value;
+        const estatus = lg.get('estatus')?.value;
+        const mensualidad = lg.get('mensualidad')?.value;
+        const giro = String(lg.get('giro')?.value ?? '').trim();
+        const localVacio =
+          !nombre &&
+          (area === '' || area == null) &&
+          (estatus === '' || estatus == null) &&
+          (mensualidad === '' || mensualidad == null) &&
+          !giro;
+        if (localVacio) return;
+
+        if (nombre) fd.append(`zonas[${zi}].locales[${lj}].nombre`, nombre);
+        if (area !== '' && area != null && Number.isFinite(Number(area))) {
+          this.appendValorNumerico(fd, `zonas[${zi}].locales[${lj}].areaM2`, area);
+        }
+        if (estatus !== '' && estatus != null && Number.isFinite(Number(estatus))) {
+          this.appendEntero(fd, `zonas[${zi}].locales[${lj}].estatus`, estatus);
+        }
+        if (mensualidad !== '' && mensualidad != null && Number.isFinite(Number(mensualidad))) {
+          this.appendValorNumerico(fd, `zonas[${zi}].locales[${lj}].mensualidad`, mensualidad);
+        }
+        if (giro) fd.append(`zonas[${zi}].locales[${lj}].giro`, giro);
+        lj += 1;
+      });
+
       zi += 1;
     });
 
@@ -1411,6 +2168,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     pushArchivo(v['documentoComprobanteDomicilio'], 'Comprobante de domicilio');
     pushArchivo(v['documentoEscritura'], 'Escrituras o título de propiedad');
     pushArchivo(v['documentoBoletaPredial'], 'Boleta predial vigente');
+    pushArchivo(v['documentoReciboAguaServicios'], 'Recibo de agua o servicios');
     pushArchivo(v['constanciaSituacionFiscalRepresentanteLegal'], 'Constancia fiscal representante legal');
     pushArchivo(v['ineRepresentanteLegal'], 'Identificación oficial representante legal');
 
@@ -1438,6 +2196,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     });
 
     return fd;
+  }
+
+  private construirFormDataInmueble(): FormData {
+    if (this.idInmueble != null && this.snapshotEdicion) {
+      return this.construirFormDataActualizacion();
+    }
+    return this.construirFormDataCreacion();
   }
 
   private estatusInmuebleANumero(raw: unknown): number | null {

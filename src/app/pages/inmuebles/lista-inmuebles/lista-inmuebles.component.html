@@ -49,6 +49,7 @@
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
           [allowFiltering]="false" [visible]="false"></dxi-column>
         <dxi-column dataField="numZonas" caption="Zonas" [visible]="false"></dxi-column>
+        <dxi-column dataField="numLocales" caption="Locales" [visible]="false"></dxi-column>
         <dxi-column dataField="numServicios" caption="Servicios" [visible]="false"></dxi-column>
         <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
         <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="center" [width]="200"
@@ -114,6 +115,10 @@
             <span class="inm-chip inm-chip--muted">
               <i class="fa fa-th-large"></i> {{ cell.data.numZonas }}
               {{ cell.data.numZonas === 1 ? 'Zona' : 'Zonas' }}
+            </span>
+            <span class="inm-chip inm-chip--muted">
+              <i class="fa fa-store"></i> {{ cell.data.numLocales }}
+              {{ cell.data.numLocales === 1 ? 'Local' : 'Locales' }}
             </span>
             <span class="inm-chip inm-chip--muted">
               <i class="fa fa-bolt"></i> {{ cell.data.numServicios }}

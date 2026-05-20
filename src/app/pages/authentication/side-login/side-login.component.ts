@@ -1,5 +1,4 @@
-import { AnimationEvent } from '@angular/animations';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CoreService } from 'src/app/services/core.service';
 import {
   FormGroup,
@@ -39,15 +38,11 @@ export class AppSideLoginComponent implements OnInit {
     private settings: CoreService,
     private auth: AuthenticationService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private toastr: ToastrService,
     private authService: AuthenticationService,
     private authTransition: AuthTransitionService
   ) {}
-
-  authAnimState: 'idle' | 'success' = 'idle';
-  private pendingRoute: string[] | null = null;
 
   form = new FormGroup({
     uname: new FormControl('', [Validators.required, Validators.minLength(6)]),
@@ -117,32 +112,8 @@ export class AppSideLoginComponent implements OnInit {
         const perms = this.authService.getPermissions() || [];
         const hasMonitoreo = perms.includes(String(Permiso.CONSULTAR_MONITOREO));
         const route = hasMonitoreo ? ['/monitoreo'] : ['/usuarios/perfil-usuario'];
-
-        if (this.prefersReducedMotion()) {
-          this.completeLoginNavigation(route);
-          return;
-        }
-
-        this.authTransition.beginLoginExit();
-        this.pendingRoute = route;
-        this.textLogin = 'accediendo...';
-        this.authAnimState = 'success';
-        this.cdr.markForCheck();
-        window.setTimeout(() => {
-          if (this.pendingRoute) {
-            this.onAuthAnimDone({ toState: 'success' } as AnimationEvent);
-          }
-        }, 620);
+        this.completeLoginNavigation(route);
       });
-  }
-
-  onAuthAnimDone(event: AnimationEvent): void {
-    if (event.toState !== 'success' || !this.pendingRoute) {
-      return;
-    }
-    const route = this.pendingRoute;
-    this.pendingRoute = null;
-    this.completeLoginNavigation(route);
   }
 
   private completeLoginNavigation(route: string[]): void {
@@ -153,14 +124,6 @@ export class AppSideLoginComponent implements OnInit {
     this.loading = false;
     this.textLogin = 'iniciar sesión';
     this.isDisabled = false;
-    this.authAnimState = 'idle';
-  }
-
-  private prefersReducedMotion(): boolean {
-    return (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    );
   }
 
   onSubmits() {

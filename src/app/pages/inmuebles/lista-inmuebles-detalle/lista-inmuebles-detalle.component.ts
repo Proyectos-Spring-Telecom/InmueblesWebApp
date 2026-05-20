@@ -8,6 +8,10 @@ import {
   formatearMoneda,
   InmuebleApiItem,
   InmuebleGridRow,
+  InmuebleZonaApi,
+  contarLocalesInmueble,
+  etiquetaEstatusLocal,
+  localesDeZona,
   nombreArrendador,
   nombreServicio,
   urlPdfMiniatura,
@@ -51,6 +55,16 @@ export class ListaInmueblesDetalleComponent {
   nombreServicio = nombreServicio;
   formatearFecha = formatearFecha;
   formatearMoneda = formatearMoneda;
+  localesDeZona = localesDeZona;
+  etiquetaEstatusLocal = etiquetaEstatusLocal;
+
+  totalLocales(): number {
+    return contarLocalesInmueble(this.item);
+  }
+
+  localesZona(z: InmuebleZonaApi) {
+    return localesDeZona(z);
+  }
 
   superficieTotalZonas(): number {
     return this.zonas.reduce((s, z) => s + (Number(z.superficieZonaM2) || 0), 0);

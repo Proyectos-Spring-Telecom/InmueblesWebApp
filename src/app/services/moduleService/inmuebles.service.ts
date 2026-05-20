@@ -15,12 +15,20 @@ export class InmueblesService {
     return this.http.get(`${this.base}/paginated?page=${page}&limit=${limit}`);
   }
 
+  obtenerInmueblesPorArrendador(idArrendador: number): Observable<unknown> {
+    return this.http.get(`${this.base}/arrendador/${idArrendador}`);
+  }
+
   crearInmueble(data: FormData): Observable<unknown> {
     return this.http.post(this.base, data);
   }
 
   obtenerInmueble(id: number): Observable<unknown> {
     return this.http.get(`${this.base}/${id}`);
+  }
+
+  obtenerLocalesLibres(idInmueble: number): Observable<unknown> {
+    return this.http.get(`${this.base}/locales-libres/${idInmueble}`);
   }
 
   actualizarInmueble(id: number, data: FormData): Observable<unknown> {

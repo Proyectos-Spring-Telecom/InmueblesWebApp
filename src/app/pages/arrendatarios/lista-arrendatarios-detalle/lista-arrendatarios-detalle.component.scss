@@ -1,16 +1,21 @@
 @import '../../inmuebles/lista-inmuebles-detalle/lista-inmuebles-detalle.component.scss';
 
-/* Socios */
+/* Socios (grid con Bootstrap row/col en plantilla) */
 .arr-socios-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  justify-content: center;
-  gap: 1rem;
   width: 100%;
+  min-width: 0;
+
+  > [class*='col-'] {
+    min-width: 0;
+  }
 }
 
 .arr-socio-card {
   text-align: left;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: rgba(12, 18, 28, 0.92);
   border: 1px solid rgba(130, 160, 255, 0.28);
   border-radius: 16px;
@@ -49,12 +54,16 @@
   letter-spacing: 0.02em;
   color: #f4f6ff;
   line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .arr-socio-card__rfc {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.35rem;
+  max-width: 100%;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
   font-size: 0.74rem;
@@ -63,6 +72,7 @@
   color: #c5cef5;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(14, 20, 32, 0.75);
+  overflow-wrap: anywhere;
 }
 
 .arr-socio-card__rfc-label {
@@ -77,6 +87,9 @@
   letter-spacing: 0.02em;
   color: #8f9bc4;
   line-height: 1.45;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .arr-socio-card__docs {
@@ -89,15 +102,11 @@
 }
 
 .arr-socio-card__docs li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
   padding: 0.55rem 0.65rem;
   border-radius: 12px;
   border: 1px solid rgba(130, 160, 255, 0.15);
   background: rgba(8, 12, 20, 0.65);
+  min-width: 0;
 }
 
 .arr-socio-doc__label {
@@ -105,9 +114,13 @@
   letter-spacing: 0.02em;
   color: #dce3ff;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
   gap: 0.45rem;
   min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .arr-socio-doc__label i {
@@ -116,30 +129,44 @@
 }
 
 .arr-socio-doc__actions {
-  display: inline-flex;
-  align-items: center;
+  --arr-socio-doc-action-h: 32px;
+  align-items: stretch;
   gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .arr-socio-doc__btn.mat-mdc-unelevated-button {
+  --mdc-filled-button-container-height: var(--arr-socio-doc-action-h);
   border-radius: 999px !important;
-  min-height: 30px;
+  min-height: var(--arr-socio-doc-action-h) !important;
+  height: var(--arr-socio-doc-action-h) !important;
   padding: 0 0.65rem !important;
   font-size: 0.72rem;
   letter-spacing: 0.03em;
   line-height: 1;
 }
 
+:host ::ng-deep .arr-socio-doc__actions .arr-socio-doc__btn.mat-mdc-unelevated-button .mdc-button {
+  height: var(--arr-socio-doc-action-h);
+  min-height: var(--arr-socio-doc-action-h);
+}
+
 .arr-socio-doc__link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 10px;
+  gap: 0.35rem;
+  box-sizing: border-box;
+  height: var(--arr-socio-doc-action-h);
+  min-height: var(--arr-socio-doc-action-h);
+  padding: 0 0.65rem;
+  border-radius: 999px;
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  line-height: 1;
   color: inherit;
+  white-space: nowrap;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 

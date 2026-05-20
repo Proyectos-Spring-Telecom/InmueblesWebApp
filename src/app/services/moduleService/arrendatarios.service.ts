@@ -23,6 +23,10 @@ export class ArrendatariosService {
     return this.http.get(`${this.base}/${id}`);
   }
 
+  obtenerArrendatariosPorInmueble(idInmueble: number): Observable<unknown> {
+    return this.http.get(`${this.base}/inmueble/${idInmueble}`);
+  }
+
   actualizarArrendatario(id: number, data: FormData): Observable<unknown> {
     return this.http.put(`${this.base}/${id}`, data);
   }

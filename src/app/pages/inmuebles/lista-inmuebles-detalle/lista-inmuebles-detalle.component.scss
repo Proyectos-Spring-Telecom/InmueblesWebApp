@@ -171,6 +171,49 @@
   color: #f4f6ff;
 }
 
+.inm-zona-card__locales {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(130, 160, 255, 0.18);
+  text-align: left;
+}
+
+.inm-zona-card__locales-title {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8f9bc4;
+  margin-bottom: 0.45rem;
+}
+
+.inm-locales-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.inm-local-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.inm-local-item__nombre {
+  font-size: 0.85rem;
+  color: #e8edff;
+  margin-right: 0.15rem;
+}
+
+.inm-empty--inline {
+  margin: 0.65rem 0 0;
+  font-size: 0.78rem;
+}
+
 .inm-servicio-card {
   display: flex;
   align-items: flex-start;

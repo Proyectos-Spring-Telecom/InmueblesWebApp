@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, Subject, of, switchMap, tap, map, catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -32,7 +32,7 @@ export class AuthenticationService extends BaseServicesService {
 
   private authenticationChanged = new Subject<boolean>();
   private user: User | null = null;
-  /** Tras un refresh rechazado (401), no volver a llamar /login/refresh ni redirigir. */
+  /** Tras un refresh rechazado (401), no volver a llamar /login/refresh. */
   private refreshBlocked = false;
   private readonly baseUrl = environment.API_SECURITY;
   /** Cliente sin interceptores: refresh/logout no deben disparar otro refresh ni redirección. */
@@ -81,7 +81,15 @@ export class AuthenticationService extends BaseServicesService {
         { refreshToken },
         { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
       )
-      .pipe(tap((resp) => this.persistTokens(resp)));
+      .pipe(
+        tap((resp) => this.persistTokens(resp)),
+        catchError((err: unknown) => {
+          if (err instanceof HttpErrorResponse && err.status === 401) {
+            this.clearSessionAndRedirect();
+          }
+          return throwError(() => err);
+        })
+      );
   }
 
   public logout(): Observable<void> {
