@@ -25,7 +25,7 @@ export class EntradasSalidasEstacionamientoService {
     let params = new HttpParams()
       .set('idInmueble', String(Math.floor(query.idInmueble)))
       .set('page', String(query.page ?? 1))
-      .set('limit', String(query.limit ?? 200));
+      .set('limit', String(query.limit ?? 50));
     const ini = (query.fechaInicio ?? '').trim();
     const fin = (query.fechaFin ?? '').trim();
     if (ini) params = params.set('fechaInicio', ini);

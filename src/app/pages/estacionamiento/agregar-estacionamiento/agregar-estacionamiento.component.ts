@@ -9,7 +9,8 @@ import {
   routeAnimation,
 } from 'src/app/pipe/module-open.animation';
 import Swal from 'sweetalert2';
-import { distinctUntilChanged, finalize, Subject, map, takeUntil } from 'rxjs';
+import { distinctUntilChanged, finalize, Subject, map, takeUntil, lastValueFrom } from 'rxjs';
+import CustomStore from 'devextreme/data/custom_store';
 import {
   EstacionamientoCrearActualizarPayload,
   EstacionamientoService,
@@ -18,8 +19,8 @@ import { EntradasSalidasEstacionamientoService } from 'src/app/services/moduleSe
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { extraerArrendatariosInmuebleApi } from '../../monitoreo/monitoreo-arrendatarios.mapper';
 import {
-  EntradaSalidaGridFila,
   extraerFilasEntradasSalidasApi,
+  extraerTotalEntradasSalidasPaginated,
 } from '../entradas-salidas.mapper';
 export interface OpcionArrendatarioSelect {
   value: number;
@@ -54,8 +55,21 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
   @ViewChild('gridEntradasSalidas', { static: false })
   gridEntradasSalidas!: DxDataGridComponent;
 
-  /** Grid del acordeón «Entradas y Salidas». */
-  public filasEntradasSalidasGrid: EntradaSalidaGridFila[] = [];
+  /** Store remoto del grid Entradas y Salidas (50 por página). */
+  public entradasSalidasStore!: CustomStore;
+  public readonly pageSizeEntradasSalidas = 50;
+  readonly pagerEntradasSalidasRemote = { paging: true };
+  readonly pagerEntradasSalidasPaging = { pageSize: this.pageSizeEntradasSalidas };
+  readonly pagerEntradasSalidasConfig = {
+    showPageSizeSelector: false,
+    allowedPageSizes: [this.pageSizeEntradasSalidas],
+    showInfo: true,
+    infoText: 'Página {0} de {1}',
+    /* infoText: 'Página {0} de {1} ({2} registros)', */
+    visible: true,
+  };
+  /** Formato 24 h para columnas datetime del grid (DevExtreme). */
+  readonly formatoFechaHora24EntradasSalidas = 'dd/MM/yyyy HH:mm';
 
   public mostrarModalEntradasSalidasExcel = false;
   public excelEntradasSalidasDragging = false;
@@ -120,6 +134,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
     }
 
     this.initForm();
+    this.configurarStoreEntradasSalidasVacio();
 
     // Evita doble arranque cuando `paramMap` emite más de una vez con el mismo id (p.ej. tras PATCH):
     // repetir `arrancarModoEdicion` dispara otro GET + refresh del grid + vuelve a abrir el formulario.
@@ -224,12 +239,12 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
 
     if (this.idInmuebleNumerico != null) {
       this.recargarArrendatariosYGrid();
-      this.cargarGridEntradasSalidas();
+      this.refrescarGridEntradasSalidas();
       return;
     }
 
     this.filasEstacionamientosGrid = [];
-    this.filasEntradasSalidasGrid = [];
+    this.configurarStoreEntradasSalidasVacio();
     this.opcionesArrendatario = [];
     this.mapaNombreArrendatario.clear();
     this.estacionamientoForm.patchValue({
@@ -298,7 +313,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
                 });
                 this.estacionamientoForm.markAsPristine();
                 this.recargarSoloGrid();
-                this.cargarGridEntradasSalidas();
+                this.refrescarGridEntradasSalidas();
               },
               error: (_err) => {
                 void Swal.fire({
@@ -321,7 +336,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
                       : null,
                 });
                 this.recargarSoloGrid();
-                this.cargarGridEntradasSalidas();
+                this.refrescarGridEntradasSalidas();
               },
             });
         },
@@ -382,7 +397,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
           });
           this.estacionamientoForm.markAsUntouched();
           this.recargarSoloGrid();
-          this.cargarGridEntradasSalidas();
+          this.refrescarGridEntradasSalidas();
         },
         error: (_err) => {
           void Swal.fire({
@@ -396,45 +411,59 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
             confirmButtonText: 'Entendido',
           });
           this.recargarSoloGrid();
-          this.cargarGridEntradasSalidas();
+          this.refrescarGridEntradasSalidas();
         },
       });
   }
 
-  /** GET paginado por idInmueble → grid Entradas y Salidas. */
-  cargarGridEntradasSalidas(): void {
+  private configurarStoreEntradasSalidasVacio(): void {
+    this.entradasSalidasStore = new CustomStore({
+      key: 'id',
+      load: () => Promise.resolve({ data: [], totalCount: 0 }),
+    });
+  }
+
+  /** CustomStore: cada página del grid pide GET con `limit` 50. */
+  configurarStoreEntradasSalidas(): void {
     const idImm = this.idInmuebleNumerico;
     if (idImm == null || idImm <= 0) {
-      this.filasEntradasSalidasGrid = [];
+      this.configurarStoreEntradasSalidasVacio();
       return;
     }
-    this.cargandoGridEntradasSalidas = true;
-    this.entradasSalidasService
-      .listarPaginado({ idInmueble: idImm, page: 1, limit: 500 })
-      .pipe(
-        map((resp) => extraerFilasEntradasSalidasApi(resp)),
-        finalize(() => {
-          this.cargandoGridEntradasSalidas = false;
-        }),
-        takeUntil(this.destroyed$),
-      )
-      .subscribe({
-        next: (filas) => {
-          this.filasEntradasSalidasGrid = filas;
-          this.gridEntradasSalidas?.instance?.refresh();
-        },
-        error: () => {
-          /* void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
-            title: 'Entradas y salidas',
-            text: 'No se pudo cargar el listado. Intente nuevamente.',
-            icon: 'warning',
-            confirmButtonColor: '#3085d6',
-            confirmButtonText: 'Entendido',
-          }); */
-        },
-      });
+    const idInmueble = Math.floor(idImm);
+    this.entradasSalidasStore = new CustomStore({
+      key: 'id',
+      load: (loadOptions: { take?: number; skip?: number }) => {
+        const take = Number(loadOptions?.take) || this.pageSizeEntradasSalidas;
+        const skip = Number(loadOptions?.skip) || 0;
+        const page = Math.floor(skip / take) + 1;
+        this.cargandoGridEntradasSalidas = true;
+        return lastValueFrom(
+          this.entradasSalidasService.listarPaginado({
+            idInmueble,
+            page,
+            limit: take,
+          }),
+        )
+          .then((resp) => ({
+            data: extraerFilasEntradasSalidasApi(resp),
+            totalCount: extraerTotalEntradasSalidasPaginated(resp),
+          }))
+          .catch(() => ({ data: [], totalCount: 0 }))
+          .finally(() => {
+            this.cargandoGridEntradasSalidas = false;
+          });
+      },
+    });
+  }
+
+  refrescarGridEntradasSalidas(): void {
+    this.configurarStoreEntradasSalidas();
+    const grid = this.gridEntradasSalidas?.instance;
+    if (grid) {
+      grid.pageIndex(0);
+      grid.refresh();
+    }
   }
 
   private recargarSoloGrid(): void {
@@ -830,9 +859,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
 
   /** Toolbar: vuelve a Monitoreo con la lista de inmuebles. */
   irAMonitoreoListaInmuebles(): void {
-    void this.router.navigate(['/monitoreo'], {
-      queryParams: this.queryParamsMonitoreoInmuebles(),
-    });
+    this.router.navigate(['/monitoreo']);
   }
 
   abrirModalEntradasSalidasExcel(): void {
@@ -841,6 +868,11 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
 
   cerrarModalEntradasSalidasExcel(): void {
     if (this.subiendoEntradasSalidasExcel) return;
+    this.resetModalEntradasSalidasExcel();
+  }
+
+  /** Cierra el modal y limpia el archivo (también tras importación exitosa). */
+  private resetModalEntradasSalidasExcel(): void {
     this.mostrarModalEntradasSalidasExcel = false;
     this.excelEntradasSalidasArchivo = null;
     this.excelEntradasSalidasNombre = '';
@@ -955,20 +987,34 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => (this.subiendoEntradasSalidasExcel = false)))
       .subscribe({
         next: () => {
-          this.cerrarModalEntradasSalidasExcel();
-          this.cargarGridEntradasSalidas();
-          void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
-            title: 'Importación correcta',
-            text: 'El archivo se procesó y el listado se actualizó.',
-            icon: 'success',
-            confirmButtonColor: '#3085d6',
-            confirmButtonText: 'Entendido',
-          });
+          this.resetModalEntradasSalidasExcel();
+          this.refrescarGridEntradasSalidas();
+          window.setTimeout(() => {
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Operación Exitosa!',
+              html: 'El archivo se procesó y el listado se actualizó.',
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+          }, 1000);
         },
         error: (err) => void this.manifiestoErrorServicio(err),
       });
+  }
+
+  formatoMonedaEntradasSalidas(e: { value?: number | string | null }): string {
+    const n = Number(e?.value);
+    if (!Number.isFinite(n)) return '$0.00';
+    return (
+      '$' +
+      n.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    );
   }
 
   limpiarCamposGridEntradasSalidas(): void {

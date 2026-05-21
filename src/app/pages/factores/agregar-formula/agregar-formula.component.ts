@@ -30,8 +30,6 @@ export class AgregarFormulaComponent implements OnInit {
   /** Opciones del select: variables activas de Factores. */
   public factoresParaSelectFormula: FactorOpcionFormula[] = [];
   public cargandoVariablesFactores = false;
-  /** Select standalone: tras elegir se inserta y se vuelve a ''. */
-  public factorSeleccionadoParaFormula = '';
 
   constructor(
     private fb: FormBuilder,
@@ -80,6 +78,7 @@ export class AgregarFormulaComponent implements OnInit {
             variable,
             etiqueta: desc ? `${variable} — ${desc}` : variable,
           }));
+        this.asegurarVariableFormulaEnOpciones();
       },
       error: () => {
         this.cargandoVariablesFactores = false;
@@ -88,21 +87,16 @@ export class AgregarFormulaComponent implements OnInit {
     });
   }
 
-  onFactorSelectParaFormula(variable: string): void {
-    if (!variable) return;
-    this.insertarVariableEnFormula(variable);
-    queueMicrotask(() => {
-      this.factorSeleccionadoParaFormula = '';
-    });
-  }
-
-  insertarVariableEnFormula(variable: string): void {
-    const ctrl = this.formulaForm.get('formula');
-    if (!ctrl || !variable) return;
-    const cur = String(ctrl.value ?? '').trimEnd();
-    const next = cur.length ? `${cur} ${variable}` : variable;
-    ctrl.setValue(next);
-    ctrl.markAsDirty();
+  /** En edición, la variable guardada puede no estar en el catálogo activo. */
+  private asegurarVariableFormulaEnOpciones(): void {
+    const formula = String(this.formulaForm?.get('formula')?.value ?? '').trim();
+    if (!formula || this.factoresParaSelectFormula.some((f) => f.variable === formula)) {
+      return;
+    }
+    this.factoresParaSelectFormula = [
+      { variable: formula, etiqueta: formula },
+      ...this.factoresParaSelectFormula,
+    ].sort((a, b) => a.variable.localeCompare(b.variable, 'es'));
   }
 
   private initForm() {
@@ -120,11 +114,12 @@ export class AgregarFormulaComponent implements OnInit {
         const data = res?.data ?? res ?? {};
         this.formulaForm.patchValue(
           {
-            nombre: data?.nombre ?? '',
-            formula: data?.formula ?? '',
+            nombre: data?.nombre ?? data?.Nombre ?? '',
+            formula: data?.formula ?? data?.Formula ?? '',
           },
           { emitEvent: false },
         );
+        this.asegurarVariableFormulaEnOpciones();
         this.formulaForm.markAsPristine();
       },
       error: () => {

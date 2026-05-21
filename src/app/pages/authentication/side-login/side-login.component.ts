@@ -21,6 +21,9 @@ import { ToastrService } from 'ngx-toastr';
 import { Permiso } from 'src/app/entities/permiso.enum';
 import { authViewAnimation } from '../auth-view.animation';
 import { AuthTransitionService } from 'src/app/services/auth-transition.service';
+import { LoginSuccessSoundService } from 'src/app/services/login-success-sound.service';
+
+const LOGIN_SUCCESS_SOUND_MS = 10_000;
 
 @Component({
   selector: 'app-side-login',
@@ -41,7 +44,8 @@ export class AppSideLoginComponent implements OnInit {
     private route: ActivatedRoute,
     private toastr: ToastrService,
     private authService: AuthenticationService,
-    private authTransition: AuthTransitionService
+    private authTransition: AuthTransitionService,
+    private loginSuccessSound: LoginSuccessSoundService,
   ) {}
 
   form = new FormGroup({
@@ -78,6 +82,7 @@ export class AppSideLoginComponent implements OnInit {
   public correoUsuario: string = '';
   public textLogin: string = 'iniciar sesión';
   public loading: boolean = false;
+
   onSubmit() {
     if (this.isDisabled || this.loginForm.invalid) {
       return;
@@ -117,10 +122,15 @@ export class AppSideLoginComponent implements OnInit {
   }
 
   private completeLoginNavigation(route: string[]): void {
+    this.toastr.success('Bienvenido al Sistema.', '¡Credenciales Correctas!');
     void this.router.navigate(route).then(() => {
       this.authTransition.startAppReveal();
+      // Sonido + resaltado cuando ya está el header (después del fade de entrada)
+      window.setTimeout(() => {
+        this.loginSuccessSound.play(LOGIN_SUCCESS_SOUND_MS);
+      }, 580);
     });
-    this.toastr.success('Bienvenido al Sistema.', '¡Credenciales Correctas!');
+
     this.loading = false;
     this.textLogin = 'iniciar sesión';
     this.isDisabled = false;

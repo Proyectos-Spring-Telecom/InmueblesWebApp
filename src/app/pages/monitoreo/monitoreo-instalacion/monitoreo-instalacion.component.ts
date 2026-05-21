@@ -2219,7 +2219,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
               background: '#141a21',
               color: '#ffffff',
               icon: 'success',
-              title: 'Pago registrado',
+              title: '¡Operación Exitosa!',
               text: 'El pago y el comprobante se enviaron correctamente.',
               confirmButtonText: 'Listo',
             });
@@ -2275,7 +2275,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
             background: '#141a21',
             color: '#ffffff',
             icon: 'success',
-            title: 'Pago registrado',
+            title: '¡Operación Exitosa!',
             text: 'El pago y el comprobante se enviaron correctamente.',
             confirmButtonText: 'Listo',
           });

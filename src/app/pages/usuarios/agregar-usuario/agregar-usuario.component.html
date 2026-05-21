@@ -28,8 +28,7 @@
                                 <mat-icon aria-hidden="true">business</mat-icon>
                             </span>
                             <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="cliente" formControlName="idCliente" required>
-                                    <!-- <option [ngValue]="null"></option> -->
+                                <select class="form-select" id="cliente" formControlName="idCliente">
                                     <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
                                         {{ cliente.nombre }}
                                         <ng-container *ngIf="cliente.apellidoPaterno">
@@ -119,7 +118,6 @@
                             </span>
                             <div class="form-floating flex-grow-1 perm-select-floating">
                                 <select class="form-select" id="permClave" formControlName="idRol" required>
-                                    <option [ngValue]="null"></option>
                                     <option *ngFor="let rol of listaRoles" [ngValue]="rol.id">
                                         {{ rol.nombre }}
                                     </option>
@@ -218,20 +216,19 @@
                                     <div class="uploader__cta">
                                         <button mat-flat-button color="primary" type="button"
                                             (click)="openLogoFilePicker()">Seleccionar archivo</button>
-                                        <span class="uploader__badge">PNG · JPG · WEBP · Máx. 3 MB</span>
-                                    </div>
-
-                                    <div class="uploader__status"
-                                        *ngIf="logoFileName || usuarioForm.get('fotoPerfil')?.value">
-                                        <div class="uploader__filename" *ngIf="logoFileName">
-                                            {{ logoFileName }}
-                                        </div>
-                                        <a class="uploader__filename uploader__filename--link"
-                                            *ngIf="!logoFileName && usuarioForm.get('fotoPerfil')?.value"
-                                            [href]="usuarioForm.get('fotoPerfil')?.value" target="_blank"
-                                            rel="noopener noreferrer">
-                                            {{ usuarioForm.get('fotoPerfil')?.value }}
+                                        <a *ngIf="urlFotoPerfilRemota() as urlRemota"
+                                            class="uploader__badge uploader__badge--file"
+                                            [href]="urlRemota"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            (click)="$event.stopPropagation()">
+                                            {{ etiquetaLogoUploader() }}
                                         </a>
+                                        <span *ngIf="!urlFotoPerfilRemota()"
+                                            class="uploader__badge"
+                                            [class.uploader__badge--file]="tieneArchivoLogoEnBadge()">
+                                            {{ etiquetaLogoUploader() }}
+                                        </span>
                                     </div>
 
                                     <input #logoFileInput type="file" accept="image/png,image/jpeg,image/webp"

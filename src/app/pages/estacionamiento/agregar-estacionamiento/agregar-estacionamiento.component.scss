@@ -72,6 +72,36 @@
   padding-bottom: 0.25rem;
 }
 
+/** Mismos botones semánticos que el modal «Agregar Entradas y Salidas» (`.button-success` / `.button-danger`). */
+.est-formulario-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.est-formulario-acciones .button-success,
+.est-formulario-acciones .button-danger {
+  height: 50px;
+  min-height: 50px;
+  min-width: 10rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.est-excel-modal .docs-modal__footer .button-success,
+.est-excel-modal .docs-modal__footer .button-danger {
+  height: 50px;
+  min-height: 50px;
+  min-width: 10rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
 /**
  * Títulos del acordeón: alineados con la tipografía de las etiquetas de los `mat-flat-button`
  * del toolbar (Roboto, espaciado, línea clara). Sin `font-weight` (contrato tipografía del repo).

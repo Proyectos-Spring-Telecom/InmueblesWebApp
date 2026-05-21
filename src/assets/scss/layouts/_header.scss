@@ -468,6 +468,18 @@ html .topbar {
   }
 }
 
+/* Sonido de login (~10 s): iconos normales, sin pulso ni resaltado especial */
+.topbar .notify-cap--login-quiet .notify-cap__btn .notify-cap__fill,
+.topbar .notify-cap--login-quiet .notify-cap__badge {
+  animation: none !important;
+}
+
+.topbar .notify-cap--login-quiet .notify-cap__btn {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
 /* Paneles en overlay (clase en mat-menu) — layout “hoja” */
 .mat-mdc-menu-panel.notify-hub-panel {
   --notify-surface: #141a22;

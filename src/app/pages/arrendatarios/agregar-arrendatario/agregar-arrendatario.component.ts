@@ -2511,12 +2511,30 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     });
   }
 
+  private abrirSwalCargandoArrendatario(esActualizacion: boolean): void {
+    void Swal.fire({
+      title: 'Cargando...',
+      text: esActualizacion
+        ? 'Actualizando arrendatario, por favor espera.'
+        : 'Guardando arrendatario, por favor espera.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      background: '#141a21',
+      color: '#ffffff',
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+  }
+
   private ejecutarGuardadoArrendatario(): void {
     this.loadingSubmit = true;
     const esActualizacion =
       this.idArrendatario != null && Number.isFinite(Number(this.idArrendatario));
     const fd = this.construirFormDataArrendatario(esActualizacion);
     this.logMultipartArrendatario(fd);
+    this.abrirSwalCargandoArrendatario(esActualizacion);
 
     const req =
       this.idArrendatario != null && Number.isFinite(Number(this.idArrendatario))
@@ -2524,8 +2542,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         : this.arrendatariosService.crearArrendatario(fd);
 
     req.subscribe({
-      next: () => this.mostrarExitoArrendatarioYRedirigir(esActualizacion),
+      next: () => {
+        window.setTimeout(() => {
+          Swal.close();
+          this.mostrarExitoArrendatarioYRedirigir(esActualizacion);
+        }, 1000);
+      },
       error: (err: unknown) => {
+        Swal.close();
         this.loadingSubmit = false;
         const e = err as { error?: { message?: string }; message?: string };
         const text =

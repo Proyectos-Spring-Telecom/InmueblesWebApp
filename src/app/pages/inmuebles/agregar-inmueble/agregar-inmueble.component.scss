@@ -253,12 +253,15 @@
 .uploader-wrap .uploader__badge,
 .srv-pago-uploader .srv-pago-uploader__formats {
   font-size: clamp(0.68rem, 0.64rem + 0.2vw, 0.8rem);
+  display: inline-block;
   width: fit-content;
   max-width: 100%;
-  flex: 0 0 auto;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  flex: 0 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   line-height: 1.25;
+  box-sizing: border-box;
 }
 
 .uploader-wrap .uploader__badge.uploader__badge--file,
@@ -273,6 +276,8 @@
     0 0 0 1px rgba(147, 197, 253, 0.22),
     0 8px 20px rgba(0, 0, 0, 0.32);
   padding-inline: clamp(0.55rem, 0.48rem + 0.28vw, 0.82rem);
+  width: fit-content;
+  max-width: 100%;
 }
 
 @keyframes docs-galeria-card-enter {
@@ -352,12 +357,14 @@
 
 .uploader__cta--archivo-remoto .uploader__badge,
 .srv-pago-uploader__row--archivo-remoto .srv-pago-uploader__formats {
-  width: 100%;
+  width: fit-content;
   max-width: 100%;
   margin-left: 0;
+  align-self: center;
   text-align: center;
-  justify-content: center;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .srv-pago-uploader__row .docs-uploader-ver-btn {

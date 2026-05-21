@@ -1,24 +1,23 @@
+/** Fila del grid «Entradas y Salidas» (GET paginated / importar). */
 export interface EntradaSalidaGridFila {
-  id?: number;
+  id: number;
   boleto: string;
-  fechaE: Date | null;
-  fechaP: Date | null;
+  fechaEntrada: Date | null;
+  fechaSalida: Date | null;
   total: number | null;
+  fhRegistro: Date | null;
 }
 
 function parseFecha(val: unknown): Date | null {
   if (val == null || val === '') return null;
   if (val instanceof Date && !Number.isNaN(val.getTime())) return val;
-  const s = String(val).trim();
-  if (!s) return null;
-  const iso = /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : s;
-  const d = new Date(iso);
+  const d = new Date(String(val).trim());
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function parseTotal(val: unknown): number | null {
   if (val == null || val === '') return null;
-  const n = Number(val);
+  const n = Number(String(val).replace(/[$,\s]/g, ''));
   return Number.isFinite(n) ? n : null;
 }
 
@@ -32,20 +31,14 @@ function valorTexto(item: Record<string, unknown>, keys: string[]): string {
 
 export function extraerFilasEntradasSalidasApi(res: unknown): EntradaSalidaGridFila[] {
   if (res == null) return [];
-  const r = res as Record<string, unknown> | unknown[];
-  let rows: unknown = Array.isArray(r) ? r : null;
-  if (!rows && typeof res === 'object') {
-    const bag = res as Record<string, unknown>;
-    rows =
-      bag['data'] ??
-      bag['items'] ??
-      bag['rows'] ??
-      bag['content'] ??
-      null;
-    if (rows != null && typeof rows === 'object' && !Array.isArray(rows)) {
-      const inner = rows as Record<string, unknown>;
-      rows = inner['items'] ?? inner['rows'] ?? inner['content'] ?? inner['data'];
-    }
+  const bag =
+    typeof res === 'object' && !Array.isArray(res)
+      ? (res as Record<string, unknown>)
+      : null;
+  let rows: unknown = Array.isArray(res) ? res : bag?.['data'];
+  if (rows != null && typeof rows === 'object' && !Array.isArray(rows)) {
+    const inner = rows as Record<string, unknown>;
+    rows = inner['items'] ?? inner['rows'] ?? inner['content'] ?? inner['data'];
   }
   if (!Array.isArray(rows)) return [];
 
@@ -54,25 +47,35 @@ export function extraerFilasEntradasSalidasApi(res: unknown): EntradaSalidaGridF
     if (item == null || typeof item !== 'object') continue;
     const row = item as Record<string, unknown>;
     const boleto = valorTexto(row, ['boleto', 'Boleto']);
-    if (!boleto) continue;
     const idRaw = Number(row['id']);
+    if (!Number.isFinite(idRaw) || idRaw <= 0) continue;
+    if (!boleto) continue;
     out.push({
-      id: Number.isFinite(idRaw) && idRaw > 0 ? Math.floor(idRaw) : undefined,
+      id: Math.floor(idRaw),
       boleto,
-      fechaE: parseFecha(
-        row['fechaE'] ??
-          row['FechaE'] ??
-          row['fechaEntrada'] ??
-          row['FechaEntrada'],
+      fechaEntrada: parseFecha(
+        row['fechaEntrada'] ?? row['FechaEntrada'] ?? row['fechaE'] ?? row['FechaE'],
       ),
-      fechaP: parseFecha(
-        row['fechaP'] ??
+      fechaSalida: parseFecha(
+        row['fechaSalida'] ??
+          row['FechaSalida'] ??
+          row['fechaP'] ??
           row['FechaP'] ??
           row['fechaPago'] ??
           row['FechaPago'],
       ),
       total: parseTotal(row['total'] ?? row['Total']),
+      fhRegistro: parseFecha(row['fhRegistro'] ?? row['FhRegistro']),
     });
   }
   return out;
+}
+
+/** Total de registros desde `paginated.total` del GET paginado. */
+export function extraerTotalEntradasSalidasPaginated(res: unknown): number {
+  if (res == null || typeof res !== 'object' || Array.isArray(res)) return 0;
+  const pag = (res as Record<string, unknown>)['paginated'];
+  if (pag == null || typeof pag !== 'object' || Array.isArray(pag)) return 0;
+  const total = Number((pag as Record<string, unknown>)['total']);
+  return Number.isFinite(total) && total >= 0 ? Math.floor(total) : 0;
 }
