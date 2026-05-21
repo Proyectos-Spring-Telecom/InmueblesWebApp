@@ -17,6 +17,33 @@ export const estacionamientoFormRevealAnimation = trigger('estacionamientoFormRe
   ]),
 ]);
 
+/** Modal tipo contrato / pago (dim + panel). */
+export const contractDimAnim = trigger('contractDimAnim', [
+  transition(':enter', [
+    style({ opacity: 0 }),
+    animate('180ms ease-out', style({ opacity: 1 })),
+  ]),
+  transition(':leave', [
+    animate('150ms ease-in', style({ opacity: 0 })),
+  ]),
+]);
+
+export const contractModalAnim = trigger('contractModalAnim', [
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(12px) scale(0.98)' }),
+    animate(
+      '220ms cubic-bezier(0.22, 1, 0.36, 1)',
+      style({ opacity: 1, transform: 'translateY(0) scale(1)' }),
+    ),
+  ]),
+  transition(':leave', [
+    animate(
+      '170ms cubic-bezier(0.4, 0, 1, 1)',
+      style({ opacity: 0, transform: 'translateY(8px) scale(0.985)' }),
+    ),
+  ]),
+]);
+
 export let routeAnimation = trigger('routeAnimation', [
   transition('void => *', [
     style({

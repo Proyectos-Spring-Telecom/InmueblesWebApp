@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import {
+  contractDimAnim,
+  contractModalAnim,
   estacionamientoFormRevealAnimation,
   routeAnimation,
 } from 'src/app/pipe/module-open.animation';
@@ -12,9 +14,13 @@ import {
   EstacionamientoCrearActualizarPayload,
   EstacionamientoService,
 } from 'src/app/services/moduleService/estacionamiento.service';
+import { EntradasSalidasEstacionamientoService } from 'src/app/services/moduleService/entradas-salidas-estacionamiento.service';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { extraerArrendatariosInmuebleApi } from '../../monitoreo/monitoreo-arrendatarios.mapper';
-
+import {
+  EntradaSalidaGridFila,
+  extraerFilasEntradasSalidasApi,
+} from '../entradas-salidas.mapper';
 export interface OpcionArrendatarioSelect {
   value: number;
   label: string;
@@ -29,27 +35,34 @@ interface EstacionamientoGridFila {
   estatus: number;
 }
 
-/** Fila del grid «Entradas y Salidas» (accordion panel 2). */
-export interface EntradaSalidaGridFila {
-  boleto: string;
-  fechaE: Date | null;
-  fechaP: Date | null;
-  total: number | null;
-}
-
 @Component({
   selector: 'app-agregar-estacionamiento',
   templateUrl: './agregar-estacionamiento.component.html',
   styleUrl: './agregar-estacionamiento.component.scss',
   standalone: false,
-  animations: [routeAnimation, estacionamientoFormRevealAnimation],
+  animations: [
+    routeAnimation,
+    estacionamientoFormRevealAnimation,
+    contractDimAnim,
+    contractModalAnim,
+  ],
 })
 export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
   @ViewChild('gridEstacionamiento', { static: false })
   dataGrid!: DxDataGridComponent;
 
-  /** Grid del acordeón «Entradas y Salidas» (vacío hasta conectar fuente real). */
+  @ViewChild('gridEntradasSalidas', { static: false })
+  gridEntradasSalidas!: DxDataGridComponent;
+
+  /** Grid del acordeón «Entradas y Salidas». */
   public filasEntradasSalidasGrid: EntradaSalidaGridFila[] = [];
+
+  public mostrarModalEntradasSalidasExcel = false;
+  public excelEntradasSalidasDragging = false;
+  public excelEntradasSalidasNombre = '';
+  private excelEntradasSalidasArchivo: File | null = null;
+  public subiendoEntradasSalidasExcel = false;
+  public autoExpandAllGroupsEntradasSalidas = true;
 
   public submitButton = 'Guardar';
   public loading = false;
@@ -79,6 +92,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
   private mapaNombreArrendatario = new Map<number, string>();
   public cargandoArrendatarios = false;
   public cargandoGrid = false;
+  public cargandoGridEntradasSalidas = false;
 
   /** Si falta contexto del inmueble en alta mostramos mensaje en plantilla (sin select de predios). */
   public sinIdInmuebleEnAlta = false;
@@ -92,6 +106,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private estacionamientoService: EstacionamientoService,
+    private entradasSalidasService: EntradasSalidasEstacionamientoService,
     private arrendatariosService: ArrendatariosService,
   ) {}
 
@@ -209,10 +224,12 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
 
     if (this.idInmuebleNumerico != null) {
       this.recargarArrendatariosYGrid();
+      this.cargarGridEntradasSalidas();
       return;
     }
 
     this.filasEstacionamientosGrid = [];
+    this.filasEntradasSalidasGrid = [];
     this.opcionesArrendatario = [];
     this.mapaNombreArrendatario.clear();
     this.estacionamientoForm.patchValue({
@@ -281,6 +298,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
                 });
                 this.estacionamientoForm.markAsPristine();
                 this.recargarSoloGrid();
+                this.cargarGridEntradasSalidas();
               },
               error: (_err) => {
                 void Swal.fire({
@@ -303,6 +321,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
                       : null,
                 });
                 this.recargarSoloGrid();
+                this.cargarGridEntradasSalidas();
               },
             });
         },
@@ -363,6 +382,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
           });
           this.estacionamientoForm.markAsUntouched();
           this.recargarSoloGrid();
+          this.cargarGridEntradasSalidas();
         },
         error: (_err) => {
           void Swal.fire({
@@ -376,6 +396,43 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
             confirmButtonText: 'Entendido',
           });
           this.recargarSoloGrid();
+          this.cargarGridEntradasSalidas();
+        },
+      });
+  }
+
+  /** GET paginado por idInmueble → grid Entradas y Salidas. */
+  cargarGridEntradasSalidas(): void {
+    const idImm = this.idInmuebleNumerico;
+    if (idImm == null || idImm <= 0) {
+      this.filasEntradasSalidasGrid = [];
+      return;
+    }
+    this.cargandoGridEntradasSalidas = true;
+    this.entradasSalidasService
+      .listarPaginado({ idInmueble: idImm, page: 1, limit: 500 })
+      .pipe(
+        map((resp) => extraerFilasEntradasSalidasApi(resp)),
+        finalize(() => {
+          this.cargandoGridEntradasSalidas = false;
+        }),
+        takeUntil(this.destroyed$),
+      )
+      .subscribe({
+        next: (filas) => {
+          this.filasEntradasSalidasGrid = filas;
+          this.gridEntradasSalidas?.instance?.refresh();
+        },
+        error: () => {
+          /* void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: 'Entradas y salidas',
+            text: 'No se pudo cargar el listado. Intente nuevamente.',
+            icon: 'warning',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Entendido',
+          }); */
         },
       });
   }
@@ -773,7 +830,179 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
 
   /** Toolbar: vuelve a Monitoreo con la lista de inmuebles. */
   irAMonitoreoListaInmuebles(): void {
-    this.router.navigate(['/monitoreo'])
+    void this.router.navigate(['/monitoreo'], {
+      queryParams: this.queryParamsMonitoreoInmuebles(),
+    });
+  }
+
+  abrirModalEntradasSalidasExcel(): void {
+    this.mostrarModalEntradasSalidasExcel = true;
+  }
+
+  cerrarModalEntradasSalidasExcel(): void {
+    if (this.subiendoEntradasSalidasExcel) return;
+    this.mostrarModalEntradasSalidasExcel = false;
+    this.excelEntradasSalidasArchivo = null;
+    this.excelEntradasSalidasNombre = '';
+    this.excelEntradasSalidasDragging = false;
+  }
+
+  abrirSelectorExcelEntradasSalidas(): void {
+    const el = document.getElementById(
+      'estEntradasSalidasExcelInput',
+    ) as HTMLInputElement | null;
+    el?.click();
+  }
+
+  onExcelEntradasSalidasDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.excelEntradasSalidasDragging = true;
+  }
+
+  onExcelEntradasSalidasDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.excelEntradasSalidasDragging = false;
+  }
+
+  onExcelEntradasSalidasDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.excelEntradasSalidasDragging = false;
+    const file = event.dataTransfer?.files?.[0];
+    if (file) this.asignarArchivoExcelEntradasSalidas(file);
+  }
+
+  onExcelEntradasSalidasFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) this.asignarArchivoExcelEntradasSalidas(file);
+    input.value = '';
+  }
+
+  private esArchivoExcelEntradasSalidas(file: File): boolean {
+    if (!file?.name || !/\.(xlsx|xls)$/i.test(file.name)) return false;
+    const t = (file.type ?? '').trim().toLowerCase();
+    if (!t) return true;
+    return (
+      t === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      t === 'application/vnd.ms-excel'
+    );
+  }
+
+  private asignarArchivoExcelEntradasSalidas(file: File): void {
+    if (!this.esArchivoExcelEntradasSalidas(file)) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: 'Archivo no permitido',
+        text: 'Solo se aceptan archivos Excel (.xlsx o .xls).',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    const maxMb = 10;
+    if (file.size > maxMb * 1024 * 1024) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: 'Archivo demasiado grande',
+        text: `El tamaño máximo permitido es ${maxMb} MB.`,
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    this.excelEntradasSalidasArchivo = file;
+    this.excelEntradasSalidasNombre = file.name;
+  }
+
+  subirArchivoEntradasSalidas(): void {
+    const file = this.excelEntradasSalidasArchivo;
+    if (!file) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: 'Seleccione un archivo',
+        text: 'Elija un archivo Excel antes de guardar.',
+        icon: 'info',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    const idInm = this.idInmuebleNumerico;
+    if (idInm == null || idInm <= 0) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: 'Predio no definido',
+        text: 'Abra esta pantalla con el parámetro inmuebleId en la URL.',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    this.subiendoEntradasSalidasExcel = true;
+    this.entradasSalidasService
+      .importarExcel(idInm, file)
+      .pipe(finalize(() => (this.subiendoEntradasSalidasExcel = false)))
+      .subscribe({
+        next: () => {
+          this.cerrarModalEntradasSalidasExcel();
+          this.cargarGridEntradasSalidas();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: 'Importación correcta',
+            text: 'El archivo se procesó y el listado se actualizó.',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Entendido',
+          });
+        },
+        error: (err) => void this.manifiestoErrorServicio(err),
+      });
+  }
+
+  limpiarCamposGridEntradasSalidas(): void {
+    const g = this.gridEntradasSalidas?.instance;
+    if (!g) return;
+    g.clearGrouping();
+    g.clearFilter();
+    g.searchByText('');
+    g.refresh();
+  }
+
+  toggleExpandGroupsEntradasSalidas(): void {
+    const g = this.gridEntradasSalidas?.instance;
+    if (!g) return;
+    const groupedColumns = g
+      .getVisibleColumns()
+      .filter((col: { groupIndex?: number }) => (col.groupIndex ?? -1) >= 0);
+    if (groupedColumns.length === 0) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: '¡Ops!',
+        text: 'Debes arrastar un encabezado de una columna para expandir o contraer grupos.',
+        icon: 'warning',
+        showCancelButton: false,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+        allowOutsideClick: false,
+      });
+      return;
+    }
+    this.autoExpandAllGroupsEntradasSalidas =
+      !this.autoExpandAllGroupsEntradasSalidas;
+    g.refresh();
   }
 
   private queryParamsMonitoreoInmuebles(): Record<string, string> {

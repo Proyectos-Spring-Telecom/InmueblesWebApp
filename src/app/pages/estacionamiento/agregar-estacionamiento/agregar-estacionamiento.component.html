@@ -55,6 +55,13 @@
       }
 
       @if (!sinIdInmuebleEnAlta || esModoEdicion) {
+        <div class="d-flex justify-content-end mb-3 est-acciones-previas">
+          <button type="button" class="hero-header__back-btn" (click)="irAMonitoreoListaInmuebles()">
+            <mat-icon>arrow_back</mat-icon>
+            <span>Regresar</span>
+          </button>
+        </div>
+
         <dx-accordion
           class="est-accordion-estacionamiento"
           width="100%"
@@ -67,14 +74,6 @@
               <div class="est-vista-previa-grid pb-3">
                 <div class="est-grid-head mb-2">
                   <div class="est-grid-toolbar">
-                    <button
-                      type="button"
-                      (click)="limpiarCamposGrid()"
-                      mat-flat-button
-                      class="est-toolbar-btn-entradas est-grid-toolbar__btn"
-                    >
-                      <i class="fa fa-retweet"></i> Entradas y Salidas
-                    </button>
                     @if (puedeMostrarBotonAgregar()) {
                       <button
                         type="button"
@@ -114,14 +113,6 @@
                         aria-hidden="true"
                       ></i>
                       {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
-                    </button>
-                    <button
-                      type="button"
-                      (click)="irAMonitoreoListaInmuebles()"
-                      mat-flat-button
-                      class="est-toolbar-btn-regresar est-grid-toolbar__btn"
-                    >
-                      <i class="fa fa-arrow-left"></i> Regresar
                     </button>
                   </div>
                 </div>
@@ -460,22 +451,118 @@
           </dxi-item>
 
           <dxi-item title="Entradas y Salidas">
-            <div class="est-accordion-item-body est-accordion-inner pt-2 pb-3">
-              <dx-data-grid
-                id="gridEntradasSalidasEst"
-                class="inm-data-grid"
-                [showBorders]="true"
-                [hoverStateEnabled]="false"
-                [noDataText]="'Sin registros para mostrar'"
-                [dataSource]="filasEntradasSalidasGrid"
-                [width]="'100%'"
-                [remoteOperations]="false"
-              >
-                <dxi-column dataField="boleto" caption="Boleto"></dxi-column>
-                <dxi-column dataField="fechaE" caption="FechaE" dataType="date"></dxi-column>
-                <dxi-column dataField="fechaP" caption="FechaP" dataType="date"></dxi-column>
-                <dxi-column dataField="total" caption="Total" dataType="number"></dxi-column>
-              </dx-data-grid>
+            <div class="est-accordion-item-body est-accordion-inner pt-3 pb-2">
+              @if (
+                cargandoGridEntradasSalidas &&
+                filasEntradasSalidasGrid.length === 0
+              ) {
+                <p class="text-body-secondary mb-3">Cargando entradas y salidas…</p>
+              }
+              <div class="est-vista-previa-grid pb-3">
+                <div class="est-grid-head mb-2">
+                  <div class="est-grid-toolbar">
+                    <button
+                      type="button"
+                      (click)="abrirModalEntradasSalidasExcel()"
+                      mat-flat-button
+                      class="bg-secondary est-grid-toolbar__btn"
+                    >
+                      <i class="fa fa-plus"></i> Agregar
+                    </button>
+                    <button
+                      type="button"
+                      (click)="limpiarCamposGridEntradasSalidas()"
+                      mat-flat-button
+                      class="bg-success est-grid-toolbar__btn"
+                    >
+                      <i class="fa fa-eraser"></i> Limpiar
+                    </button>
+                    <button
+                      type="button"
+                      (click)="toggleExpandGroupsEntradasSalidas()"
+                      mat-flat-button
+                      class="bg-warn est-grid-toolbar__btn"
+                    >
+                      <i
+                        [class]="
+                          autoExpandAllGroupsEntradasSalidas
+                            ? 'fa fa-expand'
+                            : 'fa fa-compress'
+                        "
+                        aria-hidden="true"
+                      ></i>
+                      {{
+                        autoExpandAllGroupsEntradasSalidas
+                          ? ' Contraer Grupos'
+                          : ' Expandir Grupos'
+                      }}
+                    </button>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <dx-data-grid
+                    #gridEntradasSalidas
+                    id="gridEntradasSalidasEst"
+                    class="inm-data-grid"
+                    [columnHidingEnabled]="true"
+                    [hoverStateEnabled]="false"
+                    [showBorders]="true"
+                    [showColumnLines]="false"
+                    [showRowLines]="true"
+                    [rowAlternationEnabled]="true"
+                    [noDataText]="'Sin registros para mostrar'"
+                    [dataSource]="filasEntradasSalidasGrid"
+                    [keyExpr]="'boleto'"
+                    [width]="'100%'"
+                    [remoteOperations]="false"
+                    [paging]="{ pageSize: pageSize }"
+                    [pager]="{
+                      showPageSizeSelector: true,
+                      allowedPageSizes: [50],
+                      showInfo: true,
+                      infoText: 'Página {0} de {1}',
+                      visible: true
+                    }"
+                  >
+                    <dxo-search-panel
+                      [visible]="true"
+                      [width]="200"
+                      placeholder="Buscar..."
+                    ></dxo-search-panel>
+                    <dxo-toolbar>
+                      <dxi-item name="groupPanel" location="before"></dxi-item>
+                      <dxi-item
+                        name="searchPanel"
+                        locateInMenu="auto"
+                        location="after"
+                      ></dxi-item>
+                    </dxo-toolbar>
+                    <dxo-group-panel
+                      [visible]="true"
+                      [emptyPanelText]="mensajeAgrupar"
+                    ></dxo-group-panel>
+                    <dxo-grouping
+                      [autoExpandAll]="autoExpandAllGroupsEntradasSalidas"
+                    ></dxo-grouping>
+                    <dxi-column dataField="boleto" caption="Boleto"></dxi-column>
+                    <dxi-column
+                      dataField="fechaE"
+                      caption="FechaE"
+                      dataType="date"
+                    ></dxi-column>
+                    <dxi-column
+                      dataField="fechaP"
+                      caption="FechaP"
+                      dataType="date"
+                    ></dxi-column>
+                    <dxi-column
+                      dataField="total"
+                      caption="Total"
+                      dataType="number"
+                    ></dxi-column>
+                  </dx-data-grid>
+                </div>
+              </div>
             </div>
           </dxi-item>
         </dx-accordion>
@@ -483,3 +570,114 @@
     </section>
   </div>
 </div>
+
+@if (mostrarModalEntradasSalidasExcel) {
+  <div
+    class="contract-page-dim"
+    (click)="cerrarModalEntradasSalidasExcel()"
+    [@contractDimAnim]
+  ></div>
+  <div
+    class="docs-backdrop est-excel-backdrop"
+    [@contractModalAnim]
+    (click)="cerrarModalEntradasSalidasExcel()"
+  >
+    <div
+      class="docs-modal est-excel-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="est-excel-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <h3 class="docs-modal__title" id="est-excel-modal-title">
+            Agregar entradas y salidas
+          </h3>
+          <p class="docs-modal__subtitle m-0">
+            Selecciona y sube un archivo Excel (.xlsx o .xls). El servidor lo procesará.
+          </p>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col d-flex justify-content-end">
+          <button
+            type="button"
+            class="docs-modal__close"
+            (click)="cerrarModalEntradasSalidasExcel()"
+            aria-label="Cerrar modal"
+            [disabled]="subiendoEntradasSalidasExcel"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body">
+        <div class="col-12">
+          <div class="uploader-hero est-excel-uploader-hero">
+            <div
+              class="uploader est-excel-uploader"
+              [class.dragging]="excelEntradasSalidasDragging"
+              (dragover)="onExcelEntradasSalidasDragOver($event)"
+              (dragleave)="onExcelEntradasSalidasDragLeave($event)"
+              (drop)="onExcelEntradasSalidasDrop($event)"
+            >
+              <div class="uploader__glow"></div>
+              <div class="uploader__body">
+                <div class="uploader__icon">
+                  <mat-icon aria-hidden="true">table_chart</mat-icon>
+                </div>
+                <h6 class="uploader__title">Sube tu Excel</h6>
+                <p class="uploader__subtitle">Arrastra y suelta o</p>
+                <div class="uploader__cta">
+                  <button
+                    mat-flat-button
+                    type="button"
+                    class="bg-primary est-excel-uploader__select-btn"
+                    (click)="abrirSelectorExcelEntradasSalidas()"
+                    [disabled]="subiendoEntradasSalidasExcel"
+                  >
+                    Seleccionar
+                  </button>
+                  <span
+                    class="uploader__badge"
+                    [class.uploader__badge--file]="!!excelEntradasSalidasNombre"
+                  >
+                    {{ excelEntradasSalidasNombre || 'XLSX · XLS · Máx. 10 MB' }}
+                  </span>
+                </div>
+                <input
+                  id="estEntradasSalidasExcelInput"
+                  type="file"
+                  accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                  class="uploader__input"
+                  (change)="onExcelEntradasSalidasFileSelected($event)"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row docs-modal__footer">
+        <div class="col-12 d-flex flex-wrap gap-2 justify-content-end">
+          <button
+            type="button"
+            class="button-danger"
+            (click)="cerrarModalEntradasSalidasExcel()"
+            [disabled]="subiendoEntradasSalidasExcel"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="button-success"
+            (click)="subirArchivoEntradasSalidas()"
+            [disabled]="subiendoEntradasSalidasExcel"
+          >
+            {{ subiendoEntradasSalidasExcel ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

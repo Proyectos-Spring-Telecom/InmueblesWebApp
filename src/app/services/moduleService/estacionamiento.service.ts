@@ -38,4 +38,5 @@ export class EstacionamientoService {
   actualizarEstatus(id: number, payload: { estatus: number }): Observable<unknown> {
     return this.http.patch<unknown>(`${this.base}/${id}/estatus`, payload);
   }
+
 }
