@@ -49,12 +49,12 @@
               <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
               <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
               <dxi-column caption="Acciones" cellTemplate="Acciones" alignment="center" *appHasPermission="['10', '12']" dataType="string" [width]="180"></dxi-column>
-              <dxi-column dataField="nombre" caption="Nombre" alignment="center" dataType="string"></dxi-column>
+              <dxi-column dataField="nombrePensionado" caption="Nombre" alignment="center" dataType="string"></dxi-column>
               <dxi-column dataField="numeroTarjeta" caption="Número de Tarjeta" alignment="center" dataType="string"></dxi-column>
               <dxi-column dataField="arrendatario" caption="Arrendatario" alignment="center" dataType="string"></dxi-column>
               <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="est" dataType="string">
                   <div *dxTemplate="let f of 'est'">
-                      @if (f.data.estatus === 1) {
+                      @if (numEstatus(f.data.estatus) === 1) {
                       <span class="estatus estatus-activo">Activo</span>
                       } @else {
                       <span class="estatus estatus-inactivo">Inactivo</span>
@@ -69,7 +69,7 @@
                       </button>
                   </div>
                   <div *appHasPermission="'12'">
-                      @if (row.data.estatus === 0) {
+                      @if (numEstatus(row.data.estatus) === 0) {
                       <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
                           <i class="fa fa-arrow-up"></i>
                       </button>

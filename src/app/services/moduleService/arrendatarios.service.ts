@@ -23,6 +23,11 @@ export class ArrendatariosService {
     return this.http.get(`${this.base}/${id}`);
   }
 
+  /** Servicios del arrendatario (Renta, Mantenimiento, etc.) — `id` = `idServicioArrendatario` para pagos. */
+  obtenerServiciosArrendatario(idArrendatario: number): Observable<unknown> {
+    return this.http.get(`${this.base}/servicios/${idArrendatario}`);
+  }
+
   obtenerArrendatariosPorInmueble(idInmueble: number): Observable<unknown> {
     return this.http.get(`${this.base}/inmueble/${idInmueble}`);
   }

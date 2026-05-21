@@ -121,6 +121,29 @@ export function nombreArrendadorDesdeArrendatarioApi(
   return t || '—';
 }
 
+function textoInmuebleDesdeRef(inmRef: unknown): string {
+  if (inmRef == null || typeof inmRef !== 'object' || Array.isArray(inmRef)) {
+    return '';
+  }
+  return String((inmRef as Record<string, unknown>)['inmueble'] ?? '').trim();
+}
+
+export function nombreInmuebleDesdeContratoApi(
+  contrato: ArrendatarioContratoApi | null | undefined,
+): string {
+  if (!contrato) return '';
+  return textoInmuebleDesdeRef(contrato.inmueble);
+}
+
+export function nombreInmuebleDesdeArrendatarioApi(
+  item: ArrendatarioApiItem,
+  contrato?: ArrendatarioContratoApi | null,
+): string {
+  const desdeContrato = nombreInmuebleDesdeContratoApi(contrato ?? undefined);
+  if (desdeContrato) return desdeContrato;
+  return textoInmuebleDesdeRef(item['inmueble']);
+}
+
 export function buildExpedienteArrendatarioLista(
   item: ArrendatarioApiItem,
 ): MonitoreoExpedienteDoc[] {
@@ -285,4 +308,40 @@ export function tituloLocalDesdeArrendatario(
   const contrato = seleccionarContratoArrendatario(item, idContrato, idLocal);
   const nombre = String(contrato?.local?.nombre ?? '').trim();
   return nombre || fallback;
+}
+
+/** Fila de GET `/arrendatarios/servicios/{id}` — opciones para alta de pagos del arrendatario. */
+export interface ServicioArrendatarioListaPago {
+  id: number;
+  etiquetaTipoServicio: string;
+  numeroContrato?: string;
+}
+
+export function extraerServiciosArrendatarioListaPago(resp: unknown): ServicioArrendatarioListaPago[] {
+  let rows: unknown = resp;
+  if (resp != null && typeof resp === 'object' && !Array.isArray(resp)) {
+    const r = resp as Record<string, unknown>;
+    rows = r['data'] ?? r['items'];
+  }
+  if (!Array.isArray(rows)) return [];
+  const out: ServicioArrendatarioListaPago[] = [];
+  for (const item of rows) {
+    const row = item as Record<string, unknown>;
+    const id = Number(row['id']);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    const tipoObj = row['tipoServicio'];
+    let nombreTipo = '';
+    if (tipoObj != null && typeof tipoObj === 'object') {
+      nombreTipo = String((tipoObj as Record<string, unknown>)['nombre'] ?? '').trim();
+    }
+    if (!nombreTipo) nombreTipo = `Servicio ${id}`;
+    const numeroContrato =
+      row['numeroContrato'] != null ? String(row['numeroContrato']).trim() : '';
+    out.push({
+      id: Math.floor(id),
+      etiquetaTipoServicio: nombreTipo,
+      numeroContrato: numeroContrato || undefined,
+    });
+  }
+  return out;
 }

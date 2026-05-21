@@ -790,6 +790,14 @@
   padding: 0.25rem 0.1rem 0;
 }
 
+.mono-pago-servicio-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #c8d4f0;
+  font-size: 0.88rem;
+}
+
 .mono-pago-actions {
   width: 100%;
   flex-wrap: nowrap !important;
@@ -908,29 +916,32 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 6.5rem;
+  width: max-content;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 0.28rem 0.65rem;
   border-radius: 999px;
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border: 1px solid transparent;
+  color: #ffffff;
 }
 
 .mono-pago-estatus--pagado {
-  color: #ecfdf5;
+  color: #ffffff;
   background: rgba(16, 185, 129, 0.22);
   border-color: rgba(52, 211, 153, 0.55);
 }
 
 .mono-pago-estatus--pendiente {
-  color: #fffbeb;
+  color: #ffffff;
   background: rgba(245, 158, 11, 0.2);
   border-color: rgba(251, 191, 36, 0.45);
 }
 
 .mono-pago-estatus--cancelado {
-  color: #fef2f2;
+  color: #ffffff;
   background: rgba(239, 68, 68, 0.2);
   border-color: rgba(248, 113, 113, 0.5);
 }
@@ -2715,7 +2726,7 @@ $darkText: #0f172a;
   background: rgba(2, 6, 23, 0.45);
 }
 
-.contract-docs-field span {
+.contract-docs-field > span {
   display: block;
   color: #94a3b8;
   font-size: 0.62rem;

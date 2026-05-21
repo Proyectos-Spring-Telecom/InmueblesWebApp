@@ -98,7 +98,8 @@ body {
   z-index: 1;
 }
 
-.perm-head .eyebrow {
+.perm-head .eyebrow,
+.perm-wrapper .perm-head__text .eyebrow {
   font-size: 11px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -106,6 +107,15 @@ body {
 }
 
 .perm-head h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: .2px;
+}
+
+/** Misma tipografía que el título principal del panel cuando el stack va en el body (no en `.perm-head`). */
+.perm-wrapper .perm-head__text > h2,
+.perm-wrapper .perm-head__text > h3 {
   margin: 0;
   font-size: 20px;
   font-weight: 500;

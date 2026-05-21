@@ -1,4 +1,6 @@
 /* Mismo modal que lista-clientes (arrendadores) */
+/* Por encima de modales tipo contract-docs (~10051) para poder abrir un comprobante
+   desde el detalle sin quedar detrás del modal padre. */
 .docs-backdrop {
   position: fixed;
   inset: 0;
@@ -7,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 10260;
 }
 
 .docs-modal {

@@ -4,12 +4,12 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 /**
- * POST `/pago` — multipart (comprobante a S3).
- * Nombres de partes alineados con Swagger.
+ * Pagos asociados al arrendatario (multipart con comprobante S3).
+ * Endpoints Swagger: `/pagos-arrendatarios`, `/pagos-arrendatarios/paginated`, etc.
  */
 @Injectable({ providedIn: 'root' })
-export class PagoInmuebleService {
-  private readonly url = `${environment.API_SECURITY}/pago`;
+export class PagoArrendatarioService {
+  private readonly url = `${environment.API_SECURITY}/pagos-arrendatarios`;
 
   constructor(private http: HttpClient) {}
 
@@ -28,7 +28,6 @@ export class PagoInmuebleService {
     return this.http.get(`${this.url}/${id}`);
   }
 
-  /** PATCH `/pago/{id}/estatus` — body JSON `{ estatus }`. */
   actualizarEstatus(id: number, payload: { estatus: number }): Observable<unknown> {
     return this.http.patch<unknown>(`${this.url}/${id}/estatus`, payload);
   }

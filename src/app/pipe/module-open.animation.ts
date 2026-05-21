@@ -1,5 +1,22 @@
 import { animate, state, style, transition, trigger } from '@angular/animations';
 
+/** Mostrar/ocultar formulario (alta ocultable; edición igual al estar visible). */
+export const estacionamientoFormRevealAnimation = trigger('estacionamientoFormReveal', [
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(14px)' }),
+    animate(
+      '280ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateY(0)' }),
+    ),
+  ]),
+  transition(':leave', [
+    animate(
+      '220ms cubic-bezier(0.4, 0, 1, 1)',
+      style({ opacity: 0, transform: 'translateY(10px)' }),
+    ),
+  ]),
+]);
+
 export let routeAnimation = trigger('routeAnimation', [
   transition('void => *', [
     style({

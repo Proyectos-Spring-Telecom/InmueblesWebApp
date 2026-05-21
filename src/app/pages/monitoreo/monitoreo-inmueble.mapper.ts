@@ -47,6 +47,8 @@ export interface MonitoreoServicioFila {
   fechaPago: string;
   fechaLimitePago: string;
   urlComprobante?: string;
+  /** Id de servicio del inmueble (solo si viene del API). */
+  idServicioInmueble?: number;
 }
 
 /** Estatus de local en monitoreo: 0 Baja, 1 Disponible, 2 Ocupado, 3 Apartado. */
@@ -173,13 +175,18 @@ export function buildServiciosMonitoreoInmueble(
   item: InmuebleApiItem,
 ): MonitoreoServicioFila[] {
   const servicios = Array.isArray(item.servicios) ? item.servicios : [];
-  return servicios.map((s) => ({
-    concepto: nombreServicio(s),
-    contrato: String(s.numeroContrato ?? '').trim(),
-    fechaPago: fechaGridDesdeApi(s.fechaPago),
-    fechaLimitePago: fechaGridDesdeApi(s.ultimoDiaPago),
-    urlComprobante: String(s.urlComprobante ?? '').trim() || undefined,
-  }));
+  return servicios.map((s) => {
+    const id = Number(s.id);
+    const idOk = Number.isFinite(id) && id > 0;
+    return {
+      concepto: nombreServicio(s),
+      contrato: String(s.numeroContrato ?? '').trim(),
+      fechaPago: fechaGridDesdeApi(s.fechaPago),
+      fechaLimitePago: fechaGridDesdeApi(s.ultimoDiaPago),
+      urlComprobante: String(s.urlComprobante ?? '').trim() || undefined,
+      ...(idOk ? { idServicioInmueble: Math.floor(id) } : {}),
+    };
+  });
 }
 
 export function urlsGaleriaInmueble(item: InmuebleApiItem): string[] {
