@@ -90,6 +90,7 @@ export class AgregarClienteComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.obtenerClientes();
 
     const raw =
       this.activatedRouted.snapshot.paramMap.get('idCliente') ??
@@ -379,6 +380,23 @@ export class AgregarClienteComponent implements OnInit {
         id: Number(c.id),
       }));
     });
+  }
+
+  /** Arrendadores disponibles para vincular (excluye el registro en edición). */
+  get listaClientesParaPadre(): any[] {
+    const idActual = this.idCliente;
+    if (idActual == null || !Number.isFinite(Number(idActual))) {
+      return this.listaClientes;
+    }
+    return this.listaClientes.filter((c) => Number(c?.id) !== Number(idActual));
+  }
+
+  etiquetaArrendadorOpcion(c: any): string {
+    const nombre = String(c?.nombre ?? c?.Nombre ?? '').trim();
+    const ap = String(c?.apellidoPaterno ?? c?.ApellidoPaterno ?? '').trim();
+    const am = String(c?.apellidoMaterno ?? c?.ApellidoMaterno ?? '').trim();
+    const partes = [nombre, ap, am].filter(Boolean);
+    return partes.join(' ') || `Arrendador #${c?.id ?? ''}`;
   }
 
   onFileSelected(event: any) {
@@ -875,7 +893,7 @@ export class AgregarClienteComponent implements OnInit {
       this.loading = false;
 
       const etiquetas: Record<string, string> = {
-        idPadre: 'Cliente padre',
+        idPadre: 'Arrendador vinculado',
         rfc: 'RFC',
         tipoPersona: 'Tipo de Persona',
         estatus: 'Estatus',
@@ -983,7 +1001,7 @@ export class AgregarClienteComponent implements OnInit {
       this.loading = false;
 
       const etiquetas: Record<string, string> = {
-        idPadre: 'Cliente padre',
+        idPadre: 'Arrendador vinculado',
         rfc: 'RFC',
         tipoPersona: 'Tipo de Persona',
         estatus: 'Estatus',

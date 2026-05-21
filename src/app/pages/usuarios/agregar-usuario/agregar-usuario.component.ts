@@ -182,7 +182,7 @@ export class AgregarUsuarioComponent implements OnInit {
         idRol: [null, [Validators.required]],
         emailConfirmado: [0, [Validators.required]],
         estatus: [1, [Validators.required]],
-        idCliente: [null, [Validators.required]],
+        idCliente: [null],
         permisosIds: this.fb.control<number[]>([]),
       },
       { validators: this.passwordsMatchValidator }
@@ -465,6 +465,41 @@ const permisosAsignadosIds: number[] = Array.from(
     this.usuarioForm.patchValue({ fotoPerfil: null });
   }
 
+  /** Texto del badge: formatos por defecto o nombre del archivo seleccionado / remoto. */
+  etiquetaLogoUploader(): string {
+    if (this.logoFileName) return this.logoFileName;
+    const v = this.usuarioForm.get('fotoPerfil')?.value;
+    if (typeof v === 'string' && v.trim()) {
+      return this.nombreArchivoDesdeUrlRemota(v) || v;
+    }
+    return 'PNG · JPG · WEBP · Máx. 3 MB';
+  }
+
+  urlFotoPerfilRemota(): string | null {
+    if (this.logoFileName) return null;
+    const v = this.usuarioForm.get('fotoPerfil')?.value;
+    return typeof v === 'string' && v.trim() ? v.trim() : null;
+  }
+
+  tieneArchivoLogoEnBadge(): boolean {
+    if (this.logoFileName) return true;
+    const v = this.usuarioForm.get('fotoPerfil')?.value;
+    return typeof v === 'string' && !!v.trim();
+  }
+
+  private nombreArchivoDesdeUrlRemota(urlStr: string): string {
+    try {
+      const u = new URL(urlStr);
+      const parts = u.pathname.split('/').filter(Boolean);
+      const last = parts[parts.length - 1];
+      return last ? decodeURIComponent(last) : '';
+    } catch {
+      const segmentos = String(urlStr).split('/').filter(Boolean);
+      const last = segmentos[segmentos.length - 1];
+      return last ? decodeURIComponent(last) : '';
+    }
+  }
+
   private handleLogoFile(file: File) {
     if (!this.isAllowed(file)) {
       this.usuarioForm.get('fotoPerfil')?.setErrors({ invalid: true });
@@ -475,6 +510,16 @@ const permisosAsignadosIds: number[] = Array.from(
     this.logoFile = file;
     this.loadPreview(file, (url) => (this.logoPreviewUrl = url));
     this.usuarioForm.get('fotoPerfil')?.setErrors(null);
+  }
+
+  private appendIdClienteSiAplica(formData: FormData, idCliente: unknown): void {
+    const id =
+      idCliente !== null && idCliente !== undefined && String(idCliente).trim() !== ''
+        ? Number(idCliente)
+        : NaN;
+    if (Number.isFinite(id) && id > 0) {
+      formData.append('idCliente', String(id));
+    }
   }
 
   private buildFormDataParaAgregar(): FormData {
@@ -493,7 +538,7 @@ const permisosAsignadosIds: number[] = Array.from(
     formData.append('telefono', v.telefono || '');
     formData.append('estatus', String(v.estatus ?? 1));
     formData.append('idRol', String(v.idRol));
-    formData.append('idCliente', String(v.idCliente));
+    this.appendIdClienteSiAplica(formData, v.idCliente);
 
     this.permisosSeleccionadosIds.forEach((id) =>
       formData.append('permisosIds', id.toString())
@@ -522,7 +567,7 @@ const permisosAsignadosIds: number[] = Array.from(
     formData.append('telefono', v.telefono || '');
     formData.append('estatus', String(v.estatus ?? 1));
     formData.append('idRol', String(v.idRol));
-    formData.append('idCliente', String(v.idCliente));
+    this.appendIdClienteSiAplica(formData, v.idCliente);
 
     this.permisosSeleccionadosIds.forEach((id) =>
       formData.append('permisosIds', id.toString())

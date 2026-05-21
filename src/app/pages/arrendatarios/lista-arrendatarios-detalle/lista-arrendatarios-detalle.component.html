@@ -207,7 +207,7 @@
             </div>
           </li>
           <li *ngIf="textoSocioDoc(so['identificacionOficial'])">
-            <span class="arr-socio-doc__label"><i class="fa fa-id-card-o"></i> Identificación oficial</span>
+            <span class="arr-socio-doc__label"><i class="fa fa-credit-card"></i> Identificación oficial</span>
             <div class="arr-socio-doc__actions">
               <button
                 type="button"
@@ -296,11 +296,11 @@
                 >
                 <span *ngIf="inm['telefonoRepresentante']">{{ inm['telefonoRepresentante'] }}</span>
               </span>
-              <span class="arr-contrato-inm__cell arr-contrato-inm__badge-wrap">
+              <!-- <span class="arr-contrato-inm__cell arr-contrato-inm__badge-wrap">
                 <span class="arr-chip arr-chip--outline arr-chip--small arr-contrato-inm__badge">
                   {{ etiquetaEstatusInmuebleEmpresa(inm['estatusInmueble']) }}
                 </span>
-              </span>
+              </span> -->
             </div>
           </div>
         </section>

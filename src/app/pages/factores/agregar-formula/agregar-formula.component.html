@@ -46,10 +46,7 @@
                 <select
                   class="form-select"
                   id="facSelFactorFormula"
-                  name="facSelFactorFormula"
-                  [(ngModel)]="factorSeleccionadoParaFormula"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="onFactorSelectParaFormula($event)"
+                  formControlName="formula"
                   [disabled]="cargandoVariablesFactores || !factoresParaSelectFormula.length"
                 >
                   <option value="">Seleccione factor…</option>
@@ -57,7 +54,7 @@
                     {{ f.etiqueta }}
                   </option>
                 </select>
-                <label for="facSelFactorFormula">Insertar variable en la fórmula</label>
+                <label for="facSelFactorFormula">Variable de la fórmula</label>
               </div>
             </div>
             <p class="small opacity-75 mt-2 mb-0" *ngIf="cargandoVariablesFactores">Cargando factores…</p>

@@ -39,6 +39,7 @@ import {
 } from 'src/app/pages/arrendatarios/arrendatarios-list.mapper';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { LoginSuccessSoundService } from 'src/app/services/login-success-sound.service';
 
 /** Rutas mostradas en Panel de accesos para ítems que en sidebar usan `/menu-level`. */
 const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
@@ -223,6 +224,7 @@ export class HeaderComponent implements OnInit {
     private router: Router,
     private notificacionesService: NotificacionesService,
     private arrendatariosService: ArrendatariosService,
+    public loginSuccessSound: LoginSuccessSoundService,
   ) {
     const user = this.users.getUser();
     this.showNombre = user?.nombre;
@@ -232,6 +234,9 @@ export class HeaderComponent implements OnInit {
     this.showEmail = user?.userName;
     translate.setDefaultLang('en');
   }
+
+  /** Alias para plantilla: resaltado post-login. */
+  readonly notifLoginSpotlight = this.loginSuccessSound.highlightNotificaciones;
 
   ngOnInit(): void {
     this.notificacionesService.obtenerNotificaciones().subscribe({

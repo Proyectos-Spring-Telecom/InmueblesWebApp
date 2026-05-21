@@ -782,13 +782,6 @@
                         formControlName="idServicioInmueble"
                         (change)="onPagoServicioInmuebleChange()"
                       >
-                        <option [ngValue]="null">
-                          {{
-                            serviciosInmueblePago.length
-                              ? 'Seleccione servicio (opcional)'
-                              : 'Sin servicios en el inmueble'
-                          }}
-                        </option>
                         <option *ngFor="let srv of serviciosInmueblePago" [ngValue]="srv.id">
                           {{ srv.nombre }}
                         </option>
