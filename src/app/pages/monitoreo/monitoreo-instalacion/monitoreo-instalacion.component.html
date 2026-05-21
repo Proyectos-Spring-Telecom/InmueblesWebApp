@@ -287,7 +287,7 @@
                 caption="Acciones"
                 cellTemplate="monoPagoAcciones"
                 alignment="center"
-                [width]="110"
+                [width]="168"
               ></dxi-column>
               <dxi-column dataField="concepto" caption="Concepto" alignment="center"></dxi-column>
               <dxi-column dataField="fechaPago" caption="Fecha de pago" dataType="date" alignment="center"></dxi-column>
@@ -309,7 +309,7 @@
               <div *dxTemplate="let cell of 'monoPagoEstatusTpl'" class="d-flex justify-content-center">
                 <span [ngClass]="clasesEstatusPago(cell.value)">{{ cell.value }}</span>
               </div>
-              <div *dxTemplate="let row of 'monoPagoAcciones'" class="d-flex justify-content-center">
+              <div *dxTemplate="let row of 'monoPagoAcciones'" class="d-flex justify-content-center align-items-center gap-1 flex-wrap">
                 <button
                   type="button"
                   class="mono-grid-row-action-btn mono-grid-row-action-btn--icon"
@@ -317,6 +317,15 @@
                   aria-label="Ver detalle del pago"
                 >
                   <mat-icon aria-hidden="true">visibility</mat-icon>
+                </button>
+                <button
+                  type="button"
+                  class="mono-grid-row-action-btn mono-grid-row-action-btn--icon"
+                  (click)="solicitarCambioEstatusPago(row.data)"
+                  aria-label="Cambiar estatus del pago"
+                  title="Cambiar estatus"
+                >
+                  <mat-icon aria-hidden="true">sync_alt</mat-icon>
                 </button>
               </div>
             </dx-data-grid>
@@ -682,13 +691,15 @@
                       <span class="contract-docs-card__kicker">Pago #{{ pv.id }}</span>
                       <h4 class="contract-docs-card__hero-title">{{ pv.concepto }}</h4>
                     </div>
-                    <span class="contract-docs-card__chip" [ngClass]="clasesEstatusPago(pv.estatus)">
-                      {{ pv.estatus }}
-                    </span>
-                  </div>
-                  <div class="contract-docs-card__hero-meta">
-                    <span><strong>Monto:</strong> {{ pv.monto }}</span>
-                    <span><strong>Método:</strong> {{ pv.metodo }}</span>
+                    <button
+                      *ngIf="pv.tieneComprobante"
+                      type="button"
+                      class="mono-grid-action-btn d-inline-flex align-items-center gap-1"
+                      (click)="verComprobantePagoDetalleModal()"
+                    >
+                      <mat-icon aria-hidden="true">visibility</mat-icon>
+                      <span>Comprobante de pago</span>
+                    </button>
                   </div>
                 </article>
 
@@ -697,7 +708,6 @@
                   <div class="contract-docs-grid">
                     <div class="contract-docs-field"><span>Servicio</span><p>{{ pv.servicio }}</p></div>
                     <div class="contract-docs-field"><span>Fecha de pago</span><p>{{ pv.fechaPago }}</p></div>
-                    <div class="contract-docs-field"><span>Concepto</span><p>{{ pv.concepto }}</p></div>
                     <div class="contract-docs-field"><span>Monto</span><p class="is-money">{{ pv.monto }}</p></div>
                     <div class="contract-docs-field"><span>Método de pago</span><p>{{ pv.metodo }}</p></div>
                     <div class="contract-docs-field">
@@ -708,19 +718,6 @@
                         </span>
                       </p>
                     </div>
-                    <div class="contract-docs-field">
-                      <span>Comprobante</span>
-                      <p *ngIf="!pv.tieneComprobante">Sin archivo</p>
-                      <button
-                        *ngIf="pv.tieneComprobante"
-                        type="button"
-                        class="docs-modal__btn docs-modal__btn--ghost d-inline-flex align-items-center gap-1"
-                        (click)="verComprobantePagoDetalleModal()"
-                      >
-                        <mat-icon aria-hidden="true">visibility</mat-icon>
-                        <span>Ver comprobante</span>
-                      </button>
-                    </div>
                   </div>
                 </article>
               </section>
@@ -729,16 +726,7 @@
         </div>
 
         <div class="row docs-modal__footer">
-          <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <button
-              type="button"
-              class="docs-modal__btn docs-modal__btn--ghost"
-              *ngIf="pagoDetalleModal?.tieneComprobante"
-              (click)="verComprobantePagoDetalleModal()"
-            >
-              Ver comprobante
-            </button>
-            <span *ngIf="!pagoDetalleModal?.tieneComprobante"></span>
+          <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
             <button type="button" class="docs-modal__btn" (click)="cerrarModalPagoDetalle()">
               Cerrar
             </button>
@@ -781,7 +769,7 @@
             <div class="perm-form-nc">
             <form [formGroup]="pagoForm" class="perm-form-body mono-pago-form">
               <div class="row g-3 align-items-end">
-                <div class="col-12 col-lg-4">
+                <div class="col-12 col-lg-4" *ngIf="vistaEntidad !== 'local'">
                   <label for="pagoServicioInmueble" class="form-label perm-label">Servicio</label>
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold">
@@ -806,6 +794,44 @@
                         </option>
                       </select>
                       <label for="pagoServicioInmueble">Servicio del inmueble</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4" *ngIf="vistaEntidad === 'local'">
+                  <label for="pagoServicioArrendatario" class="form-label perm-label"
+                    >Tipo de servicio <span class="text-danger">*</span></label
+                  >
+                  <div *ngIf="serviciosArrendatarioModalPagoCargando" class="mono-pago-servicio-loading mb-0">
+                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                    <span>Cargando servicios del arrendatario…</span>
+                  </div>
+                  <div
+                    class="input-group input-group-lg perm-ig"
+                    *ngIf="!serviciosArrendatarioModalPagoCargando"
+                  >
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">design_services</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select
+                        id="pagoServicioArrendatario"
+                        class="form-select"
+                        formControlName="idServicioInmueble"
+                        (change)="onPagoServicioInmuebleChange()"
+                      >
+                        <option [ngValue]="null" disabled hidden>
+                          {{
+                            serviciosArrendatarioModalPago.length
+                              ? 'Seleccione tipo de servicio'
+                              : 'Sin servicios del arrendatario'
+                          }}
+                        </option>
+                        <option *ngFor="let srv of serviciosArrendatarioModalPago" [ngValue]="srv.id">
+                          {{ srv.etiquetaTipoServicio }}
+                        </option>
+                      </select>
+                      <label for="pagoServicioArrendatario">Tipo de servicio</label>
                     </div>
                   </div>
                 </div>

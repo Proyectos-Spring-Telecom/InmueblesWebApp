@@ -25,6 +25,7 @@ import { ContratosService } from 'src/app/services/moduleService/contratos.servi
 import { InstalacionService } from 'src/app/services/moduleService/instalaciones.service';
 import { InstalacionCentral } from 'src/app/services/moduleService/instalacionesCentral.service';
 import { PagoInmuebleService } from 'src/app/services/moduleService/pago-inmueble.service';
+import { PagoArrendatarioService } from 'src/app/services/moduleService/pago-arrendatario.service';
 import {
   CatMetodoPagoItem,
   CatMetodosPagoService,
@@ -41,7 +42,6 @@ import { InmueblesService } from 'src/app/services/moduleService/inmuebles.servi
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import {
   InmuebleApiItem,
-  nombreServicio,
 } from '../../inmuebles/inmuebles-list.mapper';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import {
@@ -53,6 +53,7 @@ import {
   esRentaDesdeEstatusInmueble,
   extraerInmuebleDetalleApi,
   MonitoreoExpedienteDoc,
+  MonitoreoServicioFila,
   MonitoreoZonaFila,
   superficieDisponiblePredioTexto,
   tituloInmuebleDesdeApi,
@@ -63,11 +64,12 @@ import {
   urlsGaleriaInmueble,
 } from '../monitoreo-inmueble.mapper';
 import {
-  extraerPagoDetalleApi,
-  mapPagosApiToGridRows,
-  mapPagoApiToVistaDetalle,
-  PagoGridRow,
   extraerFilasPagosApi,
+  extraerPagoDetalleApi,
+  mapPagoApiToVistaDetalle,
+  mapPagosApiToGridRows,
+  OPCIONES_ESTATUS_PAGO_API,
+  PagoGridRow,
   VistaPagoDetalleModal,
 } from '../monitoreo-pagos.mapper';
 import {
@@ -79,12 +81,14 @@ import {
   nombreArrendadorDesdeArrendatarioApi,
   nombreInmuebleDesdeArrendatarioApi,
   seleccionarContratoArrendatario,
-  serviciosArrendatarioPagoOpciones,
-  tituloLocalDesdeArrendatario,
-  urlContratoRentaArrendatario,
   archivoContratoRentaArrendatario,
   documentacionLocalEsPdf,
+  extraerServiciosArrendatarioListaPago,
+  serviciosArrendatarioPagoOpciones,
+  ServicioArrendatarioListaPago,
+  tituloLocalDesdeArrendatario,
   urlsGaleriaArrendatario,
+  urlContratoRentaArrendatario,
 } from '../monitoreo-arrendatario-detalle.mapper';
 
 const IVA_CONTRATO = 0.16;
@@ -117,14 +121,6 @@ interface VistaContratoLocalModal {
   observaciones: string;
   documentoUrl: string | null;
   esDemo: boolean;
-}
-
-interface ServicioDetalle {
-  concepto: string;
-  contrato: string;
-  fechaPago: string;
-  fechaLimitePago: string;
-  urlComprobante?: string;
 }
 
 type FrecuenciaPago = 'mensual' | 'bimestral-impar' | 'bimestral-par' | 'anual-marzo';
@@ -250,6 +246,9 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   metodosPagoCargando = false;
   /** Servicios del inmueble cargado (`id` = `idServicioInmueble` en POST /pago). */
   serviciosInmueblePago: ServicioInmueblePagoOpcion[] = [];
+  /** Servicios desde GET `/arrendatarios/servicios/{id}` para el modal de pago en vista local. */
+  serviciosArrendatarioModalPago: ServicioArrendatarioListaPago[] = [];
+  serviciosArrendatarioModalPagoCargando = false;
   /** Valor real del monto: solo dígitos y punto (ej. `5325.50`). El input solo muestra formato. */
   private pagoMontoRaw = '';
   /** Deshabilita el botón Agregar mientras corre POST /pago. */
@@ -402,6 +401,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private sanitizer: DomSanitizer,
     private pagoInmuebleService: PagoInmuebleService,
+    private pagoArrendatarioService: PagoArrendatarioService,
     private catMetodosPagoService: CatMetodosPagoService,
     private inmueblesService: InmueblesService,
     private arrendatariosService: ArrendatariosService,
@@ -802,34 +802,64 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       );
       return;
     }
-    const servicios =
-      this.inmuebleApi && Array.isArray(this.inmuebleApi.servicios)
-        ? this.inmuebleApi.servicios
-        : [];
-    this.serviciosInmueblePago = servicios
-      .map((s) => {
-        const id = Number(s.id);
-        if (!Number.isFinite(id) || id <= 0) return null;
-        const nombre = nombreServicio(s);
+    if (this.vistaEntidad !== 'local') {
+      this.serviciosInmueblePago = this.serviciosDataSource.map((row, i) => {
+        const idApi = Number(row.idServicioInmueble);
+        const hasApiId = Number.isFinite(idApi) && idApi > 0;
         return {
-          id: Math.floor(id),
-          nombre: nombre || `Servicio ${id}`,
-        } as ServicioInmueblePagoOpcion;
-      })
-      .filter((x): x is ServicioInmueblePagoOpcion => x != null);
+          id: hasApiId ? Math.floor(idApi) : -(i + 1),
+          nombre: String(row.concepto ?? '').trim() || 'Servicio',
+        };
+      });
+      return;
+    }
+    this.serviciosInmueblePago = [];
   }
 
   /**
    * Referencia estable para `dx-data-grid` (un getter que devuelve un array nuevo
    * en cada CD rompe el render de DevExtreme).
    */
-  serviciosDataSource: ServicioDetalle[] = [];
+  serviciosDataSource: MonitoreoServicioFila[] = [];
 
   private refrescarServiciosDataSource(): void {
     this.serviciosDataSource = this.buildServiciosLista();
   }
 
   private cargarPagosGrid(): void {
+    if (this.vistaEntidad === 'local') {
+      if (this.idArrendatarioContext == null) {
+        this.pagosData = [];
+        this.refrescarMesesFiltroPagosOpciones();
+        return;
+      }
+      this.pagoArrendatarioService
+        .obtenerPagosPaginados(1, 200)
+        .pipe(
+          take(1),
+          finalize(() => this.cdr.markForCheck()),
+        )
+        .subscribe({
+          next: (res) => {
+            const filas = extraerFilasPagosApi(res);
+            this.pagosData = mapPagosApiToGridRows(
+              filas,
+              {
+                modo: 'arrendatario',
+                idArrendatario: this.idArrendatarioContext,
+              },
+              (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
+            );
+            this.refrescarMesesFiltroPagosOpciones();
+          },
+          error: () => {
+            this.pagosData = [];
+            this.refrescarMesesFiltroPagosOpciones();
+          },
+        });
+      return;
+    }
+
     if (this.idInmuebleContext == null) {
       this.pagosData = [];
       this.refrescarMesesFiltroPagosOpciones();
@@ -847,8 +877,11 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
           const filas = extraerFilasPagosApi(res);
           this.pagosData = mapPagosApiToGridRows(
             filas,
-            this.idInmuebleContext,
-            (id) => this.etiquetaCatMetodoPagoPorId(id),
+            {
+              modo: 'inmueble',
+              idInmueble: this.idInmuebleContext,
+            },
+            (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
           );
           this.refrescarMesesFiltroPagosOpciones();
         },
@@ -859,7 +892,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       });
   }
 
-  private buildServiciosLista(): ServicioDetalle[] {
+  private buildServiciosLista(): MonitoreoServicioFila[] {
     if (this.vistaEntidad === 'local') {
       if (this.arrendatarioApi) {
         return buildServiciosMonitoreoArrendatario(this.arrendatarioApi);
@@ -970,8 +1003,12 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.pagoDetalleModalLoading = true;
     this.cdr.markForCheck();
 
-    this.pagoInmuebleService
-      .obtenerPagoPorId(Math.floor(id))
+    const req$ =
+      this.vistaEntidad === 'local'
+        ? this.pagoArrendatarioService.obtenerPagoPorId(Math.floor(id))
+        : this.pagoInmuebleService.obtenerPagoPorId(Math.floor(id));
+
+    req$
       .pipe(
         take(1),
         finalize(() => {
@@ -1017,7 +1054,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.docPreview?.abrir(previewUrl, titulo, this.detalleTitulo);
   }
 
-  verComprobanteImagenServicio(row: ServicioDetalle): void {
+  verComprobanteImagenServicio(row: MonitoreoServicioFila): void {
     const url = String(row?.urlComprobante ?? '').trim();
     if (!url) return;
     const previewUrl =
@@ -1759,6 +1796,11 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   etiquetaServicioInmueblePorId(id: number | null | undefined): string {
     if (id == null || !Number.isFinite(Number(id))) return '';
     const numId = Number(id);
+    const desdeModal = this.serviciosArrendatarioModalPago.find(
+      (s) => s.id === numId,
+    );
+    const etiquetaTipo = String(desdeModal?.etiquetaTipoServicio ?? '').trim();
+    if (etiquetaTipo) return etiquetaTipo;
     const hit = this.serviciosInmueblePago.find((s) => s.id === numId);
     if (hit?.nombre) return hit.nombre;
     if (this.arrendatarioApi) {
@@ -1772,9 +1814,11 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   }
 
   onPagoServicioInmuebleChange(): void {
-    const id = Number(this.pagoForm?.get('idServicioInmueble')?.value);
-    if (!Number.isFinite(id) || id <= 0) return;
-    const etiqueta = this.etiquetaServicioInmueblePorId(id);
+    const raw = this.pagoForm?.get('idServicioInmueble')?.value;
+    if (raw === null || raw === undefined || raw === '') return;
+    const numId = Number(raw);
+    if (!Number.isFinite(numId) || numId === 0) return;
+    const etiqueta = this.etiquetaServicioInmueblePorId(numId);
     if (!etiqueta) return;
     const conceptoActual = String(this.pagoForm?.get('concepto')?.value ?? '').trim();
     if (conceptoActual) return;
@@ -1837,18 +1881,36 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   }
 
   abrirModalPago(): void {
-    if (this.idInmuebleContext == null) {
-      void Swal.fire({
-        background: '#141a21',
-        color: '#ffffff',
-        icon: 'info',
-        title: 'Sin inmueble en contexto',
-        text: 'Abre el detalle desde monitoreo para registrar un pago.',
-        confirmButtonText: 'Entendido',
-      });
-      return;
+    if (this.vistaEntidad === 'local') {
+      if (this.idArrendatarioContext == null) {
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'info',
+          title: 'Sin arrendatario en contexto',
+          html:
+            'No hay <code>idArrendatario</code> en la URL de esta pantalla, así que no se puede registrar el pago del local.',
+          confirmButtonText: 'Entendido',
+        });
+        return;
+      }
+      this.cargarServiciosParaModalPagoLocal();
+    } else {
+      if (this.idInmuebleContext == null) {
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'info',
+          title: 'Sin inmueble en contexto',
+          text: 'Abre el detalle desde monitoreo para registrar un pago.',
+          confirmButtonText: 'Entendido',
+        });
+        return;
+      }
+      this.refrescarServiciosDataSource();
+      this.sincronizarServiciosPagoDesdeInmueble();
     }
-    this.sincronizarServiciosPagoDesdeInmueble();
+
     this.mostrarModalPago = true;
     this.cargarCatalogoMetodosPago();
     this.pagoMontoRaw = '';
@@ -1871,9 +1933,180 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** GET `/arrendatarios/servicios/{id}` — opciones de servicio solo con el nombre del tipo (Renta, Mantenimiento, …). */
+  private cargarServiciosParaModalPagoLocal(): void {
+    const id = this.idArrendatarioContext;
+    if (id == null) return;
+    this.serviciosArrendatarioModalPago = [];
+    this.serviciosArrendatarioModalPagoCargando = true;
+    this.arrendatariosService
+      .obtenerServiciosArrendatario(id)
+      .pipe(
+        take(1),
+        catchError((err) => {
+          console.error('Error al cargar servicios del arrendatario:', err);
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'error',
+            title: 'No se pudieron cargar los servicios',
+            text: 'No se obtuvo la lista de servicios del arrendatario. Intenta de nuevo.',
+            confirmButtonText: 'Entendido',
+          });
+          return of(null);
+        }),
+        finalize(() => {
+          this.serviciosArrendatarioModalPagoCargando = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe((resp) => {
+        const lista = extraerServiciosArrendatarioListaPago(resp);
+        this.serviciosArrendatarioModalPago = lista;
+        this.serviciosInmueblePago = lista.map((s) => ({
+          id: s.id,
+          nombre: s.etiquetaTipoServicio,
+        }));
+      });
+  }
+
   cerrarModalPago(): void {
     this.mostrarModalPago = false;
     this.cdr.markForCheck();
+  }
+
+  private estatusPagoNumericoApiDesdeEtiqueta(
+    etiqueta: PagoGridRow['estatus'],
+  ): number {
+    if (etiqueta === 'Pagado') return 1;
+    if (etiqueta === 'Cancelado') return 0;
+    return 2;
+  }
+
+  private escapeHtmlSwal(texto: string): string {
+    return texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  private htmlModalEstatusPago(estatusSeleccionado: number, concepto: string): string {
+    const conceptoEsc = this.escapeHtmlSwal(concepto);
+    const opciones = OPCIONES_ESTATUS_PAGO_API.map((op) => {
+      const activa =
+        op.value === estatusSeleccionado ? ' swal-estatus-local__opt--active' : '';
+      const etiqueta = this.escapeHtmlSwal(op.label);
+      return `<button type="button" class="swal-estatus-local__opt${activa}" data-value="${op.value}" aria-pressed="${op.value === estatusSeleccionado}">${etiqueta}</button>`;
+    }).join('');
+
+    return `
+      <div class="swal-estatus-local__wrap">
+        <div class="swal-estatus-local__icon" aria-hidden="true">
+          <i class="fa fa-exchange"></i>
+        </div>
+        <p class="swal-estatus-local__local">Pago: <strong>${conceptoEsc}</strong></p>
+        <p class="swal-estatus-local__hint">Elige el estado actual del pago</p>
+        <div class="swal-estatus-local__options" role="listbox" aria-label="Estatus del pago">
+          ${opciones}
+        </div>
+      </div>`;
+  }
+
+  private inicializarSelectorEstatusPagoSwal(): void {
+    const popup = Swal.getPopup();
+    const botones = popup?.querySelectorAll<HTMLButtonElement>(
+      '.swal-estatus-local__opt',
+    );
+    if (!botones?.length) return;
+
+    botones.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        botones.forEach((b) => {
+          b.classList.remove('swal-estatus-local__opt--active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('swal-estatus-local__opt--active');
+        btn.setAttribute('aria-pressed', 'true');
+      });
+    });
+  }
+
+  /**
+   * Cambio de estatus del pago: local → `PATCH /pagos-arrendatarios/{id}/estatus`,
+   * inmueble → `PATCH /pago/{id}/estatus`.
+   */
+  async solicitarCambioEstatusPago(row: PagoGridRow): Promise<void> {
+    const id = Number(row?.id);
+    if (!Number.isFinite(id) || id <= 0) return;
+
+    const estatusInicial = this.estatusPagoNumericoApiDesdeEtiqueta(row.estatus);
+    const conceptoLabel = String(row.concepto ?? 'Pago').trim() || 'Pago';
+
+    const result = await Swal.fire({
+      title: '¡Actualizar estatus del pago!',
+      html: this.htmlModalEstatusPago(estatusInicial, conceptoLabel),
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      focusConfirm: false,
+      customClass: { popup: 'swal-estatus-local' },
+      background: '#141a21',
+      color: '#ffffff',
+      didOpen: () => this.inicializarSelectorEstatusPagoSwal(),
+      preConfirm: () => {
+        const activo = Swal.getPopup()?.querySelector(
+          '.swal-estatus-local__opt--active',
+        );
+        const val = activo?.getAttribute('data-value');
+        if (val == null || val === '') {
+          Swal.showValidationMessage('Selecciona un estatus para el pago.');
+          return false;
+        }
+        return Number(val);
+      },
+    });
+
+    const nuevoRaw = result.value;
+    if (!result.isConfirmed || nuevoRaw === false || nuevoRaw === undefined) {
+      return;
+    }
+    const nuevoEstatus =
+      typeof nuevoRaw === 'number' ? nuevoRaw : Number(String(nuevoRaw));
+    if (!Number.isFinite(nuevoEstatus)) return;
+    if (nuevoEstatus === estatusInicial) return;
+
+    const idPago = Math.floor(id);
+    const payload = { estatus: nuevoEstatus };
+    const req$ =
+      this.vistaEntidad === 'local'
+        ? this.pagoArrendatarioService.actualizarEstatus(idPago, payload)
+        : this.pagoInmuebleService.actualizarEstatus(idPago, payload);
+
+    req$.pipe(take(1)).subscribe({
+      next: () => {
+        this.cargarPagosGrid();
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'success',
+          title: '¡Operación Exitosa!',
+          text: 'El estatus del pago se guardó correctamente.',
+          confirmButtonText: 'Listo',
+        });
+      },
+      error: (err: unknown) => {
+        console.error(err);
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'error',
+          title: 'No se pudo actualizar',
+          text: this.mensajeErrorHttp(err),
+          confirmButtonText: 'Entendido',
+        });
+      },
+    });
   }
 
   onPagoComprobanteFileSelected(event: Event): void {
@@ -1899,21 +2132,6 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       });
       return;
     }
-
-    if (this.idInmuebleContext == null) {
-      void Swal.fire({
-        background: '#141a21',
-        color: '#ffffff',
-        icon: 'info',
-        title: 'Falta la entidad en contexto',
-        html:
-          'No hay <code>idInmueble</code> en la URL de esta pantalla (vista de inmueble o local), así que no se puede registrar el pago. ' +
-          'Abre el detalle desde el mapa de monitoreo o agrega <code>?idInmueble=…</code> a la URL.',
-        confirmButtonText: 'Entendido',
-      });
-      return;
-    }
-    const idInmueble = this.idInmuebleContext;
 
     const v = this.pagoForm.value as {
       idServicioInmueble: number | null;
@@ -1951,6 +2169,90 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       });
       return;
     }
+
+    if (this.vistaEntidad === 'local') {
+      if (this.idArrendatarioContext == null) {
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'info',
+          title: 'Falta el arrendatario',
+          text: 'No hay arrendatario en contexto para registrar el pago.',
+          confirmButtonText: 'Entendido',
+        });
+        return;
+      }
+      const idSrvArr = Number(v.idServicioInmueble);
+      if (!Number.isFinite(idSrvArr) || idSrvArr <= 0) {
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'warning',
+          title: 'Selecciona un servicio',
+          text: 'Elige el servicio pagado (Renta, Mantenimiento, …).',
+          confirmButtonText: 'Entendido',
+        });
+        return;
+      }
+      const fd = this.construirFormDataPagoArrendatario(
+        this.idArrendatarioContext,
+        idSrvArr,
+        v,
+        montoN,
+        archivo,
+      );
+      this.pagoGuardando = true;
+      this.cdr.markForCheck();
+      this.pagoArrendatarioService
+        .registrarPago(fd)
+        .pipe(
+          finalize(() => {
+            this.pagoGuardando = false;
+            this.cdr.markForCheck();
+          }),
+        )
+        .subscribe({
+          next: () => {
+            this.cerrarModalPago();
+            this.cargarPagosGrid();
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              icon: 'success',
+              title: 'Pago registrado',
+              text: 'El pago y el comprobante se enviaron correctamente.',
+              confirmButtonText: 'Listo',
+            });
+          },
+          error: (err: unknown) => {
+            const msg = this.mensajeErrorHttp(err);
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              icon: 'error',
+              title: 'No se pudo registrar el pago',
+              text: msg,
+              confirmButtonText: 'Entendido',
+            });
+          },
+        });
+      return;
+    }
+
+    if (this.idInmuebleContext == null) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'info',
+        title: 'Falta la entidad en contexto',
+        html:
+          'No hay <code>idInmueble</code> en la URL de esta pantalla (vista de inmueble), así que no se puede registrar el pago. ' +
+          'Abre el detalle desde el mapa de monitoreo o agrega <code>?idInmueble=…</code> a la URL.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    const idInmueble = this.idInmuebleContext;
 
     const fd = this.construirFormDataPago(idInmueble, v, montoN, archivo);
 
@@ -1990,6 +2292,51 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
           });
         },
       });
+  }
+
+  private construirFormDataPagoArrendatario(
+    idArrendatario: number,
+    idServicioArrendatario: number,
+    v: {
+      concepto: string;
+      fechaPago: string;
+      monto: string;
+      idMetodoPago: number | null;
+      estatus: PagoEstatus;
+    },
+    montoN: number,
+    comprobante: File,
+  ): FormData {
+    const fd = new FormData();
+    const fecha = String(v.fechaPago ?? '').trim();
+    const fechaPagoApi =
+      fecha.length === 10 ? `${fecha}T12:00:00.000Z` : fecha;
+
+    fd.append('idArrendatario', String(Math.floor(idArrendatario)));
+    fd.append(
+      'idServicioArrendatario',
+      String(Math.floor(idServicioArrendatario)),
+    );
+
+    const concepto = String(v.concepto ?? '').trim();
+    if (concepto) {
+      fd.append('concepto', concepto);
+    }
+
+    fd.append('fechaPago', fechaPagoApi);
+    fd.append('monto', String(montoN));
+
+    const idMetodo = Number(v.idMetodoPago);
+    if (Number.isFinite(idMetodo) && idMetodo > 0) {
+      fd.append('idMetodoPago', String(Math.floor(idMetodo)));
+    }
+
+    if (v.estatus != null) {
+      fd.append('estatus', String(estatusPagoToApi(v.estatus)));
+    }
+
+    fd.append('ComprobantePagoArchivo', comprobante, comprobante.name);
+    return fd;
   }
 
   private construirFormDataPago(

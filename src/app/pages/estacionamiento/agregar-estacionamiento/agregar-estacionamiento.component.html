@@ -4,8 +4,13 @@
       <mat-icon>local_parking</mat-icon>
     </div>
     <div class="perm-head__text">
-      <span class="eyebrow">Sección</span>
-      <h2>{{ title }}</h2>
+      <span class="eyebrow">{{ title }}</span>
+      <h2>
+        Estacionamiento de Inmueble:
+        @if (nombreInmuebleParaTitulo) {
+          <span> {{ nombreInmuebleParaTitulo }}</span>
+        }
+      </h2>
     </div>
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Operación</span>
@@ -16,174 +21,465 @@
 
   <div class="surface">
     <section class="perm-form-nc container-fluid py-4">
-      <form [formGroup]="estacionamientoForm" class="perm-form-body">
-        <div class="row g-4">
-          <div class="col-12 col-md-4">
-            <label for="estNombrePensionado" class="form-label perm-label">Nombre del pensionado</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">badge</mat-icon>
-              </span>
-              <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  formControlName="nombrePensionado"
-                  class="form-control"
-                  id="estNombrePensionado"
-                  placeholder="Ej.: Juan Pérez"
-                  required
-                />
-                <label for="estNombrePensionado">Ej.: Juan Pérez</label>
+      @if (sinIdInmuebleEnAlta && !esModoEdicion) {
+        <div class="alert alert-warning mb-4" role="status">
+          <p class="mb-1">
+            No hay predio seleccionado: esta pantalla debe abrirse con el parámetro
+            <code>inmuebleId</code> en la URL (por ejemplo desde Monitoreo).
+          </p>
+          <p class="mb-0 small text-body-secondary">
+            Si entró desde el listado de estacionamiento, elija antes un predio desde monitoreo o use una ruta con
+            query <code>?inmuebleId=&lt;número&gt;</code>.
+          </p>
+        </div>
+      }
+
+      @if (esModoEdicion && loading) {
+        <p class="text-body-secondary mb-3">Cargando datos del estacionamiento…</p>
+      }
+
+      @if (
+        cargandoArrendatarios &&
+        opcionesArrendatario.length === 0 &&
+        mostrarFormulario
+      ) {
+        <p class="text-body-secondary mb-3">Cargando arrendatarios del predio…</p>
+      }
+
+      @if (
+        cargandoGrid &&
+        idInmuebleNumerico != null &&
+        filasEstacionamientosGrid.length === 0
+      ) {
+        <p class="text-body-secondary mb-3">Cargando listado de estacionamientos…</p>
+      }
+
+      @if (!sinIdInmuebleEnAlta || esModoEdicion) {
+        <dx-accordion
+          class="est-accordion-estacionamiento"
+          width="100%"
+          [collapsible]="true"
+          [multiple]="false"
+          [selectedIndex]="0"
+        >
+          <dxi-item title="Estacionamiento">
+            <div class="est-accordion-item-body est-accordion-inner pt-3 pb-2">
+              <div class="est-vista-previa-grid pb-3">
+                <div class="est-grid-head mb-2">
+                  <div class="est-grid-toolbar">
+                    <button
+                      type="button"
+                      (click)="limpiarCamposGrid()"
+                      mat-flat-button
+                      class="est-toolbar-btn-entradas est-grid-toolbar__btn"
+                    >
+                      <i class="fa fa-retweet"></i> Entradas y Salidas
+                    </button>
+                    @if (puedeMostrarBotonAgregar()) {
+                      <button
+                        type="button"
+                        (click)="abrirFormularioAlta()"
+                        mat-flat-button
+                        class="bg-secondary est-grid-toolbar__btn"
+                      >
+                        <i class="fa fa-plus"></i> Agregar
+                      </button>
+                    }
+                    @if (puedeMostrarBotonContinuarEditando()) {
+                      <button
+                        type="button"
+                        (click)="abrirPanelFormularioEdicion()"
+                        mat-flat-button
+                        class="bg-secondary est-grid-toolbar__btn"
+                      >
+                        <i class="fa fa-edit"></i> Mostrar formulario
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      (click)="limpiarCamposGrid()"
+                      mat-flat-button
+                      class="bg-success est-grid-toolbar__btn"
+                    >
+                      <i class="fa fa-eraser"></i> Limpiar
+                    </button>
+                    <button
+                      type="button"
+                      (click)="toggleExpandGroups()"
+                      mat-flat-button
+                      class="bg-warn est-grid-toolbar__btn"
+                    >
+                      <i
+                        [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'"
+                        aria-hidden="true"
+                      ></i>
+                      {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="irAMonitoreoListaInmuebles()"
+                      mat-flat-button
+                      class="est-toolbar-btn-regresar est-grid-toolbar__btn"
+                    >
+                      <i class="fa fa-arrow-left"></i> Regresar
+                    </button>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <dx-data-grid
+                    #gridEstacionamiento
+                    id="gridEstacionamientoEst"
+                    class="inm-data-grid"
+                    [columnHidingEnabled]="true"
+                    [hoverStateEnabled]="false"
+                    [showBorders]="true"
+                    [showColumnLines]="false"
+                    [showRowLines]="true"
+                    [rowAlternationEnabled]="true"
+                    [noDataText]="'Sin registros para mostrar'"
+                    [dataSource]="filasEstacionamientosGrid"
+                    [keyExpr]="'id'"
+                    [width]="'100%'"
+                    [remoteOperations]="false"
+                    [paging]="{ pageSize: pageSize }"
+                    [pager]="{
+                      showPageSizeSelector: true,
+                      allowedPageSizes: [50],
+                      showInfo: true,
+                      infoText: 'Página {0} de {1}',
+                      visible: true
+                    }"
+                    (onPageIndexChanged)="onPageIndexChanged($event)"
+                    (onOptionChanged)="onGridOptionChanged($event)"
+                  >
+                    <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+                    <dxo-toolbar>
+                      <dxi-item name="groupPanel" location="before"></dxi-item>
+                      <dxi-item
+                        name="exportButton"
+                        location="after"
+                        [options]="{ text: 'Exportar Grid', icon: 'export' }"
+                        [showText]="'always'"
+                      ></dxi-item>
+                      <dxi-item name="searchPanel" location="after"></dxi-item>
+                    </dxo-toolbar>
+                    <dxo-pager
+                      [showPageSizeSelector]="true"
+                      [allowedPageSizes]="[20]"
+                      [showInfo]="true"
+                    ></dxo-pager>
+                    <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+                    <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+                    <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+                    <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+                    <dxi-column
+                      caption="Acciones"
+                      cellTemplate="estAcciones"
+                      alignment="center"
+                      *appHasPermission="['10', '12']"
+                      dataType="string"
+                      [width]="180"
+                    ></dxi-column>
+                    <dxi-column
+                      dataField="nombrePensionado"
+                      caption="Nombre del Pensionado"
+                      alignment="center"
+                      dataType="string"
+                      [allowSearch]="true"
+                    ></dxi-column>
+                    <dxi-column
+                      dataField="numeroTarjeta"
+                      caption="Número de Tarjeta"
+                      alignment="center"
+                      dataType="string"
+                      [allowSearch]="true"
+                    ></dxi-column>
+                    <dxi-column
+                      dataField="arrendatario"
+                      caption="Arrendatario"
+                      alignment="center"
+                      dataType="string"
+                      [allowSearch]="true"
+                    ></dxi-column>
+                    <dxi-column
+                      dataField="estatus"
+                      caption="Estatus"
+                      alignment="center"
+                      cellTemplate="estEstatusTpl"
+                      dataType="string"
+                    ></dxi-column>
+                    <div *dxTemplate="let f of 'estEstatusTpl'">
+                      @if (numEstatus(f.data.estatus) === 1) {
+                        <span class="estatus estatus-activo">Activo</span>
+                      } @else {
+                        <span class="estatus estatus-inactivo">Inactivo</span>
+                      }
+                    </div>
+                    <div *dxTemplate="let row of 'estAcciones'" class="d-flex gap-3 justify-content-center">
+                      <div *appHasPermission="'10'">
+                        <button
+                          type="button"
+                          valueExpr="id"
+                          id="actualizarButton"
+                          class="btnAcciones"
+                          (click)="editarEstacionamientoDesdeGrid(row.data.id)"
+                        >
+                          <i class="fa fa-edit"></i>
+                        </button>
+                      </div>
+                      <div *appHasPermission="'12'">
+                        @if (numEstatus(row.data.estatus) === 0) {
+                          <button
+                            type="button"
+                            id="pinButton"
+                            class="btnAcciones"
+                            (click)="activarEstacionamientoGrid(row.data)"
+                          >
+                            <i class="fa fa-arrow-up"></i>
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            id="deleteButton"
+                            class="btnAcciones"
+                            (click)="desactivarEstacionamientoGrid(row.data)"
+                          >
+                            <i class="fa fa-arrow-down"></i>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                    <dxo-export
+                      [enabled]="false"
+                      [allowExportSelectedData]="false"
+                      [texts]="{ exportAll: 'Exportar todos los datos a Excel' }"
+                    ></dxo-export>
+                  </dx-data-grid>
+                </div>
+              </div>
+
+              <!-- @if (!esModoEdicion && !mostrarFormulario) {
+                <p class="text-body-secondary est-placeholder-formulario mb-0">
+                  Use «Agregar» en la barra de acciones arriba para abrir el formulario.
+                </p>
+              }
+              @if (esModoEdicion && !mostrarFormulario) {
+                <p class="text-body-secondary est-placeholder-formulario mb-0">
+                  Use «Mostrar formulario» en la barra de acciones para editar este registro.
+                </p>
+              } -->
+
+              <div *ngIf="mostrarFormulario && !esModoEdicion" class="est-formulario-bloque" [@estacionamientoFormReveal]>
+                <div class="perm-head__text mb-4 est-panel-titulos">
+                  <span class="eyebrow">Sección</span>
+                  <h3 class="est-panel-main-title">Agregar Estacionamiento</h3>
+                </div>
+                <div class="est-formulario-bloque-cuerpo border-top border-secondary border-opacity-25">
+                  <form
+                    [formGroup]="estacionamientoForm"
+                    class="perm-form-body pt-4"
+                    (ngSubmit)="onFormularioEstacionamientoSubmit($event)"
+                  >
+                    <div class="row g-4">
+                      <div class="col-12 col-md-4">
+                        <label for="estNombrePensionado" class="form-label perm-label">Nombre del pensionado</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">badge</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <input
+                              type="text"
+                              formControlName="nombrePensionado"
+                              class="form-control"
+                              id="estNombrePensionado"
+                              placeholder="Ej.: Juan Pérez"
+                              required
+                            />
+                            <label for="estNombrePensionado">Ej.: Juan Pérez</label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <label for="estNumeroTarjeta" class="form-label perm-label">Número de tarjeta</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">credit_card</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <input
+                              type="text"
+                              formControlName="numeroTarjeta"
+                              class="form-control"
+                              id="estNumeroTarjeta"
+                              placeholder="Ej.: TAR-1001"
+                              required
+                            />
+                            <label for="estNumeroTarjeta">Ej.: TAR-1001</label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <label for="selArrendatarioEst" class="form-label perm-label">Arrendatario del predio</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">person</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1 perm-select-floating">
+                            <select
+                              class="form-select"
+                              id="selArrendatarioEst"
+                              formControlName="idArrendatario"
+                            >
+                              <option [ngValue]="null" selected disabled hidden></option>
+                              @for (op of opcionesArrendatario; track op.value) {
+                                <option [ngValue]="op.value">{{ op.label }}</option>
+                              }
+                            </select>
+                            <label for="selArrendatarioEst">Selecciona un arrendatario</label>
+                          </div>
+                        </div>
+                        @if (opcionesArrendatario.length === 0 && !cargandoArrendatarios) {
+                          <p class="small text-body-secondary mb-0 mt-1">
+                            No hay arrendatarios cargados para este predio.
+                          </p>
+                        }
+                        @if (cargandoArrendatarios) {
+                          <p class="small text-body-secondary mb-0 mt-1">Cargando lista…</p>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
+                      <button type="button" class="button-success" role="button" (click)="submit()" [disabled]="loading">
+                        <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
+                      </button>
+                      <button type="button" class="button-danger" (click)="cancelar()" [disabled]="loading">
+                        <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div *ngIf="mostrarFormulario && esModoEdicion" class="est-formulario-bloque" [@estacionamientoFormReveal]>
+                <div class="perm-head__text mb-4 est-panel-titulos">
+                  <span class="eyebrow">Sección</span>
+                  <h3 class="est-panel-main-title">Actualizar Estacionamiento</h3>
+                </div>
+                <div class="est-formulario-bloque-cuerpo border-top border-secondary border-opacity-25">
+                  <form
+                    [formGroup]="estacionamientoForm"
+                    class="perm-form-body pt-4"
+                    (ngSubmit)="onFormularioEstacionamientoSubmit($event)"
+                  >
+                    <div class="row g-4">
+                      <div class="col-12 col-md-4">
+                        <label for="estNombrePensionadoEdit" class="form-label perm-label">Nombre del pensionado</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">badge</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <input
+                              type="text"
+                              formControlName="nombrePensionado"
+                              class="form-control"
+                              id="estNombrePensionadoEdit"
+                              placeholder="Ej.: Juan Pérez"
+                              required
+                            />
+                            <label for="estNombrePensionadoEdit">Ej.: Juan Pérez</label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <label for="estNumeroTarjetaEdit" class="form-label perm-label">Número de tarjeta</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">credit_card</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <input
+                              type="text"
+                              formControlName="numeroTarjeta"
+                              class="form-control"
+                              id="estNumeroTarjetaEdit"
+                              placeholder="Ej.: TAR-1001"
+                              required
+                            />
+                            <label for="estNumeroTarjetaEdit">Ej.: TAR-1001</label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <label for="selArrendatarioEstEdit" class="form-label perm-label">Arrendatario del predio</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">person</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1 perm-select-floating">
+                            <select
+                              class="form-select"
+                              id="selArrendatarioEstEdit"
+                              formControlName="idArrendatario"
+                            >
+                              <option [ngValue]="null" selected disabled hidden></option>
+                              @for (op of opcionesArrendatario; track op.value) {
+                                <option [ngValue]="op.value">{{ op.label }}</option>
+                              }
+                            </select>
+                            <label for="selArrendatarioEstEdit">Selecciona un arrendatario</label>
+                          </div>
+                        </div>
+                        @if (opcionesArrendatario.length === 0 && !cargandoArrendatarios) {
+                          <p class="small text-body-secondary mb-0 mt-1">No hay arrendatarios cargados para este predio.</p>
+                        }
+                        @if (cargandoArrendatarios) {
+                          <p class="small text-body-secondary mb-0 mt-1">Cargando lista…</p>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
+                      <button type="button" class="button-success" role="button" (click)="submit()" [disabled]="loading">
+                        <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
+                      </button>
+                      <button type="button" class="button-danger" (click)="cancelar()" [disabled]="loading">
+                        <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
-          </div>
+          </dxi-item>
 
-          <div class="col-12 col-md-4">
-            <label for="estNumeroTarjeta" class="form-label perm-label">Número de tarjeta</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">credit_card</mat-icon>
-              </span>
-              <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  formControlName="numeroTarjeta"
-                  class="form-control"
-                  id="estNumeroTarjeta"
-                  placeholder="Ej.: TAR-1001"
-                  required
-                />
-                <label for="estNumeroTarjeta">Ej.: TAR-1001</label>
-              </div>
+          <dxi-item title="Entradas y Salidas">
+            <div class="est-accordion-item-body est-accordion-inner pt-2 pb-3">
+              <dx-data-grid
+                id="gridEntradasSalidasEst"
+                class="inm-data-grid"
+                [showBorders]="true"
+                [hoverStateEnabled]="false"
+                [noDataText]="'Sin registros para mostrar'"
+                [dataSource]="filasEntradasSalidasGrid"
+                [width]="'100%'"
+                [remoteOperations]="false"
+              >
+                <dxi-column dataField="boleto" caption="Boleto"></dxi-column>
+                <dxi-column dataField="fechaE" caption="FechaE" dataType="date"></dxi-column>
+                <dxi-column dataField="fechaP" caption="FechaP" dataType="date"></dxi-column>
+                <dxi-column dataField="total" caption="Total" dataType="number"></dxi-column>
+              </dx-data-grid>
             </div>
-          </div>
-
-          <div class="col-12 col-md-4">
-            <label for="estArrendatario" class="form-label perm-label">Arrendatario</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">person</mat-icon>
-              </span>
-              <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  formControlName="arrendatario"
-                  class="form-control"
-                  id="estArrendatario"
-                  placeholder="Ej.: Santory"
-                  required
-                />
-                <label for="estArrendatario">Ej.: Santander</label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" (click)="submit()">
-            <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
-          </button>
-          <button type="button" class="button-danger est-grid-toolbar__btn" (click)="cancelar()">
-            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
-          </button>
-        </div>
-      </form>
-
-      <div class="est-vista-previa-grid mt-4 pt-4 border-top border-secondary border-opacity-25">
-        <div class="est-grid-head mb-2">
-          <h6 class="form-section-head est-grid-head__title mb-0">
-            Estacionamiento de Inmueble:<span *ngIf="nombreInmuebleParaTitulo"> {{ nombreInmuebleParaTitulo }}</span>
-          </h6>
-          <div class="est-grid-toolbar">
-            <button type="button" (click)="limpiarCamposGrid()" mat-flat-button class="bg-warning est-grid-toolbar__btn">
-              <i class="fa fa-retweet"></i> Entradas y Salidas
-            </button>
-            <button type="button" (click)="limpiarCamposGrid()" mat-flat-button class="bg-success est-grid-toolbar__btn">
-              <i class="fa fa-eraser"></i> Limpiar
-            </button>
-            <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn est-grid-toolbar__btn">
-              <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
-              {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
-            </button>
-          </div>
-        </div>
-        <div class="mt-3">
-          <dx-data-grid
-            #gridEstacionamiento
-            id="gridEstacionamientoEst"
-            class="inm-data-grid"
-            [columnHidingEnabled]="true"
-            [hoverStateEnabled]="false"
-            [showBorders]="true"
-            [showColumnLines]="false"
-            [showRowLines]="true"
-            [rowAlternationEnabled]="true"
-            [noDataText]="'Sin registros para mostrar'"
-            [dataSource]="filasEstacionamientosGrid"
-            [keyExpr]="'id'"
-            [width]="'100%'"
-            [remoteOperations]="false"
-            [paging]="{ pageSize: pageSize }"
-            [pager]="{
-              showPageSizeSelector: true,
-              allowedPageSizes: [50],
-              showInfo: true,
-              infoText: 'Página {0} de {1}',
-              visible: true
-            }"
-            (onPageIndexChanged)="onPageIndexChanged($event)"
-            (onOptionChanged)="onGridOptionChanged($event)"
-          >
-            <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
-            <dxo-toolbar>
-              <dxi-item name="groupPanel" location="before"></dxi-item>
-              <dxi-item
-                name="exportButton"
-                location="after"
-                [options]="{ text: 'Exportar Grid', icon: 'export' }"
-                [showText]="'always'"
-              ></dxi-item>
-              <dxi-item name="searchPanel" location="after"></dxi-item>
-            </dxo-toolbar>
-            <dxo-pager
-              [showPageSizeSelector]="true"
-              [allowedPageSizes]="[100]"
-              [showInfo]="true"
-            ></dxo-pager>
-            <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
-            <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
-            <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
-            <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
-            <dxi-column
-              dataField="nombrePensionado"
-              caption="Nombre del pensionado"
-              alignment="center"
-              dataType="string"
-              [allowSearch]="true"
-            ></dxi-column>
-            <dxi-column
-              dataField="numeroTarjeta"
-              caption="Número de tarjeta"
-              alignment="center"
-              dataType="string"
-              [allowSearch]="true"
-            ></dxi-column>
-            <dxi-column
-              dataField="arrendatario"
-              caption="Arrendatario"
-              alignment="center"
-              dataType="string"
-              [allowSearch]="true"
-            ></dxi-column>
-            <dxo-export
-              [enabled]="false"
-              [allowExportSelectedData]="false"
-              [texts]="{ exportAll: 'Exportar todos los datos a Excel' }"
-            ></dxo-export>
-          </dx-data-grid>
-        </div>
-      </div>
+          </dxi-item>
+        </dx-accordion>
+      }
     </section>
   </div>
 </div>
-

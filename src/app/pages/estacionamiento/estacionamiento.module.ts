@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { EstacionamientoRoutingModule } from './estacionamiento-routing.module';
 import { MatIconModule } from '@angular/material/icon';
+import { DxAccordionModule } from 'devextreme-angular/ui/accordion';
 import { DxButtonModule, DxDataGridModule } from 'devextreme-angular';
 import { MaterialModule } from 'src/app/material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -17,6 +18,7 @@ import { AgregarEstacionamientoComponent } from './agregar-estacionamiento/agreg
     EstacionamientoRoutingModule,
     MatIconModule,
     DxDataGridModule,
+    DxAccordionModule,
     DxButtonModule,
     MaterialModule,
     ReactiveFormsModule,

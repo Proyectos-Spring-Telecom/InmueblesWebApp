@@ -5,6 +5,13 @@ export interface PagoApiItem {
   id?: number;
   idInmueble?: number;
   idServicioInmueble?: number;
+  /** Pagos del arrendatario (`/pagos-arrendatarios/...`). */
+  idArrendatario?: number;
+  idServicioArrendatario?: number;
+  servicioArrendatario?: {
+    numeroContrato?: string;
+    tipoServicio?: { id?: number; nombre?: string };
+  };
   concepto?: string;
   fechaPago?: string;
   fechaLimitePago?: string;
@@ -115,6 +122,8 @@ function etiquetaMetodoPago(item: PagoApiItem): string {
 function etiquetaConceptoPago(item: PagoApiItem): string {
   const c = String(item.concepto ?? '').trim();
   if (c) return c;
+  const srvArr = item.servicioArrendatario?.tipoServicio?.nombre;
+  if (String(srvArr ?? '').trim()) return String(srvArr).trim();
   const srv = item.servicioInmueble;
   const nombre =
     srv?.nombre ?? srv?.servicio ?? (item['nombreServicio'] != null ? String(item['nombreServicio']) : '');
@@ -165,12 +174,19 @@ function textoServicioPago(
   item: PagoApiItem,
   resolverServicio?: (id: number) => string,
 ): string {
+  const tipoArr = item.servicioArrendatario?.tipoServicio?.nombre;
+  if (String(tipoArr ?? '').trim()) return String(tipoArr).trim();
   const srv = item.servicioInmueble;
   const nested =
     srv?.nombre ??
     srv?.servicio ??
     (item['nombreServicio'] != null ? String(item['nombreServicio']) : '');
   if (String(nested).trim()) return String(nested).trim();
+  const idSrvArr = Number(item.idServicioArrendatario);
+  if (resolverServicio && Number.isFinite(idSrvArr) && idSrvArr > 0) {
+    const etiquetaArr = resolverServicio(idSrvArr);
+    if (etiquetaArr.trim()) return etiquetaArr;
+  }
   const id = Number(item.idServicioInmueble);
   if (resolverServicio && Number.isFinite(id) && id > 0) {
     const etiqueta = resolverServicio(id);
@@ -216,19 +232,44 @@ export function mapPagoApiToVistaDetalle(
 
 export function mapPagosApiToGridRows(
   items: PagoApiItem[],
-  idInmueble: number | null,
+  filtro:
+    | {
+        modo: 'inmueble';
+        idInmueble: number | null;
+      }
+    | {
+        modo: 'arrendatario';
+        idArrendatario: number | null;
+      },
   resolverMetodo?: (id: number) => string,
 ): PagoGridRow[] {
-  const filtrados =
-    idInmueble != null
-      ? items.filter((p) => {
-          const id = Number(p.idInmueble);
-          return !Number.isFinite(id) || id <= 0 || id === idInmueble;
-        })
-      : items;
+  let filtrados: PagoApiItem[];
+  if (filtro.modo === 'arrendatario') {
+    const idArr = filtro.idArrendatario;
+    filtrados =
+      idArr != null && Number.isFinite(idArr) && idArr > 0
+        ? items.filter((p) => Number(p.idArrendatario) === idArr)
+        : [];
+  } else {
+    const idInmueble = filtro.idInmueble;
+    filtrados =
+      idInmueble != null
+        ? items.filter((p) => {
+            const id = Number(p.idInmueble);
+            return !Number.isFinite(id) || id <= 0 || id === idInmueble;
+          })
+        : items;
+  }
 
   return filtrados
     .map((p) => mapPagoApiItemToGridRow(p, resolverMetodo))
     .filter((r): r is PagoGridRow => r != null)
     .sort((a, b) => String(b.fechaPago).localeCompare(String(a.fechaPago)));
 }
+
+/** Opciones de estatus (API): 2 Pendiente, 1 Pagado, 0 Cancelado. */
+export const OPCIONES_ESTATUS_PAGO_API = [
+  { value: 1, label: 'Pagado' },
+  { value: 2, label: 'Pendiente' },
+  { value: 0, label: 'Cancelado' },
+] as const;
