@@ -17,13 +17,17 @@
     </nav>
   </header>
 
-  <div class="surface">
-    <ng-container *ngIf="flowMode === 'inmuebles'; else clientesFlowTpl">
+  <div class="surface monitor-flow-surface">
+    <div class="monitor-flow-viewport">
+      <div *ngIf="flowMode === 'inmuebles'" class="monitor-flow-panel"
+        [class.monitor-anim-fwd]="listNavDirection === 'forward'"
+        [class.monitor-anim-back]="listNavDirection === 'back'"
+        [@monitorListPanel]="monitorListLevel">
       <div class="row g-2 g-md-3">
         <div class="col-12 col-lg-5">
           <div class="h-100 d-flex flex-column">
             <div class="card-header monitor-card-header">
-              <div class="monitor-head-wrap w-100" [@monitorModeHeader]="flowMode">
+              <div class="monitor-head-wrap w-100" [@monitorModeHeader]="monitorListLevel">
                 <div class="monitor-head-icon" aria-hidden="true">
                   <mat-icon>home_work</mat-icon>
                 </div>
@@ -46,8 +50,14 @@
                 </div>
               </div>
             </div>
-            <div class="card-body insta-body" [@monitorListSwap]="viewMode">
-              <ng-container *ngIf="zonasViewActive">
+            <div class="card-body insta-body monitor-list-body"
+              [class.monitor-list-body--detail-leave]="navigatingToDetail"
+              [@monitorListSwap]="monitorListLevel">
+              <div class="monitor-list-viewport">
+              <div *ngIf="zonasViewActive" class="monitor-list-pane monitor-list-pane--locales"
+                [class.monitor-anim-fwd]="listNavDirection === 'forward'"
+                [class.monitor-anim-back]="listNavDirection === 'back'"
+                [@monitorListInner]="'locales'">
                 <div class="text-center py-4 text-muted" *ngIf="cargandoLocalesInmueble">
                   Cargando locales…
                 </div>
@@ -69,14 +79,15 @@
                             <img *ngIf="!localMuestraIconoDisponible(loc)"
                               [src]="getImagenFachadaLocalLista(loc)"
                               [attr.alt]="'Fachada — ' + getNombreLocalEnLista(loc)" />
-                            <span class="inmueble-status" [ngClass]="getEstadoChipClassLista(loc)">
-                              {{ getOcupacionEtiquetaLista(loc) }}
-                            </span>
                           </div>
 
                           <div class="inmueble-info">
-                            <div class="inmueble-top">
+                            <div class="inmueble-top inmueble-top--local">
                               <div class="inmueble-name text-truncate">{{ getNombreLocalEnLista(loc) }}</div>
+                              <span class="inmueble-status inmueble-status--inline"
+                                [ngClass]="getEstadoChipClassLista(loc)">
+                                {{ getOcupacionEtiquetaLista(loc) }}
+                              </span>
                             </div>
                             <div class="local-zona-meta-wrap">
                               <div class="inmueble-line" *ngIf="getOcupanteLocalLista(loc) as arrendatarioNom">
@@ -147,16 +158,22 @@
                     </p>
                   </div>
                 </div>
-              </ng-container>
+              </div>
 
-              <div class="text-center py-4 text-muted" *ngIf="!zonasViewActive && cargandoInmueblesArrendador">
+              <div *ngIf="!zonasViewActive" class="monitor-list-pane monitor-list-pane--inmuebles"
+                [class.monitor-anim-fwd]="listNavDirection === 'forward'"
+                [class.monitor-anim-back]="listNavDirection === 'back'"
+                [@monitorListInner]="'inmuebles'">
+              <div class="text-center py-4 text-muted" *ngIf="cargandoInmueblesArrendador">
                 Cargando inmuebles…
               </div>
-              <ng-container *ngIf="!zonasViewActive && !cargandoInmueblesArrendador && listaVisible.length > 0; else noInstalacionesTpl">
+              <ng-container *ngIf="!cargandoInmueblesArrendador && listaVisible.length > 0; else noInstalacionesTpl">
                 <div class="insta-item" *ngFor="let item of listaVisible; let i = index" [@monitorItemIn]
                   [class.central]="viewMode === 'centrales'" [class.instalacion]="viewMode === 'instalaciones'"
                   [class.active]="viewMode === 'centrales' && item.id === selectedId"
-                  (click)="viewMode === 'instalaciones' ? irADetalleInmueble(item, $event) : selectInstalacion(item, i)">
+                  [class.inmueble-lista-row--selected]="viewMode === 'instalaciones' && isInmuebleResaltadoEnLista(item, i)"
+                  [attr.id]="viewMode === 'instalaciones' ? idAtributoFilaListaInmueble(item, i) : null"
+                  (click)="viewMode === 'instalaciones' ? onListaInmuebleRowClick(item, i) : selectInstalacion(item, i)">
                   <div class="inmueble-card-shell">
                     <div class="inmueble-content-grid">
                       <div class="inmueble-media">
@@ -223,7 +240,7 @@
                         Zonas
                       </button>
                       <button type="button" class="btn btn-sm monitor-list-btn monitor-list-btn--credito"
-                        (click)="onInfoAction({ central: selectedCentral, instalacion: item }); $event.stopPropagation()">
+                        (click)="irADetalleInmueble(item, $event)">
                         Información
                       </button>
                     </div>
@@ -232,7 +249,7 @@
               </ng-container>
               <ng-template #noInstalacionesTpl>
                 <div class="empty-inmuebles-arrendador"
-                  *ngIf="!zonasViewActive && !cargandoInmueblesArrendador && listaVisible.length === 0 && selectedCentral">
+                  *ngIf="!cargandoInmueblesArrendador && listaVisible.length === 0 && selectedCentral">
                   <div class="empty-inmuebles-arrendador__glow" aria-hidden="true"></div>
                   <div class="empty-inmuebles-arrendador__art" aria-hidden="true">
                     <span class="empty-inmuebles-arrendador__ring"></span>
@@ -247,19 +264,27 @@
                   </div>
                 </div>
               </ng-template>
+              </div>
+              </div>
             </div>
           </div>
         </div>
         <div class="col-12 col-lg-7">
-          <div class="map-wrapper" *ngIf="rightPanelMode === 'mapa'; else localesCardTpl">
+          <div class="monitor-right-viewport">
+          <div class="map-wrapper" *ngIf="rightPanelMode === 'mapa'"
+            [class.monitor-anim-fwd]="listNavDirection === 'forward'"
+            [class.monitor-anim-back]="listNavDirection === 'back'"
+            [@monitorRightPanel]="'mapa'">
             <!-- <button *ngIf="zonasViewActive && mapScopeMode === 'locales'" type="button"
               class="btn btn-sm map-back-to-diagram" (click)="volverDiagramaDesdeMapaLocal()">
               Volver al diagrama
             </button> -->
             <div id="map"></div>
           </div>
-          <ng-template #localesCardTpl>
-            <div class="locales-wrapper">
+            <div class="locales-wrapper" *ngIf="rightPanelMode === 'locales'"
+              [class.monitor-anim-fwd]="listNavDirection === 'forward'"
+              [class.monitor-anim-back]="listNavDirection === 'back'"
+              [@monitorRightPanel]="'locales'">
               <div class="locales-card">
                 <div class="locales-card__head">
                   <h5 class="m-0">Locales del Inmueble</h5>
@@ -370,13 +395,15 @@
                 </div>
               </div>
             </div>
-          </ng-template>
+          </div>
         </div>
       </div>
-    </ng-container>
+      </div>
 
-    <ng-template #clientesFlowTpl>
-      <div class="p-3">
+      <div *ngIf="flowMode === 'clientes'" class="monitor-flow-panel monitor-flow-panel--clientes p-3"
+        [class.monitor-anim-fwd]="listNavDirection === 'forward'"
+        [class.monitor-anim-back]="listNavDirection === 'back'"
+        [@monitorListPanel]="'clientes'">
         <div class="clientes-flow-head mb-2">
           <div class="clientes-search" role="search">
             <label class="clientes-search-label" for="clientesSearchInput">Buscar arrendador</label>
@@ -451,6 +478,6 @@
           </div>
         </div>
       </div>
-    </ng-template>
+    </div>
   </div>
 </div>

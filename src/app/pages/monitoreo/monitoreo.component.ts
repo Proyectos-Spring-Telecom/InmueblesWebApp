@@ -131,6 +131,40 @@ interface ZoneDragState {
   linkedLocales: Array<{ id: string; x: number; y: number }>;
 }
 
+type MonitorListLevel = 'clientes' | 'inmuebles' | 'locales';
+
+const MONITOR_SLIDE_EASE = '260ms cubic-bezier(0.22, 0.82, 0.22, 1)';
+const MONITOR_SLIDE_OUT = '200ms ease-in';
+
+const monitorPanelLeaveFwd = [
+  style({ position: 'absolute', width: '100%', top: 0, left: 0, zIndex: 0 }),
+  animate(
+    MONITOR_SLIDE_OUT,
+    style({ opacity: 0, transform: 'translateX(-28px)' }),
+  ),
+];
+const monitorPanelEnterFwd = [
+  style({ opacity: 0, transform: 'translateX(32px)' }),
+  animate(
+    MONITOR_SLIDE_EASE,
+    style({ opacity: 1, transform: 'translateX(0)' }),
+  ),
+];
+const monitorPanelLeaveBack = [
+  style({ position: 'absolute', width: '100%', top: 0, left: 0, zIndex: 0 }),
+  animate(
+    MONITOR_SLIDE_OUT,
+    style({ opacity: 0, transform: 'translateX(28px)' }),
+  ),
+];
+const monitorPanelEnterBack = [
+  style({ opacity: 0, transform: 'translateX(-32px)' }),
+  animate(
+    MONITOR_SLIDE_EASE,
+    style({ opacity: 1, transform: 'translateX(0)' }),
+  ),
+];
+
 @Component({
   selector: 'app-monitoreo',
   templateUrl: './monitoreo.component.html',
@@ -145,6 +179,52 @@ interface ZoneDragState {
           '180ms cubic-bezier(0.2, 0.8, 0.2, 1)',
           style({ opacity: 1, transform: 'translateY(0) scale(1)' })
         ),
+      ]),
+    ]),
+    trigger('monitorListPanel', [
+      transition('clientes => inmuebles', [
+        style({ position: 'relative', display: 'block', overflow: 'hidden' }),
+        query(':leave', monitorPanelLeaveFwd, { optional: true }),
+        query(':enter', monitorPanelEnterFwd, { optional: true }),
+      ]),
+      transition('clientes => locales', [
+        style({ position: 'relative', display: 'block', overflow: 'hidden' }),
+        query(':leave', monitorPanelLeaveFwd, { optional: true }),
+        query(':enter', monitorPanelEnterFwd, { optional: true }),
+      ]),
+      transition('inmuebles => clientes', [
+        style({ position: 'relative', display: 'block', overflow: 'hidden' }),
+        query(':leave', monitorPanelLeaveBack, { optional: true }),
+        query(':enter', monitorPanelEnterBack, { optional: true }),
+      ]),
+      transition('locales => clientes', [
+        style({ position: 'relative', display: 'block', overflow: 'hidden' }),
+        query(':leave', monitorPanelLeaveBack, { optional: true }),
+        query(':enter', monitorPanelEnterBack, { optional: true }),
+      ]),
+    ]),
+    trigger('monitorListInner', [
+      transition('inmuebles => locales', [
+        style({ position: 'relative', display: 'block', overflow: 'hidden' }),
+        query(':leave', monitorPanelLeaveFwd, { optional: true }),
+        query(':enter', monitorPanelEnterFwd, { optional: true }),
+      ]),
+      transition('locales => inmuebles', [
+        style({ position: 'relative', display: 'block', overflow: 'hidden' }),
+        query(':leave', monitorPanelLeaveBack, { optional: true }),
+        query(':enter', monitorPanelEnterBack, { optional: true }),
+      ]),
+    ]),
+    trigger('monitorRightPanel', [
+      transition('mapa => locales', [
+        style({ position: 'relative', display: 'block', overflow: 'hidden' }),
+        query(':leave', monitorPanelLeaveFwd, { optional: true }),
+        query(':enter', monitorPanelEnterFwd, { optional: true }),
+      ]),
+      transition('locales => mapa', [
+        style({ position: 'relative', display: 'block', overflow: 'hidden' }),
+        query(':leave', monitorPanelLeaveBack, { optional: true }),
+        query(':enter', monitorPanelEnterBack, { optional: true }),
       ]),
     ]),
     trigger('monitorListSwap', [
@@ -255,8 +335,17 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   zonasViewActive = false;
   /** Al abrir Mapa desde un local, pintamos solo ese punto. */
   private selectedLocalForMap: { local: any; index: number } | null = null;
+  /** Inmueble resaltado al elegir fila o pin en mapa (lista del arrendador). */
+  private selectedInmuebleForMap: { inmueble: any; index: number } | null = null;
   /** Abrir InfoWindow del local tras clic en fila, Mapa o Centrar (no al primer pintado pasivo del mapa). */
   private pendingLocalInfoWindow = false;
+  /** Salida suave de la lista antes de abrir detalle (instalación). */
+  navigatingToDetail = false;
+  private readonly listLevelOrder: Record<MonitorListLevel, number> = {
+    clientes: 0,
+    inmuebles: 1,
+    locales: 2,
+  };
 
   readonly layoutConfig = {
     gridSize: 20,
@@ -340,6 +429,34 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const c = this.selectedCentral;
     return Array.isArray(c?.instalaciones) ? c.instalaciones : [];
   }
+
+  /** Nivel actual de la jerarquía: arrendadores → inmuebles → locales. */
+  get monitorListLevel(): MonitorListLevel {
+    if (this.flowMode === 'clientes') return 'clientes';
+    return this.zonasViewActive ? 'locales' : 'inmuebles';
+  }
+
+  private prepareListNavigation(target: MonitorListLevel): void {
+    const cur = this.listLevelOrder[this.monitorListLevel];
+    const next = this.listLevelOrder[target];
+    if (next > cur) {
+      this.listNavDirection = 'forward';
+    } else if (next < cur) {
+      this.listNavDirection = 'back';
+    }
+  }
+
+  private runDetailLeaveTransition(then: () => void): void {
+    this.navigatingToDetail = true;
+    this.cdr.markForCheck();
+    setTimeout(() => {
+      then();
+      this.navigatingToDetail = false;
+      this.cdr.markForCheck();
+    }, 240);
+  }
+
+  listNavDirection: 'forward' | 'back' = 'forward';
 
   get clientesFiltrados(): any[] {
     const list = this.listaVisible;
@@ -610,6 +727,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getMensualidadLocalLista(local: any): string | null {
+    const rentaFmt = String(local?.rentaFmt ?? local?.mensualidadFmt ?? '').trim();
+    if (rentaFmt) return rentaFmt;
+
     const raw =
       local?.mensualidadMxn ??
       local?.mensualidad ??
@@ -974,10 +1094,12 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** Cierra vista Zonas sin diálogo de cambios sin guardar (vuelta desde detalle). */
   private cerrarVistaZonasSinDirtyConfirm(): void {
+    this.prepareListNavigation('inmuebles');
     this.zonasViewActive = false;
     this.localesZonasLista = [];
     this.selectedInmuebleForLocales = null;
     this.selectedLocalForMap = null;
+    this.selectedInmuebleForMap = null;
     this.closeInlineEditors();
     this.clearSelection();
     this.rightPanelMode = 'mapa';
@@ -1110,6 +1232,31 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     return `<div class="iw-line"><span class="iw-line__label">${this.escapeHtml(label)}</span><span class="iw-line__value">${this.escapeHtml(v)}</span></div>`;
   }
 
+  /** Celda label/valor para grid 2 columnas (estilo col-6) en el tooltip. */
+  private iwLineCelda(
+    label: string,
+    value: unknown,
+    spanFull = false,
+  ): string {
+    const line = this.iwLine(label, value);
+    if (!line) return '';
+    const span = spanFull ? ' iw-grid-cell--full' : '';
+    return `<div class="iw-grid-cell${span}">${line}</div>`;
+  }
+
+  private iwCuerpoEnGrid(
+    celdas: Array<{ label: string; value: unknown; spanFull?: boolean }>,
+  ): string {
+    const html = celdas
+      .map((c) => this.iwLineCelda(c.label, c.value, c.spanFull === true))
+      .filter(Boolean)
+      .join('');
+    if (!html) {
+      return '<div class="iw-line"><span class="iw-line__value">Sin datos adicionales.</span></div>';
+    }
+    return `<div class="iw-card__grid">${html}</div>`;
+  }
+
   private iwChipHtml(
     text: string,
     variant: 'activo' | 'inactivo' | 'tipo' | 'estado',
@@ -1117,6 +1264,30 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const t = String(text ?? '').trim();
     if (!t || t === '—') return '';
     return `<span class="iw-chip iw-chip--${variant}">${this.escapeHtml(t)}</span>`;
+  }
+
+  /** Chip de estatus del local con los mismos colores que la lista. */
+  private iwChipLocalEstatus(local: any): string {
+    const t = this.getOcupacionEtiquetaLista(local);
+    if (!t || t === '—') return '';
+    const tone = this.getEstadoChipClassLista(local).replace('local-status--', '');
+    const variant =
+      tone === 'libre' ||
+      tone === 'ocupado' ||
+      tone === 'reservado' ||
+      tone === 'inactivo'
+        ? tone
+        : 'estado';
+    return `<span class="iw-chip iw-chip--${variant}">${this.escapeHtml(t)}</span>`;
+  }
+
+  private iwHeroArrendatario(nombre: string): string {
+    const n = String(nombre ?? '').trim();
+    if (!n) return '';
+    return `<div class="iw-card__hero">
+      <span class="iw-card__hero-label">Arrendatario</span>
+      <span class="iw-card__hero-name">${this.escapeHtml(n)}</span>
+    </div>`;
   }
 
   private vigenciaTextoInmuebleIw(ins: any): string {
@@ -1137,14 +1308,22 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     title: string;
     eyebrow?: string;
     chipsHtml?: string;
+    /** Si true, el chip va en la misma fila que el título (p. ej. estatus del local). */
+    chipsInTitle?: boolean;
+    heroHtml?: string;
     bodyHtml: string;
     addressHtml?: string;
     actionLabel?: string;
     actionBtnClass?: string;
+    cardClass?: string;
   }): string {
-    const chips = opts.chipsHtml?.trim()
-      ? `<div class="iw-card__chips">${opts.chipsHtml}</div>`
+    const chipsRaw = opts.chipsHtml?.trim() ?? '';
+    const chipsInTitle = opts.chipsInTitle === true && chipsRaw.length > 0;
+    const chipsInline = chipsInTitle ? chipsRaw : '';
+    const chips = !chipsInTitle && chipsRaw
+      ? `<div class="iw-card__chips">${chipsRaw}</div>`
       : '';
+    const hero = opts.heroHtml?.trim() ?? '';
     const addr = opts.addressHtml?.trim() ?? '';
     const action = opts.actionLabel
       ? `<div class="iw-card__footer"><button type="button" class="${opts.actionBtnClass ?? 'iw-action iw-action--credito'}">${this.escapeHtml(opts.actionLabel)}</button></div>`
@@ -1152,20 +1331,47 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const eyebrow = opts.eyebrow?.trim()
       ? `<span class="iw-card__eyebrow">${this.escapeHtml(opts.eyebrow)}</span>`
       : '';
+    const extraClass = opts.cardClass?.trim() ? ` ${opts.cardClass.trim()}` : '';
+    const scrollInner = `${chips}${hero}<div class="iw-card__body">${opts.bodyHtml}</div>${addr}`;
     return `
-    <div class="iw-card iw-enter">
+    <div class="iw-card iw-enter${extraClass}">
       <div class="iw-card__head">
         <div class="iw-card__title-block">
           ${eyebrow}
-          <h6 class="iw-card__title">${this.escapeHtml(opts.title)}</h6>
+          <div class="iw-card__title-row">
+            <h6 class="iw-card__title">${this.escapeHtml(opts.title)}</h6>
+            ${chipsInline}
+          </div>
         </div>
         <button type="button" class="iw-close" aria-label="Cerrar">✕</button>
       </div>
-      ${chips}
-      <div class="iw-card__body">${opts.bodyHtml}</div>
-      ${addr}
+      <div class="iw-card__scroll" tabindex="0">${scrollInner}</div>
       ${action}
     </div>`;
+  }
+
+  /**
+   * Posición en mapa del inmueble: cada local en un anillo alrededor del predio.
+   * No usamos lat/lng del arrendatario (varios locales comparten la misma dirección).
+   */
+  private coordenadasMapaLocalEnInmueble(
+    index: number,
+    total: number,
+    baseLat: number,
+    baseLng: number,
+  ): { lat: number; lng: number } | null {
+    if (!isFinite(baseLat) || !isFinite(baseLng)) return null;
+    const n = Math.max(total, 1);
+    const perRing = 8;
+    const ring = Math.floor(index / perRing);
+    const slot = index % perRing;
+    const baseRadius = 0.00048;
+    const radius = baseRadius * (1 + ring * 0.95);
+    const angle = (slot / perRing) * Math.PI * 2 + ring * 0.38;
+    return {
+      lat: baseLat + Math.cos(angle) * radius,
+      lng: baseLng + Math.sin(angle) * radius,
+    };
   }
 
   /** Todos los locales del inmueble en el mapa. */
@@ -1189,23 +1395,21 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (list.length) {
       const baseLat = Number(inmueble?.lat);
       const baseLng = Number(inmueble?.lng);
-      const n = Math.max(list.length, 1);
-      const radius = 0.00055;
       list.forEach((loc: any, i: number) => {
-        const lat = Number(loc?.lat);
-        const lng = Number(loc?.lng);
-        if (isFinite(lat) && isFinite(lng)) {
-          points.push({ lat, lng, local: loc, index: i, kind: 'local' });
-        } else if (isFinite(baseLat) && isFinite(baseLng)) {
-          const angle = (i / n) * Math.PI * 2;
-          points.push({
-            lat: baseLat + Math.cos(angle) * radius,
-            lng: baseLng + Math.sin(angle) * radius,
-            local: loc,
-            index: i,
-            kind: 'local',
-          });
-        }
+        const pos = this.coordenadasMapaLocalEnInmueble(
+          i,
+          list.length,
+          baseLat,
+          baseLng,
+        );
+        if (!pos) return;
+        points.push({
+          lat: pos.lat,
+          lng: pos.lng,
+          local: loc,
+          index: i,
+          kind: 'local',
+        });
       });
     }
 
@@ -1247,12 +1451,37 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
       if (isLocal) {
         markerAtIndex[p.index] = marker;
+        const localPayload = {
+          central: this.selectedCentral,
+          instalacion: {
+            ...(this.selectedInmuebleForLocales || {}),
+            ...(p.local || {}),
+          },
+          vistaEntidad: 'local' as const,
+          parentInmuebleId: this.idInmuebleDesdeInstalacion(
+            this.selectedInmuebleForLocales,
+          ),
+        };
+        marker.addListener('mouseover', () => {
+          this.cancelHoverClose();
+          this.showHover(marker, html);
+        });
+        marker.addListener('mouseout', () => this.hideHover(marker));
+        marker.addListener('click', () => {
+          this.seleccionarLocalDesdeMapa(p.local, p.index);
+          this.togglePin(marker, html, localPayload);
+        });
       } else {
+        marker.addListener('mouseover', () => {
+          this.cancelHoverClose();
+          this.showHover(marker, html);
+        });
+        marker.addListener('mouseout', () => this.hideHover(marker));
         marker.addListener('click', () =>
           this.togglePin(marker, html, {
             central: this.selectedCentral,
             instalacion: inmueble,
-          })
+          }),
         );
       }
 
@@ -1277,6 +1506,12 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.pendingLocalInfoWindow = false;
 
     if (focusMarker && focus) {
+      const idLista = this.resolveLocalIdParaLista(focus.local, focus.index);
+      if (idLista) {
+        requestAnimationFrame(() =>
+          this.scrollListaZonaLocalAlSeleccionado(idLista),
+        );
+      }
       const pos = focusMarker.getPosition();
       if (pos) {
         this.map.panTo(pos);
@@ -1401,12 +1636,15 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const bounds = new google.maps.LatLngBounds();
     let hasAny = false;
 
-    for (const ins of childs) {
+    for (let i = 0; i < childs.length; i++) {
+      const ins = childs[i];
       const lat = Number(ins.lat);
       const lng = Number(ins.lng);
       if (!isFinite(lat) || !isFinite(lng)) continue;
 
       const pos = { lat, lng };
+      const html = this.buildInfoHtmlInstalacion(c, ins);
+      const payload = { central: c, instalacion: ins };
 
       const marker = new google.maps.Marker({
         map: this.map,
@@ -1419,15 +1657,13 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
       marker.addListener('mouseover', () => {
         this.cancelHoverClose();
-        this.showHover(marker, this.buildInfoHtmlInstalacion(c, ins));
+        this.showHover(marker, html);
       });
       marker.addListener('mouseout', () => this.hideHover(marker));
-      marker.addListener('click', () =>
-        this.togglePin(marker, this.buildInfoHtmlInstalacion(c, ins), {
-          central: c,
-          instalacion: ins,
-        })
-      );
+      marker.addListener('click', () => {
+        this.seleccionarInmuebleDesdeMapa(ins, i);
+        this.togglePin(marker, html, payload);
+      });
 
       this.markers.push(marker);
       bounds.extend(pos);
@@ -1438,12 +1674,14 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   goToCentrales() {
+    this.prepareListNavigation('clientes');
     this.viewMode = 'centrales';
     this.flowMode = 'clientes';
     this.selectedCentral = null;
     this.selectedInmuebleForLocales = null;
     this.zonasViewActive = false;
     this.selectedLocalForMap = null;
+    this.selectedInmuebleForMap = null;
     this.rightPanelMode = 'mapa';
     this.mapScopeMode = 'inmuebles';
     this.clearPin();
@@ -1457,6 +1695,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedInmuebleForLocales = null;
     this.zonasViewActive = false;
     this.selectedLocalForMap = null;
+    this.selectedInmuebleForMap = null;
     this.rightPanelMode = 'mapa';
     this.mapScopeMode = 'inmuebles';
     this.clearPin();
@@ -1464,12 +1703,14 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   verInstalacionesDeCentral(central: any) {
+    this.prepareListNavigation('inmuebles');
     this.selectedCentral = central;
     this.viewMode = 'instalaciones';
     this.flowMode = 'inmuebles';
     this.selectedInmuebleForLocales = null;
     this.zonasViewActive = false;
     this.selectedLocalForMap = null;
+    this.selectedInmuebleForMap = null;
     this.rightPanelMode = 'mapa';
     this.mapScopeMode = 'inmuebles';
     this.clearPin();
@@ -1602,10 +1843,12 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.prepareListNavigation('locales');
     this.localesZonasLista = [];
     this.selectedInmuebleForLocales = { ...inmueble, locales: [] };
     this.zonasViewActive = true;
     this.selectedLocalForMap = null;
+    this.selectedInmuebleForMap = null;
     this.clearPin();
     this.rightPanelMode = 'locales';
     this.mapScopeMode = 'locales';
@@ -1760,12 +2003,14 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       );
       if (!ok) return;
     }
+    this.prepareListNavigation('inmuebles');
     this.zonasViewActive = false;
     this.localesZonasLista = [];
     this.diagramaMapaVacio = true;
     this.diagramaPlanoDesdeCatalogo = false;
     this.selectedInmuebleForLocales = null;
     this.selectedLocalForMap = null;
+    this.selectedInmuebleForMap = null;
     this.closeInlineEditors();
     this.clearSelection();
     this.rightPanelMode = 'mapa';
@@ -1776,6 +2021,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Mapa: ubicación del local (o representación junto al inmueble). */
   mostrarMapaLocal(local: any, index: number, event?: Event): void {
     event?.stopPropagation();
+    if (this.rightPanelMode === 'locales') {
+      this.listNavDirection = 'forward';
+    }
     this.pendingLocalInfoWindow = true;
     this.selectedLocalForMap = { local, index };
     this.rightPanelMode = 'mapa';
@@ -1787,6 +2035,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Diagrama: panel drag & drop y resalta el local en el lienzo si coincide id. */
   mostrarDiagramaLocal(local: any, index: number, event?: Event): void {
     event?.stopPropagation();
+    if (this.rightPanelMode === 'mapa') {
+      this.listNavDirection = 'back';
+    }
     this.selectedLocalForMap = null;
     this.rightPanelMode = 'locales';
     this.mapScopeMode = 'locales';
@@ -1809,12 +2060,15 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       arrendatario:
         local?.arrendatario ?? local?.ocupanteNombre ?? local?.nombreEmpresa,
     };
-    this.onInfoAction({
-      central: this.selectedCentral,
-      instalacion: merged,
-      vistaEntidad: 'local',
-      parentInmuebleId,
-    });
+    this.onInfoAction(
+      {
+        central: this.selectedCentral,
+        instalacion: merged,
+        vistaEntidad: 'local',
+        parentInmuebleId,
+      },
+      { animateLeave: true },
+    );
   }
 
   trackByLocalEnZonas(index: number, local: any): string {
@@ -1863,8 +2117,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   onListaLocalRowClick(local: any, index: number): void {
     if (!this.zonasViewActive) return;
     this.pendingLocalInfoWindow = true;
-    this.sincronizarSeleccionLocalLista(local, index);
-    this.selectedLocalForMap = { local, index };
+    this.seleccionarLocalDesdeMapa(local, index);
     if (this.rightPanelMode !== 'mapa' || this.mapScopeMode !== 'locales') {
       this.rightPanelMode = 'mapa';
       this.mapScopeMode = 'locales';
@@ -1879,6 +2132,32 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  onListaInmuebleRowClick(item: any, index: number): void {
+    if (this.viewMode !== 'instalaciones' || this.zonasViewActive) return;
+    this.seleccionarInmuebleDesdeMapa(item, index);
+    this.selectInstalacion(item, index);
+  }
+
+  private seleccionarLocalDesdeMapa(local: any, index: number): void {
+    this.selectedLocalForMap = { local, index };
+    this.sincronizarSeleccionLocalLista(local, index);
+    const id = this.resolveLocalIdParaLista(local, index);
+    if (id) {
+      requestAnimationFrame(() => this.scrollListaZonaLocalAlSeleccionado(id));
+    }
+    this.cdr.markForCheck();
+  }
+
+  private seleccionarInmuebleDesdeMapa(inmueble: any, index: number): void {
+    if (this.viewMode !== 'instalaciones' || this.zonasViewActive) return;
+    this.selectedInmuebleForMap = { inmueble, index };
+    const id = this.resolveInmuebleIdParaLista(inmueble, index);
+    if (id) {
+      requestAnimationFrame(() => this.scrollListaInmuebleAlSeleccionado(id));
+    }
+    this.cdr.markForCheck();
+  }
+
   /** Id estable para fila + scroll; coincide con `selectLocal`. */
   idAtributoFilaListaLocal(local: any, index: number): string {
     const id = this.resolveLocalIdParaLista(local, index);
@@ -1886,10 +2165,55 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isLocalResaltadoEnListaZonas(local: any, index: number): boolean {
+    const focus = this.selectedLocalForMap;
+    if (focus) {
+      return this.mismoLocalEnLista(focus.local, focus.index, local, index);
+    }
     const sid = this.uiState.selectedLocalId;
     if (!sid) return false;
     const id = this.resolveLocalIdParaLista(local, index);
     return id != null && String(id) === String(sid);
+  }
+
+  idAtributoFilaListaInmueble(item: any, index: number): string {
+    return this.listaInmuebleRowDomId(
+      this.resolveInmuebleIdParaLista(item, index) ?? `idx-${index}`,
+    );
+  }
+
+  isInmuebleResaltadoEnLista(item: any, index: number): boolean {
+    const focus = this.selectedInmuebleForMap;
+    if (!focus) return false;
+    return this.mismoInmuebleEnLista(focus.inmueble, focus.index, item, index);
+  }
+
+  private mismoInmuebleEnLista(
+    a: any,
+    ai: number,
+    b: any,
+    bi: number,
+  ): boolean {
+    const ida = this.resolveInmuebleIdParaLista(a, ai);
+    const idb = this.resolveInmuebleIdParaLista(b, bi);
+    if (ida && idb) return ida === idb;
+    return ai === bi;
+  }
+
+  private resolveInmuebleIdParaLista(inmueble: any, index: number): string {
+    const id = this.idInmuebleDesdeInstalacion(inmueble);
+    if (id != null) return String(id);
+    const raw = inmueble?.id ?? inmueble?.idInstalacion ?? inmueble?.idDepartamento;
+    if (raw != null && String(raw).trim() !== '') return String(raw).trim();
+    return `idx-${index}`;
+  }
+
+  private listaInmuebleRowDomId(inmuebleId: string): string {
+    return `lista-inmueble-${String(inmuebleId).replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+  }
+
+  private scrollListaInmuebleAlSeleccionado(inmuebleId: string): void {
+    const el = document.getElementById(this.listaInmuebleRowDomId(inmuebleId));
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   private listaLocalRowDomId(localId: string): string {
@@ -2886,7 +3210,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const ins = this.selectedCentral?.instalaciones?.[index];
+    this.selectedInmuebleForMap = { inmueble: item, index };
+    const ins = this.selectedCentral?.instalaciones?.[index] ?? item;
     if (ins) {
       const lat = Number(ins.lat);
       const lng = Number(ins.lng);
@@ -2917,6 +3242,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       const infoCard: HTMLElement | null = root?.querySelector(
         '.iw-card'
       ) as HTMLElement;
+      const scrollPane = root?.querySelector(
+        '.iw-card__scroll',
+      ) as HTMLElement | null;
+      this.enlazarScrollInfoWindow(scrollPane);
       const btnClose: HTMLElement | null = root?.querySelector(
         '.iw-close'
       ) as HTMLElement;
@@ -2928,14 +3257,18 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       ) as HTMLElement;
 
       if (!pinned) {
-        infoCard?.addEventListener('mouseenter', () => {
+        const onEnter = () => {
           this.isHoveringInfoWindow = true;
           this.cancelHoverClose();
-        });
-        infoCard?.addEventListener('mouseleave', () => {
+        };
+        const onLeave = () => {
           this.isHoveringInfoWindow = false;
           this.scheduleHoverClose(marker);
-        });
+        };
+        infoCard?.addEventListener('mouseenter', onEnter);
+        infoCard?.addEventListener('mouseleave', onLeave);
+        scrollPane?.addEventListener('mouseenter', onEnter);
+        scrollPane?.addEventListener('mouseleave', onLeave);
       }
 
       btnClose?.addEventListener('click', () => {
@@ -2951,13 +3284,19 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   irADetalleInmueble(inmueble: any, event?: Event): void {
     event?.stopPropagation();
-    this.onInfoAction({
-      central: this.selectedCentral,
-      instalacion: inmueble,
-    });
+    this.onInfoAction(
+      {
+        central: this.selectedCentral,
+        instalacion: inmueble,
+      },
+      { animateLeave: true },
+    );
   }
 
-  onInfoAction(payload: any) {
+  onInfoAction(
+    payload: any,
+    options?: { animateLeave?: boolean },
+  ) {
     const numeroSerie =
       payload?.instalacion?.equipo?.numeroSerie ??
       payload?.instalacion?.numeroSerie;
@@ -3047,10 +3386,16 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (idCli != null && String(idCli).trim() !== '') {
       qp['idCliente'] = String(idCli).trim();
     }
-    this.router.navigate(
-      ['/monitoreo', 'instalacion', numeroSerie || this.PREVIEW_SERIE],
-      { queryParams: qp },
-    );
+    const go = () =>
+      this.router.navigate(
+        ['/monitoreo', 'instalacion', numeroSerie || this.PREVIEW_SERIE],
+        { queryParams: qp },
+      );
+    if (options?.animateLeave) {
+      this.runDetailLeaveTransition(go);
+    } else {
+      go();
+    }
   }
 
   onPredioDetalleAction(central: any) {
@@ -3075,10 +3420,20 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     return null;
   }
 
-  private static iwStylesInstalled = false;
+  /** Evita que la rueda del mapa se coma el scroll del tooltip. */
+  private enlazarScrollInfoWindow(scrollPane: HTMLElement | null): void {
+    if (!scrollPane) return;
+    scrollPane.addEventListener(
+      'wheel',
+      (e) => {
+        e.stopPropagation();
+      },
+      { passive: true },
+    );
+  }
 
   private installInfoWindowSkin(): void {
-    if (MonitoreoComponent.iwStylesInstalled) return;
+    document.querySelector('style[data-iw-skin="true"]')?.remove();
     const css = `
       .gm-style-iw, .gm-style-iw.gm-style-iw-c {
         background: #151f35 !important;
@@ -3097,7 +3452,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
             top: -1px;
             width: 25px;
         }
-      .gm-style-iw-d { padding: 0 !important; overflow: visible !important; }
+      .gm-style .gm-style-iw-d {
+        padding: 0 !important;
+        overflow: hidden !important;
+      }
       .gm-style .gm-style-iw-t::after { background: transparent !important; box-shadow: none !important; }
       .gm-style-iw-tc { padding: 0 !important; margin: 0 !important; }
       .gm-ui-hover-effect { display: none !important; }
@@ -3122,26 +3480,74 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       .gm-style-iw-c {
-        max-width: none !important;
+        max-width: min(360px, 94vw) !important;
       }
 
       .iw-card {
         background: #151f35;
         color: #e5e7eb;
-        padding: 14px 18px 16px;
+        display: flex;
+        flex-direction: column;
+        max-height: min(52vh, 340px);
+        padding: 0;
         border-radius: 12px;
-        min-width: min(340px, 92vw);
-        max-width: min(400px, 94vw);
+        min-width: min(300px, 92vw);
+        max-width: min(360px, 94vw);
         line-height: 1.35;
         box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      .iw-card__scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 6px 14px 6px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.5) rgba(255, 255, 255, 0.06);
+      }
+      .iw-card__scroll::-webkit-scrollbar {
+        width: 7px;
+      }
+      .iw-card__scroll::-webkit-scrollbar-track {
+        margin: 4px 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+      }
+      .iw-card__scroll::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.45);
+        border-radius: 8px;
+      }
+      .iw-card--local .iw-card__title {
+        font-size: clamp(1.12rem, 3vw, 1.28rem);
+        letter-spacing: 0.04em;
+        color: #ffffff;
+      }
+      .iw-card__title-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        min-width: 0;
+      }
+      .iw-card__title-row .iw-card__title {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin: 0;
+      }
+      .iw-card__title-row .iw-chip {
+        flex: 0 0 auto;
       }
       .iw-card__head {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 10px;
-        padding-bottom: 10px;
+        flex-shrink: 0;
+        margin-bottom: 0;
+        padding: 12px 14px 10px;
         border-bottom: 1px solid rgba(130, 160, 255, 0.22);
       }
       .iw-card__title-block {
@@ -3215,31 +3621,101 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         border-color: rgba(130, 160, 255, 0.28);
         background: rgba(14, 20, 32, 0.88);
       }
-      .iw-card__body {
+      .iw-chip--libre {
+        color: #ecfdf5;
+        border-color: rgba(134, 239, 172, 0.45);
+        background: rgba(22, 163, 74, 0.92);
+      }
+      .iw-chip--ocupado {
+        color: #fff1f2;
+        border-color: rgba(248, 113, 113, 0.45);
+        background: rgba(220, 38, 38, 0.88);
+      }
+      .iw-chip--reservado {
+        color: #fffbeb;
+        border-color: rgba(253, 224, 71, 0.4);
+        background: rgba(217, 119, 6, 0.92);
+      }
+      .iw-chip--inactivo {
+        color: #f5f3ff;
+        border-color: rgba(216, 180, 254, 0.5);
+        background: rgba(109, 40, 217, 0.88);
+      }
+      .iw-card__hero {
         display: flex;
         flex-direction: column;
         gap: 4px;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(130, 160, 255, 0.2);
+      }
+      .iw-card__hero-label {
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9eb0d8;
+        line-height: 1.3;
+      }
+      .iw-card__hero-name {
+        font-size: clamp(1rem, 2.6vw, 1.12rem);
+        letter-spacing: 0.03em;
+        color: #f8fafc;
+        line-height: 1.3;
+        word-break: break-word;
+      }
+      .iw-card__body {
+        display: block;
+        padding-top: 4px;
+      }
+      .iw-card__grid {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -5px;
+      }
+      .iw-grid-cell {
+        flex: 0 0 50%;
+        max-width: 50%;
+        padding: 0 5px;
+        box-sizing: border-box;
+      }
+      .iw-grid-cell--full {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+      .iw-grid-cell .iw-line {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: clamp(0.78rem, 2vw, 0.86rem);
+        padding: 4px 0 6px;
+        border-bottom: none;
+        min-height: 100%;
       }
       .iw-line {
-        display: grid;
-        grid-template-columns: minmax(7.75rem, 38%) minmax(0, 1fr);
-        gap: 8px 12px;
-        font-size: clamp(0.78rem, 2vw, 0.86rem);
-        align-items: start;
-        padding: 2px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 3px;
+        font-size: clamp(0.8rem, 2vw, 0.88rem);
+        padding: 6px 0;
+        border-bottom: none;
       }
       .iw-line__label {
-        color: #c5d2ef;
-        letter-spacing: 0.05em;
+        color: #9eb0d8;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         line-height: 1.35;
-        white-space: nowrap;
+        white-space: normal;
+        word-break: normal;
       }
       .iw-line__value {
         color: #eef2f8;
         word-break: break-word;
-        line-height: 1.4;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
       }
       .iw-address {
         display: flex;
@@ -3262,7 +3738,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       .iw-card__footer {
         display: flex;
         justify-content: flex-end;
-        margin-top: 10px;
+        flex-shrink: 0;
+        margin-top: 0;
+        padding: 8px 14px 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
       }
       .iw-action, .iw-detail-action {
         color: #fff;
@@ -3283,11 +3762,15 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         background: rgba(52, 152, 219, 0.32);
       }
     `;
-    const style = document.createElement('style');
-    style.setAttribute('data-iw-skin', 'true');
+    let style = document.querySelector(
+      'style[data-iw-skin="monitoreo"]',
+    ) as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.setAttribute('data-iw-skin', 'monitoreo');
+      document.head.appendChild(style);
+    }
     style.textContent = css;
-    document.head.appendChild(style);
-    MonitoreoComponent.iwStylesInstalled = true;
   }
 
   private buildInfoHtml(item: any): string {
@@ -3344,22 +3827,78 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private buildInfoHtmlLocal(local: any, _index: number): string {
-    const est = this.getOcupacionEtiquetaLista(local);
-    const chips = this.iwChipHtml(est, 'estado');
-    const body = [
-      this.iwLine('Zona', local?.zonaPrincipal),
-      this.iwLine('Arrendatario', this.getOcupanteLocalLista(local)),
-      this.iwLine('Superficie', this.getMedidaLocalLista(local)),
-      this.iwLine('Mensualidad', this.getMensualidadLocalLista(local)),
-      this.iwLine('Giro', local?.giro),
-    ]
-      .filter(Boolean)
-      .join('');
+    const chips = this.iwChipLocalEstatus(local);
+    const ocupado = this.localTieneInformacion(local);
+    const zona =
+      String(local?.zonaPrincipal ?? '').trim() ||
+      this.getZonaNombreLocalLista(local) ||
+      '';
+    const giro =
+      this.getGiroActividadLocalLista(local) ??
+      (String(local?.giro ?? '').trim() || '');
+    const mensualidad = this.getMensualidadLocalLista(local);
+    const mensualidadConMoneda =
+      mensualidad && ocupado && local?.monedaContrato
+        ? `${mensualidad} (${local.monedaContrato})`
+        : mensualidad;
+    const superficie =
+      String(local?.metrosRentadosTexto ?? '').trim() ||
+      this.getMedidaLocalLista(local) ||
+      '';
+
+    const arrendatario = this.getOcupanteLocalLista(local);
+    const celdas: Array<{ label: string; value: unknown; spanFull?: boolean }> =
+      [];
+    if (zona) celdas.push({ label: 'Zona', value: zona });
+    if (giro) celdas.push({ label: 'Giro', value: giro });
+
+    if (ocupado) {
+      if (mensualidadConMoneda) {
+        celdas.push({ label: 'Renta', value: mensualidadConMoneda });
+      }
+      if (local?.rentaTotalFmt) {
+        celdas.push({ label: 'Total contrato', value: local.rentaTotalFmt });
+      }
+      if (superficie) {
+        celdas.push({ label: 'Superficie rentada', value: superficie });
+      }
+      if (local?.representanteLegal) {
+        celdas.push({
+          label: 'Representante legal',
+          value: local.representanteLegal,
+        });
+      }
+      if (local?.telefonoRepresentante) {
+        celdas.push({
+          label: 'Tel. representante',
+          value: local.telefonoRepresentante,
+        });
+      }
+      if (local?.vigenciaTexto) {
+        celdas.push({
+          label: 'Vigencia',
+          value: local.vigenciaTexto,
+        });
+      }
+    } else {
+      if (mensualidadConMoneda) {
+        celdas.push({ label: 'Mensualidad', value: mensualidadConMoneda });
+      }
+      if (superficie) {
+        celdas.push({ label: 'Superficie', value: superficie });
+      }
+    }
+
+    const body = this.iwCuerpoEnGrid(celdas);
+
     return this.buildIwCardHtml({
       title: this.getNombreLocalEnLista(local),
       chipsHtml: chips,
+      chipsInTitle: true,
+      heroHtml: arrendatario ? this.iwHeroArrendatario(arrendatario) : '',
       bodyHtml: body,
-      actionLabel: 'Información',
+      cardClass: 'iw-card--local',
+      actionLabel: ocupado ? 'Información' : undefined,
       actionBtnClass: 'iw-action iw-action--credito',
     });
   }
@@ -3389,14 +3928,12 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         ? `${ins?.numZonas ?? 0} zona(s) · ${ins?.numServicios ?? 0} servicio(s)`
         : '';
 
-    const body = [
-      this.iwLine('Arrendador', ins?.arrendador ?? c?.nombreCliente),
-      this.iwLine('Vigencia', this.vigenciaTextoInmuebleIw(ins)),
-      this.iwLine('Representante', ins?.nombreRepresentante),
-      this.iwLine('Resumen', resumenZonas),
-    ]
-      .filter(Boolean)
-      .join('');
+    const body = this.iwCuerpoEnGrid([
+      { label: 'Arrendador', value: ins?.arrendador ?? c?.nombreCliente },
+      { label: 'Vigencia', value: this.vigenciaTextoInmuebleIw(ins), spanFull: true },
+      { label: 'Representante', value: ins?.nombreRepresentante },
+      { label: 'Resumen', value: resumenZonas },
+    ]);
 
     const dir = String(ins?.direccion ?? '').trim();
     const addressHtml = dir

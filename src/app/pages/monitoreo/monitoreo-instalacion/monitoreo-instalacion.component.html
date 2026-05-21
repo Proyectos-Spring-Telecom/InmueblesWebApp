@@ -15,7 +15,7 @@
                 vistaEntidad === 'local' ? 'storefront' : 'apartment'
               }}</mat-icon>
               <span class="mono-entity-pill__text">{{ vistaEntidad === 'local' ? 'Local:' : 'Inmueble:' }}</span>
-              <h1 class="hero-header__title">{{ detalleTitulo }}</h1>
+              <h1 class="hero-header__title">{{ heroTituloEntidad }}</h1>
             </span>
             <div class="hero-header__row hero-header__row--top">
               <div
@@ -39,7 +39,7 @@
             <div class="d-flex align-items-center flex-wrap gap-2">
               <span class="hero-header__status hero-header__status--local">Arrendador: {{ detalleArrendador }}</span>
               <span class="hero-header__status hero-header__status--local" *ngIf="vistaEntidad === 'local'">
-                Arrendatario: {{ detalleArrendatario }}
+                Inmueble: {{ detalleInmuebleNombre }}
               </span>
             </div>
             <button
@@ -88,7 +88,7 @@
           </div>
           <button
             type="button"
-            class="btn bg-primary mono-local-contrato-strip__cta-btn"
+            class="btn mono-grid-action-btn mono-local-contrato-strip__cta-btn"
             (click)="abrirModalContratoLocal()"
           >
             <mat-icon aria-hidden="true">visibility</mat-icon>

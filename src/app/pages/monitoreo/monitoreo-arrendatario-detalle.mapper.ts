@@ -121,6 +121,29 @@ export function nombreArrendadorDesdeArrendatarioApi(
   return t || '—';
 }
 
+function textoInmuebleDesdeRef(inmRef: unknown): string {
+  if (inmRef == null || typeof inmRef !== 'object' || Array.isArray(inmRef)) {
+    return '';
+  }
+  return String((inmRef as Record<string, unknown>)['inmueble'] ?? '').trim();
+}
+
+export function nombreInmuebleDesdeContratoApi(
+  contrato: ArrendatarioContratoApi | null | undefined,
+): string {
+  if (!contrato) return '';
+  return textoInmuebleDesdeRef(contrato.inmueble);
+}
+
+export function nombreInmuebleDesdeArrendatarioApi(
+  item: ArrendatarioApiItem,
+  contrato?: ArrendatarioContratoApi | null,
+): string {
+  const desdeContrato = nombreInmuebleDesdeContratoApi(contrato ?? undefined);
+  if (desdeContrato) return desdeContrato;
+  return textoInmuebleDesdeRef(item['inmueble']);
+}
+
 export function buildExpedienteArrendatarioLista(
   item: ArrendatarioApiItem,
 ): MonitoreoExpedienteDoc[] {

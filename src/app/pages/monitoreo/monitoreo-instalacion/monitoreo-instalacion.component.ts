@@ -77,6 +77,7 @@ import {
   extraerArrendatarioDetalleApi,
   estatusLocalDesdeArrendatario,
   nombreArrendadorDesdeArrendatarioApi,
+  nombreInmuebleDesdeArrendatarioApi,
   seleccionarContratoArrendatario,
   serviciosArrendatarioPagoOpciones,
   tituloLocalDesdeArrendatario,
@@ -220,6 +221,24 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   detalleLocalNombre = 'Local PB-01';
   detalleArrendador = 'Inmuebles y Desarrollos HAC S.A de C.V.';
   detalleArrendatario = 'Laboratorios Chopo';
+  /** Pill Local: nombre del local y arrendatario. */
+  get heroTituloEntidad(): string {
+    if (this.vistaEntidad !== 'local') {
+      return this.detalleTitulo;
+    }
+    const local = (this.detalleLocalNombre ?? '').trim();
+    const arrendatario = (this.detalleArrendatario ?? '').trim();
+    if (!local && !arrendatario) {
+      return this.detalleTitulo;
+    }
+    if (!arrendatario) {
+      return local || this.detalleTitulo;
+    }
+    if (!local) {
+      return arrendatario;
+    }
+    return `${local} · ${arrendatario}`;
+  }
   mostrarModalContratoLocal = false;
   mostrarModalPago = false;
   mostrarModalPagoDetalle = false;
@@ -557,6 +576,12 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       this.idContratoQuery,
       this.idLocalContext,
     );
+
+    const nombreInm = nombreInmuebleDesdeArrendatarioApi(item, contrato);
+    if (nombreInm) {
+      this.detalleInmuebleNombre = nombreInm;
+    }
+
     const idInm = Number(contrato?.idInmueble);
     if (Number.isFinite(idInm) && idInm > 0) {
       const idInmFloor = Math.floor(idInm);
