@@ -24,6 +24,10 @@ export class AuthInterceptor implements HttpInterceptor {
     const hadAuth = !!(token && !isAuthEndpoint);
     const authReq = hadAuth ? this.addToken(req, token) : req;
 
+    if (req.url.includes('amazonaws.com')) {
+      return next.handle(req);
+    }
+
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
         if (this.shouldAttemptRefresh(error, hadAuth, req)) {
