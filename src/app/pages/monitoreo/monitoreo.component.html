@@ -439,11 +439,11 @@
           </div>
         </div>
         <div [ngClass]="clientesGridRowClass" *ngIf="!cargandoClientes && clientesFiltrados.length > 0">
-          <div [ngClass]="clienteCardColClass" *ngFor="let cliente of clientesFiltrados; let ci = index">
+          <div [ngClass]="clienteCardColClass" *ngFor="let cliente of clientesFiltrados">
             <div class="inmueble-card-shell cliente-grid-card cliente-card-v2">
               <header class="cliente-card-head">
                 <div class="cliente-card-media">
-                  <img [src]="getImagenClienteCard(cliente, ci)"
+                  <img *ngIf="getImagenClienteCard(cliente) as imgCliente" [src]="imgCliente"
                     [attr.alt]="'Logo — ' + (cliente?.nombreCliente || cliente?.nombre || 'Arrendador')" />
                 </div>
                 <div class="cliente-card-head-main">

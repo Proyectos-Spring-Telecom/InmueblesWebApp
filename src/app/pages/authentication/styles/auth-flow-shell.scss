@@ -273,7 +273,7 @@ $haloB: #4f7cff; // azul brillante
   p {
     margin: 14px 0 0;
     opacity: 0.85;
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1.55;
   }
 }
@@ -327,6 +327,10 @@ $haloB: #4f7cff; // azul brillante
   gap: 12px;
   align-items: start;
   transform-style: preserve-3d;
+}
+
+.ul-card__head {
+  text-align: left;
 }
 
 .ul-card {
@@ -541,14 +545,66 @@ $haloB: #4f7cff; // azul brillante
     grid-template-columns: 1fr;
     min-height: unset;
     padding-bottom: 28px;
+    justify-items: center;
+    align-content: start;
+  }
+
+  /* Mismo orden que desktop / DOM: escena arriba, formulario abajo */
+  .ul-scene,
+  .ul-login {
+    width: 100%;
+    max-width: min(520px, 100%);
   }
 
   .ul-scene {
-    order: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ul-scene__stack {
+    width: 100%;
+    text-align: left;
+  }
+
+  .ul-scene__logoWrap {
+    margin-inline: auto;
+  }
+
+  .ul-scene__headline {
+    text-align: left;
+  }
+
+  .ul-floating {
+    justify-content: center;
+    width: 100%;
   }
 
   .ul-login {
-    order: 1;
+    justify-items: center;
+  }
+
+  .ul-card {
+    width: 100%;
+  }
+
+  .ul-card__head {
+    text-align: left;
+    width: 100%;
+  }
+
+  .ul-form,
+  .ul-field {
+    width: 100%;
+    text-align: left;
+  }
+
+  .ul-actions {
+    justify-content: center;
+  }
+
+  .ul-footer {
+    width: 100%;
   }
 }
 

@@ -297,14 +297,6 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   };
 
   private readonly PREVIEW_SERIE = 'preview-demo';
-  /**
-   * Logos por defecto cuando el API no envía imagen (temporal).
-   * Se elige uno u otro según identidad del arrendador para que no salgan iguales.
-   */
-  readonly imagenesClientes = [
-    'https://analiticadevideo.s3.us-east-1.amazonaws.com/Clientes/37269948-9b8c-42c7-a858-87d0f6101fad.png',
-    'https://analiticadevideo.s3.us-east-1.amazonaws.com/Clientes/1b74ca94-7427-4689-bca8-29963c05925f.png',
-  ];
   /** Fachada / predio para tarjetas de inmuebles en monitoreo (demo San Cristóbal). */
   readonly imagenListaInmuebleMonitoreo =
     'https://lh3.googleusercontent.com/gps-cs-s/APNQkAFlG1RuIX_TUTB944PQtcU_VhwJBKarAk6AZl61hj8-4Pes7T6n4kUQicm-qp8DtXMazia1NU7pjij4ziIozMFwvKH6Lbr1r60PIedWpOhP9ouysXVnE2gjY2rWj212L9kc7r3D=s680-w680-h510-rw';
@@ -565,7 +557,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     return v;
   }
 
-  getImagenClienteCard(cliente: any, index: number): string {
+  getImagenClienteCard(cliente: any): string {
     const u =
       cliente?.logotipo ??
       cliente?.imagenUrl ??
@@ -576,47 +568,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       cliente?.urlFoto ??
       cliente?.logoUrl ??
       cliente?.urlLogo;
-    const direct = u != null ? String(u).trim() : '';
-    if (direct.length) return direct;
-
-    const pool = this.imagenesClientes;
-    if (!pool.length) return '';
-
-    // Solo hay 2 logos temporales: alternar por posición en la lista (evita colisiones hash % 2).
-    if (pool.length <= 2) {
-      return pool[index % pool.length];
-    }
-
-    const idRaw = cliente?.id ?? cliente?.idCliente;
-    const idStr = idRaw != null ? String(idRaw).trim() : '';
-    const identityParts = [
-      idStr.length ? `id:${idStr}` : '',
-      cliente?.nombreCliente,
-      cliente?.nombre,
-      cliente?.apellidoPaterno,
-      cliente?.apellidoMaterno,
-      cliente?.razonSocial,
-      cliente?.rfc,
-      cliente?.correo ?? cliente?.email,
-      cliente?.telefono,
-      cliente?.telefonoMovil,
-      `row:${index}`,
-    ]
-      .map((v) => (v != null ? String(v).trim() : ''))
-      .filter((t) => t.length > 0);
-    const seed = identityParts.join('|') || `arrendador-${index}`;
-    return this.pickImageBySeed(seed, pool, pool[index % pool.length]);
-  }
-
-  private pickImageBySeed(seed: unknown, pool: string[], fallback: string): string {
-    if (!Array.isArray(pool) || !pool.length) return fallback;
-    const raw = String(seed ?? '');
-    let hash = 0;
-    for (let i = 0; i < raw.length; i++) {
-      hash = (hash * 31 + raw.charCodeAt(i)) | 0;
-    }
-    const idx = Math.abs(hash) % pool.length;
-    return pool[idx] || fallback;
+    return u != null ? String(u).trim() : '';
   }
 
   /** Empresa o persona que ocupa el local (según API). */

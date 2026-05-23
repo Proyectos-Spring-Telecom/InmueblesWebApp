@@ -43,7 +43,7 @@ export class ListaClientesComponent implements OnInit {
   public filtroActivo: string = '';
 
   readonly urlLogotipoPorDefecto =
-    'https://analiticadevideo.s3.us-east-1.amazonaws.com/Usuarios/d9ad9d73-b046-43a2-a4a0-d5fc2f3e3597.png';
+    'https://inmueblespring.s3.us-east-1.amazonaws.com/imagenes/user.png ';
 
   esLogotipoImagen(url: string | undefined): boolean {
     return !!url?.trim() && esImagenArchivo(url, 'logotipo');
