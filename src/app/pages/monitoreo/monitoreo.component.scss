@@ -1684,6 +1684,55 @@
   }
 }
 
+/* Arrendadores: en una misma fila todas las tarjetas miden igual (altura de la más alta); "Propiedades" queda al pie de cada una. */
+.surface .monitor-flow-panel--clientes .row.g-3 {
+  align-items: stretch;
+}
+
+.surface .monitor-flow-panel--clientes .row.g-3 > [class*="col-"] {
+  display: flex;
+  flex-direction: column;
+}
+
+.surface .monitor-flow-panel--clientes .cliente-grid-card.cliente-card-v2 {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  /* Sustituye el `gap: 0` de `.cliente-card-v2`: separa botón sin depender solo de márgenes. */
+  gap: 12px;
+}
+
+/* Cabecera + metadatos crecen: el bloque del botón queda alineado entre todas las cards de la fila. */
+.surface .monitor-flow-panel--clientes .cliente-card-body-stack {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.surface .monitor-flow-panel--clientes .cliente-card-head {
+  /* Logo + bloque texto centrados verticalmente entre sí dentro de la cabecera */
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .surface .monitor-flow-panel--clientes .cliente-card-head {
+    /* Banda mínima común para alinear etiqueta/título/logo entre cards (nombres largos siguen creciendo). */
+    min-height: 10rem;
+  }
+
+  .surface .monitor-flow-panel--clientes .cliente-card-media {
+    height: 118px;
+    min-height: 118px;
+    max-height: 118px;
+    box-sizing: border-box;
+  }
+}
+
+.surface .monitor-flow-panel--clientes .cliente-card-block--ubicacion {
+  flex-shrink: 0;
+}
+
 /* Mismo lenguaje visual de hover que .insta-item (lista de inmuebles). */
 .surface .cliente-grid-card {
   min-height: 0;
@@ -1917,8 +1966,9 @@
   font-weight: 600;
   max-width: 100%;
   line-height: 1.3;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
   white-space: normal;
 }
 
@@ -2469,5 +2519,415 @@
 
   .surface .clientes-search-input {
     font-size: 0.88rem;
+  }
+}
+
+/* ===== Responsive: tarjetas de inmuebles (lista monitoreo) ===== */
+.surface .monitor-list-pane--inmuebles .inmueble-card-shell {
+  padding: 0.5rem 0.55rem 0.45rem;
+  min-width: 0;
+  container-type: inline-size;
+  container-name: monitor-inmueble-card;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-content-grid {
+  grid-template-columns: minmax(88px, 118px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-media {
+  min-width: 0;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-media img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  max-height: 118px;
+  object-fit: cover;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-top {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px 8px;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-estatus-pill {
+  flex: 0 0 auto;
+  margin-left: auto;
+  max-width: 100%;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-info {
+  gap: 4px;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-line {
+  margin-top: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-line:has(mat-icon) {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-line:has(mat-icon) mat-icon {
+  flex-shrink: 0;
+  margin-right: 0;
+  margin-top: 1px;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-line:has(mat-icon) span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.surface .monitor-list-pane--inmuebles .inmueble-footer .btn.btn-sm.monitor-list-btn {
+  flex: 1 1 calc(33.333% - 6px);
+  min-width: 0;
+  max-width: 100%;
+  padding: 6px 8px;
+  font-size: clamp(0.68rem, 1.6vw, 0.82rem);
+  min-height: 34px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  hyphens: auto;
+}
+
+@container monitor-inmueble-card (max-width: 360px) {
+  .inmueble-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inmueble-media img {
+    max-height: 140px;
+    aspect-ratio: 16 / 9;
+  }
+
+  .inmueble-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inmueble-estatus-pill {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}
+
+/* Panel lista + mapa (col-lg-5 estrecho) */
+@media (min-width: 992px) and (max-width: 1399.98px) {
+  .surface .monitor-list-pane--inmuebles .inmueble-content-grid {
+    grid-template-columns: minmax(80px, 100px) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-media img {
+    max-height: 100px;
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-footer .btn.btn-sm.monitor-list-btn {
+    flex: 1 1 calc(50% - 4px);
+    font-size: 0.72rem;
+    min-height: 32px;
+    padding: 5px 6px;
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-footer .monitor-list-btn--estacionamiento {
+    flex: 1 1 100%;
+  }
+}
+
+@media (min-width: 1400px) {
+  .surface .monitor-list-pane--inmuebles .inmueble-content-grid {
+    grid-template-columns: minmax(100px, 118px) minmax(0, 1fr);
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-media img {
+    max-height: 118px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .surface .monitor-list-pane--inmuebles .inmueble-content-grid {
+    grid-template-columns: minmax(88px, 110px) minmax(0, 1fr);
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-media img {
+    max-height: 110px;
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-footer .btn.btn-sm.monitor-list-btn {
+    flex: 1 1 calc(50% - 4px);
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-footer .monitor-list-btn--estacionamiento {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .surface .monitor-list-pane--inmuebles .insta-item {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-content-grid {
+    grid-template-columns: minmax(76px, 96px) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-media img {
+    max-height: 96px;
+  }
+
+  .surface .monitor-list-pane--inmuebles .inmueble-footer .btn.btn-sm.monitor-list-btn {
+    flex: 1 1 100%;
+    font-size: 0.78rem;
+    min-height: 36px;
+  }
+}
+
+/* ===== Responsive: tarjetas de locales (lista monitoreo) ===== */
+.surface .monitor-list-pane--locales .local-zona-list-card {
+  min-width: 0;
+  container-type: inline-size;
+  container-name: monitor-local-card;
+}
+
+.surface .monitor-list-pane--locales .local-zona-content-grid {
+  grid-template-columns: minmax(88px, 118px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.surface .monitor-list-pane--locales .inmueble-media {
+  min-width: 0;
+}
+
+.surface .monitor-list-pane--locales .local-zona-list-card .inmueble-media img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  max-height: 118px;
+  object-fit: cover;
+}
+
+.surface .monitor-list-pane--locales .local-zona-list-card .inmueble-media--icon {
+  min-height: 0;
+}
+
+.surface .monitor-list-pane--locales .local-zona-list-card .local-zona-media-icon {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  max-height: 118px;
+  min-height: 88px;
+}
+
+.surface .monitor-list-pane--locales .local-zona-list-card .local-zona-media-icon mat-icon {
+  width: 48px;
+  height: 48px;
+  font-size: 48px;
+}
+
+.surface .monitor-list-pane--locales .inmueble-top--local {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px 8px;
+  margin-bottom: 4px;
+}
+
+.surface .monitor-list-pane--locales .inmueble-top--local .inmueble-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.surface .monitor-list-pane--locales .inmueble-status--inline {
+  flex: 0 0 auto;
+  margin-left: auto;
+  max-width: 100%;
+  font-size: 10px;
+  padding: 3px 9px;
+  line-height: 1.2;
+  border-radius: 999px;
+}
+
+.surface .monitor-list-pane--locales .local-zona-meta-wrap {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.surface .monitor-list-pane--locales .local-zona-meta-wrap .inmueble-line {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: 11px;
+}
+
+.surface .monitor-list-pane--locales .inmueble-info {
+  gap: 4px;
+  min-width: 0;
+}
+
+.surface .monitor-list-pane--locales .inmueble-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.surface .monitor-list-pane--locales .inmueble-footer .btn.btn-sm.monitor-list-btn {
+  flex: 0 1 calc(50% - 4px);
+  min-width: 0;
+  max-width: calc(50% - 4px);
+  padding: 6px 10px;
+  font-size: clamp(0.72rem, 1.6vw, 0.85rem);
+  min-height: 34px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+@container monitor-local-card (max-width: 320px) {
+  .local-zona-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .local-zona-list-card .inmueble-media img,
+  .local-zona-list-card .local-zona-media-icon {
+    max-height: 140px;
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+  }
+
+  .inmueble-top--local {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inmueble-status--inline {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}
+
+/* Panel lista + mapa (col-lg-5 estrecho) */
+@media (min-width: 992px) and (max-width: 1399.98px) {
+  .surface .monitor-list-pane--locales .local-zona-content-grid {
+    grid-template-columns: minmax(80px, 100px) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .surface .monitor-list-pane--locales .local-zona-list-card .inmueble-media img,
+  .surface .monitor-list-pane--locales .local-zona-list-card .local-zona-media-icon {
+    max-height: 100px;
+  }
+
+  .surface .monitor-list-pane--locales .inmueble-footer .btn.btn-sm.monitor-list-btn {
+    font-size: 0.74rem;
+    min-height: 32px;
+    padding: 5px 8px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .surface .monitor-list-pane--locales .local-zona-content-grid {
+    grid-template-columns: minmax(100px, 118px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 991.98px) {
+  .surface .monitor-list-pane--locales .local-zona-content-grid {
+    grid-template-columns: minmax(88px, 110px) minmax(0, 1fr);
+  }
+
+  .surface .monitor-list-pane--locales .local-zona-list-card .inmueble-media img,
+  .surface .monitor-list-pane--locales .local-zona-list-card .local-zona-media-icon {
+    max-height: 110px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .surface .monitor-list-pane--locales .insta-item {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .surface .monitor-list-pane--locales .local-zona-content-grid {
+    grid-template-columns: minmax(76px, 96px) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .surface .monitor-list-pane--locales .local-zona-list-card .inmueble-media img,
+  .surface .monitor-list-pane--locales .local-zona-list-card .local-zona-media-icon {
+    max-height: 92px;
+  }
+
+  .surface .monitor-list-pane--locales .local-zona-list-card .local-zona-media-icon mat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+  }
+
+  .surface .monitor-list-pane--locales .inmueble-status--inline {
+    font-size: 9px;
+    padding: 2px 8px;
+  }
+
+  .surface .monitor-list-pane--locales .inmueble-footer .btn.btn-sm.monitor-list-btn {
+    flex: 0 1 calc(50% - 4px);
+    max-width: calc(50% - 4px);
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 399.98px) {
+  .surface .monitor-list-pane--locales .inmueble-footer .btn.btn-sm.monitor-list-btn {
+    flex: 0 1 calc(50% - 4px);
+    max-width: calc(50% - 4px);
   }
 }

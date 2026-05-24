@@ -441,28 +441,30 @@
         <div [ngClass]="clientesGridRowClass" *ngIf="!cargandoClientes && clientesFiltrados.length > 0">
           <div [ngClass]="clienteCardColClass" *ngFor="let cliente of clientesFiltrados">
             <div class="inmueble-card-shell cliente-grid-card cliente-card-v2">
-              <header class="cliente-card-head">
-                <div class="cliente-card-media">
-                  <img *ngIf="getImagenClienteCard(cliente) as imgCliente" [src]="imgCliente"
-                    [attr.alt]="'Logo — ' + (cliente?.nombreCliente || cliente?.nombre || 'Arrendador')" />
-                </div>
-                <div class="cliente-card-head-main">
-                  <span class="cliente-card-role-label">Arrendador</span>
-                  <h3 class="cliente-card-title">{{ cliente?.nombreCliente || cliente?.nombre || 'Arrendador' }}</h3>
-                </div>
-              </header>
-
-              <section class="cliente-card-block cliente-card-block--tight"
-                *ngIf="getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']).length > 0">
-                <div class="cliente-meta-grid" role="list">
-                  <div class="cliente-meta-pair"
-                    *ngFor="let info of getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']) | slice:0:10"
-                    role="listitem">
-                    <span class="cliente-meta-label">{{ info.key }}</span>
-                    <p class="cliente-meta-value">{{ info.value }}</p>
+              <div class="cliente-card-body-stack">
+                <header class="cliente-card-head">
+                  <div class="cliente-card-media">
+                    <img *ngIf="getImagenClienteCard(cliente) as imgCliente" [src]="imgCliente"
+                      [attr.alt]="'Logo — ' + (cliente?.nombreCliente || cliente?.nombre || 'Arrendador')" />
                   </div>
-                </div>
-              </section>
+                  <div class="cliente-card-head-main">
+                    <span class="cliente-card-role-label">Arrendador</span>
+                    <h3 class="cliente-card-title">{{ cliente?.nombreCliente || cliente?.nombre || 'Arrendador' }}</h3>
+                  </div>
+                </header>
+
+                <section class="cliente-card-block cliente-card-block--tight"
+                  *ngIf="getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']).length > 0">
+                  <div class="cliente-meta-grid" role="list">
+                    <div class="cliente-meta-pair"
+                      *ngFor="let info of getClienteInfoEntries(cliente, ['nombreCliente', 'direccion']) | slice:0:10"
+                      role="listitem">
+                      <span class="cliente-meta-label">{{ info.key }}</span>
+                      <p class="cliente-meta-value">{{ info.value }}</p>
+                    </div>
+                  </div>
+                </section>
+              </div>
 
               <section class="cliente-card-block cliente-card-block--tight cliente-card-block--ubicacion">
                 <div class="cliente-ubicacion-grid">

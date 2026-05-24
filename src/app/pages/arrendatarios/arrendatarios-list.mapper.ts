@@ -10,6 +10,7 @@ export interface ArrendatarioGridRow {
   id: number;
   arrendatario: string;
   tipoPersonaLabel: string;
+  rfc: string;
   rentaFmt: string;
   fechaInicioFmt: string;
   fechaFinFmt: string;
@@ -120,6 +121,7 @@ export function construirTextoBusquedaArrendatario(item: Record<string, unknown>
 
   push(item['arrendatario']);
   push(item['nombre']);
+  push(item['rfc']);
   push(item['representanteLegal']);
   push(item['correoRepresentante']);
   push(item['telefonoRepresentante']);
@@ -189,6 +191,7 @@ export function mapArrendatariosApiToGridRows(rows: unknown[]): ArrendatarioGrid
       id,
       arrendatario: String(item['arrendatario'] ?? 'Sin nombre').trim() || 'Sin nombre',
       tipoPersonaLabel: etiquetaTipoPersonaArrendatario(item['tipoPersona']),
+      rfc: String(item['rfc'] ?? '').trim() || '—',
       rentaFmt: formatearMoneda(item['renta']),
       fechaInicioFmt: formatearFecha(String(item['fechaInicio'] ?? '')) || '—',
       fechaFinFmt: formatearFecha(String(item['fechaFin'] ?? '')) || '—',

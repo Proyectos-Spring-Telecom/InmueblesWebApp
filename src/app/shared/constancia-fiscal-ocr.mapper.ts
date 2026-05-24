@@ -35,6 +35,7 @@ export interface CamposInmuebleDesdeConstancia {
 
 export interface CamposArrendatarioDesdeConstancia {
   nombreInmueble?: string;
+  rfc?: string;
   tipoPersona?: number;
   direccionInmueble?: string;
 }
@@ -110,6 +111,9 @@ export function mapearConstanciaAArrendatario(
   const patch: CamposArrendatarioDesdeConstancia = {};
   const direccion = construirDireccionFiscalDesdeConstancia(c);
   if (direccion) patch.direccionInmueble = direccion;
+
+  const rfc = limpiarTexto(c.rfc).replace(/[^A-Za-z0-9]/g, '').slice(0, 13);
+  if (rfc) patch.rfc = rfc;
 
   const tipo = String(c.tipoContribuyente ?? '').toUpperCase().trim();
   const esMoral = tipo === 'PERSONA_MORAL';
