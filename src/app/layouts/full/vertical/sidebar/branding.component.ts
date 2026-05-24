@@ -8,10 +8,10 @@ import { CoreService } from 'src/app/services/core.service';
   standalone: true,
   imports: [RouterModule],
   template: `
-    <div class="branding d-flex align-items-center">
+    <div class="branding d-flex align-items-center" style="margin-left: -15px;">
       <a [routerLink]="['/']" class="d-flex align-items-center branding__link">
         <img
-          [src]="showImage"
+          [src]="'/assets/images/logos/spring_white.png'"
           (error)="onLogoError()"
           class="branding__img m-2"
           alt="logo"

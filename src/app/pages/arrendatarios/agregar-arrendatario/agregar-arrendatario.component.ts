@@ -325,6 +325,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (patch.nombreInmueble) valores['arrendatario'] = patch.nombreInmueble;
     if (patch.direccionInmueble) valores['direccionFiscal'] = patch.direccionInmueble;
     if (patch.tipoPersona != null) valores['tipoPersona'] = patch.tipoPersona;
+    if (patch.rfc) valores['rfc'] = patch.rfc;
 
     if (Object.keys(valores).length === 0) return;
 
@@ -426,6 +427,15 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.idContratoArrendatarioApi = null;
     this.arrendatarioForm = this.fb.group({
       arrendatario: ['', Validators.required],
+      rfc: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(12),
+          Validators.maxLength(13),
+          Validators.pattern(/^[A-Za-z0-9]+$/),
+        ],
+      ],
       tipoPersona: [null as number | null, Validators.required],
       renta: ['', Validators.required],
       direccionFiscal: [''],
@@ -634,6 +644,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const value =
       raw === null || raw === undefined || raw === '' ? null : Number(raw);
     this.arrendatarioForm.get('tipoPersona')?.setValue(value, { emitEvent: true });
+  }
+
+  sanitizeRfcInput(event: Event): void {
+    const inputElement = event.target as HTMLInputElement;
+    const sanitizedValue = inputElement.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 13);
+    inputElement.value = sanitizedValue;
+    this.arrendatarioForm.get('rfc')?.setValue(sanitizedValue, { emitEvent: false });
   }
 
   esPersonaFisica(): boolean {
@@ -1146,6 +1163,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.arrendatarioForm.patchValue(
       {
         arrendatario: arrendatarioNombre,
+        rfc: registro?.rfc ?? '',
         tipoPersona: 2,
         estatusInmueble: 'RENTADO',
         renta: localDemo?.mensualidadMxn ?? '',
@@ -1223,6 +1241,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.arrendatarioForm.patchValue(
       {
         arrendatario: data.arrendatario || 'Arrendatario Demo',
+        rfc: '',
         tipoPersona: 2,
         estatusInmueble: 'RENTADO',
         renta: data.mensualidadMxn || 25000,
@@ -1390,6 +1409,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.arrendatarioForm.patchValue(
       {
         arrendatario: this.strApi(item['arrendatario'] ?? item['nombre']),
+        rfc: this.strApi(item['rfc']),
         tipoPersona: tp != null && tp > 0 ? tp : null,
         renta: this.numForm(item['renta']),
         direccionFiscal: this.strApi(item['direccionFiscal']),
@@ -1788,6 +1808,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private readonly etiquetasCampos: Record<string, string> = {
     arrendatario: 'Nombre del arrendatario',
+    rfc: 'RFC',
     tipoPersona: 'Tipo de persona',
     renta: 'Renta',
     direccionFiscal: 'Dirección fiscal',
@@ -2160,6 +2181,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       fechaInicio: String(v['fechaInicio'] ?? '').trim(),
       fechaFin: String(v['fechaFin'] ?? '').trim(),
       arrendatario: String(v['arrendatario'] ?? '').trim(),
+      rfc: String(v['rfc'] ?? '').trim(),
       correoRepresentante: String(v['correoRepresentante'] ?? '').trim(),
       telefonoRepresentante: String(v['telefonoRepresentante'] ?? '').trim(),
       representanteLegal: String(v['representanteLegal'] ?? '').trim(),

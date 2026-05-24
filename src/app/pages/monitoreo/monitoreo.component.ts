@@ -419,7 +419,21 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       return this.listaInstalaciones;
     }
     const c = this.selectedCentral;
-    return Array.isArray(c?.instalaciones) ? c.instalaciones : [];
+    const list = Array.isArray(c?.instalaciones) ? c.instalaciones : [];
+    return this.ordenarInstalacionesPorId(list);
+  }
+
+  /** Inmuebles del arrendador: id ascendente (menor → mayor). */
+  private ordenarInstalacionesPorId(instalaciones: any[]): any[] {
+    return [...instalaciones].sort(
+      (a, b) => this.idInstalacionNumerico(a) - this.idInstalacionNumerico(b),
+    );
+  }
+
+  private idInstalacionNumerico(item: any): number {
+    const raw = item?.id ?? item?.idInstalacion ?? item?.idDepartamento;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
   }
 
   /** Nivel actual de la jerarquía: arrendadores → inmuebles → locales. */
@@ -910,7 +924,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     instalaciones: Record<string, unknown>[],
   ): any {
     const id = this.idArrendadorDesdeCentral(central);
-    const actualizado = { ...central, instalaciones };
+    const ordenadas = this.ordenarInstalacionesPorId(instalaciones);
+    const actualizado = { ...central, instalaciones: ordenadas };
     if (id == null) {
       return actualizado;
     }
@@ -1111,10 +1126,12 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 0);
 
     if ('ResizeObserver' in window && el) {
+      const observeTarget =
+        (el.closest('.map-wrapper') as HTMLElement | null) ?? el;
       this.resizeObserver = new ResizeObserver(() => {
         google.maps.event?.trigger(this.map, 'resize');
       });
-      this.resizeObserver.observe(el);
+      this.resizeObserver.observe(observeTarget);
     }
   }
 

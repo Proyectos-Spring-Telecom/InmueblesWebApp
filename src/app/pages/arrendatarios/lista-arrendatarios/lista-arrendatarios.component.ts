@@ -158,6 +158,7 @@ export class ListaArrendatariosComponent implements OnInit {
       const extras = [
         normalizar(row.etiquetaBusqueda),
         normalizar(row.arrendatario),
+        normalizar(row.rfc),
         normalizar(row.arrendadorNombre),
         normalizar(row.inmuebleVinculado),
         normalizar(row.direccionInmuebleVinculado),
