@@ -11,7 +11,7 @@ import { CoreService } from 'src/app/services/core.service';
     <div class="branding d-flex align-items-center" style="margin-left: -15px;">
       <a [routerLink]="['/']" class="d-flex align-items-center branding__link">
         <img
-          [src]="'/assets/images/logos/spring_white.png'"
+          src="assets/images/logos/logo_Spring.png"
           (error)="onLogoError()"
           class="branding__img m-2"
           alt="logo"
