@@ -131,6 +131,25 @@ export function construirTextoBusquedaArrendatario(item: Record<string, unknown>
   push(nombre);
   push(direccion);
 
+  const contratos = item['contratos'];
+  if (Array.isArray(contratos)) {
+    for (const c of contratos) {
+      if (c == null || typeof c !== 'object') continue;
+      const contrato = c as Record<string, unknown>;
+      const filas = contrato['contratoLocales'];
+      if (!Array.isArray(filas)) continue;
+      for (const fila of filas) {
+        if (fila == null || typeof fila !== 'object') continue;
+        const loc = (fila as Record<string, unknown>)['local'];
+        if (loc != null && typeof loc === 'object') {
+          const l = loc as Record<string, unknown>;
+          push(l['nombre']);
+          push(l['giro']);
+        }
+      }
+    }
+  }
+
   for (const k of Object.keys(item)) {
     const v = item[k];
     if (typeof v === 'string') push(v);

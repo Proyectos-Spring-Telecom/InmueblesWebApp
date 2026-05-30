@@ -6,13 +6,25 @@ import Swal from 'sweetalert2';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import { ArrendatarioGridRow } from '../arrendatarios-list.mapper';
 import {
+  claseChipEstatusLocal,
   esImagenArchivo,
   esPdfArchivo,
+  etiquetaEstatusLocal,
   formatearFecha,
   formatearMoneda,
   nombreArrendador,
   urlPdfMiniatura,
 } from '../../inmuebles/inmuebles-list.mapper';
+
+export interface MetricaContratoVista {
+  label: string;
+  value: string;
+}
+
+export interface GrupoMetricasContrato {
+  titulo: string;
+  metricas: MetricaContratoVista[];
+}
 
 @Component({
   selector: 'app-lista-arrendatarios-detalle',
@@ -43,6 +55,8 @@ export class ListaArrendatariosDetalleComponent {
   formatearFecha = formatearFecha;
   formatearMoneda = formatearMoneda;
   nombreArrendador = nombreArrendador;
+  etiquetaEstatusLocal = etiquetaEstatusLocal;
+  claseChipEstatusLocal = claseChipEstatusLocal;
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -157,60 +171,156 @@ export class ListaArrendatariosDetalleComponent {
     return fallback;
   }
 
-  metricasContrato(c: Record<string, unknown>): { label: string; value: string }[] {
-    const n = (k: string): string => {
-      const v = c[k];
-      if (v == null || v === '') return '—';
-      const num = Number(v);
-      if (Number.isFinite(num) && String(v).trim() !== '') {
-        if (
-          [
-            'metrosRentados',
-            'porcentajeMantenimiento',
-            'mesesDeposito',
-            'mesesAdelanto',
-            'aniosForzososArrendador',
-            'aniosForzososArrendatario',
-          ].includes(k)
-        ) {
-          return k === 'porcentajeMantenimiento' ? `${num} %` : String(num);
-        }
-        if (
-          [
-            'montoDeposito',
-            'montoAdelanto',
-            'subTotalRenta',
-            'ivaRenta',
-            'rentaTotal',
-            'subTotalMantenimiento',
-            'ivaMantenimiento',
-            'mantenimientoTotal',
-            'costoM2',
-          ].includes(k)
-        ) {
-          return formatearMoneda(v);
-        }
+  private valorMetricaContrato(c: Record<string, unknown>, k: string): string {
+    const v = c[k];
+    if (v == null || v === '') return '—';
+    const num = Number(v);
+    if (Number.isFinite(num) && String(v).trim() !== '') {
+      if (
+        [
+          'metrosRentados',
+          'porcentajeMantenimiento',
+          'mesesDeposito',
+          'mesesAdelanto',
+          'aniosForzososArrendador',
+          'aniosForzososArrendatario',
+        ].includes(k)
+      ) {
+        return k === 'porcentajeMantenimiento' ? `${num} %` : String(num);
       }
-      return String(v).trim();
-    };
+      if (
+        [
+          'montoDeposito',
+          'montoAdelanto',
+          'subTotalRenta',
+          'ivaRenta',
+          'rentaTotal',
+          'subTotalMantenimiento',
+          'ivaMantenimiento',
+          'mantenimientoTotal',
+          'costoM2',
+        ].includes(k)
+      ) {
+        return formatearMoneda(v);
+      }
+    }
+    return String(v).trim();
+  }
 
-    return [
-      { label: 'Metros rentados', value: n('metrosRentados') },
-      { label: 'Costo m²', value: n('costoM2') },
-      { label: '% mantenimiento', value: n('porcentajeMantenimiento') },
-      { label: 'Meses depósito', value: n('mesesDeposito') },
-      { label: 'Monto depósito', value: n('montoDeposito') },
-      { label: 'Meses adelanto', value: n('mesesAdelanto') },
-      { label: 'Monto adelanto', value: n('montoAdelanto') },
-      { label: 'Años forz. arrendador', value: n('aniosForzososArrendador') },
-      { label: 'Años forz. arrendatario', value: n('aniosForzososArrendatario') },
-      { label: 'Subtotal renta', value: n('subTotalRenta') },
-      { label: 'IVA renta', value: n('ivaRenta') },
-      { label: 'Renta total', value: n('rentaTotal') },
-      { label: 'Subtotal mant.', value: n('subTotalMantenimiento') },
-      { label: 'IVA mant.', value: n('ivaMantenimiento') },
-      { label: 'Mantenimiento total', value: n('mantenimientoTotal') },
+  private metricasContratoKeys(
+    c: Record<string, unknown>,
+    keys: { label: string; key: string }[],
+  ): MetricaContratoVista[] {
+    return keys.map(({ label, key }) => ({
+      label,
+      value: this.valorMetricaContrato(c, key),
+    }));
+  }
+
+  gruposMetricasContrato(c: Record<string, unknown>): GrupoMetricasContrato[] {
+    const grupos: GrupoMetricasContrato[] = [
+      {
+        titulo: 'Superficie y tarifa',
+        metricas: this.metricasContratoKeys(c, [
+          { label: 'Metros rentados', key: 'metrosRentados' },
+          { label: 'Costo m²', key: 'costoM2' },
+          { label: '% mantenimiento', key: 'porcentajeMantenimiento' },
+        ]),
+      },
+      {
+        titulo: 'Depósito y adelanto',
+        metricas: this.metricasContratoKeys(c, [
+          { label: 'Meses depósito', key: 'mesesDeposito' },
+          { label: 'Monto depósito', key: 'montoDeposito' },
+          { label: 'Meses adelanto', key: 'mesesAdelanto' },
+          { label: 'Monto adelanto', key: 'montoAdelanto' },
+        ]),
+      },
+      {
+        titulo: 'Plazo forzoso',
+        metricas: this.metricasContratoKeys(c, [
+          { label: 'Arrendador (años)', key: 'aniosForzososArrendador' },
+          { label: 'Arrendatario (años)', key: 'aniosForzososArrendatario' },
+        ]),
+      },
+      {
+        titulo: 'Desglose de renta',
+        metricas: this.metricasContratoKeys(c, [
+          { label: 'Subtotal renta', key: 'subTotalRenta' },
+          { label: 'IVA renta', key: 'ivaRenta' },
+          { label: 'Renta total', key: 'rentaTotal' },
+        ]),
+      },
+      {
+        titulo: 'Desglose de mantenimiento',
+        metricas: this.metricasContratoKeys(c, [
+          { label: 'Subtotal mant.', key: 'subTotalMantenimiento' },
+          { label: 'IVA mant.', key: 'ivaMantenimiento' },
+          { label: 'Mantenimiento total', key: 'mantenimientoTotal' },
+        ]),
+      },
     ];
+    return grupos
+      .map((g) => ({
+        ...g,
+        metricas: g.metricas.filter((m) => m.value !== '—'),
+      }))
+      .filter((g) => g.metricas.length > 0);
+  }
+
+  localesDesdeContrato(c: Record<string, unknown>): Record<string, unknown>[] {
+    const filas = c['contratoLocales'];
+    if (!Array.isArray(filas)) return [];
+    const out: Record<string, unknown>[] = [];
+    for (const raw of filas) {
+      if (raw == null || typeof raw !== 'object') continue;
+      const fila = raw as Record<string, unknown>;
+      const loc = fila['local'];
+      if (loc != null && typeof loc === 'object') {
+        out.push({
+          ...(loc as Record<string, unknown>),
+          idContratoLocal: fila['id'],
+          idLocalContrato: fila['idLocal'],
+        });
+        continue;
+      }
+      out.push(fila);
+    }
+    return out.sort((a, b) =>
+      String(a['nombre'] ?? '').localeCompare(String(b['nombre'] ?? ''), 'es'),
+    );
+  }
+
+  cantidadLocalesContrato(c: Record<string, unknown>): number {
+    return this.localesDesdeContrato(c).length;
+  }
+
+  areaTotalLocalesContrato(c: Record<string, unknown>): number | null {
+    const locales = this.localesDesdeContrato(c);
+    if (!locales.length) return null;
+    let sum = 0;
+    let tiene = false;
+    for (const loc of locales) {
+      const n = Number(loc['areaM2']);
+      if (Number.isFinite(n)) {
+        sum += n;
+        tiene = true;
+      }
+    }
+    return tiene ? sum : null;
+  }
+
+  urlFachadaLocal(loc: Record<string, unknown>): string {
+    const direct = String(
+      loc['fachadaUrl'] ?? loc['urlFachada'] ?? loc['imagenFachada'] ?? '',
+    ).trim();
+    if (direct) return direct;
+    const fachada = loc['fachada'];
+    if (fachada != null && typeof fachada === 'object' && !Array.isArray(fachada)) {
+      return String((fachada as Record<string, unknown>)['url'] ?? '').trim();
+    }
+    if (typeof fachada === 'string' && fachada.trim()) return fachada.trim();
+    return '';
   }
 
   inmuebleDesdeContrato(c: Record<string, unknown>): Record<string, unknown> | null {
@@ -219,10 +329,4 @@ export class ListaArrendatariosDetalleComponent {
     return null;
   }
 
-  etiquetaEstatusInmuebleEmpresa(raw: unknown): string {
-    const n = Number(raw);
-    if (n === 1) return 'Rentado';
-    if (n === 2) return 'Propio';
-    return '—';
-  }
 }

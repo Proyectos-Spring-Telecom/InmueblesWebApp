@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, debounceTime, finalize, forkJoin, of, Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -78,9 +78,15 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   /** Carga del GET `/arrendatarios/{id}` en curso. */
   cargandoDetalle = false;
   public listaClientes: { id: number; nombre?: string; apellidoPaterno?: string; apellidoMaterno?: string }[] = [];
+  /** Inmuebles del arrendador seleccionado (GET `/inmuebles/arrendador/{id}`). */
   public listaInmuebles: { id: number; etiqueta: string }[] = [];
-  public listaLocalesLibres: { id: number; etiqueta: string }[] = [];
-  cargandoLocalesLibres = false;
+  cargandoInmueblesArrendador = false;
+  /** Opciones del tag-box por contrato (GET `/inmuebles/locales-libres/{idInmueble}`). */
+  localesLibresPorContrato: { id: number; nombre: string; etiqueta: string }[][] = [[]];
+  cargandoLocalesPorContrato: boolean[] = [false];
+  /** Índice del contrato cuyo menú de locales está abierto (-1 = ninguno). */
+  localesDropdownContratoIndex = -1;
+  private contratosInmuebleSubs: Subscription[] = [];
   public listaCatServicios: CatServicioItem[] = [];
   loadingSubmit = false;
   mostrarModalMapa = false;
@@ -126,7 +132,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private promptAutocargaMostrado = false;
   private readonly debounceLogMs = 400;
   private formValueLogSub?: Subscription;
-  private idInmuebleChangeSub?: Subscription;
+  private idArrendadorSub?: Subscription;
 
   /** Última respuesta de documentos del GET (ids por slot). */
   private documentosApiUltimaCarga: Partial<Record<SlotDocumentoInmueble, InmuebleArchivoApi>> = {};
@@ -134,11 +140,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private sociosEdicionSnapshots: SocioArrendatarioEdicionSnap[] | null = null;
   private documentosEdicionSnapshots: Partial<Record<string, DocSlotArrendatarioSnap>> | null = null;
   private galeriaEdicionSnapshots: GaleriaArrendatarioSnap[] | null = null;
-  /** Firma estable (`JSON` ordenado) del bloque `contratoArrendatario` tras cargar edición; no incluye `id`. */
+  /** Firma estable del arreglo `contratos` tras cargar edición (sin campos excluidos por API). */
   private contratoEdicionSnapshotJson: string | null = null;
-
-  /** Id del contrato principal cargado del GET (respaldo si el control del formulario se pierde). */
-  private idContratoArrendatarioApi: number | null = null;
 
   private readonly controlDocumentoASlot: Record<string, SlotDocumentoInmueble> = {
     documentoContratoRenta: 'contratoRenta',
@@ -196,13 +199,17 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
     this.initTipoPersonaLogic();
-    this.initContratoInmuebleLocalLogic();
+    this.inicializarContratosArrendatarioLogic();
+    this.enlazarInmueblesArrendador();
+    this.actualizarEstadoInmuebleContratos();
     this.formValueLogSub = this.arrendatarioForm.valueChanges
       .pipe(debounceTime(this.debounceLogMs))
       .subscribe(() => {
-        // Mismo criterio que `agregar-inmueble`: log tras pausa de escritura (incluye valores actuales).
+        const raw = this.arrendatarioForm.getRawValue() as Record<string, unknown>;
+        const { contratos: _contratosForm, ...restoFormulario } = raw;
         console.log('[agregar-arrendatario] valor del formulario (tras pausa de escritura)', {
-          value: this.arrendatarioForm.getRawValue(),
+          value: restoFormulario,
+          contratos: this.construirContratosArrendatarioDesdeFormulario(),
         });
       });
 
@@ -211,12 +218,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       catServicios: this.catServiciosService
         .obtenerServiciosPaginados(1, 30)
         .pipe(catchError(() => of(null))),
-      inmuebles: this.inmueblesService
-        .obtenerInmueblesData(1, 200)
-        .pipe(catchError(() => of(null))),
-    }).subscribe(({ clientes, catServicios, inmuebles }) => {
+    }).subscribe(({ clientes, catServicios }) => {
       this.asignarListaClientes(clientes);
-      this.asignarListaInmuebles(inmuebles);
       if (catServicios != null) {
         this.listaCatServicios = this.extraerFilasCatServicios(catServicios);
       } else {
@@ -252,7 +255,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.formValueLogSub?.unsubscribe();
-    this.idInmuebleChangeSub?.unsubscribe();
+    this.idArrendadorSub?.unsubscribe();
+    this.contratosInmuebleSubs.forEach((sub) => sub.unsubscribe());
+    this.contratosInmuebleSubs = [];
   }
 
   private mostrarPromptAutocargaContrato(): void {
@@ -424,7 +429,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.documentosEdicionSnapshots = null;
     this.galeriaEdicionSnapshots = null;
     this.contratoEdicionSnapshotJson = null;
-    this.idContratoArrendatarioApi = null;
     this.arrendatarioForm = this.fb.group({
       arrendatario: ['', Validators.required],
       rfc: [
@@ -448,12 +452,40 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       representanteLegal: ['', Validators.required],
       telefonoRepresentante: ['', Validators.required],
       correoRepresentante: ['', [Validators.required, Validators.email]],
-      /** Id del registro de contrato en API (solo edición; va dentro de `contratoArrendatario.id`). */
-      idContrato: [null as number | null],
-      idInmueble: [null as number | null],
-      idLocal: [{ value: null as number | null, disabled: true }],
       lat: [''],
       lng: [''],
+      documentoPlano: [null],
+      documentoContratoRenta: [null],
+      documentoConstanciaFiscal: [null],
+      constanciaSituacionFiscalRepresentanteLegal: [null],
+      documentoComprobanteDomicilio: [null],
+      ineRepresentanteLegal: [null],
+      galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
+      /** Dos filas por defecto: Renta y Mantenimiento (`syncServiciosIdsDesdeCatalogo`). */
+      servicios: this.fb.array([this.crearServicioFormGroup(), this.crearServicioFormGroup()]),
+      pagos: this.fb.array([]),
+      socios: this.fb.array([this.crearSocioFormGroup()]),
+      locales: this.fb.array([this.crearLocalFormGroup()]),
+      contratos: this.fb.array([this.crearContratoFormGroup()]),
+    });
+    this.localesLibresPorContrato = [[]];
+    this.cargandoLocalesPorContrato = [false];
+  }
+
+  private initTipoPersonaLogic(): void {
+    const ctrl = this.arrendatarioForm.get('tipoPersona');
+    if (!ctrl) return;
+    this.aplicarValidadoresTipoPersona(ctrl.value);
+    ctrl.valueChanges.subscribe((v) => this.aplicarValidadoresTipoPersona(v));
+  }
+
+  private crearContratoFormGroup(): FormGroup {
+    return this.fb.group({
+      /** Id del registro de contrato en API (solo edición; no se envía en `contratos`). */
+      idContrato: [null as number | null],
+      idInmueble: [null as number | null],
+      /** Locales seleccionados (mismo nombre que el payload API). */
+      idLocales: [[] as number[]],
       fechaInicioContrato: [''],
       fechaTerminoContrato: [''],
       tipoMoneda: ['MXN'],
@@ -473,62 +505,135 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       ivaMantenimiento: [''],
       mantenimientoTotal: [''],
       observaciones: [''],
-      documentoPlano: [null],
-      documentoContratoRenta: [null],
-      documentoConstanciaFiscal: [null],
-      constanciaSituacionFiscalRepresentanteLegal: [null],
-      documentoComprobanteDomicilio: [null],
-      ineRepresentanteLegal: [null],
-      galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
-      /** Dos filas por defecto: Renta y Mantenimiento (`syncServiciosIdsDesdeCatalogo`). */
-      servicios: this.fb.array([this.crearServicioFormGroup(), this.crearServicioFormGroup()]),
-      pagos: this.fb.array([]),
-      socios: this.fb.array([this.crearSocioFormGroup()]),
-      locales: this.fb.array([this.crearLocalFormGroup()]),
     });
   }
 
-  private initTipoPersonaLogic(): void {
-    const ctrl = this.arrendatarioForm.get('tipoPersona');
-    if (!ctrl) return;
-    this.aplicarValidadoresTipoPersona(ctrl.value);
-    ctrl.valueChanges.subscribe((v) => this.aplicarValidadoresTipoPersona(v));
+  private inicializarContratosArrendatarioLogic(): void {
+    this.contratosInmuebleSubs.forEach((sub) => sub.unsubscribe());
+    this.contratosInmuebleSubs = [];
+    this.contratosFormArray.controls.forEach((_, index) => {
+      this.enlazarInmuebleLocalContrato(index);
+    });
+    this.actualizarEstadoInmuebleContratos();
   }
 
-  private initContratoInmuebleLocalLogic(): void {
-    const ctrl = this.arrendatarioForm.get('idInmueble');
+  private enlazarInmueblesArrendador(): void {
+    const ctrl = this.arrendatarioForm.get('idArrendador');
     if (!ctrl) return;
-    this.idInmuebleChangeSub = ctrl.valueChanges.subscribe((raw) => {
-      this.arrendatarioForm.patchValue({ idLocal: null }, { emitEvent: false });
+    this.idArrendadorSub?.unsubscribe();
+    this.idArrendadorSub = ctrl.valueChanges.subscribe((raw) => {
+      this.onArrendadorContratoChanged(raw);
+    });
+  }
+
+  private onArrendadorContratoChanged(raw: unknown): void {
+    this.limpiarInmueblesContratosTrasCambioArrendador();
+    const id =
+      raw != null && String(raw).trim() !== '' ? Number(raw) : Number.NaN;
+    if (Number.isFinite(id) && id > 0) {
+      this.cargarInmueblesPorArrendador(Math.trunc(id));
+    } else {
+      this.listaInmuebles = [];
+      this.actualizarEstadoInmuebleContratos();
+      this.cdr.markForCheck();
+    }
+  }
+
+  private limpiarInmueblesContratosTrasCambioArrendador(): void {
+    this.listaInmuebles = [];
+    this.contratosFormArray.controls.forEach((_, index) => {
+      const grupo = this.contratosFormArray.at(index) as FormGroup;
+      grupo.get('idInmueble')?.setValue(null, { emitEvent: false });
+      this.limpiarIdLocalesContrato(index);
+      this.localesLibresPorContrato[index] = [];
+      this.cargandoLocalesPorContrato[index] = false;
+    });
+    this.cerrarLocalesDropdown();
+    this.actualizarEstadoInmuebleContratos();
+  }
+
+  private cargarInmueblesPorArrendador(idArrendador: number, onListo?: () => void): void {
+    this.cargandoInmueblesArrendador = true;
+    this.actualizarEstadoInmuebleContratos();
+    this.inmueblesService
+      .obtenerInmueblesPorArrendador(idArrendador)
+      .pipe(
+        catchError(() => of(null)),
+        finalize(() => {
+          this.cargandoInmueblesArrendador = false;
+          this.actualizarEstadoInmuebleContratos();
+          onListo?.();
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe((res) => {
+        this.asignarListaInmuebles(res);
+        this.cdr.markForCheck();
+      });
+  }
+
+  private actualizarEstadoInmuebleContratos(): void {
+    const deshabilitado = this.inmuebleContratoDeshabilitado();
+    this.contratosFormArray.controls.forEach((ctrl) => {
+      const c = (ctrl as FormGroup).get('idInmueble');
+      if (!c) return;
+      if (deshabilitado) {
+        c.disable({ emitEvent: false });
+      } else {
+        c.enable({ emitEvent: false });
+      }
+    });
+  }
+
+  arrendadorContratoSeleccionado(): boolean {
+    const id = Number(this.arrendatarioForm.get('idArrendador')?.value);
+    return Number.isFinite(id) && id > 0;
+  }
+
+  inmuebleContratoDeshabilitado(): boolean {
+    if (!this.arrendadorContratoSeleccionado()) return true;
+    if (this.cargandoInmueblesArrendador) return true;
+    return this.listaInmuebles.length === 0;
+  }
+
+  placeholderInmuebleContrato(): string {
+    if (!this.arrendadorContratoSeleccionado()) return 'Selecciona arrendador primero';
+    if (this.cargandoInmueblesArrendador) return 'Cargando inmuebles…';
+    if (this.listaInmuebles.length === 0) return 'Sin inmuebles disponibles';
+    return 'Selecciona inmueble';
+  }
+
+  private enlazarInmuebleLocalContrato(indexContrato: number): void {
+    const grupo = this.contratosFormArray.at(indexContrato) as FormGroup;
+    const ctrlInmueble = grupo.get('idInmueble');
+    if (!ctrlInmueble) return;
+
+    this.contratosInmuebleSubs[indexContrato]?.unsubscribe();
+    this.contratosInmuebleSubs[indexContrato] = ctrlInmueble.valueChanges.subscribe((raw) => {
+      this.cerrarLocalesDropdown();
+      this.limpiarIdLocalesContrato(indexContrato);
+      this.localesLibresPorContrato[indexContrato] = [];
+      this.cdr.markForCheck();
       const id =
         raw != null && String(raw).trim() !== '' ? Number(raw) : Number.NaN;
       if (Number.isFinite(id) && id > 0) {
-        this.cargarLocalesLibres(Math.trunc(id), null, null);
-        return;
+        this.cargarLocalesLibresContrato(indexContrato, Math.trunc(id));
       }
-      this.listaLocalesLibres = [];
-      this.actualizarEstadoControlIdLocal();
     });
   }
 
-  /**
-   * `contratoOrigen`: fila del contrato del GET; si el local ya está ocupado no viene en «libres» y hay que inyectarlo.
-   */
-  private cargarLocalesLibres(
+  private cargarLocalesLibresContrato(
+    indexContrato: number,
     idInmueble: number,
-    idLocalPreservar?: number | null,
-    contratoOrigen?: Record<string, unknown> | null,
+    idLocalesPreservar?: number[] | null,
   ): void {
-    this.cargandoLocalesLibres = true;
-    this.listaLocalesLibres = [];
-    this.actualizarEstadoControlIdLocal();
+    this.cargandoLocalesPorContrato[indexContrato] = true;
     this.inmueblesService
       .obtenerLocalesLibres(idInmueble)
       .pipe(
         catchError(() => of(null)),
         finalize(() => {
-          this.cargandoLocalesLibres = false;
-          this.actualizarEstadoControlIdLocal();
+          this.cargandoLocalesPorContrato[indexContrato] = false;
           if (this.esEdicionArrendatario()) {
             this.actualizarContratoEdicionSnapshotDesdeFormularioActual();
           }
@@ -536,103 +641,90 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         }),
       )
       .subscribe((res) => {
-        this.asignarListaLocalesLibres(res);
-        const preserve =
-          idLocalPreservar != null && Number.isFinite(Number(idLocalPreservar))
-            ? Math.trunc(Number(idLocalPreservar))
-            : null;
-        if (preserve != null && preserve > 0 && contratoOrigen) {
-          this.inyectarLocalContratoEnListaLibres(preserve, contratoOrigen);
+        this.localesLibresPorContrato[indexContrato] = this.mapearLocalesLibresDesdeApi(res);
+        const preserve = (idLocalesPreservar ?? [])
+          .map((id) => Math.trunc(Number(id)))
+          .filter((id) => Number.isFinite(id) && id > 0);
+        const opciones = this.localesLibresPorContrato[indexContrato] ?? [];
+        const idsValidos = preserve.filter((id) => opciones.some((l) => l.id === id));
+        if (idsValidos.length > 0) {
+          this.idLocalesControl(indexContrato).setValue([...idsValidos], { emitEvent: false });
         }
-        if (preserve != null && preserve > 0) {
-          if (this.listaLocalesLibres.some((l) => l.id === preserve)) {
-            this.arrendatarioForm.patchValue({ idLocal: preserve }, { emitEvent: false });
-          }
-        }
-        this.actualizarEstadoControlIdLocal();
+        this.cdr.markForCheck();
       });
   }
 
-  /** Añade el local del contrato actual a las opciones si la API de «libres» no lo devuelve (p. ej. ya asignado). */
-  private inyectarLocalContratoEnListaLibres(idLoc: number, c: Record<string, unknown>): void {
-    if (!Number.isFinite(idLoc) || idLoc <= 0) return;
-    const idTrunc = Math.trunc(idLoc);
-    if (this.listaLocalesLibres.some((l) => l.id === idTrunc)) return;
-    const loc = c['local'];
-    if (loc != null && typeof loc === 'object') {
-      const row = loc as Record<string, unknown>;
-      const etiqueta = this.etiquetaLocalLibre(row);
-      this.listaLocalesLibres = [...this.listaLocalesLibres, { id: idTrunc, etiqueta }];
-    } else {
-      this.listaLocalesLibres = [
-        ...this.listaLocalesLibres,
-        { id: idTrunc, etiqueta: `Local ${idTrunc}` },
-      ];
-    }
-    this.listaLocalesLibres.sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es'));
+  private limpiarIdLocalesContrato(indexContrato: number): void {
+    (this.contratosFormArray.at(indexContrato) as FormGroup)
+      .get('idLocales')
+      ?.setValue([], { emitEvent: false });
   }
 
-  private actualizarEstadoControlIdLocal(): void {
-    const ctrl = this.arrendatarioForm.get('idLocal');
-    if (!ctrl) return;
-    const idInm = Number(this.arrendatarioForm.get('idInmueble')?.value);
-    const puedeElegir =
-      Number.isFinite(idInm) &&
-      idInm > 0 &&
-      !this.cargandoLocalesLibres &&
-      this.listaLocalesLibres.length > 0;
-    if (puedeElegir) {
-      ctrl.enable({ emitEvent: false });
-    } else {
-      ctrl.disable({ emitEvent: false });
+  private extraerFilasLocalesApi(resp: unknown): Record<string, unknown>[] {
+    if (Array.isArray(resp)) {
+      return resp.filter(
+        (x): x is Record<string, unknown> =>
+          x != null && typeof x === 'object' && !Array.isArray(x),
+      );
     }
+    if (resp != null && typeof resp === 'object') {
+      const data = (resp as Record<string, unknown>)['data'];
+      if (Array.isArray(data)) {
+        return data.filter(
+          (x): x is Record<string, unknown> =>
+            x != null && typeof x === 'object' && !Array.isArray(x),
+        );
+      }
+    }
+    return [];
   }
 
-  private asignarListaLocalesLibres(res: unknown): void {
-    if (res == null) {
-      this.listaLocalesLibres = [];
-      return;
-    }
-    let rows: unknown = res;
-    if (typeof res === 'object' && !Array.isArray(res)) {
-      const bag = res as Record<string, unknown>;
-      rows = bag['data'] ?? bag['locales'] ?? bag['items'] ?? bag['content'];
-    }
-    if (!Array.isArray(rows)) {
-      this.listaLocalesLibres = [];
-      return;
-    }
-    const items = rows
-      .map((raw) => {
-        const row = raw as Record<string, unknown>;
+  private mapearLocalesLibresDesdeApi(
+    resp: unknown,
+  ): { id: number; nombre: string; etiqueta: string }[] {
+    return this.extraerFilasLocalesApi(resp)
+      .map((row) => {
         const id = Number(row['id'] ?? row['idLocal']);
         if (!Number.isFinite(id) || id <= 0) return null;
-        return { id: Math.trunc(id), etiqueta: this.etiquetaLocalLibre(row) };
+        return {
+          id: Math.trunc(id),
+          nombre: this.nombreLocalLibre(row),
+          etiqueta: this.etiquetaLocalLibre(row),
+        };
       })
-      .filter((x): x is { id: number; etiqueta: string } => x != null);
-    items.sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es'));
-    this.listaLocalesLibres = items;
+      .filter((x): x is { id: number; nombre: string; etiqueta: string } => x != null)
+      .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es'));
+  }
+
+  private nombreLocalLibre(row: Record<string, unknown>): string {
+    const idRef = row['id'] ?? row['idLocal'];
+    return (
+      String(row['nombre'] ?? row['nombreLocal'] ?? '').trim() ||
+      (idRef != null ? `Local ${idRef}` : 'Local')
+    );
   }
 
   private etiquetaLocalLibre(row: Record<string, unknown>): string {
-    const idRef = row['id'] ?? row['idLocal'];
-    const nombre = String(row['nombre'] ?? row['nombreLocal'] ?? '').trim();
+    const nombre = this.nombreLocalLibre(row);
+    const partes = [`Nombre: ${nombre}`];
     const mensualidadRaw = row['mensualidad'];
-    const mensualidad =
-      mensualidadRaw != null && String(mensualidadRaw).trim() !== ''
-        ? String(mensualidadRaw).trim()
-        : '';
-    const zonaObj = row['zona'];
-    const zonaPrincipal =
-      zonaObj != null && typeof zonaObj === 'object'
-        ? String((zonaObj as Record<string, unknown>)['zonaPrincipal'] ?? '').trim()
-        : String(row['zonaPrincipal'] ?? row['nivel'] ?? '').trim();
-    const parts = [
-      nombre || (idRef != null ? `Local ${idRef}` : 'Local'),
-      mensualidad,
-      zonaPrincipal,
-    ].filter(Boolean);
-    return parts.join(' — ');
+    if (mensualidadRaw != null && String(mensualidadRaw).trim() !== '') {
+      partes.push(`Mensualidad: ${this.formatearMensualidadLocal(mensualidadRaw)}`);
+    }
+    return partes.join(' - ');
+  }
+
+  /** MXN con centavos solo si el valor los trae (p. ej. $3,500.65 o $70,000). */
+  private formatearMensualidadLocal(val: unknown): string {
+    const n = Number(val);
+    if (!Number.isFinite(n)) return '—';
+    const hasCentavos = Math.abs(n - Math.trunc(n)) > 0.001;
+    return n.toLocaleString('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: hasCentavos ? 2 : 0,
+      maximumFractionDigits: hasCentavos ? 2 : 0,
+    });
   }
 
   private aplicarValidadoresTipoPersona(_raw: unknown): void {
@@ -743,6 +835,101 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     });
   }
 
+  get contratosFormArray(): FormArray {
+    return this.arrendatarioForm.get('contratos') as FormArray;
+  }
+
+  idLocalesControl(index: number): FormControl<number[]> {
+    return (this.contratosFormArray.at(index) as FormGroup).get('idLocales') as FormControl<number[]>;
+  }
+
+  inmuebleContratoSeleccionado(index: number): boolean {
+    const idInm = Number(
+      (this.contratosFormArray.at(index) as FormGroup).get('idInmueble')?.value,
+    );
+    return Number.isFinite(idInm) && idInm > 0;
+  }
+
+  idLocalesContrato(index: number): number[] {
+    return this.normalizarIdLocalesValue(this.idLocalesControl(index).value);
+  }
+
+  localesDropdownAbierto(index: number): boolean {
+    return this.localesDropdownContratoIndex === index;
+  }
+
+  localesContratoDeshabilitado(index: number): boolean {
+    if (!this.arrendadorContratoSeleccionado()) return true;
+    if (!this.inmuebleContratoSeleccionado(index)) return true;
+    if (this.cargandoLocalesPorContrato[index]) return true;
+    return (this.localesLibresPorContrato[index]?.length ?? 0) === 0;
+  }
+
+  placeholderLocalesContrato(index: number): string {
+    if (!this.arrendadorContratoSeleccionado()) return 'Selecciona arrendador';
+    if (!this.inmuebleContratoSeleccionado(index)) return 'Selecciona inmueble';
+    if (this.cargandoLocalesPorContrato[index]) return 'Cargando locales…';
+    if ((this.localesLibresPorContrato[index]?.length ?? 0) === 0) return 'Sin locales disponibles';
+    return 'Selecciona local(es)';
+  }
+
+  toggleLocalesDropdown(index: number, event?: Event): void {
+    event?.stopPropagation();
+    if (this.localesContratoDeshabilitado(index)) return;
+    this.localesDropdownContratoIndex =
+      this.localesDropdownContratoIndex === index ? -1 : index;
+  }
+
+  cerrarLocalesDropdown(): void {
+    this.localesDropdownContratoIndex = -1;
+  }
+
+  @HostListener('document:click')
+  onDocumentClickCerrarLocalesDropdown(): void {
+    this.cerrarLocalesDropdown();
+  }
+
+  localContratoEstaSeleccionado(index: number, idLocal: number): boolean {
+    return this.idLocalesContrato(index).includes(idLocal);
+  }
+
+  toggleLocalContrato(index: number, idLocal: number, event?: Event): void {
+    event?.stopPropagation();
+    const actual = [...this.idLocalesContrato(index)];
+    const pos = actual.indexOf(idLocal);
+    if (pos >= 0) actual.splice(pos, 1);
+    else actual.push(idLocal);
+    actual.sort((a, b) => a - b);
+    this.idLocalesControl(index).setValue(actual, { emitEvent: false });
+    this.cdr.markForCheck();
+  }
+
+  quitarLocalContrato(index: number, idLocal: number, event: Event): void {
+    event.stopPropagation();
+    const actual = this.idLocalesContrato(index).filter((id) => id !== idLocal);
+    this.idLocalesControl(index).setValue(actual, { emitEvent: false });
+    this.cdr.markForCheck();
+  }
+
+  nombreLocalContrato(index: number, idLocal: number): string {
+    const loc = (this.localesLibresPorContrato[index] ?? []).find((l) => l.id === idLocal);
+    return loc?.nombre ?? `Local ${idLocal}`;
+  }
+
+  private normalizarIdLocalesValue(raw: unknown): number[] {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((x) => {
+        if (x != null && typeof x === 'object') {
+          const row = x as Record<string, unknown>;
+          const idRef = row['id'] ?? row['idLocal'];
+          return Math.trunc(Number(idRef));
+        }
+        return Math.trunc(Number(x));
+      })
+      .filter((n) => Number.isFinite(n) && n > 0);
+  }
+
   get localesFormArray(): FormArray {
     return this.arrendatarioForm.get('locales') as FormArray;
   }
@@ -767,21 +954,112 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     return this.arrendatarioForm.get('socios') as FormArray;
   }
 
-  /** Label flotante del select Local según carga y resultados del API. */
-  get etiquetaFloatingLocal(): string {
-    if (this.cargandoLocalesLibres) return 'Cargando locales…';
-    const idInm = Number(this.arrendatarioForm.get('idInmueble')?.value);
-    if (!Number.isFinite(idInm) || idInm <= 0) return 'Selecciona inmueble primero';
-    if (this.listaLocalesLibres.length === 0) return 'Sin locales disponibles';
-    return 'Selecciona local';
+  /** Ítems expandidos del acordeón de contratos (el primero inicia abierto). */
+  contratoAccordionIndicesAbiertos: number[] = [0];
+
+  onContratoAccordionIndicesChange(raw: number | number[]): void {
+    if (Array.isArray(raw)) {
+      this.contratoAccordionIndicesAbiertos = raw;
+      return;
+    }
+    this.contratoAccordionIndicesAbiertos = raw >= 0 ? [raw] : [];
   }
 
-  /** API de locales libres respondió `[]` para el inmueble elegido. */
-  get mostrarAvisoLocalesLibresVacios(): boolean {
-    const idInm = Number(this.arrendatarioForm.get('idInmueble')?.value);
+  agregarContratoArrendatario(): void {
+    this.contratosFormArray.push(this.crearContratoFormGroup());
+    const nuevoIndex = this.contratosFormArray.length - 1;
+    this.localesLibresPorContrato.push([]);
+    this.cargandoLocalesPorContrato.push(false);
+    this.enlazarInmuebleLocalContrato(nuevoIndex);
+    this.actualizarEstadoInmuebleContratos();
+    const abiertos = new Set(this.contratoAccordionIndicesAbiertos);
+    abiertos.add(nuevoIndex);
+    this.contratoAccordionIndicesAbiertos = [...abiertos].sort((a, b) => a - b);
+    this.cdr.detectChanges();
+    setTimeout(() => this.scrollAlContratoArrendatario(nuevoIndex), 300);
+  }
+
+  private scrollAlContratoArrendatario(index: number): void {
+    const root = document.querySelector('.arrend-accordion-contratos');
+    if (!root) return;
+    const items = root.querySelectorAll('.dx-accordion-item');
+    const target = items.item(index);
+    if (target instanceof HTMLElement) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  eliminarContratoArrendatario(index: number): void {
+    if (this.contratosFormArray.length < 2) return;
+    this.contratosInmuebleSubs[index]?.unsubscribe();
+    this.contratosFormArray.removeAt(index);
+    this.contratosInmuebleSubs.splice(index, 1);
+    this.localesLibresPorContrato.splice(index, 1);
+    this.cargandoLocalesPorContrato.splice(index, 1);
+    if (this.localesDropdownContratoIndex === index) {
+      this.localesDropdownContratoIndex = -1;
+    } else if (this.localesDropdownContratoIndex > index) {
+      this.localesDropdownContratoIndex -= 1;
+    }
+    this.contratoAccordionIndicesAbiertos = this.contratoAccordionIndicesAbiertos
+      .filter((i) => i !== index)
+      .map((i) => (i > index ? i - 1 : i));
+    if (this.contratoAccordionIndicesAbiertos.length === 0 && this.contratosFormArray.length > 0) {
+      this.contratoAccordionIndicesAbiertos = [0];
+    }
+  }
+
+  tituloAccordionCaption(data: unknown): string {
+    if (typeof data === 'string') return data;
+    if (data != null && typeof data === 'object' && 'title' in data) {
+      return String((data as { title: unknown }).title ?? '');
+    }
+    return '';
+  }
+
+  eliminarContratoDesdeTituloAccordion(event: Event, data: unknown): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const titulo = this.tituloAccordionCaption(data);
+    const idx = this.indiceContratoDesdeTituloAccordion(titulo);
+    if (idx >= 0) this.eliminarContratoArrendatario(idx);
+  }
+
+  private indiceContratoDesdeTituloAccordion(titulo: string): number {
+    const m = /^Contrato\s+(\d+)/i.exec(String(titulo ?? '').trim());
+    if (!m) return -1;
+    const idx = Number(m[1]) - 1;
+    return idx >= 0 && idx < this.contratosFormArray.length ? idx : -1;
+  }
+
+  tituloContratoAccordion(index: number): string {
+    const grupo = this.contratosFormArray.at(index) as FormGroup;
+    const partes = [`Contrato ${index + 1}`];
+    const idInm = Number(grupo.get('idInmueble')?.value);
+    const inm = this.listaInmuebles.find((x) => x.id === idInm);
+    if (inm?.etiqueta) partes.push(`Inmueble: ${inm.etiqueta}`);
+
+    const idLocales = this.idLocalesContrato(index);
+    const lista = this.localesLibresPorContrato[index] ?? [];
+    const nombres = idLocales
+      .map((id) => lista.find((l) => l.id === id)?.nombre ?? `Local ${id}`)
+      .filter(Boolean);
+
+    if (nombres.length === 1) {
+      partes.push(`Local: ${nombres[0]}`);
+    } else if (nombres.length > 1) {
+      partes.push(`Locales: ${nombres.join(', ')}`);
+    }
+
+    return partes.join(' | ');
+  }
+
+  mostrarAvisoLocalesLibresVaciosContrato(index: number): boolean {
+    const grupo = this.contratosFormArray.at(index) as FormGroup;
+    const idInm = Number(grupo.get('idInmueble')?.value);
     if (!Number.isFinite(idInm) || idInm <= 0) return false;
-    if (this.cargandoLocalesLibres) return false;
-    return this.listaLocalesLibres.length === 0;
+    if (this.cargandoLocalesPorContrato[index]) return false;
+    return (this.localesLibresPorContrato[index] ?? []).length === 0;
   }
 
   get primerNombreSocio(): string {
@@ -1175,14 +1453,28 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         representanteLegal: nombreRepresentante,
         telefonoRepresentante: telefonoRep,
         correoRepresentante: correoRep,
-        idInmueble: localDemo?.idInmueble ?? null,
         lat: '',
         lng: '',
       },
       { emitEvent: false },
     );
     if (localDemo?.idInmueble != null) {
-      this.cargarLocalesLibres(localDemo.idInmueble, localDemo.idLocal ?? null, null);
+      this.cargarInmueblesPorArrendador(1, () => {
+        const contrato0 = this.contratosFormArray.at(0) as FormGroup;
+        contrato0.patchValue(
+          {
+            idInmueble: localDemo.idInmueble,
+          },
+          { emitEvent: false },
+        );
+        this.cargarLocalesLibresContrato(
+          0,
+          localDemo.idInmueble,
+          localDemo.idLocal != null ? [localDemo.idLocal] : null,
+        );
+      });
+    } else {
+      this.cargarInmueblesPorArrendador(1);
     }
 
     const socio0 = this.sociosFormArray.at(0) as FormGroup;
@@ -1255,32 +1547,42 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         ),
         telefonoRepresentante: data.telefonoContacto || '7770000000',
         correoRepresentante: data.correoContacto || 'demo@correo.com',
-        idInmueble: 1,
         lat: '',
         lng: '',
-        fechaInicioContrato: '2024-01-01',
-        fechaTerminoContrato: '2027-01-01',
-        tipoMoneda: 'MXN',
-        metrosRentados: data.superficieM2 || 100,
-        costoPorM2: 350,
-        pctMantenimiento: 10,
-        mesesDeposito: 2,
-        montoDeposito: 70000,
-        mesesAdelanto: 1,
-        montoAdelanto: 35000,
-        anosForzososArrendador: 2,
-        anosForzososArrendatario: 2,
-        subtotalRenta: 35000,
-        ivaRenta: 5600,
-        rentaTotal: 40600,
-        subtotalMantenimiento: 3500,
-        ivaMantenimiento: 560,
-        mantenimientoTotal: 4060,
-        observaciones:
-          'Contrato activo con condiciones estándar, incluye mantenimiento y servicios básicos.',
       },
       { emitEvent: false },
     );
+
+    this.cargarInmueblesPorArrendador(1, () => {
+      const contrato0 = this.contratosFormArray.at(0) as FormGroup;
+      contrato0.patchValue(
+        {
+          idInmueble: 1,
+          fechaInicioContrato: '2024-01-01',
+          fechaTerminoContrato: '2027-01-01',
+          tipoMoneda: 'MXN',
+          metrosRentados: data.superficieM2 || 100,
+          costoPorM2: 350,
+          pctMantenimiento: 10,
+          mesesDeposito: 2,
+          montoDeposito: 70000,
+          mesesAdelanto: 1,
+          montoAdelanto: 35000,
+          anosForzososArrendador: 2,
+          anosForzososArrendatario: 2,
+          subtotalRenta: 35000,
+          ivaRenta: 5600,
+          rentaTotal: 40600,
+          subtotalMantenimiento: 3500,
+          ivaMantenimiento: 560,
+          mantenimientoTotal: 4060,
+          observaciones:
+            'Contrato activo con condiciones estándar, incluye mantenimiento y servicios básicos.',
+        },
+        { emitEvent: false },
+      );
+      this.cargarLocalesLibresContrato(0, 1);
+    });
 
     const servicios = this.arrendatarioForm.get('servicios') as FormArray;
     servicios.clear();
@@ -1432,56 +1734,24 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       { emitEvent: false },
     );
 
-    const c = this.contratoPrincipalDesdeItem(item);
-    if (c) {
-      const idContr =
-        c['id'] != null &&
-        String(c['id']).trim() !== '' &&
-        Number.isFinite(Number(c['id'])) &&
-        Number(c['id']) > 0
-          ? Math.trunc(Number(c['id']))
-          : null;
-      this.idContratoArrendatarioApi = idContr;
-      const idIm = this.idInmuebleDesdeContrato(c);
-      const idLoc = this.idLocalDesdeContrato(c);
-      this.arrendatarioForm.patchValue(
-        {
-          idContrato: idContr,
-          idInmueble: idIm,
-          fechaInicioContrato: fechaParaInputDate(String(c['fechaInicioContrato'] ?? '')),
-          fechaTerminoContrato: fechaParaInputDate(String(c['fechaTerminoContrato'] ?? '')),
-          tipoMoneda: this.strApi(c['moneda'] ?? c['tipoMoneda']) || 'MXN',
-          metrosRentados: this.numForm(c['metrosRentados']),
-          costoPorM2: this.numForm(c['costoM2'] ?? c['costoPorM2']),
-          pctMantenimiento: this.numForm(c['porcentajeMantenimiento'] ?? c['pctMantenimiento']),
-          mesesDeposito: this.numForm(c['mesesDeposito']),
-          montoDeposito: this.numForm(c['montoDeposito']),
-          mesesAdelanto: this.numForm(c['mesesAdelanto']),
-          montoAdelanto: this.numForm(c['montoAdelanto']),
-          anosForzososArrendador: this.numForm(
-            c['aniosForzososArrendador'] ?? c['anosForzososArrendador'],
-          ),
-          anosForzososArrendatario: this.numForm(
-            c['aniosForzososArrendatario'] ?? c['anosForzososArrendatario'],
-          ),
-          subtotalRenta: this.numForm(c['subTotalRenta'] ?? c['subtotalRenta']),
-          ivaRenta: this.numForm(c['ivaRenta']),
-          rentaTotal: this.numForm(c['rentaTotal']),
-          subtotalMantenimiento: this.numForm(c['subTotalMantenimiento'] ?? c['subtotalMantenimiento']),
-          ivaMantenimiento: this.numForm(c['ivaMantenimiento']),
-          mantenimientoTotal: this.numForm(c['mantenimientoTotal']),
-          observaciones: this.strApi(c['observaciones']),
-        },
-        { emitEvent: false },
-      );
-      if (idIm != null) {
-        this.cargarLocalesLibres(idIm, idLoc, c);
-      }
-    } else {
-      this.idContratoArrendatarioApi = null;
-      this.arrendatarioForm.patchValue({ idContrato: null }, { emitEvent: false });
-    }
+    const continuarDespuesContratos = (): void => {
+      this.poblarRestoFormularioDesdeDetalleApi(item);
+    };
 
+    if (idArr != null && idArr > 0) {
+      this.cargarInmueblesPorArrendador(idArr, () => {
+        this.poblarContratosDesdeDetalleApi(item);
+        continuarDespuesContratos();
+      });
+    } else {
+      this.listaInmuebles = [];
+      this.poblarContratosDesdeDetalleApi(item);
+      this.actualizarEstadoInmuebleContratos();
+      continuarDespuesContratos();
+    }
+  }
+
+  private poblarRestoFormularioDesdeDetalleApi(item: Record<string, unknown>): void {
     const serviciosRaw = item['servicios'];
     this.serviciosFormArray.clear();
     if (Array.isArray(serviciosRaw) && serviciosRaw.length > 0) {
@@ -1647,16 +1917,94 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Contrato «principal»: el más antiguo por `fhRegistro`, o el de `id` menor (evita tomar duplicados recientes como primero).
-   */
-  private contratoPrincipalDesdeItem(item: Record<string, unknown>): Record<string, unknown> | null {
+  private poblarContratosDesdeDetalleApi(item: Record<string, unknown>): void {
+    const contratos = this.listarContratosOrdenadosDesdeItem(item);
+    this.contratosInmuebleSubs.forEach((sub) => sub.unsubscribe());
+    this.contratosInmuebleSubs = [];
+    this.contratosFormArray.clear();
+    this.localesLibresPorContrato = [];
+    this.cargandoLocalesPorContrato = [];
+    this.localesDropdownContratoIndex = -1;
+    this.contratoAccordionIndicesAbiertos = [0];
+
+    if (contratos.length === 0) {
+      this.contratosFormArray.push(this.crearContratoFormGroup());
+      this.localesLibresPorContrato.push([]);
+      this.cargandoLocalesPorContrato.push(false);
+      this.enlazarInmuebleLocalContrato(0);
+      this.actualizarEstadoInmuebleContratos();
+      return;
+    }
+
+    contratos.forEach((c, index) => {
+      const g = this.crearContratoFormGroup();
+      this.patchContratoGrupoDesdeApi(g, c);
+      this.contratosFormArray.push(g);
+      this.localesLibresPorContrato.push([]);
+      this.cargandoLocalesPorContrato.push(false);
+      this.enlazarInmuebleLocalContrato(index);
+      const idIm = this.idInmuebleDesdeContrato(c);
+      const idsLoc = this.idLocalesDesdeContrato(c);
+      if (idIm != null) {
+        this.cargarLocalesLibresContrato(
+          index,
+          idIm,
+          idsLoc.length > 0 ? idsLoc : null,
+        );
+      }
+    });
+    this.actualizarEstadoInmuebleContratos();
+  }
+
+  private patchContratoGrupoDesdeApi(g: FormGroup, c: Record<string, unknown>): void {
+    const idContr =
+      c['id'] != null &&
+      String(c['id']).trim() !== '' &&
+      Number.isFinite(Number(c['id'])) &&
+      Number(c['id']) > 0
+        ? Math.trunc(Number(c['id']))
+        : null;
+    const idLoc = this.idLocalesDesdeContrato(c);
+    g.patchValue(
+      {
+        idContrato: idContr,
+        idInmueble: this.idInmuebleDesdeContrato(c),
+        idLocales: idLoc,
+        fechaInicioContrato: fechaParaInputDate(String(c['fechaInicioContrato'] ?? '')),
+        fechaTerminoContrato: fechaParaInputDate(String(c['fechaTerminoContrato'] ?? '')),
+        tipoMoneda: this.strApi(c['moneda'] ?? c['tipoMoneda']) || 'MXN',
+        metrosRentados: this.numForm(c['metrosRentados']),
+        costoPorM2: this.numForm(c['costoM2'] ?? c['costoPorM2']),
+        pctMantenimiento: this.numForm(c['porcentajeMantenimiento'] ?? c['pctMantenimiento']),
+        mesesDeposito: this.numForm(c['mesesDeposito']),
+        montoDeposito: this.numForm(c['montoDeposito']),
+        mesesAdelanto: this.numForm(c['mesesAdelanto']),
+        montoAdelanto: this.numForm(c['montoAdelanto']),
+        anosForzososArrendador: this.numForm(
+          c['aniosForzososArrendador'] ?? c['anosForzososArrendador'],
+        ),
+        anosForzososArrendatario: this.numForm(
+          c['aniosForzososArrendatario'] ?? c['anosForzososArrendatario'],
+        ),
+        subtotalRenta: this.numForm(c['subTotalRenta'] ?? c['subtotalRenta']),
+        ivaRenta: this.numForm(c['ivaRenta']),
+        rentaTotal: this.numForm(c['rentaTotal']),
+        subtotalMantenimiento: this.numForm(c['subTotalMantenimiento'] ?? c['subtotalMantenimiento']),
+        ivaMantenimiento: this.numForm(c['ivaMantenimiento']),
+        mantenimientoTotal: this.numForm(c['mantenimientoTotal']),
+        observaciones: this.strApi(c['observaciones']),
+      },
+      { emitEvent: false },
+    );
+  }
+
+  /** Contratos del GET ordenados por antigüedad (`fhRegistro` / `id`). */
+  private listarContratosOrdenadosDesdeItem(item: Record<string, unknown>): Record<string, unknown>[] {
     const contratos = item['contratos'];
-    if (!Array.isArray(contratos) || contratos.length === 0) return null;
+    if (!Array.isArray(contratos) || contratos.length === 0) return [];
     const rows = contratos
       .map((x) => (x != null && typeof x === 'object' ? (x as Record<string, unknown>) : null))
       .filter((x): x is Record<string, unknown> => x != null);
-    if (rows.length === 0) return null;
     rows.sort((a, b) => {
       const ta = new Date(String(a['fhRegistro'] ?? '')).getTime();
       const tb = new Date(String(b['fhRegistro'] ?? '')).getTime();
@@ -1666,7 +2014,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       if (Number.isFinite(ida) && Number.isFinite(idb) && ida !== idb) return ida - idb;
       return 0;
     });
-    return rows[0] ?? null;
+    return rows;
   }
 
   private idInmuebleDesdeContrato(c: Record<string, unknown>): number | null {
@@ -1678,6 +2026,18 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       if (Number.isFinite(id) && id > 0) return Math.trunc(id);
     }
     return null;
+  }
+
+  private idLocalesDesdeContrato(c: Record<string, unknown>): number[] {
+    const raw = c['idLocales'];
+    if (Array.isArray(raw)) {
+      return raw
+        .map((x) => Number(x))
+        .filter((n) => Number.isFinite(n) && n > 0)
+        .map((n) => Math.trunc(n));
+    }
+    const idLoc = this.idLocalDesdeContrato(c);
+    return idLoc != null ? [idLoc] : [];
   }
 
   private idLocalDesdeContrato(c: Record<string, unknown>): number | null {
@@ -1730,17 +2090,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   private asignarListaInmuebles(res: unknown): void {
-    const bag = res as { data?: unknown[] } | null;
-    const rows = Array.isArray(bag?.data) ? bag.data : [];
-    const items = rows
-      .map((raw) => {
-        const row = raw as Record<string, unknown>;
+    const items = this.extraerFilasLocalesApi(res)
+      .map((row) => {
         const id = Number(row['id']);
-        if (!Number.isFinite(id)) return null;
+        if (!Number.isFinite(id) || id <= 0) return null;
         const nombre = String(row['inmueble'] ?? '').trim() || 'Inmueble';
         const dir = String(row['direccionFiscal'] ?? '').trim();
         const etiqueta = dir ? `${nombre} — ${dir}` : nombre;
-        return { id, etiqueta };
+        return { id: Math.trunc(id), etiqueta };
       })
       .filter((x): x is { id: number; etiqueta: string } => x != null);
     items.sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es'));
@@ -1792,6 +2149,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private readonly controlesExcluidosValidacion = new Set<string>([
     'locales',
+    'contratos',
     'pagos',
     'servicios',
     'socios',
@@ -1847,6 +2205,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
 
     this.arrendatarioForm.markAllAsTouched();
+    this.contratosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
     this.serviciosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
     this.sociosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
 
@@ -1923,38 +2282,36 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * El control `idLocal` va deshabilitado hasta que haya opciones; no entra en el bucle genérico de invalid.
+   * Validación por fila de contrato: inmueble elegido y al menos un local en `idLocales`.
    */
   private recopilarFaltantesLocalContrato(faltantes: string[]): void {
-    const idInmRaw = this.arrendatarioForm.get('idInmueble')?.value;
-    const idInmSeleccionado =
-      idInmRaw != null &&
-      String(idInmRaw).trim() !== '' &&
-      Number.isFinite(Number(idInmRaw)) &&
-      Number(idInmRaw) > 0;
+    this.contratosFormArray.controls.forEach((ctrl, index) => {
+      const g = ctrl as FormGroup;
+      const idInmRaw = g.get('idInmueble')?.value;
+      const idInmSeleccionado =
+        idInmRaw != null &&
+        String(idInmRaw).trim() !== '' &&
+        Number.isFinite(Number(idInmRaw)) &&
+        Number(idInmRaw) > 0;
+      const pref = `Contrato ${index + 1}`;
 
-    if (!idInmSeleccionado) return;
+      if (!idInmSeleccionado) return;
 
-    if (this.cargandoLocalesLibres) {
-      faltantes.push('Local: espera a que termine la carga de locales');
-      return;
-    }
+      if (this.cargandoLocalesPorContrato[index]) {
+        faltantes.push(`${pref}: espera a que termine la carga de locales`);
+        return;
+      }
 
-    if (this.listaLocalesLibres.length === 0) {
-      faltantes.push('Local: no hay locales disponibles para el inmueble seleccionado');
-      return;
-    }
+      if ((this.localesLibresPorContrato[index] ?? []).length === 0) {
+        faltantes.push(`${pref}: no hay locales disponibles para el inmueble seleccionado`);
+        return;
+      }
 
-    const rawVal = this.arrendatarioForm.getRawValue() as Record<string, unknown>;
-    const idLocVal = rawVal['idLocal'];
-    const idLocOk =
-      idLocVal != null &&
-      String(idLocVal).trim() !== '' &&
-      Number.isFinite(Number(idLocVal)) &&
-      Number(idLocVal) > 0;
-    if (!idLocOk) {
-      faltantes.push(this.etiquetasCampos['idLocal'] ?? 'Local');
-    }
+      const idsOk = this.normalizarIdLocalesValue(g.get('idLocales')?.value).length > 0;
+      if (!idsOk) {
+        faltantes.push(`${pref}: ${this.etiquetasCampos['idLocal'] ?? 'Local'}`);
+      }
+    });
   }
 
   private esEdicionArrendatario(): boolean {
@@ -2027,15 +2384,21 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.actualizarContratoEdicionSnapshotDesdeFormularioActual();
   }
 
-  /** Línea base del JSON `contratoArrendatario` (sin `id`) para comparar en actualización. */
+  /** Línea base del arreglo `contratos` (sin `id`, `idArrendatario`, `fhRegistro`, `estatus`) para comparar en actualización. */
   private actualizarContratoEdicionSnapshotDesdeFormularioActual(): void {
     if (!this.esEdicionArrendatario()) return;
-    const vSnap = this.arrendatarioForm.getRawValue() as Record<string, unknown>;
-    const contratoSnap = this.construirContratoArrendatarioObjetoDesdeFormRaw(vSnap);
+    const contratos = this.construirContratosArrendatarioDesdeFormulario();
     this.contratoEdicionSnapshotJson =
-      Object.keys(contratoSnap).length === 0
-        ? null
-        : this.serialContratoArrendatarioEstable(contratoSnap);
+      contratos.length === 0 ? null : this.serialContratosArrendatarioEstable(contratos);
+  }
+
+  private construirContratosArrendatarioDesdeFormulario(): Record<string, unknown>[] {
+    return this.contratosFormArray.controls
+      .map((ctrl) => {
+        const v = (ctrl as FormGroup).getRawValue() as Record<string, unknown>;
+        return this.construirContratoArrendatarioObjetoDesdeFormRaw(v);
+      })
+      .filter((c) => Object.keys(c).length > 0);
   }
 
   private vistaDocumentoDesdeControl(control: string): { nombre: string | null; url: string | null } {
@@ -2400,17 +2763,16 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Objeto enviado en `contratoArrendatario` (sin `id`; el id se agrega al actualizar si existe en formulario). */
+  /** Objeto enviado en `contratos[]` (sin `id`, `idArrendatario`, `fhRegistro`, `estatus`; incluye `idLocales`). */
   private construirContratoArrendatarioObjetoDesdeFormRaw(v: Record<string, unknown>): Record<string, unknown> {
     const contrato: Record<string, unknown> = {};
     const idInmRaw = v['idInmueble'];
     const idInm =
       idInmRaw != null && String(idInmRaw).trim() !== '' ? Number(idInmRaw) : Number.NaN;
-    if (Number.isFinite(idInm)) contrato['idInmueble'] = Math.trunc(idInm);
-    const idLocRaw = v['idLocal'];
-    const idLoc =
-      idLocRaw != null && String(idLocRaw).trim() !== '' ? Number(idLocRaw) : Number.NaN;
-    if (Number.isFinite(idLoc)) contrato['idLocal'] = Math.trunc(idLoc);
+    if (Number.isFinite(idInm)) {
+      contrato['idInmueble'] = Math.trunc(idInm);
+      contrato['idLocales'] = this.normalizarIdLocalesValue(v['idLocales']);
+    }
     const fiC = String(v['fechaInicioContrato'] ?? '').trim();
     if (fiC) contrato['fechaInicioContrato'] = fiC;
     const ftC = String(v['fechaTerminoContrato'] ?? '').trim();
@@ -2452,27 +2814,16 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     return contrato;
   }
 
+  private serialContratosArrendatarioEstable(contratos: Record<string, unknown>[]): string {
+    const normalized = contratos.map((c) => JSON.parse(this.serialContratoArrendatarioEstable(c)));
+    return JSON.stringify(normalized);
+  }
+
   private serialContratoArrendatarioEstable(contrato: Record<string, unknown>): string {
     const keys = Object.keys(contrato).sort();
     const sorted: Record<string, unknown> = {};
     for (const k of keys) sorted[k] = contrato[k];
     return JSON.stringify(sorted);
-  }
-
-  /** Id del registro de contrato para actualizar (formulario o último GET). */
-  private idContratoDesdeFormOApi(v: Record<string, unknown>): number | null {
-    const idC = v['idContrato'];
-    if (
-      idC != null &&
-      String(idC).trim() !== '' &&
-      Number.isFinite(Number(idC)) &&
-      Number(idC) > 0
-    ) {
-      return Math.trunc(Number(idC));
-    }
-    const snap = this.idContratoArrendatarioApi;
-    if (snap != null && snap > 0) return snap;
-    return null;
   }
 
   private construirFormDataArrendatario(esActualizacion = false): FormData {
@@ -2481,8 +2832,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     fd.append('arrendatario', this.construirJsonArrendatarioSwagger(v));
 
-    const contratoBase = this.construirContratoArrendatarioObjetoDesdeFormRaw(v);
-    let debeEnviarContrato = Object.keys(contratoBase).length > 0;
+    const contratosBase = this.construirContratosArrendatarioDesdeFormulario();
+    let debeEnviarContrato = contratosBase.length > 0;
 
     if (
       esActualizacion &&
@@ -2490,20 +2841,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.contratoEdicionSnapshotJson != null &&
       debeEnviarContrato
     ) {
-      if (
-        this.serialContratoArrendatarioEstable(contratoBase) === this.contratoEdicionSnapshotJson
-      ) {
+      if (this.serialContratosArrendatarioEstable(contratosBase) === this.contratoEdicionSnapshotJson) {
         debeEnviarContrato = false;
       }
     }
 
     if (debeEnviarContrato) {
-      const contrato: Record<string, unknown> = { ...contratoBase };
-      if (esActualizacion && this.esEdicionArrendatario()) {
-        const idNum = this.idContratoDesdeFormOApi(v);
-        if (idNum != null) contrato['id'] = idNum;
-      }
-      fd.append('contratoArrendatario', JSON.stringify(contrato));
+      fd.append('contratos', JSON.stringify(contratosBase));
     }
 
     const soloArraysModificados = esActualizacion && this.esEdicionArrendatario();

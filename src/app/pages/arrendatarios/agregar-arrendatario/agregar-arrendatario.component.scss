@@ -106,9 +106,397 @@
   color: #e7eefc;
 }
 
+/* Acordeón de contratos (dx-accordion) */
+:host ::ng-deep .arrend-accordion-contratos {
+  display: block;
+}
+
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item {
+  margin-bottom: 0.75rem;
+  border-radius: 14px;
+  overflow: hidden;
+  /* background: rgba(12, 18, 28, 0.94);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28); */
+}
+
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-title {
+  min-height: 3.6rem;
+  padding: 0.85rem 1.05rem;
+  letter-spacing: 1.02em;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* :host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-title::before {
+  font-size: 1.05rem;
+  margin-right: 0.55rem;
+  color: #8fa8ff;
+} */
+
+:host ::ng-deep .arrend-accordion-contratos .dx-state-hover .dx-accordion-item-title,
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-opened .dx-accordion-item-title {
+  border: 1px solid rgba(130, 160, 255, 0.35);
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(96, 132, 255, 0.18), transparent 55%),
+    linear-gradient(180deg, rgba(3, 6, 11, 0.92), rgba(12, 18, 30, 0.72));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-opened .dx-accordion-item-title {
+  border-bottom-color: rgba(130, 160, 255, 0.28);
+}
+
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item:not(.dx-accordion-item-opened) .dx-state-focused .dx-accordion-item-title,
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item:not(.dx-accordion-item-opened) .dx-state-active .dx-accordion-item-title {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+:host ::ng-deep .arrend-accordion-contratos.dx-state-focused,
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item.dx-state-focused,
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-body {
+  outline: none;
+}
+
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-opened.dx-state-focused,
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-opened .dx-state-focused {
+  box-shadow: none;
+}
+
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-title-caption {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 2.75rem;
+  height: 100%;
+  color: #eef2ff;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.4rem);
+  letter-spacing: 0.05em;
+  line-height: 1.35;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+
+.arrend-accordion-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 2.75rem;
+}
+
+.arrend-accordion-title-bar__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #eef2ff;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  line-height: 1.35;
+}
+
+/* Botón eliminar contrato (estilo monitoreo) */
+.mono-grid-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 8px 14px;
+  min-height: 38px;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* transform: translateZ(0);
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease; */
+}
+
+
+
+
+/* .mono-grid-action-btn:hover::before {
+  transform: translateX(130%);
+} */
+
+.mono-grid-action-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.arrend-contrato-eliminar-btn.bg-error {
+  border: 1px solid rgba(254, 202, 202, 0.74);
+  background: rgba(220, 38, 38, 0.28);
+}
+
+.arrend-contrato-eliminar-btn.bg-error:hover {
+  border-color: rgba(252, 165, 165, 0.85);
+  background: rgba(220, 38, 38, 0.36);
+}
+
+.arrend-accordion-inner {
+  width: 100%;
+}
+
+/* Fila de contrato: labels arriba e inputs alineados entre columnas */
+.arrend-contrato-fila-campos {
+  align-items: flex-start;
+
+  > [class*='col-'] {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Select Inmueble: misma altura/label flotante que el resto del formulario perm-form-nc */
+.perm-form-nc .perm-ig.input-group-lg .perm-select-floating > select.form-select {
+  font-size: 1rem;
+  line-height: 1.5;
+  padding-top: 1.625rem;
+  padding-bottom: 0.625rem;
+  min-height: calc(3.5rem + 2px);
+  height: calc(3.5rem + 2px);
+}
+
+.perm-form-nc .perm-ig .form-floating > select.form-select + label {
+  transform: scale(0.85) translateY(-0.6rem) translateX(0.15rem);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 2rem);
+}
+
+.arrend-locales-aviso {
+  font-size: 12px;
+}
+
+.arrend-locales-picker {
+  position: relative;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.arrend-locales-picker > .input-group-text {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  height: calc(3.5rem + 2px) !important;
+  min-height: calc(3.5rem + 2px) !important;
+  max-height: calc(3.5rem + 2px);
+}
+
+.arrend-locales-picker__body {
+  position: relative;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 1%;
+  max-width: 100%;
+  height: calc(3.5rem + 2px);
+  align-self: flex-start;
+}
+
+.arrend-locales-picker__field {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  width: 100%;
+  height: calc(3.5rem + 2px);
+  min-height: calc(3.5rem + 2px);
+  max-height: calc(3.5rem + 2px);
+  padding: 0.45rem 0.85rem 0.45rem 0.65rem;
+  border-radius: 0 14px 14px 0;
+  background: #1c252e;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.arrend-locales-picker__field.is-disabled {
+  opacity: 0.72;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.arrend-locales-picker__field.is-disabled .arrend-locales-picker__placeholder {
+  color: rgba(212, 206, 208, 0.72);
+}
+
+.arrend-locales-picker__field.is-disabled .arrend-locales-picker__chevron {
+  color: rgba(148, 163, 184, 0.45);
+}
+
+.arrend-locales-picker__chips {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.1rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+}
+
+.arrend-locales-picker__chips::-webkit-scrollbar {
+  height: 4px;
+}
+
+.arrend-locales-picker__chips::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.arrend-locales-picker__chips::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+}
+
+.arrend-locales-picker__chips::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.arrend-locales-picker__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  max-width: none;
+  padding: 0.28rem 0.4rem 0.28rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(147, 197, 253, 0.45);
+  background: rgba(59, 130, 246, 0.18);
+  color: #eef2ff;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.arrend-locales-picker__chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrend-locales-picker__chip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #dbeafe;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.arrend-locales-picker__chip-btn mat-icon {
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+}
+
+.arrend-locales-picker__placeholder {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #d4ced0;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arrend-locales-picker__chevron {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  transition: transform 160ms ease;
+}
+
+.arrend-locales-picker__body--open {
+  z-index: 25;
+}
+
+.arrend-locales-picker__body--open .arrend-locales-picker__chevron {
+  transform: rotate(180deg);
+}
+
+.arrend-locales-picker__menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.85rem);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.55rem;
+  list-style: none;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #1c252e;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.arrend-locales-picker__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #eef2ff;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+}
+
+.arrend-locales-picker__option:hover,
+.arrend-locales-picker__option.is-selected {
+  background: rgba(59, 130, 246, 0.16);
+}
+
+.arrend-locales-picker__option mat-icon {
+  flex: 0 0 auto;
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  color: #93c5fd;
+}
+
 /* Bloques FormArray (Servicios, socios, galería, etc.) */
 .arrend-fa-section {
   margin-top: 1.15rem;
+}
+
+/* Contenido indentado bajo el hero azul (misma sangría que arrend-fa-item en servicios) */
+.arrend-fa-section__body {
+  margin-top: 0.75rem;
+  padding-inline: 0.70rem;
 }
 
 /* Documentos: una fila, 7 columnas iguales (Fachada → Acta → Imagen 1 → INE) */
@@ -512,6 +900,14 @@
   color: #c7d6f3;
 }
 
+
+.perm-label{
+  font-size: 16px;
+}
+
+dx-tag-container {
+  min-height: 60px;
+}
 /* Tipografía en HTML: Cada Palabra con Inicial Mayúscula (solo este componente) */
 :host .perm-label,
 :host .docs-uploader-label,
