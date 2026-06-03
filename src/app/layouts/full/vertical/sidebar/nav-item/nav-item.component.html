@@ -6,12 +6,16 @@
 } @if (!item.navCap && !item.external && !item.twoLines) {
 
 <a mat-list-item (click)="onItemSelected(item)" class="menu-list-item"
+  [disableRipple]="!mostrarIconoNav()"
   [ngClass]="{
     'mat-toolbar mat-primary activeMenu': isDirectlyActive(item),
-    disabled: item.disabled
+    disabled: item.disabled,
+    'menu-list-item--no-icon': !mostrarIconoNav()
   }"
   [attr.aria-expanded]="ariaExpanded">
-    <i-tabler class="routeIcon" name="{{ item.iconName }}" matListItemIcon></i-tabler>
+    @if (mostrarIconoNav() && item.iconName) {
+      <i-tabler class="routeIcon" name="{{ item.iconName }}" matListItemIcon></i-tabler>
+    }
     <span class="hide-menu">{{ item.displayName | translate }}</span>
 
     <div class="d-flex align-items-center gap-4" *ngIf="item.children?.length">
@@ -37,11 +41,14 @@
   <a
     mat-list-item
     class="menu-list-item"
+    [class.menu-list-item--no-icon]="!mostrarIconoNav()"
     [href]="item.externalUrl || 'https://google.com'"
     [attr.target]="item.target || '_blank'"
     rel="noopener"
   >
-    <i-tabler class="routeIcon" name="{{ item.iconName }}" matListItemIcon></i-tabler>
+    @if (mostrarIconoNav() && item.iconName) {
+      <i-tabler class="routeIcon" name="{{ item.iconName }}" matListItemIcon></i-tabler>
+    }
     <span class="hide-menu">{{ item.displayName | translate }}</span>
   </a>
 }

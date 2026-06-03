@@ -89,6 +89,9 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   twoLines: any = false;
 
   @HostBinding('attr.aria-expanded') ariaExpanded = this.expanded;
+  @HostBinding('attr.data-nav-depth') get navDepthAttr(): string {
+    return String(this.numericDepth());
+  }
   @Input() item: NavItem | any;
   @Input() depth: any;
 
@@ -104,6 +107,11 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   private numericDepth(): number {
     const d = Number(this.depth);
     return Number.isFinite(d) ? d : 0;
+  }
+
+  /** Sin icono solo en el último nivel (hijos de Arrendatarios, etc.). */
+  mostrarIconoNav(): boolean {
+    return this.numericDepth() < 2;
   }
 
   // Colapsa TODAS las instancias en el mismo nivel

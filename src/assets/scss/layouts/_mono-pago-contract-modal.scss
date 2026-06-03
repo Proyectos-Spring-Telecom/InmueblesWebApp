@@ -1,0 +1,524 @@
+/* Paridad exacta con monitoreo-instalacion (modal Agregar Pago). Estilos globales. */
+
+/* --- Botones y layout del formulario --- */
+.mono-pago-modal .docs-modal__btn--ghost {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+.mono-pago-modal .docs-modal__btn--ghost:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.mono-pago-modal .mono-pago-form-btn {
+  min-height: 44px;
+  padding: 0.62rem 1.5rem;
+  font-size: 15px;
+  width: auto;
+}
+
+.mono-pago-modal .mono-pago-form-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.mono-pago-form {
+  padding: 0.25rem 0.1rem 0;
+}
+
+.mono-pago-servicio-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #c8d4f0;
+  font-size: 0.88rem;
+}
+
+.mono-pago-actions {
+  width: 100%;
+  flex-wrap: nowrap !important;
+}
+
+@media (max-width: 991.98px) {
+  .mono-pago-actions {
+    justify-content: stretch !important;
+  }
+
+  .mono-pago-modal .mono-pago-form-btn {
+    width: 100%;
+  }
+}
+
+.mono-pago-actions .mono-pago-form-btn {
+  flex: 1 1 0;
+  width: 50%;
+  min-width: 0;
+}
+
+.mono-pago-modal .mono-pago-actions--footer .mono-pago-form-btn {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 9rem;
+}
+
+/* --- Encabezado del modal (título + subtítulo morado) --- */
+.contract-docs-modal.mono-pago-modal .docs-modal__header,
+.mono-pago-modal.contract-docs-modal .docs-modal__header {
+  flex: 0 0 auto;
+  margin: 0 -0.1rem 0.55rem;
+  padding: 0 0.1rem 0.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.contract-docs-modal.mono-pago-modal .docs-modal__title,
+.mono-pago-modal.contract-docs-modal .docs-modal__title {
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  color: #f4f6ff;
+  margin: 0;
+}
+
+.contract-docs-modal.mono-pago-modal .docs-modal__eyebrow,
+.contract-docs-modal.mono-pago-modal .docs-modal__subtitle,
+.mono-pago-modal.contract-docs-modal .docs-modal__eyebrow,
+.mono-pago-modal.contract-docs-modal .docs-modal__subtitle {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d8b4fe;
+}
+
+.contract-docs-modal.mono-pago-modal .docs-modal__subtitle,
+.mono-pago-modal.contract-docs-modal .docs-modal__subtitle {
+  margin-top: 0.35rem;
+}
+
+.contract-docs-modal.mono-pago-modal .docs-modal__body,
+.mono-pago-modal.contract-docs-modal .docs-modal__body {
+  flex: 1;
+  min-height: 0;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.contract-docs-modal.mono-pago-modal .docs-modal__close-col,
+.mono-pago-modal.contract-docs-modal .docs-modal__close-col {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 0.15rem;
+}
+
+.contract-docs-modal.mono-pago-modal .docs-modal__close,
+.mono-pago-modal.contract-docs-modal .docs-modal__close {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #dbe7ff;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.contract-docs-modal.mono-pago-modal .docs-modal__close mat-icon,
+.mono-pago-modal.contract-docs-modal .docs-modal__close mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  display: block;
+}
+
+.contract-docs-modal.mono-pago-modal .docs-modal__close:hover,
+.mono-pago-modal.contract-docs-modal .docs-modal__close:hover {
+  background: rgba(99, 102, 241, 0.28);
+  border-color: rgba(129, 140, 248, 0.55);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* --- Formulario perm-form-nc (títulos de campo + inputs) --- */
+.mono-pago-modal .perm-form-nc {
+  --p-primary: #4f46e5;
+  --p-secondary: #7c3aed;
+}
+
+.mono-pago-modal .perm-form-nc .form-label.perm-label,
+.mono-pago-modal .perm-form-nc label.perm-label {
+  font-weight: 300;
+  font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
+  letter-spacing: 0.2px;
+  margin-bottom: 0.4rem;
+  color: #e5e7eb;
+  text-transform: none;
+}
+
+.mono-pago-modal .perm-form-nc .perm-ig .input-group-text {
+  border: none;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background: #681330;
+  border-radius: 14px 0 0 14px;
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+}
+
+.mono-pago-modal .perm-form-nc .perm-ig .form-control,
+.mono-pago-modal .perm-form-nc .perm-ig .form-select {
+  border-left: 0 !important;
+  border-radius: 0 14px 14px 0 !important;
+  background: #1c252e;
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.mono-pago-modal .perm-form-nc .perm-ig .form-floating > label {
+  font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
+  color: #d4ced0;
+}
+
+.mono-pago-modal .perm-form-nc .perm-ig .form-floating > select.form-select {
+  font-size: 1rem;
+  line-height: 1.5;
+  padding-top: 1.625rem;
+  padding-bottom: 0.625rem;
+  min-height: calc(3.5rem + 2px);
+  height: calc(3.5rem + 2px);
+}
+
+.mono-pago-modal .perm-form-nc .perm-ig .form-floating > select.form-select + label {
+  transform: scale(0.85) translateY(-0.6rem) translateX(0.15rem);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 2rem);
+}
+
+.mono-pago-modal .perm-form-nc .perm-ig select.form-select {
+  background-color: #1c252e;
+  color: #ffffff;
+  border-color: #2a3642;
+  font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
+}
+
+.mono-pago-modal .perm-form-nc .perm-ig select.form-select option {
+  background: #1c252e;
+  color: #ffffff;
+  font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
+  padding: 10px 12px;
+}
+
+.mono-pago-modal .perm-form-nc .perm-ig select.form-select option:checked,
+.mono-pago-modal .perm-form-nc .perm-ig select.form-select option:focus,
+.mono-pago-modal .perm-form-nc .perm-ig select.form-select option:active {
+  background: #681330;
+  color: #ffffff;
+  font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
+}
+
+:root[data-theme='dark'] .mono-pago-modal .perm-form-nc .perm-ig .form-control,
+:root[data-theme='dark'] .mono-pago-modal .perm-form-nc .perm-ig .form-select {
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='dark'] .mono-pago-modal .perm-form-nc .perm-ig .form-floating > label {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+:root[data-theme='dark'] .mono-pago-modal .perm-form-nc .form-label.perm-label,
+:root[data-theme='dark'] .mono-pago-modal .perm-form-nc label.perm-label {
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 300;
+}
+
+/* --- Backdrop y contenedor --- */
+.docs-backdrop.contract-docs-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10051;
+  padding: clamp(0.7rem, 2.2vh, 1.2rem);
+}
+
+.docs-modal.contract-docs-modal {
+  width: 100%;
+  max-width: 980px;
+  max-height: calc(100dvh - (2 * clamp(0.7rem, 2.2vh, 1.2rem)));
+  background: #0e141c;
+  border-radius: 18px;
+  border: 1px solid rgba(130, 160, 255, 0.5);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  padding: 1.1rem 1.2rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.contract-page-dim {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10050;
+  background: rgba(0, 0, 0, 0.86);
+}
+
+body:has(.docs-backdrop.contract-docs-backdrop) {
+  --layout-header-height: 68px;
+  --layout-footer-space: 70px;
+  --contract-modal-edge-gap: 12px;
+}
+
+@media (max-width: 1023px) {
+  body:has(.docs-backdrop.contract-docs-backdrop) {
+    --layout-footer-space: 88px;
+    --contract-modal-edge-gap: 8px;
+  }
+}
+
+body:has(.docs-backdrop.contract-docs-backdrop) .docs-backdrop.contract-docs-backdrop {
+  top: calc(var(--layout-header-height) + var(--contract-modal-edge-gap));
+  bottom: calc(var(--layout-footer-space) + var(--contract-modal-edge-gap));
+  left: 0;
+  right: 0;
+  background: transparent;
+  backdrop-filter: none;
+  width: auto;
+}
+
+body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal {
+  max-height: 100%;
+}
+
+@media (max-width: 768px) {
+  .docs-backdrop.contract-docs-backdrop {
+    padding: 0.65rem;
+  }
+
+  .docs-modal.contract-docs-modal {
+    max-height: calc(100dvh - 1.3rem);
+    padding: 0.9rem 0.9rem 0.8rem;
+  }
+
+  .contract-docs-modal.mono-pago-modal .docs-modal__body,
+  .mono-pago-modal.contract-docs-modal .docs-modal__body {
+    margin-bottom: 0.4rem;
+  }
+}
+
+/* --- Resumen de pago (Registrar renta), paridad contract-docs-card --- */
+.mono-pago-modal .renta-pago-resumen {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.15rem;
+}
+
+.mono-pago-modal .renta-pago-resumen__hero {
+  border: 1px solid rgba(192, 132, 252, 0.35);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  background: linear-gradient(140deg, rgba(76, 29, 149, 0.38), rgba(15, 23, 42, 0.72));
+}
+
+.mono-pago-modal .renta-pago-resumen__hero-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+}
+
+.mono-pago-modal .renta-pago-resumen__kicker {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d8b4fe;
+}
+
+.mono-pago-modal .renta-pago-resumen__hero-title {
+  margin: 0.2rem 0 0;
+  color: #f8fafc;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.mono-pago-modal .renta-pago-resumen__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f5d0fe;
+  background: rgba(126, 34, 206, 0.28);
+  border: 1px solid rgba(216, 180, 254, 0.35);
+  flex-shrink: 0;
+}
+
+.mono-pago-modal .renta-pago-resumen__chip--pagada {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 0.38rem 1rem;
+  color: #ecfdf5;
+  background: linear-gradient(180deg, rgba(22, 101, 52, 0.95), rgba(17, 73, 42, 0.95));
+  border: 1px solid rgba(74, 222, 128, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.2),
+    0 4px 16px rgba(16, 185, 129, 0.28);
+}
+
+.mono-pago-modal .renta-pago-resumen__chip--pagada .renta-pago-resumen__chip-eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(209, 250, 229, 0.9);
+}
+
+.mono-pago-modal .renta-pago-resumen__chip--pagada .renta-pago-resumen__chip-eyebrow::after {
+  content: ':';
+  margin-left: 0.12rem;
+  color: rgba(209, 250, 229, 0.75);
+}
+
+.mono-pago-modal .renta-pago-resumen__chip--pagada .renta-pago-resumen__chip-valor {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.mono-pago-modal .renta-pago-resumen__hero-meta {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.mono-pago-modal .renta-pago-resumen__hero-meta span {
+  color: #f1f5f9;
+}
+
+.mono-pago-modal .renta-pago-resumen__card {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 14px;
+  padding: 0.82rem 0.9rem;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.65), rgba(2, 6, 23, 0.65));
+}
+
+.mono-pago-modal .renta-pago-resumen__card-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #dbeafe;
+}
+
+.mono-pago-modal .renta-pago-resumen__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.mono-pago-modal .renta-pago-resumen__field {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  padding: 0.48rem 0.56rem;
+  background: rgba(2, 6, 23, 0.45);
+}
+
+.mono-pago-modal .renta-pago-resumen__field > span {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.14rem;
+}
+
+.mono-pago-modal .renta-pago-resumen__field p {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  line-height: 1.28;
+}
+
+.mono-pago-modal .renta-pago-resumen__field p.is-money {
+  color: #f5d0fe;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.mono-pago-modal .renta-pago-resumen-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+  padding: 0.8rem 0.95rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.45);
+  color: #94a3b8;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.mono-pago-modal .renta-pago-resumen-hint mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #c4b5fd;
+  flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+  .mono-pago-modal .renta-pago-resumen__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .mono-pago-modal .renta-pago-resumen__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mono-pago-modal .renta-pago-resumen__hero-row {
+    flex-direction: column;
+  }
+
+  .mono-pago-modal .renta-pago-resumen__hero-title {
+    font-size: 1.15rem;
+  }
+}

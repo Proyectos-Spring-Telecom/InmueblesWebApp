@@ -28,6 +28,23 @@ export const contractDimAnim = trigger('contractDimAnim', [
   ]),
 ]);
 
+/** Resumen de pago en modal Registrar renta. */
+export const rentaResumenRevealAnim = trigger('rentaResumenReveal', [
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(12px) scale(0.985)' }),
+    animate(
+      '340ms 60ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateY(0) scale(1)' }),
+    ),
+  ]),
+  transition(':leave', [
+    animate(
+      '200ms cubic-bezier(0.4, 0, 1, 1)',
+      style({ opacity: 0, transform: 'translateY(8px) scale(0.99)' }),
+    ),
+  ]),
+]);
+
 export const contractModalAnim = trigger('contractModalAnim', [
   transition(':enter', [
     style({ opacity: 0, transform: 'translateY(12px) scale(0.98)' }),

@@ -1,0 +1,44 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper operacion-pagos-hub">
+  <header class="perm-head" role="region" [attr.aria-label]="'Sección: ' + config.titulo">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>{{ config.iconoCabecera }}</mat-icon>
+    </div>
+    <div class="perm-head__text">
+      <span class="eyebrow">{{ config.eyebrow }}</span>
+      <h2>{{ config.titulo }}</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      @for (miga of config.migas; track miga.etiqueta; let last = $last) {
+        <span class="crumb" [class.active]="miga.activa || last">{{ miga.etiqueta }}</span>
+        @if (!last) {
+          <span class="sep">/</span>
+        }
+      }
+    </nav>
+  </header>
+
+  <nav class="operacion-pagos-hub__segmentos" role="tablist" [attr.aria-label]="config.titulo">
+    @for (vista of config.vistas; track vista.segmento) {
+      <a
+        class="operacion-pagos-hub__segmento"
+        [class.operacion-pagos-hub__segmento--activo]="segmentoActivo === vista.segmento"
+        [routerLink]="rutaSegmento(vista.segmento)"
+        routerLinkActive="operacion-pagos-hub__segmento--activo"
+        role="tab"
+        [attr.aria-selected]="segmentoActivo === vista.segmento"
+      >
+        <span class="operacion-pagos-hub__segmento-icono" aria-hidden="true">
+          <mat-icon>{{ vista.icono }}</mat-icon>
+        </span>
+        <span class="operacion-pagos-hub__segmento-texto">
+          <span class="operacion-pagos-hub__segmento-titulo">{{ vista.titulo }}</span>
+          <span class="operacion-pagos-hub__segmento-desc">{{ vista.descripcion }}</span>
+        </span>
+      </a>
+    }
+  </nav>
+
+  <div class="operacion-pagos-hub__cuerpo">
+    <router-outlet></router-outlet>
+  </div>
+</div>

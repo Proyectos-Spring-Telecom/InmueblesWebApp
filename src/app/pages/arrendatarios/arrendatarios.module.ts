@@ -11,12 +11,18 @@ import { ArrendatariosRoutingModule } from './arrendatarios-routing.module';
 import { ListaArrendatariosDetalleComponent } from './lista-arrendatarios-detalle/lista-arrendatarios-detalle.component';
 import { ListaArrendatariosComponent } from './lista-arrendatarios/lista-arrendatarios.component';
 import { AgregarArrendatarioComponent } from './agregar-arrendatario/agregar-arrendatario.component';
+import { ListaRentasArrendatariosComponent } from './lista-rentas-arrendatarios/lista-rentas-arrendatarios.component';
+import { ListaHistoricoPagosRentaComponent } from './lista-historico-pagos-renta/lista-historico-pagos-renta.component';
+import { OperacionPagosHubComponent } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.component';
 
 @NgModule({
   declarations: [
     ListaArrendatariosComponent,
     ListaArrendatariosDetalleComponent,
+    ListaRentasArrendatariosComponent,
+    ListaHistoricoPagosRentaComponent,
     AgregarArrendatarioComponent,
+    OperacionPagosHubComponent,
   ],
   imports: [
     CommonModule,

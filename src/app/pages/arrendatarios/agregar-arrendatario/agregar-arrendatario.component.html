@@ -144,15 +144,14 @@
                     <h6 class="arrend-fa-section-title m-0">Datos del Contrato</h6>
                   </div>
                   <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
-                    (click)="agregarContratoArrendatario()"><mat-icon>add</mat-icon> Agregar contrato</button>
+                    (click)="agregarContratoArrendatario()"><mat-icon>add</mat-icon> Agregar Contrato</button>
                 </div>
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="contratos">
               <dx-accordion class="arrend-accordion-contratos" width="100%" [collapsible]="true" [multiple]="true"
                 [animationDuration]="260" [selectedIndex]="$any(contratoAccordionIndicesAbiertos)"
-                [focusStateEnabled]="false"
-                (selectedIndexChange)="onContratoAccordionIndicesChange($event)"
+                [focusStateEnabled]="false" (selectedIndexChange)="onContratoAccordionIndicesChange($event)"
                 itemTitleTemplate="contratoAccordionTitle">
                 <div *dxTemplate="let data of 'contratoAccordionTitle'" class="arrend-accordion-title-bar">
                   <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
@@ -181,6 +180,10 @@
                             <label [attr.for]="'idInmuebleContrato' + i">Inmueble</label>
                           </div>
                         </div>
+                        <p *ngIf="mostrarAvisoSinInmueblesArrendador()"
+                          class="small mt-2 mb-0 text-warning arrend-contrato-aviso" role="status">
+                          Este arrendador no tiene inmuebles registrados.
+                        </p>
                       </div>
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label">Local(es)</label>
@@ -190,9 +193,8 @@
                           <div class="arrend-locales-picker__body"
                             [class.arrend-locales-picker__body--open]="localesDropdownAbierto(i)">
                             <div class="arrend-locales-picker__field"
-                              [class.is-disabled]="localesContratoDeshabilitado(i)"
-                              role="button" tabindex="0" aria-haspopup="listbox"
-                              [attr.aria-disabled]="localesContratoDeshabilitado(i)"
+                              [class.is-disabled]="localesContratoDeshabilitado(i)" role="button" tabindex="0"
+                              aria-haspopup="listbox" [attr.aria-disabled]="localesContratoDeshabilitado(i)"
                               [attr.aria-expanded]="localesDropdownAbierto(i)"
                               (click)="toggleLocalesDropdown(i, $event)"
                               (keydown.enter)="toggleLocalesDropdown(i, $event)"
@@ -203,15 +205,16 @@
                                 <span class="arrend-locales-picker__chip">
                                   <span>{{ nombreLocalContrato(i, idLoc) }}</span>
                                   <button type="button" class="arrend-locales-picker__chip-btn"
-                                    [disabled]="localesContratoDeshabilitado(i)"
-                                    aria-label="Quitar local" (click)="quitarLocalContrato(i, idLoc, $event)">
+                                    [disabled]="localesContratoDeshabilitado(i)" aria-label="Quitar local"
+                                    (click)="quitarLocalContrato(i, idLoc, $event)">
                                     <mat-icon>close</mat-icon>
                                   </button>
                                 </span>
                                 }
                               </div>
                               } @else {
-                              <span class="arrend-locales-picker__placeholder">{{ placeholderLocalesContrato(i) }}</span>
+                              <span class="arrend-locales-picker__placeholder">{{ placeholderLocalesContrato(i)
+                                }}</span>
                               }
                               <mat-icon class="arrend-locales-picker__chevron">expand_more</mat-icon>
                             </div>
@@ -233,12 +236,13 @@
                           </div>
                         </div>
                         <p *ngIf="mostrarAvisoLocalesLibresVaciosContrato(i)"
-                          class="small mt-2 mb-0 text-warning arrend-locales-aviso" role="status">
-                          No hay locales disponibles.
+                          class="small mt-2 mb-0 text-warning arrend-contrato-aviso" role="status">
+                          Este inmueble no tiene locales disponibles.
                         </p>
                       </div>
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'fechaInicioContrato' + i">Fecha de Inicio</label>
+                        <label class="form-label perm-label" [attr.for]="'fechaInicioContrato' + i">Fecha de
+                          Inicio</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
                           <div class="form-floating flex-grow-1"><input [id]="'fechaInicioContrato' + i" type="date"
@@ -247,7 +251,8 @@
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'fechaTerminoContrato' + i">Fecha de Término</label>
+                        <label class="form-label perm-label" [attr.for]="'fechaTerminoContrato' + i">Fecha de
+                          Término</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
                           <div class="form-floating flex-grow-1"><input [id]="'fechaTerminoContrato' + i" type="date"
@@ -270,8 +275,9 @@
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>straighten</mat-icon></span>
                           <div class="form-floating flex-grow-1"><input [id]="'metrosRentados' + i" type="number"
-                              class="form-control" formControlName="metrosRentados" placeholder="Metros rentados" /><label
-                              [attr.for]="'metrosRentados' + i">Metros Rentados</label></div>
+                              class="form-control" formControlName="metrosRentados"
+                              placeholder="Metros rentados" /><label [attr.for]="'metrosRentados' + i">Metros
+                              Rentados</label></div>
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
@@ -334,9 +340,10 @@
                           Arrendador</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'anosForzososArrendador' + i" type="number"
-                              class="form-control" formControlName="anosForzososArrendador"
-                              placeholder="Años forzosos arrendador" /><label [attr.for]="'anosForzososArrendador' + i">Años
+                          <div class="form-floating flex-grow-1"><input [id]="'anosForzososArrendador' + i"
+                              type="number" class="form-control" formControlName="anosForzososArrendador"
+                              placeholder="Años forzosos arrendador" /><label
+                              [attr.for]="'anosForzososArrendador' + i">Años
                               Forzosos Arrendador</label></div>
                         </div>
                       </div>
@@ -385,12 +392,14 @@
                             class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
                           <div class="form-floating flex-grow-1"><input [id]="'subtotalMantenimiento' + i" type="number"
                               class="form-control" formControlName="subtotalMantenimiento"
-                              placeholder="Subtotal mantenimiento" /><label [attr.for]="'subtotalMantenimiento' + i">Subtotal
+                              placeholder="Subtotal mantenimiento" /><label
+                              [attr.for]="'subtotalMantenimiento' + i">Subtotal
                               Mantenimiento</label></div>
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'ivaMantenimiento' + i">Iva Mantenimiento</label>
+                        <label class="form-label perm-label" [attr.for]="'ivaMantenimiento' + i">Iva
+                          Mantenimiento</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>functions</mat-icon></span>
                           <div class="form-floating flex-grow-1"><input [id]="'ivaMantenimiento' + i" type="number"
@@ -406,7 +415,8 @@
                             class="input-group-text fw-bold"><mat-icon>summarize</mat-icon></span>
                           <div class="form-floating flex-grow-1"><input [id]="'mantenimientoTotal' + i" type="number"
                               class="form-control" formControlName="mantenimientoTotal"
-                              placeholder="Mantenimiento total" /><label [attr.for]="'mantenimientoTotal' + i">Mantenimiento
+                              placeholder="Mantenimiento total" /><label
+                              [attr.for]="'mantenimientoTotal' + i">Mantenimiento
                               Total</label>
                           </div>
                         </div>
@@ -442,7 +452,8 @@
                 <div class="uploader__cta-actions">
                   <button mat-flat-button color="primary" type="button"
                     (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
-                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
+                  <ng-container
+                    *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
                 </div>
                 <span class="uploader__badge uploader__badge--file">{{ nombreRemoto }}</span>
               </div>
@@ -455,7 +466,8 @@
                   [class.uploader__badge--file]="nombreRemoto || url || arrendatarioForm.get(controlName)?.value?.name">
                   {{ nombreRemoto || arrendatarioForm.get(controlName)?.value?.name || placeholder }}
                 </span>
-                <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
+                <ng-container
+                  *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
               </div>
             </ng-template>
           </ng-template>
@@ -491,18 +503,21 @@
                     <h6 class="arrend-fa-section-title m-0">Servicios</h6>
                   </div>
                   <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
-                    (click)="agregarServicio()"><mat-icon>add</mat-icon> Agregar</button>
+                    (click)="agregarServicio()"><mat-icon>add</mat-icon> Agregar Servicio</button>
                 </div>
               </div>
             </div>
-            <div class="row g-1 mt-0" formArrayName="servicios">
-              <ng-container *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index" [formGroupName]="i">
-                <div class="col-12">
-                  <div class="arrend-fa-item">
-                    <div
-                      class="arrend-fa-item__toolbar d-flex align-items-center flex-wrap gap-2">
-                      <span class="arrend-fa-idx">Servicio {{ i + 1 }}</span>
-                    </div>
+            <div class="arrend-fa-section__body" formArrayName="servicios">
+              <dx-accordion class="arrend-accordion-servicios" width="100%" [collapsible]="true" [multiple]="true"
+                [animationDuration]="260" [selectedIndex]="$any(servicioAccordionIndicesAbiertos)"
+                [focusStateEnabled]="false" (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
+                itemTitleTemplate="servicioAccordionTitle">
+                <div *dxTemplate="let data of 'servicioAccordionTitle'" class="arrend-accordion-title-bar">
+                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                </div>
+                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index"
+                  [title]="tituloServicioAccordion(i)">
+                  <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label">Tipo de servicio</label>
@@ -607,8 +622,8 @@
                       </div>
                     </div>
                   </div>
-                </div>
-              </ng-container>
+                </dxi-item>
+              </dx-accordion>
             </div>
           </div>
 
@@ -869,7 +884,7 @@
                     <div class="d-flex flex-wrap gap-1 justify-content-end">
                       <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
                         (click)="agregarFotoGaleria()" *ngIf="i === galeriaImagenesFormArray.length - 1">
-                        <mat-icon>add</mat-icon> Agregar
+                        <mat-icon>add</mat-icon> Agregar Socio
                       </button>
                     </div>
                   </div>
@@ -989,17 +1004,17 @@
                     </div>
                   </div>
                 </div>
-                <div formArrayName="socios" class="row g-1 mt-0">
-                  <ng-container *ngFor="let socioCtrl of sociosFormArray.controls; let i = index" [formGroupName]="i">
-                    <div class="col-12">
-                      <div class="arrend-fa-item">
-                        <div
-                          class="arrend-fa-item__toolbar d-flex align-items-center flex-wrap gap-2">
-                          <div class="d-flex align-items-center flex-wrap gap-2">
-                            <span class="socios-live-name" *ngIf="nombreSocioEnIndice(i)">{{ 'Socio: ' +
-                              nombreSocioEnIndice(i) }}</span>
-                          </div>
-                        </div>
+                <div class="arrend-fa-section__body" formArrayName="socios">
+                  <dx-accordion class="arrend-accordion-socios" width="100%" [collapsible]="true" [multiple]="true"
+                    [animationDuration]="260" [selectedIndex]="$any(socioAccordionIndicesAbiertos)"
+                    [focusStateEnabled]="false" (selectedIndexChange)="onSocioAccordionIndicesChange($event)"
+                    itemTitleTemplate="socioAccordionTitle">
+                    <div *dxTemplate="let data of 'socioAccordionTitle'" class="arrend-accordion-title-bar">
+                      <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                    </div>
+                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index"
+                      [title]="tituloSocioAccordion(i)">
+                      <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                         <div class="row g-3 socios-identidad">
                           <div class="col-12 col-md-6">
                             <label class="form-label perm-label">Nombre</label>
@@ -1067,12 +1082,10 @@
                                       (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
                                     <span class="uploader__badge"
                                       [class.uploader__badge--file]="socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name">
-                                      {{ socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name || 'PDF · PNG · JPG'
-                                      }}
+                                      {{ socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name || 'PDF · PNG · JPG' }}
                                     </span>
                                   </div>
-                                  <input #socioCompInput type="file"
-                                    accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
+                                  <input #socioCompInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
                                     (change)="onSocioFileSelected($event, i, 'comprobanteDomicilioArchivo')" />
                                 </div>
                               </div>
@@ -1088,12 +1101,9 @@
                                   <h6 class="uploader__title">Sube archivo</h6>
                                   <p class="uploader__subtitle">Arrastra y suelta o</p>
                                   <div class="uploader__cta">
-                                    <button mat-flat-button color="primary" type="button"
-                                      (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
-                                    <span class="uploader__badge"
-                                      [class.uploader__badge--file]="socioCtrl.get('identificacionOficialArchivo')?.value?.name">
-                                      {{ socioCtrl.get('identificacionOficialArchivo')?.value?.name || 'PDF · PNG · JPG'
-                                      }}
+                                    <button mat-flat-button color="primary" type="button" (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
+                                    <span class="uploader__badge" [class.uploader__badge--file]="socioCtrl.get('identificacionOficialArchivo')?.value?.name">
+                                      {{ socioCtrl.get('identificacionOficialArchivo')?.value?.name || 'PDF · PNG · JPG' }}
                                     </span>
                                   </div>
                                   <input #socioIneInput type="file"
@@ -1105,23 +1115,19 @@
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </ng-container>
+                    </dxi-item>
+                  </dx-accordion>
                 </div>
               </div>
-
-
-
             </div>
           </div>
         </div>
-
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" type="button" [disabled]="loadingSubmit || cargandoDetalle" (click)="submit()"><i
-              class="fa fa-check"></i>&nbsp;&nbsp;{{
-            submitButton }}</button>
-          <button type="button" class="button-danger" (click)="regresar()"><i
-              class="fa fa-times">&nbsp;&nbsp;</i>Cancelar</button>
+          <button class="button-success" role="button" type="button" [disabled]="loadingSubmit || cargandoDetalle" (click)="submit()">
+            <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}</button>
+          <button type="button" class="button-danger" (click)="regresar()">
+            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+          </button>
         </div>
       </form>
     </section>
@@ -1155,7 +1161,8 @@
           [disabled]="loadingSubmit || cargandoDetalle">
           Cancelar
         </button>
-        <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()" [disabled]="loadingSubmit || cargandoDetalle">
+        <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()"
+          [disabled]="loadingSubmit || cargandoDetalle">
           Guardar
         </button>
       </div>

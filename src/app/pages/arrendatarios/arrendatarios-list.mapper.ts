@@ -71,6 +71,103 @@ export function resolverIdArrendatarioApi(item: Record<string, unknown>): number
   return null;
 }
 
+/** Filas de respuestas paginadas `{ data: [], paginated: {} }`. */
+export function extraerFilasPaginadasApi(resp: unknown): Record<string, unknown>[] {
+  if (resp == null) return [];
+  if (Array.isArray(resp)) {
+    return resp.filter(
+      (x): x is Record<string, unknown> =>
+        x != null && typeof x === 'object' && !Array.isArray(x),
+    );
+  }
+  if (typeof resp !== 'object') return [];
+  const r = resp as Record<string, unknown>;
+  let rows: unknown = r['data'];
+  if (rows != null && typeof rows === 'object' && !Array.isArray(rows)) {
+    const bag = rows as Record<string, unknown>;
+    rows = bag['items'] ?? bag['rows'] ?? bag['content'] ?? bag['data'];
+  }
+  if (!Array.isArray(rows)) return [];
+  return rows.filter(
+    (x): x is Record<string, unknown> =>
+      x != null && typeof x === 'object' && !Array.isArray(x),
+  );
+}
+
+/** Nombre visible: campo `arrendatario` (string u objeto), `nombre` o `razonSocial`. */
+export function nombreArrendatarioDesdeApi(item: Record<string, unknown>): string {
+  const raw = item['arrendatario'];
+  if (typeof raw === 'string') {
+    const s = raw.trim();
+    if (s) return s;
+  }
+  if (raw != null && typeof raw === 'object') {
+    const a = raw as Record<string, unknown>;
+    const s = String(a['arrendatario'] ?? a['nombre'] ?? a['razonSocial'] ?? '').trim();
+    if (s) return s;
+  }
+  const alt = String(
+    item['nombre'] ?? item['razonSocial'] ?? item['nombreArrendatario'] ?? '',
+  ).trim();
+  if (alt) return alt;
+  const id = resolverIdArrendatarioApi(item);
+  return id != null ? `Arrendatario #${id}` : '';
+}
+
+function truncarEtiquetaContrato(texto: string, max = 48): string {
+  const s = texto.trim();
+  if (s.length <= max) return s;
+  return `${s.slice(0, max - 1).trimEnd()}…`;
+}
+
+function nombresLocalesContratoApi(c: Record<string, unknown>): string[] {
+  const filas = c['contratoLocales'];
+  if (!Array.isArray(filas)) return [];
+  const out: string[] = [];
+  for (const fila of filas) {
+    if (fila == null || typeof fila !== 'object') continue;
+    const loc = (fila as Record<string, unknown>)['local'];
+    if (loc == null || typeof loc !== 'object') continue;
+    const nombre = String((loc as Record<string, unknown>)['nombre'] ?? '').trim();
+    if (nombre && !out.includes(nombre)) out.push(nombre);
+  }
+  return out;
+}
+
+function resumenLocalesContratoApi(locales: string[]): string {
+  if (locales.length === 0) return '';
+  if (locales.length === 1) return locales[0];
+  return `${locales[0]} (+${locales.length - 1})`;
+}
+
+/** Etiqueta corta del select: título identificable + inmueble si aporta contexto. */
+export function etiquetaContratoArrendatarioApi(c: Record<string, unknown>): string {
+  const id = Number(c['id'] ?? c['idContrato']);
+  const num = String(c['numeroContrato'] ?? c['numero'] ?? '').trim();
+  const observaciones = truncarEtiquetaContrato(String(c['observaciones'] ?? ''));
+  const locales = resumenLocalesContratoApi(nombresLocalesContratoApi(c));
+
+  const inm = c['inmueble'];
+  const inmueble =
+    inm != null && typeof inm === 'object'
+      ? String((inm as Record<string, unknown>)['inmueble'] ?? '').trim()
+      : '';
+
+  let titulo = num || observaciones || locales;
+  if (!titulo && Number.isFinite(id) && id > 0) {
+    titulo = `Contrato ${Math.trunc(id)}`;
+  }
+  if (!titulo) titulo = 'Contrato';
+
+  if (
+    inmueble &&
+    !titulo.toLowerCase().includes(inmueble.toLowerCase())
+  ) {
+    return truncarEtiquetaContrato(`${titulo} — ${inmueble}`, 56);
+  }
+  return truncarEtiquetaContrato(titulo, 56);
+}
+
 export function etiquetaTipoPersonaArrendatario(raw: unknown): string {
   const n = Number(raw);
   if (n === 1) return 'Persona física';

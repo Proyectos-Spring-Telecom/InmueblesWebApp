@@ -271,6 +271,101 @@
       width: 100%;
     }
 
+    // Nietos bajo Arrendatarios: pill al ancho del texto, sangría a la derecha.
+    .nav-submenu-children .nav-submenu-children {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      padding-left: 40px;
+      margin-left: 0;
+      box-sizing: border-box;
+      overflow: visible;
+    }
+
+    .nav-submenu-children .nav-submenu-children app-nav-item[data-nav-depth='2'],
+    .nav-submenu-children .nav-submenu-children app-nav-item[data-nav-depth='3'] {
+      display: block;
+      width: auto;
+      max-width: none;
+      padding: 0;
+      margin: 0;
+      overflow: visible;
+    }
+
+    .nav-submenu-children .nav-submenu-children app-nav-item[data-nav-depth='2'] .menu-list-item--no-icon,
+    .nav-submenu-children .nav-submenu-children app-nav-item[data-nav-depth='3'] .menu-list-item--no-icon {
+      --mdc-ripple-hover-opacity: 0;
+      --mdc-ripple-press-opacity: 0;
+      --mdc-ripple-focus-opacity: 0;
+
+      .mdc-list-item__ripple,
+      .mat-mdc-list-item-ripple,
+      .mat-ripple-element,
+      .mat-mdc-focus-indicator::before {
+        display: none !important;
+        opacity: 0 !important;
+      }
+
+      &::before,
+      &:active::before,
+      &:focus::before {
+        display: none !important;
+        background: transparent !important;
+      }
+
+      box-sizing: border-box;
+      display: inline-flex !important;
+      width: max-content !important;
+      min-width: max-content;
+      max-width: none;
+      margin-left: 0;
+      margin-right: auto;
+      overflow: hidden;
+      flex-shrink: 0;
+      gap: 0;
+      padding: 10px 14px;
+      justify-content: flex-start;
+      align-items: center;
+
+      .hide-menu {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+        overflow: visible;
+        text-overflow: clip;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .mdc-list-item__content {
+        display: flex !important;
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+        overflow: visible;
+        justify-content: flex-start;
+        margin: 0;
+        padding: 0;
+      }
+
+      .mdc-list-item__primary-text {
+        width: auto;
+        max-width: none;
+        overflow: visible;
+        justify-content: flex-start;
+      }
+
+      .mdc-list-item__start,
+      .mat-mdc-list-item-icon,
+      .routeIcon {
+        display: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+      }
+    }
+
     .menu-list-item {
       transition: 0.2s ease-in-out all;
       margin-top: 3px;

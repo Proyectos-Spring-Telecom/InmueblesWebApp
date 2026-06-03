@@ -81,9 +81,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   /** Inmuebles del arrendador seleccionado (GET `/inmuebles/arrendador/{id}`). */
   public listaInmuebles: { id: number; etiqueta: string }[] = [];
   cargandoInmueblesArrendador = false;
+  /** GET `/inmuebles/arrendador/{id}` ya respondió (p. ej. `[]` = sin inmuebles). */
+  inmueblesArrendadorConsultados = false;
   /** Opciones del tag-box por contrato (GET `/inmuebles/locales-libres/{idInmueble}`). */
   localesLibresPorContrato: { id: number; nombre: string; etiqueta: string }[][] = [[]];
   cargandoLocalesPorContrato: boolean[] = [false];
+  /** GET locales-libres ya respondió por contrato (p. ej. `[]` = sin locales). */
+  localesLibresConsultadosPorContrato: boolean[] = [false];
   /** Índice del contrato cuyo menú de locales está abierto (-1 = ninguno). */
   localesDropdownContratoIndex = -1;
   private contratosInmuebleSubs: Subscription[] = [];
@@ -470,6 +474,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     });
     this.localesLibresPorContrato = [[]];
     this.cargandoLocalesPorContrato = [false];
+    this.localesLibresConsultadosPorContrato = [false];
   }
 
   private initTipoPersonaLogic(): void {
@@ -534,6 +539,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.cargarInmueblesPorArrendador(Math.trunc(id));
     } else {
       this.listaInmuebles = [];
+      this.inmueblesArrendadorConsultados = false;
       this.actualizarEstadoInmuebleContratos();
       this.cdr.markForCheck();
     }
@@ -541,12 +547,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private limpiarInmueblesContratosTrasCambioArrendador(): void {
     this.listaInmuebles = [];
+    this.inmueblesArrendadorConsultados = false;
     this.contratosFormArray.controls.forEach((_, index) => {
       const grupo = this.contratosFormArray.at(index) as FormGroup;
       grupo.get('idInmueble')?.setValue(null, { emitEvent: false });
       this.limpiarIdLocalesContrato(index);
       this.localesLibresPorContrato[index] = [];
       this.cargandoLocalesPorContrato[index] = false;
+      this.localesLibresConsultadosPorContrato[index] = false;
     });
     this.cerrarLocalesDropdown();
     this.actualizarEstadoInmuebleContratos();
@@ -554,6 +562,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private cargarInmueblesPorArrendador(idArrendador: number, onListo?: () => void): void {
     this.cargandoInmueblesArrendador = true;
+    this.inmueblesArrendadorConsultados = false;
     this.actualizarEstadoInmuebleContratos();
     this.inmueblesService
       .obtenerInmueblesPorArrendador(idArrendador)
@@ -561,6 +570,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         catchError(() => of(null)),
         finalize(() => {
           this.cargandoInmueblesArrendador = false;
+          this.inmueblesArrendadorConsultados = true;
           this.actualizarEstadoInmuebleContratos();
           onListo?.();
           this.cdr.markForCheck();
@@ -599,8 +609,19 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   placeholderInmuebleContrato(): string {
     if (!this.arrendadorContratoSeleccionado()) return 'Selecciona arrendador primero';
     if (this.cargandoInmueblesArrendador) return 'Cargando inmuebles…';
-    if (this.listaInmuebles.length === 0) return 'Sin inmuebles disponibles';
+    if (this.inmueblesArrendadorConsultados && this.listaInmuebles.length === 0) {
+      return 'Este arrendador no tiene inmuebles';
+    }
     return 'Selecciona inmueble';
+  }
+
+  mostrarAvisoSinInmueblesArrendador(): boolean {
+    return (
+      this.arrendadorContratoSeleccionado() &&
+      !this.cargandoInmueblesArrendador &&
+      this.inmueblesArrendadorConsultados &&
+      this.listaInmuebles.length === 0
+    );
   }
 
   private enlazarInmuebleLocalContrato(indexContrato: number): void {
@@ -613,6 +634,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.cerrarLocalesDropdown();
       this.limpiarIdLocalesContrato(indexContrato);
       this.localesLibresPorContrato[indexContrato] = [];
+      this.localesLibresConsultadosPorContrato[indexContrato] = false;
       this.cdr.markForCheck();
       const id =
         raw != null && String(raw).trim() !== '' ? Number(raw) : Number.NaN;
@@ -628,12 +650,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     idLocalesPreservar?: number[] | null,
   ): void {
     this.cargandoLocalesPorContrato[indexContrato] = true;
+    this.localesLibresConsultadosPorContrato[indexContrato] = false;
     this.inmueblesService
       .obtenerLocalesLibres(idInmueble)
       .pipe(
         catchError(() => of(null)),
         finalize(() => {
           this.cargandoLocalesPorContrato[indexContrato] = false;
+          this.localesLibresConsultadosPorContrato[indexContrato] = true;
           if (this.esEdicionArrendatario()) {
             this.actualizarContratoEdicionSnapshotDesdeFormularioActual();
           }
@@ -869,7 +893,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (!this.arrendadorContratoSeleccionado()) return 'Selecciona arrendador';
     if (!this.inmuebleContratoSeleccionado(index)) return 'Selecciona inmueble';
     if (this.cargandoLocalesPorContrato[index]) return 'Cargando locales…';
-    if ((this.localesLibresPorContrato[index]?.length ?? 0) === 0) return 'Sin locales disponibles';
+    if (
+      this.localesLibresConsultadosPorContrato[index] &&
+      (this.localesLibresPorContrato[index]?.length ?? 0) === 0
+    ) {
+      return 'Este inmueble no tiene locales disponibles';
+    }
     return 'Selecciona local(es)';
   }
 
@@ -956,6 +985,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   /** Ítems expandidos del acordeón de contratos (el primero inicia abierto). */
   contratoAccordionIndicesAbiertos: number[] = [0];
+  servicioAccordionIndicesAbiertos: number[] = [0];
+  socioAccordionIndicesAbiertos: number[] = [0];
 
   onContratoAccordionIndicesChange(raw: number | number[]): void {
     if (Array.isArray(raw)) {
@@ -965,11 +996,38 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratoAccordionIndicesAbiertos = raw >= 0 ? [raw] : [];
   }
 
+  onServicioAccordionIndicesChange(raw: number | number[]): void {
+    if (Array.isArray(raw)) {
+      this.servicioAccordionIndicesAbiertos = raw;
+      return;
+    }
+    this.servicioAccordionIndicesAbiertos = raw >= 0 ? [raw] : [];
+  }
+
+  onSocioAccordionIndicesChange(raw: number | number[]): void {
+    if (Array.isArray(raw)) {
+      this.socioAccordionIndicesAbiertos = raw;
+      return;
+    }
+    this.socioAccordionIndicesAbiertos = raw >= 0 ? [raw] : [];
+  }
+
+  tituloServicioAccordion(index: number): string {
+    return `Servicio ${index + 1}`;
+  }
+
+  tituloSocioAccordion(index: number): string {
+    const nombre = this.nombreSocioEnIndice(index);
+    if (nombre) return `Socio ${index + 1} | ${nombre}`;
+    return `Socio ${index + 1}`;
+  }
+
   agregarContratoArrendatario(): void {
     this.contratosFormArray.push(this.crearContratoFormGroup());
     const nuevoIndex = this.contratosFormArray.length - 1;
     this.localesLibresPorContrato.push([]);
     this.cargandoLocalesPorContrato.push(false);
+    this.localesLibresConsultadosPorContrato.push(false);
     this.enlazarInmuebleLocalContrato(nuevoIndex);
     this.actualizarEstadoInmuebleContratos();
     const abiertos = new Set(this.contratoAccordionIndicesAbiertos);
@@ -996,6 +1054,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratosInmuebleSubs.splice(index, 1);
     this.localesLibresPorContrato.splice(index, 1);
     this.cargandoLocalesPorContrato.splice(index, 1);
+    this.localesLibresConsultadosPorContrato.splice(index, 1);
     if (this.localesDropdownContratoIndex === index) {
       this.localesDropdownContratoIndex = -1;
     } else if (this.localesDropdownContratoIndex > index) {
@@ -1059,6 +1118,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const idInm = Number(grupo.get('idInmueble')?.value);
     if (!Number.isFinite(idInm) || idInm <= 0) return false;
     if (this.cargandoLocalesPorContrato[index]) return false;
+    if (!this.localesLibresConsultadosPorContrato[index]) return false;
     return (this.localesLibresPorContrato[index] ?? []).length === 0;
   }
 
@@ -1076,6 +1136,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   agregarSocio(): void {
     this.sociosFormArray.push(this.crearSocioFormGroup());
+    const nuevoIndex = this.sociosFormArray.length - 1;
+    const abiertos = new Set(this.socioAccordionIndicesAbiertos);
+    abiertos.add(nuevoIndex);
+    this.socioAccordionIndicesAbiertos = [...abiertos].sort((a, b) => a - b);
   }
 
   openSocioFilePicker(input: HTMLInputElement): void {
@@ -1267,6 +1331,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   agregarServicio(): void {
     this.serviciosFormArray.push(this.crearServicioFormGroup());
+    const nuevoIndex = this.serviciosFormArray.length - 1;
+    const abiertos = new Set(this.servicioAccordionIndicesAbiertos);
+    abiertos.add(nuevoIndex);
+    this.servicioAccordionIndicesAbiertos = [...abiertos].sort((a, b) => a - b);
   }
 
   etiquetaCatServicio(item: CatServicioItem): string {
@@ -1924,6 +1992,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratosFormArray.clear();
     this.localesLibresPorContrato = [];
     this.cargandoLocalesPorContrato = [];
+    this.localesLibresConsultadosPorContrato = [];
     this.localesDropdownContratoIndex = -1;
     this.contratoAccordionIndicesAbiertos = [0];
 
@@ -1931,6 +2000,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.contratosFormArray.push(this.crearContratoFormGroup());
       this.localesLibresPorContrato.push([]);
       this.cargandoLocalesPorContrato.push(false);
+      this.localesLibresConsultadosPorContrato.push(false);
       this.enlazarInmuebleLocalContrato(0);
       this.actualizarEstadoInmuebleContratos();
       return;
@@ -1942,6 +2012,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.contratosFormArray.push(g);
       this.localesLibresPorContrato.push([]);
       this.cargandoLocalesPorContrato.push(false);
+      this.localesLibresConsultadosPorContrato.push(false);
       this.enlazarInmuebleLocalContrato(index);
       const idIm = this.idInmuebleDesdeContrato(c);
       const idsLoc = this.idLocalesDesdeContrato(c);

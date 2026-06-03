@@ -140,19 +140,40 @@ export const navItems: NavItem[] = [
     children: [
       {
         displayName: 'Lista Arrendadores',
+        iconName: 'users',
         route: '/clientes',
         permission: Permiso.CONSULTA_CLIENTE,
       },
       {
         displayName: 'Lista Inmuebles',
+        iconName: 'building',
         route: '/inmuebles',
         permission: Permiso.CONSULTA_CLIENTE,
       },
       {
-        displayName: 'Lista Arrendatarios',
-        route: '/arrendatarios',
+        displayName: 'Arrendatarios',
+        iconName: 'building-store',
+        route: '/menu-level',
         permission: Permiso.CONSULTA_CLIENTE,
+        children: [
+          {
+            displayName: 'Lista de Arrendatarios',
+            route: '/arrendatarios',
+            permission: Permiso.CONSULTA_CLIENTE,
+          },
+          {
+            displayName: 'Pagos de Renta',
+            route: '/arrendatarios/pagos-renta',
+            permission: Permiso.CONSULTA_CLIENTE,
+          },
+          {
+            displayName: 'Pagos de Mantenimiento',
+            route: '/arrendatarios/pagos-mantenimiento',
+            permission: Permiso.CONSULTA_CLIENTE,
+          },
+        ],
       },
+      
     ],
   },
   /* {
