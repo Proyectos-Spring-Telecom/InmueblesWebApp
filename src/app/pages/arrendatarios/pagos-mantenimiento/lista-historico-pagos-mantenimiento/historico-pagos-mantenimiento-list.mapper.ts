@@ -2,7 +2,7 @@ import {
   extraerFilasMantenimientoActualApi,
   mapMantenimientoActualApiToGridRow,
   MantenimientoActualGridRow,
-} from './mantenimiento-actual-list.mapper';
+} from '../lista-mantenimiento-actual/mantenimiento-actual-list.mapper';
 
 export type HistoricoPagoMantenimientoGridRow = MantenimientoActualGridRow;
 

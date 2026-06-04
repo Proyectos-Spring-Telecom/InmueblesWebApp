@@ -240,7 +240,8 @@ $dark-body-bg: #141a21;
   .hide-menu,
   [matListItemIcon],
   .routeIcon,
-  i-tabler.routeIcon {
+  i-tabler.routeIcon,
+  .arrow-icon .mat-icon {
     color: var(--mat-sys-on-secondary, #fff) !important;
     fill: var(--mat-sys-on-secondary, #fff) !important;
   }
@@ -299,7 +300,8 @@ $dark-body-bg: #141a21;
   [matListItemIcon],
   .routeIcon,
   i-tabler,
-  i-tabler.routeIcon {
+  i-tabler.routeIcon,
+  .arrow-icon .mat-icon {
     color: var(--mat-sys-on-secondary, #fff) !important;
     fill: var(--mat-sys-on-secondary, #fff) !important;
     opacity: 1 !important;

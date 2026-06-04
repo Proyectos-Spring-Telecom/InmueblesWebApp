@@ -85,7 +85,7 @@ export class AuthenticationService extends BaseServicesService {
         tap((resp) => this.persistTokens(resp)),
         catchError((err: unknown) => {
           if (err instanceof HttpErrorResponse && err.status === 401) {
-            this.clearSessionAndRedirect();
+            this.clearSessionOnly();
           }
           return throwError(() => err);
         })
@@ -112,7 +112,7 @@ export class AuthenticationService extends BaseServicesService {
       );
   }
 
-  /** Limpia credenciales sin navegar (solo logout explícito debe redirigir al login). */
+  /** Limpia credenciales sin navegar (p. ej. refresh rechazado: el usuario permanece en la pantalla actual). */
   public clearSessionOnly(): void {
     this.user = null;
     this.cleanSession();
@@ -120,7 +120,7 @@ export class AuthenticationService extends BaseServicesService {
     this.blockRefresh();
   }
 
-  /** Cierre de sesión explícito (logout): limpia y va al login. */
+  /** Cierre de sesión explícito (logout): limpia y va al login sin query params. */
   public clearSessionAndRedirect(): void {
     this.clearSessionOnly();
     if (!this.isAuthRoute()) {

@@ -119,6 +119,8 @@
   border: 1px solid rgba(113, 121, 132, 0.8);
   border-radius: 9px;
   box-shadow: none;
+  container-type: inline-size;
+  container-name: monitor-head-title;
 }
 
 .surface .monitor-head-actions {
@@ -133,11 +135,12 @@
 
 .surface .monitor-head-text {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.45rem;
   min-width: 0;
   flex: 1 1 auto;
+  width: 100%;
   color: #f4f7ff;
   font-size: 0.92rem;
   letter-spacing: 0.05em;
@@ -151,21 +154,34 @@
   white-space: nowrap;
 }
 
+/* El nombre ocupa la línea siguiente y hace salto de línea dentro del cuadro gris. */
 .surface .monitor-head-client {
   display: block;
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   min-width: 0;
+  width: 100%;
   margin-top: 0;
   padding: 0;
   border-radius: 0;
-  max-width: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
   color: #e8edf5;
   background: transparent;
   border: none;
   box-shadow: none;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.surface .monitor-head-title:has(.monitor-head-client) {
+  align-items: flex-start;
+  min-height: auto;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 .surface .insta-item.instalacion.local-zona-row--selected,
@@ -734,25 +750,113 @@
 
 .surface .local-item.selected {
   z-index: 7;
-  outline: 2px solid #fbbf24;
-  filter: saturate(1.2);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(251, 191, 36, 0.4) inset;
+  filter: saturate(1.12);
 }
 
 .surface .local-item.estado-libre {
-  background: #1e2631;
+  border-color: rgba(134, 239, 172, 0.55);
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(22, 163, 74, 0.5) inset;
+}
+
+.surface .local-item.estado-libre.selected {
+  outline: 2px solid rgba(187, 247, 208, 0.95);
+  border-color: rgba(187, 247, 208, 0.9);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 3px rgba(134, 239, 172, 0.65) inset;
 }
 
 .surface .local-item.estado-ocupado {
-  background: #1e2631;
+  border-color: rgba(248, 113, 113, 0.55);
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(220, 38, 38, 0.55) inset;
+}
+
+.surface .local-item.estado-ocupado.selected {
+  outline: 2px solid rgba(254, 202, 202, 0.95);
+  border-color: rgba(254, 202, 202, 0.9);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 3px rgba(248, 113, 113, 0.65) inset;
 }
 
 .surface .local-item.estado-reservado {
-  background: #1e2631;
+  border-color: rgba(253, 224, 71, 0.5);
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(217, 119, 6, 0.55) inset;
+}
+
+.surface .local-item.estado-reservado.selected {
+  outline: 2px solid rgba(253, 230, 138, 0.95);
+  border-color: rgba(253, 230, 138, 0.9);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 3px rgba(253, 224, 71, 0.65) inset;
 }
 
 .surface .local-item.estado-inactivo {
-  background: #1e2631;
+  border-color: rgba(216, 180, 254, 0.5);
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(109, 40, 217, 0.5) inset;
+}
+
+.surface .local-item.estado-inactivo.selected {
+  outline: 2px solid rgba(233, 213, 255, 0.95);
+  border-color: rgba(233, 213, 255, 0.9);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 3px rgba(216, 180, 254, 0.65) inset;
+}
+
+.surface .local-item .local-diagram-status {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  left: auto;
+  z-index: 2;
+  max-width: calc(100% - 6px);
+  padding: 1px 5px;
+  font-size: 7px;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.surface .local-item.estado-libre .local-icon-wrap {
+  background: rgba(22, 163, 74, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(134, 239, 172, 0.35) inset,
+    0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.surface .local-item.estado-ocupado .local-icon-wrap {
+  background: rgba(220, 38, 38, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(248, 113, 113, 0.35) inset,
+    0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.surface .local-item.estado-reservado .local-icon-wrap {
+  background: rgba(217, 119, 6, 0.3);
+  box-shadow:
+    0 0 0 1px rgba(253, 224, 71, 0.35) inset,
+    0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.surface .local-item.estado-inactivo .local-icon-wrap {
+  background: rgba(109, 40, 217, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(216, 180, 254, 0.35) inset,
+    0 4px 10px rgba(0, 0, 0, 0.35);
 }
 
 .surface .local-name {
@@ -845,6 +949,50 @@
   min-height: 0;
 }
 
+/* Lista + diagrama/mapa: misma altura en escritorio (evita panel derecho colapsado < 1400px). */
+@media (min-width: 992px) {
+  .surface .monitor-inmuebles-split {
+    align-items: stretch;
+  }
+
+  .surface .monitor-inmuebles-split__panel-left,
+  .surface .monitor-inmuebles-split__panel-right {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .surface .monitor-inmuebles-split__panel-right .monitor-right-viewport {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 60vh;
+  }
+
+  .surface .monitor-right-viewport .map-wrapper,
+  .surface .monitor-right-viewport .locales-wrapper {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 420px;
+    height: auto;
+  }
+
+  .surface .monitor-right-viewport .locales-card {
+    min-height: 0;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1399.98px) {
+  .surface .monitor-inmuebles-split__panel-right .monitor-right-viewport {
+    min-height: min(58vh, calc(100dvh - 260px));
+  }
+
+  .surface .monitor-right-viewport .map-wrapper,
+  .surface .monitor-right-viewport .locales-wrapper {
+    min-height: min(380px, calc(58vh - 48px));
+  }
+}
+
 .monitor-list-pane {
   width: 100%;
 }
@@ -861,7 +1009,6 @@
 .monitor-right-viewport .map-wrapper,
 .monitor-right-viewport .locales-wrapper {
   width: 100%;
-  height: 100%;
 }
 
 /* =========== Scrollbar lista =========== */
@@ -938,7 +1085,6 @@
   }
 
   .surface .monitor-head-client {
-    max-width: none;
     font-size: 0.76rem;
   }
 
@@ -1051,6 +1197,15 @@
 
   .surface .locales-wrapper {
     height: 65vh;
+  }
+
+  .surface .monitor-inmuebles-split__panel-right .monitor-right-viewport {
+    min-height: 65vh;
+  }
+
+  .surface .monitor-right-viewport .map-wrapper,
+  .surface .monitor-right-viewport .locales-wrapper {
+    min-height: min(420px, calc(65vh - 48px));
   }
 
   .surface .insta-body {
@@ -1628,22 +1783,26 @@
   letter-spacing: 0.03em;
 }
 
-.surface .inmueble-status.local-status--libre {
+.surface .inmueble-status.local-status--libre,
+.surface .local-item .local-diagram-status.local-status--libre {
   background: rgba(22, 163, 74, 0.92);
   border: 1px solid rgba(134, 239, 172, 0.45);
 }
 
-.surface .inmueble-status.local-status--ocupado {
+.surface .inmueble-status.local-status--ocupado,
+.surface .local-item .local-diagram-status.local-status--ocupado {
   background: rgba(220, 38, 38, 0.88);
   border: 1px solid rgba(248, 113, 113, 0.45);
 }
 
-.surface .inmueble-status.local-status--reservado {
+.surface .inmueble-status.local-status--reservado,
+.surface .local-item .local-diagram-status.local-status--reservado {
   background: rgba(217, 119, 6, 0.92);
   border: 1px solid rgba(253, 224, 71, 0.4);
 }
 
-.surface .inmueble-status.local-status--inactivo {
+.surface .inmueble-status.local-status--inactivo,
+.surface .local-item .local-diagram-status.local-status--inactivo {
   background: rgba(109, 40, 217, 0.88);
   border: 1px solid rgba(216, 180, 254, 0.5);
 }
@@ -1684,20 +1843,33 @@
   }
 }
 
-/* Arrendadores: en una misma fila todas las tarjetas miden igual (altura de la más alta); "Propiedades" queda al pie de cada una. */
-.surface .monitor-flow-panel--clientes .row.g-3 {
+/* Arrendadores: rejilla por ancho de tarjeta (no breakpoint de viewport) para evitar columnas demasiado estrechas con sidebar. */
+.surface .monitor-flow-panel--clientes .clientes-cards-grid {
+  display: grid;
+  /* auto-fit: sin columnas fantasma a la derecha; las tarjetas existentes reparten todo el ancho. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
   align-items: stretch;
 }
 
-.surface .monitor-flow-panel--clientes .row.g-3 > [class*="col-"] {
+.surface .monitor-flow-panel--clientes .clientes-cards-grid--solo {
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+.surface .monitor-flow-panel--clientes .clientes-cards-grid__item {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .surface .monitor-flow-panel--clientes .cliente-grid-card.cliente-card-v2 {
   flex: 1 1 auto;
   width: 100%;
+  min-width: 0;
   min-height: 0;
+  container-type: inline-size;
+  container-name: monitor-cliente-card;
   /* Sustituye el `gap: 0` de `.cliente-card-v2`: separa botón sin depender solo de márgenes. */
   gap: 12px;
 }
@@ -1715,13 +1887,12 @@
   align-items: center;
 }
 
-@media (min-width: 768px) {
-  .surface .monitor-flow-panel--clientes .cliente-card-head {
-    /* Banda mínima común para alinear etiqueta/título/logo entre cards (nombres largos siguen creciendo). */
+@container monitor-cliente-card (min-width: 360px) {
+  .cliente-card-head {
     min-height: 10rem;
   }
 
-  .surface .monitor-flow-panel--clientes .cliente-card-media {
+  .cliente-card-media {
     height: 118px;
     min-height: 118px;
     max-height: 118px;
@@ -1731,6 +1902,25 @@
 
 .surface .monitor-flow-panel--clientes .cliente-card-block--ubicacion {
   flex-shrink: 0;
+  margin-top: auto;
+  width: 100%;
+}
+
+.surface .monitor-flow-panel--clientes .cliente-ubicacion-grid {
+  grid-template-columns: 1fr;
+  justify-items: stretch;
+}
+
+.surface .monitor-flow-panel--clientes .cliente-ubicacion-actions {
+  justify-content: stretch;
+  width: 100%;
+  padding-top: 0;
+}
+
+.surface .monitor-flow-panel--clientes .cliente-ubicacion-actions .cliente-inmuebles-btn.btn {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Mismo lenguaje visual de hover que .insta-item (lista de inmuebles). */
@@ -1777,7 +1967,7 @@
 
 .surface .cliente-card-head {
   display: grid;
-  grid-template-columns: minmax(152px, 42%) minmax(0, 1fr);
+  grid-template-columns: minmax(0, min(118px, 38%)) minmax(0, 1fr);
   gap: 14px;
   align-items: center;
   padding-bottom: 14px;
@@ -1970,6 +2160,36 @@
   word-break: normal;
   hyphens: none;
   white-space: normal;
+}
+
+@container monitor-cliente-card (max-width: 420px) {
+  .cliente-card-head {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 10px;
+    min-height: 0;
+  }
+
+  .cliente-card-head-main {
+    align-items: center;
+  }
+
+  .cliente-card-media {
+    width: 100%;
+    max-width: 260px;
+    height: auto;
+    min-height: 88px;
+    max-height: 118px;
+  }
+
+  .cliente-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cliente-meta-grid .cliente-meta-pair:last-child:nth-child(odd):not(:only-child) {
+    grid-column: auto;
+  }
 }
 
 .surface .cliente-card-renta {

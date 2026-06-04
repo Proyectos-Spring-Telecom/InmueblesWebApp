@@ -1,30 +1,30 @@
 @if (embebidoEnHub) {
   <div class="operacion-hub-vista inm-lista">
-    <ng-container *ngTemplateOutlet="contenidoRentas"></ng-container>
+    <ng-container *ngTemplateOutlet="contenidoMantenimiento"></ng-container>
   </div>
 } @else {
   <div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
-    <header class="perm-head" role="region" [attr.aria-label]="'Sección: ' + dominio.tituloVistaActual">
+    <header class="perm-head" role="region" aria-label="Sección: Mantenimiento actual">
       <div class="perm-head__icon" aria-hidden="true">
-        <mat-icon>{{ dominio.iconoCabeceraSuelta }}</mat-icon>
+        <mat-icon>handyman</mat-icon>
       </div>
       <div class="perm-head__text">
         <span class="eyebrow">Catálogos</span>
-        <h2>{{ dominio.tituloVistaActual }}</h2>
+        <h2>Mantenimiento actual</h2>
       </div>
       <nav class="perm-head__crumbs" aria-label="Ruta">
         <span class="crumb">Operación</span>
         <span class="sep">/</span>
         <span class="crumb">Arrendatarios</span>
         <span class="sep">/</span>
-        <span class="crumb active">{{ dominio.tituloVistaActual }}</span>
+        <span class="crumb active">Mantenimiento actual</span>
       </nav>
     </header>
-    <ng-container *ngTemplateOutlet="contenidoRentas"></ng-container>
+    <ng-container *ngTemplateOutlet="contenidoMantenimiento"></ng-container>
   </div>
 }
 
-<ng-template #contenidoRentas>
+<ng-template #contenidoMantenimiento>
   <div class="surface">
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
       <button type="button" (click)="abrirModalAlta()" mat-flat-button class="bg-secondary">
@@ -42,7 +42,7 @@
     <div class="mt-3">
       <dx-data-grid
         #gridContainer
-        [attr.id]="dominio.gridIdActual"
+        id="gridMantenimientoActual"
         class="inm-data-grid"
         [columnHidingEnabled]="true"
         [hoverStateEnabled]="false"
@@ -50,7 +50,7 @@
         [showColumnLines]="false"
         [showRowLines]="true"
         [rowAlternationEnabled]="true"
-        [dataSource]="listaRentas"
+        [dataSource]="listaMantenimientos"
         [keyExpr]="'id'"
         [width]="'100%'"
         [remoteOperations]="{ paging: true }"
@@ -65,7 +65,7 @@
         (onPageIndexChanged)="onPageIndexChanged($event)"
         (onOptionChanged)="onGridOptionChanged($event)"
       >
-        <dxo-search-panel [visible]="true" [width]="240" [placeholder]="dominio.buscarActual"></dxo-search-panel>
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar mantenimiento..."></dxo-search-panel>
         <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
         <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
@@ -73,7 +73,7 @@
 
         <dxi-column
           caption="Acciones"
-          cellTemplate="accionesRentasTpl"
+          cellTemplate="accionesMantenimientoTpl"
           alignment="center"
           [width]="200"
           [allowFiltering]="false"
@@ -88,10 +88,10 @@
         <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90"></dxi-column>
         <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
         <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>
-        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusRentaTpl" [width]="120"></dxi-column>
+        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusMantenimientoTpl" [width]="120"></dxi-column>
         <dxi-column dataField="id" caption="ID" alignment="center" [width]="72" [visible]="false"></dxi-column>
 
-        <div *dxTemplate="let row of 'estatusRentaTpl'">
+        <div *dxTemplate="let row of 'estatusMantenimientoTpl'">
           @if (row.data.pagada) {
             <span class="estatus estatus-activo">{{ row.data.pagadaLabel }}</span>
           } @else {
@@ -99,7 +99,7 @@
           }
         </div>
 
-        <div *dxTemplate="let row of 'accionesRentasTpl'" class="d-flex gap-3 justify-content-center">
+        <div *dxTemplate="let row of 'accionesMantenimientoTpl'" class="d-flex gap-3 justify-content-center">
           <div>
             <button
               type="button"
@@ -117,8 +117,8 @@
                 type="button"
                 id="pinButton"
                 class="btnAcciones"
-                title="Marcar como pagada"
-                (click)="marcarRentaPagada(row.data); $event.stopPropagation()"
+                title="Registrar pago"
+                (click)="marcarMantenimientoPagado(row.data); $event.stopPropagation()"
               >
                 <i class="fa fa-check"></i>
               </button>
@@ -130,35 +130,31 @@
   </div>
 </ng-template>
 
-<ng-container *ngIf="mostrarModalRenta">
-  <div class="contract-page-dim" (click)="cerrarModalRenta()" [@contractDimAnim]></div>
-  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalRenta()">
+<ng-container *ngIf="mostrarModalMantenimiento">
+  <div class="contract-page-dim" (click)="cerrarModalMantenimiento()" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalMantenimiento()">
     <div
       class="docs-modal contract-docs-modal mono-pago-modal"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="renta-modal-title"
+      aria-labelledby="mantenimiento-modal-title"
       (click)="$event.stopPropagation()"
     >
       <div class="row docs-modal__header">
         <div class="col-10 col-md-11">
-          <h3 class="docs-modal__title" id="renta-modal-title">
-            {{
-              rentaModalModo === 'edicion'
-                ? 'Editar ' + dominio.etiquetaPeriodo
-                : 'Registrar ' + dominio.etiquetaPeriodo
-            }}
+          <h3 class="docs-modal__title" id="mantenimiento-modal-title">
+            {{ mantenimientoModalModo === 'edicion' ? 'Editar mantenimiento' : 'Registrar mantenimiento' }}
           </h3>
           <p class="docs-modal__subtitle">
-            Captura el {{ dominio.etiquetaPeriodo }} del mes y administra total, fórmula y monto final.
+            Captura el mantenimiento del mes y administra total, fórmula y monto final.
           </p>
         </div>
         <div class="col-2 col-md-1 docs-modal__close-col">
           <button
             type="button"
             class="docs-modal__close"
-            (click)="cerrarModalRenta()"
-            aria-label="Cerrar modal de renta"
+            (click)="cerrarModalMantenimiento()"
+            aria-label="Cerrar modal de mantenimiento"
           >
             <mat-icon aria-hidden="true">close</mat-icon>
           </button>
@@ -168,10 +164,10 @@
       <div class="row docs-modal__body">
         <div class="col-12">
           <div class="perm-form-nc">
-            <form [formGroup]="rentaForm" class="perm-form-body mono-pago-form">
+            <form [formGroup]="mantenimientoForm" class="perm-form-body mono-pago-form">
               <div class="row g-3 align-items-end">
-                <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'alta'">
-                  <label for="rentaArrendatario" class="form-label perm-label"
+                <div class="col-12 col-lg-4" *ngIf="mantenimientoModalModo === 'alta'">
+                  <label for="mantenimientoArrendatario" class="form-label perm-label"
                     >Arrendatario <span class="text-danger">*</span></label
                   >
                   <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
@@ -183,7 +179,7 @@
                       <mat-icon aria-hidden="true">person</mat-icon>
                     </span>
                     <div class="form-floating flex-grow-1">
-                      <select id="rentaArrendatario" class="form-select" formControlName="idArrendatario">
+                      <select id="mantenimientoArrendatario" class="form-select" formControlName="idArrendatario">
                         <option [ngValue]="null" disabled hidden>
                           {{
                             arrendatariosOpciones.length
@@ -193,13 +189,13 @@
                         </option>
                         <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
                       </select>
-                      <label for="rentaArrendatario">Seleccione arrendatario</label>
+                      <label for="mantenimientoArrendatario">Seleccione arrendatario</label>
                     </div>
                   </div>
                 </div>
 
-                <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'alta'">
-                  <label for="rentaContrato" class="form-label perm-label"
+                <div class="col-12 col-lg-4" *ngIf="mantenimientoModalModo === 'alta'">
+                  <label for="mantenimientoContrato" class="form-label perm-label"
                     >Contrato <span class="text-danger">*</span></label
                   >
                   <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
@@ -211,19 +207,19 @@
                       <mat-icon aria-hidden="true">description</mat-icon>
                     </span>
                     <div class="form-floating flex-grow-1">
-                      <select id="rentaContrato" class="form-select" formControlName="idContrato">
+                      <select id="mantenimientoContrato" class="form-select" formControlName="idContrato">
                         <option [ngValue]="null" disabled hidden>
                           {{ textoPlaceholderContrato() }}
                         </option>
                         <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
                       </select>
-                      <label for="rentaContrato">Seleccione contrato</label>
+                      <label for="mantenimientoContrato">Seleccione contrato</label>
                     </div>
                   </div>
                 </div>
 
-                <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'alta'">
-                  <label for="rentaFormulaAlta" class="form-label perm-label"
+                <div class="col-12 col-lg-4" *ngIf="mantenimientoModalModo === 'alta'">
+                  <label for="mantenimientoFormulaAlta" class="form-label perm-label"
                     >Fórmula <span class="text-danger">*</span></label
                   >
                   <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
@@ -235,36 +231,36 @@
                       <mat-icon aria-hidden="true">functions</mat-icon>
                     </span>
                     <div class="form-floating flex-grow-1">
-                      <select id="rentaFormulaAlta" class="form-select" formControlName="idFormula">
+                      <select id="mantenimientoFormulaAlta" class="form-select" formControlName="idFormula">
                         <option [ngValue]="null" disabled hidden>
                           {{ formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas' }}
                         </option>
                         <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
                       </select>
-                      <label for="rentaFormulaAlta">Seleccione fórmula</label>
+                      <label for="mantenimientoFormulaAlta">Seleccione fórmula</label>
                     </div>
                   </div>
                 </div>
 
-                <div class="col-12 col-lg-4" *ngIf="rentaModalCargando">
+                <div class="col-12 col-lg-4" *ngIf="mantenimientoModalCargando">
                   <div class="mono-pago-servicio-loading mb-0">
                     <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                    <span>Cargando renta…</span>
+                    <span>Cargando mantenimiento…</span>
                   </div>
                 </div>
 
-                <ng-container *ngIf="!rentaModalCargando">
+                <ng-container *ngIf="!mantenimientoModalCargando">
                   <div class="col-12 col-lg-4">
-                    <label for="rentaTotal" class="form-label perm-label"
+                    <label for="mantenimientoTotal" class="form-label perm-label"
                       >Total <span class="text-danger">*</span></label
                     >
                     <div class="input-group input-group-lg perm-ig">
                       <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true">payments</mat-icon>
+                        <mat-icon aria-hidden="true">build</mat-icon>
                       </span>
                       <div class="form-floating flex-grow-1">
                         <input
-                          id="rentaTotal"
+                          id="mantenimientoTotal"
                           type="text"
                           inputmode="decimal"
                           class="form-control"
@@ -272,13 +268,13 @@
                           placeholder=" "
                           autocomplete="off"
                         />
-                        <label for="rentaTotal">Total</label>
+                        <label for="mantenimientoTotal">Total</label>
                       </div>
                     </div>
                   </div>
 
                   <div class="col-12 col-lg-4">
-                    <label for="rentaMontoFinal" class="form-label perm-label"
+                    <label for="mantenimientoMontoFinal" class="form-label perm-label"
                       >Monto final <span class="text-danger">*</span></label
                     >
                     <div class="input-group input-group-lg perm-ig">
@@ -287,7 +283,7 @@
                       </span>
                       <div class="form-floating flex-grow-1">
                         <input
-                          id="rentaMontoFinal"
+                          id="mantenimientoMontoFinal"
                           type="text"
                           inputmode="decimal"
                           class="form-control"
@@ -295,13 +291,13 @@
                           placeholder=" "
                           autocomplete="off"
                         />
-                        <label for="rentaMontoFinal">Monto final</label>
+                        <label for="mantenimientoMontoFinal">Monto final</label>
                       </div>
                     </div>
                   </div>
 
                   <div class="col-12 col-lg-4">
-                    <label for="rentaFactor" class="form-label perm-label"
+                    <label for="mantenimientoFactor" class="form-label perm-label"
                       >Factor variable <span class="text-danger">*</span></label
                     >
                     <div class="input-group input-group-lg perm-ig">
@@ -310,7 +306,7 @@
                       </span>
                       <div class="form-floating flex-grow-1">
                         <input
-                          id="rentaFactor"
+                          id="mantenimientoFactor"
                           type="text"
                           inputmode="decimal"
                           class="form-control"
@@ -318,13 +314,13 @@
                           placeholder=" "
                           autocomplete="off"
                         />
-                        <label for="rentaFactor">Factor variable</label>
+                        <label for="mantenimientoFactor">Factor variable</label>
                       </div>
                     </div>
                   </div>
 
-                  <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'edicion'">
-                    <label for="rentaFormula" class="form-label perm-label"
+                  <div class="col-12 col-lg-4" *ngIf="mantenimientoModalModo === 'edicion'">
+                    <label for="mantenimientoFormula" class="form-label perm-label"
                       >Fórmula <span class="text-danger">*</span></label
                     >
                     <div class="input-group input-group-lg perm-ig">
@@ -332,36 +328,36 @@
                         <mat-icon aria-hidden="true">functions</mat-icon>
                       </span>
                       <div class="form-floating flex-grow-1">
-                        <select id="rentaFormula" class="form-select" formControlName="idFormula">
+                        <select id="mantenimientoFormula" class="form-select" formControlName="idFormula">
                           <option [ngValue]="null" disabled hidden>Seleccione fórmula</option>
                           <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
                         </select>
-                        <label for="rentaFormula">Seleccione fórmula</label>
+                        <label for="mantenimientoFormula">Seleccione fórmula</label>
                       </div>
                     </div>
                   </div>
 
                   <div class="col-12 col-lg-4">
-                    <label for="rentaOcupoFormula" class="form-label perm-label">Usó fórmula</label>
+                    <label for="mantenimientoOcupoFormula" class="form-label perm-label">Usó fórmula</label>
                     <div class="input-group input-group-lg perm-ig">
                       <span class="input-group-text fw-bold">
                         <mat-icon aria-hidden="true">flag</mat-icon>
                       </span>
                       <div class="form-floating flex-grow-1">
-                        <select id="rentaOcupoFormula" class="form-select" formControlName="ocupoFormula">
+                        <select id="mantenimientoOcupoFormula" class="form-select" formControlName="ocupoFormula">
                           <option [ngValue]="0">No</option>
                           <option [ngValue]="1">Sí</option>
                         </select>
-                        <label for="rentaOcupoFormula">Usó fórmula</label>
+                        <label for="mantenimientoOcupoFormula">Usó fórmula</label>
                       </div>
                     </div>
                   </div>
                 </ng-container>
 
-                <div class="col-12" *ngIf="!rentaModalCargando && !catalogosModalCargando">
+                <div class="col-12" *ngIf="!mantenimientoModalCargando && !catalogosModalCargando">
                   <section
                     class="renta-pago-resumen"
-                    *ngIf="resumenRentaModal.listo"
+                    *ngIf="resumenMantenimientoModal.listo"
                     @rentaResumenReveal
                     aria-live="polite"
                   >
@@ -369,20 +365,20 @@
                       <div class="renta-pago-resumen__hero-row">
                         <div>
                           <span class="renta-pago-resumen__kicker">Pago a favor de</span>
-                          <h4 class="renta-pago-resumen__hero-title">{{ resumenRentaModal.pagoAFavorDe }}</h4>
+                          <h4 class="renta-pago-resumen__hero-title">{{ resumenMantenimientoModal.pagoAFavorDe }}</h4>
                         </div>
-                        <span class="renta-pago-resumen__chip">{{ dominio.etiquetaChip }}</span>
+                        <span class="renta-pago-resumen__chip">Mantenimiento</span>
                       </div>
                       <p class="renta-pago-resumen__hero-meta">
-                        Arrendatario: <span>{{ resumenRentaModal.arrendatario }}</span>
+                        Arrendatario: <span>{{ resumenMantenimientoModal.arrendatario }}</span>
                       </p>
                     </article>
-                    <article class="renta-pago-resumen__card" *ngIf="resumenRentaModal.campos.length">
+                    <article class="renta-pago-resumen__card" *ngIf="resumenMantenimientoModal.campos.length">
                       <h5 class="renta-pago-resumen__card-title">Detalle del registro</h5>
                       <div class="renta-pago-resumen__grid">
                         <div
                           class="renta-pago-resumen__field"
-                          *ngFor="let campo of resumenRentaModal.campos; trackBy: trackByResumenCampo"
+                          *ngFor="let campo of resumenMantenimientoModal.campos; trackBy: trackByResumenCampo"
                         >
                           <span>{{ campo.etiqueta }}</span>
                           <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
@@ -390,24 +386,28 @@
                       </div>
                     </article>
                   </section>
-                  <div class="renta-pago-resumen-hint" *ngIf="!resumenRentaModal.listo" @rentaResumenReveal>
+                  <div class="renta-pago-resumen-hint" *ngIf="!resumenMantenimientoModal.listo" @rentaResumenReveal>
                     <mat-icon aria-hidden="true">info_outline</mat-icon>
-                    <span>{{ resumenRentaModal.mensajeVacio }}</span>
+                    <span>{{ resumenMantenimientoModal.mensajeVacio }}</span>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
-                    <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalRenta()">
+                    <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalMantenimiento()">
                       Cancelar
                     </button>
                     <button
                       type="button"
                       class="button-success mono-pago-form-btn"
-                      (click)="guardarRentaDesdeModal()"
-                      [disabled]="rentaGuardando || rentaModalCargando"
+                      (click)="guardarMantenimientoDesdeModal()"
+                      [disabled]="mantenimientoGuardando || mantenimientoModalCargando"
                     >
-                      {{ rentaGuardando ? 'Enviando…' : (rentaModalModo === 'edicion' ? 'Guardar' : 'Agregar') }}
+                      {{
+                        mantenimientoGuardando
+                          ? 'Enviando…'
+                          : (mantenimientoModalModo === 'edicion' ? 'Guardar' : 'Agregar')
+                      }}
                     </button>
                   </div>
                 </div>

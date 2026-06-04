@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { vistaEmbebidaEnHub } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.util';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
@@ -11,22 +10,21 @@ import {
   contractModalAnim,
   routeAnimation,
 } from 'src/app/pipe/module-open.animation';
-import { formatearFechaHora } from '../../inmuebles/inmuebles-list.mapper';
+import { formatearFechaHora } from '../../../inmuebles/inmuebles-list.mapper';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { HistoricoPagosMantenimientoService } from 'src/app/services/moduleService/historico-pagos-mantenimiento.service';
-import { HistoricoPagosRentaService } from 'src/app/services/moduleService/historico-pagos-renta.service';
 import {
   etiquetaContratoArrendatarioApi,
   extraerFilasPaginadasApi,
   nombreArrendatarioDesdeApi,
   resolverIdArrendatarioApi,
-} from '../arrendatarios-list.mapper';
-import { HistoricoPagoRentaGridRow } from '../historico-pagos-renta-list.mapper';
+} from '../../arrendatarios-list.mapper';
 import {
-  OPERACION_PAGO_RENTA,
-  OperacionPagoDominioConfig,
-  resolverOperacionPagoDominio,
-} from '../operacion-pago-dominio.config';
+  extraerFilasHistoricoPagosMantenimientoApi,
+  extraerHistoricoPagoMantenimientoDetalleApi,
+  HistoricoPagoMantenimientoGridRow,
+  mapHistoricoPagoMantenimientoApiToGridRow,
+} from './historico-pagos-mantenimiento-list.mapper';
 
 interface SelectOpcion {
   id: number;
@@ -48,15 +46,14 @@ interface HistoricoDetalleVista {
 }
 
 @Component({
-  selector: 'app-lista-historico-pagos-renta',
-  templateUrl: './lista-historico-pagos-renta.component.html',
-  styleUrl: './lista-historico-pagos-renta.component.scss',
+  selector: 'app-lista-historico-pagos-mantenimiento',
+  templateUrl: './lista-historico-pagos-mantenimiento.component.html',
+  styleUrl: './lista-historico-pagos-mantenimiento.component.scss',
   standalone: false,
   animations: [routeAnimation, contractDimAnim, contractModalAnim],
 })
-export class ListaHistoricoPagosRentaComponent implements OnInit {
+export class ListaHistoricoPagosMantenimientoComponent implements OnInit {
   embebidoEnHub = false;
-  dominio: OperacionPagoDominioConfig = OPERACION_PAGO_RENTA;
   listaHistorico!: InstanceType<typeof CustomStore>;
   showFilterRow = true;
   showHeaderFilter = true;
@@ -65,7 +62,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
   paginaActual = 1;
   totalRegistros = 0;
   totalPaginas = 0;
-  paginaActualData: HistoricoPagoRentaGridRow[] = [];
+  paginaActualData: HistoricoPagoMantenimientoGridRow[] = [];
   filtroActivo = '';
   mensajeAgrupar =
     'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
@@ -91,14 +88,12 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
   constructor(
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
-    private historicoPagosRentaService: HistoricoPagosRentaService,
     private historicoPagosMantenimientoService: HistoricoPagosMantenimientoService,
     private arrendatariosService: ArrendatariosService,
   ) {}
 
   ngOnInit(): void {
-    this.dominio = resolverOperacionPagoDominio(this.route);
-    this.embebidoEnHub = vistaEmbebidaEnHub(this.route);
+    this.embebidoEnHub = this.leerEmbebidoEnHub();
     const rango = this.rangoFechasPorDefecto();
     this.fechaInicioFiltro = rango.inicio;
     this.fechaFinFiltro = rango.fin;
@@ -121,7 +116,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
           .filter((x): x is SelectOpcion => x != null);
         this.sincronizarContratosFiltro(this.idArrendatarioFiltro);
       })
-      .catch((err) => console.error('Error catálogos filtro histórico:', err))
+      .catch((err) => console.error('Error catálogos filtro histórico mantenimiento:', err))
       .finally(() => {
         this.catalogosFiltroCargando = false;
         this.cdr.markForCheck();
@@ -199,7 +194,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
         const page = Math.floor(skip / take) + 1;
         try {
           const resp = (await lastValueFrom(
-            this.obtenerHistoricoPaginado({
+            this.historicoPagosMantenimientoService.obtenerHistoricoPaginado({
               page,
               limit: take,
               fechaInicio: this.fechaInicioFiltro,
@@ -209,7 +204,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
             }),
           )) as Record<string, unknown>;
           this.loading = false;
-          const rowsRaw = this.dominio.extraerFilasHistorico(resp);
+          const rowsRaw = extraerFilasHistoricoPagosMantenimientoApi(resp);
           const meta =
             resp?.['paginated'] != null && typeof resp['paginated'] === 'object'
               ? (resp['paginated'] as Record<string, unknown>)
@@ -223,8 +218,8 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
             Math.max(1, Math.ceil(totalRegistros / take));
 
           const dataTransformada = rowsRaw
-            .map((item) => this.dominio.mapFilaHistorico(item))
-            .filter((r): r is HistoricoPagoRentaGridRow => r != null);
+            .map((item) => mapHistoricoPagoMantenimientoApiToGridRow(item))
+            .filter((r): r is HistoricoPagoMantenimientoGridRow => r != null);
 
           this.totalRegistros = totalRegistros;
           this.paginaActual = paginaActual;
@@ -234,10 +229,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
           return { data: dataTransformada, totalCount: totalRegistros };
         } catch (err) {
           this.loading = false;
-          console.error(
-            `Error al cargar histórico de ${this.dominio.etiquetaPeriodo}:`,
-            err,
-          );
+          console.error('Error al cargar histórico de pagos de mantenimiento:', err);
           return { data: [], totalCount: 0 };
         }
       },
@@ -345,7 +337,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
     this.dataGrid.instance.refresh();
   }
 
-  verDetalleHistorico(row: HistoricoPagoRentaGridRow): void {
+  verDetalleHistorico(row: HistoricoPagoMantenimientoGridRow): void {
     const id = Number(row?.id);
     if (!Number.isFinite(id) || id <= 0) return;
 
@@ -355,7 +347,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
     this.detalleHistoricoVista = this.construirVistaDetalle(row, row.detalle);
     this.cdr.markForCheck();
 
-    this.obtenerHistoricoPorId(Math.floor(id))
+    this.historicoPagosMantenimientoService.obtenerHistoricoPorId(Math.floor(id))
       .pipe(
         take(1),
         finalize(() => {
@@ -365,8 +357,8 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
       )
       .subscribe({
         next: (resp) => {
-          const det = this.dominio.extraerDetalleHistorico(resp);
-          const fila = (det && this.dominio.mapFilaHistorico(det)) ?? row;
+          const det = extraerHistoricoPagoMantenimientoDetalleApi(resp);
+          const fila = (det && mapHistoricoPagoMantenimientoApiToGridRow(det)) ?? row;
           this.detalleHistoricoVista = this.construirVistaDetalle(
             fila,
             det ?? row.detalle,
@@ -388,7 +380,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
   }
 
   private construirVistaDetalle(
-    row: HistoricoPagoRentaGridRow,
+    row: HistoricoPagoMantenimientoGridRow,
     det: Record<string, unknown>,
   ): HistoricoDetalleVista {
     const campos: HistoricoDetalleCampo[] = [
@@ -424,20 +416,13 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
     };
   }
 
-  private obtenerHistoricoPaginado(
-    filtros: import('src/app/services/moduleService/historico-pagos-renta.service').HistoricoPagosRentaFiltros,
-  ) {
-    if (this.dominio.id === 'mantenimiento') {
-      return this.historicoPagosMantenimientoService.obtenerHistoricoPaginado(filtros);
+  private leerEmbebidoEnHub(): boolean {
+    let actual: ActivatedRoute | null = this.route;
+    while (actual) {
+      if (actual.snapshot.data['hubEmbebido']) return true;
+      actual = actual.parent;
     }
-    return this.historicoPagosRentaService.obtenerHistoricoPaginado(filtros);
-  }
-
-  private obtenerHistoricoPorId(id: number) {
-    if (this.dominio.id === 'mantenimiento') {
-      return this.historicoPagosMantenimientoService.obtenerHistoricoPorId(id);
-    }
-    return this.historicoPagosRentaService.obtenerHistoricoPorId(id);
+    return false;
   }
 
   private mensajeErrorHttp(err: unknown): string {

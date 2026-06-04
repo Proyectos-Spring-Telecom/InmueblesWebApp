@@ -2,7 +2,7 @@ import {
   extraerFilasRentasActualApi,
   mapRentaActualApiToGridRow,
   RentaActualGridRow,
-} from './renta-actual-list.mapper';
+} from '../lista-rentas-actuales/renta-actual-list.mapper';
 
 export type HistoricoPagoRentaGridRow = RentaActualGridRow;
 

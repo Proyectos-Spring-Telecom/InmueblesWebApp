@@ -4,20 +4,20 @@
   </div>
 } @else {
   <div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
-    <header class="perm-head" role="region" [attr.aria-label]="'Sección: ' + dominio.tituloVistaHistorico">
+    <header class="perm-head" role="region" aria-label="Sección: Histórico de pagos">
       <div class="perm-head__icon" aria-hidden="true">
         <mat-icon>history</mat-icon>
       </div>
       <div class="perm-head__text">
         <span class="eyebrow">Catálogos</span>
-        <h2>{{ dominio.tituloVistaHistorico }}</h2>
+        <h2>Histórico de pagos</h2>
       </div>
       <nav class="perm-head__crumbs" aria-label="Ruta">
         <span class="crumb">Operación</span>
         <span class="sep">/</span>
         <span class="crumb">Arrendatarios</span>
         <span class="sep">/</span>
-        <span class="crumb active">{{ dominio.tituloVistaHistorico }}</span>
+        <span class="crumb active">Histórico de pagos</span>
       </nav>
     </header>
     <ng-container *ngTemplateOutlet="contenidoHistorico"></ng-container>
@@ -125,7 +125,7 @@
         (onPageIndexChanged)="onPageIndexChanged($event)"
         (onOptionChanged)="onGridOptionChanged($event)"
       >
-        <dxo-search-panel [visible]="true" [width]="240" [placeholder]="dominio.buscarHistorico"></dxo-search-panel>
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar en histórico..."></dxo-search-panel>
         <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
         <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
@@ -149,7 +149,6 @@
         <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
         <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>
         <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusHistoricoTpl" [width]="120"></dxi-column>
-        <!-- <dxi-column dataField="id" caption="ID" alignment="center" [width]="72" [visible]="false"></dxi-column> -->
 
         <div *dxTemplate="let row of 'estatusHistoricoTpl'">
           <span class="estatus estatus-activo">{{ row.data.pagadaLabel }}</span>
@@ -185,7 +184,7 @@
     >
       <div class="row docs-modal__header">
         <div class="col-10 col-md-11">
-          <span class="docs-modal__eyebrow">{{ dominio.tituloVistaHistorico }}</span>
+          <span class="docs-modal__eyebrow">Histórico de pagos</span>
           <h3 class="docs-modal__title" id="hist-detalle-modal-title">Detalle del pago</h3>
           <p class="docs-modal__subtitle" *ngIf="detalleHistoricoVista">
             Folio {{ detalleHistoricoVista.id }} · {{ detalleHistoricoVista.periodo }}

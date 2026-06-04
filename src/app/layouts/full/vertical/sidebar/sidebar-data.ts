@@ -140,19 +140,16 @@ export const navItems: NavItem[] = [
     children: [
       {
         displayName: 'Lista Arrendadores',
-        iconName: 'users',
         route: '/clientes',
         permission: Permiso.CONSULTA_CLIENTE,
       },
       {
         displayName: 'Lista Inmuebles',
-        iconName: 'building',
         route: '/inmuebles',
         permission: Permiso.CONSULTA_CLIENTE,
       },
       {
         displayName: 'Arrendatarios',
-        iconName: 'building-store',
         route: '/menu-level',
         permission: Permiso.CONSULTA_CLIENTE,
         children: [

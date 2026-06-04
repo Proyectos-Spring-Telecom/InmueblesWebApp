@@ -1,4 +1,4 @@
-@import '../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
+@import '../../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
 
 :host {
   display: block;
@@ -94,4 +94,8 @@
 
 .hist-detalle-modal__resumen {
   margin-top: 0;
+}
+
+.operacion-hub-vista .surface {
+  padding-top: 1rem;
 }

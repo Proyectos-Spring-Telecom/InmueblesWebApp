@@ -648,13 +648,28 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     indexContrato: number,
     idInmueble: number,
     idLocalesPreservar?: number[] | null,
+    localesExtraDesdeContrato?: { id: number; nombre: string; etiqueta: string }[],
   ): void {
     this.cargandoLocalesPorContrato[indexContrato] = true;
     this.localesLibresConsultadosPorContrato[indexContrato] = false;
-    this.inmueblesService
+
+    const preserve = (idLocalesPreservar ?? [])
+      .map((id) => Math.trunc(Number(id)))
+      .filter((id) => Number.isFinite(id) && id > 0);
+    const necesitaCatalogo =
+      this.esEdicionArrendatario() || preserve.length > 0;
+
+    const libres$ = this.inmueblesService
       .obtenerLocalesLibres(idInmueble)
+      .pipe(catchError(() => of(null)));
+    const catalogo$ = necesitaCatalogo
+      ? this.inmueblesService
+          .obtenerLocalesPorInmueble(idInmueble)
+          .pipe(catchError(() => of(null)))
+      : of(null);
+
+    forkJoin({ libres: libres$, catalogo: catalogo$ })
       .pipe(
-        catchError(() => of(null)),
         finalize(() => {
           this.cargandoLocalesPorContrato[indexContrato] = false;
           this.localesLibresConsultadosPorContrato[indexContrato] = true;
@@ -664,18 +679,80 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         }),
       )
-      .subscribe((res) => {
-        this.localesLibresPorContrato[indexContrato] = this.mapearLocalesLibresDesdeApi(res);
-        const preserve = (idLocalesPreservar ?? [])
-          .map((id) => Math.trunc(Number(id)))
-          .filter((id) => Number.isFinite(id) && id > 0);
-        const opciones = this.localesLibresPorContrato[indexContrato] ?? [];
-        const idsValidos = preserve.filter((id) => opciones.some((l) => l.id === id));
+      .subscribe(({ libres, catalogo }) => {
+        const opciones = this.fusionarOpcionesLocalesContrato(
+          this.mapearLocalesLibresDesdeApi(libres),
+          this.mapearLocalesLibresDesdeApi(catalogo),
+          localesExtraDesdeContrato ?? [],
+          preserve,
+        );
+        this.localesLibresPorContrato[indexContrato] = opciones;
+
+        const idsValidos = preserve.filter((id) =>
+          opciones.some((l) => l.id === id),
+        );
         if (idsValidos.length > 0) {
-          this.idLocalesControl(indexContrato).setValue([...idsValidos], { emitEvent: false });
+          this.idLocalesControl(indexContrato).setValue([...idsValidos], {
+            emitEvent: false,
+          });
         }
         this.cdr.markForCheck();
       });
+  }
+
+  private fusionarOpcionesLocalesContrato(
+    libres: { id: number; nombre: string; etiqueta: string }[],
+    catalogo: { id: number; nombre: string; etiqueta: string }[],
+    extra: { id: number; nombre: string; etiqueta: string }[],
+    idsPreservar: number[],
+  ): { id: number; nombre: string; etiqueta: string }[] {
+    const map = new Map<number, { id: number; nombre: string; etiqueta: string }>();
+    for (const l of libres) map.set(l.id, l);
+
+    const preserve = new Set(idsPreservar);
+    const agregarSiPreservado = (l: { id: number; nombre: string; etiqueta: string }): void => {
+      if (!preserve.has(l.id) || map.has(l.id)) return;
+      map.set(l.id, l);
+    };
+
+    for (const l of catalogo) agregarSiPreservado(l);
+    for (const l of extra) agregarSiPreservado(l);
+
+    return [...map.values()].sort((a, b) =>
+      a.etiqueta.localeCompare(b.etiqueta, 'es'),
+    );
+  }
+
+  /** Opciones desde `contratoLocales[]` del GET (local embebido o `idLocal`). */
+  private localesOpcionesDesdeContratoLocales(
+    c: Record<string, unknown>,
+  ): { id: number; nombre: string; etiqueta: string }[] {
+    const filas = c['contratoLocales'];
+    if (!Array.isArray(filas)) return [];
+    const out: { id: number; nombre: string; etiqueta: string }[] = [];
+
+    for (const raw of filas) {
+      if (raw == null || typeof raw !== 'object') continue;
+      const fila = raw as Record<string, unknown>;
+      const loc =
+        fila['local'] != null &&
+        typeof fila['local'] === 'object' &&
+        !Array.isArray(fila['local'])
+          ? (fila['local'] as Record<string, unknown>)
+          : null;
+
+      const id = Number(loc?.['id'] ?? loc?.['idLocal'] ?? fila['idLocal']);
+      if (!Number.isFinite(id) || id <= 0) continue;
+
+      const row = loc ?? { id, nombre: `Local ${Math.trunc(id)}` };
+      out.push({
+        id: Math.trunc(id),
+        nombre: this.nombreLocalLibre(row),
+        etiqueta: this.etiquetaLocalLibre(row),
+      });
+    }
+
+    return out;
   }
 
   private limpiarIdLocalesContrato(indexContrato: number): void {
@@ -941,7 +1018,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   nombreLocalContrato(index: number, idLocal: number): string {
-    const loc = (this.localesLibresPorContrato[index] ?? []).find((l) => l.id === idLocal);
+    const loc = (this.localesLibresPorContrato[index] ?? []).find(
+      (l) => l.id === idLocal,
+    );
     return loc?.nombre ?? `Local ${idLocal}`;
   }
 
@@ -1047,8 +1126,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Solo en alta: quitar filas del FormArray antes de enviar (mínimo 1 contrato). */
+  puedeEliminarContratoEnFormulario(): boolean {
+    return !this.esEdicionArrendatario() && this.contratosFormArray.length >= 2;
+  }
+
   eliminarContratoArrendatario(index: number): void {
-    if (this.contratosFormArray.length < 2) return;
+    if (this.esEdicionArrendatario() || this.contratosFormArray.length < 2) return;
     this.contratosInmuebleSubs[index]?.unsubscribe();
     this.contratosFormArray.removeAt(index);
     this.contratosInmuebleSubs.splice(index, 1);
@@ -2016,11 +2100,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.enlazarInmuebleLocalContrato(index);
       const idIm = this.idInmuebleDesdeContrato(c);
       const idsLoc = this.idLocalesDesdeContrato(c);
+      const localesExtra = this.localesOpcionesDesdeContratoLocales(c);
       if (idIm != null) {
         this.cargarLocalesLibresContrato(
           index,
           idIm,
           idsLoc.length > 0 ? idsLoc : null,
+          localesExtra,
         );
       }
     });
@@ -2100,26 +2186,59 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   private idLocalesDesdeContrato(c: Record<string, unknown>): number[] {
+    const ids = new Set<number>();
+
     const raw = c['idLocales'];
     if (Array.isArray(raw)) {
-      return raw
-        .map((x) => Number(x))
-        .filter((n) => Number.isFinite(n) && n > 0)
-        .map((n) => Math.trunc(n));
+      for (const x of raw) {
+        const n = Number(x);
+        if (Number.isFinite(n) && n > 0) ids.add(Math.trunc(n));
+      }
     }
-    const idLoc = this.idLocalDesdeContrato(c);
-    return idLoc != null ? [idLoc] : [];
+
+    const direct = Number(c['idLocal']);
+    if (Number.isFinite(direct) && direct > 0) ids.add(Math.trunc(direct));
+
+    const loc = c['local'];
+    if (loc != null && typeof loc === 'object' && !Array.isArray(loc)) {
+      const id = Number(
+        (loc as Record<string, unknown>)['id'] ??
+          (loc as Record<string, unknown>)['idLocal'],
+      );
+      if (Number.isFinite(id) && id > 0) ids.add(Math.trunc(id));
+    }
+
+    const filas = c['contratoLocales'];
+    if (Array.isArray(filas)) {
+      for (const fila of filas) {
+        if (fila == null || typeof fila !== 'object') continue;
+        const f = fila as Record<string, unknown>;
+        const idFila = Number(f['idLocal']);
+        if (Number.isFinite(idFila) && idFila > 0) {
+          ids.add(Math.trunc(idFila));
+          continue;
+        }
+        const locFila = f['local'];
+        if (
+          locFila != null &&
+          typeof locFila === 'object' &&
+          !Array.isArray(locFila)
+        ) {
+          const idLoc = Number(
+            (locFila as Record<string, unknown>)['id'] ??
+              (locFila as Record<string, unknown>)['idLocal'],
+          );
+          if (Number.isFinite(idLoc) && idLoc > 0) ids.add(Math.trunc(idLoc));
+        }
+      }
+    }
+
+    return [...ids];
   }
 
   private idLocalDesdeContrato(c: Record<string, unknown>): number | null {
-    const direct = Number(c['idLocal']);
-    if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
-    const loc = c['local'];
-    if (loc != null && typeof loc === 'object') {
-      const id = Number((loc as Record<string, unknown>)['id'] ?? (loc as Record<string, unknown>)['idLocal']);
-      if (Number.isFinite(id) && id > 0) return Math.trunc(id);
-    }
-    return null;
+    const ids = this.idLocalesDesdeContrato(c);
+    return ids.length > 0 ? ids[0] : null;
   }
 
   private idArrendadorDesdeItem(item: Record<string, unknown>): number | null {

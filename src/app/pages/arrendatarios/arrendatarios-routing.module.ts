@@ -1,58 +1,47 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { OperacionPagosHubComponent } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.component';
 import { ListaArrendatariosComponent } from './lista-arrendatarios/lista-arrendatarios.component';
-import { ListaRentasArrendatariosComponent } from './lista-rentas-arrendatarios/lista-rentas-arrendatarios.component';
-import { ListaHistoricoPagosRentaComponent } from './lista-historico-pagos-renta/lista-historico-pagos-renta.component';
 import { AgregarArrendatarioComponent } from './agregar-arrendatario/agregar-arrendatario.component';
-import {
-  OPERACION_PAGO_MANTENIMIENTO,
-  OPERACION_PAGO_RENTA,
-} from './operacion-pago-dominio.config';
-import { PAGOS_MANTENIMIENTO_HUB_CONFIG } from './pagos-mantenimiento-hub.config';
-import { PAGOS_RENTA_HUB_CONFIG } from './pagos-renta-hub.config';
+import { PagosRentaComponent } from './pagos-renta/pagos-renta.component';
+import { ListaRentasActualesComponent } from './pagos-renta/lista-rentas-actuales/lista-rentas-actuales.component';
+import { ListaHistoricoPagosRentaComponent } from './pagos-renta/lista-historico-pagos-renta/lista-historico-pagos-renta.component';
+import { PagosMantenimientoComponent } from './pagos-mantenimiento/pagos-mantenimiento.component';
+import { ListaMantenimientoActualComponent } from './pagos-mantenimiento/lista-mantenimiento-actual/lista-mantenimiento-actual.component';
+import { ListaHistoricoPagosMantenimientoComponent } from './pagos-mantenimiento/lista-historico-pagos-mantenimiento/lista-historico-pagos-mantenimiento.component';
 
 const routes: Routes = [
   { path: '', component: ListaArrendatariosComponent },
   {
     path: 'pagos-renta',
-    component: OperacionPagosHubComponent,
-    data: { operacionHub: PAGOS_RENTA_HUB_CONFIG },
+    component: PagosRentaComponent,
     children: [
       { path: '', redirectTo: 'actual', pathMatch: 'full' },
       {
         path: 'actual',
-        component: ListaRentasArrendatariosComponent,
-        data: { hubEmbebido: true, operacionPagoDominio: OPERACION_PAGO_RENTA },
+        component: ListaRentasActualesComponent,
+        data: { hubEmbebido: true },
       },
       {
         path: 'historico',
         component: ListaHistoricoPagosRentaComponent,
-        data: { hubEmbebido: true, operacionPagoDominio: OPERACION_PAGO_RENTA },
+        data: { hubEmbebido: true },
       },
     ],
   },
   {
     path: 'pagos-mantenimiento',
-    component: OperacionPagosHubComponent,
-    data: { operacionHub: PAGOS_MANTENIMIENTO_HUB_CONFIG },
+    component: PagosMantenimientoComponent,
     children: [
       { path: '', redirectTo: 'actual', pathMatch: 'full' },
       {
         path: 'actual',
-        component: ListaRentasArrendatariosComponent,
-        data: {
-          hubEmbebido: true,
-          operacionPagoDominio: OPERACION_PAGO_MANTENIMIENTO,
-        },
+        component: ListaMantenimientoActualComponent,
+        data: { hubEmbebido: true },
       },
       {
         path: 'historico',
-        component: ListaHistoricoPagosRentaComponent,
-        data: {
-          hubEmbebido: true,
-          operacionPagoDominio: OPERACION_PAGO_MANTENIMIENTO,
-        },
+        component: ListaHistoricoPagosMantenimientoComponent,
+        data: { hubEmbebido: true },
       },
     ],
   },

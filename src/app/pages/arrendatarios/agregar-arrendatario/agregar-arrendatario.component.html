@@ -155,10 +155,15 @@
                 itemTitleTemplate="contratoAccordionTitle">
                 <div *dxTemplate="let data of 'contratoAccordionTitle'" class="arrend-accordion-title-bar">
                   <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
-                  <button *ngIf="contratosFormArray.length >= 2" type="button"
-                    class="mono-grid-action-btn arrend-contrato-eliminar-btn bg-error" aria-label="Eliminar contrato"
-                    (mousedown)="$event.stopPropagation()" (click)="eliminarContratoDesdeTituloAccordion($event, data)">
-                    <span>Eliminar Contrato</span>
+                  <button
+                    *ngIf="puedeEliminarContratoEnFormulario()"
+                    type="button"
+                    class="btn btn-sm bg-error arrend-contrato-eliminar-btn"
+                    aria-label="Eliminar contrato"
+                    (mousedown)="$event.stopPropagation()"
+                    (click)="eliminarContratoDesdeTituloAccordion($event, data)"
+                  >
+                    Eliminar Contrato
                   </button>
                 </div>
                 <dxi-item *ngFor="let contratoCtrl of contratosFormArray.controls; let i = index"

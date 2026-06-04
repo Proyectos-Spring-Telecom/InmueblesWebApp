@@ -104,14 +104,14 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   ) {}
 
   // -------- Utils ----------
-  private numericDepth(): number {
+  numericDepth(): number {
     const d = Number(this.depth);
     return Number.isFinite(d) ? d : 0;
   }
 
-  /** Sin icono solo en el último nivel (hijos de Arrendatarios, etc.). */
+  /** Icono solo si el ítem lo define (evita hueco vacío en submenús sin icono). */
   mostrarIconoNav(): boolean {
-    return this.numericDepth() < 2;
+    return this.numericDepth() < 2 && !!this.item?.iconName;
   }
 
   // Colapsa TODAS las instancias en el mismo nivel
@@ -165,13 +165,13 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(): void {
-    // Compatibilidad con tu lógica original
-    const url = this.navService.currentUrl();
-    if (this.item?.route && url) {
-      const mine = url.indexOf(`/${this.item.route}`) === 0;
-      if (mine) this.openExclusivelyAtMyDepth();
-      this.ariaExpanded = this.expanded;
+    if (
+      this.item &&
+      (this.isDirectlyActive(this.item) || this.isChildActive(this.item))
+    ) {
+      this.openExclusivelyAtMyDepth();
     }
+    this.ariaExpanded = this.expanded;
   }
 
   ngOnDestroy(): void {
@@ -220,8 +220,30 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   // -------- Activo ----------
+  private normalizePath(path: string): string {
+    const p = (path || '/').split('?')[0].replace(/\/+$/, '') || '/';
+    return p;
+  }
+
+  private currentPath(): string {
+    return this.normalizePath(this.router.url);
+  }
+
   isDirectlyActive(item: NavItem): boolean {
-    return !!item?.route && this.router.isActive(item.route, true);
+    if (!item?.route || item.route === '/menu-level') return false;
+
+    const route = this.normalizePath(item.route);
+    const url = this.currentPath();
+
+    if (url === route) return true;
+    if (!url.startsWith(route + '/')) return false;
+
+    // Lista de arrendatarios: no marcar al estar en hubs de pagos
+    if (route === '/arrendatarios') {
+      return !/^\/arrendatarios\/pagos-(renta|mantenimiento)(\/|$)/.test(url);
+    }
+
+    return true;
   }
 
   isChildActive(item: NavItem): boolean {

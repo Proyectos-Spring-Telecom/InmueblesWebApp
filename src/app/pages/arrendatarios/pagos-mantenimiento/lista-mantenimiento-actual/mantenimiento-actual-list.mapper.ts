@@ -1,6 +1,6 @@
 import { formatMonedaDesdeNumero } from 'src/app/shared/valor-miles-format';
-import { formatearFechaHora } from '../inmuebles/inmuebles-list.mapper';
-import { nombreArrendatarioDesdeApi } from './arrendatarios-list.mapper';
+import { formatearFechaHora } from '../../../inmuebles/inmuebles-list.mapper';
+import { nombreArrendatarioDesdeApi } from '../../arrendatarios-list.mapper';
 
 const MESES_PERIODO_ES = [
   'Enero',

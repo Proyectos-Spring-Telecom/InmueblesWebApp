@@ -23,8 +23,8 @@
         [class.monitor-anim-fwd]="listNavDirection === 'forward'"
         [class.monitor-anim-back]="listNavDirection === 'back'"
         [@monitorListPanel]="monitorListLevel">
-      <div class="row g-2 g-md-3">
-        <div class="col-12 col-lg-5">
+      <div class="row g-2 g-md-3 monitor-inmuebles-split">
+        <div class="col-12 col-lg-5 monitor-inmuebles-split__panel-left">
           <div class="h-100 d-flex flex-column">
             <div class="card-header monitor-card-header">
               <div class="monitor-head-wrap w-100" [@monitorModeHeader]="monitorListLevel">
@@ -269,8 +269,8 @@
             </div>
           </div>
         </div>
-        <div class="col-12 col-lg-7">
-          <div class="monitor-right-viewport">
+        <div class="col-12 col-lg-7 monitor-inmuebles-split__panel-right">
+          <div class="monitor-right-viewport h-100">
           <div class="map-wrapper" *ngIf="rightPanelMode === 'mapa'"
             [class.monitor-anim-fwd]="listNavDirection === 'forward'"
             [class.monitor-anim-back]="listNavDirection === 'back'"
@@ -384,6 +384,8 @@
                         [style.width.px]="local.width" [style.height.px]="local.height"
                         (mousedown)="onDragStart($event, local)"
                         (click)="selectLocal(local.id); $event.stopPropagation()">
+                        <span class="local-diagram-status inmueble-status" [ngClass]="claseEstadoDiagrama(local)"
+                          [attr.title]="etiquetaEstadoDiagrama(local)">{{ etiquetaEstadoDiagrama(local) }}</span>
                         <div class="local-icon-wrap">
                           <img src="assets/images/svgs/icon-office-bag-2.svg" alt="Local" />
                         </div>
@@ -438,8 +440,9 @@
             <p>No hay arrendadores que coincidan con la búsqueda.</p>
           </div>
         </div>
-        <div [ngClass]="clientesGridRowClass" *ngIf="!cargandoClientes && clientesFiltrados.length > 0">
-          <div [ngClass]="clienteCardColClass" *ngFor="let cliente of clientesFiltrados">
+        <div class="clientes-cards-grid" [class.clientes-cards-grid--solo]="clientesFiltrados.length === 1"
+          *ngIf="!cargandoClientes && clientesFiltrados.length > 0">
+          <div class="clientes-cards-grid__item" *ngFor="let cliente of clientesFiltrados">
             <div class="inmueble-card-shell cliente-grid-card cliente-card-v2">
               <div class="cliente-card-body-stack">
                 <header class="cliente-card-head">

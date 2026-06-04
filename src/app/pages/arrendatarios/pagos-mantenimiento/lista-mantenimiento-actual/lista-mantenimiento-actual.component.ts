@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { vistaEmbebidaEnHub } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.util';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
@@ -19,60 +18,54 @@ import {
   formatearFecha,
   formatearMoneda,
   nombreArrendador,
-} from '../../inmuebles/inmuebles-list.mapper';
+} from '../../../inmuebles/inmuebles-list.mapper';
 import {
   etiquetaContratoArrendatarioApi,
   extraerFilasPaginadasApi,
   nombreArrendatarioDesdeApi,
   resolverIdArrendatarioApi,
-} from '../arrendatarios-list.mapper';
+} from '../../arrendatarios-list.mapper';
 import {
   MantenimientoActualPostPayload,
   MantenimientoActualPutPayload,
   MantenimientoActualService,
 } from 'src/app/services/moduleService/mantenimiento-actual.service';
 import {
-  RentaActualPostPayload,
-  RentaActualPutPayload,
-  RentaActualService,
-} from 'src/app/services/moduleService/renta-actual.service';
-import { RentaActualGridRow } from '../renta-actual-list.mapper';
-import {
-  OPERACION_PAGO_RENTA,
-  OperacionPagoDominioConfig,
-  resolverOperacionPagoDominio,
-} from '../operacion-pago-dominio.config';
+  extraerFilasMantenimientoActualApi,
+  extraerMantenimientoActualDetalleApi,
+  mapMantenimientoActualApiToGridRow,
+  MantenimientoActualGridRow,
+} from './mantenimiento-actual-list.mapper';
 
 interface SelectOpcion {
   id: number;
   label: string;
 }
 
-interface RentaModalResumenCampo {
+interface MantenimientoModalResumenCampo {
   etiqueta: string;
   valor: string;
   dinero?: boolean;
 }
 
-interface RentaModalResumenVm {
+interface MantenimientoModalResumenVm {
   listo: boolean;
   mensajeVacio: string;
   pagoAFavorDe: string;
   arrendatario: string;
-  campos: RentaModalResumenCampo[];
+  campos: MantenimientoModalResumenCampo[];
 }
 
 @Component({
-  selector: 'app-lista-rentas-arrendatarios',
-  templateUrl: './lista-rentas-arrendatarios.component.html',
-  styleUrl: './lista-rentas-arrendatarios.component.scss',
+  selector: 'app-lista-mantenimiento-actual',
+  templateUrl: './lista-mantenimiento-actual.component.html',
+  styleUrl: './lista-mantenimiento-actual.component.scss',
   standalone: false,
   animations: [routeAnimation, contractDimAnim, contractModalAnim, rentaResumenRevealAnim],
 })
-export class ListaRentasArrendatariosComponent implements OnInit {
+export class ListaMantenimientoActualComponent implements OnInit {
   embebidoEnHub = false;
-  dominio: OperacionPagoDominioConfig = OPERACION_PAGO_RENTA;
-  listaRentas!: InstanceType<typeof CustomStore>;
+  listaMantenimientos!: InstanceType<typeof CustomStore>;
   showFilterRow = true;
   showHeaderFilter = true;
   loading = false;
@@ -80,25 +73,25 @@ export class ListaRentasArrendatariosComponent implements OnInit {
   paginaActual = 1;
   totalRegistros = 0;
   totalPaginas = 0;
-  paginaActualData: RentaActualGridRow[] = [];
+  paginaActualData: MantenimientoActualGridRow[] = [];
   filtroActivo = '';
   mensajeAgrupar =
     'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
   autoExpandAllGroups = true;
 
-  mostrarModalRenta = false;
-  rentaModalModo: 'alta' | 'edicion' = 'alta';
-  rentaEditId: number | null = null;
-  rentaGuardando = false;
-  rentaModalCargando = false;
-  rentaForm!: FormGroup;
+  mostrarModalMantenimiento = false;
+  mantenimientoModalModo: 'alta' | 'edicion' = 'alta';
+  mantenimientoEditId: number | null = null;
+  mantenimientoGuardando = false;
+  mantenimientoModalCargando = false;
+  mantenimientoForm!: FormGroup;
 
   arrendatariosOpciones: SelectOpcion[] = [];
   contratosOpciones: SelectOpcion[] = [];
   formulasOpciones: SelectOpcion[] = [];
   private arrendatariosCatalogo: Record<string, unknown>[] = [];
   catalogosModalCargando = false;
-  resumenRentaModal: RentaModalResumenVm = this.resumenRentaModalVacio();
+  resumenMantenimientoModal: MantenimientoModalResumenVm = this.resumenMantenimientoModalVacio();
 
   @ViewChild('gridContainer', { static: false })
   dataGrid!: DxDataGridComponent;
@@ -107,21 +100,19 @@ export class ListaRentasArrendatariosComponent implements OnInit {
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
-    private rentaActualService: RentaActualService,
     private mantenimientoActualService: MantenimientoActualService,
     private arrendatariosService: ArrendatariosService,
     private formulasService: FormulasService,
   ) {}
 
   ngOnInit(): void {
-    this.dominio = resolverOperacionPagoDominio(this.route);
-    this.embebidoEnHub = vistaEmbebidaEnHub(this.route);
+    this.embebidoEnHub = this.leerEmbebidoEnHub();
     this.inicializarFormulario();
     this.setupDataSource();
   }
 
   private inicializarFormulario(): void {
-    this.rentaForm = this.fb.group({
+    this.mantenimientoForm = this.fb.group({
       idArrendatario: [null, Validators.required],
       idContrato: [null, Validators.required],
       total: [null, Validators.required],
@@ -130,14 +121,14 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       factorVariable: [null, Validators.required],
       ocupoFormula: [0, Validators.required],
     });
-    this.rentaForm.get('idArrendatario')?.valueChanges.subscribe((id) => {
+    this.mantenimientoForm.get('idArrendatario')?.valueChanges.subscribe((id) => {
       this.sincronizarContratosPorArrendatario(id);
-      this.actualizarResumenRentaModal();
+      this.actualizarResumenMantenimientoModal();
     });
-    this.rentaForm.valueChanges.subscribe(() => this.actualizarResumenRentaModal());
+    this.mantenimientoForm.valueChanges.subscribe(() => this.actualizarResumenMantenimientoModal());
   }
 
-  private resumenRentaModalVacio(): RentaModalResumenVm {
+  private resumenMantenimientoModalVacio(): MantenimientoModalResumenVm {
     return {
       listo: false,
       mensajeVacio:
@@ -148,18 +139,18 @@ export class ListaRentasArrendatariosComponent implements OnInit {
     };
   }
 
-  trackByResumenCampo(_index: number, campo: RentaModalResumenCampo): string {
+  trackByResumenCampo(_index: number, campo: MantenimientoModalResumenCampo): string {
     return campo.etiqueta;
   }
 
-  private actualizarResumenRentaModal(): void {
-    this.resumenRentaModal = this.construirResumenRentaModal();
+  private actualizarResumenMantenimientoModal(): void {
+    this.resumenMantenimientoModal = this.construirResumenMantenimientoModal();
     this.cdr.markForCheck();
   }
 
   setupDataSource(): void {
     this.loading = true;
-    this.listaRentas = new CustomStore({
+    this.listaMantenimientos = new CustomStore({
       key: 'id',
       load: async (loadOptions: { take?: number; skip?: number }) => {
         const take = Number(loadOptions?.take) || this.pageSize || 20;
@@ -167,10 +158,10 @@ export class ListaRentasArrendatariosComponent implements OnInit {
         const page = Math.floor(skip / take) + 1;
         try {
           const resp = (await lastValueFrom(
-            this.obtenerPaginaActual(page, take),
+            this.mantenimientoActualService.obtenerMantenimientosPaginados(page, take),
           )) as Record<string, unknown>;
           this.loading = false;
-          const rowsRaw = this.dominio.extraerFilasActual(resp);
+          const rowsRaw = extraerFilasMantenimientoActualApi(resp);
           const meta =
             resp?.['paginated'] != null && typeof resp['paginated'] === 'object'
               ? (resp['paginated'] as Record<string, unknown>)
@@ -184,8 +175,8 @@ export class ListaRentasArrendatariosComponent implements OnInit {
             Math.max(1, Math.ceil(totalRegistros / take));
 
           const dataTransformada = rowsRaw
-            .map((item) => this.dominio.mapFilaActual(item))
-            .filter((r): r is RentaActualGridRow => r != null);
+            .map((item) => mapMantenimientoActualApiToGridRow(item))
+            .filter((r): r is MantenimientoActualGridRow => r != null);
 
           this.totalRegistros = totalRegistros;
           this.paginaActual = paginaActual;
@@ -195,7 +186,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
           return { data: dataTransformada, totalCount: totalRegistros };
         } catch (err) {
           this.loading = false;
-          console.error(this.dominio.textos.errorCargarActual, err);
+          console.error('Error al cargar mantenimientos actuales:', err);
           return { data: [], totalCount: 0 };
         }
       },
@@ -218,7 +209,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
     const texto = (e.value ?? '').toString().trim().toLowerCase();
     if (!texto) {
       this.filtroActivo = '';
-      grid?.option('dataSource', this.listaRentas);
+      grid?.option('dataSource', this.listaMantenimientos);
       return;
     }
     this.filtroActivo = texto;
@@ -246,7 +237,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
     inst.pageIndex(0);
     inst.option('searchPanel.text', '');
     this.filtroActivo = '';
-    inst.option('dataSource', this.listaRentas);
+    inst.option('dataSource', this.listaMantenimientos);
     inst.refresh();
   }
 
@@ -270,9 +261,9 @@ export class ListaRentasArrendatariosComponent implements OnInit {
   }
 
   abrirModalAlta(): void {
-    this.rentaModalModo = 'alta';
-    this.rentaEditId = null;
-    this.rentaForm.reset({
+    this.mantenimientoModalModo = 'alta';
+    this.mantenimientoEditId = null;
+    this.mantenimientoForm.reset({
       idArrendatario: null,
       idContrato: null,
       total: null,
@@ -281,45 +272,45 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       factorVariable: null,
       ocupoFormula: 0,
     });
-    this.rentaForm.get('idArrendatario')?.enable();
-    this.rentaForm.get('idContrato')?.enable();
+    this.mantenimientoForm.get('idArrendatario')?.enable();
+    this.mantenimientoForm.get('idContrato')?.enable();
     this.contratosOpciones = [];
-    this.resumenRentaModal = this.resumenRentaModalVacio();
-    this.mostrarModalRenta = true;
+    this.resumenMantenimientoModal = this.resumenMantenimientoModalVacio();
+    this.mostrarModalMantenimiento = true;
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
   }
 
-  abrirModalEdicion(row: RentaActualGridRow): void {
+  abrirModalEdicion(row: MantenimientoActualGridRow): void {
     const id = Number(row?.id);
     if (!Number.isFinite(id) || id <= 0) return;
-    this.rentaModalModo = 'edicion';
-    this.rentaEditId = Math.floor(id);
-    this.mostrarModalRenta = true;
-    this.rentaModalCargando = true;
-    this.rentaForm.reset();
-    this.rentaForm.get('idArrendatario')?.disable();
-    this.rentaForm.get('idContrato')?.disable();
-    this.resumenRentaModal = this.resumenRentaModalVacio();
+    this.mantenimientoModalModo = 'edicion';
+    this.mantenimientoEditId = Math.floor(id);
+    this.mostrarModalMantenimiento = true;
+    this.mantenimientoModalCargando = true;
+    this.mantenimientoForm.reset();
+    this.mantenimientoForm.get('idArrendatario')?.disable();
+    this.mantenimientoForm.get('idContrato')?.disable();
+    this.resumenMantenimientoModal = this.resumenMantenimientoModalVacio();
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
 
-    this.obtenerDetalleActual(this.rentaEditId)
+    this.mantenimientoActualService.obtenerMantenimientoPorId(this.mantenimientoEditId)
       .pipe(
         take(1),
         finalize(() => {
-          this.rentaModalCargando = false;
+          this.mantenimientoModalCargando = false;
           this.cdr.markForCheck();
         }),
       )
       .subscribe({
         next: (resp) => {
-          const det = this.dominio.extraerDetalleActual(resp);
+          const det = extraerMantenimientoActualDetalleApi(resp);
           if (!det) return;
           const ocupoRaw = det['ocupoFormula'] ?? det['ocupo_formula'];
           const ocupo =
             ocupoRaw === true || ocupoRaw === 1 || ocupoRaw === '1' ? 1 : 0;
-          this.rentaForm.patchValue({
+          this.mantenimientoForm.patchValue({
             idArrendatario: Number(det['idArrendatario']) || null,
             idContrato: Number(det['idContrato']) || null,
             total: Number(det['total']),
@@ -330,7 +321,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
             ),
             ocupoFormula: ocupo,
           });
-          this.actualizarResumenRentaModal();
+          this.actualizarResumenMantenimientoModal();
         },
         error: (err) => {
           console.error(err);
@@ -338,26 +329,26 @@ export class ListaRentasArrendatariosComponent implements OnInit {
             background: '#141a21',
             color: '#ffffff',
             icon: 'error',
-            title: this.dominio.textos.errorCargarDetalle,
+            title: 'No se pudo cargar el mantenimiento',
             text: this.mensajeErrorHttp(err),
             confirmButtonText: 'Entendido',
           });
-          this.cerrarModalRenta();
+          this.cerrarModalMantenimiento();
         },
       });
   }
 
-  cerrarModalRenta(): void {
-    this.mostrarModalRenta = false;
-    this.rentaEditId = null;
-    this.resumenRentaModal = this.resumenRentaModalVacio();
+  cerrarModalMantenimiento(): void {
+    this.mostrarModalMantenimiento = false;
+    this.mantenimientoEditId = null;
+    this.resumenMantenimientoModal = this.resumenMantenimientoModalVacio();
     this.cdr.markForCheck();
   }
 
-  private construirResumenRentaModal(): RentaModalResumenVm {
+  private construirResumenMantenimientoModal(): MantenimientoModalResumenVm {
     const vacio =
       'Selecciona arrendatario y contrato para ver a quién corresponde este pago.';
-    const raw = this.rentaForm?.getRawValue() ?? {};
+    const raw = this.mantenimientoForm?.getRawValue() ?? {};
     const idArr = Number(raw['idArrendatario']);
     const idCon = Number(raw['idContrato']);
 
@@ -392,7 +383,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
     const pagoAFavorDe = item
       ? this.nombreArrendadorPago(item, contrato)
       : 'Arrendador no disponible';
-    const campos: RentaModalResumenCampo[] = [
+    const campos: MantenimientoModalResumenCampo[] = [
       {
         etiqueta: 'Contrato',
         valor:
@@ -463,56 +454,43 @@ export class ListaRentasArrendatariosComponent implements OnInit {
   }
 
   private agregarMontosContratoAlResumen(
-    campos: RentaModalResumenCampo[],
+    campos: MantenimientoModalResumenCampo[],
     contrato: Record<string, unknown> | null,
     moneda: string,
   ): void {
     if (!contrato) return;
 
-    if (this.dominio.id === 'mantenimiento') {
-      const sub = formatearMoneda(
-        contrato['subTotalMantenimiento'] ?? contrato['subtotalMantenimiento'],
-      );
-      const iva = formatearMoneda(
-        contrato['ivaMantenimiento'] ?? contrato['iva_mantenimiento'],
-      );
-      const total = formatearMoneda(
-        contrato['mantenimientoTotal'] ?? contrato['mantenimiento_total'],
-      );
-
-      if (sub && sub !== '—') {
-        campos.push({
-          etiqueta: 'Subtotal mantenimiento',
-          valor: `${sub} ${moneda}`,
-          dinero: true,
-        });
-      }
-      if (iva && iva !== '—') {
-        campos.push({
-          etiqueta: 'IVA mantenimiento',
-          valor: `${iva} ${moneda}`,
-          dinero: true,
-        });
-      }
-      const montoMostrar =
-        total && total !== '—' ? total : sub && sub !== '—' ? sub : '';
-      if (montoMostrar) {
-        campos.push({
-          etiqueta: this.dominio.textos.resumenContratoMonto,
-          valor: `${montoMostrar} ${moneda}`,
-          dinero: true,
-        });
-      }
-      return;
+    const subtotal = formatearMoneda(
+      contrato['subTotalMantenimiento'] ??
+        contrato['subtotalMantenimiento'] ??
+        contrato['sub_total_mantenimiento'],
+    );
+    if (subtotal && subtotal !== '—') {
+      campos.push({
+        etiqueta: 'Subtotal mantenimiento',
+        valor: `${subtotal} ${moneda}`,
+        dinero: true,
+      });
     }
 
-    const rentaContrato = formatearMoneda(
-      contrato['rentaTotal'] ?? contrato['renta_total'] ?? contrato['subTotalRenta'],
+    const iva = formatearMoneda(
+      contrato['ivaMantenimiento'] ?? contrato['iva_mantenimiento'],
     );
-    if (rentaContrato && rentaContrato !== '—') {
+    if (iva && iva !== '—') {
       campos.push({
-        etiqueta: this.dominio.textos.resumenContratoMonto,
-        valor: `${rentaContrato} ${moneda}`,
+        etiqueta: 'IVA mantenimiento',
+        valor: `${iva} ${moneda}`,
+        dinero: true,
+      });
+    }
+
+    const mantenimiento = formatearMoneda(
+      contrato['mantenimientoTotal'] ?? contrato['mantenimiento_total'],
+    );
+    if (mantenimiento && mantenimiento !== '—') {
+      campos.push({
+        etiqueta: 'Mantenimiento del contrato',
+        valor: `${mantenimiento} ${moneda}`,
         dinero: true,
       });
     }
@@ -572,7 +550,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
   }
 
   textoPlaceholderContrato(): string {
-    const idArr = Number(this.rentaForm?.get('idArrendatario')?.value);
+    const idArr = Number(this.mantenimientoForm?.get('idArrendatario')?.value);
     if (!Number.isFinite(idArr) || idArr <= 0) {
       return 'Seleccione arrendatario primero';
     }
@@ -593,10 +571,10 @@ export class ListaRentasArrendatariosComponent implements OnInit {
             this.arrendatariosCatalogo,
           );
           this.sincronizarContratosPorArrendatario(
-            this.rentaForm.get('idArrendatario')?.value,
+            this.mantenimientoForm.get('idArrendatario')?.value,
           );
         } else {
-          console.error(`Error arrendatarios modal ${this.dominio.etiquetaPeriodo}:`, arrResult.reason);
+          console.error('Error arrendatarios modal mantenimiento:', arrResult.reason);
           this.arrendatariosCatalogo = [];
           this.arrendatariosOpciones = [];
           this.contratosOpciones = [];
@@ -604,19 +582,19 @@ export class ListaRentasArrendatariosComponent implements OnInit {
         if (formResult.status === 'fulfilled') {
           this.formulasOpciones = this.mapFormulasOpciones(formResult.value);
         } else {
-          console.error(`Error fórmulas modal ${this.dominio.etiquetaPeriodo}:`, formResult.reason);
+          console.error('Error fórmulas modal mantenimiento:', formResult.reason);
           this.formulasOpciones = [];
         }
       })
       .finally(() => {
         this.catalogosModalCargando = false;
-        this.actualizarResumenRentaModal();
+        this.actualizarResumenMantenimientoModal();
       });
   }
 
   private sincronizarContratosPorArrendatario(idArrendatario: unknown): void {
     const id = Number(idArrendatario);
-    const ctrlContrato = this.rentaForm.get('idContrato');
+    const ctrlContrato = this.mantenimientoForm.get('idContrato');
     if (!Number.isFinite(id) || id <= 0) {
       this.contratosOpciones = [];
       ctrlContrato?.setValue(null, { emitEvent: false });
@@ -649,7 +627,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
     if (!sigueValido) {
       ctrlContrato?.setValue(null, { emitEvent: false });
     }
-    this.actualizarResumenRentaModal();
+    this.actualizarResumenMantenimientoModal();
   }
 
   private mapArrendatariosOpciones(rows: Record<string, unknown>[]): SelectOpcion[] {
@@ -677,8 +655,8 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       .filter((x): x is SelectOpcion => x != null);
   }
 
-  guardarRentaDesdeModal(): void {
-    if (!this.rentaForm || this.rentaForm.invalid) {
+  guardarMantenimientoDesdeModal(): void {
+    if (!this.mantenimientoForm || this.mantenimientoForm.invalid) {
       void Swal.fire({
         background: '#141a21',
         color: '#ffffff',
@@ -690,7 +668,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       return;
     }
 
-    const raw = this.rentaForm.getRawValue();
+    const raw = this.mantenimientoForm.getRawValue();
     const total = Number(raw.total);
     const montoFinal = Number(raw.montoFinal);
     const factorVariable = Number(raw.factorVariable);
@@ -714,7 +692,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       return;
     }
 
-    const putBody: RentaActualPutPayload | MantenimientoActualPutPayload = {
+    const putBody: MantenimientoActualPutPayload = {
       total,
       idFormula: Math.floor(idFormula),
       montoFinal,
@@ -722,22 +700,22 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       ocupoFormula,
     };
 
-    this.rentaGuardando = true;
+    this.mantenimientoGuardando = true;
     this.cdr.markForCheck();
 
-    if (this.rentaModalModo === 'edicion' && this.rentaEditId != null) {
-      this.actualizarActual(this.rentaEditId, putBody)
+    if (this.mantenimientoModalModo === 'edicion' && this.mantenimientoEditId != null) {
+      this.mantenimientoActualService.actualizarMantenimiento(this.mantenimientoEditId, putBody)
         .pipe(
           take(1),
           finalize(() => {
-            this.rentaGuardando = false;
+            this.mantenimientoGuardando = false;
             this.cdr.markForCheck();
           }),
         )
         .subscribe({
           next: () =>
-            this.onRentaGuardadaOk(this.dominio.textos.guardarExitoEdicion),
-          error: (err) => this.onRentaGuardadaError(err),
+            this.onMantenimientoGuardadoOk('El mantenimiento se actualizó correctamente.'),
+          error: (err) => this.onMantenimientoGuardadoError(err),
         });
       return;
     }
@@ -750,41 +728,42 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       !Number.isFinite(idContrato) ||
       idContrato <= 0
     ) {
-      this.rentaGuardando = false;
+      this.mantenimientoGuardando = false;
       void Swal.fire({
         background: '#141a21',
         color: '#ffffff',
         icon: 'warning',
         title: 'Arrendatario y contrato',
-        text: this.dominio.textos.guardarSeleccionArrCon,
+        text: 'Selecciona arrendatario y contrato para registrar el mantenimiento.',
         confirmButtonText: 'Entendido',
       });
       this.cdr.markForCheck();
       return;
     }
 
-    const postBody: RentaActualPostPayload | MantenimientoActualPostPayload = {
+    const postBody: MantenimientoActualPostPayload = {
       idArrendatario: Math.floor(idArrendatario),
       idContrato: Math.floor(idContrato),
       ...putBody,
     };
 
-    this.registrarActual(postBody)
+    this.mantenimientoActualService.registrarMantenimiento(postBody)
       .pipe(
         take(1),
         finalize(() => {
-          this.rentaGuardando = false;
+          this.mantenimientoGuardando = false;
           this.cdr.markForCheck();
         }),
       )
       .subscribe({
-        next: () => this.onRentaGuardadaOk(this.dominio.textos.guardarExitoAlta),
-        error: (err) => this.onRentaGuardadaError(err),
+        next: () =>
+          this.onMantenimientoGuardadoOk('El mantenimiento del mes se registró correctamente.'),
+        error: (err) => this.onMantenimientoGuardadoError(err),
       });
   }
 
-  private onRentaGuardadaOk(texto: string): void {
-    this.cerrarModalRenta();
+  private onMantenimientoGuardadoOk(texto: string): void {
+    this.cerrarModalMantenimiento();
     this.dataGrid?.instance?.refresh();
     void Swal.fire({
       background: '#141a21',
@@ -796,7 +775,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
     });
   }
 
-  private onRentaGuardadaError(err: unknown): void {
+  private onMantenimientoGuardadoError(err: unknown): void {
     void Swal.fire({
       background: '#141a21',
       color: '#ffffff',
@@ -807,7 +786,7 @@ export class ListaRentasArrendatariosComponent implements OnInit {
     });
   }
 
-  async marcarRentaPagada(row: RentaActualGridRow): Promise<void> {
+  async marcarMantenimientoPagado(row: MantenimientoActualGridRow): Promise<void> {
     if (row?.pagada) return;
     const id = Number(row?.id);
     if (!Number.isFinite(id) || id <= 0) return;
@@ -817,15 +796,15 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       background: '#141a21',
       color: '#ffffff',
       icon: 'question',
-      title: this.dominio.textos.marcarPagadaTitulo,
-      html: this.htmlConfirmarMarcarPagada(row.arrendatarioLabel, periodo),
+      title: '¡Registrar Pago!',
+      html: `Se registrara como pagado el mantenimiento de <strong>${row.arrendatarioLabel}</strong> (${periodo}).`,
       showCancelButton: true,
       confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar',
     });
     if (!result.isConfirmed) return;
 
-    this.marcarPagadaActual(Math.floor(id))
+    this.mantenimientoActualService.marcarComoPagada(Math.floor(id))
       .pipe(take(1))
       .subscribe({
         next: () => {
@@ -835,17 +814,17 @@ export class ListaRentasArrendatariosComponent implements OnInit {
             color: '#ffffff',
             icon: 'success',
             title: '¡Operación Exitosa!',
-            text: this.dominio.textos.marcarPagadaExito,
+            text: 'El mantenimiento quedó marcado como pagado y se registró en el histórico.',
             confirmButtonText: 'Listo',
           });
         },
         error: (err) => {
-          console.error(this.dominio.textos.marcarPagadaError, err);
+          console.error('Error al marcar mantenimiento pagado:', err);
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
             icon: 'error',
-            title: 'No se pudo marcar como pagada',
+            title: 'No se pudo marcar como pagado',
             text: this.mensajeErrorHttp(err),
             confirmButtonText: 'Entendido',
           });
@@ -853,54 +832,13 @@ export class ListaRentasArrendatariosComponent implements OnInit {
       });
   }
 
-  private htmlConfirmarMarcarPagada(arrendatario: string, periodo: string): string {
-    if (this.dominio.id === 'mantenimiento') {
-      return `Se registrara como pagado el mantenimiento de <strong>${arrendatario}</strong> (${periodo}).`;
+  private leerEmbebidoEnHub(): boolean {
+    let actual: ActivatedRoute | null = this.route;
+    while (actual) {
+      if (actual.snapshot.data['hubEmbebido']) return true;
+      actual = actual.parent;
     }
-    return `Se registrara como pagada la renta de <strong>${arrendatario}</strong> (${periodo}).`;
-  }
-
-  private obtenerPaginaActual(page: number, limit: number) {
-    if (this.dominio.id === 'mantenimiento') {
-      return this.mantenimientoActualService.obtenerMantenimientosPaginados(
-        page,
-        limit,
-      );
-    }
-    return this.rentaActualService.obtenerRentasPaginadas(page, limit);
-  }
-
-  private obtenerDetalleActual(id: number) {
-    if (this.dominio.id === 'mantenimiento') {
-      return this.mantenimientoActualService.obtenerMantenimientoPorId(id);
-    }
-    return this.rentaActualService.obtenerRentaPorId(id);
-  }
-
-  private actualizarActual(
-    id: number,
-    body: RentaActualPutPayload | MantenimientoActualPutPayload,
-  ) {
-    if (this.dominio.id === 'mantenimiento') {
-      return this.mantenimientoActualService.actualizarMantenimiento(id, body);
-    }
-    return this.rentaActualService.actualizarRenta(id, body);
-  }
-
-  private registrarActual(
-    body: RentaActualPostPayload | MantenimientoActualPostPayload,
-  ) {
-    if (this.dominio.id === 'mantenimiento') {
-      return this.mantenimientoActualService.registrarMantenimiento(body);
-    }
-    return this.rentaActualService.registrarRenta(body);
-  }
-
-  private marcarPagadaActual(id: number) {
-    if (this.dominio.id === 'mantenimiento') {
-      return this.mantenimientoActualService.marcarComoPagada(id);
-    }
-    return this.rentaActualService.marcarComoPagada(id);
+    return false;
   }
 
   private mensajeErrorHttp(err: unknown): string {
