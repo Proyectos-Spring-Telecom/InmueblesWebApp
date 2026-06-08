@@ -64,16 +64,31 @@ export class AgregarFactorComponent implements OnInit {
     });
   }
 
-  obtenerFactor() {
-    if (this.idFactor == null) return;
+  initForm(): void {
+    this.factorForm = this.fb.group({
+      variable:    ['', [Validators.required]],
+      valor:       ['', [Validators.required, factorValorValidador]],
+      descripcion: ['', [Validators.maxLength(2000)]],
+    });
 
+    // Forzar mayúsculas en variable al escribir
+    this.factorForm.get('variable')?.valueChanges.subscribe((val: string) => {
+      const upper = (val ?? '').toUpperCase().replace(/[^A-Z0-9_]/g, '');
+      if (upper !== val) {
+        this.factorForm.get('variable')?.setValue(upper, { emitEvent: false });
+      }
+    });
+  }
+
+  obtenerFactor(): void {
+    if (this.idFactor == null) return;
     this.factoresService.obtenerFactor(this.idFactor).subscribe({
       next: (res: any) => {
         const data = res?.data ?? res ?? {};
         this.factorForm.patchValue(
           {
-            variable: data?.variable ?? data?.nombre ?? '',
-            valor: formatValorMilesParaLista(data?.valor ?? ''),
+            variable:    data?.variable    ?? data?.nombre      ?? '',
+            valor:       formatValorMilesParaLista(data?.valor  ?? ''),
             descripcion: data?.descripcion ?? '',
           },
           { emitEvent: false },
@@ -83,7 +98,7 @@ export class AgregarFactorComponent implements OnInit {
       error: () => {
         Swal.fire({
           title: '¡Ops!',
-          text: `No se pudo cargar el factor.`,
+          text: 'No se pudo cargar el factor.',
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -95,22 +110,14 @@ export class AgregarFactorComponent implements OnInit {
     });
   }
 
-  initForm() {
-    this.factorForm = this.fb.group({
-      variable: ['', Validators.required],
-      valor: ['', [Validators.required, factorValorValidador]],
-      descripcion: ['', [Validators.maxLength(2000)]],
-    });
-  }
-
   onValorInput(ev: Event): void {
-    const input = ev.target as HTMLInputElement;
-    const before = input.value;
-    const cursor = input.selectionStart ?? before.length;
+    const input        = ev.target as HTMLInputElement;
+    const before       = input.value;
+    const cursor       = input.selectionStart ?? before.length;
     const digitsBefore = countDigitosAntesCursor(before, cursor);
 
     const formatted = formatMilesAlEscribir(before);
-    const ctrl = this.factorForm.get('valor');
+    const ctrl      = this.factorForm.get('valor');
     ctrl?.setValue(formatted, { emitEvent: false });
     ctrl?.updateValueAndValidity({ emitEvent: false });
 
@@ -124,9 +131,9 @@ export class AgregarFactorComponent implements OnInit {
     });
   }
 
-  submit() {
+  submit(): void {
     this.submitButton = 'Cargando...';
-    this.loading = true;
+    this.loading      = true;
     if (this.idFactor != null) {
       this.actualizar();
     } else {
@@ -135,14 +142,14 @@ export class AgregarFactorComponent implements OnInit {
   }
 
   private etiquetas: Record<string, string> = {
-    variable: 'Variable',
-    valor: 'Valor',
+    variable:    'Nombre de la variable',
+    valor:       'Valor',
     descripcion: 'Descripción',
   };
 
-  private mostrarErroresValidacion(esActualizar: boolean) {
+  private mostrarErroresValidacion(esActualizar: boolean): void {
     this.submitButton = esActualizar ? 'Actualizar' : 'Guardar';
-    this.loading = false;
+    this.loading      = false;
     const camposFaltantes: string[] = [];
     Object.keys(this.factorForm.controls).forEach((key) => {
       const control = this.factorForm.get(key);
@@ -153,12 +160,12 @@ export class AgregarFactorComponent implements OnInit {
     const lista = camposFaltantes
       .map(
         (campo, index) => `
-            <div style="padding: 8px 12px; border-left: 4px solid #d9534f;
-                        background: #caa8a8; text-align: center; margin-bottom: 8px;
-                        border-radius: 4px;">
-              <strong style="color: #b02a37;">${index + 1}. ${campo}</strong>
-            </div>
-          `,
+          <div style="padding: 8px 12px; border-left: 4px solid #d9534f;
+                      background: #caa8a8; text-align: center; margin-bottom: 8px;
+                      border-radius: 4px;">
+            <strong style="color: #b02a37;">${index + 1}. ${campo}</strong>
+          </div>
+        `,
       )
       .join('');
     Swal.fire({
@@ -166,30 +173,27 @@ export class AgregarFactorComponent implements OnInit {
       color: '#ffffff',
       title: '¡Revise el formulario!',
       html: `
-              <p style="text-align: center; font-size: 15px; margin-bottom: 16px; color: white">
-                Corrija los campos indicados antes de continuar.
-              </p>
-              <div style="max-height: 350px; overflow-y: auto;">${lista}</div>
-            `,
+        <p style="text-align: center; font-size: 15px; margin-bottom: 16px; color: white">
+          Corrija los campos indicados antes de continuar.
+        </p>
+        <div style="max-height: 350px; overflow-y: auto;">${lista}</div>
+      `,
       icon: 'error',
       confirmButtonText: 'Entendido',
-      customClass: {
-        popup: 'swal2-padding swal2-border',
-      },
     });
   }
 
   private buildPayload(): FactorPayload {
-    const v = this.factorForm.value;
+    const v    = this.factorForm.value;
     const desc = (v.descripcion ?? '').toString().trim();
     return {
-      variable: (v.variable ?? '').trim(),
-      valor: valorSinComasParaApi(v.valor),
+      variable:    (v.variable ?? '').trim().toUpperCase(),
+      valor:       valorSinComasParaApi(v.valor),
       descripcion: desc.length ? desc : null,
     };
   }
 
-  agregar() {
+  agregar(): void {
     if (this.factorForm.invalid) {
       this.mostrarErroresValidacion(false);
       return;
@@ -198,10 +202,10 @@ export class AgregarFactorComponent implements OnInit {
     this.factoresService.agregarFactor(payload).subscribe({
       next: () => {
         this.submitButton = 'Guardar';
-        this.loading = false;
+        this.loading      = false;
         Swal.fire({
           title: '¡Operación Exitosa!',
-          text: `Se agregó un nuevo factor de manera exitosa.`,
+          text: 'Se agregó un nuevo factor de manera exitosa.',
           icon: 'success',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -212,10 +216,10 @@ export class AgregarFactorComponent implements OnInit {
       },
       error: () => {
         this.submitButton = 'Guardar';
-        this.loading = false;
+        this.loading      = false;
         Swal.fire({
           title: '¡Ops!',
-          text: `Ocurrió un error al agregar el factor.`,
+          text: 'Ocurrió un error al agregar el factor.',
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -226,10 +230,10 @@ export class AgregarFactorComponent implements OnInit {
     });
   }
 
-  actualizar() {
+  actualizar(): void {
     if (this.idFactor == null) {
       this.submitButton = 'Actualizar';
-      this.loading = false;
+      this.loading      = false;
       return;
     }
     if (this.factorForm.invalid) {
@@ -240,10 +244,10 @@ export class AgregarFactorComponent implements OnInit {
     this.factoresService.actualizarFactor(this.idFactor, payload).subscribe({
       next: () => {
         this.submitButton = 'Actualizar';
-        this.loading = false;
+        this.loading      = false;
         Swal.fire({
           title: '¡Operación Exitosa!',
-          text: `Los datos del factor se actualizaron correctamente.`,
+          text: 'Los datos del factor se actualizaron correctamente.',
           icon: 'success',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -254,10 +258,10 @@ export class AgregarFactorComponent implements OnInit {
       },
       error: () => {
         this.submitButton = 'Actualizar';
-        this.loading = false;
+        this.loading      = false;
         Swal.fire({
           title: '¡Ops!',
-          text: `Ocurrió un error al actualizar el factor.`,
+          text: 'Ocurrió un error al actualizar el factor.',
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -268,7 +272,7 @@ export class AgregarFactorComponent implements OnInit {
     });
   }
 
-  regresar() {
+  regresar(): void {
     this.route.navigateByUrl('/factores');
   }
 }

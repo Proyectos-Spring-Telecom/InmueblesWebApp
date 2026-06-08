@@ -13,65 +13,124 @@
       <span class="crumb active">Fórmulas</span>
     </nav>
   </header>
+
   <div class="surface">
     <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="formulaForm" class="perm-form-body">
         <div class="row g-4">
+
+          <!-- Nombre de la fórmula -->
           <div class="col-12 col-md-6">
-            <label for="forNombre" class="form-label perm-label">Nombre</label>
+            <label for="forNombre" class="form-label perm-label">Nombre de la fórmula</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">title</mat-icon>
               </span>
               <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  formControlName="nombre"
-                  class="form-control"
-                  id="forNombre"
-                  placeholder="Ej.: Renta con INPC"
-                  required
-                />
-                <label for="forNombre">Nombre mostrado en el grid</label>
+                <input type="text" formControlName="nombre" class="form-control" id="forNombre"
+                  placeholder="Ej.: Actualización de renta por INPC" required />
+                <label for="forNombre">Ej.: Actualización de renta por INPC</label>
               </div>
             </div>
           </div>
+
+          <!-- Tipo de resultado -->
           <div class="col-12 col-md-6">
-            <label for="facSelFactorFormula" class="form-label perm-label">Factor</label>
+            <label for="forTipoResultado" class="form-label perm-label">Tipo de resultado</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">category</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 perm-select-floating">
+                <select class="form-select" id="forTipoResultado" formControlName="tipoResultado">
+                  <option value="MONTO">Monto ($)</option>
+                  <option value="PORCENTAJE">Porcentaje (%)</option>
+                </select>
+                <label for="forTipoResultado">¿El resultado es un monto o porcentaje?</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+
+
+          <!-- Variables disponibles (helper de inserción) -->
+          <div class="col-12 col-md-6">
+            <label for="forInsertarVariable" class="form-label perm-label">Variables disponibles</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">straighten</mat-icon>
               </span>
               <div class="form-floating flex-grow-1 perm-select-floating">
-                <select
-                  class="form-select"
-                  id="facSelFactorFormula"
-                  formControlName="formula"
+                <select class="form-select" id="forInsertarVariable"
                   [disabled]="cargandoVariablesFactores || !factoresParaSelectFormula.length"
-                >
-                  <option value="">Seleccione factor…</option>
+                  (change)="insertarVariable($any($event.target).value); $any($event.target).value = ''">
+                  <option value="">— Seleccione una variable para agregarla —</option>
                   <option *ngFor="let f of factoresParaSelectFormula" [value]="f.variable">
                     {{ f.etiqueta }}
                   </option>
                 </select>
-                <label for="facSelFactorFormula">Variable de la fórmula</label>
+                <label for="forInsertarVariable">Seleccione una variable para agregarla</label>
               </div>
             </div>
-            <p class="small opacity-75 mt-2 mb-0" *ngIf="cargandoVariablesFactores">Cargando factores…</p>
-            <p class="small opacity-75 mt-2 mb-0" *ngIf="!cargandoVariablesFactores && !factoresParaSelectFormula.length">
-              No hay factores activos; registre variables en Factores y recargue.
+            <p class="small opacity-50 mt-2 mb-0" *ngIf="cargandoVariablesFactores">
+              Cargando variables…
+            </p>
+            <p class="small opacity-50 mt-2 mb-0"
+              *ngIf="!cargandoVariablesFactores && !factoresParaSelectFormula.length">
+              No hay variables registradas. Agregue factores y recargue la página.
             </p>
           </div>
+
+          <!-- Expresión matemática -->
+          <div class="col-12 col-md-6">
+            <label for="forFormula" class="form-label perm-label">Expresión matemática</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">functions</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input #formulaInput type="text" formControlName="formula" class="form-control font-monospace"
+                  id="forFormula" placeholder="Ej.: RENTA_ACTUAL * (INPC_ACTUAL / INPC_BASE)" required
+                  autocomplete="off" spellcheck="false" />
+                <label for="forFormula">Escriba la fórmula usando las variables de arriba</label>
+              </div>
+            </div>
+            <p class="small font-monospace opacity-75 mt-2 mb-0 text-truncate" *ngIf="formulaForm.get('formula')?.value"
+              [title]="formulaForm.get('formula')?.value">
+              <span class="opacity-50">Fórmula actual: </span>
+              <strong>{{ formulaForm.get('formula')?.value }}</strong>
+            </p>
+          </div>
+
+          <div class="col-12">
+            <label for="forDescripcion" class="form-label perm-label">
+              Descripción <span class="opacity-50 fw-normal">(opcional)</span>
+            </label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">notes</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" formControlName="descripcion" class="form-control" id="forDescripcion"
+                  placeholder="Explique brevemente para qué sirve esta fórmula" maxlength="500" />
+                <label for="forDescripcion">Explique brevemente para qué sirve esta fórmula</label>
+              </div>
+            </div>
+          </div>
+
         </div>
 
+        <!-- Botones -->
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" (click)="submit()">
+          <button class="button-success" role="button" (click)="submit()" [disabled]="loading">
             <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
           </button>
-          <button type="button" class="button-danger" (click)="regresar()">
-            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+          <button type="button" class="button-danger" (click)="regresar()" [disabled]="loading">
+            <i class="fa fa-times"></i>&nbsp;&nbsp;Cancelar
           </button>
         </div>
+
       </form>
     </section>
   </div>

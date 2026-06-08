@@ -3,10 +3,27 @@ import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-/** POST/PATCH `/formulas`. Las variables dentro de `formula` deben coincidir con `variable` en Factores cuando el motor evalúe la expresión. */
 export interface FormulaPayload {
   nombre: string;
   formula: string;
+  descripcion?: string;
+  tipoResultado: 'MONTO' | 'PORCENTAJE';
+}
+
+export interface PreviewFormulaRequest {
+  idFormula: number;
+  idContrato?: number;
+  idArrendatario?: number;
+}
+
+export interface PreviewFormulaResponse {
+  idFormula: number;
+  nombreFormula: string;
+  expresionOriginal: string;
+  expresionSustituida: string;
+  variables: Record<string, number>;
+  resultado: number;
+  tipoResultado: 'MONTO' | 'PORCENTAJE';
 }
 
 @Injectable({
@@ -34,6 +51,10 @@ export class FormulasService {
 
   actualizarFormula(id: number, data: FormulaPayload): Observable<any> {
     return this.http.patch(`${this.base}/${id}`, data);
+  }
+
+  previewFormula(body: PreviewFormulaRequest): Observable<PreviewFormulaResponse> {
+    return this.http.post<PreviewFormulaResponse>(`${this.base}/evaluar/preview`, body);
   }
 
   updateEstatusActivar(id: number, estatus: number): Observable<string> {

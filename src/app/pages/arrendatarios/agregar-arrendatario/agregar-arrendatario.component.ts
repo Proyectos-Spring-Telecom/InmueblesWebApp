@@ -445,14 +445,15 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         ],
       ],
       tipoPersona: [null as number | null, Validators.required],
-      renta: ['', Validators.required],
+      /** Ocultos en UI; se envían vacíos en el body del API. */
+      renta: [''],
       direccionFiscal: [''],
-      fechaInicio: ['', Validators.required],
-      fechaFin: ['', Validators.required],
+      fechaInicio: [''],
+      fechaFin: [''],
       idArrendador: [null as number | null, Validators.required],
       /** Sin selector en UI; puede venir de demos u otras rutas. */
       estatusInmueble: [null as string | null],
-      tiempoRenta: ['', Validators.required],
+      tiempoRenta: [''],
       representanteLegal: ['', Validators.required],
       telefonoRepresentante: ['', Validators.required],
       correoRepresentante: ['', [Validators.required, Validators.email]],
@@ -2352,6 +2353,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     'ineRepresentanteLegal',
     'lat',
     'lng',
+    'fechaInicio',
+    'fechaFin',
+    'renta',
+    'tiempoRenta',
   ]);
 
   private readonly etiquetasCampos: Record<string, string> = {
@@ -2731,8 +2736,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   /** JSON `arrendatario`: campos ArrendatarioJsonDto (string en multipart FormData). */
   private construirJsonArrendatarioSwagger(v: Record<string, unknown>): string {
     const dto: Record<string, unknown> = {
-      fechaInicio: String(v['fechaInicio'] ?? '').trim(),
-      fechaFin: String(v['fechaFin'] ?? '').trim(),
+      fechaInicio: '',
+      fechaFin: '',
+      renta: '',
+      tiempoRenta: '',
       arrendatario: String(v['arrendatario'] ?? '').trim(),
       rfc: String(v['rfc'] ?? '').trim(),
       correoRepresentante: String(v['correoRepresentante'] ?? '').trim(),
@@ -2748,11 +2755,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     const idArr = Number(v['idArrendador']);
     if (Number.isFinite(idArr)) dto['idArrendador'] = Math.trunc(idArr);
-
-    const rentaNum = this.numJson(v['renta']);
-    if (rentaNum !== undefined) dto['renta'] = rentaNum;
-    const tr = String(v['tiempoRenta'] ?? '').trim();
-    if (tr) dto['tiempoRenta'] = tr;
 
     const lat = Number(v['lat']);
     const lng = Number(v['lng']);

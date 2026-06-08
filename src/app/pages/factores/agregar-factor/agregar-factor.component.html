@@ -13,12 +13,15 @@
       <span class="crumb active">Factores</span>
     </nav>
   </header>
+
   <div class="surface">
     <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="factorForm" class="perm-form-body">
         <div class="row g-4">
+
+          <!-- Variable -->
           <div class="col-12 col-md-4">
-            <label for="facVariable" class="form-label perm-label">Variable</label>
+            <label for="facVariable" class="form-label perm-label">Nombre de la variable</label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">title</mat-icon>
@@ -29,13 +32,20 @@
                   formControlName="variable"
                   class="form-control"
                   id="facVariable"
-                  placeholder="Ej.: inpcAnterior"
+                  placeholder="Ej.: INPC_ACTUAL"
                   required
+                  autocomplete="off"
+                  style="text-transform: uppercase;"
                 />
-                <label for="facVariable">Nombre de variable mostrado en el grid</label>
+                <label for="facVariable">Ej.: INPC_ACTUAL, RENTA_BASE</label>
               </div>
             </div>
+            <p class="small opacity-50 mt-1 mb-0">
+              Use solo letras mayúsculas, números y guiones bajos
+            </p>
           </div>
+
+          <!-- Valor -->
           <div class="col-12 col-md-4">
             <label for="facValor" class="form-label perm-label">Valor</label>
             <div class="input-group input-group-lg perm-ig">
@@ -45,7 +55,6 @@
               <div class="form-floating flex-grow-1">
                 <input
                   type="text"
-                  inputmode="decimal"
                   autocomplete="off"
                   formControlName="valor"
                   class="form-control"
@@ -53,12 +62,16 @@
                   placeholder=" "
                   (input)="onValorInput($event)"
                 />
-                <label for="facValor">Ej.: 1.25 o 127,000</label>
+                <label for="facValor">Ej.: 140.0000 o 75,000</label>
               </div>
             </div>
           </div>
+
+          <!-- Descripción -->
           <div class="col-12 col-md-4">
-            <label for="facDescripcion" class="form-label perm-label">Descripción (opcional)</label>
+            <label for="facDescripcion" class="form-label perm-label">
+              Descripción <span class="opacity-50 fw-normal">(opcional)</span>
+            </label>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">notes</mat-icon>
@@ -69,20 +82,22 @@
                   formControlName="descripcion"
                   class="form-control"
                   id="facDescripcion"
-                placeholder="Criterios de aplicación del factor en rentas o avalúos…"
-                  required
+                  placeholder="Ej.: INPC junio 2025"
+                  autocomplete="off"
                 />
-                <label for="facVariable">Nombre de variable mostrado en el grid</label>
+                <label for="facDescripcion">Explique brevemente para qué sirve este factor</label>
               </div>
             </div>
           </div>
+
         </div>
+
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" (click)="submit()">
+          <button class="button-success" role="button" (click)="submit()" [disabled]="loading">
             <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
           </button>
-          <button type="button" class="button-danger" (click)="regresar()">
-            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+          <button type="button" class="button-danger" (click)="regresar()" [disabled]="loading">
+            <i class="fa fa-times"></i>&nbsp;&nbsp;Cancelar
           </button>
         </div>
       </form>

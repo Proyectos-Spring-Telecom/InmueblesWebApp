@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
   CanActivate,
+  CanActivateChild,   // ← Agrega esto
   Router,
   RouterStateSnapshot,
   UrlTree,
@@ -9,11 +10,19 @@ import {
 import { AuthenticationService } from 'src/app/services/auth.service';
 
 @Injectable({ providedIn: 'root' })
-export class AuthGuard implements CanActivate {
+export class AuthGuard implements CanActivate, CanActivateChild {
   private readonly auth = inject(AuthenticationService);
   private readonly router = inject(Router);
 
   canActivate(_route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): boolean | UrlTree {
+    return this.check();
+  }
+
+  canActivateChild(_route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): boolean | UrlTree {
+    return this.check();  // ← Se ejecuta para CADA hijo antes de cargar el módulo lazy
+  }
+
+  private check(): boolean | UrlTree {
     if (this.auth.isAuthenticated()) {
       return true;
     }

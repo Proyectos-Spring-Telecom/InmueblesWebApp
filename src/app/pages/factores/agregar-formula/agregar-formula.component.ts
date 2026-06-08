@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -22,12 +22,13 @@ interface FactorOpcionFormula {
   animations: [routeAnimation],
 })
 export class AgregarFormulaComponent implements OnInit {
+  @ViewChild('formulaInput') formulaInputRef!: ElementRef<HTMLInputElement>;
+
   public submitButton: string = 'Guardar';
   public loading = false;
   public formulaForm: FormGroup;
   public idFormula: number | null = null;
   public title = 'Agregar Fórmula';
-  /** Opciones del select: variables activas de Factores. */
   public factoresParaSelectFormula: FactorOpcionFormula[] = [];
   public cargandoVariablesFactores = false;
 
@@ -78,7 +79,6 @@ export class AgregarFormulaComponent implements OnInit {
             variable,
             etiqueta: desc ? `${variable} — ${desc}` : variable,
           }));
-        this.asegurarVariableFormulaEnOpciones();
       },
       error: () => {
         this.cargandoVariablesFactores = false;
@@ -87,45 +87,66 @@ export class AgregarFormulaComponent implements OnInit {
     });
   }
 
-  /** En edición, la variable guardada puede no estar en el catálogo activo. */
-  private asegurarVariableFormulaEnOpciones(): void {
-    const formula = String(this.formulaForm?.get('formula')?.value ?? '').trim();
-    if (!formula || this.factoresParaSelectFormula.some((f) => f.variable === formula)) {
-      return;
+  /** Inserta la variable seleccionada en la posición del cursor dentro del input de fórmula */
+  insertarVariable(variable: string): void {
+    if (!variable) return;
+    const input = this.formulaInputRef?.nativeElement;
+    const ctrl = this.formulaForm.get('formula');
+    if (!ctrl) return;
+
+    if (input) {
+      const start = input.selectionStart ?? 0;
+      const end = input.selectionEnd ?? 0;
+      const current: string = ctrl.value ?? '';
+      const nuevo = current.slice(0, start) + variable + current.slice(end);
+      ctrl.setValue(nuevo);
+      // Restaurar foco y posición del cursor
+      setTimeout(() => {
+        input.focus();
+        const pos = start + variable.length;
+        input.setSelectionRange(pos, pos);
+      });
+    } else {
+      // Fallback: agregar al final
+      const current: string = ctrl.value ?? '';
+      ctrl.setValue(current ? `${current} ${variable}` : variable);
     }
-    this.factoresParaSelectFormula = [
-      { variable: formula, etiqueta: formula },
-      ...this.factoresParaSelectFormula,
-    ].sort((a, b) => a.variable.localeCompare(b.variable, 'es'));
+    ctrl.markAsDirty();
   }
 
-  private initForm() {
+  private initForm(): void {
     this.formulaForm = this.fb.group({
       nombre: ['', Validators.required],
       formula: ['', Validators.required],
+      descripcion: [''],
+      tipoResultado: ['MONTO', Validators.required],
     });
   }
 
-  private obtenerFormula() {
+  private obtenerFormula(): void {
     if (this.idFormula == null) return;
-
     this.formulasService.obtenerFormula(this.idFormula).subscribe({
       next: (res: any) => {
         const data = res?.data ?? res ?? {};
-        this.formulaForm.patchValue(
-          {
-            nombre: data?.nombre ?? data?.Nombre ?? '',
-            formula: data?.formula ?? data?.Formula ?? '',
-          },
-          { emitEvent: false },
-        );
-        this.asegurarVariableFormulaEnOpciones();
-        this.formulaForm.markAsPristine();
+  
+        // setTimeout para que el select tenga sus opciones montadas
+        setTimeout(() => {
+          this.formulaForm.patchValue(
+            {
+              nombre:        data?.nombre        ?? data?.Nombre        ?? '',
+              formula:       data?.formula       ?? data?.Formula       ?? '',
+              descripcion:   data?.descripcion   ?? data?.Descripcion   ?? '',
+              tipoResultado: data?.tipoResultado ?? data?.TipoResultado ?? 'MONTO',
+            },
+            { emitEvent: false },
+          );
+          this.formulaForm.markAsPristine();
+        });
       },
       error: () => {
         Swal.fire({
           title: '¡Ops!',
-          text: `No se pudo cargar la fórmula.`,
+          text: 'No se pudo cargar la fórmula.',
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -142,10 +163,12 @@ export class AgregarFormulaComponent implements OnInit {
     return {
       nombre: (v.nombre ?? '').trim(),
       formula: (v.formula ?? '').trim(),
+      descripcion: (v.descripcion ?? '').trim() || undefined,
+      tipoResultado: v.tipoResultado ?? 'MONTO',
     };
   }
 
-  submit() {
+  submit(): void {
     if (this.formulaForm.invalid) {
       this.formulaForm.markAllAsTouched();
       Swal.fire({
@@ -227,7 +250,7 @@ export class AgregarFormulaComponent implements OnInit {
     });
   }
 
-  regresar() {
+  regresar(): void {
     this.route.navigateByUrl('/factores');
   }
 }

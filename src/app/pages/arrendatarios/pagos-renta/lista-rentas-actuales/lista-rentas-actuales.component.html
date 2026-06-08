@@ -165,95 +165,110 @@
         <div class="col-12">
           <div class="perm-form-nc">
             <form [formGroup]="rentaForm" class="perm-form-body mono-pago-form">
-              <div class="row g-3 align-items-end">
-                <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'alta'">
-                  <label for="rentaArrendatario" class="form-label perm-label"
-                    >Arrendatario <span class="text-danger">*</span></label
-                  >
-                  <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
-                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                    <span>Cargando arrendatarios…</span>
-                  </div>
-                  <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
-                    <span class="input-group-text fw-bold">
-                      <mat-icon aria-hidden="true">person</mat-icon>
-                    </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="rentaArrendatario" class="form-select" formControlName="idArrendatario">
-                        <option [ngValue]="null" disabled hidden>
-                          {{
-                            arrendatariosOpciones.length
-                              ? 'Seleccione arrendatario'
-                              : 'Sin arrendatarios'
-                          }}
-                        </option>
-                        <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
-                      </select>
-                      <label for="rentaArrendatario">Seleccione arrendatario</label>
+
+              <!-- ── Fila 1: Arrendatario · Contrato · Fórmula (solo alta) ── -->
+              <ng-container *ngIf="rentaModalModo === 'alta'">
+                <div class="row g-3 mb-3">
+
+                  <!-- Arrendatario -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaArrendatario" class="form-label perm-label">
+                      Arrendatario <span class="text-danger">*</span>
+                    </label>
+                    <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                      <span>Cargando arrendatarios…</span>
+                    </div>
+                    <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">person</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaArrendatario" class="form-select" formControlName="idArrendatario">
+                          <option [ngValue]="null" disabled hidden>
+                            {{ arrendatariosOpciones.length ? 'Seleccione arrendatario' : 'Sin arrendatarios' }}
+                          </option>
+                          <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
+                        </select>
+                        <label for="rentaArrendatario">Seleccione arrendatario</label>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'alta'">
-                  <label for="rentaContrato" class="form-label perm-label"
-                    >Contrato <span class="text-danger">*</span></label
-                  >
-                  <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
-                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                    <span>Cargando contratos…</span>
-                  </div>
-                  <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
-                    <span class="input-group-text fw-bold">
-                      <mat-icon aria-hidden="true">description</mat-icon>
-                    </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="rentaContrato" class="form-select" formControlName="idContrato">
-                        <option [ngValue]="null" disabled hidden>
-                          {{ textoPlaceholderContrato() }}
-                        </option>
-                        <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
-                      </select>
-                      <label for="rentaContrato">Seleccione contrato</label>
+                  <!-- Contrato -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaContrato" class="form-label perm-label">
+                      Contrato <span class="text-danger">*</span>
+                    </label>
+                    <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                      <span>Cargando contratos…</span>
+                    </div>
+                    <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">description</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaContrato" class="form-select" formControlName="idContrato">
+                          <option [ngValue]="null" disabled hidden>{{ textoPlaceholderContrato() }}</option>
+                          <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
+                        </select>
+                        <label for="rentaContrato">Seleccione contrato</label>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'alta'">
-                  <label for="rentaFormulaAlta" class="form-label perm-label"
-                    >Fórmula <span class="text-danger">*</span></label
-                  >
-                  <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
-                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                    <span>Cargando fórmulas…</span>
-                  </div>
-                  <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
-                    <span class="input-group-text fw-bold">
-                      <mat-icon aria-hidden="true">functions</mat-icon>
-                    </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="rentaFormulaAlta" class="form-select" formControlName="idFormula">
-                        <option [ngValue]="null" disabled hidden>
-                          {{ formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas' }}
-                        </option>
-                        <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
-                      </select>
-                      <label for="rentaFormulaAlta">Seleccione fórmula</label>
+                  <!-- Fórmula -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaFormulaAlta" class="form-label perm-label">
+                      Fórmula <span class="text-danger">*</span>
+                    </label>
+                    <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                      <span>Cargando fórmulas…</span>
                     </div>
+                    <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">functions</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaFormulaAlta" class="form-select" formControlName="idFormula">
+                          <option [ngValue]="null" disabled hidden>
+                            {{ formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas' }}
+                          </option>
+                          <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
+                        </select>
+                        <label for="rentaFormulaAlta">Seleccione fórmula</label>
+                      </div>
+                    </div>
+                    <p class="small opacity-75 mt-2 mb-0 d-flex align-items-center gap-1" *ngIf="evaluandoFormula">
+                      <mat-progress-spinner mode="indeterminate" diameter="14"></mat-progress-spinner>
+                      Calculando…
+                    </p>
                   </div>
-                </div>
 
-                <div class="col-12 col-lg-4" *ngIf="rentaModalCargando">
+                </div>
+              </ng-container>
+
+              <!-- ── Spinner cargando renta (edición) ── -->
+              <div class="row g-3 mb-3" *ngIf="rentaModalCargando">
+                <div class="col-12">
                   <div class="mono-pago-servicio-loading mb-0">
                     <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
                     <span>Cargando renta…</span>
                   </div>
                 </div>
+              </div>
 
-                <ng-container *ngIf="!rentaModalCargando">
+              <!-- ── Fila 2: Total · Monto final · Factor variable ── -->
+              <ng-container *ngIf="!rentaModalCargando">
+                <div class="row g-3 mb-3">
+
+                  <!-- Total -->
                   <div class="col-12 col-lg-4">
-                    <label for="rentaTotal" class="form-label perm-label"
-                      >Total <span class="text-danger">*</span></label
-                    >
+                    <label for="rentaTotal" class="form-label perm-label">
+                      Total <span class="text-danger">*</span>
+                    </label>
                     <div class="input-group input-group-lg perm-ig">
                       <span class="input-group-text fw-bold">
                         <mat-icon aria-hidden="true">payments</mat-icon>
@@ -271,15 +286,20 @@
                         <label for="rentaTotal">Total</label>
                       </div>
                     </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;" aria-hidden="true">auto_fix_high</mat-icon>
+                      Tomado del contrato · puede modificarse
+                    </p>
                   </div>
 
+                  <!-- Monto final -->
                   <div class="col-12 col-lg-4">
-                    <label for="rentaMontoFinal" class="form-label perm-label"
-                      >Monto final <span class="text-danger">*</span></label
-                    >
+                    <label for="rentaMontoFinal" class="form-label perm-label">
+                      Monto final <span class="text-danger">*</span>
+                    </label>
                     <div class="input-group input-group-lg perm-ig">
                       <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+                        <mat-icon aria-hidden="true" [class.opacity-50]="evaluandoFormula">account_balance_wallet</mat-icon>
                       </span>
                       <div class="form-floating flex-grow-1">
                         <input
@@ -290,16 +310,24 @@
                           formControlName="montoFinal"
                           placeholder=" "
                           autocomplete="off"
+                          [readonly]="evaluandoFormula"
                         />
-                        <label for="rentaMontoFinal">Monto final</label>
+                        <label for="rentaMontoFinal">
+                          {{ evaluandoFormula ? 'Calculando…' : 'Monto final' }}
+                        </label>
                       </div>
                     </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;" aria-hidden="true">auto_fix_high</mat-icon>
+                      Calculado por fórmula · puede modificarse
+                    </p>
                   </div>
 
+                  <!-- Factor variable -->
                   <div class="col-12 col-lg-4">
-                    <label for="rentaFactor" class="form-label perm-label"
-                      >Factor variable <span class="text-danger">*</span></label
-                    >
+                    <label for="rentaFactor" class="form-label perm-label">
+                      Factor variable <span class="text-danger">*</span>
+                    </label>
                     <div class="input-group input-group-lg perm-ig">
                       <span class="input-group-text fw-bold">
                         <mat-icon aria-hidden="true">percent</mat-icon>
@@ -317,12 +345,22 @@
                         <label for="rentaFactor">Factor variable</label>
                       </div>
                     </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;" aria-hidden="true">auto_fix_high</mat-icon>
+                      Calculado por fórmula · puede modificarse
+                    </p>
                   </div>
 
+                </div>
+
+                <!-- ── Fila 3: Fórmula (edición) · Usó fórmula ── -->
+                <div class="row g-3 mb-3">
+
+                  <!-- Fórmula solo edición -->
                   <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'edicion'">
-                    <label for="rentaFormula" class="form-label perm-label"
-                      >Fórmula <span class="text-danger">*</span></label
-                    >
+                    <label for="rentaFormula" class="form-label perm-label">
+                      Fórmula <span class="text-danger">*</span>
+                    </label>
                     <div class="input-group input-group-lg perm-ig">
                       <span class="input-group-text fw-bold">
                         <mat-icon aria-hidden="true">functions</mat-icon>
@@ -337,6 +375,7 @@
                     </div>
                   </div>
 
+                  <!-- Usó fórmula -->
                   <div class="col-12 col-lg-4">
                     <label for="rentaOcupoFormula" class="form-label perm-label">Usó fórmula</label>
                     <div class="input-group input-group-lg perm-ig">
@@ -352,9 +391,13 @@
                       </div>
                     </div>
                   </div>
-                </ng-container>
 
-                <div class="col-12" *ngIf="!rentaModalCargando && !catalogosModalCargando">
+                </div>
+              </ng-container>
+
+              <!-- ── Resumen ── -->
+              <div class="row" *ngIf="!rentaModalCargando && !catalogosModalCargando">
+                <div class="col-12">
                   <section
                     class="renta-pago-resumen"
                     *ngIf="resumenRentaModal.listo"
@@ -391,7 +434,10 @@
                     <span>{{ resumenRentaModal.mensajeVacio }}</span>
                   </div>
                 </div>
+              </div>
 
+              <!-- ── Botones ── -->
+              <div class="row mt-3">
                 <div class="col-12">
                   <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
                     <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalRenta()">
@@ -401,13 +447,14 @@
                       type="button"
                       class="button-success mono-pago-form-btn"
                       (click)="guardarRentaDesdeModal()"
-                      [disabled]="rentaGuardando || rentaModalCargando"
+                      [disabled]="rentaGuardando || rentaModalCargando || evaluandoFormula"
                     >
                       {{ rentaGuardando ? 'Enviando…' : (rentaModalModo === 'edicion' ? 'Guardar' : 'Agregar') }}
                     </button>
                   </div>
                 </div>
               </div>
+
             </form>
           </div>
         </div>

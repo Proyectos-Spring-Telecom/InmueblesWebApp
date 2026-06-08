@@ -26,7 +26,7 @@ export const routes: Routes = [
   {
     path: '',
     component: FullComponent,
-    canActivate: [AuthGuard], // ← Si no tiene sesión, regresa al login
+    canActivateChild: [AuthGuard],  // ← Cambia canActivate por canActivateChild
     children: [
       {
         path: '',
