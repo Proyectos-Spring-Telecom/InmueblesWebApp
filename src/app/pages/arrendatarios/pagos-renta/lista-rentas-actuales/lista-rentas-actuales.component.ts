@@ -14,6 +14,7 @@ import {
 } from 'src/app/pipe/module-open.animation';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { FormulasService } from 'src/app/services/moduleService/formulas.service';
+import { RentaFormulaPreviewService } from '../renta-formula-preview.service';
 import {
   formatearFecha,
   formatearMoneda,
@@ -36,6 +37,12 @@ import {
   mapRentaActualApiToGridRow,
   RentaActualGridRow,
 } from './renta-actual-list.mapper';
+import { parseValorNumerico } from 'src/app/shared/valor-miles-format';
+
+interface EvaluacionFormulaRentas {
+  montoFinal: number;
+  factorVariable: number;
+}
 
 interface SelectOpcion {
   id: number;
@@ -103,7 +110,8 @@ export class ListaRentasActualesComponent implements OnInit {
     private rentaActualService: RentaActualService,
     private arrendatariosService: ArrendatariosService,
     private formulasService: FormulasService,
-  ) {}
+    private rentaFormulaPreview: RentaFormulaPreviewService,
+  ) { }
 
   ngOnInit(): void {
     this.embebidoEnHub = this.leerEmbebidoEnHub();
@@ -126,11 +134,13 @@ export class ListaRentasActualesComponent implements OnInit {
 
     this.rentaForm.get('idArrendatario')?.valueChanges.subscribe((id) => {
       this.sincronizarContratosPorArrendatario(id);
+      this.ejecutarPreviewFormula();
       this.actualizarResumenRentaModal();
     });
 
     this.rentaForm.get('idContrato')?.valueChanges.subscribe((idContrato) => {
       this.autocompletarTotalDesdeContrato(idContrato);
+      this.ejecutarPreviewFormula();
     });
 
     this.rentaForm.get('idFormula')?.valueChanges.subscribe(() => {
@@ -145,47 +155,116 @@ export class ListaRentasActualesComponent implements OnInit {
   private autocompletarTotalDesdeContrato(idContrato: unknown): void {
     const id    = Number(idContrato);
     const idArr = Number(this.rentaForm.getRawValue()['idArrendatario']);
-    if (!Number.isFinite(id) || id <= 0) return;
+    if (!Number.isFinite(id)    || id    <= 0) return;
     if (!Number.isFinite(idArr) || idArr <= 0) return;
 
     const contrato = this.buscarContratoEnCatalogo(Math.floor(idArr), Math.floor(id));
     if (!contrato) return;
 
-    const rentaTotal = Number(
-      contrato['rentaTotal'] ?? contrato['renta_total'] ?? contrato['subTotalRenta'],
-    );
-    if (Number.isFinite(rentaTotal) && rentaTotal > 0) {
+    const rentaTotal = this.extraerTotalContrato(contrato);
+    if (rentaTotal != null) {
       this.rentaForm.get('total')?.setValue(rentaTotal, { emitEvent: false });
       this.actualizarResumenRentaModal();
       this.cdr.markForCheck();
     }
   }
 
-  // ─── Preview de fórmula ──────────────────────────────────────────────────────
-
-  private ejecutarPreviewFormula(): void {
-    const raw            = this.rentaForm.getRawValue();
+  private idsPreviewRentaListos(raw: Record<string, unknown>): {
+    idFormula: number;
+    idContrato: number;
+    idArrendatario: number;
+  } | null {
     const idFormula      = Number(raw['idFormula']);
     const idContrato     = Number(raw['idContrato']);
     const idArrendatario = Number(raw['idArrendatario']);
-    const totalActual    = Number(raw['total']);
-
-    if (!Number.isFinite(idFormula) || idFormula <= 0) return;
-
-    const body: Record<string, number> = {
+    if (
+      !Number.isFinite(idFormula) || idFormula <= 0 ||
+      !Number.isFinite(idContrato) || idContrato <= 0 ||
+      !Number.isFinite(idArrendatario) || idArrendatario <= 0
+    ) {
+      return null;
+    }
+    return {
       idFormula: Math.floor(idFormula),
+      idContrato: Math.floor(idContrato),
+      idArrendatario: Math.floor(idArrendatario),
     };
-    if (Number.isFinite(idContrato) && idContrato > 0) {
-      body['idContrato'] = Math.floor(idContrato);
+  }
+
+  private parseNumeroFormulario(value: unknown): number {
+    return parseValorNumerico(value);
+  }
+
+  /** Renta total del contrato (con IVA); subtotal solo como respaldo. */
+  private extraerTotalContrato(contrato: Record<string, unknown>): number | null {
+    const candidatos = [
+      contrato['rentaTotal'],
+      contrato['renta_total'],
+      contrato['subTotalRenta'],
+      contrato['subtotalRenta'],
+    ];
+    for (const raw of candidatos) {
+      const n = parseValorNumerico(raw);
+      if (Number.isFinite(n) && n > 0) return n;
     }
-    if (Number.isFinite(idArrendatario) && idArrendatario > 0) {
-      body['idArrendatario'] = Math.floor(idArrendatario);
+    return null;
+  }
+
+  private normalizarRespuestaFormula(res: unknown): {
+    resultado?: number;
+    tipoResultado?: string;
+  } {
+    const body =
+      res != null && typeof res === 'object' && 'data' in (res as object)
+        ? ((res as { data?: unknown }).data ?? res)
+        : res;
+    if (body == null || typeof body !== 'object') return {};
+    const o = body as Record<string, unknown>;
+    return {
+      resultado: Number(o['resultado']),
+      tipoResultado: String(o['tipoResultado'] ?? o['TipoResultado'] ?? 'MONTO'),
+    };
+  }
+
+  /**
+   * MONTO: `resultado` del API ya es el monto final (ej. 78115.71).
+   * PORCENTAJE: `resultado` es el factor; monto final = factor × total.
+   */
+  private aplicarEvaluacionFormula(
+    res: { resultado?: number; tipoResultado?: string },
+    total: number,
+  ): EvaluacionFormulaRentas | null {
+    const resultado = Number(res?.resultado);
+    if (!Number.isFinite(resultado)) return null;
+  
+    const tipo = String(res?.tipoResultado ?? 'PORCENTAJE').toUpperCase();
+  
+    if (tipo === 'MONTO') {
+      const montoFinal     = Number(resultado.toFixed(2));
+      const factorVariable = Number.isFinite(total) && total > 0
+        ? parseFloat((montoFinal / total).toFixed(4))
+        : 1;
+      return { montoFinal, factorVariable };
     }
+  
+    // PORCENTAJE: resultado es el factor
+    const montoFinal = Number.isFinite(total) && total > 0
+      ? Number((resultado * total).toFixed(2))
+      : resultado;
+    return { montoFinal, factorVariable: parseFloat(resultado.toFixed(4)) };
+  }
+
+  // ─── Preview de fórmula ──────────────────────────────────────────────────────
+
+  private ejecutarPreviewFormula(): void {
+    const raw = this.rentaForm.getRawValue() as Record<string, unknown>;
+    const ids = this.idsPreviewRentaListos(raw);
+    if (!ids) return;
 
     this.evaluandoFormula = true;
     this.cdr.markForCheck();
 
-    this.formulasService.previewFormula({ idFormula: idFormula })
+    this.rentaFormulaPreview.preview(ids)
       .pipe(
         take(1),
         finalize(() => {
@@ -195,44 +274,24 @@ export class ListaRentasActualesComponent implements OnInit {
       )
       .subscribe({
         next: (res: any) => {
-          const resultado = Number(res?.resultado);
-          if (!Number.isFinite(resultado)) return;
+          const total = this.parseNumeroFormulario(this.rentaForm.getRawValue()['total']);
+          const aplicado = this.aplicarEvaluacionFormula(
+            this.normalizarRespuestaFormula(res),
+            total,
+          );
+          if (!aplicado) return;
 
-          // Monto final → resultado directo de la fórmula
-          this.rentaForm.get('montoFinal')?.setValue(resultado, { emitEvent: false });
-
-          // Factor variable → resultado / total (si total existe), o INPC_ACTUAL / INPC_BASE si vienen las variables
-          const variables  = res?.variables ?? {};
-          const inpcActual = Number(variables['INPC_ACTUAL']);
-          const inpcBase   = Number(variables['INPC_BASE']);
-          let factor: number | null = null;
-
-          if (Number.isFinite(inpcActual) && Number.isFinite(inpcBase) && inpcBase !== 0) {
-            factor = inpcActual / inpcBase;
-          } else if (Number.isFinite(totalActual) && totalActual !== 0) {
-            factor = resultado / totalActual;
-          }
-
-          if (factor !== null) {
-            this.rentaForm.get('factorVariable')?.setValue(
-              parseFloat(factor.toFixed(4)),
-              { emitEvent: false },
-            );
-          }
-
-          // Usó fórmula → automáticamente Sí
+          this.rentaForm.get('montoFinal')?.setValue(aplicado.montoFinal, { emitEvent: false });
+          this.rentaForm.get('factorVariable')?.setValue(aplicado.factorVariable, { emitEvent: false });
           this.rentaForm.get('ocupoFormula')?.setValue(1, { emitEvent: false });
 
           this.actualizarResumenRentaModal();
           this.cdr.markForCheck();
         },
-        error: (err) => {
-          console.warn('Preview fórmula sin resultado:', err);
-        },
       });
   }
 
-  // ─── Resumen vacio ───────────────────────────────────────────────────────────
+  // ─── Resumen vacío ───────────────────────────────────────────────────────────
 
   private resumenRentaModalVacio(): RentaModalResumenVm {
     return {
@@ -286,9 +345,9 @@ export class ListaRentasActualesComponent implements OnInit {
             .map((item) => mapRentaActualApiToGridRow(item))
             .filter((r): r is RentaActualGridRow => r != null);
 
-          this.totalRegistros   = totalRegistros;
-          this.paginaActual     = paginaActual;
-          this.totalPaginas     = totalPaginas;
+          this.totalRegistros  = totalRegistros;
+          this.paginaActual    = paginaActual;
+          this.totalPaginas    = totalPaginas;
           this.paginaActualData = dataTransformada;
 
           return { data: dataTransformada, totalCount: totalRegistros };
@@ -384,9 +443,9 @@ export class ListaRentasActualesComponent implements OnInit {
     });
     this.rentaForm.get('idArrendatario')?.enable();
     this.rentaForm.get('idContrato')?.enable();
-    this.contratosOpciones = [];
-    this.resumenRentaModal = this.resumenRentaModalVacio();
-    this.mostrarModalRenta = true;
+    this.contratosOpciones    = [];
+    this.resumenRentaModal    = this.resumenRentaModalVacio();
+    this.mostrarModalRenta    = true;
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
   }
@@ -396,9 +455,9 @@ export class ListaRentasActualesComponent implements OnInit {
   abrirModalEdicion(row: RentaActualGridRow): void {
     const id = Number(row?.id);
     if (!Number.isFinite(id) || id <= 0) return;
-    this.rentaModalModo     = 'edicion';
-    this.rentaEditId        = Math.floor(id);
-    this.mostrarModalRenta  = true;
+    this.rentaModalModo    = 'edicion';
+    this.rentaEditId       = Math.floor(id);
+    this.mostrarModalRenta = true;
     this.rentaModalCargando = true;
     this.rentaForm.reset();
     this.rentaForm.get('idArrendatario')?.disable();
@@ -466,7 +525,7 @@ export class ListaRentasActualesComponent implements OnInit {
       return { listo: false, mensajeVacio: vacio, pagoAFavorDe: '', arrendatario: '', campos: [] };
     }
 
-    const item = this.arrendatariosCatalogo.find(
+    const item              = this.arrendatariosCatalogo.find(
       (r) => resolverIdArrendatarioApi(r) === Math.floor(idArr),
     );
     const arrendatarioNombre = item
@@ -501,7 +560,7 @@ export class ListaRentasActualesComponent implements OnInit {
       contrato?.['inmueble'] != null && typeof contrato['inmueble'] === 'object'
         ? (contrato['inmueble'] as Record<string, unknown>)
         : null;
-    const inmueble  = inm ? String(inm['inmueble']       ?? '').trim() : '';
+    const inmueble  = inm ? String(inm['inmueble'] ?? '').trim() : '';
     const direccion = inm ? String(inm['direccionFiscal'] ?? '').trim() : '';
     if (inmueble) {
       campos.push({
@@ -525,8 +584,8 @@ export class ListaRentasActualesComponent implements OnInit {
       if (formula) campos.push({ etiqueta: 'Fórmula', valor: formula });
     }
 
-    const total         = String(raw['total']          ?? '').trim();
-    const montoFinal    = String(raw['montoFinal']     ?? '').trim();
+    const total         = String(raw['total']         ?? '').trim();
+    const montoFinal    = String(raw['montoFinal']    ?? '').trim();
     const factorVariable = String(raw['factorVariable'] ?? '').trim();
 
     if (total) {
@@ -559,9 +618,8 @@ export class ListaRentasActualesComponent implements OnInit {
     moneda: string,
   ): void {
     if (!contrato) return;
-    const rentaContrato = formatearMoneda(
-      contrato['rentaTotal'] ?? contrato['renta_total'] ?? contrato['subTotalRenta'],
-    );
+    const totalContrato = this.extraerTotalContrato(contrato);
+    const rentaContrato = totalContrato != null ? formatearMoneda(totalContrato) : '—';
     if (rentaContrato && rentaContrato !== '—') {
       campos.push({
         etiqueta: 'Renta del contrato',
@@ -599,7 +657,7 @@ export class ListaRentasActualesComponent implements OnInit {
     idArrendatario: number,
     idContrato: number,
   ): Record<string, unknown> | null {
-    const item      = this.arrendatariosCatalogo.find(
+    const item     = this.arrendatariosCatalogo.find(
       (r) => resolverIdArrendatarioApi(r) === idArrendatario,
     );
     const contratos = Array.isArray(item?.['contratos']) ? item['contratos'] : [];
@@ -618,8 +676,7 @@ export class ListaRentasActualesComponent implements OnInit {
   }
 
   private esNumeroCaptura(v: string): boolean {
-    const n = Number(String(v).replace(/,/g, ''));
-    return Number.isFinite(n);
+    return Number.isFinite(parseValorNumerico(v));
   }
 
   textoPlaceholderContrato(): string {
@@ -639,8 +696,8 @@ export class ListaRentasActualesComponent implements OnInit {
       .then((results) => {
         const [arrResult, formResult] = results;
         if (arrResult.status === 'fulfilled') {
-          this.arrendatariosCatalogo = extraerFilasPaginadasApi(arrResult.value);
-          this.arrendatariosOpciones = this.mapArrendatariosOpciones(this.arrendatariosCatalogo);
+          this.arrendatariosCatalogo  = extraerFilasPaginadasApi(arrResult.value);
+          this.arrendatariosOpciones  = this.mapArrendatariosOpciones(this.arrendatariosCatalogo);
           this.sincronizarContratosPorArrendatario(this.rentaForm.get('idArrendatario')?.value);
         } else {
           console.error('Error arrendatarios modal renta:', arrResult.reason);
@@ -662,7 +719,7 @@ export class ListaRentasActualesComponent implements OnInit {
   }
 
   private sincronizarContratosPorArrendatario(idArrendatario: unknown): void {
-    const id           = Number(idArrendatario);
+    const id          = Number(idArrendatario);
     const ctrlContrato = this.rentaForm.get('idContrato');
     if (!Number.isFinite(id) || id <= 0) {
       this.contratosOpciones = [];
@@ -695,7 +752,7 @@ export class ListaRentasActualesComponent implements OnInit {
   private mapArrendatariosOpciones(rows: Record<string, unknown>[]): SelectOpcion[] {
     return rows
       .map((r) => {
-        const id     = resolverIdArrendatarioApi(r);
+        const id = resolverIdArrendatarioApi(r);
         if (id == null) return null;
         const nombre = nombreArrendatarioDesdeApi(r);
         return { id, label: nombre || `Arrendatario #${id}` };
@@ -709,7 +766,7 @@ export class ListaRentasActualesComponent implements OnInit {
       .map((r) => {
         const estatus = r['estatus'];
         if (estatus != null && Number(estatus) !== 1) return null;
-        const id     = Number(r['id'] ?? r['idFormula']);
+        const id = Number(r['id'] ?? r['idFormula']);
         if (!Number.isFinite(id) || id <= 0) return null;
         const nombre = String(r['nombre'] ?? '').trim();
         return { id: Math.floor(id), label: nombre || `Fórmula #${id}` };
@@ -729,78 +786,116 @@ export class ListaRentasActualesComponent implements OnInit {
       });
       return;
     }
-
+  
     const raw            = this.rentaForm.getRawValue();
-    const total          = Number(raw.total);
-    const montoFinal     = Number(raw.montoFinal);
-    const factorVariable = Number(raw.factorVariable);
+    const total          = this.parseNumeroFormulario(raw.total);
     const idFormula      = Number(raw.idFormula);
+    const idContrato     = Number(raw.idContrato);
+    const idArrendatario = Number(raw.idArrendatario);
     const ocupoFormula   = Number(raw.ocupoFormula) === 1 ? 1 : 0;
-
-    if (
-      !Number.isFinite(total)         ||
-      !Number.isFinite(montoFinal)    ||
-      !Number.isFinite(factorVariable)||
-      !Number.isFinite(idFormula)
-    ) {
+  
+    if (!Number.isFinite(total) || !Number.isFinite(idFormula)) {
       void Swal.fire({
         background: '#141a21', color: '#ffffff',
         icon: 'warning', title: 'Valores inválidos',
-        text: 'Revisa total, monto final, factor variable y fórmula.',
+        text: 'Revisa el total y la fórmula seleccionada.',
         confirmButtonText: 'Entendido',
       });
       return;
     }
-
-    const putBody: RentaActualPutPayload = {
-      total,
-      idFormula: Math.floor(idFormula),
-      montoFinal,
-      factorVariable,
-      ocupoFormula,
-    };
-
+  
     this.rentaGuardando = true;
     this.cdr.markForCheck();
-
-    if (this.rentaModalModo === 'edicion' && this.rentaEditId != null) {
-      this.rentaActualService.actualizarRenta(this.rentaEditId, putBody)
-        .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
-        .subscribe({
-          next:  () => this.onRentaGuardadaOk('La renta se actualizó correctamente.'),
-          error: (err) => this.onRentaGuardadaError(err),
-        });
-      return;
-    }
-
-    const idArrendatario = Number(raw.idArrendatario);
-    const idContrato     = Number(raw.idContrato);
-    if (
-      !Number.isFinite(idArrendatario) || idArrendatario <= 0 ||
-      !Number.isFinite(idContrato)     || idContrato     <= 0
-    ) {
-      this.rentaGuardando = false;
-      void Swal.fire({
-        background: '#141a21', color: '#ffffff',
-        icon: 'warning', title: 'Arrendatario y contrato',
-        text: 'Selecciona arrendatario y contrato para registrar la renta.',
-        confirmButtonText: 'Entendido',
-      });
-      this.cdr.markForCheck();
-      return;
-    }
-
-    const postBody: RentaActualPostPayload = {
-      idArrendatario: Math.floor(idArrendatario),
-      idContrato:     Math.floor(idContrato),
-      ...putBody,
+  
+    const evaluarBody: { idFormula: number; idContrato?: number; idArrendatario?: number } = {
+      idFormula: Math.floor(idFormula),
     };
-
-    this.rentaActualService.registrarRenta(postBody)
-      .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
+    if (Number.isFinite(idContrato) && idContrato > 0) {
+      evaluarBody['idContrato'] = Math.floor(idContrato);
+    }
+    if (Number.isFinite(idArrendatario) && idArrendatario > 0) {
+      evaluarBody['idArrendatario'] = Math.floor(idArrendatario);
+    }
+  
+    // Paso 1: evaluar con auditoría (guarda en FormulaEvaluaciones)
+    this.formulasService.evaluar(evaluarBody)
+      .pipe(take(1))
       .subscribe({
-        next:  () => this.onRentaGuardadaOk('La renta del mes se registró correctamente.'),
-        error: (err) => this.onRentaGuardadaError(err),
+        next: (resEvaluar: any) => {
+          const aplicado = this.aplicarEvaluacionFormula(
+            this.normalizarRespuestaFormula(resEvaluar),
+            total,
+          );
+
+          if (!aplicado) {
+            this.rentaGuardando = false;
+            this.cdr.markForCheck();
+            void Swal.fire({
+              background: '#141a21', color: '#ffffff',
+              icon: 'error', title: 'Error en la fórmula',
+              text: 'La fórmula no devolvió un resultado válido.',
+              confirmButtonText: 'Entendido',
+            });
+            return;
+          }
+
+          const { montoFinal, factorVariable } = aplicado;
+  
+          const putBody: RentaActualPutPayload = {
+            total,
+            idFormula:      Math.floor(idFormula),
+            montoFinal,
+            factorVariable,
+            ocupoFormula,
+          };
+  
+          // Paso 2: registrar o actualizar la renta
+          if (this.rentaModalModo === 'edicion' && this.rentaEditId != null) {
+            this.rentaActualService.actualizarRenta(this.rentaEditId, putBody)
+              .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
+              .subscribe({
+                next: () => this.onRentaGuardadaOk('La renta se actualizó correctamente.'),
+                error: (err) => this.onRentaGuardadaError(err),
+              });
+            return;
+          }
+  
+          if (!Number.isFinite(idArrendatario) || idArrendatario <= 0 ||
+              !Number.isFinite(idContrato)     || idContrato     <= 0) {
+            this.rentaGuardando = false;
+            this.cdr.markForCheck();
+            void Swal.fire({
+              background: '#141a21', color: '#ffffff',
+              icon: 'warning', title: 'Arrendatario y contrato',
+              text: 'Selecciona arrendatario y contrato para registrar la renta.',
+              confirmButtonText: 'Entendido',
+            });
+            return;
+          }
+  
+          const postBody: RentaActualPostPayload = {
+            idArrendatario: Math.floor(idArrendatario),
+            idContrato:     Math.floor(idContrato),
+            ...putBody,
+          };
+  
+          this.rentaActualService.registrarRenta(postBody)
+            .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
+            .subscribe({
+              next: () => this.onRentaGuardadaOk('La renta del mes se registró correctamente.'),
+              error: (err) => this.onRentaGuardadaError(err),
+            });
+        },
+        error: (err) => {
+          this.rentaGuardando = false;
+          this.cdr.markForCheck();
+          void Swal.fire({
+            background: '#141a21', color: '#ffffff',
+            icon: 'error', title: 'Error al evaluar la fórmula',
+            text: this.mensajeErrorHttp(err),
+            confirmButtonText: 'Entendido',
+          });
+        },
       });
   }
 
@@ -875,7 +970,7 @@ export class ListaRentasActualesComponent implements OnInit {
   }
 
   private mensajeErrorHttp(err: unknown): string {
-    const e = err as { error?: string | { message?: string; mensaje?: string }; message?: string };
+    const e      = err as { error?: string | { message?: string; mensaje?: string }; message?: string };
     const nested = e?.error;
     if (typeof nested === 'string' && nested.trim()) return nested;
     if (nested && typeof nested === 'object') {

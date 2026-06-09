@@ -70,4 +70,8 @@ export class FormulasService {
       .patch(url, { estatus }, { responseType: 'text' })
       .pipe(catchError((error) => throwError(() => error)));
   }
+
+  evaluar(body: { idFormula: number; idContrato?: number; idArrendatario?: number }): Observable<any> {
+    return this.http.post<any>(`${this.base}/evaluar`, body);
+  }
 }

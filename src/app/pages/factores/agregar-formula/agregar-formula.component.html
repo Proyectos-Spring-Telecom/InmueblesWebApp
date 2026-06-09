@@ -19,7 +19,7 @@
       <form [formGroup]="formulaForm" class="perm-form-body">
         <div class="row g-4">
 
-          <!-- Nombre de la fórmula -->
+          <!-- Nombre -->
           <div class="col-12 col-md-6">
             <label for="forNombre" class="form-label perm-label">Nombre de la fórmula</label>
             <div class="input-group input-group-lg perm-ig">
@@ -51,59 +51,94 @@
             </div>
           </div>
 
+          <!-- Constructor de expresión -->
+          <div class="col-12 col-md-6">
+            <label class="form-label perm-label">Expresión matemática</label>
+
+            <div class="formula-builder">
+
+              <!-- Display -->
+              <div class="formula-builder__display"
+                [class.formula-builder__display--empty]="!formulaForm.get('formula')?.value">
+                <mat-icon aria-hidden="true" class="formula-builder__display-icon">functions</mat-icon>
+                <span class="font-monospace formula-builder__display-text">
+                  {{ formulaForm.get('formula')?.value || 'Construye tu fórmula usando los botones de abajo' }}
+                </span>
+                <button type="button" class="formula-builder__clear" (click)="limpiarFormula()"
+                  *ngIf="formulaForm.get('formula')?.value" title="Limpiar fórmula">
+                  <mat-icon aria-hidden="true">backspace</mat-icon>
+                </button>
+              </div>
+
+              <!-- Operadores -->
+              <div class="formula-builder__operators">
+                <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('+')">+</button>
+                <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('-')">−</button>
+                <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('*')">×</button>
+                <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('/')">÷</button>
+                <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('(')">(</button>
+                <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken(')')">)</button>
+                <button type="button" class="formula-btn formula-btn--num" (click)="agregarToken('100')">100</button>
+                <button type="button" class="formula-btn formula-btn--del" (click)="borrarUltimo()" title="Borrar último">
+                  <mat-icon aria-hidden="true" style="font-size:16px;height:16px;width:16px;">backspace</mat-icon>
+                </button>
+              </div>
+
+              <!-- Variables -->
+              <div class="formula-builder__vars" *ngIf="!cargandoVariablesFactores && factoresParaSelectFormula.length">
+                <span class="formula-builder__vars-label">Variables:</span>
+                <button type="button" class="formula-btn formula-btn--var"
+                  *ngFor="let f of factoresParaSelectFormula"
+                  (click)="agregarToken(f.variable)" [title]="f.etiqueta">
+                  {{ f.variable }}
+                </button>
+              </div>
+              <p class="small opacity-50 mt-2 mb-0" *ngIf="cargandoVariablesFactores">Cargando variables…</p>
+              <p class="small opacity-50 mt-2 mb-0"
+                *ngIf="!cargandoVariablesFactores && !factoresParaSelectFormula.length">
+                No hay variables registradas.
+              </p>
+
+              <!-- Preview dentro del builder -->
+              <ng-container *ngIf="previewState !== null">
+                <div class="formula-builder__divider"></div>
+
+                <!-- Preview ok -->
+                <div class="formula-builder__preview formula-builder__preview--ok" *ngIf="previewState.ok" role="status" aria-live="polite">
+                  <div class="formula-builder__preview-header">
+                    <mat-icon aria-hidden="true">check_circle</mat-icon>
+                    <span>Vista previa</span>
+                  </div>
+                  <p class="formula-builder__preview-expr font-monospace">
+                    <span>{{ $any(previewState).expresionSustituida }}</span>
+                  </p>
+                  <p class="formula-builder__preview-result">
+                    <span class="formula-builder__preview-label">Resultado:</span>
+                    <strong>{{ previewResultadoFormateado }}</strong>
+                  </p>
+                </div>
+
+                <!-- Preview error -->
+                <div class="formula-builder__preview formula-builder__preview--error" *ngIf="!previewState.ok" role="alert">
+                  <div class="formula-builder__preview-header">
+                    <mat-icon aria-hidden="true">warning</mat-icon>
+                    <span>No se puede calcular</span>
+                  </div>
+                  <p class="formula-builder__preview-error-msg">{{ $any(previewState).mensaje }}</p>
+                </div>
+
+              </ng-container>
+
+            </div>
+
+            <!-- Error de validación -->
+            <p class="small text-danger mt-2 mb-0" *ngIf="formulaErrorMsg" role="alert">
+              <i class="fa fa-exclamation-circle me-1" aria-hidden="true"></i>{{ formulaErrorMsg }}
+            </p>
+          </div>
+
           <!-- Descripción -->
-
-
-          <!-- Variables disponibles (helper de inserción) -->
           <div class="col-12 col-md-6">
-            <label for="forInsertarVariable" class="form-label perm-label">Variables disponibles</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">straighten</mat-icon>
-              </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="forInsertarVariable"
-                  [disabled]="cargandoVariablesFactores || !factoresParaSelectFormula.length"
-                  (change)="insertarVariable($any($event.target).value); $any($event.target).value = ''">
-                  <option value="">— Seleccione una variable para agregarla —</option>
-                  <option *ngFor="let f of factoresParaSelectFormula" [value]="f.variable">
-                    {{ f.etiqueta }}
-                  </option>
-                </select>
-                <label for="forInsertarVariable">Seleccione una variable para agregarla</label>
-              </div>
-            </div>
-            <p class="small opacity-50 mt-2 mb-0" *ngIf="cargandoVariablesFactores">
-              Cargando variables…
-            </p>
-            <p class="small opacity-50 mt-2 mb-0"
-              *ngIf="!cargandoVariablesFactores && !factoresParaSelectFormula.length">
-              No hay variables registradas. Agregue factores y recargue la página.
-            </p>
-          </div>
-
-          <!-- Expresión matemática -->
-          <div class="col-12 col-md-6">
-            <label for="forFormula" class="form-label perm-label">Expresión matemática</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">functions</mat-icon>
-              </span>
-              <div class="form-floating flex-grow-1">
-                <input #formulaInput type="text" formControlName="formula" class="form-control font-monospace"
-                  id="forFormula" placeholder="Ej.: RENTA_ACTUAL * (INPC_ACTUAL / INPC_BASE)" required
-                  autocomplete="off" spellcheck="false" />
-                <label for="forFormula">Escriba la fórmula usando las variables de arriba</label>
-              </div>
-            </div>
-            <p class="small font-monospace opacity-75 mt-2 mb-0 text-truncate" *ngIf="formulaForm.get('formula')?.value"
-              [title]="formulaForm.get('formula')?.value">
-              <span class="opacity-50">Fórmula actual: </span>
-              <strong>{{ formulaForm.get('formula')?.value }}</strong>
-            </p>
-          </div>
-
-          <div class="col-12">
             <label for="forDescripcion" class="form-label perm-label">
               Descripción <span class="opacity-50 fw-normal">(opcional)</span>
             </label>

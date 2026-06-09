@@ -11,7 +11,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { FactorPayload, FactoresService } from 'src/app/services/moduleService/factores.service';
 import {
+  contarMontoSimbolosAntesCursor,
   countDigitosAntesCursor,
+  cursorMontoTrasFormato,
   cursorPosicionTrasFormatoMiles,
   formatMilesAlEscribir,
   formatValorMilesParaLista,
@@ -47,7 +49,7 @@ export class AgregarFactorComponent implements OnInit {
     private factoresService: FactoresService,
     private activatedRouted: ActivatedRoute,
     private route: Router,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initForm();
@@ -66,8 +68,8 @@ export class AgregarFactorComponent implements OnInit {
 
   initForm(): void {
     this.factorForm = this.fb.group({
-      variable:    ['', [Validators.required]],
-      valor:       ['', [Validators.required, factorValorValidador]],
+      variable: ['', [Validators.required]],
+      valor: ['', [Validators.required, factorValorValidador]],
       descripcion: ['', [Validators.maxLength(2000)]],
     });
 
@@ -87,8 +89,8 @@ export class AgregarFactorComponent implements OnInit {
         const data = res?.data ?? res ?? {};
         this.factorForm.patchValue(
           {
-            variable:    data?.variable    ?? data?.nombre      ?? '',
-            valor:       formatValorMilesParaLista(data?.valor  ?? ''),
+            variable: data?.variable ?? data?.nombre ?? '',
+            valor: formatValorMilesParaLista(data?.valor ?? ''),
             descripcion: data?.descripcion ?? '',
           },
           { emitEvent: false },
@@ -111,13 +113,15 @@ export class AgregarFactorComponent implements OnInit {
   }
 
   onValorInput(ev: Event): void {
-    const input        = ev.target as HTMLInputElement;
-    const before       = input.value;
-    const cursor       = input.selectionStart ?? before.length;
-    const digitsBefore = countDigitosAntesCursor(before, cursor);
+    const input = ev.target as HTMLInputElement;
+    const before = input.value;
+    const cursor = input.selectionStart ?? before.length;
+
+    // Usar la función que cuenta el punto como símbolo
+    const simbolosAntes = contarMontoSimbolosAntesCursor(before, cursor);
 
     const formatted = formatMilesAlEscribir(before);
-    const ctrl      = this.factorForm.get('valor');
+    const ctrl = this.factorForm.get('valor');
     ctrl?.setValue(formatted, { emitEvent: false });
     ctrl?.updateValueAndValidity({ emitEvent: false });
 
@@ -125,7 +129,8 @@ export class AgregarFactorComponent implements OnInit {
       input.value = formatted;
     }
 
-    const newPos = cursorPosicionTrasFormatoMiles(formatted, digitsBefore);
+    // Usar la función que reposiciona correctamente con el punto
+    const newPos = cursorMontoTrasFormato(formatted, simbolosAntes);
     requestAnimationFrame(() => {
       input.setSelectionRange(newPos, newPos);
     });
@@ -133,7 +138,7 @@ export class AgregarFactorComponent implements OnInit {
 
   submit(): void {
     this.submitButton = 'Cargando...';
-    this.loading      = true;
+    this.loading = true;
     if (this.idFactor != null) {
       this.actualizar();
     } else {
@@ -142,14 +147,14 @@ export class AgregarFactorComponent implements OnInit {
   }
 
   private etiquetas: Record<string, string> = {
-    variable:    'Nombre de la variable',
-    valor:       'Valor',
+    variable: 'Nombre de la variable',
+    valor: 'Valor',
     descripcion: 'Descripción',
   };
 
   private mostrarErroresValidacion(esActualizar: boolean): void {
     this.submitButton = esActualizar ? 'Actualizar' : 'Guardar';
-    this.loading      = false;
+    this.loading = false;
     const camposFaltantes: string[] = [];
     Object.keys(this.factorForm.controls).forEach((key) => {
       const control = this.factorForm.get(key);
@@ -184,11 +189,11 @@ export class AgregarFactorComponent implements OnInit {
   }
 
   private buildPayload(): FactorPayload {
-    const v    = this.factorForm.value;
+    const v = this.factorForm.value;
     const desc = (v.descripcion ?? '').toString().trim();
     return {
-      variable:    (v.variable ?? '').trim().toUpperCase(),
-      valor:       valorSinComasParaApi(v.valor),
+      variable: (v.variable ?? '').trim().toUpperCase(),
+      valor: valorSinComasParaApi(v.valor),
       descripcion: desc.length ? desc : null,
     };
   }
@@ -202,7 +207,7 @@ export class AgregarFactorComponent implements OnInit {
     this.factoresService.agregarFactor(payload).subscribe({
       next: () => {
         this.submitButton = 'Guardar';
-        this.loading      = false;
+        this.loading = false;
         Swal.fire({
           title: '¡Operación Exitosa!',
           text: 'Se agregó un nuevo factor de manera exitosa.',
@@ -214,12 +219,12 @@ export class AgregarFactorComponent implements OnInit {
         });
         this.regresar();
       },
-      error: () => {
+      error: (err) => {
         this.submitButton = 'Guardar';
-        this.loading      = false;
+        this.loading = false;
         Swal.fire({
           title: '¡Ops!',
-          text: 'Ocurrió un error al agregar el factor.',
+          text: this.mensajeErrorHttp(err),
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -233,7 +238,7 @@ export class AgregarFactorComponent implements OnInit {
   actualizar(): void {
     if (this.idFactor == null) {
       this.submitButton = 'Actualizar';
-      this.loading      = false;
+      this.loading = false;
       return;
     }
     if (this.factorForm.invalid) {
@@ -244,7 +249,7 @@ export class AgregarFactorComponent implements OnInit {
     this.factoresService.actualizarFactor(this.idFactor, payload).subscribe({
       next: () => {
         this.submitButton = 'Actualizar';
-        this.loading      = false;
+        this.loading = false;
         Swal.fire({
           title: '¡Operación Exitosa!',
           text: 'Los datos del factor se actualizaron correctamente.',
@@ -256,12 +261,12 @@ export class AgregarFactorComponent implements OnInit {
         });
         this.regresar();
       },
-      error: () => {
+      error: (err) => {
         this.submitButton = 'Actualizar';
-        this.loading      = false;
+        this.loading = false;
         Swal.fire({
           title: '¡Ops!',
-          text: 'Ocurrió un error al actualizar el factor.',
+          text: this.mensajeErrorHttp(err),
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -270,6 +275,18 @@ export class AgregarFactorComponent implements OnInit {
         });
       },
     });
+  }
+
+  private mensajeErrorHttp(err: unknown): string {
+    const e = err as { error?: string | { message?: string; mensaje?: string }; message?: string };
+    const nested = e?.error;
+    if (typeof nested === 'string' && nested.trim()) return nested;
+    if (nested && typeof nested === 'object') {
+      const msg = nested.message ?? nested.mensaje;
+      if (msg != null && String(msg).trim()) return String(msg);
+    }
+    if (e?.message) return String(e.message);
+    return 'Ocurrió un error al comunicarse con el servidor.';
   }
 
   regresar(): void {

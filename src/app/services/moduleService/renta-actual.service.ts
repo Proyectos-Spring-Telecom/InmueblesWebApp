@@ -26,6 +26,7 @@ export interface RentaActualPutPayload {
 @Injectable({ providedIn: 'root' })
 export class RentaActualService {
   private readonly url = `${environment.API_SECURITY}/renta-actual`;
+  private readonly base = `${environment.API_SECURITY}/formulas`;
 
   constructor(private http: HttpClient) {}
 
@@ -52,5 +53,9 @@ export class RentaActualService {
       .set('page', String(page))
       .set('limit', String(limit));
     return this.http.get(`${this.url}/paginated`, { params });
+  }
+
+  evaluar(body: { idFormula: number; idContrato?: number; idArrendatario?: number }): Observable<any> {
+    return this.http.post<any>(`${this.base}/evaluar`, body);
   }
 }
