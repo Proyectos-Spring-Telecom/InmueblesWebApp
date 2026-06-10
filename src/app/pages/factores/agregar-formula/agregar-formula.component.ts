@@ -141,7 +141,7 @@ export class AgregarFormulaComponent implements OnInit {
       nombre:        ['', Validators.required],
       formula:       ['', [Validators.required, parentesisBalanceadosValidator]],
       descripcion:   [''],
-      tipoResultado: ['MONTO', Validators.required],
+      tipoResultado: ['PORCENTAJE', Validators.required],
     });
 
     this.formulaForm.get('formula')?.valueChanges.subscribe(() => {
@@ -174,13 +174,24 @@ export class AgregarFormulaComponent implements OnInit {
           map.set(variable, { desc: desc.slice(0, 80), valor: Number.isFinite(valor!) ? valor : null });
         }
 
-        this.factoresParaSelectFormula = [...map.entries()]
-          .sort(([a], [b]) => a.localeCompare(b, 'es'))
-          .map(([variable, { desc, valor }]) => ({
-            variable,
-            etiqueta: desc ? `${variable} — ${desc}` : variable,
-            valor,
-          }));
+        this.factoresParaSelectFormula = [
+          ...[...map.entries()]
+            .sort(([a], [b]) => a.localeCompare(b, 'es'))
+            .map(([variable, { desc, valor }]) => ({
+              variable,
+              etiqueta: desc ? `${variable} — ${desc}` : variable,
+              valor,
+            })),
+          ...Array.from({ length: 20 }, (_, i) => {
+            const n = i + 1;
+            const variable = `VAR_DEMO_${String(n).padStart(2, '0')}`;
+            return {
+              variable,
+              etiqueta: `${variable} — Factor ficticio ${n}`,
+              valor: Number((n * 1.25).toFixed(2)),
+            };
+          }),
+        ];
 
         this.calcularPreview();
       },
@@ -193,38 +204,39 @@ export class AgregarFormulaComponent implements OnInit {
 
   // ─── Constructor de expresión por botones ─────────────────────────────────
 
+  insertarVariable(variable: string): void {
+    this.agregarToken(variable);
+  }
+
+  variableUsadaEnFormula(variable: string): boolean {
+    const expr = String(this.formulaForm?.get('formula')?.value ?? '');
+    if (!expr.trim()) return false;
+    const escaped = variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|[^A-Z0-9_])${escaped}([^A-Z0-9_]|$)`).test(expr);
+  }
+
   agregarToken(token: string): void {
     const ctrl = this.formulaForm.get('formula');
     if (!ctrl) return;
-  
-    const current = String(ctrl.value ?? '');
-    const ultimo  = current[current.length - 1] ?? '';
-    const esOp    = ['+', '-', '*', '/'].includes(token);
-  
-    // El último carácter real ignorando el espacio que dejó el operador anterior
-    const ultimoReal = current.trimEnd()[current.trimEnd().length - 1] ?? '';
-    const ultimoEsOp = ['+', '-', '*', '/'].includes(ultimoReal);
-    const ultimoEsAbre = ultimoReal === '(';
-  
+
+    const esOp = ['+', '-', '*', '/'].includes(token);
+    const base = String(ctrl.value ?? '').trimEnd();
     let nuevo: string;
-  
-    if (!current.trim()) {
-      // Expresión vacía
-      nuevo = token;
+
+    if (!base) {
+      nuevo = esOp ? `${token} ` : token;
     } else if (esOp) {
-      // + - * / : espacio antes y después, sin importar lo que haya
-      nuevo = current.trimEnd() + ' ' + token + ' ';
+      nuevo = `${base} ${token} `;
     } else if (token === '(') {
-      // ( : espacio antes solo si lo anterior es variable/número/cierre
-      nuevo = current.trimEnd() + (ultimoEsOp || ultimoEsAbre || !ultimoReal ? '' : ' ') + token;
+      const ultimo = base[base.length - 1] ?? '';
+      nuevo = ultimo === '(' ? `${base}${token}` : `${base} ${token}`;
     } else if (token === ')') {
-      // ) : sin espacio antes
-      nuevo = current.trimEnd() + token;
+      nuevo = `${base}${token}`;
     } else {
-      // variable o número: sin espacio si lo anterior es operador (ya tiene espacio) o '('
-      nuevo = current + (ultimoEsOp || ultimoEsAbre || ultimo === ' ' ? '' : ' ') + token;
+      const ultimo = base[base.length - 1] ?? '';
+      nuevo = ultimo === '(' ? `${base}${token}` : `${base} ${token}`;
     }
-  
+
     ctrl.setValue(nuevo);
     ctrl.markAsDirty();
   }

@@ -43,8 +43,8 @@
               </span>
               <div class="form-floating flex-grow-1 perm-select-floating">
                 <select class="form-select" id="forTipoResultado" formControlName="tipoResultado">
-                  <option value="MONTO">Monto ($)</option>
                   <option value="PORCENTAJE">Porcentaje (%)</option>
+                  <option value="MONTO">Monto ($)</option>
                 </select>
                 <label for="forTipoResultado">¿El resultado es un monto o porcentaje?</label>
               </div>
@@ -66,7 +66,7 @@
                 </span>
                 <button type="button" class="formula-builder__clear" (click)="limpiarFormula()"
                   *ngIf="formulaForm.get('formula')?.value" title="Limpiar fórmula">
-                  <mat-icon aria-hidden="true">backspace</mat-icon>
+                  <mat-icon aria-hidden="true">close</mat-icon>
                 </button>
               </div>
 
@@ -75,11 +75,12 @@
                 <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('+')">+</button>
                 <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('-')">−</button>
                 <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('*')">×</button>
-                <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('/')">÷</button>
+                <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('/')">/</button>
                 <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken('(')">(</button>
                 <button type="button" class="formula-btn formula-btn--op" (click)="agregarToken(')')">)</button>
                 <button type="button" class="formula-btn formula-btn--num" (click)="agregarToken('100')">100</button>
-                <button type="button" class="formula-btn formula-btn--del" (click)="borrarUltimo()" title="Borrar último">
+                <button type="button" class="formula-btn formula-btn--del" (click)="borrarUltimo()"
+                  title="Borrar último">
                   <mat-icon aria-hidden="true" style="font-size:16px;height:16px;width:16px;">backspace</mat-icon>
                 </button>
               </div>
@@ -87,11 +88,17 @@
               <!-- Variables -->
               <div class="formula-builder__vars" *ngIf="!cargandoVariablesFactores && factoresParaSelectFormula.length">
                 <span class="formula-builder__vars-label">Variables:</span>
-                <button type="button" class="formula-btn formula-btn--var"
-                  *ngFor="let f of factoresParaSelectFormula"
-                  (click)="agregarToken(f.variable)" [title]="f.etiqueta">
-                  {{ f.variable }}
-                </button>
+                <div class="formula-builder__vars-scroll">
+                  <div class="row g-2 formula-builder__vars-row">
+                    <div class="col-auto" *ngFor="let f of factoresParaSelectFormula">
+                      <button type="button" class="formula-btn formula-btn--var"
+                        [class.formula-btn--var-used]="variableUsadaEnFormula(f.variable)"
+                        (click)="insertarVariable(f.variable)" [title]="f.etiqueta">
+                        {{ f.variable }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
               <p class="small opacity-50 mt-2 mb-0" *ngIf="cargandoVariablesFactores">Cargando variables…</p>
               <p class="small opacity-50 mt-2 mb-0"
@@ -104,7 +111,8 @@
                 <div class="formula-builder__divider"></div>
 
                 <!-- Preview ok -->
-                <div class="formula-builder__preview formula-builder__preview--ok" *ngIf="previewState.ok" role="status" aria-live="polite">
+                <div class="formula-builder__preview formula-builder__preview--ok" *ngIf="previewState.ok" role="status"
+                  aria-live="polite">
                   <div class="formula-builder__preview-header">
                     <mat-icon aria-hidden="true">check_circle</mat-icon>
                     <span>Vista previa</span>
@@ -119,7 +127,8 @@
                 </div>
 
                 <!-- Preview error -->
-                <div class="formula-builder__preview formula-builder__preview--error" *ngIf="!previewState.ok" role="alert">
+                <div class="formula-builder__preview formula-builder__preview--error" *ngIf="!previewState.ok"
+                  role="alert">
                   <div class="formula-builder__preview-header">
                     <mat-icon aria-hidden="true">warning</mat-icon>
                     <span>No se puede calcular</span>

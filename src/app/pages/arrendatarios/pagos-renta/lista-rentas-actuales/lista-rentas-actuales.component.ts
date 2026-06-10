@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DxDataGridComponent } from 'devextreme-angular';
@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import {
   contractDimAnim,
   contractModalAnim,
+  rentaHintMsgAnim,
   rentaResumenRevealAnim,
   routeAnimation,
 } from 'src/app/pipe/module-open.animation';
@@ -37,7 +38,13 @@ import {
   mapRentaActualApiToGridRow,
   RentaActualGridRow,
 } from './renta-actual-list.mapper';
-import { parseValorNumerico } from 'src/app/shared/valor-miles-format';
+import {
+  extraerMontoRawDesdeDisplay,
+  formatMonedaAlEscribir,
+  formatMonedaDesdeNumero,
+  parseMonedaNumerico,
+  parseValorNumerico,
+} from 'src/app/shared/valor-miles-format';
 
 interface EvaluacionFormulaRentas {
   montoFinal: number;
@@ -53,6 +60,13 @@ interface RentaModalResumenCampo {
   etiqueta: string;
   valor: string;
   dinero?: boolean;
+  destacado?: boolean;
+}
+
+interface RentaModalResumenFilaMontos {
+  total?: RentaModalResumenCampo;
+  factor?: RentaModalResumenCampo;
+  montoACobrar?: RentaModalResumenCampo;
 }
 
 interface RentaModalResumenVm {
@@ -61,6 +75,7 @@ interface RentaModalResumenVm {
   pagoAFavorDe: string;
   arrendatario: string;
   campos: RentaModalResumenCampo[];
+  filaMontos: RentaModalResumenFilaMontos | null;
 }
 
 @Component({
@@ -68,7 +83,7 @@ interface RentaModalResumenVm {
   templateUrl: './lista-rentas-actuales.component.html',
   styleUrl: './lista-rentas-actuales.component.scss',
   standalone: false,
-  animations: [routeAnimation, contractDimAnim, contractModalAnim, rentaResumenRevealAnim],
+  animations: [routeAnimation, contractDimAnim, contractModalAnim, rentaResumenRevealAnim, rentaHintMsgAnim],
 })
 export class ListaRentasActualesComponent implements OnInit {
   embebidoEnHub = false;
@@ -99,9 +114,16 @@ export class ListaRentasActualesComponent implements OnInit {
   private arrendatariosCatalogo: Record<string, unknown>[] = [];
   catalogosModalCargando = false;
   resumenRentaModal: RentaModalResumenVm = this.resumenRentaModalVacio();
+  rentaTotalDisplay = '';
+  rentaMontoFinalDisplay = '';
+  private rentaModalPermitirAutoScroll = false;
+  private rentaModalScrollTimer: ReturnType<typeof setTimeout> | null = null;
 
   @ViewChild('gridContainer', { static: false })
   dataGrid!: DxDataGridComponent;
+
+  @ViewChild('rentaModalBody', { static: false })
+  rentaModalBody?: ElementRef<HTMLElement>;
 
   constructor(
     private fb: FormBuilder,
@@ -131,22 +153,37 @@ export class ListaRentasActualesComponent implements OnInit {
       factorVariable: [null, Validators.required],
       ocupoFormula:   [0,    Validators.required],
     });
-
+  
+    // Al cambiar arrendatario → limpiar contrato, fórmula, montos y resumen
     this.rentaForm.get('idArrendatario')?.valueChanges.subscribe((id) => {
       this.sincronizarContratosPorArrendatario(id);
-      this.ejecutarPreviewFormula();
+      this.rentaForm.get('idContrato')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('idFormula')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('total')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('montoFinal')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('factorVariable')?.setValue(null, { emitEvent: false });
+      this.rentaTotalDisplay = '';
+      this.rentaMontoFinalDisplay = '';
       this.actualizarResumenRentaModal();
+      this.cdr.markForCheck();
     });
-
+  
+    // Al cambiar contrato → limpiar fórmula y montos, autocompletar total
     this.rentaForm.get('idContrato')?.valueChanges.subscribe((idContrato) => {
+      this.rentaForm.get('idFormula')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('montoFinal')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('factorVariable')?.setValue(null, { emitEvent: false });
+      this.rentaMontoFinalDisplay = '';
       this.autocompletarTotalDesdeContrato(idContrato);
-      this.ejecutarPreviewFormula();
+      this.actualizarResumenRentaModal();
+      this.cdr.markForCheck();
     });
-
+  
+    // Al cambiar fórmula → recalcular si ya hay arrendatario, contrato y total
     this.rentaForm.get('idFormula')?.valueChanges.subscribe(() => {
       this.ejecutarPreviewFormula();
     });
-
+  
     this.rentaForm.valueChanges.subscribe(() => this.actualizarResumenRentaModal());
   }
 
@@ -164,6 +201,7 @@ export class ListaRentasActualesComponent implements OnInit {
     const rentaTotal = this.extraerTotalContrato(contrato);
     if (rentaTotal != null) {
       this.rentaForm.get('total')?.setValue(rentaTotal, { emitEvent: false });
+      this.actualizarDisplayMonedaRenta();
       this.actualizarResumenRentaModal();
       this.cdr.markForCheck();
     }
@@ -193,6 +231,50 @@ export class ListaRentasActualesComponent implements OnInit {
 
   private parseNumeroFormulario(value: unknown): number {
     return parseValorNumerico(value);
+  }
+
+  private actualizarDisplayMonedaRenta(): void {
+    const total = Number(this.rentaForm?.get('total')?.value);
+    const montoFinal = Number(this.rentaForm?.get('montoFinal')?.value);
+    this.rentaTotalDisplay = Number.isFinite(total) ? formatMonedaDesdeNumero(total) : '';
+    this.rentaMontoFinalDisplay = Number.isFinite(montoFinal) ? formatMonedaDesdeNumero(montoFinal) : '';
+  }
+
+  onRentaMonedaInput(ev: Event, campo: 'total' | 'montoFinal'): void {
+    const input = ev.target as HTMLInputElement;
+    const raw = extraerMontoRawDesdeDisplay(input.value);
+    const n = parseMonedaNumerico(raw);
+    this.rentaForm.get(campo)?.setValue(Number.isFinite(n) ? n : null);
+    const visible = formatMonedaAlEscribir(input.value);
+    input.value = visible;
+    if (campo === 'total') {
+      this.rentaTotalDisplay = visible;
+    } else {
+      this.rentaMontoFinalDisplay = visible;
+    }
+  }
+
+  onRentaMonedaBlur(ev: Event, campo: 'total' | 'montoFinal'): void {
+    const input = ev.target as HTMLInputElement;
+    const ctrl = this.rentaForm.get(campo);
+    const n = this.parseNumeroFormulario(ctrl?.value);
+    if (Number.isFinite(n)) {
+      ctrl?.setValue(n);
+      const fmt = formatMonedaDesdeNumero(n);
+      input.value = fmt;
+      if (campo === 'total') {
+        this.rentaTotalDisplay = fmt;
+      } else {
+        this.rentaMontoFinalDisplay = fmt;
+      }
+      return;
+    }
+    input.value = '';
+    if (campo === 'total') {
+      this.rentaTotalDisplay = '';
+    } else {
+      this.rentaMontoFinalDisplay = '';
+    }
   }
 
   /** Renta total del contrato (con IVA); subtotal solo como respaldo. */
@@ -269,6 +351,7 @@ export class ListaRentasActualesComponent implements OnInit {
         take(1),
         finalize(() => {
           this.evaluandoFormula = false;
+          this.scrollRentaModalSiCorresponde();
           this.cdr.markForCheck();
         }),
       )
@@ -285,10 +368,40 @@ export class ListaRentasActualesComponent implements OnInit {
           this.rentaForm.get('factorVariable')?.setValue(aplicado.factorVariable, { emitEvent: false });
           this.rentaForm.get('ocupoFormula')?.setValue(1, { emitEvent: false });
 
+          this.actualizarDisplayMonedaRenta();
           this.actualizarResumenRentaModal();
+          this.scrollRentaModalSiCorresponde();
           this.cdr.markForCheck();
         },
       });
+  }
+
+  private cancelarScrollRentaModalProgramado(): void {
+    if (this.rentaModalScrollTimer != null) {
+      clearTimeout(this.rentaModalScrollTimer);
+      this.rentaModalScrollTimer = null;
+    }
+  }
+
+  private scrollRentaModalSiCorresponde(): void {
+    if (
+      !this.rentaModalPermitirAutoScroll ||
+      this.rentaModalModo !== 'alta' ||
+      !this.mostrarModalRenta ||
+      !this.resumenRentaModal.listo
+    ) {
+      return;
+    }
+    this.cancelarScrollRentaModalProgramado();
+    this.rentaModalScrollTimer = setTimeout(() => {
+      this.rentaModalScrollTimer = null;
+      if (!this.mostrarModalRenta || !this.resumenRentaModal.listo) return;
+      requestAnimationFrame(() => {
+        const el = this.rentaModalBody?.nativeElement;
+        if (!el) return;
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      });
+    }, 500);
   }
 
   // ─── Resumen vacío ───────────────────────────────────────────────────────────
@@ -300,6 +413,7 @@ export class ListaRentasActualesComponent implements OnInit {
       pagoAFavorDe: '',
       arrendatario: '',
       campos: [],
+      filaMontos: null,
     };
   }
 
@@ -308,7 +422,17 @@ export class ListaRentasActualesComponent implements OnInit {
   }
 
   private actualizarResumenRentaModal(): void {
+    const prevListo = this.resumenRentaModal.listo;
     this.resumenRentaModal = this.construirResumenRentaModal();
+    if (
+      this.rentaModalPermitirAutoScroll &&
+      this.rentaModalModo === 'alta' &&
+      this.mostrarModalRenta &&
+      !prevListo &&
+      this.resumenRentaModal.listo
+    ) {
+      this.scrollRentaModalSiCorresponde();
+    }
     this.cdr.markForCheck();
   }
 
@@ -445,6 +569,9 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaForm.get('idContrato')?.enable();
     this.contratosOpciones    = [];
     this.resumenRentaModal    = this.resumenRentaModalVacio();
+    this.rentaTotalDisplay    = '';
+    this.rentaMontoFinalDisplay = '';
+    this.rentaModalPermitirAutoScroll = true;
     this.mostrarModalRenta    = true;
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
@@ -457,12 +584,15 @@ export class ListaRentasActualesComponent implements OnInit {
     if (!Number.isFinite(id) || id <= 0) return;
     this.rentaModalModo    = 'edicion';
     this.rentaEditId       = Math.floor(id);
+    this.rentaModalPermitirAutoScroll = false;
     this.mostrarModalRenta = true;
     this.rentaModalCargando = true;
     this.rentaForm.reset();
     this.rentaForm.get('idArrendatario')?.disable();
     this.rentaForm.get('idContrato')?.disable();
     this.resumenRentaModal = this.resumenRentaModalVacio();
+    this.rentaTotalDisplay = '';
+    this.rentaMontoFinalDisplay = '';
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
 
@@ -489,6 +619,7 @@ export class ListaRentasActualesComponent implements OnInit {
             factorVariable: Number(det['factorVariable']  ?? det['factor_variable']),
             ocupoFormula:   ocupo,
           });
+          this.actualizarDisplayMonedaRenta();
           this.actualizarResumenRentaModal();
         },
         error: (err) => {
@@ -507,46 +638,48 @@ export class ListaRentasActualesComponent implements OnInit {
   }
 
   cerrarModalRenta(): void {
+    this.cancelarScrollRentaModalProgramado();
     this.mostrarModalRenta = false;
     this.rentaEditId       = null;
+    this.rentaModalPermitirAutoScroll = false;
     this.resumenRentaModal = this.resumenRentaModalVacio();
+    this.rentaTotalDisplay = '';
+    this.rentaMontoFinalDisplay = '';
     this.cdr.markForCheck();
   }
 
   // ─── Resumen modal ───────────────────────────────────────────────────────────
 
   private construirResumenRentaModal(): RentaModalResumenVm {
-    const vacio = 'Selecciona arrendatario y contrato para ver a quién corresponde este pago.';
     const raw   = this.rentaForm?.getRawValue() ?? {};
     const idArr = Number(raw['idArrendatario']);
     const idCon = Number(raw['idContrato']);
-
+    const idFor = Number(raw['idFormula']);
+  
     if (!Number.isFinite(idArr) || idArr <= 0) {
-      return { listo: false, mensajeVacio: vacio, pagoAFavorDe: '', arrendatario: '', campos: [] };
+      return { listo: false, mensajeVacio: 'Selecciona un arrendatario para comenzar.', pagoAFavorDe: '', arrendatario: '', campos: [], filaMontos: null };
     }
-
-    const item              = this.arrendatariosCatalogo.find(
+  
+    if (!Number.isFinite(idCon) || idCon <= 0) {
+      return { listo: false, mensajeVacio: 'Selecciona un contrato para continuar.', pagoAFavorDe: '', arrendatario: '', campos: [], filaMontos: null };
+    }
+  
+    if (!Number.isFinite(idFor) || idFor <= 0) {
+      return { listo: false, mensajeVacio: 'Selecciona una fórmula para ver el resumen del pago.', pagoAFavorDe: '', arrendatario: '', campos: [], filaMontos: null };
+    }
+  
+    const item = this.arrendatariosCatalogo.find(
       (r) => resolverIdArrendatarioApi(r) === Math.floor(idArr),
     );
     const arrendatarioNombre = item
       ? nombreArrendatarioDesdeApi(item)
       : this.etiquetaOpcion(this.arrendatariosOpciones, idArr);
-
-    if (!Number.isFinite(idCon) || idCon <= 0) {
-      return {
-        listo: false,
-        mensajeVacio: 'Selecciona un contrato para completar el resumen del pago.',
-        pagoAFavorDe: item ? this.nombreArrendadorPago(item, null) : '',
-        arrendatario: arrendatarioNombre || '—',
-        campos: [],
-      };
-    }
-
+  
     const contrato     = this.buscarContratoEnCatalogo(Math.floor(idArr), Math.floor(idCon));
     const pagoAFavorDe = item
       ? this.nombreArrendadorPago(item, contrato)
       : 'Arrendador no disponible';
-
+  
     const campos: RentaModalResumenCampo[] = [
       {
         etiqueta: 'Contrato',
@@ -555,7 +688,7 @@ export class ListaRentasActualesComponent implements OnInit {
           this.etiquetaOpcion(this.contratosOpciones, idCon),
       },
     ];
-
+  
     const inm =
       contrato?.['inmueble'] != null && typeof contrato['inmueble'] === 'object'
         ? (contrato['inmueble'] as Record<string, unknown>)
@@ -568,48 +701,54 @@ export class ListaRentasActualesComponent implements OnInit {
         valor: direccion ? `${inmueble} · ${direccion}` : inmueble,
       });
     }
-
+  
     const fi = formatearFecha(String(contrato?.['fechaInicioContrato'] ?? contrato?.['fechaInicio'] ?? ''));
     const ff = formatearFecha(String(contrato?.['fechaTerminoContrato'] ?? contrato?.['fechaFin']   ?? ''));
     if (fi && ff && fi !== '—' && ff !== '—') {
       campos.push({ etiqueta: 'Vigencia', valor: `${fi} – ${ff}` });
     }
-
+  
     const moneda = String(contrato?.['moneda'] ?? 'MXN').trim() || 'MXN';
     this.agregarMontosContratoAlResumen(campos, contrato, moneda);
-
-    const idFormula = Number(raw['idFormula']);
-    if (Number.isFinite(idFormula) && idFormula > 0) {
-      const formula = this.etiquetaOpcion(this.formulasOpciones, idFormula);
-      if (formula) campos.push({ etiqueta: 'Fórmula', valor: formula });
-    }
-
-    const total         = String(raw['total']         ?? '').trim();
-    const montoFinal    = String(raw['montoFinal']    ?? '').trim();
+  
+    const formula = this.etiquetaOpcion(this.formulasOpciones, idFor);
+    if (formula) campos.push({ etiqueta: 'Fórmula', valor: formula });
+  
+    const total          = String(raw['total']          ?? '').trim();
+    const montoFinal     = String(raw['montoFinal']     ?? '').trim();
     const factorVariable = String(raw['factorVariable'] ?? '').trim();
 
+    const filaMontos: RentaModalResumenFilaMontos = {};
     if (total) {
-      campos.push({
+      filaMontos.total = {
         etiqueta: 'Total a registrar',
         valor: this.esNumeroCaptura(total) ? formatearMoneda(total) : total,
         dinero: true,
-      });
-    }
-    if (montoFinal) {
-      campos.push({
-        etiqueta: 'Monto final',
-        valor: this.esNumeroCaptura(montoFinal) ? formatearMoneda(montoFinal) : montoFinal,
-        dinero: true,
-      });
+      };
     }
     if (factorVariable) {
-      campos.push({ etiqueta: 'Factor variable', valor: factorVariable });
+      filaMontos.factor = { etiqueta: 'Factor INPC', valor: factorVariable };
     }
-
+    if (montoFinal) {
+      filaMontos.montoACobrar = {
+        etiqueta: 'Monto A Cobrar',
+        valor: this.esNumeroCaptura(montoFinal) ? formatearMoneda(montoFinal) : montoFinal,
+        dinero: true,
+        destacado: true,
+      };
+    }
+  
     const ocupo = Number(raw['ocupoFormula']) === 1 ? 'Sí' : 'No';
     campos.push({ etiqueta: 'Usó fórmula', valor: ocupo });
-
-    return { listo: true, mensajeVacio: '', pagoAFavorDe, arrendatario: arrendatarioNombre || '—', campos };
+  
+    return {
+      listo: true,
+      mensajeVacio: '',
+      pagoAFavorDe,
+      arrendatario: arrendatarioNombre || '—',
+      campos,
+      filaMontos: Object.keys(filaMontos).length ? filaMontos : null,
+    };
   }
 
   private agregarMontosContratoAlResumen(

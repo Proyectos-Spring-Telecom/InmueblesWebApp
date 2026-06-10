@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import {
   contractDimAnim,
   contractModalAnim,
+  rentaHintMsgAnim,
   rentaResumenRevealAnim,
   routeAnimation,
 } from 'src/app/pipe/module-open.animation';
@@ -61,7 +62,7 @@ interface MantenimientoModalResumenVm {
   templateUrl: './lista-mantenimiento-actual.component.html',
   styleUrl: './lista-mantenimiento-actual.component.scss',
   standalone: false,
-  animations: [routeAnimation, contractDimAnim, contractModalAnim, rentaResumenRevealAnim],
+  animations: [routeAnimation, contractDimAnim, contractModalAnim, rentaResumenRevealAnim, rentaHintMsgAnim],
 })
 export class ListaMantenimientoActualComponent implements OnInit {
   embebidoEnHub = false;
