@@ -159,13 +159,13 @@ export const navItems: NavItem[] = [
             permission: Permiso.CONSULTA_CLIENTE,
           },
           {
-            displayName: 'Pagos de Renta',
-            route: '/arrendatarios/pagos-renta',
+            displayName: 'Pagos del mes',
+            route: '/arrendatarios/pagos-mes',
             permission: Permiso.CONSULTA_CLIENTE,
           },
           {
-            displayName: 'Pagos de Mantenimiento',
-            route: '/arrendatarios/pagos-mantenimiento',
+            displayName: 'Histórico de pagos',
+            route: '/arrendatarios/pagos-historico',
             permission: Permiso.CONSULTA_CLIENTE,
           },
         ],

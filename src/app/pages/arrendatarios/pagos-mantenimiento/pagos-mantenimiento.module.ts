@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
 import { DxButtonModule, DxDataGridModule } from 'devextreme-angular';
 import { MaterialModule } from 'src/app/material.module';
+import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.module';
 import { PagosMantenimientoComponent } from './pagos-mantenimiento.component';
 import { ListaHistoricoPagosMantenimientoComponent } from './lista-historico-pagos-mantenimiento/lista-historico-pagos-mantenimiento.component';
 import { ListaMantenimientoActualComponent } from './lista-mantenimiento-actual/lista-mantenimiento-actual.component';
@@ -24,6 +25,7 @@ import { ListaMantenimientoActualComponent } from './lista-mantenimiento-actual/
     MaterialModule,
     DxDataGridModule,
     DxButtonModule,
+    OperacionPagosHubModule,
   ],
   exports: [
     PagosMantenimientoComponent,

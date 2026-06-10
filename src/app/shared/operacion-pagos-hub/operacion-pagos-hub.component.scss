@@ -3,51 +3,155 @@
   min-width: 0;
 }
 
-.operacion-pagos-hub__segmentos {
+.operacion-pagos-hub__layout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 16px 20px 14px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+  align-items: stretch;
+  min-height: 420px;
+}
+
+.operacion-pagos-hub__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 14px;
+  border-right: 1px solid rgba(148, 163, 184, 0.18);
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.02),
-    rgba(15, 23, 42, 0.15)
+    rgba(15, 23, 42, 0.28),
+    rgba(15, 23, 42, 0.12)
   );
 }
 
-.operacion-pagos-hub__segmento {
+.operacion-pagos-hub__rail-item {
+  position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 14px 14px 14px 22px;
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(15, 23, 42, 0.35);
-  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(15, 23, 42, 0.18);
+  color: #64748b;
   text-decoration: none;
+  overflow: hidden;
+  opacity: 0.9;
+  cursor: pointer;
   transition:
     border-color 0.2s ease,
     background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease,
     transform 0.18s ease;
 
-  &:hover {
-    border-color: color-mix(in srgb, var(--mat-sys-secondary) 55%, transparent);
-    background: color-mix(in srgb, var(--mat-sys-secondary) 8%, rgba(15, 23, 42, 0.45));
-    transform: translateY(-1px);
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: transparent;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, width 0.2s ease;
+  }
+
+  &:not(.operacion-pagos-hub__rail-item--activo):hover {
+    opacity: 0.9 !important;
+    border-color: color-mix(in srgb, var(--mat-sys-secondary) 58%, transparent) !important;
+    background: color-mix(in srgb, var(--mat-sys-secondary) 18%, rgba(15, 23, 42, 0.5)) !important;
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--mat-sys-secondary) 22%, transparent),
+      0 10px 24px rgba(0, 0, 0, 0.24) !important;
+    transform: translateX(3px) !important;
+
+    &::before {
+      background: color-mix(in srgb, var(--mat-sys-secondary) 58%, transparent) !important;
+      box-shadow: 0 0 12px color-mix(in srgb, var(--mat-sys-secondary) 38%, transparent) !important;
+    }
+
+    .operacion-pagos-hub__rail-titulo {
+      color: #e2e8f0 !important;
+    }
+
+    .operacion-pagos-hub__rail-desc {
+      color: #94a3b8 !important;
+    }
+
+    .operacion-pagos-hub__rail-icono {
+      background: color-mix(in srgb, var(--mat-sys-secondary) 24%, transparent) !important;
+      border-color: color-mix(in srgb, var(--mat-sys-secondary) 38%, transparent) !important;
+    }
+
+    .operacion-pagos-hub__rail-flecha {
+      opacity: 0.85 !important;
+      transform: translateX(0) !important;
+      color: #e2e8f0 !important;
+    }
   }
 }
 
-.operacion-pagos-hub__segmento--activo {
-  border-color: color-mix(in srgb, var(--mat-sys-secondary) 70%, white 8%);
-  background: color-mix(in srgb, var(--mat-sys-secondary) 16%, rgba(15, 23, 42, 0.5));
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+.operacion-pagos-hub__rail-item--activo {
+  opacity: 1 !important;
+  cursor: default;
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--mat-sys-secondary) 92%, white 14%) !important;
+  background:
+    linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--mat-sys-secondary) 58%, rgba(15, 23, 42, 0.82)),
+      color-mix(in srgb, var(--mat-sys-secondary) 30%, rgba(15, 23, 42, 0.65)) 55%,
+      color-mix(in srgb, var(--mat-sys-secondary) 18%, rgba(15, 23, 42, 0.55))
+    ) !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mat-sys-secondary) 52%, white 8%),
+    0 0 0 2px color-mix(in srgb, var(--mat-sys-secondary) 28%, transparent),
+    0 0 42px color-mix(in srgb, var(--mat-sys-secondary) 42%, transparent),
+    0 0 18px color-mix(in srgb, var(--mat-sys-secondary) 28%, transparent),
+    0 18px 42px rgba(0, 0, 0, 0.38) !important;
+  transform: translateX(6px) !important;
+
+  &::before {
+    width: 7px;
+    background: color-mix(in srgb, var(--mat-sys-secondary) 98%, white 18%) !important;
+    box-shadow:
+      0 0 24px color-mix(in srgb, var(--mat-sys-secondary) 78%, transparent),
+      0 0 10px color-mix(in srgb, var(--mat-sys-secondary) 95%, white 14%) !important;
+  }
+
+  .operacion-pagos-hub__rail-titulo {
+    color: #ffffff;
+    letter-spacing: 0.06em;
+    font-size: 1rem;
+  }
+
+  .operacion-pagos-hub__rail-desc {
+    color: #f1f5f9;
+  }
+
+  .operacion-pagos-hub__rail-icono {
+    background: color-mix(in srgb, var(--mat-sys-secondary) 50%, transparent);
+    border-color: color-mix(in srgb, var(--mat-sys-secondary) 72%, white 14%);
+    box-shadow:
+      0 0 22px color-mix(in srgb, var(--mat-sys-secondary) 42%, transparent),
+      0 10px 20px rgba(0, 0, 0, 0.32);
+
+    mat-icon {
+      color: #ffffff;
+    }
+  }
+
+  .operacion-pagos-hub__rail-flecha {
+    opacity: 1;
+    transform: translateX(3px);
+    color: #ffffff;
+  }
 }
 
-.operacion-pagos-hub__segmento-icono {
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
+.operacion-pagos-hub__rail-icono {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -62,26 +166,49 @@
   }
 }
 
-.operacion-pagos-hub__segmento-texto {
+.operacion-pagos-hub__rail-texto {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
+  flex: 1;
 }
 
-.operacion-pagos-hub__segmento-titulo {
-  font-size: 0.95rem;
+.operacion-pagos-hub__rail-titulo {
+  font-size: 0.94rem;
   letter-spacing: 0.02em;
-  color: #f8fafc;
+  color: #cbd5e1;
+  transition: color 0.2s ease, letter-spacing 0.2s ease;
 }
 
-.operacion-pagos-hub__segmento-desc {
-  font-size: 0.78rem;
+.operacion-pagos-hub__rail-desc {
+  font-size: 0.76rem;
   line-height: 1.35;
   color: #94a3b8;
 }
 
+.operacion-pagos-hub__rail-flecha {
+  flex-shrink: 0;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #cbd5e1;
+  opacity: 0.45;
+  transform: translateX(-4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
 .operacion-pagos-hub__cuerpo {
   padding: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.operacion-pagos-hub__contenido-vista {
+  width: 100%;
+  min-width: 0;
+  will-change: transform, opacity;
 }
 
 .operacion-pagos-hub__cuerpo ::ng-deep .operacion-hub-vista .surface {
@@ -90,8 +217,55 @@
   box-shadow: none;
 }
 
-@media (max-width: 720px) {
-  .operacion-pagos-hub__segmentos {
+@media (max-width: 860px) {
+  .operacion-pagos-hub__layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .operacion-pagos-hub__rail {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    padding: 14px 16px;
+    scrollbar-width: thin;
+  }
+
+  .operacion-pagos-hub__rail-item {
+    min-width: min(280px, 78vw);
+    flex-shrink: 0;
+
+    &::before {
+      top: auto;
+      left: 12px;
+      right: 12px;
+      bottom: 0;
+      width: auto;
+      height: 4px;
+      border-radius: 4px 4px 0 0;
+    }
+
+    &:not(.operacion-pagos-hub__rail-item--activo):hover {
+      transform: translateY(-2px) !important;
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--mat-sys-secondary) 22%, transparent),
+        0 10px 24px rgba(0, 0, 0, 0.26) !important;
+    }
+
+    &.operacion-pagos-hub__rail-item--activo::before {
+      height: 7px;
+      box-shadow:
+        0 0 20px color-mix(in srgb, var(--mat-sys-secondary) 72%, transparent),
+        0 0 8px color-mix(in srgb, var(--mat-sys-secondary) 90%, white 12%) !important;
+    }
+  }
+
+  .operacion-pagos-hub__rail-desc {
+    display: none;
+  }
+
+  .operacion-pagos-hub__rail-flecha {
+    display: none;
   }
 }

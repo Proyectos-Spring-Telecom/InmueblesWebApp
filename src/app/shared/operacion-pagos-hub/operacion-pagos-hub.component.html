@@ -17,28 +17,35 @@
     </nav>
   </header>
 
-  <nav class="operacion-pagos-hub__segmentos" role="tablist" [attr.aria-label]="config.titulo">
-    @for (vista of config.vistas; track vista.segmento) {
-      <a
-        class="operacion-pagos-hub__segmento"
-        [class.operacion-pagos-hub__segmento--activo]="segmentoActivo === vista.segmento"
-        [routerLink]="rutaSegmento(vista.segmento)"
-        routerLinkActive="operacion-pagos-hub__segmento--activo"
-        role="tab"
-        [attr.aria-selected]="segmentoActivo === vista.segmento"
-      >
-        <span class="operacion-pagos-hub__segmento-icono" aria-hidden="true">
-          <mat-icon>{{ vista.icono }}</mat-icon>
-        </span>
-        <span class="operacion-pagos-hub__segmento-texto">
-          <span class="operacion-pagos-hub__segmento-titulo">{{ vista.titulo }}</span>
-          <span class="operacion-pagos-hub__segmento-desc">{{ vista.descripcion }}</span>
-        </span>
-      </a>
-    }
-  </nav>
+  <div class="operacion-pagos-hub__layout">
+    <nav
+      class="operacion-pagos-hub__rail"
+      role="navigation"
+      [attr.aria-label]="'Secciones de ' + config.titulo"
+    >
+      @for (vista of config.vistas; track vista.segmento) {
+        <a
+          class="operacion-pagos-hub__rail-item"
+          [class.operacion-pagos-hub__rail-item--activo]="segmentoActivo === vista.segmento"
+          [routerLink]="rutaSegmento(vista.segmento)"
+          [attr.aria-current]="segmentoActivo === vista.segmento ? 'page' : null"
+        >
+          <span class="operacion-pagos-hub__rail-icono" aria-hidden="true">
+            <mat-icon>{{ vista.icono }}</mat-icon>
+          </span>
+          <span class="operacion-pagos-hub__rail-texto">
+            <span class="operacion-pagos-hub__rail-titulo">{{ vista.titulo }}</span>
+            <span class="operacion-pagos-hub__rail-desc">{{ vista.descripcion }}</span>
+          </span>
+          <mat-icon class="operacion-pagos-hub__rail-flecha" aria-hidden="true">chevron_right</mat-icon>
+        </a>
+      }
+    </nav>
 
-  <div class="operacion-pagos-hub__cuerpo">
-    <router-outlet></router-outlet>
+    <main class="operacion-pagos-hub__cuerpo">
+      <div class="operacion-pagos-hub__contenido-vista" [@operacionHubContenidoAnim]="segmentoActivo">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
   </div>
 </div>

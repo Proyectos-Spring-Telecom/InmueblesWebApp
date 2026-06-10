@@ -83,6 +83,38 @@ export let routeAnimation = trigger('routeAnimation', [
   ]),
 ]);
 
+/** Cambio de vista interna en hub de pagos (renta ↔ mantenimiento). */
+export const operacionHubContenidoAnim = trigger('operacionHubContenidoAnim', [
+  transition('renta => mantenimiento', [
+    style({ opacity: 0, transform: 'translateX(24px)' }),
+    animate(
+      '360ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateX(0)' }),
+    ),
+  ]),
+  transition('mantenimiento => renta', [
+    style({ opacity: 0, transform: 'translateX(-24px)' }),
+    animate(
+      '360ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateX(0)' }),
+    ),
+  ]),
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(14px)' }),
+    animate(
+      '340ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateY(0)' }),
+    ),
+  ]),
+  transition('* => *', [
+    style({ opacity: 0, transform: 'translateX(16px)' }),
+    animate(
+      '320ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateX(0)' }),
+    ),
+  ]),
+]);
+
 
 export let fadeOutAnimation = trigger('fadeOutAnimation', [
   state('*', style({

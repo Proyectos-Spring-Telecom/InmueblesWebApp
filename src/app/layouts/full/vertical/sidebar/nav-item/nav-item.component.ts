@@ -238,9 +238,9 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
     if (url === route) return true;
     if (!url.startsWith(route + '/')) return false;
 
-    // Lista de arrendatarios: no marcar al estar en hubs de pagos
+    // Lista de arrendatarios: solo activa en la ruta exacta del listado
     if (route === '/arrendatarios') {
-      return !/^\/arrendatarios\/pagos-(renta|mantenimiento)(\/|$)/.test(url);
+      return url === '/arrendatarios';
     }
 
     return true;
