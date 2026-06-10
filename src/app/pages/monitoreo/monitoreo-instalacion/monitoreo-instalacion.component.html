@@ -69,32 +69,113 @@
 
     <section
       *ngIf="vistaEntidad === 'local'"
-      class="mono-local-contrato-strip mt-2 mt-lg-3"
-      aria-labelledby="mono-local-contrato-strip-title"
+      class="mono-local-contratos mt-2 mt-lg-3"
+      aria-labelledby="mono-local-contratos-title"
     >
-      <div class="mono-local-contrato-strip__shell">
-        <aside class="mono-local-contrato-strip__cta w-100" aria-label="Acciones del contrato">
-          <div class="mono-local-contrato-strip__cta-glow" aria-hidden="true"></div>
-          <div class="mono-local-contrato-strip__cta-head">
-            <mat-icon class="mono-local-contrato-strip__cta-icon" aria-hidden="true">gavel</mat-icon>
-            <p class="mono-local-contrato-strip__cta-kicker m-0">Detalle operativo</p>
+      <header class="mono-local-contratos__header">
+        <div class="mono-local-contratos__header-text flex-grow-1">
+          <span class="mono-local-contratos__eyebrow" id="mono-local-contratos-title">Contratos del local</span>
+          <h2 class="mono-local-contratos__title m-0">
+            <ng-container [ngSwitch]="contratosLocalResumen.length">
+              <span *ngSwitchCase="0">Sin contratos vinculados</span>
+              <span *ngSwitchCase="1">1 contrato registrado</span>
+              <span *ngSwitchDefault>{{ contratosLocalResumen.length }} contratos registrados</span>
+            </ng-container>
+          </h2>
+          <p class="mono-local-contratos__lede m-0" *ngIf="detalleLocalNombre">
+            Historial y condiciones vigentes para <strong>{{ detalleLocalNombre }}</strong>
+            <ng-container *ngIf="detalleArrendatario"> · {{ detalleArrendatario }}</ng-container>.
+          </p>
+        </div>
+        <span class="mono-local-contratos__pill" aria-hidden="true">
+          <mat-icon>gavel</mat-icon>
+          <span>{{ contratosLocalResumen.length }}</span>
+        </span>
+      </header>
+
+      <div class="text-center py-4 text-muted" *ngIf="cargandoArrendatarioDetalle">
+        Cargando contratos…
+      </div>
+
+      <div
+        class="mono-local-contratos__empty"
+        *ngIf="!cargandoArrendatarioDetalle && contratosLocalResumen.length === 0"
+        role="status"
+      >
+        <mat-icon aria-hidden="true">description</mat-icon>
+        <p class="m-0">No hay contratos vinculados a este local en el arrendatario.</p>
+      </div>
+
+      <div
+        class="mono-local-contratos__grid"
+        *ngIf="!cargandoArrendatarioDetalle && contratosLocalResumen.length > 0"
+        role="list"
+      >
+        <article
+          class="mono-local-contrato-card"
+          role="listitem"
+          *ngFor="let ctr of contratosLocalResumen; trackBy: trackByContratoLocal"
+          [class.mono-local-contrato-card--active]="ctr.id === contratoActivoId"
+          [attr.aria-current]="ctr.id === contratoActivoId ? 'true' : null"
+        >
+          <div class="mono-local-contrato-card__head">
+            <div class="mono-local-contrato-card__titles">
+              <h3 class="mono-local-contrato-card__name m-0">{{ ctr.titulo }}</h3>
+              <span class="mono-local-contrato-card__vinculo">{{ etiquetaVinculoContrato(ctr) }}</span>
+            </div>
+            <span class="mono-local-contrato-card__badge" *ngIf="ctr.esVigente">Más reciente</span>
           </div>
-          <div class="mono-local-contrato-strip__cta-copy">
-            <!-- <span class="mono-local-contrato-strip__eyebrow" id="mono-local-contrato-strip-title">Documentación del local</span> -->
-            <h2 class="mono-local-contrato-strip__title">Información del contrato</h2>
-            <p class="mono-local-contrato-strip__lede m-0">
-              Consulta datos clave del contrato y abre el detalle completo cuando lo necesites.
-            </p>
+
+          <dl class="mono-local-contrato-card__meta">
+            <div class="mono-local-contrato-card__meta-row">
+              <dt>Registro</dt>
+              <dd>{{ ctr.fechaRegistroTexto }}</dd>
+            </div>
+            <div class="mono-local-contrato-card__meta-row">
+              <dt>Vigencia</dt>
+              <dd>{{ ctr.vigenciaTexto }}</dd>
+            </div>
+            <div class="mono-local-contrato-card__meta-row" *ngIf="ctr.rentaContratoFmt">
+              <dt>Renta</dt>
+              <dd class="mono-local-contrato-card__money">
+                {{ ctr.rentaContratoFmt }} <span>{{ ctr.moneda }}</span>
+              </dd>
+            </div>
+            <div class="mono-local-contrato-card__meta-row" *ngIf="ctr.mantenimientoContratoFmt">
+              <dt>Mantenimiento</dt>
+              <dd class="mono-local-contrato-card__money mono-local-contrato-card__money--mant">
+                {{ ctr.mantenimientoContratoFmt }} <span>{{ ctr.moneda }}</span>
+              </dd>
+            </div>
+            <div class="mono-local-contrato-card__meta-row">
+              <dt>Superficie rentada</dt>
+              <dd>{{ ctr.metrosRentadosTexto }}</dd>
+            </div>
+          </dl>
+
+          <p class="mono-local-contrato-card__obs m-0" *ngIf="ctr.observacionesCorta">
+            {{ ctr.observacionesCorta }}
+          </p>
+
+          <div class="mono-local-contrato-card__actions">
+            <!-- <button
+              type="button"
+              class="btn btn-sm mono-local-contrato-card__btn mono-local-contrato-card__btn--ghost"
+              [class.is-selected]="ctr.id === contratoActivoId"
+              (click)="seleccionarContratoLocal(ctr.id)"
+            >
+              {{ ctr.id === contratoActivoId ? 'Seleccionado' : 'Seleccionar' }}
+            </button> -->
+            <button
+              type="button"
+              class="btn btn-sm mono-local-contrato-card__btn mono-local-contrato-card__btn--primary"
+              (click)="abrirModalContratoLocal(ctr.id)"
+            >
+              <mat-icon aria-hidden="true">visibility</mat-icon>
+              <span>Ver detalle</span>
+            </button>
           </div>
-          <button
-            type="button"
-            class="btn mono-grid-action-btn mono-local-contrato-strip__cta-btn"
-            (click)="abrirModalContratoLocal()"
-          >
-            <mat-icon aria-hidden="true">visibility</mat-icon>
-            <span>Ver contrato completo</span>
-          </button>
-        </aside>
+        </article>
       </div>
     </section>
 
@@ -551,6 +632,27 @@
         aria-labelledby="contract-docs-title"
         (click)="$event.stopPropagation()"
       >
+
+      <div class="row docs-modal__header" *ngIf="!contratoModalLoading && !contratoModalError">
+        <div class="col-10 col-md-11">
+          <span class="docs-modal__eyebrow">Contrato del local</span>
+          <h3 class="docs-modal__title" id="contract-docs-title">Detalle del contrato</h3>
+          <p class="docs-modal__subtitle m-0" *ngIf="contratoModal?.idContrato as idContratoModal">
+            Contrato #{{ idContratoModal }}
+            <ng-container *ngIf="detalleLocalNombre"> · {{ detalleLocalNombre }}</ng-container>
+          </p>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button
+            type="button"
+            class="docs-modal__close"
+            (click)="cerrarModalContratoLocal()"
+            aria-label="Cerrar detalle del contrato"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
 
       <div class="row docs-modal__body">
         <div class="col-12 contract-docs__scroll">

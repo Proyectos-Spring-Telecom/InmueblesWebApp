@@ -28,6 +28,34 @@ export const contractDimAnim = trigger('contractDimAnim', [
   ]),
 ]);
 
+/** Resumen de pago en modal Registrar renta. */
+export const rentaResumenRevealAnim = trigger('rentaResumenReveal', [
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(12px) scale(0.985)' }),
+    animate(
+      '340ms 60ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateY(0) scale(1)' }),
+    ),
+  ]),
+  transition(':leave', [
+    animate(
+      '200ms cubic-bezier(0.4, 0, 1, 1)',
+      style({ opacity: 0, transform: 'translateY(8px) scale(0.99)' }),
+    ),
+  ]),
+]);
+
+/** Cambio de texto en aviso del resumen (hint). */
+export const rentaHintMsgAnim = trigger('rentaHintMsgAnim', [
+  transition('* => *', [
+    style({ opacity: 0, transform: 'translateY(10px) scale(0.96)' }),
+    animate(
+      '220ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateY(0) scale(1)' }),
+    ),
+  ]),
+]);
+
 export const contractModalAnim = trigger('contractModalAnim', [
   transition(':enter', [
     style({ opacity: 0, transform: 'translateY(12px) scale(0.98)' }),
@@ -52,6 +80,38 @@ export let routeAnimation = trigger('routeAnimation', [
     animate('400ms 150ms ease-in-out', style({
       opacity: 1,
     }))
+  ]),
+]);
+
+/** Cambio de vista interna en hub de pagos (renta ↔ mantenimiento). */
+export const operacionHubContenidoAnim = trigger('operacionHubContenidoAnim', [
+  transition('renta => mantenimiento', [
+    style({ opacity: 0, transform: 'translateX(24px)' }),
+    animate(
+      '360ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateX(0)' }),
+    ),
+  ]),
+  transition('mantenimiento => renta', [
+    style({ opacity: 0, transform: 'translateX(-24px)' }),
+    animate(
+      '360ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateX(0)' }),
+    ),
+  ]),
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(14px)' }),
+    animate(
+      '340ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateY(0)' }),
+    ),
+  ]),
+  transition('* => *', [
+    style({ opacity: 0, transform: 'translateX(16px)' }),
+    animate(
+      '320ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({ opacity: 1, transform: 'translateX(0)' }),
+    ),
   ]),
 ]);
 

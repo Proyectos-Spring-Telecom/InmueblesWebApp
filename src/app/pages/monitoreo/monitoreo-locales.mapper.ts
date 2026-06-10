@@ -52,12 +52,72 @@ export function urlFachadaDesdeArchivos(
 }
 
 function idLocalDesdeContrato(c: Record<string, unknown>): number | null {
+  const ids = idLocalesDesdeContrato(c);
+  return ids.length > 0 ? ids[0] : null;
+}
+
+/** IDs de local ligados al contrato (`idLocal`, `local`, `idLocales`, `contratoLocales`). */
+function idLocalesDesdeContrato(c: Record<string, unknown>): number[] {
+  const ids = new Set<number>();
+
+  const rawIdLocales = c['idLocales'];
+  if (Array.isArray(rawIdLocales)) {
+    for (const x of rawIdLocales) {
+      const n = Number(x);
+      if (Number.isFinite(n) && n > 0) ids.add(Math.trunc(n));
+    }
+  }
+
+  const direct = Number(c['idLocal']);
+  if (Number.isFinite(direct) && direct > 0) ids.add(Math.trunc(direct));
+
   const localObj =
     c['local'] != null && typeof c['local'] === 'object' && !Array.isArray(c['local'])
       ? (c['local'] as Record<string, unknown>)
       : null;
-  const idLocal = Number(c['idLocal'] ?? localObj?.['id']);
-  return Number.isFinite(idLocal) && idLocal > 0 ? idLocal : null;
+  const idDesdeLocal = Number(localObj?.['id'] ?? localObj?.['idLocal']);
+  if (Number.isFinite(idDesdeLocal) && idDesdeLocal > 0) ids.add(Math.trunc(idDesdeLocal));
+
+  const filas = c['contratoLocales'];
+  if (Array.isArray(filas)) {
+    for (const raw of filas) {
+      if (raw == null || typeof raw !== 'object') continue;
+      const fila = raw as Record<string, unknown>;
+      const idFila = Number(fila['idLocal']);
+      if (Number.isFinite(idFila) && idFila > 0) {
+        ids.add(Math.trunc(idFila));
+        continue;
+      }
+      const loc = fila['local'];
+      if (loc != null && typeof loc === 'object' && !Array.isArray(loc)) {
+        const idLoc = Number((loc as Record<string, unknown>)['id']);
+        if (Number.isFinite(idLoc) && idLoc > 0) ids.add(Math.trunc(idLoc));
+      }
+    }
+  }
+
+  return [...ids];
+}
+
+function importeComparable(v: unknown): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+function importesContratoCoincidenConMensualidad(
+  contrato: Record<string, unknown>,
+  mensualidad: number,
+): boolean {
+  const tolerancia = 0.01;
+  const candidatos = [
+    contrato['rentaTotal'],
+    contrato['subTotalRenta'],
+    contrato['montoAdelanto'],
+  ];
+  return candidatos.some((raw) => {
+    const n = importeComparable(raw);
+    return n != null && Math.abs(n - mensualidad) <= tolerancia;
+  });
 }
 
 function fhContrato(c: Record<string, unknown>): string {
@@ -81,25 +141,69 @@ function buildOcupacionPorIdLocal(
       const idInm = Number(c['idInmueble']);
       if (!Number.isFinite(idInm) || idInm !== idInmueble) continue;
 
-      const idLocal = idLocalDesdeContrato(c);
-      if (idLocal == null) continue;
+      for (const idLocal of idLocalesDesdeContrato(c)) {
+        const prev = map.get(idLocal);
+        const prevContrato = prev?.['contrato'] as Record<string, unknown> | undefined;
+        if (prevContrato && fhContrato(c) < fhContrato(prevContrato)) {
+          continue;
+        }
 
-      const prev = map.get(idLocal);
-      const prevContrato = prev?.['contrato'] as Record<string, unknown> | undefined;
-      if (prevContrato && fhContrato(c) < fhContrato(prevContrato)) {
-        continue;
+        map.set(idLocal, {
+          arrendatario: item,
+          contrato: c,
+          nombreArrendatario: String(item['arrendatario'] ?? '').trim(),
+          imagenFachada: urlFachadaDesdeArchivos(item),
+        });
       }
-
-      map.set(idLocal, {
-        arrendatario: item,
-        contrato: c,
-        nombreArrendatario: String(item['arrendatario'] ?? '').trim(),
-        imagenFachada: urlFachadaDesdeArchivos(item),
-      });
     }
   }
 
   return map;
+}
+
+/**
+ * Respaldo cuando el API devuelve `contratoLocales: []` pero el catálogo marca el local
+ * como ocupado (`estatus` 2) y la renta del arrendatario coincide con la mensualidad.
+ */
+function enriquecerOcupacionPorEstatusYRenta(
+  localesCatalogo: Record<string, unknown>[],
+  idsLibres: Set<number>,
+  arrendatarios: Record<string, unknown>[],
+  idInmueble: number,
+  ocupacion: Map<number, Record<string, unknown>>,
+): void {
+  for (const local of localesCatalogo) {
+    const idLocal = Number(local['id']);
+    if (!Number.isFinite(idLocal) || idLocal <= 0) continue;
+    if (idsLibres.has(idLocal) || ocupacion.has(idLocal)) continue;
+
+    const estatus = Number(local['estatus']);
+    if (estatus !== 2) continue;
+
+    const mensualidad = importeComparable(local['mensualidad']);
+    if (mensualidad == null) continue;
+
+    for (const item of arrendatarios) {
+      const rentaArr = importeComparable(item['renta']);
+      const coincideRenta =
+        rentaArr != null && Math.abs(rentaArr - mensualidad) <= 0.01;
+
+      const contrato = contratoVigenteEnInmueble(item, idInmueble);
+      const coincideContrato =
+        contrato != null &&
+        importesContratoCoincidenConMensualidad(contrato, mensualidad);
+
+      if (!coincideRenta && !coincideContrato) continue;
+
+      ocupacion.set(idLocal, {
+        arrendatario: item,
+        contrato: contrato ?? ({} as Record<string, unknown>),
+        nombreArrendatario: String(item['arrendatario'] ?? '').trim(),
+        imagenFachada: urlFachadaDesdeArchivos(item),
+      });
+      break;
+    }
+  }
 }
 
 function contratoVigenteEnInmueble(
@@ -363,6 +467,13 @@ export function buildMonitoreoLocalesZonasListaUnica(
       .filter((id) => Number.isFinite(id) && id > 0),
   );
   const ocupacion = buildOcupacionPorIdLocal(arrendatarios, idInmueble);
+  enriquecerOcupacionPorEstatusYRenta(
+    localesCatalogo,
+    idsLibres,
+    arrendatarios,
+    idInmueble,
+    ocupacion,
+  );
   const filas: Record<string, unknown>[] = [];
   const idsEnLista = new Set<number>();
 

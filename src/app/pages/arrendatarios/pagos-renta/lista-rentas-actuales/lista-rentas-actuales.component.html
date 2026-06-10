@@ -1,0 +1,423 @@
+@if (embebidoEnHub) {
+<div class="operacion-hub-vista inm-lista">
+  <ng-container *ngTemplateOutlet="contenidoRentas"></ng-container>
+</div>
+} @else {
+<div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
+  <header class="perm-head" role="region" aria-label="Sección: Rentas actuales">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>payments</mat-icon>
+    </div>
+    <div class="perm-head__text">
+      <span class="eyebrow">Catálogos</span>
+      <h2>Rentas actuales</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Operación</span>
+      <span class="sep">/</span>
+      <span class="crumb">Arrendatarios</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Rentas actuales</span>
+    </nav>
+  </header>
+  <ng-container *ngTemplateOutlet="contenidoRentas"></ng-container>
+</div>
+}
+
+<ng-template #contenidoRentas>
+  <div class="surface">
+    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
+      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="bg-secondary">
+        <i class="fa fa-plus"></i> Agregar
+      </button>
+      <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
+        <i class="fa fa-eraser"></i> Limpiar
+      </button>
+      <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+        {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
+      </button>
+    </div>
+
+    <div class="mt-3">
+      <dx-data-grid #gridContainer id="gridRentasActual" class="inm-data-grid" [columnHidingEnabled]="true"
+        [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+        [rowAlternationEnabled]="true" [dataSource]="listaRentas" [keyExpr]="'id'" [width]="'100%'"
+        [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'" [pager]="{
+          showPageSizeSelector: true,
+          allowedPageSizes: [20],
+          showInfo: true,
+          visible: true
+        }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar renta..."></dxo-search-panel>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+        <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+        <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+        <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+
+        <dxi-column caption="Acciones" cellTemplate="accionesRentasTpl" alignment="center" [width]="200"
+          [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+        <dxi-column dataField="mesLabel" caption="Periodo" alignment="center" [width]="150"></dxi-column>
+        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="200"></dxi-column>
+        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="140"></dxi-column>
+        <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column>
+        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="130"></dxi-column>
+        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90"></dxi-column>
+        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>
+        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusRentaTpl"
+          [width]="120"></dxi-column>
+        <dxi-column dataField="id" caption="ID" alignment="center" [width]="72" [visible]="false"></dxi-column>
+
+        <div *dxTemplate="let row of 'estatusRentaTpl'">
+          @if (row.data.pagada) {
+          <span class="estatus estatus-activo">{{ row.data.pagadaLabel }}</span>
+          } @else {
+          <span class="estatus estatus-inactivo">{{ row.data.pagadaLabel }}</span>
+          }
+        </div>
+
+        <div *dxTemplate="let row of 'accionesRentasTpl'" class="d-flex gap-3 justify-content-center">
+          <div>
+            <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
+              (click)="abrirModalEdicion(row.data); $event.stopPropagation()">
+              <i class="fa fa-edit"></i>
+            </button>
+          </div>
+          @if (!row.data.pagada) {
+          <div>
+            <button type="button" id="pinButton" class="btnAcciones" title="Marcar como pagada"
+              (click)="marcarRentaPagada(row.data); $event.stopPropagation()">
+              <i class="fa fa-check"></i>
+            </button>
+          </div>
+          }
+        </div>
+      </dx-data-grid>
+    </div>
+  </div>
+</ng-template>
+
+<ng-container *ngIf="mostrarModalRenta">
+  <div class="contract-page-dim" (click)="cerrarModalRenta()" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalRenta()">
+    <div class="docs-modal contract-docs-modal mono-pago-modal" role="dialog" aria-modal="true"
+      aria-labelledby="renta-modal-title" (click)="$event.stopPropagation()">
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <h3 class="docs-modal__title" id="renta-modal-title">
+            {{ rentaModalModo === 'edicion' ? 'Editar renta' : 'Registrar renta' }}
+          </h3>
+          <p class="docs-modal__subtitle">
+            Captura la renta del mes y administra total, fórmula y monto final.
+          </p>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button type="button" class="docs-modal__close" (click)="cerrarModalRenta()"
+            aria-label="Cerrar modal de renta">
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body" #rentaModalBody>
+        <div class="col-12">
+          <div class="perm-form-nc">
+            <form [formGroup]="rentaForm" class="perm-form-body mono-pago-form">
+
+              <!-- ── Fila 1: Arrendatario · Contrato · Fórmula (solo alta) ── -->
+              <ng-container *ngIf="rentaModalModo === 'alta'">
+                <div class="row g-3 mb-3">
+
+                  <!-- Arrendatario -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaArrendatario" class="form-label perm-label">
+                      Arrendatario <span class="text-danger">*</span>
+                    </label>
+                    <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                      <span>Cargando arrendatarios…</span>
+                    </div>
+                    <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">person</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaArrendatario" class="form-select" formControlName="idArrendatario">
+                          <option [ngValue]="null" disabled hidden>
+                            {{ arrendatariosOpciones.length ? 'Seleccione arrendatario' : 'Sin arrendatarios' }}
+                          </option>
+                          <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
+                        </select>
+                        <label for="rentaArrendatario">Seleccione arrendatario</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Contrato -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaContrato" class="form-label perm-label">
+                      Contrato <span class="text-danger">*</span>
+                    </label>
+                    <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                      <span>Cargando contratos…</span>
+                    </div>
+                    <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">description</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaContrato" class="form-select" formControlName="idContrato">
+                          <option [ngValue]="null" disabled hidden>{{ textoPlaceholderContrato() }}</option>
+                          <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
+                        </select>
+                        <label for="rentaContrato">Seleccione contrato</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Fórmula -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaFormulaAlta" class="form-label perm-label">
+                      Fórmula <span class="text-danger">*</span>
+                    </label>
+                    <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                      <span>Cargando fórmulas…</span>
+                    </div>
+                    <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">functions</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaFormulaAlta" class="form-select" formControlName="idFormula">
+                          <option [ngValue]="null" disabled hidden>
+                            {{ formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas' }}
+                          </option>
+                          <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
+                        </select>
+                        <label for="rentaFormulaAlta">Seleccione fórmula</label>
+                      </div>
+                    </div>
+                    <p class="small opacity-75 mt-2 mb-0 d-flex align-items-center gap-1" *ngIf="evaluandoFormula">
+                      <mat-progress-spinner mode="indeterminate" diameter="14"></mat-progress-spinner>
+                      Calculando…
+                    </p>
+                  </div>
+
+                </div>
+              </ng-container>
+
+              <!-- ── Spinner cargando renta (edición) ── -->
+              <div class="row g-3 mb-3" *ngIf="rentaModalCargando">
+                <div class="col-12">
+                  <div class="mono-pago-servicio-loading mb-0">
+                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                    <span>Cargando renta…</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Fila 2: Total · Monto final · Factor variable ── -->
+              <ng-container *ngIf="!rentaModalCargando">
+                <div class="row g-3 mb-3">
+
+                  <!-- Total -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaTotal" class="form-label perm-label">
+                      Total <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">payments</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input id="rentaTotal" type="text" inputmode="decimal" class="form-control"
+                          [value]="rentaTotalDisplay" placeholder=" " autocomplete="off"
+                          (input)="onRentaMonedaInput($event, 'total')"
+                          (blur)="onRentaMonedaBlur($event, 'total')" />
+                        <label for="rentaTotal">Total</label>
+                      </div>
+                    </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;"
+                        aria-hidden="true">auto_fix_high</mat-icon>
+                      Tomado del contrato · puede modificarse
+                    </p>
+                  </div>
+
+                  <!-- Monto final -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaMontoFinal" class="form-label perm-label">
+                      Monto final <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true"
+                          [class.opacity-50]="evaluandoFormula">account_balance_wallet</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input id="rentaMontoFinal" type="text" inputmode="decimal" class="form-control"
+                          [value]="rentaMontoFinalDisplay" placeholder=" " autocomplete="off"
+                          [readonly]="evaluandoFormula"
+                          (input)="onRentaMonedaInput($event, 'montoFinal')"
+                          (blur)="onRentaMonedaBlur($event, 'montoFinal')" />
+                        <label for="rentaMontoFinal">
+                          {{ evaluandoFormula ? 'Calculando…' : 'Monto final' }}
+                        </label>
+                      </div>
+                    </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;"
+                        aria-hidden="true">auto_fix_high</mat-icon>
+                      Calculado por fórmula · puede modificarse
+                    </p>
+                  </div>
+
+                  <!-- Factor variable -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaFactor" class="form-label perm-label">
+                      Factor variable <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">percent</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input id="rentaFactor" type="text" inputmode="decimal" class="form-control"
+                          formControlName="factorVariable" placeholder=" " autocomplete="off" />
+                        <label for="rentaFactor">Factor INPC</label>
+                      </div>
+                    </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;"
+                        aria-hidden="true">auto_fix_high</mat-icon>
+                      Calculado por fórmula · puede modificarse
+                    </p>
+                  </div>
+
+                </div>
+
+                <!-- ── Fila 3: Fórmula (edición) · Usó fórmula ── -->
+                <div class="row g-3 mb-3">
+
+                  <!-- Fórmula solo edición -->
+                  <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'edicion'">
+                    <label for="rentaFormula" class="form-label perm-label">
+                      Fórmula <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">functions</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaFormula" class="form-select" formControlName="idFormula">
+                          <option [ngValue]="null" disabled hidden>Seleccione fórmula</option>
+                          <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
+                        </select>
+                        <label for="rentaFormula">Seleccione fórmula</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Usó fórmula -->
+                  <div class="col-12 col-lg-4">
+                    <label for="rentaOcupoFormula" class="form-label perm-label">Usó fórmula</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">flag</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaOcupoFormula" class="form-select" formControlName="ocupoFormula">
+                          <option [ngValue]="0">No</option>
+                          <option [ngValue]="1">Sí</option>
+                        </select>
+                        <label for="rentaOcupoFormula">Usó fórmula</label>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </ng-container>
+
+              <!-- ── Resumen ── -->
+              <div class="row" *ngIf="!rentaModalCargando && !catalogosModalCargando">
+                <div class="col-12">
+                  <section class="renta-pago-resumen" *ngIf="resumenRentaModal.listo" @rentaResumenReveal
+                    aria-live="polite">
+                    <article class="renta-pago-resumen__hero">
+                      <div class="renta-pago-resumen__hero-row">
+                        <div>
+                          <span class="renta-pago-resumen__kicker">Pago a favor de</span>
+                          <h4 class="renta-pago-resumen__hero-title">{{ resumenRentaModal.pagoAFavorDe }}</h4>
+                        </div>
+                        <span class="renta-pago-resumen__chip">Renta</span>
+                      </div>
+                      <p class="renta-pago-resumen__hero-meta">
+                        Arrendatario: <span>{{ resumenRentaModal.arrendatario }}</span>
+                      </p>
+                    </article>
+                    <article class="renta-pago-resumen__card" *ngIf="resumenRentaModal.campos.length || resumenRentaModal.filaMontos">
+                      <h5 class="renta-pago-resumen__card-title">Detalle del registro</h5>
+                      <div class="renta-pago-resumen__grid" *ngIf="resumenRentaModal.campos.length">
+                        <div class="renta-pago-resumen__field"
+                          *ngFor="let campo of resumenRentaModal.campos; trackBy: trackByResumenCampo">
+                          <span>{{ campo.etiqueta }}</span>
+                          <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                        </div>
+                      </div>
+                      <div class="row g-2 renta-pago-resumen__montos-row" *ngIf="resumenRentaModal.filaMontos as fm">
+                        <div class="col-3" *ngIf="fm.total as campo">
+                          <div class="renta-pago-resumen__field renta-pago-resumen__field--compact">
+                            <span>{{ campo.etiqueta }}</span>
+                            <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                          </div>
+                        </div>
+                        <div class="col-3" *ngIf="fm.factor as campo">
+                          <div class="renta-pago-resumen__field renta-pago-resumen__field--compact">
+                            <span>{{ campo.etiqueta }}</span>
+                            <p>{{ campo.valor }}</p>
+                          </div>
+                        </div>
+                        <div class="col-6" *ngIf="fm.montoACobrar as campo">
+                          <div class="renta-pago-resumen__field renta-pago-resumen__field--destacado">
+                            <span>{{ campo.etiqueta }}</span>
+                            <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  </section>
+                  <div class="renta-pago-resumen-hint" *ngIf="!resumenRentaModal.listo" @rentaResumenReveal
+                    role="status" aria-live="polite">
+                    <mat-icon aria-hidden="true">info_outline</mat-icon>
+                    <span [@rentaHintMsgAnim]="resumenRentaModal.mensajeVacio">{{ resumenRentaModal.mensajeVacio }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Botones ── -->
+              <div class="row mt-4">
+                <div class="col-12">
+                  <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+                    <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalRenta()">
+                      Cancelar
+                    </button>
+                    <button type="button" class="button-success mono-pago-form-btn" (click)="guardarRentaDesdeModal()"
+                      [disabled]="rentaGuardando || rentaModalCargando || evaluandoFormula">
+                      {{ rentaGuardando ? 'Enviando…' : (rentaModalModo === 'edicion' ? 'Guardar' : 'Registrar') }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

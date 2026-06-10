@@ -5,7 +5,10 @@ import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { IncrementosService } from 'src/app/services/moduleService/incrementos.service';
-import { mapInpcApiItemToRow } from '../inpc-historico.data';
+import {
+  InpcBanxicoGridRow,
+  mapBanxicoDatoToRow,
+} from '../inpc-historico.data';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -31,8 +34,12 @@ export class ListaIncrementosComponent implements OnInit {
   dataGrid: DxDataGridComponent;
   public autoExpandAllGroups: boolean = true;
   isGrouped: boolean = false;
-  public paginaActualData: any[] = [];
+  public paginaActualData: InpcBanxicoGridRow[] = [];
   public filtroActivo: string = '';
+
+  fechaInicioFiltro = '';
+  fechaFinFiltro = '';
+  private datosBanxicoCache: InpcBanxicoGridRow[] = [];
 
   constructor(
     private router: Router,
@@ -43,6 +50,9 @@ export class ListaIncrementosComponent implements OnInit {
   }
 
   ngOnInit() {
+    const rango = this.rangoFechasPorDefecto();
+    this.fechaInicioFiltro = rango.inicio;
+    this.fechaFinFiltro = rango.fin;
     this.setupDataSource();
   }
 
@@ -50,100 +60,53 @@ export class ListaIncrementosComponent implements OnInit {
     this.router.navigateByUrl('/incrementos/agregar-incremento');
   }
 
-  actualizarIncremento(idIncremento: number) {
-    this.router.navigateByUrl('/incrementos/editar-incremento/' + idIncremento);
-  }
-
-  activar(rowData: any) {
-    Swal.fire({
-      title: '¡Activar!',
-      html: `¿Confirma dar de alta el registro INPC: <strong>${rowData.mes} ${rowData.anio}</strong>?`,
-      icon: 'warning',
-      background: '#141a21',
-      color: '#ffffff',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Confirmar',
-      cancelButtonText: 'Cancelar',
-    }).then((result) => {
-      if (!result.isConfirmed) return;
-      this.incrementosService.updateEstatusActivar(rowData.id, 1).subscribe({
-          next: () => {
-            Swal.fire({
-              background: '#141a21',
-              color: '#ffffff',
-              title: '¡Confirmación realizada!',
-              html: `El registro INPC ha sido activado.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
-            this.setupDataSource();
-            this.dataGrid?.instance?.refresh();
-          },
-          error: (error) => {
-            Swal.fire({
-              background: '#141a21',
-              color: '#ffffff',
-              title: '¡Ops!',
-              html: `${error}`,
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
-          },
-        });
-    });
-  }
-
-  desactivar(rowData: any) {
-    Swal.fire({
-      title: '¡Desactivar!',
-      html: `¿Confirma dar de baja el registro INPC: <strong>${rowData.mes} ${rowData.anio}</strong>?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Confirmar',
-      cancelButtonText: 'Cancelar',
-      background: '#141a21',
-      color: '#ffffff',
-    }).then((result) => {
-      if (!result.isConfirmed) return;
-      this.incrementosService.updateEstatusDesactivar(rowData.id, 0).subscribe({
-          next: () => {
-            Swal.fire({
-              title: '¡Confirmación realizada!',
-              html: `El registro INPC ha sido desactivado.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-              background: '#141a21',
-              color: '#ffffff',
-            });
-            this.setupDataSource();
-            this.dataGrid?.instance?.refresh();
-          },
-          error: (error) => {
-            Swal.fire({
-              title: '¡Ops!',
-              html: `${error}`,
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-              background: '#141a21',
-              color: '#ffffff',
-            });
-          },
-        });
-    });
-  }
-
   onPageIndexChanged(e: any) {
     const pageIndex = e.component.pageIndex();
     this.paginaActual = pageIndex + 1;
     e.component.refresh();
+  }
+
+  private rangoFechasPorDefecto(): { inicio: string; fin: string } {
+    const hoy = new Date();
+    return {
+      inicio: '2026-01-01',
+      fin: this.toIsoFecha(hoy),
+    };
+  }
+
+  private toIsoFecha(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  aplicarFiltros(): void {
+    if (!this.fechaInicioFiltro?.trim() || !this.fechaFinFiltro?.trim()) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'warning',
+        title: 'Fechas obligatorias',
+        text: 'Indica fecha inicial y fecha final.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    if (this.fechaInicioFiltro > this.fechaFinFiltro) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'warning',
+        title: 'Rango inválido',
+        text: 'La fecha inicial no puede ser posterior a la final.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    this.datosBanxicoCache = [];
+    this.dataGrid?.instance?.pageIndex(0);
+    this.dataGrid?.instance?.refresh();
   }
 
   setupDataSource() {
@@ -155,27 +118,31 @@ export class ListaIncrementosComponent implements OnInit {
       load: async (loadOptions: any) => {
         const skipValue = Number(loadOptions?.skip) || 0;
         const takeValue = Number(loadOptions?.take) || defaultPageSize;
-        const page = Math.floor(skipValue / takeValue) + 1;
 
         try {
-          const resp: any = await lastValueFrom(
-            this.incrementosService.obtenerIncrementosData(page, takeValue),
-          );
+          if (!this.datosBanxicoCache.length) {
+            const resp = await lastValueFrom(
+              this.incrementosService.obtenerBanxicoDatos(
+                this.fechaInicioFiltro,
+                this.fechaFinFiltro,
+              ),
+            );
+            const rowsRaw: any[] = Array.isArray(resp?.datos) ? resp.datos : [];
+            this.datosBanxicoCache = rowsRaw
+              .map((item) => mapBanxicoDatoToRow(item))
+              .filter((row): row is InpcBanxicoGridRow => row != null);
+          }
+
           this.loading = false;
-
-          const rowsRaw: any[] = Array.isArray(resp?.data) ? resp.data : [];
-          const meta = resp?.paginated || {};
-
-          const totalRegistros =
-            toNum(meta.total) ?? toNum(resp?.total) ?? rowsRaw.length;
-          const paginaActual = toNum(meta.page) ?? toNum(resp?.page) ?? page;
-          const totalPaginasCalc =
-            toNum(meta.lastPage) ??
-            toNum(resp?.pages) ??
-            Math.max(1, Math.ceil(totalRegistros / takeValue));
-
-          const dataTransformada = rowsRaw.map((item: any) =>
-            mapInpcApiItemToRow(item),
+          const totalRegistros = this.datosBanxicoCache.length;
+          const paginaActual = Math.floor(skipValue / takeValue) + 1;
+          const totalPaginasCalc = Math.max(
+            1,
+            Math.ceil(totalRegistros / takeValue),
+          );
+          const dataTransformada = this.datosBanxicoCache.slice(
+            skipValue,
+            skipValue + takeValue,
           );
 
           this.totalRegistros = totalRegistros;
@@ -189,15 +156,11 @@ export class ListaIncrementosComponent implements OnInit {
           };
         } catch (_error) {
           this.loading = false;
+          this.datosBanxicoCache = [];
           return { data: [], totalCount: 0 };
         }
       },
     });
-
-    function toNum(v: any): number | null {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
-    }
   }
 
   onGridOptionChanged(e: any) {
@@ -240,8 +203,10 @@ export class ListaIncrementosComponent implements OnInit {
       );
       const extras = [
         normalizar(row?.id),
-        normalizar(row?.valorInpc),
-        normalizar(String(row?.valorInpcFmt ?? '').replace(/,/g, '')),
+        normalizar(row?.indice),
+        normalizar(row?.porcAnual),
+        normalizar(row?.porcAcumAnual),
+        normalizar(String(row?.indiceFmt ?? '').replace(/,/g, '')),
       ];
 
       return hitEnColumnas || extras.some((s) => s.includes(texto));
@@ -250,8 +215,13 @@ export class ListaIncrementosComponent implements OnInit {
   }
 
   limpiarCampos() {
+    const rango = this.rangoFechasPorDefecto();
+    this.fechaInicioFiltro = rango.inicio;
+    this.fechaFinFiltro = rango.fin;
+    this.datosBanxicoCache = [];
     this.dataGrid.instance.clearGrouping();
     this.isGrouped = false;
+    this.dataGrid.instance.pageIndex(0);
     this.dataGrid.instance.refresh();
   }
 

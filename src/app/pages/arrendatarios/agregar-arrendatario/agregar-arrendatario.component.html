@@ -75,36 +75,6 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-4"><label for="fechaInicio" class="form-label perm-label">Inicio</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="fechaInicio" type="date" class="form-control"
-                  formControlName="fechaInicio" /><label for="fechaInicio">Fecha De Inicio</label></div>
-            </div>
-          </div>
-          <div class="col-12 col-md-4"><label for="fechaFin" class="form-label perm-label">Fin</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="fechaFin" type="date" class="form-control"
-                  formControlName="fechaFin" /><label for="fechaFin">Fecha De Fin</label></div>
-            </div>
-          </div>
-          <div class="col-12 col-md-4"><label for="renta" class="form-label perm-label">Renta</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="renta" type="number" class="form-control"
-                  formControlName="renta" placeholder="Monto de renta" /><label for="renta">Monto de renta</label>
-              </div>
-            </div>
-          </div>
-          <div class="col-12 col-md-4"><label for="tiempoRenta" class="form-label perm-label">Tiempo de renta</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="tiempoRenta" type="text" class="form-control"
-                  formControlName="tiempoRenta" placeholder="Ej.: 12 (meses)" /><label for="tiempoRenta">Ej.: 12
-                  (meses)</label></div>
-            </div>
-          </div>
 
           <div class="col-12 col-md-4"><label for="representanteLegal" class="form-label perm-label">Nombre
               Representante Legal</label>
@@ -143,221 +113,304 @@
                   <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
                     <h6 class="arrend-fa-section-title m-0">Datos del Contrato</h6>
                   </div>
+                  <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
+                    (click)="agregarContratoArrendatario()"><mat-icon>add</mat-icon> Agregar Contrato</button>
                 </div>
               </div>
             </div>
-            <div class="row g-4 mt-2">
-              <div class="col-12 col-md-4">
-                <label for="idInmueble" class="form-label perm-label">Inmueble</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>home</mat-icon></span>
-                  <div class="form-floating flex-grow-1 perm-select-floating">
-                    <select id="idInmueble" class="form-select" formControlName="idInmueble"
-                      aria-label="Inmueble">
-                      <option [ngValue]="null" disabled></option>
-                      <option *ngFor="let inm of listaInmuebles" [ngValue]="inm.id">
-                        {{ inm.etiqueta }}
-                      </option>
-                    </select>
-                    <label for="idInmueble">Selecciona inmueble</label>
+            <div class="arrend-fa-section__body" formArrayName="contratos">
+              <dx-accordion class="arrend-accordion-contratos" width="100%" [collapsible]="true" [multiple]="true"
+                [animationDuration]="260" [selectedIndex]="$any(contratoAccordionIndicesAbiertos)"
+                [focusStateEnabled]="false" (selectedIndexChange)="onContratoAccordionIndicesChange($event)"
+                itemTitleTemplate="contratoAccordionTitle">
+                <div *dxTemplate="let data of 'contratoAccordionTitle'" class="arrend-accordion-title-bar">
+                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                  <button
+                    *ngIf="puedeEliminarContratoEnFormulario()"
+                    type="button"
+                    class="btn btn-sm bg-error arrend-contrato-eliminar-btn"
+                    aria-label="Eliminar contrato"
+                    (mousedown)="$event.stopPropagation()"
+                    (click)="eliminarContratoDesdeTituloAccordion($event, data)"
+                  >
+                    Eliminar Contrato
+                  </button>
+                </div>
+                <dxi-item *ngFor="let contratoCtrl of contratosFormArray.controls; let i = index"
+                  [title]="tituloContratoAccordion(i)">
+                  <div class="arrend-accordion-item-body arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
+                    <div class="row g-4 arrend-contrato-fila-campos">
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'idInmuebleContrato' + i">Inmueble</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>home</mat-icon></span>
+                          <div class="form-floating flex-grow-1 perm-select-floating">
+                            <select [id]="'idInmuebleContrato' + i" class="form-select" formControlName="idInmueble"
+                              [attr.title]="placeholderInmuebleContrato()" aria-label="Inmueble">
+                              <option [ngValue]="null" disabled></option>
+                              <option *ngFor="let inm of listaInmuebles" [ngValue]="inm.id">
+                                {{ inm.etiqueta }}
+                              </option>
+                            </select>
+                            <label [attr.for]="'idInmuebleContrato' + i">Inmueble</label>
+                          </div>
+                        </div>
+                        <p *ngIf="mostrarAvisoSinInmueblesArrendador()"
+                          class="small mt-2 mb-0 text-warning arrend-contrato-aviso" role="status">
+                          Este arrendador no tiene inmuebles registrados.
+                        </p>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label">Local(es)</label>
+                        <div class="input-group input-group-lg perm-ig arrend-locales-picker"
+                          (click)="$event.stopPropagation()">
+                          <span class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
+                          <div class="arrend-locales-picker__body"
+                            [class.arrend-locales-picker__body--open]="localesDropdownAbierto(i)">
+                            <div class="arrend-locales-picker__field"
+                              [class.is-disabled]="localesContratoDeshabilitado(i)" role="button" tabindex="0"
+                              aria-haspopup="listbox" [attr.aria-disabled]="localesContratoDeshabilitado(i)"
+                              [attr.aria-expanded]="localesDropdownAbierto(i)"
+                              (click)="toggleLocalesDropdown(i, $event)"
+                              (keydown.enter)="toggleLocalesDropdown(i, $event)"
+                              (keydown.space)="toggleLocalesDropdown(i, $event); $event.preventDefault()">
+                              @if (idLocalesContrato(i).length > 0 && inmuebleContratoSeleccionado(i)) {
+                              <div class="arrend-locales-picker__chips">
+                                @for (idLoc of idLocalesContrato(i); track idLoc) {
+                                <span class="arrend-locales-picker__chip">
+                                  <span>{{ nombreLocalContrato(i, idLoc) }}</span>
+                                  <button type="button" class="arrend-locales-picker__chip-btn"
+                                    [disabled]="localesContratoDeshabilitado(i)" aria-label="Quitar local"
+                                    (click)="quitarLocalContrato(i, idLoc, $event)">
+                                    <mat-icon>close</mat-icon>
+                                  </button>
+                                </span>
+                                }
+                              </div>
+                              } @else {
+                              <span class="arrend-locales-picker__placeholder">{{ placeholderLocalesContrato(i)
+                                }}</span>
+                              }
+                              <mat-icon class="arrend-locales-picker__chevron">expand_more</mat-icon>
+                            </div>
+                            @if (localesDropdownAbierto(i) && !localesContratoDeshabilitado(i)) {
+                            <ul class="arrend-locales-picker__menu" role="listbox" aria-multiselectable="true">
+                              @for (loc of localesLibresPorContrato[i]; track loc.id) {
+                              <li role="presentation">
+                                <button type="button" class="arrend-locales-picker__option"
+                                  [class.is-selected]="localContratoEstaSeleccionado(i, loc.id)"
+                                  (click)="toggleLocalContrato(i, loc.id, $event)">
+                                  <mat-icon>{{ localContratoEstaSeleccionado(i, loc.id) ? 'check_box' :
+                                    'check_box_outline_blank' }}</mat-icon>
+                                  <span>{{ loc.etiqueta }}</span>
+                                </button>
+                              </li>
+                              }
+                            </ul>
+                            }
+                          </div>
+                        </div>
+                        <p *ngIf="mostrarAvisoLocalesLibresVaciosContrato(i)"
+                          class="small mt-2 mb-0 text-warning arrend-contrato-aviso" role="status">
+                          Este inmueble no tiene locales disponibles.
+                        </p>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'fechaInicioContrato' + i">Fecha de
+                          Inicio</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'fechaInicioContrato' + i" type="date"
+                              class="form-control" formControlName="fechaInicioContrato" /><label
+                              [attr.for]="'fechaInicioContrato' + i">Inicio Contrato</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'fechaTerminoContrato' + i">Fecha de
+                          Término</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'fechaTerminoContrato' + i" type="date"
+                              class="form-control" formControlName="fechaTerminoContrato" /><label
+                              [attr.for]="'fechaTerminoContrato' + i">Término Contrato</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'tipoMoneda' + i">Tipo De Moneda</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'tipoMoneda' + i" type="text"
+                              class="form-control" formControlName="tipoMoneda" placeholder="Tipo de moneda" /><label
+                              [attr.for]="'tipoMoneda' + i">Moneda</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'metrosRentados' + i">Metros Rentados</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>straighten</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'metrosRentados' + i" type="number"
+                              class="form-control" formControlName="metrosRentados"
+                              placeholder="Metros rentados" /><label [attr.for]="'metrosRentados' + i">Metros
+                              Rentados</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'costoPorM2' + i">Costo Por M²</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>attach_money</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'costoPorM2' + i" type="number"
+                              class="form-control" formControlName="costoPorM2" placeholder="Costo por m²" /><label
+                              [attr.for]="'costoPorM2' + i">Costo Por M²</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'pctMantenimiento' + i">% Mantenimiento</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>construction</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'pctMantenimiento' + i" type="number"
+                              class="form-control" formControlName="pctMantenimiento"
+                              placeholder="% mantenimiento" /><label [attr.for]="'pctMantenimiento' + i">%
+                              Mantenimiento</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'mesesDeposito' + i">Meses Depósito</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>calendar_month</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'mesesDeposito' + i" type="number"
+                              class="form-control" formControlName="mesesDeposito" placeholder="Meses depósito" /><label
+                              [attr.for]="'mesesDeposito' + i">Meses Depósito</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'montoDeposito' + i">Monto Depósito</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>price_check</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'montoDeposito' + i" type="number"
+                              class="form-control" formControlName="montoDeposito" placeholder="Monto depósito" /><label
+                              [attr.for]="'montoDeposito' + i">Monto Depósito</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'mesesAdelanto' + i">Meses Adelanto</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'mesesAdelanto' + i" type="number"
+                              class="form-control" formControlName="mesesAdelanto" placeholder="Meses adelanto" /><label
+                              [attr.for]="'mesesAdelanto' + i">Meses Adelanto</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'montoAdelanto' + i">Monto Adelanto</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>request_quote</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'montoAdelanto' + i" type="number"
+                              class="form-control" formControlName="montoAdelanto" placeholder="Monto adelanto" /><label
+                              [attr.for]="'montoAdelanto' + i">Monto Adelanto</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'anosForzososArrendador' + i">Años Forzosos
+                          Arrendador</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'anosForzososArrendador' + i"
+                              type="number" class="form-control" formControlName="anosForzososArrendador"
+                              placeholder="Años forzosos arrendador" /><label
+                              [attr.for]="'anosForzososArrendador' + i">Años
+                              Forzosos Arrendador</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'anosForzososArrendatario' + i">Años Forzosos
+                          Arrendatario</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>manage_accounts</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'anosForzososArrendatario' + i"
+                              type="number" class="form-control" formControlName="anosForzososArrendatario"
+                              placeholder="Años forzosos arrendatario" /><label
+                              [attr.for]="'anosForzososArrendatario' + i">Años Forzosos Arrendatario</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'subtotalRenta' + i">Subtotal Renta</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'subtotalRenta' + i" type="number"
+                              class="form-control" formControlName="subtotalRenta" placeholder="Subtotal renta" /><label
+                              [attr.for]="'subtotalRenta' + i">Subtotal Renta</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'ivaRenta' + i">Iva Renta</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>calculate</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'ivaRenta' + i" type="number"
+                              class="form-control" formControlName="ivaRenta" placeholder="IVA renta" /><label
+                              [attr.for]="'ivaRenta' + i">Iva Renta</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'rentaTotal' + i">Renta Total</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>account_balance_wallet</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'rentaTotal' + i" type="number"
+                              class="form-control" formControlName="rentaTotal" placeholder="Renta total" /><label
+                              [attr.for]="'rentaTotal' + i">Renta Total</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'subtotalMantenimiento' + i">Subtotal
+                          Mantenimiento</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'subtotalMantenimiento' + i" type="number"
+                              class="form-control" formControlName="subtotalMantenimiento"
+                              placeholder="Subtotal mantenimiento" /><label
+                              [attr.for]="'subtotalMantenimiento' + i">Subtotal
+                              Mantenimiento</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'ivaMantenimiento' + i">Iva
+                          Mantenimiento</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>functions</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'ivaMantenimiento' + i" type="number"
+                              class="form-control" formControlName="ivaMantenimiento"
+                              placeholder="IVA mantenimiento" /><label [attr.for]="'ivaMantenimiento' + i">Iva
+                              Mantenimiento</label></div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4 col-xl-3">
+                        <label class="form-label perm-label" [attr.for]="'mantenimientoTotal' + i">Mantenimiento
+                          Total</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>summarize</mat-icon></span>
+                          <div class="form-floating flex-grow-1"><input [id]="'mantenimientoTotal' + i" type="number"
+                              class="form-control" formControlName="mantenimientoTotal"
+                              placeholder="Mantenimiento total" /><label
+                              [attr.for]="'mantenimientoTotal' + i">Mantenimiento
+                              Total</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4 col-xl-3">
+                        <label class="form-label perm-label" [attr.for]="'observaciones' + i">Observaciones</label>
+                        <div class="input-group input-group-lg perm-ig"><span
+                            class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span>
+                          <div class="form-floating flex-grow-1">
+                            <input [id]="'observaciones' + i" type="text" class="form-control"
+                              formControlName="observaciones" placeholder="Observaciones del contrato" />
+                            <label [attr.for]="'observaciones' + i">Observaciones Del Contrato</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="idLocal" class="form-label perm-label">Local</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
-                  <div class="form-floating flex-grow-1 perm-select-floating">
-                    <select id="idLocal" class="form-select" formControlName="idLocal"
-                      aria-label="Local">
-                      <option [ngValue]="null" disabled></option>
-                      <option *ngFor="let loc of listaLocalesLibres" [ngValue]="loc.id">
-                        {{ loc.etiqueta }}
-                      </option>
-                    </select>
-                    <label for="idLocal">{{ etiquetaFloatingLocal }}</label>
-                  </div>
-                </div>
-                <p *ngIf="mostrarAvisoLocalesLibresVacios" class="small mt-2 mb-0 text-warning" style="font-size: 12px;" role="status">
-                  No hay locales disponibles.
-                </p>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="fechaInicioContrato" class="form-label perm-label">Fecha de Inicio</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="fechaInicioContrato" type="date"
-                      class="form-control" formControlName="fechaInicioContrato" /><label
-                      for="fechaInicioContrato">Inicio Contrato</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="fechaTerminoContrato" class="form-label perm-label">Fecha de Término</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="fechaTerminoContrato" type="date"
-                      class="form-control" formControlName="fechaTerminoContrato" /><label
-                      for="fechaTerminoContrato">Término Contrato</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="tipoMoneda" class="form-label perm-label">Tipo De Moneda</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="tipoMoneda" type="text" class="form-control"
-                      formControlName="tipoMoneda" placeholder="Tipo de moneda" /><label for="tipoMoneda">Moneda</label>
-                  </div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="metrosRentados" class="form-label perm-label">Metros Rentados</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>straighten</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="metrosRentados" type="number" class="form-control"
-                      formControlName="metrosRentados" placeholder="Metros rentados" /><label
-                      for="metrosRentados">Metros Rentados</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="costoPorM2" class="form-label perm-label">Costo Por M²</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>attach_money</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="costoPorM2" type="number" class="form-control"
-                      formControlName="costoPorM2" placeholder="Costo por m²" /><label for="costoPorM2">Costo Por
-                      M²</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="pctMantenimiento" class="form-label perm-label">% Mantenimiento</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>construction</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="pctMantenimiento" type="number" class="form-control"
-                      formControlName="pctMantenimiento" placeholder="% mantenimiento" /><label for="pctMantenimiento">%
-                      Mantenimiento</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="mesesDeposito" class="form-label perm-label">Meses Depósito</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>calendar_month</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="mesesDeposito" type="number" class="form-control"
-                      formControlName="mesesDeposito" placeholder="Meses depósito" /><label for="mesesDeposito">Meses
-                      Depósito</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="montoDeposito" class="form-label perm-label">Monto Depósito</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>price_check</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="montoDeposito" type="number" class="form-control"
-                      formControlName="montoDeposito" placeholder="Monto depósito" /><label for="montoDeposito">Monto
-                      Depósito</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="mesesAdelanto" class="form-label perm-label">Meses Adelanto</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>schedule</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="mesesAdelanto" type="number" class="form-control"
-                      formControlName="mesesAdelanto" placeholder="Meses adelanto" /><label for="mesesAdelanto">Meses
-                      Adelanto</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="montoAdelanto" class="form-label perm-label">Monto Adelanto</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>request_quote</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="montoAdelanto" type="number" class="form-control"
-                      formControlName="montoAdelanto" placeholder="Monto adelanto" /><label for="montoAdelanto">Monto
-                      Adelanto</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="anosForzososArrendador" class="form-label perm-label">Años Forzosos Arrendador</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>badge</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="anosForzososArrendador" type="number"
-                      class="form-control" formControlName="anosForzososArrendador"
-                      placeholder="Años forzosos arrendador" /><label for="anosForzososArrendador">Años Forzosos
-                      Arrendador</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="anosForzososArrendatario" class="form-label perm-label">Años Forzosos Arrendatario</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>manage_accounts</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="anosForzososArrendatario" type="number"
-                      class="form-control" formControlName="anosForzososArrendatario"
-                      placeholder="Años forzosos arrendatario" /><label for="anosForzososArrendatario">Años Forzosos
-                      Arrendatario</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="subtotalRenta" class="form-label perm-label">Subtotal Renta</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="subtotalRenta" type="number" class="form-control"
-                      formControlName="subtotalRenta" placeholder="Subtotal renta" /><label for="subtotalRenta">Subtotal
-                      Renta</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="ivaRenta" class="form-label perm-label">Iva Renta</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>calculate</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="ivaRenta" type="number" class="form-control"
-                      formControlName="ivaRenta" placeholder="IVA renta" /><label for="ivaRenta">Iva Renta</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="rentaTotal" class="form-label perm-label">Renta Total</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>account_balance_wallet</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="rentaTotal" type="number" class="form-control"
-                      formControlName="rentaTotal" placeholder="Renta total" /><label for="rentaTotal">Renta
-                      Total</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="subtotalMantenimiento" class="form-label perm-label">Subtotal Mantenimiento</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="subtotalMantenimiento" type="number"
-                      class="form-control" formControlName="subtotalMantenimiento"
-                      placeholder="Subtotal mantenimiento" /><label for="subtotalMantenimiento">Subtotal
-                      Mantenimiento</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <label for="ivaMantenimiento" class="form-label perm-label">Iva Mantenimiento</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>functions</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="ivaMantenimiento" type="number" class="form-control"
-                      formControlName="ivaMantenimiento" placeholder="IVA mantenimiento" /><label
-                      for="ivaMantenimiento">Iva Mantenimiento</label></div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="mantenimientoTotal" class="form-label perm-label">Mantenimiento Total</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>summarize</mat-icon></span>
-                  <div class="form-floating flex-grow-1"><input id="mantenimientoTotal" type="number"
-                      class="form-control" formControlName="mantenimientoTotal"
-                      placeholder="Mantenimiento total" /><label for="mantenimientoTotal">Mantenimiento Total</label>
-                  </div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4 col-xl-3">
-                <label for="observaciones" class="form-label perm-label">Observaciones</label>
-                <div class="input-group input-group-lg perm-ig"><span
-                    class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span>
-                  <div class="form-floating flex-grow-1">
-                    <input id="observaciones" type="text" class="form-control" formControlName="observaciones"
-                      placeholder="Observaciones del contrato" />
-                    <label for="observaciones">Observaciones Del Contrato</label>
-                  </div>
-                </div>
-              </div>
+                </dxi-item>
+              </dx-accordion>
             </div>
           </div>
           <ng-template #btnVerArchivo let-url="url" let-titulo="titulo">
@@ -374,7 +427,8 @@
                 <div class="uploader__cta-actions">
                   <button mat-flat-button color="primary" type="button"
                     (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
-                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
+                  <ng-container
+                    *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
                 </div>
                 <span class="uploader__badge uploader__badge--file">{{ nombreRemoto }}</span>
               </div>
@@ -387,7 +441,8 @@
                   [class.uploader__badge--file]="nombreRemoto || url || arrendatarioForm.get(controlName)?.value?.name">
                   {{ nombreRemoto || arrendatarioForm.get(controlName)?.value?.name || placeholder }}
                 </span>
-                <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
+                <ng-container
+                  *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
               </div>
             </ng-template>
           </ng-template>
@@ -423,18 +478,21 @@
                     <h6 class="arrend-fa-section-title m-0">Servicios</h6>
                   </div>
                   <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
-                    (click)="agregarServicio()"><mat-icon>add</mat-icon> Agregar</button>
+                    (click)="agregarServicio()"><mat-icon>add</mat-icon> Agregar Servicio</button>
                 </div>
               </div>
             </div>
-            <div class="row g-1 mt-0" formArrayName="servicios">
-              <ng-container *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index" [formGroupName]="i">
-                <div class="col-12">
-                  <div class="arrend-fa-item">
-                    <div
-                      class="arrend-fa-item__toolbar d-flex align-items-center flex-wrap gap-2">
-                      <span class="arrend-fa-idx">Servicio {{ i + 1 }}</span>
-                    </div>
+            <div class="arrend-fa-section__body" formArrayName="servicios">
+              <dx-accordion class="arrend-accordion-servicios" width="100%" [collapsible]="true" [multiple]="true"
+                [animationDuration]="260" [selectedIndex]="$any(servicioAccordionIndicesAbiertos)"
+                [focusStateEnabled]="false" (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
+                itemTitleTemplate="servicioAccordionTitle">
+                <div *dxTemplate="let data of 'servicioAccordionTitle'" class="arrend-accordion-title-bar">
+                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                </div>
+                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index"
+                  [title]="tituloServicioAccordion(i)">
+                  <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label">Tipo de servicio</label>
@@ -539,8 +597,8 @@
                       </div>
                     </div>
                   </div>
-                </div>
-              </ng-container>
+                </dxi-item>
+              </dx-accordion>
             </div>
           </div>
 
@@ -801,7 +859,7 @@
                     <div class="d-flex flex-wrap gap-1 justify-content-end">
                       <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
                         (click)="agregarFotoGaleria()" *ngIf="i === galeriaImagenesFormArray.length - 1">
-                        <mat-icon>add</mat-icon> Agregar
+                        <mat-icon>add</mat-icon> Agregar Socio
                       </button>
                     </div>
                   </div>
@@ -921,17 +979,17 @@
                     </div>
                   </div>
                 </div>
-                <div formArrayName="socios" class="row g-1 mt-0">
-                  <ng-container *ngFor="let socioCtrl of sociosFormArray.controls; let i = index" [formGroupName]="i">
-                    <div class="col-12">
-                      <div class="arrend-fa-item">
-                        <div
-                          class="arrend-fa-item__toolbar d-flex align-items-center flex-wrap gap-2">
-                          <div class="d-flex align-items-center flex-wrap gap-2">
-                            <span class="socios-live-name" *ngIf="nombreSocioEnIndice(i)">{{ 'Socio: ' +
-                              nombreSocioEnIndice(i) }}</span>
-                          </div>
-                        </div>
+                <div class="arrend-fa-section__body" formArrayName="socios">
+                  <dx-accordion class="arrend-accordion-socios" width="100%" [collapsible]="true" [multiple]="true"
+                    [animationDuration]="260" [selectedIndex]="$any(socioAccordionIndicesAbiertos)"
+                    [focusStateEnabled]="false" (selectedIndexChange)="onSocioAccordionIndicesChange($event)"
+                    itemTitleTemplate="socioAccordionTitle">
+                    <div *dxTemplate="let data of 'socioAccordionTitle'" class="arrend-accordion-title-bar">
+                      <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                    </div>
+                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index"
+                      [title]="tituloSocioAccordion(i)">
+                      <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                         <div class="row g-3 socios-identidad">
                           <div class="col-12 col-md-6">
                             <label class="form-label perm-label">Nombre</label>
@@ -999,12 +1057,10 @@
                                       (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
                                     <span class="uploader__badge"
                                       [class.uploader__badge--file]="socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name">
-                                      {{ socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name || 'PDF · PNG · JPG'
-                                      }}
+                                      {{ socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name || 'PDF · PNG · JPG' }}
                                     </span>
                                   </div>
-                                  <input #socioCompInput type="file"
-                                    accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
+                                  <input #socioCompInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
                                     (change)="onSocioFileSelected($event, i, 'comprobanteDomicilioArchivo')" />
                                 </div>
                               </div>
@@ -1020,12 +1076,9 @@
                                   <h6 class="uploader__title">Sube archivo</h6>
                                   <p class="uploader__subtitle">Arrastra y suelta o</p>
                                   <div class="uploader__cta">
-                                    <button mat-flat-button color="primary" type="button"
-                                      (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
-                                    <span class="uploader__badge"
-                                      [class.uploader__badge--file]="socioCtrl.get('identificacionOficialArchivo')?.value?.name">
-                                      {{ socioCtrl.get('identificacionOficialArchivo')?.value?.name || 'PDF · PNG · JPG'
-                                      }}
+                                    <button mat-flat-button color="primary" type="button" (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
+                                    <span class="uploader__badge" [class.uploader__badge--file]="socioCtrl.get('identificacionOficialArchivo')?.value?.name">
+                                      {{ socioCtrl.get('identificacionOficialArchivo')?.value?.name || 'PDF · PNG · JPG' }}
                                     </span>
                                   </div>
                                   <input #socioIneInput type="file"
@@ -1037,23 +1090,19 @@
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </ng-container>
+                    </dxi-item>
+                  </dx-accordion>
                 </div>
               </div>
-
-
-
             </div>
           </div>
         </div>
-
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" type="button" [disabled]="loadingSubmit || cargandoDetalle" (click)="submit()"><i
-              class="fa fa-check"></i>&nbsp;&nbsp;{{
-            submitButton }}</button>
-          <button type="button" class="button-danger" (click)="regresar()"><i
-              class="fa fa-times">&nbsp;&nbsp;</i>Cancelar</button>
+          <button class="button-success" role="button" type="button" [disabled]="loadingSubmit || cargandoDetalle" (click)="submit()">
+            <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}</button>
+          <button type="button" class="button-danger" (click)="regresar()">
+            <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+          </button>
         </div>
       </form>
     </section>
@@ -1087,7 +1136,8 @@
           [disabled]="loadingSubmit || cargandoDetalle">
           Cancelar
         </button>
-        <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()" [disabled]="loadingSubmit || cargandoDetalle">
+        <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()"
+          [disabled]="loadingSubmit || cargandoDetalle">
           Guardar
         </button>
       </div>

@@ -1,0 +1,10 @@
+@import '../../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.operacion-hub-vista .surface {
+  padding-top: 1rem;
+}

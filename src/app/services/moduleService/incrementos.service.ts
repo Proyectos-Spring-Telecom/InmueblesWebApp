@@ -10,6 +10,27 @@ export interface IncrementoPayload {
   inpc: number;
 }
 
+/** Elemento de `datos[]` en GET `/inpc/banxico/datos`. */
+export interface InpcBanxicoDatoItem {
+  fecha: string;
+  indice: string;
+  porcAnual: string;
+  porcAcumAnual: string;
+}
+
+/** Respuesta de GET `/inpc/banxico/datos`. */
+export interface InpcBanxicoDatosResponse {
+  idSerie: string;
+  titulo: string;
+  fechaInicial: string;
+  fechaFinal: string;
+  parametros: {
+    decimales: string;
+    incremento: string[];
+  };
+  datos: InpcBanxicoDatoItem[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -23,6 +44,18 @@ export class IncrementosService {
       .set('page', String(page))
       .set('limit', String(limit));
     return this.http.get(`${this.base}/paginated`, { params });
+  }
+
+  obtenerBanxicoDatos(
+    fechaInicial: string,
+    fechaFinal: string,
+  ): Observable<InpcBanxicoDatosResponse> {
+    const params = new HttpParams()
+      .set('fechaInicial', fechaInicial)
+      .set('fechaFinal', fechaFinal);
+    return this.http.get<InpcBanxicoDatosResponse>(`${this.base}/banxico/datos`, {
+      params,
+    });
   }
 
   obtenerIncremento(id: number): Observable<any> {

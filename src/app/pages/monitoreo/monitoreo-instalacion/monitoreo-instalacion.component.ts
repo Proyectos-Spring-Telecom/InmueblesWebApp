@@ -74,8 +74,11 @@ import {
 } from '../monitoreo-pagos.mapper';
 import {
   ArrendatarioApiItem,
+  ArrendatarioContratoApi,
+  buildContratosLocalResumenLista,
   buildExpedienteArrendatarioLista,
   buildServiciosMonitoreoArrendatario,
+  ContratoLocalResumen,
   extraerArrendatarioDetalleApi,
   estatusLocalDesdeArrendatario,
   nombreArrendadorDesdeArrendatarioApi,
@@ -95,6 +98,7 @@ const IVA_CONTRATO = 0.16;
 
 /** Vista de solo lectura del modal local: mismos campos que el formulario de contratos. */
 interface VistaContratoLocalModal {
+  idContrato?: number;
   tipoModificacion: string;
   numeroContrato: string;
   arrendador: string;
@@ -256,6 +260,11 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   contratoModalLoading = false;
   contratoModalError: string | null = null;
   contratoModal: VistaContratoLocalModal | null = null;
+  /** Contratos del local (vista detalle). */
+  contratosLocalResumen: ContratoLocalResumen[] = [];
+  /** Contrato elegido en la lista o al abrir el modal. */
+  contratoActivoId: number | null = null;
+  private contratoModalIdObjetivo: number | null = null;
   private clientesNombreMap: Map<number, string> | null = null;
   private inmueblesNombreMap: Map<number, string> | null = null;
   private vistaQuerySub?: Subscription;
@@ -571,11 +580,9 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       this.idLocalContext,
     );
 
-    const contrato = seleccionarContratoArrendatario(
-      item,
-      this.idContratoQuery,
-      this.idLocalContext,
-    );
+    this.sincronizarContratosLocalDesdeArrendatario(item);
+
+    const contrato = this.contratoArrendatarioActivo(item);
 
     const nombreInm = nombreInmuebleDesdeArrendatarioApi(item, contrato);
     if (nombreInm) {
@@ -1202,13 +1209,85 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       });
   }
 
-  abrirModalContratoLocal(): void {
+  abrirModalContratoLocal(idContrato?: number): void {
+    const id =
+      idContrato != null && Number.isFinite(idContrato) && idContrato > 0
+        ? Math.trunc(idContrato)
+        : this.contratoActivoId ?? this.idContratoQuery;
+    this.contratoModalIdObjetivo = id ?? null;
+    if (id != null) {
+      this.contratoActivoId = id;
+    }
     this.mostrarModalContratoLocal = true;
     this.contratoModalError = null;
     this.contratoModal = null;
     this.contratoModalLoading = true;
     this.cdr.markForCheck();
     this.cargarContenidoModalContrato();
+  }
+
+  seleccionarContratoLocal(idContrato: number): void {
+    if (!Number.isFinite(idContrato) || idContrato <= 0) return;
+    this.contratoActivoId = Math.trunc(idContrato);
+    this.cdr.markForCheck();
+  }
+
+  trackByContratoLocal(_index: number, c: ContratoLocalResumen): number {
+    return c.id;
+  }
+
+  etiquetaVinculoContrato(c: ContratoLocalResumen): string {
+    if (c.vinculoLocal === 'explicito') return 'Local asignado';
+    if (c.vinculoLocal === 'renta') return 'Por renta del local';
+    return 'Mismo inmueble';
+  }
+
+  private contratoArrendatarioActivo(
+    item: ArrendatarioApiItem,
+  ): ArrendatarioContratoApi | null {
+    const idObjetivo =
+      this.contratoActivoId ?? this.idContratoQuery ?? null;
+    return seleccionarContratoArrendatario(
+      item,
+      idObjetivo,
+      this.idLocalContext,
+      this.idInmuebleContext,
+      this.mensualidadLocalDesdeQuery(),
+    );
+  }
+
+  private mensualidadLocalDesdeQuery(): number | null {
+    const raw = this.route.snapshot.queryParamMap.get('mensualidadMxn');
+    if (raw == null || String(raw).trim() === '') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
+
+  private sincronizarContratosLocalDesdeArrendatario(
+    item: ArrendatarioApiItem,
+  ): void {
+    this.contratosLocalResumen = buildContratosLocalResumenLista(
+      item,
+      this.idLocalContext,
+      this.idInmuebleContext,
+      this.mensualidadLocalDesdeQuery(),
+    );
+
+    const ids = this.contratosLocalResumen.map((c) => c.id);
+    const preferido = this.idContratoQuery;
+    if (preferido != null && ids.includes(preferido)) {
+      this.contratoActivoId = preferido;
+    } else if (
+      this.contratoActivoId != null &&
+      ids.includes(this.contratoActivoId)
+    ) {
+      // conservar selección
+    } else if (this.contratosLocalResumen.length) {
+      const vigente = this.contratosLocalResumen.find((c) => c.esVigente);
+      this.contratoActivoId = vigente?.id ?? this.contratosLocalResumen[0].id;
+    } else {
+      this.contratoActivoId = null;
+    }
   }
 
   cerrarModalContratoLocal(): void {
@@ -1220,7 +1299,9 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
 
   private cargarContenidoModalContrato(): void {
     if (this.vistaEntidad === 'local' && this.arrendatarioApi) {
-      const vista = this.buildVistaContratoDesdeArrendatario();
+      const vista = this.buildVistaContratoDesdeArrendatario(
+        this.contratoModalIdObjetivo,
+      );
       this.contratoModalLoading = false;
       if (vista) {
         this.contratoModal = vista;
@@ -1578,13 +1659,22 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     ]);
   }
 
-  private buildVistaContratoDesdeArrendatario(): VistaContratoLocalModal | null {
+  private buildVistaContratoDesdeArrendatario(
+    idContratoObjetivo?: number | null,
+  ): VistaContratoLocalModal | null {
     const item = this.arrendatarioApi;
     if (!item) return null;
+    const idObj =
+      idContratoObjetivo ??
+      this.contratoModalIdObjetivo ??
+      this.contratoActivoId ??
+      this.idContratoQuery;
     const c = seleccionarContratoArrendatario(
       item,
-      this.idContratoQuery,
+      idObj,
       this.idLocalContext,
+      this.idInmuebleContext,
+      this.mensualidadLocalDesdeQuery(),
     );
     if (!c) return null;
 
@@ -1594,7 +1684,12 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     const pct = Number(c.porcentajeMantenimiento) || 0;
     const t = this.calcTotalesContrato(m, costo, pct);
 
+    const idContratoNum = Number(c.id);
     return {
+      idContrato:
+        Number.isFinite(idContratoNum) && idContratoNum > 0
+          ? Math.trunc(idContratoNum)
+          : undefined,
       tipoModificacion: 'Contrato vigente',
       numeroContrato:
         c.id != null ? `Contrato #${c.id}` : '—',

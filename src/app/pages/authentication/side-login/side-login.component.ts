@@ -9,7 +9,7 @@ import {
   UntypedFormGroup,
   FormBuilder,
 } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MaterialModule } from '../../../material.module';
 import { AppAuthBrandingComponent } from '../../../layouts/full/vertical/sidebar/auth-branding.component';
 import { Credentials } from 'src/app/entities/Credentials';
@@ -22,7 +22,6 @@ import { Permiso } from 'src/app/entities/permiso.enum';
 import { authViewAnimation } from '../auth-view.animation';
 import { AuthTransitionService } from 'src/app/services/auth-transition.service';
 import { LoginSuccessSoundService } from 'src/app/services/login-success-sound.service';
-
 const LOGIN_SUCCESS_SOUND_MS = 10_000;
 
 @Component({
@@ -41,7 +40,6 @@ export class AppSideLoginComponent implements OnInit {
     private settings: CoreService,
     private auth: AuthenticationService,
     private fb: FormBuilder,
-    private route: ActivatedRoute,
     private toastr: ToastrService,
     private authService: AuthenticationService,
     private authTransition: AuthTransitionService,

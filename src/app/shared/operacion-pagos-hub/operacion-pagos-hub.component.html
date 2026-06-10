@@ -1,0 +1,51 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper operacion-pagos-hub">
+  <header class="perm-head" role="region" [attr.aria-label]="'Sección: ' + config.titulo">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>{{ config.iconoCabecera }}</mat-icon>
+    </div>
+    <div class="perm-head__text">
+      <span class="eyebrow">{{ config.eyebrow }}</span>
+      <h2>{{ config.titulo }}</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      @for (miga of config.migas; track miga.etiqueta; let last = $last) {
+        <span class="crumb" [class.active]="miga.activa || last">{{ miga.etiqueta }}</span>
+        @if (!last) {
+          <span class="sep">/</span>
+        }
+      }
+    </nav>
+  </header>
+
+  <div class="operacion-pagos-hub__layout">
+    <nav
+      class="operacion-pagos-hub__rail"
+      role="navigation"
+      [attr.aria-label]="'Secciones de ' + config.titulo"
+    >
+      @for (vista of config.vistas; track vista.segmento) {
+        <a
+          class="operacion-pagos-hub__rail-item"
+          [class.operacion-pagos-hub__rail-item--activo]="segmentoActivo === vista.segmento"
+          [routerLink]="rutaSegmento(vista.segmento)"
+          [attr.aria-current]="segmentoActivo === vista.segmento ? 'page' : null"
+        >
+          <span class="operacion-pagos-hub__rail-icono" aria-hidden="true">
+            <mat-icon>{{ vista.icono }}</mat-icon>
+          </span>
+          <span class="operacion-pagos-hub__rail-texto">
+            <span class="operacion-pagos-hub__rail-titulo">{{ vista.titulo }}</span>
+            <span class="operacion-pagos-hub__rail-desc">{{ vista.descripcion }}</span>
+          </span>
+          <mat-icon class="operacion-pagos-hub__rail-flecha" aria-hidden="true">chevron_right</mat-icon>
+        </a>
+      }
+    </nav>
+
+    <main class="operacion-pagos-hub__cuerpo">
+      <div class="operacion-pagos-hub__contenido-vista" [@operacionHubContenidoAnim]="segmentoActivo">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>

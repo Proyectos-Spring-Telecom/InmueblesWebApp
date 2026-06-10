@@ -1,0 +1,44 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface HistoricoPagosMantenimientoFiltros {
+  page: number;
+  limit: number;
+  fechaInicio: string;
+  fechaFin: string;
+  idArrendatario?: number | null;
+  idContrato?: number | null;
+}
+
+@Injectable({ providedIn: 'root' })
+export class HistoricoPagosMantenimientoService {
+  private readonly url = `${environment.API_SECURITY}/historico-pagos-mantenimiento`;
+
+  constructor(private http: HttpClient) {}
+
+  obtenerHistoricoPaginado(filtros: HistoricoPagosMantenimientoFiltros): Observable<unknown> {
+    let params = new HttpParams()
+      .set('page', String(filtros.page))
+      .set('limit', String(filtros.limit))
+      .set('fechaInicio', filtros.fechaInicio.trim())
+      .set('fechaFin', filtros.fechaFin.trim());
+
+    const idArr = Number(filtros.idArrendatario);
+    if (Number.isFinite(idArr) && idArr > 0) {
+      params = params.set('idArrendatario', String(Math.floor(idArr)));
+    }
+
+    const idCon = Number(filtros.idContrato);
+    if (Number.isFinite(idCon) && idCon > 0) {
+      params = params.set('idContrato', String(Math.floor(idCon)));
+    }
+
+    return this.http.get(`${this.url}/paginated`, { params });
+  }
+
+  obtenerHistoricoPorId(id: number): Observable<unknown> {
+    return this.http.get(`${this.url}/${id}`);
+  }
+}

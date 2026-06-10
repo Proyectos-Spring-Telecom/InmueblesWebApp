@@ -1,0 +1,97 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.operacion-pagos-hub__segmentos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(15, 23, 42, 0.15)
+  );
+}
+
+.operacion-pagos-hub__segmento {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.35);
+  color: #e2e8f0;
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--mat-sys-secondary) 55%, transparent);
+    background: color-mix(in srgb, var(--mat-sys-secondary) 8%, rgba(15, 23, 42, 0.45));
+    transform: translateY(-1px);
+  }
+}
+
+.operacion-pagos-hub__segmento--activo {
+  border-color: color-mix(in srgb, var(--mat-sys-secondary) 70%, white 8%);
+  background: color-mix(in srgb, var(--mat-sys-secondary) 16%, rgba(15, 23, 42, 0.5));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.operacion-pagos-hub__segmento-icono {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--mat-sys-secondary) 14%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    color: #f8fafc;
+  }
+}
+
+.operacion-pagos-hub__segmento-texto {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.operacion-pagos-hub__segmento-titulo {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
+}
+
+.operacion-pagos-hub__segmento-desc {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #94a3b8;
+}
+
+.operacion-pagos-hub__cuerpo {
+  padding: 0;
+}
+
+.operacion-pagos-hub__cuerpo ::ng-deep .operacion-hub-vista .surface {
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 720px) {
+  .operacion-pagos-hub__segmentos {
+    grid-template-columns: 1fr;
+  }
+}

@@ -204,7 +204,7 @@ export function inmuebleTieneCatalogoParaPlano(
   return zonasApi.length > 0 || filasLocales.length > 0;
 }
 
-function claveZonaCatalogo(
+export function claveZonaCatalogo(
   idZona: unknown,
   nombreZona: string,
   indice: number,
@@ -297,10 +297,19 @@ export function visualLayoutDesdeCatalogoInmueble(
       const nombre = String(
         fila['nombre'] ?? fila['nombreLocal'] ?? fila['local'] ?? `Local ${li + 1}`,
       ).trim();
-      const estado =
-        fila['ocupado'] === true
-          ? 'ocupado'
-          : String(fila['estado'] ?? 'libre').toLowerCase().trim() || 'libre';
+      const estNum =
+        fila['estatusLocal'] != null
+          ? Number(fila['estatusLocal'])
+          : Number(fila['estatus']);
+      let estado = 'libre';
+      if (fila['ocupado'] === true || estNum === 2) estado = 'ocupado';
+      else if (estNum === 3) estado = 'reservado';
+      else if (estNum === 0) estado = 'inactivo';
+      else if (estNum === 1) estado = 'libre';
+      else {
+        const e = String(fila['estado'] ?? 'libre').toLowerCase().trim();
+        if (e === 'ocupado' || e === 'reservado' || e === 'inactivo') estado = e;
+      }
 
       const rect = {
         x: zx + padX + colL * (localW + localGapX),

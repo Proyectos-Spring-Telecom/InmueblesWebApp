@@ -25,6 +25,25 @@ export class AppHorizontalNavItemComponent implements OnInit {
   }
 
   ngOnInit() { }
+
+  isDirectlyActive(item: { route?: string }): boolean {
+    if (!item?.route || item.route === '/menu-level') return false;
+
+    const normalize = (path: string) =>
+      (path || '/').split('?')[0].replace(/\/+$/, '') || '/';
+    const route = normalize(item.route);
+    const url = normalize(this.router.url);
+
+    if (url === route) return true;
+    if (!url.startsWith(route + '/')) return false;
+
+    if (route === '/arrendatarios') {
+      return !/^\/arrendatarios\/pagos-(renta|mantenimiento)(\/|$)/.test(url);
+    }
+
+    return true;
+  }
+
   onItemSelected(item: any) {
     if (!item.children || !item.children.length) {
       this.router.navigate([item.route]);

@@ -6,6 +6,7 @@ import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { FactoresService } from 'src/app/services/moduleService/factores.service';
 import { FormulasService } from 'src/app/services/moduleService/formulas.service';
+import { formatearFechaHora } from 'src/app/pages/inmuebles/inmuebles-list.mapper';
 import { formatValorMilesParaLista } from 'src/app/shared/valor-miles-format';
 import Swal from 'sweetalert2';
 
@@ -25,12 +26,38 @@ function mapFactorGridRow(item: any) {
   };
 }
 
+function etiquetaTipoResultadoFormula(valor: unknown): string {
+  const tipo = String(valor ?? '').trim().toUpperCase();
+  if (tipo === 'MONTO') return 'Monto ($)';
+  if (tipo === 'PORCENTAJE') return 'Porcentaje (%)';
+  return tipo || '—';
+}
+
 function mapFormulaGridRow(item: any) {
+  const descripcionRaw = item?.descripcion ?? item?.Descripcion ?? null;
+  const descripcion =
+    descripcionRaw == null || String(descripcionRaw).trim() === ''
+      ? '—'
+      : String(descripcionRaw).trim();
+  const tipoResultado = String(
+    item?.tipoResultado ?? item?.TipoResultado ?? '',
+  ).trim();
+
   return {
     ...item,
     id: Number(item?.id ?? item?.Id),
     nombre: item?.nombre ?? item?.Nombre ?? '',
     formula: item?.formula ?? item?.Formula ?? '',
+    descripcion,
+    tipoResultado,
+    tipoResultadoLabel: etiquetaTipoResultadoFormula(tipoResultado),
+    fhRegistroFmt:
+      formatearFechaHora(String(item?.fhRegistro ?? item?.FhRegistro ?? '')) ||
+      '—',
+    fhActualizacionFmt:
+      formatearFechaHora(
+        String(item?.fhActualizacion ?? item?.FhActualizacion ?? ''),
+      ) || '—',
     estatus: Number(item?.estatus ?? item?.Estatus ?? 1),
   };
 }
@@ -420,7 +447,14 @@ export class ListaFactoresComponent implements OnInit {
       const hitEnColumnas = dataFields.some((df) =>
         normalizar(row?.[df]).includes(texto),
       );
-      const extras = [normalizar(row?.id)];
+      const extras = [
+        normalizar(row?.nombre),
+        normalizar(row?.formula),
+        normalizar(row?.descripcion),
+        normalizar(row?.tipoResultadoLabel),
+        normalizar(row?.fhRegistroFmt),
+        normalizar(row?.fhActualizacionFmt),
+      ];
       return hitEnColumnas || extras.some((s) => s.includes(texto));
     });
     grid?.option('dataSource', dataFiltrada);

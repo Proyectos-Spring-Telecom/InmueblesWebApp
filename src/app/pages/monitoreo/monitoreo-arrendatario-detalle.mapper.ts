@@ -1,4 +1,8 @@
-import { esImagenArchivo, esPdfArchivo } from '../inmuebles/inmuebles-list.mapper';
+import {
+  esImagenArchivo,
+  esPdfArchivo,
+  formatearMoneda,
+} from '../inmuebles/inmuebles-list.mapper';
 import {
   MonitoreoExpedienteDoc,
   MonitoreoServicioFila,
@@ -249,25 +253,270 @@ export function documentacionLocalEsPdf(url: string, nombre: string): boolean {
   return esPdfArchivo(url, nombre);
 }
 
+function importeNumericoContrato(v: unknown): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+function importesContratoCoinciden(
+  c: ArrendatarioContratoApi,
+  monto: number,
+): boolean {
+  const tolerancia = 0.01;
+  const candidatos = [c.rentaTotal, c.subTotalRenta, c.montoAdelanto];
+  return candidatos.some((raw) => {
+    const n = importeNumericoContrato(raw);
+    return n != null && Math.abs(n - monto) <= tolerancia;
+  });
+}
+
+/** IDs de local asociados al contrato en la respuesta del API. */
+export function idLocalesDesdeContratoApi(
+  c: ArrendatarioContratoApi,
+): number[] {
+  const ids = new Set<number>();
+
+  const rawIdLocales = c['idLocales'];
+  if (Array.isArray(rawIdLocales)) {
+    for (const x of rawIdLocales) {
+      const n = Number(x);
+      if (Number.isFinite(n) && n > 0) ids.add(Math.trunc(n));
+    }
+  }
+
+  const direct = Number(c.idLocal);
+  if (Number.isFinite(direct) && direct > 0) ids.add(Math.trunc(direct));
+
+  const loc = c.local;
+  if (loc != null && typeof loc === 'object') {
+    const idLoc = Number(loc.id ?? (loc as Record<string, unknown>)['idLocal']);
+    if (Number.isFinite(idLoc) && idLoc > 0) ids.add(Math.trunc(idLoc));
+  }
+
+  const filas = c['contratoLocales'];
+  if (Array.isArray(filas)) {
+    for (const raw of filas) {
+      if (raw == null || typeof raw !== 'object') continue;
+      const fila = raw as Record<string, unknown>;
+      const idFila = Number(fila['idLocal']);
+      if (Number.isFinite(idFila) && idFila > 0) {
+        ids.add(Math.trunc(idFila));
+        continue;
+      }
+      const locFila = fila['local'];
+      if (locFila != null && typeof locFila === 'object' && !Array.isArray(locFila)) {
+        const idLoc = Number((locFila as Record<string, unknown>)['id']);
+        if (Number.isFinite(idLoc) && idLoc > 0) ids.add(Math.trunc(idLoc));
+      }
+    }
+  }
+
+  return [...ids];
+}
+
+function contratoTieneVinculoLocalExplicito(
+  c: ArrendatarioContratoApi,
+  idLocal: number,
+): boolean {
+  return idLocalesDesdeContratoApi(c).includes(idLocal);
+}
+
+function fhRegistroContrato(c: ArrendatarioContratoApi): string {
+  return String(c['fhRegistro'] ?? '').trim();
+}
+
+function ordenarContratosPorRegistro(
+  contratos: ArrendatarioContratoApi[],
+): ArrendatarioContratoApi[] {
+  return [...contratos].sort((a, b) =>
+    fhRegistroContrato(b).localeCompare(fhRegistroContrato(a)),
+  );
+}
+
+function vigenciaTextoContratoLocal(c: ArrendatarioContratoApi): string {
+  const ini = fechaGridDesdeApi(c.fechaInicioContrato);
+  const fin = fechaGridDesdeApi(c.fechaTerminoContrato);
+  if (ini && fin) return `${ini} — ${fin}`;
+  return ini || fin || '—';
+}
+
+function etiquetaMonedaContrato(c: ArrendatarioContratoApi): string {
+  const m = String(c.moneda ?? '').trim();
+  return m || 'MXN';
+}
+
+/** Tarjeta resumida de un contrato en el detalle del local. */
+export interface ContratoLocalResumen {
+  id: number;
+  titulo: string;
+  fechaRegistroTexto: string;
+  vigenciaTexto: string;
+  /** Total renta del contrato (`rentaTotal`). */
+  rentaContratoFmt: string;
+  /** Total mantenimiento del contrato (`mantenimientoTotal`). */
+  mantenimientoContratoFmt: string;
+  metrosRentadosTexto: string;
+  moneda: string;
+  observacionesCorta: string;
+  esVigente: boolean;
+  vinculoLocal: 'explicito' | 'inmueble' | 'renta';
+}
+
+function importeContratoFormateado(v: unknown): string {
+  const r = formatearMoneda(v);
+  return r !== '—' ? r : '';
+}
+
+function truncarObservaciones(texto: string, max = 72): string {
+  const s = texto.trim();
+  if (s.length <= max) return s;
+  return `${s.slice(0, max - 1).trimEnd()}…`;
+}
+
+function buildResumenContratoLocal(
+  c: ArrendatarioContratoApi,
+  esVigente: boolean,
+  vinculoLocal: ContratoLocalResumen['vinculoLocal'],
+): ContratoLocalResumen | null {
+  const id = Number(c.id);
+  if (!Number.isFinite(id) || id <= 0) return null;
+
+  const moneda = etiquetaMonedaContrato(c);
+  const rentaContratoFmt = importeContratoFormateado(c.rentaTotal);
+  const mantenimientoContratoFmt = importeContratoFormateado(
+    c.mantenimientoTotal,
+  );
+  const metros = Number(c.metrosRentados);
+  const metrosTexto =
+    Number.isFinite(metros) && metros > 0
+      ? `${metros % 1 === 0 ? metros : metros.toFixed(2)} m²`
+      : '—';
+  const obs = truncarObservaciones(String(c.observaciones ?? ''));
+  const fh = fhRegistroContrato(c);
+  let fechaRegistroTexto = '—';
+  if (fh) {
+    const d = new Date(fh);
+    fechaRegistroTexto = Number.isNaN(d.getTime())
+      ? fh.slice(0, 10)
+      : d.toLocaleDateString('es-MX', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+  }
+
+  return {
+    id: Math.trunc(id),
+    titulo: `Contrato #${Math.trunc(id)}`,
+    fechaRegistroTexto,
+    vigenciaTexto: vigenciaTextoContratoLocal(c),
+    rentaContratoFmt,
+    mantenimientoContratoFmt,
+    metrosRentadosTexto: metrosTexto,
+    moneda,
+    observacionesCorta: obs || 'Sin observaciones',
+    esVigente,
+    vinculoLocal,
+  };
+}
+
+/**
+ * Contratos del arrendatario aplicables al local en contexto.
+ * Prioriza vínculo explícito (`contratoLocales`, `idLocal`); si el API no lo trae,
+ * filtra por inmueble y renta/mensualidad.
+ */
+export function contratosParaLocalEnArrendatario(
+  item: ArrendatarioApiItem,
+  idLocal: number | null,
+  idInmueble: number | null,
+  mensualidadLocal?: number | null,
+): ArrendatarioContratoApi[] {
+  const contratos = Array.isArray(item.contratos) ? item.contratos : [];
+  if (!contratos.length) return [];
+
+  if (idLocal != null && idLocal > 0) {
+    const explicitos = contratos.filter((c) =>
+      contratoTieneVinculoLocalExplicito(c, idLocal),
+    );
+    if (explicitos.length) return ordenarContratosPorRegistro(explicitos);
+  }
+
+  let candidatos = contratos;
+  if (idInmueble != null && idInmueble > 0) {
+    candidatos = candidatos.filter((c) => Number(c.idInmueble) === idInmueble);
+  }
+
+  const rentaArr = importeNumericoContrato(item.renta);
+  const montoRef =
+    mensualidadLocal != null && Number.isFinite(mensualidadLocal)
+      ? mensualidadLocal
+      : rentaArr;
+
+  if (montoRef != null) {
+    const porRenta = candidatos.filter((c) =>
+      importesContratoCoinciden(c, montoRef),
+    );
+    if (porRenta.length) return ordenarContratosPorRegistro(porRenta);
+  }
+
+  return ordenarContratosPorRegistro(candidatos);
+}
+
+export function buildContratosLocalResumenLista(
+  item: ArrendatarioApiItem,
+  idLocal: number | null,
+  idInmueble: number | null,
+  mensualidadLocal?: number | null,
+): ContratoLocalResumen[] {
+  const filtrados = contratosParaLocalEnArrendatario(
+    item,
+    idLocal,
+    idInmueble,
+    mensualidadLocal,
+  );
+  const tieneExplicito =
+    idLocal != null &&
+    idLocal > 0 &&
+    filtrados.some((c) => contratoTieneVinculoLocalExplicito(c, idLocal));
+
+  return filtrados
+    .map((c, index) => {
+      let vinculo: ContratoLocalResumen['vinculoLocal'] = 'inmueble';
+      if (
+        idLocal != null &&
+        idLocal > 0 &&
+        contratoTieneVinculoLocalExplicito(c, idLocal)
+      ) {
+        vinculo = 'explicito';
+      } else if (!tieneExplicito) {
+        vinculo = 'renta';
+      }
+      return buildResumenContratoLocal(c, index === 0, vinculo);
+    })
+    .filter((x): x is ContratoLocalResumen => x != null);
+}
+
 export function seleccionarContratoArrendatario(
   item: ArrendatarioApiItem,
   idContrato: number | null,
   idLocal: number | null,
+  idInmueble?: number | null,
+  mensualidadLocal?: number | null,
 ): ArrendatarioContratoApi | null {
-  const contratos = Array.isArray(item.contratos) ? item.contratos : [];
-  if (!contratos.length) return null;
+  const lista = contratosParaLocalEnArrendatario(
+    item,
+    idLocal,
+    idInmueble ?? null,
+    mensualidadLocal,
+  );
+  if (!lista.length) return null;
 
   if (idContrato != null && idContrato > 0) {
-    const hit = contratos.find((c) => Number(c.id) === idContrato);
+    const hit = lista.find((c) => Number(c.id) === idContrato);
     if (hit) return hit;
   }
 
-  if (idLocal != null && idLocal > 0) {
-    const hit = contratos.find((c) => Number(c.idLocal) === idLocal);
-    if (hit) return hit;
-  }
-
-  return contratos[0] ?? null;
+  return lista[0] ?? null;
 }
 
 export function urlContratoRentaArrendatario(

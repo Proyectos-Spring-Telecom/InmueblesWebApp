@@ -47,6 +47,7 @@ const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
   Clientes: '/clientes',
   Usuarios: '/usuarios',
   Roles: '/roles',
+  Catálogos: '/clientes',
 };
 
 /** Texto secundario del Panel de accesos (no mostrar rutas). */
@@ -55,7 +56,7 @@ const PANEL_SUBTEXT_BY_DISPLAY_NAME: Record<string, string> = {
   Usuarios: 'Alta, edición y control de usuarios del sistema.',
   Roles: 'Definición de permisos y niveles de acceso.',
   Arrendadores: 'Monitoreo y gestión de inmuebles y arrendatarios.',
-  Catálogos: 'Administración arrendadores, inmuebles y arrendatarios.',
+  Catálogos: 'Arrendadores, inmuebles, arrendatarios y rentas.',
   'Perfil Usuario': 'Configuración y actualización de tu información personal.',
 };
 

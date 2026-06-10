@@ -1,0 +1,422 @@
+@if (embebidoEnHub) {
+  <div class="operacion-hub-vista inm-lista">
+    <ng-container *ngTemplateOutlet="contenidoMantenimiento"></ng-container>
+  </div>
+} @else {
+  <div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
+    <header class="perm-head" role="region" aria-label="Sección: Mantenimiento actual">
+      <div class="perm-head__icon" aria-hidden="true">
+        <mat-icon>handyman</mat-icon>
+      </div>
+      <div class="perm-head__text">
+        <span class="eyebrow">Catálogos</span>
+        <h2>Mantenimiento actual</h2>
+      </div>
+      <nav class="perm-head__crumbs" aria-label="Ruta">
+        <span class="crumb">Operación</span>
+        <span class="sep">/</span>
+        <span class="crumb">Arrendatarios</span>
+        <span class="sep">/</span>
+        <span class="crumb active">Mantenimiento actual</span>
+      </nav>
+    </header>
+    <ng-container *ngTemplateOutlet="contenidoMantenimiento"></ng-container>
+  </div>
+}
+
+<ng-template #contenidoMantenimiento>
+  <div class="surface">
+    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
+      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="bg-secondary">
+        <i class="fa fa-plus"></i> Agregar
+      </button>
+      <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
+        <i class="fa fa-eraser"></i> Limpiar
+      </button>
+      <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+        {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
+      </button>
+    </div>
+
+    <div class="mt-3">
+      <dx-data-grid
+        #gridContainer
+        id="gridMantenimientoActual"
+        class="inm-data-grid"
+        [columnHidingEnabled]="true"
+        [hoverStateEnabled]="false"
+        [showBorders]="true"
+        [showColumnLines]="false"
+        [showRowLines]="true"
+        [rowAlternationEnabled]="true"
+        [dataSource]="listaMantenimientos"
+        [keyExpr]="'id'"
+        [width]="'100%'"
+        [remoteOperations]="{ paging: true }"
+        [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'"
+        [pager]="{
+          showPageSizeSelector: true,
+          allowedPageSizes: [20],
+          showInfo: true,
+          visible: true
+        }"
+        (onPageIndexChanged)="onPageIndexChanged($event)"
+        (onOptionChanged)="onGridOptionChanged($event)"
+      >
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar mantenimiento..."></dxo-search-panel>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+        <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+        <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+        <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+
+        <dxi-column
+          caption="Acciones"
+          cellTemplate="accionesMantenimientoTpl"
+          alignment="center"
+          [width]="200"
+          [allowFiltering]="false"
+          [allowSorting]="false"
+        ></dxi-column>
+        <dxi-column dataField="mesLabel" caption="Periodo" alignment="center" [width]="150"></dxi-column>
+        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="200"></dxi-column>
+        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="140"></dxi-column>
+        <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column>
+        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="130"></dxi-column>
+        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90"></dxi-column>
+        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>
+        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusMantenimientoTpl" [width]="120"></dxi-column>
+        <dxi-column dataField="id" caption="ID" alignment="center" [width]="72" [visible]="false"></dxi-column>
+
+        <div *dxTemplate="let row of 'estatusMantenimientoTpl'">
+          @if (row.data.pagada) {
+            <span class="estatus estatus-activo">{{ row.data.pagadaLabel }}</span>
+          } @else {
+            <span class="estatus estatus-inactivo">{{ row.data.pagadaLabel }}</span>
+          }
+        </div>
+
+        <div *dxTemplate="let row of 'accionesMantenimientoTpl'" class="d-flex gap-3 justify-content-center">
+          <div>
+            <button
+              type="button"
+              id="actualizarButton"
+              class="btnAcciones"
+              title="Editar"
+              (click)="abrirModalEdicion(row.data); $event.stopPropagation()"
+            >
+              <i class="fa fa-edit"></i>
+            </button>
+          </div>
+          @if (!row.data.pagada) {
+            <div>
+              <button
+                type="button"
+                id="pinButton"
+                class="btnAcciones"
+                title="Registrar pago"
+                (click)="marcarMantenimientoPagado(row.data); $event.stopPropagation()"
+              >
+                <i class="fa fa-check"></i>
+              </button>
+            </div>
+          }
+        </div>
+      </dx-data-grid>
+    </div>
+  </div>
+</ng-template>
+
+<ng-container *ngIf="mostrarModalMantenimiento">
+  <div class="contract-page-dim" (click)="cerrarModalMantenimiento()" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalMantenimiento()">
+    <div
+      class="docs-modal contract-docs-modal mono-pago-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mantenimiento-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <h3 class="docs-modal__title" id="mantenimiento-modal-title">
+            {{ mantenimientoModalModo === 'edicion' ? 'Editar mantenimiento' : 'Registrar mantenimiento' }}
+          </h3>
+          <p class="docs-modal__subtitle">
+            Captura el mantenimiento del mes y administra total, fórmula y monto final.
+          </p>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button
+            type="button"
+            class="docs-modal__close"
+            (click)="cerrarModalMantenimiento()"
+            aria-label="Cerrar modal de mantenimiento"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body">
+        <div class="col-12">
+          <div class="perm-form-nc">
+            <form [formGroup]="mantenimientoForm" class="perm-form-body mono-pago-form">
+              <div class="row g-3 align-items-end">
+                <div class="col-12 col-lg-4" *ngIf="mantenimientoModalModo === 'alta'">
+                  <label for="mantenimientoArrendatario" class="form-label perm-label"
+                    >Arrendatario <span class="text-danger">*</span></label
+                  >
+                  <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                    <span>Cargando arrendatarios…</span>
+                  </div>
+                  <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">person</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select id="mantenimientoArrendatario" class="form-select" formControlName="idArrendatario">
+                        <option [ngValue]="null" disabled hidden>
+                          {{
+                            arrendatariosOpciones.length
+                              ? 'Seleccione arrendatario'
+                              : 'Sin arrendatarios'
+                          }}
+                        </option>
+                        <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
+                      </select>
+                      <label for="mantenimientoArrendatario">Seleccione arrendatario</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4" *ngIf="mantenimientoModalModo === 'alta'">
+                  <label for="mantenimientoContrato" class="form-label perm-label"
+                    >Contrato <span class="text-danger">*</span></label
+                  >
+                  <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                    <span>Cargando contratos…</span>
+                  </div>
+                  <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">description</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select id="mantenimientoContrato" class="form-select" formControlName="idContrato">
+                        <option [ngValue]="null" disabled hidden>
+                          {{ textoPlaceholderContrato() }}
+                        </option>
+                        <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
+                      </select>
+                      <label for="mantenimientoContrato">Seleccione contrato</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4" *ngIf="mantenimientoModalModo === 'alta'">
+                  <label for="mantenimientoFormulaAlta" class="form-label perm-label"
+                    >Fórmula <span class="text-danger">*</span></label
+                  >
+                  <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                    <span>Cargando fórmulas…</span>
+                  </div>
+                  <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">functions</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select id="mantenimientoFormulaAlta" class="form-select" formControlName="idFormula">
+                        <option [ngValue]="null" disabled hidden>
+                          {{ formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas' }}
+                        </option>
+                        <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
+                      </select>
+                      <label for="mantenimientoFormulaAlta">Seleccione fórmula</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4" *ngIf="mantenimientoModalCargando">
+                  <div class="mono-pago-servicio-loading mb-0">
+                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                    <span>Cargando mantenimiento…</span>
+                  </div>
+                </div>
+
+                <ng-container *ngIf="!mantenimientoModalCargando">
+                  <div class="col-12 col-lg-4">
+                    <label for="mantenimientoTotal" class="form-label perm-label"
+                      >Total <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">build</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input
+                          id="mantenimientoTotal"
+                          type="text"
+                          inputmode="decimal"
+                          class="form-control"
+                          formControlName="total"
+                          placeholder=" "
+                          autocomplete="off"
+                        />
+                        <label for="mantenimientoTotal">Total</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <label for="mantenimientoMontoFinal" class="form-label perm-label"
+                      >Monto final <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input
+                          id="mantenimientoMontoFinal"
+                          type="text"
+                          inputmode="decimal"
+                          class="form-control"
+                          formControlName="montoFinal"
+                          placeholder=" "
+                          autocomplete="off"
+                        />
+                        <label for="mantenimientoMontoFinal">Monto final</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <label for="mantenimientoFactor" class="form-label perm-label"
+                      >Factor variable <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">percent</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input
+                          id="mantenimientoFactor"
+                          type="text"
+                          inputmode="decimal"
+                          class="form-control"
+                          formControlName="factorVariable"
+                          placeholder=" "
+                          autocomplete="off"
+                        />
+                        <label for="mantenimientoFactor">Factor variable</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4" *ngIf="mantenimientoModalModo === 'edicion'">
+                    <label for="mantenimientoFormula" class="form-label perm-label"
+                      >Fórmula <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">functions</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="mantenimientoFormula" class="form-select" formControlName="idFormula">
+                          <option [ngValue]="null" disabled hidden>Seleccione fórmula</option>
+                          <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
+                        </select>
+                        <label for="mantenimientoFormula">Seleccione fórmula</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <label for="mantenimientoOcupoFormula" class="form-label perm-label">Usó fórmula</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">flag</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="mantenimientoOcupoFormula" class="form-select" formControlName="ocupoFormula">
+                          <option [ngValue]="0">No</option>
+                          <option [ngValue]="1">Sí</option>
+                        </select>
+                        <label for="mantenimientoOcupoFormula">Usó fórmula</label>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <div class="col-12" *ngIf="!mantenimientoModalCargando && !catalogosModalCargando">
+                  <section
+                    class="renta-pago-resumen"
+                    *ngIf="resumenMantenimientoModal.listo"
+                    @rentaResumenReveal
+                    aria-live="polite"
+                  >
+                    <article class="renta-pago-resumen__hero">
+                      <div class="renta-pago-resumen__hero-row">
+                        <div>
+                          <span class="renta-pago-resumen__kicker">Pago a favor de</span>
+                          <h4 class="renta-pago-resumen__hero-title">{{ resumenMantenimientoModal.pagoAFavorDe }}</h4>
+                        </div>
+                        <span class="renta-pago-resumen__chip">Mantenimiento</span>
+                      </div>
+                      <p class="renta-pago-resumen__hero-meta">
+                        Arrendatario: <span>{{ resumenMantenimientoModal.arrendatario }}</span>
+                      </p>
+                    </article>
+                    <article class="renta-pago-resumen__card" *ngIf="resumenMantenimientoModal.campos.length">
+                      <h5 class="renta-pago-resumen__card-title">Detalle del registro</h5>
+                      <div class="renta-pago-resumen__grid">
+                        <div
+                          class="renta-pago-resumen__field"
+                          *ngFor="let campo of resumenMantenimientoModal.campos; trackBy: trackByResumenCampo"
+                        >
+                          <span>{{ campo.etiqueta }}</span>
+                          <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                        </div>
+                      </div>
+                    </article>
+                  </section>
+                  <div class="renta-pago-resumen-hint" *ngIf="!resumenMantenimientoModal.listo" @rentaResumenReveal
+                    role="status" aria-live="polite">
+                    <mat-icon aria-hidden="true">info_outline</mat-icon>
+                    <span [@rentaHintMsgAnim]="resumenMantenimientoModal.mensajeVacio">{{ resumenMantenimientoModal.mensajeVacio }}</span>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+                    <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalMantenimiento()">
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      class="button-success mono-pago-form-btn"
+                      (click)="guardarMantenimientoDesdeModal()"
+                      [disabled]="mantenimientoGuardando || mantenimientoModalCargando"
+                    >
+                      {{
+                        mantenimientoGuardando
+                          ? 'Enviando…'
+                          : (mantenimientoModalModo === 'edicion' ? 'Guardar' : 'Agregar')
+                      }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

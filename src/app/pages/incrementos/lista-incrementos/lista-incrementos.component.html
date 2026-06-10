@@ -19,11 +19,43 @@
   </header>
 
   <div class="surface">
-    <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
-      <div *appHasPermission="['47', '55']">
+    <div class="inpc-filtros-panel w-100">
+      <div class="inpc-filtros-panel__grid">
+        <div>
+          <label class="form-label mb-1 inpc-filtro-fechas__label" for="inpcFechaInicio"
+            >Fecha inicio <span class="text-danger">*</span></label
+          >
+          <input
+            id="inpcFechaInicio"
+            type="date"
+            class="form-control form-control-sm inpc-filtro-fechas__input"
+            [(ngModel)]="fechaInicioFiltro"
+          />
+        </div>
+        <div>
+          <label class="form-label mb-1 inpc-filtro-fechas__label" for="inpcFechaFin"
+            >Fecha fin <span class="text-danger">*</span></label
+          >
+          <input
+            id="inpcFechaFin"
+            type="date"
+            class="form-control form-control-sm inpc-filtro-fechas__input"
+            [(ngModel)]="fechaFinFiltro"
+          />
+        </div>
+        <div class="inpc-filtros-panel__accion">
+          <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
+            <i class="fa fa-filter"></i> Consultar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 mt-3">
+      <!-- <div *appHasPermission="['47', '55']">
         <button (click)="agregarIncremento()" mat-flat-button class="bg-secondary">
           <i class="fa fa-plus"></i> Agregar INPC</button>
-      </div>
+      </div> -->
       <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
       <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
         <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
@@ -62,52 +94,27 @@
         <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
-        <dxi-column
-          caption="Acciones"
-          cellTemplate="Acciones"
-          alignment="center"
-          *appHasPermission="['46', '48', '54', '56']"
-          dataType="string"
-          [width]="180"
-        ></dxi-column>
+        <dxi-column dataField="fecha" caption="Fecha" alignment="center" dataType="string"></dxi-column>
         <dxi-column dataField="anio" caption="Año" alignment="center" dataType="number"></dxi-column>
         <dxi-column dataField="mes" caption="Mes" alignment="center" dataType="string"></dxi-column>
         <dxi-column
-          dataField="valorInpcFmt"
-          caption="INPC"
+          dataField="indiceFmt"
+          caption="Índice INPC"
           alignment="center"
           dataType="string"
         ></dxi-column>
-        <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="estInpc" dataType="string">
-          <div *dxTemplate="let f of 'estInpc'">
-            @if (f.data.estatus === 1) {
-              <span class="estatus estatus-activo">Activo</span>
-            } @else {
-              <span class="estatus estatus-inactivo">Inactivo</span>
-            }
-          </div>
-        </dxi-column>
-        <div *dxTemplate="let row of 'Acciones'" class="d-flex gap-3 justify-content-center">
-          <div *appHasPermission="['46', '54']">
-            <button
-              valueExpr="id" id="actualizarButton" class="btnAcciones"
-              (click)="actualizarIncremento(row.data.id)"
-            >
-              <i class="fa fa-edit"></i>
-            </button>
-          </div>
-          <div *appHasPermission="['48', '56']">
-            @if (row.data.estatus === 0) {
-              <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
-                  <i class="fa fa-arrow-up"></i>
-              </button>
-              } @else {
-              <button id="deleteButton" class="btnAcciones" (click)="desactivar(row.data)">
-                  <i class="fa fa-arrow-down"></i>
-              </button>
-              }
-          </div>
-        </div>
+        <dxi-column
+          dataField="porcAnualFmt"
+          caption="% Anual"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
+        <dxi-column
+          dataField="porcAcumAnualFmt"
+          caption="% Acum. Anual"
+          alignment="center"
+          dataType="string"
+        ></dxi-column>
         <dxo-export
           [enabled]="true"
           [allowExportSelectedData]="true"

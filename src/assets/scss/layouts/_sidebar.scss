@@ -18,6 +18,20 @@
 
   .ng-scroll-content {
     display: block;
+    overflow-x: hidden !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sidebar-menu-scroll,
+  .sidebar-menu-scroll .ng-scroll-viewport,
+  .sidebar-menu-scroll .ng-scroll-content {
+    overflow-x: hidden !important;
+    max-width: 100%;
+  }
+
+  .sidebar-menu-scroll .ng-scrollbar-sticky {
+    display: none;
   }
 }
 
@@ -57,7 +71,7 @@
     cursor: pointer;
 
     >a {
-      padding: 6px 20px;
+      padding: 6px 8px;
       background: rgba(0, 0, 0, 0.5);
       white-space: nowrap;
 
@@ -246,7 +260,12 @@
 
 .sidebar-list {
   &.mdc-list {
-    padding: 0 15px;
+    padding: 0 12px;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: visible;
+    max-width: 100%;
+    box-sizing: border-box;
 
     .mdc-list-group__subheader {
       margin: 24px 0 0;
@@ -266,26 +285,161 @@
 
     }
 
+    app-nav-item {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
     .nav-submenu-children {
       display: block;
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    // Sangría solo en el texto (no en el contenedor) para no desbordar el sidebar.
+    $nav-subitem-label-indent: 32px; // ancho icono (22) + gap (8), alineado sin desbordar
+
+    .nav-submenu-children .nav-submenu-children {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      padding-left: 0;
+      margin-left: 0;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .nav-submenu-children .nav-submenu-children
+      app-nav-item[data-nav-depth='2']
+      .menu-list-item--no-icon,
+    .nav-submenu-children .nav-submenu-children
+      app-nav-item[data-nav-depth='3']
+      .menu-list-item--no-icon {
+      --mdc-ripple-hover-opacity: 0;
+      --mdc-ripple-press-opacity: 0;
+      --mdc-ripple-focus-opacity: 0;
+
+      .mdc-list-item__ripple,
+      .mat-mdc-list-item-ripple,
+      .mat-ripple-element,
+      .mat-mdc-focus-indicator::before {
+        display: none !important;
+        opacity: 0 !important;
+      }
+
+      &::before,
+      &:active::before,
+      &:focus::before {
+        display: none !important;
+        background: transparent !important;
+      }
     }
 
     .menu-list-item {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+
+      .mdc-list-item__content {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+      }
+
       transition: 0.2s ease-in-out all;
       margin-top: 3px;
       height: 42px;
       display: flex;
-      font-size: 15px;
-      white-space: nowrap;
       align-items: center;
+      font-size: 15px;
       line-height: 25px;
       position: relative;
-      padding: 12px 16px;
+      padding: 12px 12px;
       text-decoration: none;
       font-weight: 400;
       border-radius: 26px;
-      gap: 12px;
+      gap: 0;
+
+      &__lead {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        overflow: hidden;
+        max-width: 100%;
+      }
+
+      &--no-icon .menu-list-item__lead {
+        padding-left: $nav-subitem-label-indent;
+      }
+
+      // Reserva espacio a la derecha; el chevron va fijo (Material envuelve el DOM en __content).
+      &--has-children {
+        padding-right: 32px;
+      }
+
+      &--has-children .arrow-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        margin: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        z-index: 2;
+        pointer-events: none;
+
+        .mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          line-height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+
+      .hide-menu {
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      // Tercer nivel: subítems de subítems (clase en el componente).
+      &--depth-deep {
+        height: 38px;
+        font-size: 13px;
+        line-height: 20px;
+
+        .hide-menu,
+        .mdc-list-item__content,
+        .mdc-list-item__primary-text {
+          font-size: 13px;
+          line-height: 20px;
+        }
+      }
 
       &:hover::before {
         transition: 0.2s ease-in-out all;
@@ -334,34 +488,58 @@
         }
       }
 
-      .mdc-list-item__start {
-        margin-right: 0;
-        margin-left: 0;
+      .routeIcon {
+        flex: 0 0 22px;
         width: 22px;
         height: 22px;
-        fill: transparent !important;
-        // color: $primary;
+      }
+
+      .mdc-list-item__start {
+        display: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        margin: 0 !important;
       }
 
       .mdc-list-item__primary-text {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-
-        .arrow-icon {
-          display: flex;
-
-          .mat-icon {
-            font-size: 18px;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-        }
+        justify-content: flex-start;
       }
     }
+  }
+}
+
+// Tercer nivel: prioridad sobre estilos MDC del mat-list-item.
+.mat-mdc-nav-list.sidebar-list .menu-list-item.menu-list-item--depth-deep {
+  --mat-list-list-item-label-text-size: 13px;
+  --mat-list-list-item-label-text-line-height: 20px;
+  --mat-list-list-item-one-line-container-height: 38px;
+  height: 38px;
+  font-size: 13px;
+  line-height: 20px;
+
+  .hide-menu,
+  .menu-list-item__lead,
+  .mdc-list-item__content,
+  .mdc-list-item__primary-text {
+    font-size: 13px;
+    line-height: 20px;
+  }
+}
+
+// Chevron desplegable: fijo a la derecha del ítem (anula layout MDC del mat-list-item).
+.mat-mdc-nav-list.sidebar-list .menu-list-item--has-children {
+  position: relative !important;
+
+  .arrow-icon {
+    position: absolute !important;
+    right: 12px !important;
+    left: auto !important;
+    top: 50% !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
   }
 }
 

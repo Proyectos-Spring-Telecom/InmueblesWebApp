@@ -149,10 +149,28 @@ export const navItems: NavItem[] = [
         permission: Permiso.CONSULTA_CLIENTE,
       },
       {
-        displayName: 'Lista Arrendatarios',
-        route: '/arrendatarios',
+        displayName: 'Arrendatarios',
+        route: '/menu-level',
         permission: Permiso.CONSULTA_CLIENTE,
+        children: [
+          {
+            displayName: 'Lista de Arrendatarios',
+            route: '/arrendatarios',
+            permission: Permiso.CONSULTA_CLIENTE,
+          },
+          {
+            displayName: 'Pagos del mes',
+            route: '/arrendatarios/pagos-mes',
+            permission: Permiso.CONSULTA_CLIENTE,
+          },
+          {
+            displayName: 'Histórico de pagos',
+            route: '/arrendatarios/pagos-historico',
+            permission: Permiso.CONSULTA_CLIENTE,
+          },
+        ],
       },
+      
     ],
   },
   /* {

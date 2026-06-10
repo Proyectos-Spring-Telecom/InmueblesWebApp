@@ -1,0 +1,101 @@
+@import '../../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.hist-renta-filtro-fechas__label {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.hist-renta-filtro-fechas__input {
+  min-width: 11rem;
+  background: #1c252e;
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #f1f5f9;
+}
+
+.hist-renta-filtro-fechas__input:focus {
+  border-color: rgba(129, 140, 248, 0.55);
+  box-shadow: none;
+}
+
+.hist-renta-filtros-panel {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.hist-renta-filtros-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.hist-renta-filtros-panel__accion {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1200px) {
+  .hist-renta-filtros-panel__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hist-renta-filtros-panel__accion {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .hist-renta-filtros-panel__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hist-detalle-modal__loading {
+  min-height: 10rem;
+  justify-content: center;
+}
+
+.hist-detalle-modal__alert {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 8rem;
+  padding: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.hist-detalle-modal__alert p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.hist-detalle-modal__alert mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.hist-detalle-modal__resumen {
+  margin-top: 0;
+}
+
+.operacion-hub-vista .surface {
+  padding-top: 1rem;
+}

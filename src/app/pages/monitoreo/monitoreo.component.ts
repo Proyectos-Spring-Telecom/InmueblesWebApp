@@ -39,6 +39,7 @@ import {
   nombreClienteMonitoreo,
 } from './monitoreo-clientes.mapper';
 import {
+  claveZonaCatalogo,
   extraerMapaInmuebleApi,
   mapaInmuebleTienePlano,
   visualLayoutDesdeCatalogoInmueble,
@@ -482,17 +483,6 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /** 1–2 arrendadores: mitad de fila (`col-6`); 3 o más: tercio (`col-4`). */
-  get clienteCardColClass(): string {
-    return this.clientesFiltrados.length > 2 ? 'col-12 col-md-4' : 'col-12 col-md-6';
-  }
-
-  get clientesGridRowClass(): string {
-    return this.clientesFiltrados.length === 1
-      ? 'row g-3 justify-content-center'
-      : 'row g-3';
-  }
-
   limpiarBusquedaClientes(): void {
     this.clienteSearchTerm = '';
   }
@@ -659,10 +649,19 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       local?.estatusLocal != null
         ? Number(local.estatusLocal)
         : Number(local?.estatus);
-    const e = String(local?.estado ?? '').toLowerCase().trim();
+
+    if (local?.ocupado === true || est === 2) {
+      return 'Ocupado';
+    }
+    if (est === 3) {
+      return 'Apartado';
+    }
+    if (est === 0) {
+      return 'Fuera de servicio';
+    }
+
     const esDisponible =
       est === 1 ||
-      e === 'libre' ||
       local?.disponible === true ||
       /disponible/i.test(etiqueta);
     if (esDisponible) return 'Disponible';
@@ -1907,7 +1906,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /** Sincroniza nombres/estado de la lista con los locales ya colocados en el plano. */
+  /** Sincroniza nombres/estado de la lista con los locales del plano y añade faltantes. */
   private actualizarMetadatosLocalesEnDiagrama(
     filas: Record<string, unknown>[],
   ): void {
@@ -1916,21 +1915,23 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       const id = String(f['id'] ?? f['idLocal'] ?? '').trim();
       if (id) porId.set(id, f);
     }
-    const locales = this.visualLayout.locales.map((local) => {
-      const fila = porId.get(String(local.id));
-      if (!fila) return local;
-      const nom = String(
-        fila['nombre'] ?? fila['nombreLocal'] ?? fila['local'] ?? '',
-      ).trim();
-      return {
-        ...local,
-        nombre: nom || local.nombre,
-        estado: this.normalizeLocalState(
-          fila['estado'] ?? fila['estatusLocal'] ?? fila['estatus'] ?? local.estado,
-        ),
-      };
-    });
-    this.visualLayout = { ...this.visualLayout, locales };
+    const zonasBase = this.visualLayout.zonas.filter(
+      (z) => !this.esZonaAuxiliarDiagrama(z.id),
+    );
+    const locales = this.visualLayout.locales.map((local) =>
+      this.localCanvasDesdeFilaLista(local, porId.get(String(local.id))),
+    );
+    const fusionado = this.fusionarLocalesFaltantesEnDiagrama(
+      zonasBase,
+      locales,
+      filas,
+    );
+    this.visualLayout = {
+      ...this.visualLayout,
+      zonas: fusionado.zonas,
+      locales: fusionado.locales,
+    };
+    this.expandCanvasToContent();
   }
 
   private sincronizarMapaEnInmueble(inmueble: any, mapaInmueble: unknown): void {
@@ -2303,45 +2304,196 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       .map((z) => ({ ...z }));
     const locales: LocalCanvasModel[] = layout.locales.map((local) => {
       const fila = porId.get(String(local.id));
-      const base: LocalCanvasModel = {
-        id: local.id,
-        nombre: local.nombre,
-        x: local.x,
-        y: local.y,
-        width: local.width,
-        height: local.height,
-        zonaId: local.zonaId,
-        estado: this.normalizeLocalState(
-          fila?.['estado'] ?? fila?.['estatusLocal'] ?? fila?.['estatus'] ?? local.estado,
-        ),
-        bloqueado: Boolean(fila?.['bloqueado']),
-      };
-      if (fila) {
-        const nom = String(
-          fila['nombre'] ?? fila['nombreLocal'] ?? fila['local'] ?? '',
-        ).trim();
-        if (nom) base.nombre = nom;
-        const ocupante = this.getOcupanteLocalLista(fila);
-        if (ocupante) base.ocupanteNombre = ocupante;
-        const mn = Number(
-          fila['mensualidadMxn'] ?? fila['mensualidad'] ?? fila['rentaMensual'],
-        );
-        if (isFinite(mn) && mn >= 0) base.mensualidadMxn = mn;
-        const giro = String(fila['giro'] ?? fila['giroActividad'] ?? '').trim();
-        if (giro) base.giroActividad = giro;
-        const vig = String(
-          fila['vigenciaHasta'] ?? fila['vigenciaTexto'] ?? '',
-        ).trim();
-        if (vig) base.vigenciaHasta = vig;
-      }
-      return base;
+      return this.localCanvasDesdeFilaLista(
+        {
+          id: local.id,
+          nombre: local.nombre,
+          x: local.x,
+          y: local.y,
+          width: local.width,
+          height: local.height,
+          zonaId: local.zonaId,
+          estado: local.estado,
+        },
+        fila,
+      );
     });
+
+    const fusionado = this.fusionarLocalesFaltantesEnDiagrama(zonas, locales, filas);
 
     return {
       canvas: { ...layout.canvas },
-      zonas,
-      locales,
+      zonas: fusionado.zonas,
+      locales: fusionado.locales,
     };
+  }
+
+  /** Arma un local del lienzo con metadatos de la lista unificada. */
+  private localCanvasDesdeFilaLista(
+    rect: {
+      id: string;
+      nombre: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      zonaId: string | null;
+      estado: string;
+    },
+    fila?: Record<string, unknown>,
+  ): LocalCanvasModel {
+    const base: LocalCanvasModel = {
+      id: rect.id,
+      nombre: rect.nombre,
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      zonaId: rect.zonaId,
+      estado: fila
+        ? this.estadoVisualDesdeFilaLista(fila)
+        : this.normalizeLocalState(rect.estado),
+      bloqueado: Boolean(fila?.['bloqueado']),
+    };
+    if (!fila) return base;
+    const nom = String(
+      fila['nombre'] ?? fila['nombreLocal'] ?? fila['local'] ?? '',
+    ).trim();
+    if (nom) base.nombre = nom;
+    const ocupante = this.getOcupanteLocalLista(fila);
+    if (ocupante) base.ocupanteNombre = ocupante;
+    const mn = Number(
+      fila['mensualidadMxn'] ?? fila['mensualidad'] ?? fila['rentaMensual'],
+    );
+    if (isFinite(mn) && mn >= 0) base.mensualidadMxn = mn;
+    const giro = String(fila['giro'] ?? fila['giroActividad'] ?? '').trim();
+    if (giro) base.giroActividad = giro;
+    const vig = String(fila['vigenciaHasta'] ?? fila['vigenciaTexto'] ?? '').trim();
+    if (vig) base.vigenciaHasta = vig;
+    return base;
+  }
+
+  private resolverZonaDiagramaParaFila(
+    fila: Record<string, unknown>,
+    zonas: ZonaCanvasModel[],
+    indiceFallback: number,
+  ): ZonaCanvasModel | null {
+    const nombreZ = String(fila['zonaPrincipal'] ?? '').trim();
+    const clave = claveZonaCatalogo(fila['idZona'], nombreZ, indiceFallback);
+    const porClave = zonas.find((z) => z.id === clave);
+    if (porClave) return porClave;
+
+    const idNum = Number(fila['idZona']);
+    if (Number.isFinite(idNum) && idNum > 0) {
+      const porNum = zonas.find((z) => z.id === String(idNum));
+      if (porNum) return porNum;
+    }
+
+    if (nombreZ) {
+      const lower = nombreZ.toLowerCase();
+      const porNombre = zonas.find(
+        (z) => z.nombre.trim().toLowerCase() === lower,
+      );
+      if (porNombre) return porNombre;
+    }
+
+    return null;
+  }
+
+  private crearZonaRectEnDiagrama(
+    zonas: ZonaCanvasModel[],
+    id: string,
+    nombre: string,
+  ): ZonaCanvasModel {
+    const zoneWidth = 520;
+    const zoneHeight = 300;
+    const zoneGapY = 44;
+    let maxBottom = 40;
+    for (const z of zonas) {
+      maxBottom = Math.max(maxBottom, z.y + z.height);
+    }
+    return {
+      id,
+      nombre: nombre || 'Zona',
+      x: 40,
+      y: maxBottom + zoneGapY,
+      width: zoneWidth,
+      height: zoneHeight,
+    };
+  }
+
+  /**
+   * Añade al plano los locales del catálogo/lista que no están en el mapa guardado.
+   */
+  private fusionarLocalesFaltantesEnDiagrama(
+    zonas: ZonaCanvasModel[],
+    locales: LocalCanvasModel[],
+    filas: Record<string, unknown>[],
+  ): { zonas: ZonaCanvasModel[]; locales: LocalCanvasModel[] } {
+    const idsPresentes = new Set(locales.map((l) => String(l.id)));
+    const faltantes = filas.filter((f) => {
+      const id = String(f['id'] ?? f['idLocal'] ?? '').trim();
+      return id && !idsPresentes.has(id);
+    });
+    if (!faltantes.length) {
+      return { zonas, locales };
+    }
+
+    const zonasOut = [...zonas];
+    const localesOut = [...locales];
+    const porZona = new Map<string, LocalCanvasModel[]>();
+    for (const l of localesOut) {
+      const zid = l.zonaId != null ? String(l.zonaId) : '';
+      if (!zid) continue;
+      if (!porZona.has(zid)) porZona.set(zid, []);
+      porZona.get(zid)!.push(l);
+    }
+
+    const localW = 92;
+    const localH = 72;
+    const localGapX = 20;
+    const localGapY = 16;
+    const padX = 28;
+    const padY = 44;
+    const colsLocales = 4;
+
+    faltantes.forEach((fila, fi) => {
+      const id = String(fila['id'] ?? fila['idLocal'] ?? '').trim();
+      if (!id) return;
+
+      let zona = this.resolverZonaDiagramaParaFila(fila, zonasOut, fi);
+      if (!zona) {
+        const nombreZ = String(fila['zonaPrincipal'] ?? '').trim() || 'Zona';
+        const clave = claveZonaCatalogo(fila['idZona'], nombreZ, zonasOut.length);
+        zona = this.crearZonaRectEnDiagrama(zonasOut, clave, nombreZ);
+        zonasOut.push(zona);
+        porZona.set(zona.id, []);
+      }
+
+      const enZona = porZona.get(zona.id) ?? [];
+      const idx = enZona.length;
+      const colL = idx % colsLocales;
+      const rowL = Math.floor(idx / colsLocales);
+      const rect = {
+        id,
+        nombre:
+          String(
+            fila['nombre'] ?? fila['nombreLocal'] ?? fila['local'] ?? id,
+          ).trim() || id,
+        x: zona.x + padX + colL * (localW + localGapX),
+        y: zona.y + padY + rowL * (localH + localGapY),
+        width: localW,
+        height: localH,
+        zonaId: zona.id,
+        estado: 'libre',
+      };
+      const nuevo = this.localCanvasDesdeFilaLista(rect, fila);
+      localesOut.push(nuevo);
+      enZona.push(nuevo);
+      porZona.set(zona.id, enZona);
+    });
+
+    return { zonas: zonasOut, locales: localesOut };
   }
 
   buildZonesAndLocales(): void {
@@ -2900,6 +3052,46 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     return `estado-${local.estado}${selected}${dragging}`;
   }
 
+  /** Etiqueta breve de estatus en el diagrama (misma lógica que la lista). */
+  etiquetaEstadoDiagrama(local: LocalCanvasModel): string {
+    const map: Record<LocalVisualState, string> = {
+      libre: 'Disponible',
+      ocupado: 'Ocupado',
+      reservado: 'Apartado',
+      inactivo: 'Fuera de servicio',
+    };
+    return map[local.estado] ?? 'Sin dato';
+  }
+
+  claseEstadoDiagrama(local: LocalCanvasModel): string {
+    return `local-status--${local.estado}`;
+  }
+
+  /**
+   * Estado visual del local en el lienzo, alineado con `getEstadoChipClassLista`.
+   */
+  private estadoVisualDesdeFilaLista(
+    fila: Record<string, unknown>,
+  ): LocalVisualState {
+    if (fila['ocupado'] === true) return 'ocupado';
+
+    const est =
+      fila['estatusLocal'] != null
+        ? Number(fila['estatusLocal'])
+        : Number(fila['estatus']);
+    if (est === 2) return 'ocupado';
+    if (est === 3) return 'reservado';
+    if (est === 0) return 'inactivo';
+    if (est === 1) return 'libre';
+
+    const e = String(fila['estado'] ?? 'libre').toLowerCase().trim();
+    if (e === 'ocupado' || e === 'reservado' || e === 'inactivo') {
+      return e as LocalVisualState;
+    }
+    if (fila['disponible'] === true) return 'libre';
+    return 'libre';
+  }
+
   trackByZona(_: number, zona: ZonaCanvasModel): string {
     return zona.id;
   }
@@ -3340,6 +3532,16 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     const idLocalNum = Number(idLocalRaw);
     if (esVistaLocal && Number.isFinite(idLocalNum) && idLocalNum > 0) {
       qp['idLocal'] = Math.floor(idLocalNum);
+    }
+    const mensualidadRaw =
+      ins?.mensualidadMxn ?? ins?.mensualidad ?? ins?.detalleLocal?.['mensualidad'];
+    const mensualidadNum = Number(mensualidadRaw);
+    if (
+      esVistaLocal &&
+      Number.isFinite(mensualidadNum) &&
+      mensualidadNum >= 0
+    ) {
+      qp['mensualidadMxn'] = mensualidadNum;
     }
     const parentId =
       payload?.parentInmuebleId ??

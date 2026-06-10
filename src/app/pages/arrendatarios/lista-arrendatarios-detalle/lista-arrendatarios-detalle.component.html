@@ -241,82 +241,193 @@
   </div>
 
   <!-- Contratos -->
-  <div class="inm-detalle__panel" *ngIf="detalleTab === 3">
-    <div class="arr-contratos-stack" *ngIf="contratos.length; else sinContratos">
-      <article class="arr-contrato" *ngFor="let c of contratos; let ci = index">
-        <header class="arr-contrato__hero">
-          <div class="arr-contrato__hero-main">
-            <span class="arr-contrato__eyebrow">Contrato {{ ci + 1 }}</span>
-            <h3 class="arr-contrato__period">
+  <div class="inm-detalle__panel inm-detalle__panel--contratos" *ngIf="detalleTab === 3">
+    <div class="arr-ctr-list" *ngIf="contratos.length; else sinContratos">
+      <details
+        class="arr-ctr-panel"
+        *ngFor="let c of contratos; let ci = index"
+        [attr.open]="ci === 0 ? '' : null"
+      >
+        <summary class="arr-ctr-panel__head">
+          <span class="arr-ctr-panel__icon" aria-hidden="true"><i class="fa fa-file-text-o"></i></span>
+          <span class="arr-ctr-panel__title">
+            <span class="arr-ctr-panel__name">Contrato {{ ci + 1 }}</span>
+            <span class="arr-ctr-panel__dates">
               {{ formatearFecha($any(c['fechaInicioContrato'])) }}
-              <span class="arr-contrato__sep">→</span>
+              <span aria-hidden="true">→</span>
               {{ formatearFecha($any(c['fechaTerminoContrato'])) }}
-            </h3>
-            <div class="arr-contrato__badges">
-              <span class="arr-chip arr-chip--accent" *ngIf="c['moneda']">
-                {{ c['moneda'] }}
-              </span>
-              <span class="arr-chip arr-chip--muted" *ngIf="c['rentaTotal'] != null">
-                Renta total: {{ formatearMoneda(c['rentaTotal']) }}
-              </span>
-              <span class="arr-chip arr-chip--muted" *ngIf="c['mantenimientoTotal'] != null">
-                Mantenimiento: {{ formatearMoneda(c['mantenimientoTotal']) }}
-              </span>
-            </div>
-          </div>
-        </header>
+            </span>
+          </span>
+          <span class="arr-ctr-panel__chips">
+            <span class="arr-ctr-chip" *ngIf="c['moneda']">{{ c['moneda'] }}</span>
+            <span class="arr-ctr-chip" *ngIf="cantidadLocalesContrato(c)">
+              {{ cantidadLocalesContrato(c) }}
+              {{ cantidadLocalesContrato(c) === 1 ? 'local' : 'locales' }}
+            </span>
+          </span>
+          <span class="arr-ctr-panel__renta" *ngIf="c['rentaTotal'] != null">
+            {{ formatearMoneda(c['rentaTotal']) }}
+          </span>
+        </summary>
 
-        <section class="arr-contrato__inmueble" *ngIf="inmuebleDesdeContrato(c) as inm">
-          <div class="arr-contrato-inm__icon" aria-hidden="true">
-            <i class="fa fa-building-o"></i>
-          </div>
-          <div class="arr-contrato-inm__strip">
-            <span class="arr-contrato-inm__eyebrow">Inmueble</span>
-            <div
-              class="arr-contrato-inm__row"
-              role="group"
-              [attr.aria-label]="'Inmueble vinculado al contrato: ' + (inm['inmueble'] || '—')"
-            >
-              <span class="arr-contrato-inm__cell arr-contrato-inm__title">{{ inm['inmueble'] || '—' }}</span>
-              <span class="arr-contrato-inm__cell arr-contrato-inm__addr" *ngIf="inm['direccionFiscal']">
-                <i class="fa fa-map-marker" aria-hidden="true"></i> {{ inm['direccionFiscal'] }}
-              </span>
-              <span
-                class="arr-contrato-inm__cell arr-contrato-inm__contact"
-                *ngIf="inm['nombreRepresentante'] || inm['telefonoRepresentante']"
-              >
-                <span *ngIf="inm['nombreRepresentante']">
-                  <i class="fa fa-user" aria-hidden="true"></i> {{ inm['nombreRepresentante'] }}
+        <div class="arr-ctr-panel__body">
+          <div
+            class="arr-ctr-top-row"
+            *ngIf="
+              c['rentaTotal'] != null ||
+              c['mantenimientoTotal'] != null ||
+              inmuebleDesdeContrato(c)
+            "
+          >
+            <div class="arr-ctr-tile arr-ctr-tile--renta" *ngIf="c['rentaTotal'] != null">
+              <div class="arr-ctr-tile__stack">
+                <span class="arr-ctr-tile__label">Renta mensual total</span>
+                <span class="arr-ctr-tile__value">{{ formatearMoneda(c['rentaTotal']) }}</span>
+                <span class="arr-ctr-tile__hint" *ngIf="c['subTotalRenta'] != null && c['ivaRenta'] != null">
+                  Subtotal {{ formatearMoneda(c['subTotalRenta']) }} + IVA
+                  {{ formatearMoneda(c['ivaRenta']) }}
                 </span>
+              </div>
+            </div>
+            <div class="arr-ctr-tile arr-ctr-tile--mant" *ngIf="c['mantenimientoTotal'] != null">
+              <div class="arr-ctr-tile__stack">
+                <span class="arr-ctr-tile__label">Mantenimiento total</span>
+                <span class="arr-ctr-tile__value">{{ formatearMoneda(c['mantenimientoTotal']) }}</span>
                 <span
-                  *ngIf="inm['nombreRepresentante'] && inm['telefonoRepresentante']"
-                  class="arr-contrato-inm__phone-sep"
-                  aria-hidden="true"
-                  >·</span
+                  class="arr-ctr-tile__hint"
+                  *ngIf="c['subTotalMantenimiento'] != null && c['ivaMantenimiento'] != null"
                 >
-                <span *ngIf="inm['telefonoRepresentante']">{{ inm['telefonoRepresentante'] }}</span>
-              </span>
-              <!-- <span class="arr-contrato-inm__cell arr-contrato-inm__badge-wrap">
-                <span class="arr-chip arr-chip--outline arr-chip--small arr-contrato-inm__badge">
-                  {{ etiquetaEstatusInmuebleEmpresa(inm['estatusInmueble']) }}
+                  Subtotal {{ formatearMoneda(c['subTotalMantenimiento']) }} + IVA
+                  {{ formatearMoneda(c['ivaMantenimiento']) }}
                 </span>
-              </span> -->
+              </div>
+            </div>
+            <div class="arr-ctr-tile arr-ctr-tile--inm" *ngIf="inmuebleDesdeContrato(c) as inm">
+              <div class="arr-ctr-inm">
+                <div class="arr-ctr-inm__row arr-ctr-inm__row--top">
+                  <div class="arr-ctr-inm__head">
+                    <span class="arr-ctr-inm__icon" aria-hidden="true">
+                      <i class="fa fa-building-o"></i>
+                    </span>
+                    <div class="arr-ctr-inm__title-wrap">
+                      <span class="arr-ctr-inm__eyebrow">Inmueble</span>
+                      <span class="arr-ctr-inm__nombre">{{ inm['inmueble'] || '—' }}</span>
+                    </div>
+                  </div>
+                  <p class="arr-ctr-inm__addr" *ngIf="inm['direccionFiscal']">
+                    <i class="fa fa-map-marker" aria-hidden="true"></i>
+                    {{ inm['direccionFiscal'] }}
+                  </p>
+                </div>
+
+                <div
+                  class="arr-ctr-inm__row arr-ctr-inm__row--contact"
+                  *ngIf="
+                    inm['nombreRepresentante'] ||
+                    inm['telefonoRepresentante'] ||
+                    inm['correoRepresentante']
+                  "
+                >
+                  <span class="arr-ctr-inm__channel" *ngIf="inm['nombreRepresentante']">
+                    <i class="fa fa-user" aria-hidden="true"></i>
+                    {{ inm['nombreRepresentante'] }}
+                  </span>
+                  <span class="arr-ctr-inm__channel" *ngIf="inm['telefonoRepresentante']">
+                    <i class="fa fa-phone" aria-hidden="true"></i>
+                    {{ inm['telefonoRepresentante'] }}
+                  </span>
+                  <span class="arr-ctr-inm__channel" *ngIf="inm['correoRepresentante']">
+                    <i class="fa fa-envelope-o" aria-hidden="true"></i>
+                    {{ inm['correoRepresentante'] }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        </section>
 
-        <div class="arr-metric-grid">
-          <div class="arr-metric" *ngFor="let m of metricasContrato(c)">
-            <span class="arr-metric__label">{{ m.label }}</span>
-            <span class="arr-metric__value">{{ m.value }}</span>
+          <section class="arr-ctr-block arr-ctr-block--locales" *ngIf="localesDesdeContrato(c).length">
+            <h4 class="arr-ctr-block__title">
+              <i class="fa fa-store"></i> Locales ({{ localesDesdeContrato(c).length }})
+            </h4>
+            <div class="inm-locales-table-wrap arr-ctr-locales-wrap">
+              <table class="inm-locales-table arr-ctr-locales-table">
+                <thead>
+                  <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Local</th>
+                    <th scope="col">Área</th>
+                    <th scope="col">Giro</th>
+                    <th scope="col">Mensualidad</th>
+                    <th scope="col">Estatus</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let loc of localesDesdeContrato(c)">
+                    <td class="arr-ctr-locales-table__foto" data-label="">
+                      <img
+                        *ngIf="urlFachadaLocal(loc) as fachada"
+                        [src]="fachada"
+                        [alt]="loc['nombre'] || 'Local'"
+                        loading="lazy"
+                      />
+                      <span
+                        *ngIf="!urlFachadaLocal(loc)"
+                        class="arr-ctr-locales-table__foto-ph"
+                        aria-hidden="true"
+                        ><i class="fa fa-store"></i
+                      ></span>
+                    </td>
+                    <td class="inm-locales-table__nombre" data-label="Local">
+                      {{ loc['nombre'] || '—' }}
+                    </td>
+                    <td data-label="Área">
+                      <ng-container *ngIf="loc['areaM2'] != null && loc['areaM2'] !== ''; else sinArea">
+                        {{ loc['areaM2'] }} m²
+                      </ng-container>
+                      <ng-template #sinArea>—</ng-template>
+                    </td>
+                    <td data-label="Giro">{{ loc['giro'] || '—' }}</td>
+                    <td data-label="Mensualidad">
+                      <ng-container
+                        *ngIf="loc['mensualidad'] != null && loc['mensualidad'] !== ''; else sinMens"
+                      >
+                        {{ formatearMoneda(loc['mensualidad']) }}
+                      </ng-container>
+                      <ng-template #sinMens>—</ng-template>
+                    </td>
+                    <td data-label="Estatus">
+                      <span [ngClass]="claseChipEstatusLocal(loc['estatus'])">
+                        {{ etiquetaEstatusLocal(loc['estatus']) }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <div class="arr-ctr-fin-grid" *ngIf="gruposMetricasContrato(c).length">
+            <section
+              class="arr-ctr-block arr-ctr-block--fin"
+              *ngFor="let g of gruposMetricasContrato(c)"
+              [attr.aria-label]="g.titulo"
+            >
+              <h4 class="arr-ctr-block__title">{{ g.titulo }}</h4>
+              <dl class="arr-ctr-dl">
+                <div class="arr-ctr-dl__row" *ngFor="let m of g.metricas">
+                  <dt>{{ m.label }}</dt>
+                  <dd>{{ m.value }}</dd>
+                </div>
+              </dl>
+            </section>
           </div>
-        </div>
 
-        <footer class="arr-contrato__obs" *ngIf="c['observaciones']">
-          <span class="arr-contrato__obs-label">Observaciones</span>
-          <p class="arr-contrato__obs-text">{{ c['observaciones'] }}</p>
-        </footer>
-      </article>
+          <footer class="arr-ctr-obs" *ngIf="c['observaciones']">
+            <span class="arr-ctr-obs__label">Observaciones</span>
+            <p class="arr-ctr-obs__text">{{ c['observaciones'] }}</p>
+          </footer>
+        </div>
+      </details>
     </div>
     <ng-template #sinContratos>
       <p class="inm-empty">Sin contratos registrados.</p>

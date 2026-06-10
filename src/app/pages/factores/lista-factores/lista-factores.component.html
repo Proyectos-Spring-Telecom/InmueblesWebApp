@@ -3,12 +3,10 @@
     <div class="perm-head__icon" aria-hidden="true">
       <mat-icon>straighten</mat-icon>
     </div>
-
     <div class="perm-head__text">
       <span class="eyebrow">Sección</span>
       <h2>Factores Presupuestales</h2>
     </div>
-
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Administración</span>
       <span class="sep">/</span>
@@ -20,10 +18,11 @@
 
   <div class="surface">
     <div class="row mt-3 align-items-stretch g-3 gx-2 gx-md-3 gy-4 gy-lg-3">
+
+      <!-- Grid Factores -->
       <div class="col-12 col-lg-6 min-w-0 d-flex flex-column">
         <div
-          class="d-flex flex-wrap justify-content-between align-items-center gap-2 gap-md-3 mb-2 mb-md-3 flex-shrink-0 w-100"
-        >
+          class="d-flex flex-wrap justify-content-between align-items-center gap-2 gap-md-3 mb-2 mb-md-3 flex-shrink-0 w-100">
           <h5 class="mb-0">Factores</h5>
           <div class="d-flex flex-wrap gap-2 gap-md-3 justify-content-end">
             <div *appHasPermission="['47', '59']">
@@ -41,105 +40,84 @@
           </div>
         </div>
         <div class="flex-grow-1 min-h-0 w-100 d-flex flex-column">
-          <div class="flex-grow-1 min-h-0 w-100 overflow-x-auto">
-            <dx-data-grid
-            #gridFactoresDemo
-            id="gridFactores"
-            class="inm-data-grid"
-            [columnHidingEnabled]="false"
-            [hoverStateEnabled]="false"
-            [showBorders]="true"
-            [showColumnLines]="false"
-            [showRowLines]="true"
-            [rowAlternationEnabled]="true"
-            [dataSource]="listaFactoresDemo"
-            [keyExpr]="'id'"
-            [height]="'100%'"
-            [width]="'100%'"
-            [remoteOperations]="{ paging: true }"
-            [paging]="{ pageSize: pageSizeFactoresDemo }"
-            [noDataText]="'Sin registros para mostrar'"
-            [pager]="{
-              showPageSizeSelector: true,
-              allowedPageSizes: [20],
-              showInfo: true,
-              infoText: 'Página {0} de {1}',
-              visible: true
-            }"
-            (onPageIndexChanged)="onPageIndexChangedFactoresDemo($event)"
-            (onOptionChanged)="onFactoresDemoGridOptionChanged($event)"
-          >
-            <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
-            <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
-            <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
-            <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
-            <dxo-grouping [autoExpandAll]="autoExpandAllGroupsFactores"></dxo-grouping>
-            <dxi-column
-              caption="Acciones"
-              cellTemplate="AccionesFactores"
-              alignment="center"
-              *appHasPermission="['46', '48', '58', '60']"
-              dataType="string"
-              [width]="120"
-            ></dxi-column>
-            <dxi-column dataField="variable" caption="Variable" alignment="center" dataType="string"></dxi-column>
-            <dxi-column dataField="valorFmt" caption="Valor" alignment="center" dataType="string"></dxi-column>
-            <dxi-column dataField="descripcion" caption="Descripción" alignment="center" dataType="string"></dxi-column>
-            <dxi-column
-              dataField="estatus"
-              caption="Estatus"
-              alignment="center"
-              cellTemplate="estFactores"
-              dataType="string"
-            >
-              <div *dxTemplate="let f of 'estFactores'">
-                @if (f.data.estatus === 1) {
+          <div class="flex-grow-1 min-h-0 w-100">
+            <dx-data-grid #gridFactoresDemo id="gridFactores" class="inm-data-grid" [columnHidingEnabled]="false"
+              [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+              [rowAlternationEnabled]="true" [dataSource]="listaFactoresDemo" [keyExpr]="'id'" [height]="'100%'"
+              [width]="'100%'" [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSizeFactoresDemo }"
+              [noDataText]="'Sin registros para mostrar'" [pager]="{
+                showPageSizeSelector: true,
+                allowedPageSizes: [20],
+                showInfo: true,
+                infoText: 'Página {0} de {1}',
+                visible: true
+              }" (onPageIndexChanged)="onPageIndexChangedFactoresDemo($event)"
+              (onOptionChanged)="onFactoresDemoGridOptionChanged($event)">
+              <dxo-scrolling mode="standard" [useNative]="false" showScrollbar="always"></dxo-scrolling>
+
+              <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+              <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+              <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+              <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+              <dxo-grouping [autoExpandAll]="autoExpandAllGroupsFactores"></dxo-grouping>
+
+              <dxi-column caption="Acciones" cellTemplate="AccionesFactores" alignment="center"
+                *appHasPermission="['46', '48', '58', '60']" dataType="string" [width]="120" [fixed]="true"
+                fixedPosition="left"></dxi-column>
+              <dxi-column dataField="variable" caption="Variable" alignment="center" dataType="string"
+                [minWidth]="120"></dxi-column>
+              <dxi-column dataField="valorFmt" caption="Valor" alignment="center" dataType="string"
+                [minWidth]="100"></dxi-column>
+              <dxi-column dataField="descripcion" caption="Descripción" alignment="center" dataType="string"
+                [minWidth]="180"></dxi-column>
+              <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="estFactores"
+                dataType="string" [minWidth]="100">
+                <div *dxTemplate="let f of 'estFactores'">
+                  @if (f.data.estatus === 1) {
                   <span class="estatus estatus-activo">Activo</span>
-                } @else {
+                  } @else {
                   <span class="estatus estatus-inactivo">Inactivo</span>
-                }
-              </div>
-            </dxi-column>
-            <div *dxTemplate="let row of 'AccionesFactores'" class="d-flex gap-3 justify-content-center">
-              <div *appHasPermission="['46', '54']">
-                <button
+                  }
+                </div>
+              </dxi-column>
+
+              <div *dxTemplate="let row of 'AccionesFactores'" class="d-flex gap-3 justify-content-center">
+                <div *appHasPermission="['46', '54']">
+                  <button
                   valueExpr="id"
                   id="actualizarButton"
                   class="btnAcciones"
                   (click)="actualizarFactor(row.data.id)"
-                >
-                  <i class="fa fa-edit"></i>
-                </button>
-              </div>
-              <div *appHasPermission="['48', '56']">
-                @if (row.data.estatus === 0) {
+                  >
+                    <i class="fa fa-edit"></i>
+                  </button>
+                </div>
+                <div *appHasPermission="['48', '56']">
+                  @if (row.data.estatus === 0) {
                   <button id="pinButton" class="btnAcciones" (click)="activarFactor(row.data)">
                     <i class="fa fa-arrow-up"></i>
                   </button>
-                } @else {
+                  } @else {
                   <button id="deleteButton" class="btnAcciones" (click)="desactivarFactor(row.data)">
                     <i class="fa fa-arrow-down"></i>
                   </button>
-                }
+                  }
+                </div>
               </div>
-            </div>
-            <dxo-export
-              [enabled]="false"
-              [allowExportSelectedData]="true"
-              [texts]="{
-                exportAll: 'Exportar todos los datos a Excel',
-                exportSelectedRows: 'Exportar filas seleccionadas a Excel'
-              }"
-            >
-            </dxo-export>
-          </dx-data-grid>
+
+              <dxo-export [enabled]="false" [allowExportSelectedData]="true" [texts]="{
+                  exportAll: 'Exportar todos los datos a Excel',
+                  exportSelectedRows: 'Exportar filas seleccionadas a Excel'
+                }"></dxo-export>
+            </dx-data-grid>
           </div>
         </div>
       </div>
+
+      <!-- Grid Fórmulas -->
       <div class="col-12 col-lg-6 min-w-0 d-flex flex-column">
         <div
-          class="d-flex flex-wrap justify-content-between align-items-center gap-2 gap-md-3 mb-2 mb-md-3 flex-shrink-0 w-100"
-        >
+          class="d-flex flex-wrap justify-content-between align-items-center gap-2 gap-md-3 mb-2 mb-md-3 flex-shrink-0 w-100">
           <h5 class="mb-0">Fórmulas</h5>
           <div class="d-flex flex-wrap gap-2 gap-md-3 justify-content-end">
             <div *appHasPermission="['47', '59']">
@@ -157,95 +135,81 @@
           </div>
         </div>
         <div class="flex-grow-1 min-h-0 w-100 d-flex flex-column">
-          <div class="flex-grow-1 min-h-0 w-100 overflow-x-auto">
-            <dx-data-grid
-            #gridFormulas
-            id="gridFormulas"
-            class="inm-data-grid"
-            [columnHidingEnabled]="false"
-            [hoverStateEnabled]="false"
-            [showBorders]="true"
-            [showColumnLines]="false"
-            [showRowLines]="true"
-            [rowAlternationEnabled]="true"
-            [dataSource]="listaFormulasDemo"
-            [keyExpr]="'id'"
-            [height]="'100%'"
-            [width]="'100%'"
-            [remoteOperations]="{ paging: true }"
-            [paging]="{ pageSize: pageSizeFormulasDemo }"
-            [noDataText]="'Sin registros para mostrar'"
-            [pager]="{
-              showPageSizeSelector: true,
-              allowedPageSizes: [20],
-              showInfo: true,
-              infoText: 'Página {0} de {1}',
-              visible: true
-            }"
-            (onPageIndexChanged)="onPageIndexChangedFormulasDemo($event)"
-            (onOptionChanged)="onFormulasDemoGridOptionChanged($event)"
-          >
-            <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
-            <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
-            <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
-            <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
-            <dxo-grouping [autoExpandAll]="autoExpandAllGroupsFormulas"></dxo-grouping>
-            <dxi-column
-              caption="Acciones"
-              cellTemplate="AccionesFormulas"
-              alignment="center"
-              *appHasPermission="['46', '48', '58', '60']"
-              dataType="string"
-              [width]="120"
-            ></dxi-column>
-            <dxi-column dataField="nombre" caption="Nombre" alignment="center" dataType="string"></dxi-column>
-            <dxi-column dataField="formula" caption="Fórmula" alignment="center" dataType="string"></dxi-column>
-            <dxi-column
-              dataField="estatus"
-              caption="Estatus"
-              alignment="center"
-              cellTemplate="estFormulas"
-              dataType="string"
-            >
-              <div *dxTemplate="let f of 'estFormulas'">
-                @if (f.data.estatus === 1) {
+          <div class="flex-grow-1 min-h-0 w-100">
+            <dx-data-grid #gridFormulas id="gridFormulas" class="inm-data-grid" [columnHidingEnabled]="false"
+              [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+              [rowAlternationEnabled]="true" [dataSource]="listaFormulasDemo" [keyExpr]="'id'" [height]="'100%'"
+              [width]="'100%'" [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSizeFormulasDemo }"
+              [noDataText]="'Sin registros para mostrar'" [pager]="{
+                showPageSizeSelector: true,
+                allowedPageSizes: [20],
+                showInfo: true,
+                infoText: 'Página {0} de {1}',
+                visible: true
+              }" (onPageIndexChanged)="onPageIndexChangedFormulasDemo($event)"
+              (onOptionChanged)="onFormulasDemoGridOptionChanged($event)">
+              <dxo-scrolling mode="standard" [useNative]="false" showScrollbar="always"></dxo-scrolling>
+
+              <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
+              <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+              <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+              <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+              <dxo-grouping [autoExpandAll]="autoExpandAllGroupsFormulas"></dxo-grouping>
+
+              <dxi-column caption="Acciones" cellTemplate="AccionesFormulas" alignment="center"
+                *appHasPermission="['46', '48', '58', '60']" dataType="string" [width]="120" [fixed]="true"
+                fixedPosition="left"></dxi-column>
+              <dxi-column dataField="nombre" caption="Nombre" alignment="center" dataType="string"
+                [minWidth]="160"></dxi-column>
+              <dxi-column dataField="formula" caption="Fórmula" alignment="center" dataType="string"
+                [minWidth]="200"></dxi-column>
+              <dxi-column dataField="descripcion" caption="Descripción" alignment="center" dataType="string"
+                [minWidth]="180"></dxi-column>
+              <dxi-column dataField="tipoResultadoLabel" caption="Tipo resultado" alignment="center" dataType="string"
+                [minWidth]="120"></dxi-column>
+              <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" dataType="string"
+                [width]="160"></dxi-column>
+              <dxi-column dataField="fhActualizacionFmt" caption="Actualización" alignment="center" dataType="string"
+                [width]="160"></dxi-column>
+              <dxi-column dataField="estatus" caption="Estatus" alignment="center" cellTemplate="estFormulas"
+                dataType="string" [minWidth]="100">
+                <div *dxTemplate="let f of 'estFormulas'">
+                  @if (f.data.estatus === 1) {
                   <span class="estatus estatus-activo">Activo</span>
-                } @else {
+                  } @else {
                   <span class="estatus estatus-inactivo">Inactivo</span>
-                }
-              </div>
-            </dxi-column>
-            <div *dxTemplate="let row of 'AccionesFormulas'" class="d-flex gap-3 justify-content-center">
-              <div *appHasPermission="['46', '54']">
-                <button valueExpr="id" id="actualizarButton" class="btnAcciones" (click)="editarFormula(row.data)">
-                  <i class="fa fa-edit"></i>
-                </button>
-              </div>
-              <div *appHasPermission="['48', '56']">
-                @if (row.data.estatus === 0) {
+                  }
+                </div>
+              </dxi-column>
+
+              <div *dxTemplate="let row of 'AccionesFormulas'" class="d-flex gap-3 justify-content-center">
+                <div *appHasPermission="['46', '54']">
+                  <button valueExpr="id" id="actualizarButton" class="btnAcciones" (click)="editarFormula(row.data)">
+                    <i class="fa fa-edit"></i>
+                  </button>
+                </div>
+                <div *appHasPermission="['48', '56']">
+                  @if (row.data.estatus === 0) {
                   <button id="pinButton" class="btnAcciones" (click)="activarFormula(row.data)">
                     <i class="fa fa-arrow-up"></i>
                   </button>
-                } @else {
+                  } @else {
                   <button id="deleteButton" class="btnAcciones" (click)="desactivarFormula(row.data)">
                     <i class="fa fa-arrow-down"></i>
                   </button>
-                }
+                  }
+                </div>
               </div>
-            </div>
-            <dxo-export
-              [enabled]="false"
-              [allowExportSelectedData]="true"
-              [texts]="{
-                exportAll: 'Exportar todos los datos a Excel',
-                exportSelectedRows: 'Exportar filas seleccionadas a Excel'
-              }"
-            >
-            </dxo-export>
-          </dx-data-grid>
+
+              <dxo-export [enabled]="false" [allowExportSelectedData]="true" [texts]="{
+                  exportAll: 'Exportar todos los datos a Excel',
+                  exportSelectedRows: 'Exportar filas seleccionadas a Excel'
+                }"></dxo-export>
+            </dx-data-grid>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </div>

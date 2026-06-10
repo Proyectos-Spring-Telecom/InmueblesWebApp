@@ -89,6 +89,9 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   twoLines: any = false;
 
   @HostBinding('attr.aria-expanded') ariaExpanded = this.expanded;
+  @HostBinding('attr.data-nav-depth') get navDepthAttr(): string {
+    return String(this.numericDepth());
+  }
   @Input() item: NavItem | any;
   @Input() depth: any;
 
@@ -101,9 +104,14 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   ) {}
 
   // -------- Utils ----------
-  private numericDepth(): number {
+  numericDepth(): number {
     const d = Number(this.depth);
     return Number.isFinite(d) ? d : 0;
+  }
+
+  /** Icono solo si el ítem lo define (evita hueco vacío en submenús sin icono). */
+  mostrarIconoNav(): boolean {
+    return this.numericDepth() < 2 && !!this.item?.iconName;
   }
 
   // Colapsa TODAS las instancias en el mismo nivel
@@ -157,13 +165,13 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(): void {
-    // Compatibilidad con tu lógica original
-    const url = this.navService.currentUrl();
-    if (this.item?.route && url) {
-      const mine = url.indexOf(`/${this.item.route}`) === 0;
-      if (mine) this.openExclusivelyAtMyDepth();
-      this.ariaExpanded = this.expanded;
+    if (
+      this.item &&
+      (this.isDirectlyActive(this.item) || this.isChildActive(this.item))
+    ) {
+      this.openExclusivelyAtMyDepth();
     }
+    this.ariaExpanded = this.expanded;
   }
 
   ngOnDestroy(): void {
@@ -212,8 +220,30 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   // -------- Activo ----------
+  private normalizePath(path: string): string {
+    const p = (path || '/').split('?')[0].replace(/\/+$/, '') || '/';
+    return p;
+  }
+
+  private currentPath(): string {
+    return this.normalizePath(this.router.url);
+  }
+
   isDirectlyActive(item: NavItem): boolean {
-    return !!item?.route && this.router.isActive(item.route, true);
+    if (!item?.route || item.route === '/menu-level') return false;
+
+    const route = this.normalizePath(item.route);
+    const url = this.currentPath();
+
+    if (url === route) return true;
+    if (!url.startsWith(route + '/')) return false;
+
+    // Lista de arrendatarios: solo activa en la ruta exacta del listado
+    if (route === '/arrendatarios') {
+      return url === '/arrendatarios';
+    }
+
+    return true;
   }
 
   isChildActive(item: NavItem): boolean {

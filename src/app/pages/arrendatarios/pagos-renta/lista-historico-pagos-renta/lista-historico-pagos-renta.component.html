@@ -1,0 +1,262 @@
+@if (embebidoEnHub) {
+  <div class="operacion-hub-vista inm-lista">
+    <ng-container *ngTemplateOutlet="contenidoHistorico"></ng-container>
+  </div>
+} @else {
+  <div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
+    <header class="perm-head" role="region" aria-label="Sección: Histórico de pagos">
+      <div class="perm-head__icon" aria-hidden="true">
+        <mat-icon>history</mat-icon>
+      </div>
+      <div class="perm-head__text">
+        <span class="eyebrow">Catálogos</span>
+        <h2>Histórico de pagos</h2>
+      </div>
+      <nav class="perm-head__crumbs" aria-label="Ruta">
+        <span class="crumb">Operación</span>
+        <span class="sep">/</span>
+        <span class="crumb">Arrendatarios</span>
+        <span class="sep">/</span>
+        <span class="crumb active">Histórico de pagos</span>
+      </nav>
+    </header>
+    <ng-container *ngTemplateOutlet="contenidoHistorico"></ng-container>
+  </div>
+}
+
+<ng-template #contenidoHistorico>
+  <div class="surface">
+    <div class="hist-renta-filtros-panel w-100">
+      <div class="hist-renta-filtros-panel__grid">
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histFechaInicio"
+            >Fecha inicio <span class="text-danger">*</span></label
+          >
+          <input
+            id="histFechaInicio"
+            type="date"
+            class="form-control form-control-sm hist-renta-filtro-fechas__input"
+            [(ngModel)]="fechaInicioFiltro"
+          />
+        </div>
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histFechaFin"
+            >Fecha fin <span class="text-danger">*</span></label
+          >
+          <input
+            id="histFechaFin"
+            type="date"
+            class="form-control form-control-sm hist-renta-filtro-fechas__input"
+            [(ngModel)]="fechaFinFiltro"
+          />
+        </div>
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histArrendatario"
+            >Arrendatario</label
+          >
+          <select
+            id="histArrendatario"
+            class="form-select form-select-sm hist-renta-filtro-fechas__input"
+            [(ngModel)]="idArrendatarioFiltro"
+            (ngModelChange)="onArrendatarioFiltroChange()"
+            [disabled]="catalogosFiltroCargando"
+          >
+            <option [ngValue]="null">Todos</option>
+            <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histContrato"
+            >Contrato</label
+          >
+          <select
+            id="histContrato"
+            class="form-select form-select-sm hist-renta-filtro-fechas__input"
+            [(ngModel)]="idContratoFiltro"
+            [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro"
+          >
+            <option [ngValue]="null">{{ textoPlaceholderContratoFiltro() }}</option>
+            <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
+          </select>
+        </div>
+        <div class="hist-renta-filtros-panel__accion">
+          <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
+            <i class="fa fa-filter"></i> Filtrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-10 align-items-end justify-content-end w-100 inm-lista__toolbar mt-5">
+      <div class="d-flex flex-wrap gap-10">
+        <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
+          <i class="fa fa-eraser"></i> Limpiar
+        </button>
+        <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+          <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+          {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-1">
+      <dx-data-grid
+        #gridContainer
+        id="gridHistoricoPagosRenta"
+        class="inm-data-grid"
+        [columnHidingEnabled]="true"
+        [hoverStateEnabled]="false"
+        [showBorders]="true"
+        [showColumnLines]="false"
+        [showRowLines]="true"
+        [rowAlternationEnabled]="true"
+        [dataSource]="listaHistorico"
+        [keyExpr]="'id'"
+        [width]="'100%'"
+        [remoteOperations]="{ paging: true }"
+        [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros en el rango seleccionado'"
+        [pager]="{
+          showPageSizeSelector: true,
+          allowedPageSizes: [20],
+          showInfo: true,
+          visible: true
+        }"
+        (onPageIndexChanged)="onPageIndexChanged($event)"
+        (onOptionChanged)="onGridOptionChanged($event)"
+      >
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar en histórico..."></dxo-search-panel>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+        <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+        <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+        <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+
+        <dxi-column
+          caption="Acciones"
+          cellTemplate="accionesHistoricoTpl"
+          alignment="center"
+          [width]="120"
+          [allowFiltering]="false"
+          [allowSorting]="false"
+        ></dxi-column>
+        <dxi-column dataField="mesLabel" caption="Periodo" alignment="center" [width]="150"></dxi-column>
+        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="200"></dxi-column>
+        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column>
+        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="130"></dxi-column>
+        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90"></dxi-column>
+        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>
+        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusHistoricoTpl" [width]="120"></dxi-column>
+
+        <div *dxTemplate="let row of 'estatusHistoricoTpl'">
+          <span class="estatus estatus-activo">{{ row.data.pagadaLabel }}</span>
+        </div>
+
+        <div *dxTemplate="let row of 'accionesHistoricoTpl'" class="d-flex gap-3 justify-content-center">
+          <div>
+            <button
+              type="button"
+              id="detalleIns"
+              class="btnAcciones"
+              title="Ver detalle"
+              (click)="verDetalleHistorico(row.data); $event.stopPropagation()"
+            >
+              <i class="fa fa-eye"></i>
+            </button>
+          </div>
+        </div>
+      </dx-data-grid>
+    </div>
+  </div>
+</ng-template>
+
+<ng-container *ngIf="mostrarModalDetalle">
+  <div class="contract-page-dim" (click)="cerrarModalDetalle()" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalDetalle()">
+    <div
+      class="docs-modal contract-docs-modal mono-pago-modal hist-detalle-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hist-detalle-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <span class="docs-modal__eyebrow">Histórico de pagos</span>
+          <h3 class="docs-modal__title" id="hist-detalle-modal-title">Detalle del pago</h3>
+          <p class="docs-modal__subtitle" *ngIf="detalleHistoricoVista">
+            Folio {{ detalleHistoricoVista.id }} · {{ detalleHistoricoVista.periodo }}
+          </p>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button
+            type="button"
+            class="docs-modal__close"
+            (click)="cerrarModalDetalle()"
+            aria-label="Cerrar detalle"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body">
+        <div class="col-12">
+          <div *ngIf="detalleModalCargando" class="mono-pago-servicio-loading hist-detalle-modal__loading">
+            <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+            <span>Obteniendo detalle del pago…</span>
+          </div>
+
+          <div *ngIf="!detalleModalCargando && detalleModalError" class="hist-detalle-modal__alert">
+            <mat-icon aria-hidden="true">error_outline</mat-icon>
+            <p>{{ detalleModalError }}</p>
+          </div>
+
+          <section
+            class="renta-pago-resumen hist-detalle-modal__resumen"
+            *ngIf="!detalleModalCargando && !detalleModalError && detalleHistoricoVista as vista"
+          >
+            <article class="renta-pago-resumen__hero">
+              <div class="renta-pago-resumen__hero-row">
+                <div>
+                  <span class="renta-pago-resumen__kicker">Arrendatario</span>
+                  <h4 class="renta-pago-resumen__hero-title">{{ vista.arrendatario }}</h4>
+                </div>
+                <span
+                  class="renta-pago-resumen__chip renta-pago-resumen__chip--pagada"
+                  aria-label="Estatus del pago: Pagada"
+                >
+                  <span class="renta-pago-resumen__chip-eyebrow">Renta</span>
+                  <span class="renta-pago-resumen__chip-valor">Pagada</span>
+                </span>
+              </div>
+              <p class="renta-pago-resumen__hero-meta">
+                Contrato: <span>{{ vista.contrato }}</span>
+              </p>
+            </article>
+
+            <article class="renta-pago-resumen__card">
+              <h5 class="renta-pago-resumen__card-title">Información del pago</h5>
+              <div class="renta-pago-resumen__grid">
+                <div class="renta-pago-resumen__field" *ngFor="let campo of vista.campos">
+                  <span>{{ campo.etiqueta }}</span>
+                  <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <div class="mt-3" *ngIf="!detalleModalCargando">
+            <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+              <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalDetalle()">
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
