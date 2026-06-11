@@ -25,10 +25,11 @@
 }
 
 <ng-template #contenidoRentas>
-  <div class="surface">
+  <div class="surface" [class.hub-vista-simple]="embebidoEnHub">
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
-      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="bg-secondary">
-        <i class="fa fa-plus"></i> Agregar
+      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-renta">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+        Registrar pago de renta
       </button>
       <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
@@ -59,14 +60,14 @@
         <dxi-column caption="Acciones" cellTemplate="accionesRentasTpl" alignment="center" [width]="200"
           [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column dataField="mesLabel" caption="Periodo" alignment="center" [width]="150"></dxi-column>
-        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="160" [visible]="!embebidoEnHub"></dxi-column>
         <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="200"></dxi-column>
         <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="140"></dxi-column>
-        <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column>
-        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="130"></dxi-column>
-        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90"></dxi-column>
-        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
-        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>
+        <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120" [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="montoFinalFmt" caption="Monto a cobrar" alignment="center" [width]="130"></dxi-column>
+        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90" [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160" [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110" [visible]="!embebidoEnHub"></dxi-column>
         <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusRentaTpl"
           [width]="120"></dxi-column>
         <dxi-column dataField="id" caption="ID" alignment="center" [width]="72" [visible]="false"></dxi-column>

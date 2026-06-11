@@ -13,6 +13,7 @@ import { ListaArrendatariosComponent } from './lista-arrendatarios/lista-arrenda
 import { AgregarArrendatarioComponent } from './agregar-arrendatario/agregar-arrendatario.component';
 import { PagosRentaModule } from './pagos-renta/pagos-renta.module';
 import { PagosMantenimientoModule } from './pagos-mantenimiento/pagos-mantenimiento.module';
+import { PagosServiciosModule } from './pagos-servicios/pagos-servicios.module';
 import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.module';
 
 @NgModule({
@@ -26,6 +27,7 @@ import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/oper
     ArrendatariosRoutingModule,
     PagosRentaModule,
     PagosMantenimientoModule,
+    PagosServiciosModule,
     OperacionPagosHubModule,
     MatIconModule,
     DxDataGridModule,

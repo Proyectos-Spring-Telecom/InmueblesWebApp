@@ -157,10 +157,7 @@ export function parseMonedaNumerico(value: unknown): number {
     .replace(/,/g, '')
     .trim();
   if (!s) return NaN;
-  const parts = s.split('.');
-  const intPart = parts[0] ?? '';
-  const decPart = (parts[1] ?? '').slice(0, 2);
-  const num = Number(decPart ? `${intPart}.${decPart}` : intPart);
+  const num = Number(s);
   return Number.isFinite(num) ? num : NaN;
 }
 
@@ -172,4 +169,60 @@ export function formatMonedaDesdeNumero(n: number): string {
     maximumFractionDigits: 2,
   }).format(n);
   return `$${fmt}`;
+}
+
+/** Vista al salir del campo sin forzar `.00`: `$200`, `$15,500.51`. */
+export function formatMonedaDesdeNumeroNatural(n: number): string {
+  if (!Number.isFinite(n)) return '';
+  return formatearMonedaDesdeLimpia(String(n));
+}
+
+/** Quita `%` y comas; deja dígitos y un punto decimal (máx. 2 decimales). */
+export function extraerPorcentajeRawDesdeDisplay(display: string): string {
+  let out = '';
+  let dot = false;
+  const s = String(display ?? '')
+    .replace(/%/g, '')
+    .replace(/,/g, '')
+    .trim();
+  for (const ch of s) {
+    if (ch >= '0' && ch <= '9') {
+      if (dot) {
+        const dec = out.split('.')[1] ?? '';
+        if (dec.length >= 2) continue;
+      }
+      out += ch;
+    } else if (ch === '.' && !dot) {
+      out += '.';
+      dot = true;
+    }
+  }
+  return out;
+}
+
+/** Porcentaje al escribir: `10%`, `10.5%` (solo vista). */
+export function formatPorcentajeAlEscribir(raw: string): string {
+  const cleaned = extraerPorcentajeRawDesdeDisplay(raw);
+  if (!cleaned) return '';
+  return `${cleaned}%`;
+}
+
+/** Parsea texto con `%` a número para el formulario / API. */
+export function parsePorcentajeNumerico(value: unknown): number {
+  const s = extraerPorcentajeRawDesdeDisplay(String(value ?? ''));
+  if (!s) return NaN;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/** Vista final del input de porcentaje (ej. `10%`). */
+export function formatPorcentajeDesdeNumero(n: number): string {
+  if (!Number.isFinite(n)) return '';
+  const str = Number.isInteger(n)
+    ? String(n)
+    : new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(n);
+  return `${str}%`;
 }

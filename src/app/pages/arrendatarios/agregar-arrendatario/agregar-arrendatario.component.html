@@ -128,12 +128,13 @@
                   <button
                     *ngIf="puedeEliminarContratoEnFormulario()"
                     type="button"
-                    class="btn btn-sm bg-error arrend-contrato-eliminar-btn"
+                    mat-flat-button
+                    class="bg-error arrend-contrato-eliminar-btn"
                     aria-label="Eliminar contrato"
                     (mousedown)="$event.stopPropagation()"
                     (click)="eliminarContratoDesdeTituloAccordion($event, data)"
                   >
-                    Eliminar Contrato
+                    <mat-icon>delete</mat-icon> Eliminar Contrato
                   </button>
                 </div>
                 <dxi-item *ngFor="let contratoCtrl of contratosFormArray.controls; let i = index"
@@ -251,7 +252,9 @@
                             class="input-group-text fw-bold"><mat-icon>straighten</mat-icon></span>
                           <div class="form-floating flex-grow-1"><input [id]="'metrosRentados' + i" type="number"
                               class="form-control" formControlName="metrosRentados"
-                              placeholder="Metros rentados" /><label [attr.for]="'metrosRentados' + i">Metros
+                              placeholder="Metros rentados" (focus)="onContratoMetrosFocus(i)"
+                              (blur)="onContratoMetrosBlur(i)" /><label
+                              [attr.for]="'metrosRentados' + i">Metros
                               Rentados</label></div>
                         </div>
                       </div>
@@ -259,18 +262,25 @@
                         <label class="form-label perm-label" [attr.for]="'costoPorM2' + i">Costo Por M²</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>attach_money</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'costoPorM2' + i" type="number"
-                              class="form-control" formControlName="costoPorM2" placeholder="Costo por m²" /><label
+                          <div class="form-floating flex-grow-1"><input [id]="'costoPorM2' + i" type="text"
+                              class="form-control" [(ngModel)]="displayContrato(i)['costoPorM2']"
+                              [ngModelOptions]="{ standalone: true }" placeholder="Costo por m²" autocomplete="off"
+                              (focus)="onContratoMonedaFocus(i, 'costoPorM2')"
+                              (blur)="onContratoMonedaBlur(i, 'costoPorM2')" /><label
                               [attr.for]="'costoPorM2' + i">Costo Por M²</label></div>
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'pctMantenimiento' + i">% Mantenimiento</label>
+                        <label class="form-label perm-label" [attr.for]="'pctMantenimiento' + i">Porcentaje
+                          Mantenimiento</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>construction</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'pctMantenimiento' + i" type="number"
-                              class="form-control" formControlName="pctMantenimiento"
-                              placeholder="% mantenimiento" /><label [attr.for]="'pctMantenimiento' + i">%
+                          <div class="form-floating flex-grow-1"><input [id]="'pctMantenimiento' + i" type="text"
+                              class="form-control" [(ngModel)]="displayContrato(i)['pctMantenimiento']"
+                              [ngModelOptions]="{ standalone: true }" placeholder="Porcentaje mantenimiento"
+                              autocomplete="off" (focus)="onContratoPctFocus(i)"
+                              (blur)="onContratoPctBlur(i)" /><label
+                              [attr.for]="'pctMantenimiento' + i">Porcentaje
                               Mantenimiento</label></div>
                         </div>
                       </div>
@@ -287,8 +297,10 @@
                         <label class="form-label perm-label" [attr.for]="'montoDeposito' + i">Monto Depósito</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>price_check</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'montoDeposito' + i" type="number"
-                              class="form-control" formControlName="montoDeposito" placeholder="Monto depósito" /><label
+                          <div class="form-floating flex-grow-1"><input [id]="'montoDeposito' + i" type="text"
+                              class="form-control" [(ngModel)]="displayContrato(i)['montoDeposito']"
+                              [ngModelOptions]="{ standalone: true }" placeholder="Monto depósito" autocomplete="off"
+                              (blur)="onContratoMonedaBlur(i, 'montoDeposito')" /><label
                               [attr.for]="'montoDeposito' + i">Monto Depósito</label></div>
                         </div>
                       </div>
@@ -305,8 +317,10 @@
                         <label class="form-label perm-label" [attr.for]="'montoAdelanto' + i">Monto Adelanto</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>request_quote</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'montoAdelanto' + i" type="number"
-                              class="form-control" formControlName="montoAdelanto" placeholder="Monto adelanto" /><label
+                          <div class="form-floating flex-grow-1"><input [id]="'montoAdelanto' + i" type="text"
+                              class="form-control" [(ngModel)]="displayContrato(i)['montoAdelanto']"
+                              [ngModelOptions]="{ standalone: true }" placeholder="Monto adelanto" autocomplete="off"
+                              (blur)="onContratoMonedaBlur(i, 'montoAdelanto')" /><label
                               [attr.for]="'montoAdelanto' + i">Monto Adelanto</label></div>
                         </div>
                       </div>
@@ -334,69 +348,6 @@
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'subtotalRenta' + i">Subtotal Renta</label>
-                        <div class="input-group input-group-lg perm-ig"><span
-                            class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'subtotalRenta' + i" type="number"
-                              class="form-control" formControlName="subtotalRenta" placeholder="Subtotal renta" /><label
-                              [attr.for]="'subtotalRenta' + i">Subtotal Renta</label></div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'ivaRenta' + i">Iva Renta</label>
-                        <div class="input-group input-group-lg perm-ig"><span
-                            class="input-group-text fw-bold"><mat-icon>calculate</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'ivaRenta' + i" type="number"
-                              class="form-control" formControlName="ivaRenta" placeholder="IVA renta" /><label
-                              [attr.for]="'ivaRenta' + i">Iva Renta</label></div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'rentaTotal' + i">Renta Total</label>
-                        <div class="input-group input-group-lg perm-ig"><span
-                            class="input-group-text fw-bold"><mat-icon>account_balance_wallet</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'rentaTotal' + i" type="number"
-                              class="form-control" formControlName="rentaTotal" placeholder="Renta total" /><label
-                              [attr.for]="'rentaTotal' + i">Renta Total</label></div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'subtotalMantenimiento' + i">Subtotal
-                          Mantenimiento</label>
-                        <div class="input-group input-group-lg perm-ig"><span
-                            class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'subtotalMantenimiento' + i" type="number"
-                              class="form-control" formControlName="subtotalMantenimiento"
-                              placeholder="Subtotal mantenimiento" /><label
-                              [attr.for]="'subtotalMantenimiento' + i">Subtotal
-                              Mantenimiento</label></div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <label class="form-label perm-label" [attr.for]="'ivaMantenimiento' + i">Iva
-                          Mantenimiento</label>
-                        <div class="input-group input-group-lg perm-ig"><span
-                            class="input-group-text fw-bold"><mat-icon>functions</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'ivaMantenimiento' + i" type="number"
-                              class="form-control" formControlName="ivaMantenimiento"
-                              placeholder="IVA mantenimiento" /><label [attr.for]="'ivaMantenimiento' + i">Iva
-                              Mantenimiento</label></div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4 col-xl-3">
-                        <label class="form-label perm-label" [attr.for]="'mantenimientoTotal' + i">Mantenimiento
-                          Total</label>
-                        <div class="input-group input-group-lg perm-ig"><span
-                            class="input-group-text fw-bold"><mat-icon>summarize</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'mantenimientoTotal' + i" type="number"
-                              class="form-control" formControlName="mantenimientoTotal"
-                              placeholder="Mantenimiento total" /><label
-                              [attr.for]="'mantenimientoTotal' + i">Mantenimiento
-                              Total</label>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4 col-xl-3">
                         <label class="form-label perm-label" [attr.for]="'observaciones' + i">Observaciones</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>notes</mat-icon></span>
@@ -407,6 +358,106 @@
                           </div>
                         </div>
                       </div>
+                      <div class="col-12 renta-calc-bloque" [id]="'contratoCalcRenta' + i">
+                        <p class="renta-calc-hint mb-0"
+                          [class.renta-calc-hint--destacado]="contratoHintResaltado(i, 'renta')">
+                          <span class="renta-calc-hint__clave">Metros rentados</span> ×
+                          <span class="renta-calc-hint__clave">costo por m²</span> + <span class="renta-calc-hint__clave">16% IVA</span>
+                          = <span class="renta-calc-hint__clave">Renta Total</span>.
+                        </p>
+                        <div class="row g-2 gx-3 renta-calc-bloque__campos">
+                          <div class="col-12 col-md-4">
+                            <label class="form-label perm-label" [attr.for]="'subtotalRenta' + i">Subtotal Renta</label>
+                            <div class="input-group input-group-lg perm-ig renta-calc-field"
+                              [class.renta-calc-highlight]="contratoCampoResaltado(i, 'subtotalRenta')"><span
+                                class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span>
+                              <div class="form-floating flex-grow-1"><input [id]="'subtotalRenta' + i" type="text"
+                                  class="form-control renta-calc-input"
+                                  [value]="contratoMonedaDisplay(i, 'subtotalRenta')"
+                                  placeholder="Subtotal renta" readonly tabindex="-1" /><label
+                                  [attr.for]="'subtotalRenta' + i">Subtotal Renta</label></div>
+                            </div>
+                          </div>
+                          <div class="col-12 col-md-4">
+                            <label class="form-label perm-label" [attr.for]="'ivaRenta' + i">Iva Renta</label>
+                            <div class="input-group input-group-lg perm-ig renta-calc-field"
+                              [class.renta-calc-highlight]="contratoCampoResaltado(i, 'ivaRenta')"><span
+                                class="input-group-text fw-bold"><mat-icon>calculate</mat-icon></span>
+                              <div class="form-floating flex-grow-1"><input [id]="'ivaRenta' + i" type="text"
+                                  class="form-control renta-calc-input" [value]="contratoMonedaDisplay(i, 'ivaRenta')"
+                                  placeholder="IVA renta" readonly tabindex="-1" /><label [attr.for]="'ivaRenta' + i">Iva
+                                  Renta</label></div>
+                            </div>
+                          </div>
+                          <div class="col-12 col-md-4">
+                            <label class="form-label perm-label" [attr.for]="'rentaTotal' + i"
+                              [class.renta-calc-label-total]="contratoCampoResaltado(i, 'rentaTotal')">Renta Total</label>
+                            <div class="input-group input-group-lg perm-ig renta-calc-field"
+                              [class.renta-calc-highlight]="contratoCampoResaltado(i, 'rentaTotal')"><span
+                                class="input-group-text fw-bold"><mat-icon>account_balance_wallet</mat-icon></span>
+                              <div class="form-floating flex-grow-1"><input [id]="'rentaTotal' + i" type="text"
+                                  class="form-control renta-calc-input" [value]="contratoMonedaDisplay(i, 'rentaTotal')"
+                                  placeholder="Renta total" readonly tabindex="-1" /><label
+                                  [attr.for]="'rentaTotal' + i">Renta Total</label></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 renta-calc-bloque" [id]="'contratoCalcMantenimiento' + i">
+                        <p class="renta-calc-hint mb-0"
+                          [class.renta-calc-hint--destacado]="contratoHintResaltado(i, 'mantenimiento')">
+                          <span class="renta-calc-hint__clave">Subtotal renta</span> ×
+                          <span class="renta-calc-hint__clave">% mantenimiento</span> + <span class="renta-calc-hint__clave">16% IVA</span>
+                          = <span class="renta-calc-hint__clave">Mantenimiento Total</span>.
+                        </p>
+                        <div class="row g-2 gx-3 renta-calc-bloque__campos">
+                          <div class="col-12 col-md-4">
+                            <label class="form-label perm-label" [attr.for]="'subtotalMantenimiento' + i">Subtotal
+                              Mantenimiento</label>
+                            <div class="input-group input-group-lg perm-ig renta-calc-field"
+                              [class.renta-calc-highlight]="contratoCampoResaltado(i, 'subtotalMantenimiento')"><span
+                                class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
+                              <div class="form-floating flex-grow-1"><input [id]="'subtotalMantenimiento' + i" type="text"
+                                  class="form-control renta-calc-input"
+                                  [value]="contratoMonedaDisplay(i, 'subtotalMantenimiento')"
+                                  placeholder="Subtotal mantenimiento" readonly tabindex="-1" /><label
+                                  [attr.for]="'subtotalMantenimiento' + i">Subtotal
+                                  Mantenimiento</label></div>
+                            </div>
+                          </div>
+                          <div class="col-12 col-md-4">
+                            <label class="form-label perm-label" [attr.for]="'ivaMantenimiento' + i">Iva
+                              Mantenimiento</label>
+                            <div class="input-group input-group-lg perm-ig renta-calc-field"
+                              [class.renta-calc-highlight]="contratoCampoResaltado(i, 'ivaMantenimiento')"><span
+                                class="input-group-text fw-bold"><mat-icon>functions</mat-icon></span>
+                              <div class="form-floating flex-grow-1"><input [id]="'ivaMantenimiento' + i" type="text"
+                                  class="form-control renta-calc-input"
+                                  [value]="contratoMonedaDisplay(i, 'ivaMantenimiento')"
+                                  placeholder="IVA mantenimiento" readonly tabindex="-1" /><label
+                                  [attr.for]="'ivaMantenimiento' + i">Iva
+                                  Mantenimiento</label></div>
+                            </div>
+                          </div>
+                          <div class="col-12 col-md-4">
+                            <label class="form-label perm-label" [attr.for]="'mantenimientoTotal' + i"
+                              [class.renta-calc-label-total]="contratoCampoResaltado(i, 'mantenimientoTotal')">Mantenimiento
+                              Total</label>
+                            <div class="input-group input-group-lg perm-ig renta-calc-field"
+                              [class.renta-calc-highlight]="contratoCampoResaltado(i, 'mantenimientoTotal')"><span
+                                class="input-group-text fw-bold"><mat-icon>summarize</mat-icon></span>
+                              <div class="form-floating flex-grow-1"><input [id]="'mantenimientoTotal' + i" type="text"
+                                  class="form-control renta-calc-input"
+                                  [value]="contratoMonedaDisplay(i, 'mantenimientoTotal')"
+                                  placeholder="Mantenimiento total" readonly tabindex="-1" /><label
+                                  [attr.for]="'mantenimientoTotal' + i">Mantenimiento
+                                  Total</label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 </dxi-item>

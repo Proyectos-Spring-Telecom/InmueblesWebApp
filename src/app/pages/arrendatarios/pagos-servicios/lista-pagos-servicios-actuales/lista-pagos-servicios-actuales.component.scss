@@ -1,0 +1,77 @@
+@import '../../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.operacion-hub-vista .surface {
+  padding-top: 1rem;
+}
+
+.pagos-servicios-mes-filter {
+  min-width: 180px;
+}
+
+.pagos-servicios-mes-filter__label {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.pagos-servicios-mes-filter__select {
+  min-width: 180px;
+  border-radius: 10px;
+  border-color: rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.35);
+  color: #e2e8f0;
+}
+
+.pagos-servicios-mes-filter__select:focus {
+  border-color: color-mix(in srgb, var(--mat-sys-secondary) 55%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mat-sys-secondary) 18%, transparent);
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(33,81,186,0.7), 0 0 0 0 rgba(33,81,186,0.4); }
+  70%  { box-shadow: 0 0 0 12px rgba(33,81,186,0), 0 0 0 24px rgba(33,81,186,0); }
+  100% { box-shadow: 0 0 0 0 rgba(33,81,186,0), 0 0 0 0 rgba(33,81,186,0); }
+}
+@keyframes shine {
+  0%   { left: -100%; }
+  50%  { left: 100%; }
+  100% { left: 100%; }
+}
+
+.btn-servicio {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: #2151ba;
+  color: #fff;
+  border: 2.5px solid rgba(255,255,255,0.25);
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  animation: pulse 1.6s ease-out infinite;
+  letter-spacing: 0.03em;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%;
+    height: 100%;
+    background: rgba(255,255,255,0.15);
+    transform: skewX(-20deg);
+    animation: shine 2.4s ease-in-out infinite;
+  }
+
+  &:hover  { background: #173d8a; animation: none; }
+  &:active { transform: scale(0.97); }
+}

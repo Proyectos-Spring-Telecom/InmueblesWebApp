@@ -168,7 +168,13 @@ export const navItems: NavItem[] = [
             route: '/arrendatarios/pagos-historico',
             permission: Permiso.CONSULTA_CLIENTE,
           },
+          
         ],
+      },
+      {
+        displayName: 'Rent-rol',
+        route: '/arrendatarios/rent-rol',
+        permission: Permiso.CONSULTA_CLIENTE,
       },
       
     ],

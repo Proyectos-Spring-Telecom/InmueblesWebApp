@@ -96,6 +96,7 @@ export class ListaRentasActualesComponent implements OnInit {
   totalRegistros = 0;
   totalPaginas = 0;
   paginaActualData: RentaActualGridRow[] = [];
+  busquedaHub = '';
   filtroActivo = '';
   mensajeAgrupar = 'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
   autoExpandAllGroups = true;
@@ -494,9 +495,22 @@ export class ListaRentasActualesComponent implements OnInit {
     e.component.refresh();
   }
 
+  aplicarBusquedaHub(): void {
+    const grid = this.dataGrid?.instance;
+    const texto = this.busquedaHub.trim().toLowerCase();
+    if (!texto) {
+      this.filtroActivo = '';
+      grid?.option('dataSource', this.listaRentas);
+      return;
+    }
+    this.filtroActivo = texto;
+    const dataFiltrada = this.filtrarFilasRentasPorTexto(texto);
+    grid?.option('dataSource', dataFiltrada);
+  }
+
   onGridOptionChanged(e: any): void {
     if (e.fullName !== 'searchPanel.text') return;
-    const grid  = this.dataGrid?.instance;
+    const grid = this.dataGrid?.instance;
     const texto = (e.value ?? '').toString().trim().toLowerCase();
     if (!texto) {
       this.filtroActivo = '';
@@ -504,7 +518,11 @@ export class ListaRentasActualesComponent implements OnInit {
       return;
     }
     this.filtroActivo = texto;
-    const dataFiltrada = (this.paginaActualData || []).filter((row) => {
+    grid?.option('dataSource', this.filtrarFilasRentasPorTexto(texto));
+  }
+
+  private filtrarFilasRentasPorTexto(texto: string): RentaActualGridRow[] {
+    return (this.paginaActualData || []).filter((row) => {
       const extras = [
         row.arrendatarioLabel,
         row.contratoLabel,
@@ -517,10 +535,10 @@ export class ListaRentasActualesComponent implements OnInit {
       ];
       return extras.some((s) => String(s).toLowerCase().includes(texto));
     });
-    grid?.option('dataSource', dataFiltrada);
   }
 
   limpiarVista(): void {
+    this.busquedaHub = '';
     const inst = this.dataGrid?.instance;
     if (!inst) return;
     inst.clearFilter();
