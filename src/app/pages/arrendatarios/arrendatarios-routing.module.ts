@@ -8,6 +8,7 @@ import { ListaRentasActualesComponent } from './pagos-renta/lista-rentas-actuale
 import { ListaHistoricoPagosRentaComponent } from './pagos-renta/lista-historico-pagos-renta/lista-historico-pagos-renta.component';
 import { ListaMantenimientoActualComponent } from './pagos-mantenimiento/lista-mantenimiento-actual/lista-mantenimiento-actual.component';
 import { ListaHistoricoPagosMantenimientoComponent } from './pagos-mantenimiento/lista-historico-pagos-mantenimiento/lista-historico-pagos-mantenimiento.component';
+import { ListaPagosServiciosActualesComponent } from './pagos-servicios/lista-pagos-servicios-actuales/lista-pagos-servicios-actuales.component';
 
 const routes: Routes = [
   { path: '', component: ListaArrendatariosComponent },
@@ -25,6 +26,11 @@ const routes: Routes = [
       {
         path: 'mantenimiento',
         component: ListaMantenimientoActualComponent,
+        data: { hubEmbebido: true },
+      },
+      {
+        path: 'servicios',
+        component: ListaPagosServiciosActualesComponent,
         data: { hubEmbebido: true },
       },
     ],
@@ -53,11 +59,18 @@ const routes: Routes = [
   { path: 'pagos-mantenimiento', redirectTo: 'pagos-mes/mantenimiento', pathMatch: 'full' },
   { path: 'pagos-mantenimiento/actual', redirectTo: 'pagos-mes/mantenimiento', pathMatch: 'full' },
   { path: 'pagos-mantenimiento/historico', redirectTo: 'pagos-historico/mantenimiento', pathMatch: 'full' },
+  { path: 'pagos-servicios', redirectTo: 'pagos-mes/servicios', pathMatch: 'full' },
+  { path: 'pagos-servicios/actual', redirectTo: 'pagos-mes/servicios', pathMatch: 'full' },
   { path: 'rentas', redirectTo: 'pagos-mes/renta', pathMatch: 'full' },
   { path: 'historico-pagos-renta', redirectTo: 'pagos-historico/renta', pathMatch: 'full' },
   { path: 'agregar-arrendatario', component: AgregarArrendatarioComponent },
   { path: 'agregar-arrendatario/:id', component: AgregarArrendatarioComponent },
   { path: 'editar-arrendatario/:idArrendatario', component: AgregarArrendatarioComponent },
+  {
+    path: 'rent-rol',
+    loadChildren: () =>
+      import('./rent-rol/rent-rol.module').then((m) => m.RentRolModule),
+  },
 ];
 
 @NgModule({

@@ -28,6 +28,13 @@ import {
   type InmuebleArchivoApi,
   type SlotDocumentoInmueble,
 } from '../../inmuebles/inmuebles-list.mapper';
+import {
+  formatMonedaDesdeNumero,
+  formatMonedaDesdeNumeroNatural,
+  formatPorcentajeDesdeNumero,
+  parseMonedaNumerico,
+  parsePorcentajeNumerico,
+} from 'src/app/shared/valor-miles-format';
 
 type ServicioArrendatarioEdicionSnap = {
   id: number | null;
@@ -49,6 +56,45 @@ type SocioArrendatarioEdicionSnap = {
 
 type DocSlotArrendatarioSnap = { id: number | null; nombre: string; url: string };
 type GaleriaArrendatarioSnap = { id: number | null; nombre: string; url: string };
+
+const IVA_CONTRATO = 0.16;
+
+type CampoContratoCalculado =
+  | 'subtotalRenta'
+  | 'ivaRenta'
+  | 'rentaTotal'
+  | 'subtotalMantenimiento'
+  | 'ivaMantenimiento'
+  | 'mantenimientoTotal';
+
+type HintContratoCalculado = 'renta' | 'mantenimiento';
+
+type CampoMonedaContrato =
+  | 'costoPorM2'
+  | 'montoDeposito'
+  | 'montoAdelanto'
+  | CampoContratoCalculado;
+
+const CAMPOS_MONEDA_CONTRATO: CampoMonedaContrato[] = [
+  'costoPorM2',
+  'montoDeposito',
+  'montoAdelanto',
+  'subtotalRenta',
+  'ivaRenta',
+  'rentaTotal',
+  'subtotalMantenimiento',
+  'ivaMantenimiento',
+  'mantenimientoTotal',
+];
+
+const CAMPOS_MONEDA_CALCULADOS: CampoContratoCalculado[] = [
+  'subtotalRenta',
+  'ivaRenta',
+  'rentaTotal',
+  'subtotalMantenimiento',
+  'ivaMantenimiento',
+  'mantenimientoTotal',
+];
 
 @Component({
   selector: 'app-agregar-arrendatario',
@@ -91,6 +137,17 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   /** Índice del contrato cuyo menú de locales está abierto (-1 = ninguno). */
   localesDropdownContratoIndex = -1;
   private contratosInmuebleSubs: Subscription[] = [];
+  private contratosCalcBlurTimers: Array<ReturnType<typeof setTimeout> | undefined> = [];
+  /** Campos de entrada que disparan cálculo; evita recalcular al pasar entre ellos. */
+  private contratoCalcCampoFoco: Record<string, boolean>[] = [{}];
+  /** Resaltado temporal tras autocalcular renta y mantenimiento por contrato. */
+  contratoCalcHighlight: Record<CampoContratoCalculado, boolean>[] = [
+    {} as Record<CampoContratoCalculado, boolean>,
+  ];
+  contratoHintHighlight: Partial<Record<HintContratoCalculado, boolean>>[] = [{}];
+  private contratoCalcHighlightTimers: ReturnType<typeof setTimeout>[][] = [];
+  /** Vista ($ / %) por contrato; el FormControl conserva el número para el API. */
+  contratoCampoDisplay: Record<string, string>[] = [{}];
   public listaCatServicios: CatServicioItem[] = [];
   loadingSubmit = false;
   mostrarModalMapa = false;
@@ -262,6 +319,17 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.idArrendadorSub?.unsubscribe();
     this.contratosInmuebleSubs.forEach((sub) => sub.unsubscribe());
     this.contratosInmuebleSubs = [];
+    this.limpiarTimersRecalculoBlurContratos();
+    this.contratoCalcHighlightTimers.forEach((timers) => timers.forEach((t) => clearTimeout(t)));
+    this.contratoCalcHighlightTimers = [];
+    this.contratoHintHighlight = [];
+  }
+
+  private limpiarTimersRecalculoBlurContratos(): void {
+    this.contratosCalcBlurTimers.forEach((timer) => {
+      if (timer != null) clearTimeout(timer);
+    });
+    this.contratosCalcBlurTimers = [];
   }
 
   private mostrarPromptAutocargaContrato(): void {
@@ -293,6 +361,26 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       elemento.scrollIntoView({ behavior: 'smooth', block });
     }, 120);
+  }
+
+  private scrollABloqueCalculoContrato(
+    indexContrato: number,
+    bloque: HintContratoCalculado,
+    delayMs = 0,
+  ): void {
+    const id =
+      bloque === 'renta'
+        ? `contratoCalcRenta${indexContrato}`
+        : `contratoCalcMantenimiento${indexContrato}`;
+    const ejecutar = () => {
+      const el = document.getElementById(id);
+      this.scrollSuaveAElemento(el ?? undefined, 'start');
+    };
+    if (delayMs > 0) {
+      setTimeout(ejecutar, delayMs);
+      return;
+    }
+    ejecutar();
   }
 
   private enfocarAutocargaCsf(): void {
@@ -519,8 +607,356 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratosInmuebleSubs = [];
     this.contratosFormArray.controls.forEach((_, index) => {
       this.enlazarInmuebleLocalContrato(index);
+      this.enlazarCalculoMontosContrato(index);
     });
     this.actualizarEstadoInmuebleContratos();
+  }
+
+  onContratoMetrosFocus(index: number): void {
+    this.contratoCalcCampoFoco[index] = {
+      ...this.contratoCalcCampoFoco[index],
+      metrosRentados: true,
+    };
+  }
+
+  onContratoMetrosBlur(index: number): void {
+    this.contratoCalcCampoFoco[index] = {
+      ...this.contratoCalcCampoFoco[index],
+      metrosRentados: false,
+    };
+    this.programarRecalculoAlSalirInputsContrato(index);
+  }
+
+  onContratoMonedaFocus(index: number, campo: CampoMonedaContrato): void {
+    if (campo !== 'costoPorM2') return;
+    this.contratoCalcCampoFoco[index] = {
+      ...this.contratoCalcCampoFoco[index],
+      costoPorM2: true,
+    };
+  }
+
+  onContratoPctFocus(index: number): void {
+    this.contratoCalcCampoFoco[index] = {
+      ...this.contratoCalcCampoFoco[index],
+      pctMantenimiento: true,
+    };
+  }
+
+  private algunInputCalculoContratoEnfocado(index: number): boolean {
+    const f = this.contratoCalcCampoFoco[index];
+    return !!(f?.['metrosRentados'] || f?.['costoPorM2'] || f?.['pctMantenimiento']);
+  }
+
+  private programarRecalculoAlSalirInputsContrato(indexContrato: number): void {
+    const prev = this.contratosCalcBlurTimers[indexContrato];
+    if (prev != null) clearTimeout(prev);
+    this.contratosCalcBlurTimers[indexContrato] = setTimeout(() => {
+      this.contratosCalcBlurTimers[indexContrato] = undefined;
+      if (this.algunInputCalculoContratoEnfocado(indexContrato)) return;
+      this.recalcularMontosContrato(indexContrato, true);
+    }, 0);
+  }
+
+  private enlazarCalculoMontosContrato(indexContrato: number): void {
+    this.recalcularMontosContrato(indexContrato, false);
+    this.actualizarDisplaysMonedaContrato(indexContrato);
+  }
+
+  private asegurarDisplayContrato(index: number): Record<string, string> {
+    if (!this.contratoCampoDisplay[index]) {
+      this.contratoCampoDisplay[index] = {};
+    }
+    return this.contratoCampoDisplay[index];
+  }
+
+  displayContrato(index: number): Record<string, string> {
+    return this.asegurarDisplayContrato(index);
+  }
+
+  contratoMonedaDisplay(index: number, campo: CampoMonedaContrato): string {
+    return this.contratoCampoDisplay[index]?.[campo] ?? '';
+  }
+
+  private setContratoCampoDisplay(index: number, campo: string, value: string): void {
+    this.asegurarDisplayContrato(index)[campo] = value;
+  }
+
+  private valorNumericoEnControl(grupo: FormGroup, controlName: string): number | null {
+    const raw = grupo.get(controlName)?.value;
+    if (raw == null || String(raw).trim() === '') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  private redondearMontoCalculado(n: number): number {
+    return Math.round(n * 100) / 100;
+  }
+
+  private syncMonedaDisplayDesdeControl(index: number, campo: CampoMonedaContrato): void {
+    const grupo = this.contratosFormArray.at(index) as FormGroup;
+    const n = this.valorNumericoEnControl(grupo, campo);
+    const esCalculado = (CAMPOS_MONEDA_CALCULADOS as readonly string[]).includes(campo);
+    this.setContratoCampoDisplay(
+      index,
+      campo,
+      n != null
+        ? esCalculado
+          ? formatMonedaDesdeNumero(n)
+          : formatMonedaDesdeNumeroNatural(n)
+        : '',
+    );
+  }
+
+  private syncPctDisplayDesdeControl(index: number): void {
+    const grupo = this.contratosFormArray.at(index) as FormGroup;
+    const n = this.valorNumericoEnControl(grupo, 'pctMantenimiento');
+    this.setContratoCampoDisplay(
+      index,
+      'pctMantenimiento',
+      n != null ? formatPorcentajeDesdeNumero(n) : '',
+    );
+  }
+
+  actualizarDisplaysMonedaContrato(index: number): void {
+    for (const campo of CAMPOS_MONEDA_CONTRATO) {
+      this.syncMonedaDisplayDesdeControl(index, campo);
+    }
+    this.syncPctDisplayDesdeControl(index);
+    this.cdr.markForCheck();
+  }
+
+  private actualizarDisplaysMontosCalculadosContrato(index: number): void {
+    for (const campo of CAMPOS_MONEDA_CALCULADOS) {
+      this.syncMonedaDisplayDesdeControl(index, campo);
+    }
+    this.cdr.markForCheck();
+  }
+
+  onContratoMonedaBlur(index: number, campo: CampoMonedaContrato): void {
+    const raw = this.contratoCampoDisplay[index]?.[campo] ?? '';
+    const grupo = this.contratosFormArray.at(index) as FormGroup;
+    const ctrl = grupo.get(campo);
+    const n = parseMonedaNumerico(raw);
+    if (Number.isFinite(n)) {
+      ctrl?.setValue(n, { emitEvent: false });
+      this.setContratoCampoDisplay(index, campo, formatMonedaDesdeNumeroNatural(n));
+    } else {
+      ctrl?.setValue('', { emitEvent: false });
+      this.setContratoCampoDisplay(index, campo, '');
+    }
+    if (campo === 'costoPorM2') {
+      this.contratoCalcCampoFoco[index] = {
+        ...this.contratoCalcCampoFoco[index],
+        costoPorM2: false,
+      };
+      this.programarRecalculoAlSalirInputsContrato(index);
+    }
+  }
+
+  onContratoPctBlur(index: number): void {
+    const raw = this.contratoCampoDisplay[index]?.['pctMantenimiento'] ?? '';
+    const grupo = this.contratosFormArray.at(index) as FormGroup;
+    const ctrl = grupo.get('pctMantenimiento');
+    const n = parsePorcentajeNumerico(raw);
+    if (Number.isFinite(n)) {
+      ctrl?.setValue(n, { emitEvent: false });
+      this.setContratoCampoDisplay(index, 'pctMantenimiento', formatPorcentajeDesdeNumero(n));
+    } else {
+      ctrl?.setValue('', { emitEvent: false });
+      this.setContratoCampoDisplay(index, 'pctMantenimiento', '');
+    }
+    this.contratoCalcCampoFoco[index] = {
+      ...this.contratoCalcCampoFoco[index],
+      pctMantenimiento: false,
+    };
+    this.programarRecalculoAlSalirInputsContrato(index);
+  }
+
+  private valorNumericoContratoCapturado(grupo: FormGroup, controlName: string): boolean {
+    const raw = grupo.get(controlName)?.value;
+    if (raw == null || String(raw).trim() === '') return false;
+    return Number.isFinite(Number(raw));
+  }
+
+  private recalcularMontosContrato(indexContrato: number, conEfecto = true): void {
+    const grupo = this.contratosFormArray.at(indexContrato) as FormGroup;
+    if (!grupo) return;
+
+    const metrosOk = this.valorNumericoContratoCapturado(grupo, 'metrosRentados');
+    const costoOk = this.valorNumericoContratoCapturado(grupo, 'costoPorM2');
+    const pctOk = this.valorNumericoContratoCapturado(grupo, 'pctMantenimiento');
+
+    let subR = 0;
+    let ivaR = 0;
+    let totR = 0;
+    let rentaLista = false;
+
+    if (metrosOk && costoOk) {
+      const metros = Number(grupo.get('metrosRentados')?.value);
+      const costo = Number(grupo.get('costoPorM2')?.value);
+      subR = this.redondearMontoCalculado(metros * costo);
+      ivaR = this.redondearMontoCalculado(subR * IVA_CONTRATO);
+      totR = this.redondearMontoCalculado(subR + ivaR);
+      rentaLista = true;
+    }
+
+    const prevSubR = grupo.get('subtotalRenta')?.value;
+    const prevIvaR = grupo.get('ivaRenta')?.value;
+    const prevTotR = grupo.get('rentaTotal')?.value;
+
+    if (!rentaLista) {
+      grupo.patchValue(
+        {
+          subtotalRenta: '',
+          ivaRenta: '',
+          rentaTotal: '',
+          subtotalMantenimiento: '',
+          ivaMantenimiento: '',
+          mantenimientoTotal: '',
+        },
+        { emitEvent: false },
+      );
+      this.actualizarDisplaysMontosCalculadosContrato(indexContrato);
+      return;
+    }
+
+    grupo.patchValue(
+      { subtotalRenta: subR, ivaRenta: ivaR, rentaTotal: totR },
+      { emitEvent: false },
+    );
+
+    let subM = 0;
+    let ivaM = 0;
+    let totM = 0;
+    let mttoListo = false;
+
+    if (pctOk) {
+      const pct = Number(grupo.get('pctMantenimiento')?.value);
+      subM = this.redondearMontoCalculado(subR * (pct / 100));
+      ivaM = this.redondearMontoCalculado(subM * IVA_CONTRATO);
+      totM = this.redondearMontoCalculado(subM + ivaM);
+      mttoListo = true;
+    }
+
+    const prevSubM = grupo.get('subtotalMantenimiento')?.value;
+    const prevIvaM = grupo.get('ivaMantenimiento')?.value;
+    const prevTotM = grupo.get('mantenimientoTotal')?.value;
+
+    if (!mttoListo) {
+      grupo.patchValue(
+        { subtotalMantenimiento: '', ivaMantenimiento: '', mantenimientoTotal: '' },
+        { emitEvent: false },
+      );
+    } else {
+      grupo.patchValue(
+        { subtotalMantenimiento: subM, ivaMantenimiento: ivaM, mantenimientoTotal: totM },
+        { emitEvent: false },
+      );
+    }
+
+    this.actualizarDisplaysMontosCalculadosContrato(indexContrato);
+
+    if (!conEfecto) return;
+
+    const rentaActualizada =
+      rentaLista &&
+      (prevSubR !== subR || prevIvaR !== ivaR || prevTotR !== totR);
+    const mttoActualizado =
+      mttoListo &&
+      (prevSubM !== subM || prevIvaM !== ivaM || prevTotM !== totM);
+
+    if (rentaActualizada) {
+      this.resaltarCampoContratoCalculado(indexContrato, 'subtotalRenta', 0);
+      this.resaltarCampoContratoCalculado(indexContrato, 'ivaRenta', 140);
+      this.resaltarCampoContratoCalculado(indexContrato, 'rentaTotal', 280);
+      this.resaltarHintContratoCalculado(indexContrato, 'renta', 280);
+      if (!mttoActualizado) {
+        this.scrollABloqueCalculoContrato(indexContrato, 'renta');
+      }
+    }
+
+    if (mttoActualizado) {
+      const baseMtto = rentaActualizada ? 420 : 0;
+      this.resaltarCampoContratoCalculado(indexContrato, 'subtotalMantenimiento', baseMtto);
+      this.resaltarCampoContratoCalculado(indexContrato, 'ivaMantenimiento', baseMtto + 140);
+      this.resaltarCampoContratoCalculado(indexContrato, 'mantenimientoTotal', baseMtto + 280);
+      this.resaltarHintContratoCalculado(indexContrato, 'mantenimiento', baseMtto + 280);
+      this.scrollABloqueCalculoContrato(
+        indexContrato,
+        'mantenimiento',
+        rentaActualizada ? baseMtto : 0,
+      );
+    }
+  }
+
+  private resaltarCampoContratoCalculado(
+    indexContrato: number,
+    campo: CampoContratoCalculado,
+    delayMs: number,
+  ): void {
+    if (!this.contratoCalcHighlight[indexContrato]) {
+      this.contratoCalcHighlight[indexContrato] = {} as Record<CampoContratoCalculado, boolean>;
+    }
+    if (!this.contratoCalcHighlightTimers[indexContrato]) {
+      this.contratoCalcHighlightTimers[indexContrato] = [];
+    }
+
+    const timers = this.contratoCalcHighlightTimers[indexContrato];
+    const activar = () => {
+      this.contratoCalcHighlight[indexContrato][campo] = true;
+      this.cdr.markForCheck();
+      const apagar = setTimeout(() => {
+        this.contratoCalcHighlight[indexContrato][campo] = false;
+        this.cdr.markForCheck();
+      }, 1200);
+      timers.push(apagar);
+    };
+
+    if (delayMs > 0) {
+      const inicio = setTimeout(activar, delayMs);
+      timers.push(inicio);
+    } else {
+      activar();
+    }
+  }
+
+  contratoCampoResaltado(indexContrato: number, campo: CampoContratoCalculado): boolean {
+    return !!this.contratoCalcHighlight[indexContrato]?.[campo];
+  }
+
+  contratoHintResaltado(indexContrato: number, hint: HintContratoCalculado): boolean {
+    return !!this.contratoHintHighlight[indexContrato]?.[hint];
+  }
+
+  private resaltarHintContratoCalculado(
+    indexContrato: number,
+    hint: HintContratoCalculado,
+    delayMs: number,
+  ): void {
+    if (!this.contratoHintHighlight[indexContrato]) {
+      this.contratoHintHighlight[indexContrato] = {};
+    }
+    if (!this.contratoCalcHighlightTimers[indexContrato]) {
+      this.contratoCalcHighlightTimers[indexContrato] = [];
+    }
+
+    const timers = this.contratoCalcHighlightTimers[indexContrato];
+    const activar = () => {
+      this.contratoHintHighlight[indexContrato][hint] = true;
+      this.cdr.markForCheck();
+      const apagar = setTimeout(() => {
+        this.contratoHintHighlight[indexContrato][hint] = false;
+        this.cdr.markForCheck();
+      }, 1400);
+      timers.push(apagar);
+    };
+
+    if (delayMs > 0) {
+      const inicio = setTimeout(activar, delayMs);
+      timers.push(inicio);
+    } else {
+      activar();
+    }
   }
 
   private enlazarInmueblesArrendador(): void {
@@ -1108,7 +1544,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.localesLibresPorContrato.push([]);
     this.cargandoLocalesPorContrato.push(false);
     this.localesLibresConsultadosPorContrato.push(false);
+    this.contratoCalcHighlight.push({} as Record<CampoContratoCalculado, boolean>);
+    this.contratoHintHighlight.push({});
+    this.contratoCalcHighlightTimers.push([]);
+    this.contratoCampoDisplay.push({});
+    this.contratoCalcCampoFoco.push({});
+    this.contratosCalcBlurTimers.push(undefined);
     this.enlazarInmuebleLocalContrato(nuevoIndex);
+    this.enlazarCalculoMontosContrato(nuevoIndex);
     this.actualizarEstadoInmuebleContratos();
     const abiertos = new Set(this.contratoAccordionIndicesAbiertos);
     abiertos.add(nuevoIndex);
@@ -1135,8 +1578,15 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   eliminarContratoArrendatario(index: number): void {
     if (this.esEdicionArrendatario() || this.contratosFormArray.length < 2) return;
     this.contratosInmuebleSubs[index]?.unsubscribe();
+    this.contratoCalcHighlightTimers[index]?.forEach((t) => clearTimeout(t));
     this.contratosFormArray.removeAt(index);
     this.contratosInmuebleSubs.splice(index, 1);
+    this.contratoCalcHighlight.splice(index, 1);
+    this.contratoHintHighlight.splice(index, 1);
+    this.contratoCalcHighlightTimers.splice(index, 1);
+    this.contratoCampoDisplay.splice(index, 1);
+    this.contratoCalcCampoFoco.splice(index, 1);
+    this.contratosCalcBlurTimers.splice(index, 1);
     this.localesLibresPorContrato.splice(index, 1);
     this.cargandoLocalesPorContrato.splice(index, 1);
     this.localesLibresConsultadosPorContrato.splice(index, 1);
@@ -1735,6 +2185,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         { emitEvent: false },
       );
       this.cargarLocalesLibresContrato(0, 1);
+      this.recalcularMontosContrato(0, false);
     });
 
     const servicios = this.arrendatarioForm.get('servicios') as FormArray;
@@ -2074,6 +2525,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const contratos = this.listarContratosOrdenadosDesdeItem(item);
     this.contratosInmuebleSubs.forEach((sub) => sub.unsubscribe());
     this.contratosInmuebleSubs = [];
+    this.contratoCalcHighlightTimers.forEach((timers) => timers.forEach((t) => clearTimeout(t)));
+    this.contratoCalcHighlight = [];
+    this.contratoHintHighlight = [];
+    this.contratoCalcHighlightTimers = [];
+    this.contratoCampoDisplay = [];
+    this.contratoCalcCampoFoco = [];
+    this.limpiarTimersRecalculoBlurContratos();
     this.contratosFormArray.clear();
     this.localesLibresPorContrato = [];
     this.cargandoLocalesPorContrato = [];
@@ -2086,7 +2544,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.localesLibresPorContrato.push([]);
       this.cargandoLocalesPorContrato.push(false);
       this.localesLibresConsultadosPorContrato.push(false);
+      this.contratoCalcHighlight.push({} as Record<CampoContratoCalculado, boolean>);
+      this.contratoHintHighlight.push({});
+      this.contratoCalcHighlightTimers.push([]);
+      this.contratoCampoDisplay.push({});
+      this.contratoCalcCampoFoco.push({});
+      this.contratosCalcBlurTimers.push(undefined);
       this.enlazarInmuebleLocalContrato(0);
+      this.enlazarCalculoMontosContrato(0);
       this.actualizarEstadoInmuebleContratos();
       return;
     }
@@ -2098,7 +2563,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.localesLibresPorContrato.push([]);
       this.cargandoLocalesPorContrato.push(false);
       this.localesLibresConsultadosPorContrato.push(false);
+      this.contratoCalcHighlight.push({} as Record<CampoContratoCalculado, boolean>);
+      this.contratoHintHighlight.push({});
+      this.contratoCalcHighlightTimers.push([]);
+      this.contratoCampoDisplay.push({});
+      this.contratoCalcCampoFoco.push({});
+      this.contratosCalcBlurTimers.push(undefined);
       this.enlazarInmuebleLocalContrato(index);
+      this.enlazarCalculoMontosContrato(index);
       const idIm = this.idInmuebleDesdeContrato(c);
       const idsLoc = this.idLocalesDesdeContrato(c);
       const localesExtra = this.localesOpcionesDesdeContratoLocales(c);

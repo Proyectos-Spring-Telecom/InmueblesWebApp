@@ -75,6 +75,7 @@ export class ListaMantenimientoActualComponent implements OnInit {
   totalRegistros = 0;
   totalPaginas = 0;
   paginaActualData: MantenimientoActualGridRow[] = [];
+  busquedaHub = '';
   filtroActivo = '';
   mensajeAgrupar =
     'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
@@ -204,6 +205,18 @@ export class ListaMantenimientoActualComponent implements OnInit {
     e.component.refresh();
   }
 
+  aplicarBusquedaHub(): void {
+    const grid = this.dataGrid?.instance;
+    const texto = this.busquedaHub.trim().toLowerCase();
+    if (!texto) {
+      this.filtroActivo = '';
+      grid?.option('dataSource', this.listaMantenimientos);
+      return;
+    }
+    this.filtroActivo = texto;
+    grid?.option('dataSource', this.filtrarFilasMantenimientoPorTexto(texto));
+  }
+
   onGridOptionChanged(e: any): void {
     if (e.fullName !== 'searchPanel.text') return;
     const grid = this.dataGrid?.instance;
@@ -214,7 +227,11 @@ export class ListaMantenimientoActualComponent implements OnInit {
       return;
     }
     this.filtroActivo = texto;
-    const dataFiltrada = (this.paginaActualData || []).filter((row) => {
+    grid?.option('dataSource', this.filtrarFilasMantenimientoPorTexto(texto));
+  }
+
+  private filtrarFilasMantenimientoPorTexto(texto: string): MantenimientoActualGridRow[] {
+    return (this.paginaActualData || []).filter((row) => {
       const extras = [
         row.arrendatarioLabel,
         row.contratoLabel,
@@ -227,10 +244,10 @@ export class ListaMantenimientoActualComponent implements OnInit {
       ];
       return extras.some((s) => String(s).toLowerCase().includes(texto));
     });
-    grid?.option('dataSource', dataFiltrada);
   }
 
   limpiarVista(): void {
+    this.busquedaHub = '';
     const inst = this.dataGrid?.instance;
     if (!inst) return;
     inst.clearFilter();

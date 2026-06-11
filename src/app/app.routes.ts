@@ -11,7 +11,7 @@ export const routes: Routes = [
   {
     path: '',
     component: BlankComponent,
-    canActivate: [NoAuthGuard], // ← Si ya tiene sesión, no puede volver al login
+    canActivate: [NoAuthGuard],
     children: [
       {
         path: '',
@@ -26,7 +26,8 @@ export const routes: Routes = [
   {
     path: '',
     component: FullComponent,
-    canActivateChild: [AuthGuard],  // ← Cambia canActivate por canActivateChild
+    canActivate: [AuthGuard],      // Protege el componente padre
+    canActivateChild: [AuthGuard], // Protege cada ruta hija individualmente
     children: [
       {
         path: '',

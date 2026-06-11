@@ -1,0 +1,504 @@
+@if (embebidoEnHub) {
+  <div class="operacion-hub-vista inm-lista">
+    <ng-container *ngTemplateOutlet="contenidoPagosServicios"></ng-container>
+  </div>
+} @else {
+  <div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
+    <header class="perm-head" role="region" aria-label="Sección: Pagos de servicios">
+      <div class="perm-head__icon" aria-hidden="true">
+        <mat-icon>design_services</mat-icon>
+      </div>
+      <div class="perm-head__text">
+        <span class="eyebrow">Catálogos</span>
+        <h2>Pagos de servicios</h2>
+      </div>
+      <nav class="perm-head__crumbs" aria-label="Ruta">
+        <span class="crumb">Operación</span>
+        <span class="sep">/</span>
+        <span class="crumb">Arrendatarios</span>
+        <span class="sep">/</span>
+        <span class="crumb active">Pagos de servicios</span>
+      </nav>
+    </header>
+    <ng-container *ngTemplateOutlet="contenidoPagosServicios"></ng-container>
+  </div>
+}
+
+<ng-template #contenidoPagosServicios>
+  <div class="surface hub-vista-simple">
+    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
+      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-servicio">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+        Registrar pago servicio
+      </button>
+      <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
+        <i class="fa fa-eraser"></i> Limpiar
+      </button>
+    </div>
+
+    <div class="hub-vista-simple__resumen" aria-label="Resumen de pagos">
+      <span class="hub-vista-simple__stat">{{ pagosVisibles.length }} en la lista</span>
+      <span class="hub-vista-simple__stat hub-vista-simple__stat--pagado">{{ conteoPagados }} pagados</span>
+      <span class="hub-vista-simple__stat hub-vista-simple__stat--pendiente">{{ conteoPendientes }} pendientes</span>
+    </div>
+
+    <div class="hub-vista-simple__filtros">
+      <label class="hub-vista-simple__busqueda">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <input
+          type="search"
+          [(ngModel)]="busquedaPagos"
+          (ngModelChange)="aplicarFiltrosVista()"
+          placeholder="Buscar por arrendatario, servicio o concepto…"
+          aria-label="Buscar pago de servicio"
+        />
+      </label>
+
+      <div class="hub-vista-simple__meses" role="group" aria-label="Filtrar por mes">
+        @for (mes of mesesFiltroPagosOpciones; track mes.value) {
+          <button
+            type="button"
+            class="hub-vista-simple__mes-chip"
+            [class.hub-vista-simple__mes-chip--activo]="mesFiltroPagosSeleccionado === mes.value"
+            (click)="seleccionarMesFiltro(mes.value)"
+          >
+            {{ mes.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="hub-vista-simple__cargando">Cargando pagos…</div>
+    } @else if (pagosVisibles.length === 0) {
+      <div class="hub-vista-simple__vacio">
+        @if (busquedaPagosActiva) {
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <p>No se encontró nada con «{{ busquedaPagos.trim() }}».</p>
+          <p class="hub-vista-simple__vacio-detalle">
+            Prueba con otro arrendatario, servicio o concepto.
+          </p>
+        } @else if (hayPagosEnCatalogo) {
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          <p>No hay pagos de servicios{{ mesFiltroEtiqueta }}.</p>
+        } @else {
+          <mat-icon aria-hidden="true">receipt_long</mat-icon>
+          <p>No hay pagos de servicios registrados.</p>
+          <button type="button" mat-flat-button class="hub-btn-registrar hub-btn-registrar--servicio" (click)="abrirModalAlta()">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            Registrar pago servicio
+          </button>
+        }
+      </div>
+    } @else {
+      <ul class="hub-vista-simple__lista">
+        @for (pago of pagosVisibles; track pago.id) {
+          <li class="hub-vista-simple__tarjeta">
+            <div class="hub-vista-simple__tarjeta-cabecera">
+              <div>
+                <span class="hub-vista-simple__tarjeta-arrendatario">{{ pago.arrendatarioLabel }}</span>
+                <span class="hub-vista-simple__tarjeta-servicio">{{ pago.servicioLabel }}</span>
+              </div>
+              <span [ngClass]="clasesEstatusPago(pago.estatus)">{{ pago.estatus }}</span>
+            </div>
+
+            <div class="hub-vista-simple__tarjeta-datos">
+              <span>
+                <mat-icon aria-hidden="true">event</mat-icon>
+                {{ formatearFechaPago(pago.fechaPago) }}
+              </span>
+              <span>
+                <mat-icon aria-hidden="true">payments</mat-icon>
+                {{ pago.montoFmt }}
+              </span>
+              @if (pago.concepto) {
+                <span>
+                  <mat-icon aria-hidden="true">receipt_long</mat-icon>
+                  {{ pago.concepto }}
+                </span>
+              }
+              @if (pago.metodo) {
+                <span>
+                  <mat-icon aria-hidden="true">credit_card</mat-icon>
+                  {{ pago.metodo }}
+                </span>
+              }
+            </div>
+
+            <div class="hub-vista-simple__tarjeta-acciones">
+              <button type="button" class="hub-vista-simple__accion" (click)="abrirModalPagoDetalle(pago)">
+                <mat-icon aria-hidden="true">visibility</mat-icon>
+                Ver detalle
+              </button>
+              <button
+                type="button"
+                class="hub-vista-simple__accion hub-vista-simple__accion--secundaria"
+                (click)="solicitarCambioEstatusPago(pago)"
+              >
+                <mat-icon aria-hidden="true">sync_alt</mat-icon>
+                Cambiar estatus
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</ng-template>
+
+<ng-container *ngIf="mostrarModalPagoDetalle">
+  <div class="contract-page-dim" (click)="cerrarModalPagoDetalle()" [@contractDimAnim]></div>
+  <div
+    class="docs-backdrop contract-docs-backdrop"
+    [@contractModalAnim]
+    (click)="cerrarModalPagoDetalle()"
+  >
+    <div
+      class="docs-modal contract-docs-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pago-servicio-detalle-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <span class="docs-modal__eyebrow">Pagos de servicios</span>
+          <h3 class="docs-modal__title" id="pago-servicio-detalle-title">Detalle del pago</h3>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button
+            type="button"
+            class="docs-modal__close"
+            (click)="cerrarModalPagoDetalle()"
+            aria-label="Cerrar detalle del pago"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body">
+        <div class="col-12 contract-docs__scroll">
+          <div *ngIf="pagoDetalleModalLoading" class="contract-docs__loading">
+            <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+            <p>Obteniendo datos del pago…</p>
+          </div>
+
+          <div *ngIf="!pagoDetalleModalLoading && pagoDetalleModalError" class="contract-docs__alert">
+            <mat-icon>error_outline</mat-icon>
+            <p>{{ pagoDetalleModalError }}</p>
+          </div>
+
+          <ng-container *ngIf="!pagoDetalleModalLoading && pagoDetalleModal as pv">
+            <section class="contract-docs-shell">
+              <article class="contract-docs-card contract-docs-card--hero">
+                <div class="contract-docs-card__hero-row">
+                  <div>
+                    <span class="contract-docs-card__kicker">Pago #{{ pv.id }}</span>
+                    <h4 class="contract-docs-card__hero-title">{{ pv.concepto }}</h4>
+                  </div>
+                  <button
+                    *ngIf="pv.tieneComprobante"
+                    type="button"
+                    class="mono-grid-action-btn d-inline-flex align-items-center gap-1"
+                    (click)="verComprobantePagoDetalleModal()"
+                  >
+                    <mat-icon aria-hidden="true">visibility</mat-icon>
+                    <span>Comprobante de pago</span>
+                  </button>
+                </div>
+              </article>
+
+              <article class="contract-docs-card">
+                <h5 class="contract-docs-card__title">Información del pago</h5>
+                <div class="contract-docs-grid">
+                  <div class="contract-docs-field"><span>Servicio</span><p>{{ pv.servicio }}</p></div>
+                  <div class="contract-docs-field"><span>Fecha de pago</span><p>{{ pv.fechaPago }}</p></div>
+                  <div class="contract-docs-field"><span>Monto</span><p class="is-money">{{ pv.monto }}</p></div>
+                  <div class="contract-docs-field"><span>Método de pago</span><p>{{ pv.metodo }}</p></div>
+                  <div class="contract-docs-field">
+                    <span>Estatus</span>
+                    <p>
+                      <span class="mono-pago-estatus" [ngClass]="clasesEstatusPago(pv.estatus)">
+                        {{ pv.estatus }}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </article>
+            </section>
+          </ng-container>
+        </div>
+      </div>
+
+      <div class="row docs-modal__footer">
+        <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
+          <button type="button" class="docs-modal__btn" (click)="cerrarModalPagoDetalle()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="mostrarModalPago">
+  <div class="contract-page-dim" (click)="cerrarModalPago()" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalPago()">
+    <div
+      class="docs-modal contract-docs-modal mono-pago-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pago-servicio-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <h3 class="docs-modal__title" id="pago-servicio-modal-title">Agregar pago de servicio</h3>
+          <p class="docs-modal__subtitle">Captura el pago del arrendatario y adjunta el comprobante.</p>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button
+            type="button"
+            class="docs-modal__close"
+            (click)="cerrarModalPago()"
+            aria-label="Cerrar modal de pago"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body">
+        <div class="col-12">
+          <div class="perm-form-nc">
+            <form [formGroup]="pagoForm" class="perm-form-body mono-pago-form">
+              <div class="row g-3 align-items-end">
+                <div class="col-12 col-lg-4">
+                  <label for="pagoServicioArrendatarioSelect" class="form-label perm-label">
+                    Arrendatario <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">person</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select
+                        id="pagoServicioArrendatarioSelect"
+                        class="form-select"
+                        formControlName="idArrendatario"
+                      >
+                        <option [ngValue]="null" disabled hidden>Seleccione arrendatario</option>
+                        <option *ngFor="let opt of arrendatariosOpciones" [ngValue]="opt.id">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                      <label for="pagoServicioArrendatarioSelect">Arrendatario</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoServicioTipoSelect" class="form-label perm-label">
+                    Tipo de servicio <span class="text-danger">*</span>
+                  </label>
+                  <div *ngIf="serviciosArrendatarioModalPagoCargando" class="mono-pago-servicio-loading mb-0">
+                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                    <span>Cargando servicios del arrendatario…</span>
+                  </div>
+                  <div class="input-group input-group-lg perm-ig" *ngIf="!serviciosArrendatarioModalPagoCargando">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">design_services</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select
+                        id="pagoServicioTipoSelect"
+                        class="form-select"
+                        formControlName="idServicioArrendatario"
+                        (change)="onPagoServicioChange()"
+                      >
+                        <option [ngValue]="null" disabled hidden>
+                          {{
+                            serviciosArrendatarioModalPago.length
+                              ? 'Seleccione tipo de servicio'
+                              : 'Seleccione arrendatario primero'
+                          }}
+                        </option>
+                        <option *ngFor="let srv of serviciosArrendatarioModalPago" [ngValue]="srv.id">
+                          {{ srv.etiquetaTipoServicio }}
+                        </option>
+                      </select>
+                      <label for="pagoServicioTipoSelect">Tipo de servicio</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoServicioConcepto" class="form-label perm-label">Concepto</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">receipt_long</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input
+                        id="pagoServicioConcepto"
+                        type="text"
+                        class="form-control"
+                        formControlName="concepto"
+                        placeholder="Ej.: Agua potable"
+                      />
+                      <label for="pagoServicioConcepto">Ej.: Agua potable</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoServicioFecha" class="form-label perm-label">
+                    Fecha de pago <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">event</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="pagoServicioFecha" type="date" class="form-control" formControlName="fechaPago" />
+                      <label for="pagoServicioFecha">Fecha de pago</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoServicioMonto" class="form-label perm-label">
+                    Monto <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">payments</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input
+                        #pagoMontoInput
+                        id="pagoServicioMonto"
+                        type="text"
+                        inputmode="decimal"
+                        class="form-control"
+                        placeholder=" "
+                        autocomplete="off"
+                        (keydown)="onMontoKeydown($event)"
+                        (paste)="onMontoPaste($event)"
+                        (blur)="onMontoBlur()"
+                        aria-label="Monto del pago"
+                      />
+                      <label for="pagoServicioMonto">Monto</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoServicioMetodo" class="form-label perm-label">Método de pago</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">credit_card</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select
+                        id="pagoServicioMetodo"
+                        class="form-select"
+                        formControlName="idMetodoPago"
+                        [disabled]="metodosPagoCargando"
+                      >
+                        <option [ngValue]="null" disabled hidden>
+                          {{ metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago' }}
+                        </option>
+                        <option *ngFor="let mp of listaCatMetodosPago" [ngValue]="mp.id">
+                          {{ etiquetaCatMetodoPago(mp) }}
+                        </option>
+                      </select>
+                      <label for="pagoServicioMetodo">Método de pago</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="pagoServicioEstatus" class="form-label perm-label">Estatus</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">flag</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select id="pagoServicioEstatus" class="form-select" formControlName="estatus">
+                        <option [ngValue]="'Pagado'">Pagado</option>
+                        <option [ngValue]="'Pendiente'">Pendiente</option>
+                        <option [ngValue]="'Cancelado'">Cancelado</option>
+                      </select>
+                      <label for="pagoServicioEstatus">Estatus</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label class="form-label perm-label d-block mb-2">
+                    Comprobante de pago <span class="text-danger">*</span>
+                  </label>
+                  <div class="uploader-hero srv-pago-uploader">
+                    <div class="uploader srv-pago-uploader__card">
+                      <div class="uploader__glow"></div>
+                      <div class="uploader__body">
+                        <div class="srv-pago-uploader__row">
+                          <div class="srv-pago-uploader__left">
+                            <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
+                              <mat-icon>receipt</mat-icon>
+                            </div>
+                            <button
+                              mat-flat-button
+                              color="primary"
+                              type="button"
+                              (click)="pagoComprobanteInput.click()"
+                            >
+                              Selecciona un archivo
+                            </button>
+                          </div>
+                          <span
+                            class="uploader__badge srv-pago-uploader__formats"
+                            [class.uploader__badge--file]="pagoForm.get('comprobantePagoNombre')?.value"
+                          >
+                            {{ pagoForm.get('comprobantePagoNombre')?.value || etiquetaComprobanteFormatos }}
+                          </span>
+                        </div>
+                        <input
+                          #pagoComprobanteInput
+                          type="file"
+                          accept="application/pdf,image/png,image/jpeg,image/jpg"
+                          class="uploader__input"
+                          (change)="onPagoComprobanteFileSelected($event)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+                    <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalPago()">
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      class="button-success mono-pago-form-btn"
+                      (click)="guardarPagoDesdeModal()"
+                      [disabled]="pagoGuardando"
+                    >
+                      {{ pagoGuardando ? 'Enviando…' : 'Agregar' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<app-documento-preview #docPreview eyebrow="Comprobante de pago"></app-documento-preview>

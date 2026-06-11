@@ -14,7 +14,9 @@
 }
 
 .hist-renta-filtro-fechas__input {
-  min-width: 11rem;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   background: #1c252e;
   border-color: rgba(148, 163, 184, 0.35);
   color: #f1f5f9;
@@ -30,33 +32,54 @@
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.22);
   background: rgba(15, 23, 42, 0.45);
+  min-width: 0;
 }
 
 .hist-renta-filtros-panel__grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
   align-items: end;
 }
 
-.hist-renta-filtros-panel__accion {
-  display: flex;
-  justify-content: flex-end;
+.hist-renta-filtros-panel__grid > div {
+  min-width: 0;
 }
 
-@media (max-width: 1200px) {
+.hist-renta-filtros-panel__accion {
+  display: flex;
+  justify-content: stretch;
+}
+
+.hist-renta-filtros-panel__accion .mat-mdc-unelevated-button,
+.hist-renta-filtros-panel__accion button.mat-mdc-button-base {
+  width: 100%;
+}
+
+@media (min-width: 576px) {
   .hist-renta-filtros-panel__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .hist-renta-filtros-panel__accion {
     grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .hist-renta-filtros-panel__accion .mat-mdc-unelevated-button,
+  .hist-renta-filtros-panel__accion button.mat-mdc-button-base {
+    width: auto;
+    min-width: 9rem;
   }
 }
 
-@media (max-width: 768px) {
+@media (min-width: 992px) {
   .hist-renta-filtros-panel__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  }
+
+  .hist-renta-filtros-panel__accion {
+    grid-column: auto;
   }
 }
 

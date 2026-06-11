@@ -292,6 +292,17 @@ body:has(.docs-backdrop.contract-docs-backdrop) {
   --layout-header-height: 68px;
   --layout-footer-space: 70px;
   --contract-modal-edge-gap: 12px;
+
+  /* El hub aplica transform/overflow y encoge modales fixed dentro del router-outlet */
+  .operacion-pagos-hub__layout,
+  .operacion-pagos-hub__cuerpo {
+    overflow: visible !important;
+  }
+
+  .operacion-pagos-hub__contenido-vista {
+    transform: none !important;
+    will-change: auto;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -306,12 +317,15 @@ body:has(.docs-backdrop.contract-docs-backdrop) .docs-backdrop.contract-docs-bac
   bottom: calc(var(--layout-footer-space) + var(--contract-modal-edge-gap));
   left: 0;
   right: 0;
+  width: 100%;
+  max-width: none;
   background: transparent;
   backdrop-filter: none;
-  width: auto;
 }
 
 body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal {
+  width: min(100%, 980px);
+  max-width: 980px;
   max-height: 100%;
 }
 
@@ -613,5 +627,128 @@ body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal 
 
   .mono-pago-modal .renta-pago-resumen__hero-title {
     font-size: 1.15rem;
+  }
+}
+
+/* --- Uploader comprobante compacto (mismo diseño que agregar-arrendatario / Servicios) --- */
+.mono-pago-modal .uploader-hero {
+  display: block;
+}
+
+.mono-pago-modal .uploader-hero .uploader {
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+}
+
+.mono-pago-modal .uploader-hero .uploader:hover {
+  transform: translateY(-1px);
+  border-color: rgba(147, 197, 253, 0.45);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.mono-pago-modal .srv-pago-uploader {
+  min-height: 0;
+}
+
+.mono-pago-modal .srv-pago-uploader .srv-pago-uploader__card {
+  min-height: 0 !important;
+}
+
+.mono-pago-modal .srv-pago-uploader .uploader {
+  min-height: 0 !important;
+}
+
+.mono-pago-modal .srv-pago-uploader .uploader__body {
+  padding: 0.35rem 0.55rem !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.mono-pago-modal .srv-pago-uploader .srv-pago-uploader__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.mono-pago-modal .srv-pago-uploader .srv-pago-uploader__left {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mono-pago-modal .srv-pago-uploader .srv-pago-uploader__icon.uploader__icon {
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 12px;
+  flex: 0 0 auto;
+}
+
+.mono-pago-modal .srv-pago-uploader .srv-pago-uploader__icon.uploader__icon mat-icon {
+  font-size: 1.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  line-height: 1.15rem;
+}
+
+.mono-pago-modal .srv-pago-uploader button[mat-flat-button] {
+  min-height: 2.55rem !important;
+  padding: 0 0.85rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1 !important;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.mono-pago-modal .srv-pago-uploader .srv-pago-uploader__formats {
+  margin-left: auto;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  padding: 0.22rem 0.62rem;
+  white-space: nowrap;
+  color: #eaf2ff;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.12));
+  border: 1px dashed rgba(147, 197, 253, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.18),
+    0 10px 22px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.mono-pago-modal .srv-pago-uploader .srv-pago-uploader__formats.uploader__badge--file {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: #f1f6ff;
+  border-style: solid;
+  border-color: rgba(147, 197, 253, 0.55);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.22), rgba(30, 64, 175, 0.2));
+  box-shadow:
+    0 0 0 1px rgba(147, 197, 253, 0.22),
+    0 8px 20px rgba(0, 0, 0, 0.32);
+  padding-inline: clamp(0.55rem, 0.48rem + 0.28vw, 0.82rem);
+}
+
+@media (max-width: 767.98px) {
+  .mono-pago-modal .srv-pago-uploader .srv-pago-uploader__row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mono-pago-modal .srv-pago-uploader button[mat-flat-button] {
+    width: auto;
+    min-width: min(100%, 11.5rem);
+  }
+
+  .mono-pago-modal .srv-pago-uploader .srv-pago-uploader__formats {
+    width: fit-content;
+    max-width: 100%;
+    text-align: center;
   }
 }

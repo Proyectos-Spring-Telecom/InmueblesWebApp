@@ -25,6 +25,11 @@ export interface PagoApiItem {
   metodoPago?: { nombre?: string };
   catMetodoPago?: { nombre?: string };
   servicioInmueble?: { nombre?: string; servicio?: string };
+  arrendatario?: {
+    nombre?: string;
+    arrendatario?: string;
+    razonSocial?: string;
+  };
   [key: string]: unknown;
 }
 
@@ -273,3 +278,58 @@ export const OPCIONES_ESTATUS_PAGO_API = [
   { value: 2, label: 'Pendiente' },
   { value: 0, label: 'Cancelado' },
 ] as const;
+
+/** API `estatus`: 2 Pendiente, 1 Pagado, 0 Cancelado (Swagger). */
+export function estatusPagoToApi(estatus: PagoEstatusUi): number {
+  switch (estatus) {
+    case 'Pagado':
+      return 1;
+    case 'Pendiente':
+      return 2;
+    case 'Cancelado':
+      return 0;
+    default:
+      return 2;
+  }
+}
+
+export function construirFormDataPagoArrendatario(
+  idArrendatario: number,
+  idServicioArrendatario: number,
+  v: {
+    concepto: string;
+    fechaPago: string;
+    monto: string;
+    idMetodoPago: number | null;
+    estatus: PagoEstatusUi;
+  },
+  montoN: number,
+  comprobante: File,
+): FormData {
+  const fd = new FormData();
+  const fecha = String(v.fechaPago ?? '').trim();
+  const fechaPagoApi = fecha.length === 10 ? `${fecha}T12:00:00.000Z` : fecha;
+
+  fd.append('idArrendatario', String(Math.floor(idArrendatario)));
+  fd.append('idServicioArrendatario', String(Math.floor(idServicioArrendatario)));
+
+  const concepto = String(v.concepto ?? '').trim();
+  if (concepto) {
+    fd.append('concepto', concepto);
+  }
+
+  fd.append('fechaPago', fechaPagoApi);
+  fd.append('monto', String(montoN));
+
+  const idMetodo = Number(v.idMetodoPago);
+  if (Number.isFinite(idMetodo) && idMetodo > 0) {
+    fd.append('idMetodoPago', String(Math.floor(idMetodo)));
+  }
+
+  if (v.estatus != null) {
+    fd.append('estatus', String(estatusPagoToApi(v.estatus)));
+  }
+
+  fd.append('ComprobantePagoArchivo', comprobante, comprobante.name);
+  return fd;
+}

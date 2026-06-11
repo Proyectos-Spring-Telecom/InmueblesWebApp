@@ -14,14 +14,20 @@ export const HUB_PAGOS_MES: OperacionPagosHubConfig = {
     {
       segmento: 'renta',
       titulo: 'Rentas',
-      descripcion: 'Registrar rentas del periodo y marcar pagos',
+      descripcion: 'Consulta y registra la renta mensual de cada local. Aquí solo ves los pagos de este mes.',
       icono: 'payments',
     },
     {
       segmento: 'mantenimiento',
       titulo: 'Mantenimientos',
-      descripcion: 'Registrar mantenimientos del periodo y marcar pagos',
+      descripcion: 'Consulta y registra las cuotas de mantenimiento de cada arrendatario. Solo los pagos de este mes.',
       icono: 'handyman',
+    },
+    {
+      segmento: 'servicios',
+      titulo: 'Servicios',
+      descripcion: 'Consulta y registra agua, luz, gas y otros servicios. Puedes guardar el comprobante de cada pago.',
+      icono: 'design_services',
     },
   ],
 };
@@ -40,13 +46,13 @@ export const HUB_PAGOS_HISTORICO: OperacionPagosHubConfig = {
     {
       segmento: 'renta',
       titulo: 'Rentas',
-      descripcion: 'Consultar pagos de renta cerrados por fechas',
+      descripcion: 'Busca pagos de renta ya cerrados. Elige las fechas y revisa lo que se cobró.',
       icono: 'payments',
     },
     {
       segmento: 'mantenimiento',
       titulo: 'Mantenimientos',
-      descripcion: 'Consultar pagos de mantenimiento por fechas',
+      descripcion: 'Busca pagos de mantenimiento ya cerrados. Elige las fechas y revisa lo registrado.',
       icono: 'handyman',
     },
   ],
