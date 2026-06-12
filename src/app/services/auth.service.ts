@@ -1,7 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, Subject, of, switchMap, tap, map, catchError, throwError } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  of,
+  switchMap,
+  tap,
+  map,
+  catchError,
+  throwError,
+  shareReplay,
+  finalize,
+} from 'rxjs';
 import { environment } from '../../environments/environment';
 import { User } from '../entities/User';
 import { Credentials } from '../entities/Credentials';
@@ -22,16 +33,22 @@ interface LoginResponse {
 export class AuthenticationService extends BaseServicesService {
   private static readonly TOKEN_KEY = 'token';
   private static readonly REFRESH_KEY = 'refreshToken';
+  /** Solo en sessionStorage: indica login explícito en esta pestaña/sesión del navegador. */
+  private static readonly SESSION_ACTIVE_KEY = 'authSessionActive';
   private static readonly AUTH_STORAGE_KEYS = [
     'token',
     'refreshToken',
     'user',
     'permissions',
     'coordinates',
+    AuthenticationService.SESSION_ACTIVE_KEY,
   ] as const;
 
   private authenticationChanged = new Subject<boolean>();
   private user: User | null = null;
+  /** Sesión confirmada con el servidor en esta carga de la app. */
+  private sessionValidated = false;
+  private sessionCheck$: Observable<boolean> | null = null;
   /** Tras un refresh rechazado (401), no volver a llamar /login/refresh. */
   private refreshBlocked = false;
   private readonly baseUrl = environment.API_SECURITY;
@@ -45,6 +62,7 @@ export class AuthenticationService extends BaseServicesService {
   ) {
     super();
     this.rawHttp = new HttpClient(httpBackend);
+    this.purgeStalePersistentAuth();
   }
 
   public login(body: { userName: string; password: string }): Observable<User> {
@@ -63,9 +81,38 @@ export class AuthenticationService extends BaseServicesService {
         this.user = user;
         this.setStorageUser(user);
         this.setStoragePermissions(user?.permisos || []);
+        this.activateBrowserSession();
+        this.sessionValidated = true;
         this.authenticationChanged.next(this.isAuthenticated());
       })
     );
+  }
+
+  /**
+   * Comprueba con el servidor que la sesión sigue vigente.
+   * Si hay tokens locales inválidos o expirados, limpia la sesión y devuelve false.
+   */
+  public ensureSessionValid(): Observable<boolean> {
+    if (!this.isAuthenticated()) {
+      return of(false);
+    }
+    if (this.sessionValidated) {
+      return of(true);
+    }
+    if (!this.sessionCheck$) {
+      this.sessionCheck$ = this.getMe().pipe(
+        map(() => true),
+        catchError(() => {
+          this.clearSessionOnly();
+          return of(false);
+        }),
+        finalize(() => {
+          this.sessionCheck$ = null;
+        }),
+        shareReplay(1)
+      );
+    }
+    return this.sessionCheck$;
   }
 
   /** Solo desde `AuthInterceptor` ante 401/403 de recurso (no timers). */
@@ -116,6 +163,7 @@ export class AuthenticationService extends BaseServicesService {
   public clearSessionOnly(): void {
     this.user = null;
     this.cleanSession();
+    this.invalidateSessionValidation();
     this.authenticationChanged.next(false);
     this.blockRefresh();
   }
@@ -134,14 +182,20 @@ export class AuthenticationService extends BaseServicesService {
 
   public resetSessionState(): void {
     this.refreshBlocked = false;
+    this.invalidateSessionValidation();
+  }
+
+  private invalidateSessionValidation(): void {
+    this.sessionValidated = false;
+    this.sessionCheck$ = null;
   }
 
   /**
-   * Sesión activa en cliente: access y/o refresh guardados (normalizados).
-   * El access puede estar expirado en el servidor; el interceptor renueva ante 401/403 con Bearer.
+   * Sesión activa: login explícito en esta sesión del navegador + credenciales guardadas.
+   * Tokens en localStorage de sesiones anteriores no cuentan como autenticado.
    */
   public isAuthenticated(): boolean {
-    return !!(this.getToken() || this.getRefreshToken());
+    return this.hasBrowserSessionFlag() && !!(this.getToken() || this.getRefreshToken());
   }
 
   public blockRefresh(): void {
@@ -206,8 +260,7 @@ export class AuthenticationService extends BaseServicesService {
   }
 
   public getUser(): User | null {
-    const user =
-      sessionStorage.getItem('user') ?? localStorage.getItem('user');
+    const user = sessionStorage.getItem('user');
     if (!user) return null;
     return JSON.parse(user);
   }
@@ -219,9 +272,7 @@ export class AuthenticationService extends BaseServicesService {
   }
 
   public getPermissions(): string[] {
-    const permissions =
-      sessionStorage.getItem('permissions') ??
-      localStorage.getItem('permissions');
+    const permissions = sessionStorage.getItem('permissions');
     if (!permissions) return [];
     return JSON.parse(permissions);
   }
@@ -271,16 +322,36 @@ export class AuthenticationService extends BaseServicesService {
   }
 
   private readAuthStorage(key: string): string {
-    const fromSession = this.normalizeStorageValue(sessionStorage.getItem(key));
-    if (fromSession) {
-      return fromSession;
-    }
-    return this.normalizeStorageValue(localStorage.getItem(key));
+    return this.normalizeStorageValue(sessionStorage.getItem(key));
   }
 
   private writeAuthStorage(key: string, value: string): void {
     sessionStorage.setItem(key, value);
-    localStorage.setItem(key, value);
+  }
+
+  private hasBrowserSessionFlag(): boolean {
+    return sessionStorage.getItem(AuthenticationService.SESSION_ACTIVE_KEY) === '1';
+  }
+
+  private activateBrowserSession(): void {
+    sessionStorage.setItem(AuthenticationService.SESSION_ACTIVE_KEY, '1');
+  }
+
+  /** Credenciales viejas en localStorage no deben reabrir la app sin login. */
+  private purgeStalePersistentAuth(): void {
+    if (this.hasBrowserSessionFlag()) {
+      return;
+    }
+    const hadPersistentAuth = AuthenticationService.AUTH_STORAGE_KEYS.some(
+      (key) => !!localStorage.getItem(key) || !!sessionStorage.getItem(key)
+    );
+    if (!hadPersistentAuth) {
+      return;
+    }
+    this.user = null;
+    this.cleanSession();
+    this.invalidateSessionValidation();
+    this.authenticationChanged.next(false);
   }
 
   /**
@@ -316,9 +387,7 @@ export class AuthenticationService extends BaseServicesService {
   }
 
   private setStorageUser(value: any): void {
-    const serialized = JSON.stringify(value);
-    sessionStorage.setItem('user', serialized);
-    localStorage.setItem('user', serialized);
+    sessionStorage.setItem('user', JSON.stringify(value));
   }
 
   private setStoragePermissions(permissions: any[]): void {
@@ -329,9 +398,7 @@ export class AuthenticationService extends BaseServicesService {
       return String(perm);
     });
 
-    const serialized = JSON.stringify(permissionIds);
-    sessionStorage.setItem('permissions', serialized);
-    localStorage.setItem('permissions', serialized);
+    sessionStorage.setItem('permissions', JSON.stringify(permissionIds));
   }
 
   private normalizeStorageValue(raw: string | null): string {

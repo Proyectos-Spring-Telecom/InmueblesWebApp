@@ -14,19 +14,19 @@ export const HUB_PAGOS_MES: OperacionPagosHubConfig = {
     {
       segmento: 'renta',
       titulo: 'Rentas',
-      descripcion: 'Consulta y registra la renta mensual de cada local. Aquí solo ves los pagos de este mes.',
+      descripcion: 'Registra y consulta el pago de renta mensual por local.',
       icono: 'payments',
     },
     {
       segmento: 'mantenimiento',
       titulo: 'Mantenimientos',
-      descripcion: 'Consulta y registra las cuotas de mantenimiento de cada arrendatario. Solo los pagos de este mes.',
+      descripcion: 'Registra y consulta las cuotas de mantenimiento del mes.',
       icono: 'handyman',
     },
     {
       segmento: 'servicios',
       titulo: 'Servicios',
-      descripcion: 'Consulta y registra agua, luz, gas y otros servicios. Puedes guardar el comprobante de cada pago.',
+      descripcion: 'Gestiona agua, luz, gas y otros servicios con su comprobante.',
       icono: 'design_services',
     },
   ],

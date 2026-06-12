@@ -2,11 +2,12 @@ import { inject, Injectable } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
   CanActivate,
-  CanActivateChild,   // ← Agrega esto
+  CanActivateChild,
   Router,
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
+import { map, Observable, of } from 'rxjs';
 import { AuthenticationService } from 'src/app/services/auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -14,22 +15,24 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   private readonly auth = inject(AuthenticationService);
   private readonly router = inject(Router);
 
-  // auth.guard.ts
-canActivate(): boolean | UrlTree {
-  if (this.auth.isAuthenticated()) {
-    return true;
-  }
-  return this.router.createUrlTree(['/login']); // ← Debe retornar UrlTree, no navigate()
-}
-
-  canActivateChild(_route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): boolean | UrlTree {
-    return this.check();  // ← Se ejecuta para CADA hijo antes de cargar el módulo lazy
+  canActivate(): Observable<boolean | UrlTree> {
+    return this.check();
   }
 
-  private check(): boolean | UrlTree {
-    if (this.auth.isAuthenticated()) {
-      return true;
+  canActivateChild(
+    _route: ActivatedRouteSnapshot,
+    _state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> {
+    return this.check();
+  }
+
+  private check(): Observable<boolean | UrlTree> {
+    if (!this.auth.isAuthenticated()) {
+      return of(this.router.createUrlTree(['/login']));
     }
-    return this.router.createUrlTree(['/login']);
+
+    return this.auth.ensureSessionValid().pipe(
+      map((valid) => (valid ? true : this.router.createUrlTree(['/login'])))
+    );
   }
 }
