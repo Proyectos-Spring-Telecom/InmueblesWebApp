@@ -1,8 +1,429 @@
-:host {
-  display: block;
-  min-width: 0;
+// ─────────────────────────────────────────────
+//  Tokens
+// ─────────────────────────────────────────────
+$bg-base:      #12151e;
+$bg-surface:   #1a1e2a;
+$bg-row-alt:   #1e2230;
+$bg-thead:     #0e1118;
+$accent-red:   #681330;
+$accent-red-l: #8a1a3e;
+$border:       rgba(255,255,255,0.07);
+$text-main:    #e8eaf0;
+$text-muted:   #6b7794;
+$text-dim:     #9aa0b8;
+$radius-sm:    6px;
+$radius-md:    10px;
+$radius-lg:    14px;
+
+// Colores estatus — texto
+$aldia-text:       #4ade80;
+$cambio-text:      #f87171;
+$finanzas-text:    #fbbf24;
+$incremento-text:  #60a5fa;
+
+// Colores estatus — fondo de fila (tinte visible pero suave)
+// Fila renta: opacidad base | Fila mantto: un poco más intensa
+$aldia-row:         rgba(74,  222, 128, 0.08);
+$aldia-row-alt:     rgba(74,  222, 128, 0.13);
+$aldia-hover:       rgba(74,  222, 128, 0.18);
+
+$cambio-row:        rgba(248, 113, 113, 0.08);
+$cambio-row-alt:    rgba(248, 113, 113, 0.13);
+$cambio-hover:      rgba(248, 113, 113, 0.18);
+
+$finanzas-row:      rgba(251, 191,  36, 0.08);
+$finanzas-row-alt:  rgba(251, 191,  36, 0.13);
+$finanzas-hover:    rgba(251, 191,  36, 0.18);
+
+$incremento-row:    rgba(96,  165, 250, 0.08);
+$incremento-row-alt:rgba(96,  165, 250, 0.13);
+$incremento-hover:  rgba(96,  165, 250, 0.18);
+
+// ─────────────────────────────────────────────
+//  Page
+// ─────────────────────────────────────────────
+.rr-page {
+  background: $bg-base;
+  min-height: 100vh;
+  padding: 24px 20px 56px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: $text-main;
 }
 
-.rent-rol {
-  min-width: 0;
+// ─────────────────────────────────────────────
+//  Breadcrumb
+// ─────────────────────────────────────────────
+.rr-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: $text-muted;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  i       { font-size: 13px; }
+  .sep    { color: rgba(255,255,255,0.2); }
+  .active { color: $text-main; font-weight: 500; }
+}
+
+// ─────────────────────────────────────────────
+//  Page header
+// ─────────────────────────────────────────────
+.rr-pageheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, $accent-red 0%, #3a0a1e 100%);
+  border-radius: $radius-lg;
+  padding: 18px 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+
+  &__info {
+    display: flex; align-items: center; gap: 14px;
+    position: relative; z-index: 1;
+  }
+
+  &__icon {
+    width: 42px; height: 42px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: $radius-md;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 17px; flex-shrink: 0;
+  }
+
+  &__eyebrow {
+    font-size: 11px; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 0.6px; margin: 0;
+  }
+
+  &__title {
+    font-size: 20px; font-weight: 700; color: #fff; margin: 2px 0 0;
+  }
+
+  &__periodo {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: $radius-sm;
+    padding: 7px 14px;
+    color: rgba(255,255,255,0.85);
+    font-size: 12px; font-weight: 500;
+    position: relative; z-index: 1; white-space: nowrap;
+
+    i { font-size: 12px; color: rgba(255,255,255,0.55); }
+  }
+}
+
+// ─────────────────────────────────────────────
+//  KPI Cards
+// ─────────────────────────────────────────────
+.rr-kpi {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 16px 18px;
+  height: 100%;
+  display: flex; flex-direction: column; gap: 6px;
+  transition: border-color 0.2s;
+
+  &:hover { border-color: rgba(255,255,255,0.14); }
+
+  &__label {
+    font-size: 10px; font-weight: 600;
+    color: $text-muted; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  &__value {
+    font-size: 18px; font-weight: 700;
+    color: $text-main; letter-spacing: -0.4px;
+    @media (min-width: 992px) { font-size: 21px; }
+  }
+
+  &--accent {
+    background: $accent-red; border-color: $accent-red-l;
+    .rr-kpi__label { color: rgba(255,255,255,0.55); }
+    .rr-kpi__value { color: #fff; }
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Toolbar: info registros + leyenda
+// ─────────────────────────────────────────────
+.rr-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rr-pag-info {
+  font-size: 11px; color: $text-muted; white-space: nowrap;
+}
+
+// ─────────────────────────────────────────────
+//  Leyenda — cajitas de color estilo Excel
+// ─────────────────────────────────────────────
+.rr-leyenda {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  &__item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600;
+  }
+
+  &__caja {
+    display: inline-block;
+    width: 32px; height: 14px;
+    border-radius: 3px; flex-shrink: 0;
+  }
+
+  // Sin estatus — sin caja, sin color especial (no aparece en leyenda)
+  // Solo los 4 colores reales
+  &__item--aldia      { color: $aldia-text;
+    .rr-leyenda__caja { background: $aldia-row-alt; border: 1px solid rgba(74,222,128,0.3); } }
+
+  &__item--cambio     { color: $cambio-text;
+    .rr-leyenda__caja { background: $cambio-row-alt; border: 1px solid rgba(248,113,113,0.3); } }
+
+  &__item--finanzas   { color: $finanzas-text;
+    .rr-leyenda__caja { background: $finanzas-row-alt; border: 1px solid rgba(251,191,36,0.3); } }
+
+  &__item--incremento { color: $incremento-text;
+    .rr-leyenda__caja { background: $incremento-row-alt; border: 1px solid rgba(96,165,250,0.3); } }
+}
+
+// ─────────────────────────────────────────────
+//  Tags estatus
+// ─────────────────────────────────────────────
+.rr-tag {
+  display: inline-flex; align-items: center;
+  padding: 3px 11px; border-radius: 99px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+
+  &--aldia      { background: rgba(74,222,128,0.15);  color: $aldia-text; }
+  &--cambio     { background: rgba(248,113,113,0.15); color: $cambio-text; }
+  &--finanzas   { background: rgba(251,191,36,0.15);  color: $finanzas-text; }
+  &--incremento { background: rgba(96,165,250,0.15);  color: $incremento-text; }
+  &--neutral    { color: $text-muted; }
+}
+
+// ─────────────────────────────────────────────
+//  Tabla
+// ─────────────────────────────────────────────
+.rr-table-wrap {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  overflow: hidden;
+
+  .table-responsive {
+    border-radius: $radius-lg;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+.rr-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+  min-width: 1100px;
+
+  .col-empresa  { width: 18%; }
+  .col-piso     { width: 5%; }
+  .col-modulo   { width: 7%; }
+  .col-m2       { width: 6%; }
+  .col-pm2      { width: 8%; }
+  .col-concepto { width: 7%; }
+  .col-num      { width: 8%; }
+  .col-fecha    { width: 9%; }
+  .col-estatus  { width: 8%; }
+
+  // ── Thead ──
+  thead tr { background: $bg-thead; }
+
+  thead th {
+    padding: 12px 10px;
+    font-size: 11px; font-weight: 600;
+    color: $text-muted; text-align: center;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-right: 1px solid $border;
+    border-bottom: 1px solid $border;
+    white-space: nowrap;
+
+    &:first-child { text-align: left; padding-left: 18px; }
+    &:last-child  { border-right: none; }
+  }
+
+  // ── Celdas tbody ──
+  tbody td {
+    padding: 9px 10px;
+    border-bottom: 1px solid $border;
+    border-right: 1px solid $border;
+    vertical-align: middle;
+    color: $text-main;
+
+    &:first-child { padding-left: 18px; }
+    &:last-child  { border-right: none; }
+  }
+
+  .cell-center { text-align: center; }
+  .cell-right  { text-align: right; font-variant-numeric: tabular-nums; }
+  .cell-total  { font-weight: 600; color: #fff; }
+  .cell-fecha  { font-size: 11px; color: $text-dim; }
+
+  // ────────────────────────────────────────────
+  //  Sin estatus — SIN color, fondo transparente
+  //  hereda el fondo de la tabla directamente
+  // ────────────────────────────────────────────
+  .row-renta.row-estatus--neutral td {
+    background: transparent;
+  }
+  .row-mant.row-estatus--neutral td {
+    background: transparent;
+  }
+  .row-renta.row-estatus--neutral td:first-child {
+    border-left: 3px solid transparent;
+  }
+  .row-renta.row-estatus--neutral:hover td,
+  .row-renta.row-estatus--neutral:hover + .row-mant td {
+    background: rgba(255,255,255,0.02);
+  }
+
+  // ────────────────────────────────────────────
+  //  Con estatus — colores pintados de base
+  // ────────────────────────────────────────────
+
+  // Al día
+  .row-renta.row-estatus--aldia td      { background: $aldia-row; }
+  .row-mant.row-estatus--aldia td       { background: $aldia-row-alt; }
+  .row-renta.row-estatus--aldia td:first-child { border-left: 3px solid $aldia-text; }
+  .row-renta.row-estatus--aldia:hover td,
+  .row-renta.row-estatus--aldia:hover + .row-mant td { background: $aldia-hover; cursor: default; }
+
+  // Cambios
+  .row-renta.row-estatus--cambio td     { background: $cambio-row; }
+  .row-mant.row-estatus--cambio td      { background: $cambio-row-alt; }
+  .row-renta.row-estatus--cambio td:first-child { border-left: 3px solid $cambio-text; }
+  .row-renta.row-estatus--cambio:hover td,
+  .row-renta.row-estatus--cambio:hover + .row-mant td { background: $cambio-hover; cursor: default; }
+
+  // Finanzas
+  .row-renta.row-estatus--finanzas td   { background: $finanzas-row; }
+  .row-mant.row-estatus--finanzas td    { background: $finanzas-row-alt; }
+  .row-renta.row-estatus--finanzas td:first-child { border-left: 3px solid $finanzas-text; }
+  .row-renta.row-estatus--finanzas:hover td,
+  .row-renta.row-estatus--finanzas:hover + .row-mant td { background: $finanzas-hover; cursor: default; }
+
+  // Incremento
+  .row-renta.row-estatus--incremento td { background: $incremento-row; }
+  .row-mant.row-estatus--incremento td  { background: $incremento-row-alt; }
+  .row-renta.row-estatus--incremento td:first-child { border-left: 3px solid $incremento-text; }
+  .row-renta.row-estatus--incremento:hover td,
+  .row-renta.row-estatus--incremento:hover + .row-mant td { background: $incremento-hover; cursor: default; }
+}
+
+// ── Empresa ──
+.empresa-nombre {
+  font-weight: 600; font-size: 12px;
+  color: $text-main; line-height: 1.4;
+}
+
+.empresa-nota {
+  font-size: 11px; color: $text-muted; margin-top: 2px;
+}
+
+// ── Pills concepto ──
+.concepto-pill {
+  display: inline-block;
+  padding: 3px 9px; border-radius: $radius-sm;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.3px;
+
+  &--renta { background: rgba(96,165,250,0.15); color: #60a5fa; }
+  &--mant  { background: rgba(251,191,36,0.15); color: #fbbf24; }
+}
+
+// ─────────────────────────────────────────────
+//  Tfoot
+// ─────────────────────────────────────────────
+tfoot {
+  .foot-row td {
+    background: #0a0d14;
+    color: $text-main;
+    font-weight: 500; font-size: 12px;
+    border-top: 2px solid rgba(255,255,255,0.12);
+    border-right: 1px solid $border;
+    padding: 13px 10px;
+
+    &:first-child { padding-left: 18px; }
+    &:last-child  { border-right: none; }
+  }
+
+  .foot-label {
+    font-size: 13px; font-weight: 700; color: #fff;
+  }
+
+  .foot-row--last td { border-top: 1px solid $border; }
+
+  .foot-highlight {
+    font-size: 15px; font-weight: 700;
+    color: #fff; letter-spacing: -0.3px;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Paginado
+// ─────────────────────────────────────────────
+.rr-pagination { padding: 4px 2px; }
+
+.rr-pag-btn {
+  min-width: 34px; height: 34px;
+  padding: 0 8px;
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  color: $text-dim;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  display: inline-flex; align-items: center; justify-content: center;
+
+  &:hover:not(:disabled):not(.dots) {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.18);
+    color: $text-main;
+  }
+
+  &.active {
+    background: $accent-red; border-color: $accent-red-l;
+    color: #fff; font-weight: 700;
+  }
+
+  &:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  &.dots {
+    border-color: transparent; background: transparent;
+    cursor: default; color: $text-muted;
+  }
 }
