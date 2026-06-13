@@ -628,6 +628,41 @@
     0 0 24px rgba(56, 189, 248, 0.3);
 }
 
+.contrato-incluye-mtto {
+  display: flex;
+  align-items: center;
+  min-height: 3.25rem;
+  padding: 0.35rem 0.15rem;
+}
+
+:host ::ng-deep .contrato-incluye-mtto .mat-mdc-slide-toggle {
+  --mat-slide-toggle-selected-track-color: #681330;
+  --mat-slide-toggle-selected-handle-color: #fff;
+  --mat-slide-toggle-selected-icon-color: #681330;
+  --mat-slide-toggle-selected-focus-state-layer-color: color-mix(in srgb, #681330 12%, transparent);
+  --mat-slide-toggle-selected-hover-state-layer-color: color-mix(in srgb, #681330 8%, transparent);
+  --mat-slide-toggle-selected-pressed-state-layer-color: color-mix(in srgb, #681330 12%, transparent);
+  --mat-slide-toggle-track-width: 4.5rem;
+  --mat-slide-toggle-track-height: 34px;
+  --mat-slide-toggle-with-icon-handle-size: 26px;
+  --mdc-switch-selected-track-color: #681330;
+  --mdc-switch-selected-handle-color: #fff;
+  --mdc-switch-selected-icon-color: #681330;
+  --mdc-switch-track-width: 4.5rem;
+  --mdc-switch-track-height: 34px;
+  --mdc-switch-handle-height: 26px;
+  --mdc-switch-handle-width: 26px;
+
+  .mdc-switch {
+    width: 4.5rem;
+    height: 34px;
+  }
+
+  .mdc-switch--selected .mdc-switch__handle:has(.mdc-switch__icons) {
+    margin: 0 36px;
+  }
+}
+
 .renta-calc-bloque {
   scroll-margin-top: 5.5rem;
 

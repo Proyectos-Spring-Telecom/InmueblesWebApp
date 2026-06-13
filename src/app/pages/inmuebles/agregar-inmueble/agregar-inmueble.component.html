@@ -143,18 +143,21 @@
                     <h6 class="arrend-fa-section-title m-0">Servicios</h6>
                   </div>
                   <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
-                    (click)="agregarServicio()"><mat-icon>add</mat-icon> Agregar</button>
+                    (click)="agregarServicio()"><mat-icon>add</mat-icon> Agregar Servicio</button>
                 </div>
               </div>
             </div>
-            <div class="row g-1 mt-0" formArrayName="servicios">
-              <ng-container *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index" [formGroupName]="i">
-                <div class="col-12">
-                  <div class="arrend-fa-item">
-                    <div
-                      class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                      <span class="arrend-fa-idx">Servicio {{ i + 1 }}</span>
-                    </div>
+            <div class="arrend-fa-section__body" formArrayName="servicios">
+              <dx-accordion class="arrend-accordion-servicios" width="100%" [collapsible]="true" [multiple]="true"
+                [animationDuration]="260" [selectedIndex]="$any(servicioAccordionIndicesAbiertos)"
+                [focusStateEnabled]="false" (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
+                itemTitleTemplate="servicioAccordionTitle">
+                <div *dxTemplate="let data of 'servicioAccordionTitle'" class="arrend-accordion-title-bar">
+                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                </div>
+                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index"
+                  [title]="tituloServicioAccordion(i)">
+                  <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label">Tipo de servicio</label>
@@ -244,8 +247,6 @@
                                   }"></ng-container>
                                 </div>
                               </ng-template>
-                              <h6 class="uploader__title">Sube imagen</h6>
-                              <p class="uploader__subtitle">Arrastra y suelta o</p>
                               <input #srvPagoInput type="file" [accept]="acceptPdfImagenes"
                                 class="uploader__input" (change)="onServicioPagoFileSelected($event, i)" />
                             </div>
@@ -254,8 +255,8 @@
                       </div>
                     </div>
                   </div>
-                </div>
-              </ng-container>
+                </dxi-item>
+              </dx-accordion>
             </div>
           </div>
 
@@ -268,19 +269,22 @@
                     <h6 class="arrend-fa-section-title m-0">Zonas</h6>
                   </div>
                   <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
-                    (click)="agregarZona()"><mat-icon>add</mat-icon> Agregar</button>
+                    (click)="agregarZona()"><mat-icon>add</mat-icon> Agregar Zona</button>
                 </div>
               </div>
             </div>
-            <div class="row g-1 mt-0 zonas-form-list" formArrayName="zonas">
-              <ng-container *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index" [formGroupName]="i">
-                <div class="col-12 zona-item-card">
-                  <div class="arrend-fa-item zona-item-card__panel">
-                    <div
-                      class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                      <span class="arrend-fa-idx arrend-fa-idx--zona">Zona {{ i + 1 }}</span>
-                    </div>
-                    <div class="row g-3 zona-item-card__fields">
+            <div class="arrend-fa-section__body" formArrayName="zonas">
+              <dx-accordion class="arrend-accordion-zonas" width="100%" [collapsible]="true" [multiple]="true"
+                [animationDuration]="260" [selectedIndex]="$any(zonaAccordionIndicesAbiertos)"
+                [focusStateEnabled]="false" (selectedIndexChange)="onZonaAccordionIndicesChange($event)"
+                itemTitleTemplate="zonaAccordionTitle">
+                <div *dxTemplate="let data of 'zonaAccordionTitle'" class="arrend-accordion-title-bar">
+                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                </div>
+                <dxi-item *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index"
+                  [title]="tituloZonaAccordion(i)">
+                  <div class="arrend-accordion-item-body arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
+                    <div class="row g-4 arrend-contrato-fila-campos">
                       <div class="col-12 col-md-4"><label class="form-label perm-label">Zona principal</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>layers</mat-icon></span>
@@ -307,138 +311,141 @@
                         </div>
                       </div>
                     </div>
-                    <div class="locales-builder" formArrayName="locales">
+                    <div class="locales-builder mt-4" formArrayName="locales">
                       <div
-                        class="locales-builder__head d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        class="locales-builder__head d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
                         <div class="locales-builder__title">
                           <span class="locales-builder__eyebrow">Pertenece a zona {{ i + 1 }}</span>
                           <h6 class="m-0 locales-builder__heading">Locales de la zona</h6>
                         </div>
                         <button type="button" class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
-                          (click)="agregarLocalZona(i)"><mat-icon>add</mat-icon> Agregar local</button>
+                          (click)="agregarLocalZona(i)"><mat-icon>add</mat-icon> Agregar Local</button>
                       </div>
                       <div class="locales-builder__list">
-                        <ng-container
-                          *ngFor="let localCtrl of localesZonaFormArray(i).controls; let j = index"
-                          [formGroupName]="j">
-                          <div class="local-item-card">
-                            <div
-                              class="arrend-fa-item__toolbar d-flex align-items-center justify-content-between flex-wrap gap-2">
-                              <span class="arrend-fa-idx arrend-fa-idx--local">Local {{ j + 1 }}</span>
-                            </div>
-                            <div class="row g-3">
-                              <div class="col-12 col-md-4"><label class="form-label perm-label">Nombre del local</label>
-                                <div class="input-group input-group-lg perm-ig"><span
-                                    class="input-group-text fw-bold"><mat-icon>storefront</mat-icon></span>
-                                  <div class="form-floating flex-grow-1"><input type="text" class="form-control"
-                                      formControlName="nombre" placeholder="Ej.: Local A-01" /><label>Ej.: Local
-                                      A-01</label></div>
-                                </div>
-                              </div>
-                              <div class="col-12 col-md-4"><label class="form-label perm-label">Área (m²)</label>
-                                <div class="input-group input-group-lg perm-ig"><span
-                                    class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span>
-                                  <div class="form-floating flex-grow-1"><input type="number" class="form-control"
-                                      formControlName="areaM2" placeholder="m² del local" /><label>m² del
-                                      local</label></div>
-                                </div>
-                              </div>
-                              <div class="col-12 col-md-4"><label class="form-label perm-label">Estatus del
-                                  local</label>
-                                <div class="input-group input-group-lg perm-ig"><span
-                                    class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
-                                  <div class="form-floating flex-grow-1 perm-select-floating">
-                                    <select class="form-select" formControlName="estatus"
-                                      [attr.aria-label]="'Estatus del local ' + (j + 1)">
-                                      <option [ngValue]="null" disabled></option>
-                                      <option [ngValue]="0">Fuera de servicio</option>
-                                      <option [ngValue]="1">Disponible para renta</option>
-                                      <option [ngValue]="2">Ocupado</option>
-                                      <option [ngValue]="3">Apartado</option>
-                                    </select>
-                                    <label>Estatus del local</label>
+                        <dx-accordion class="arrend-accordion-locales" width="100%" [collapsible]="true"
+                          [multiple]="true" [animationDuration]="260"
+                          [selectedIndex]="$any(localAccordionIndicesAbiertosDeZona(i))"
+                          [focusStateEnabled]="false"
+                          (selectedIndexChange)="onLocalAccordionIndicesChange(i, $event)"
+                          itemTitleTemplate="localAccordionTitle">
+                          <div *dxTemplate="let data of 'localAccordionTitle'" class="arrend-accordion-title-bar">
+                            <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                          </div>
+                          <dxi-item *ngFor="let localCtrl of localesZonaFormArray(i).controls; let j = index"
+                            [title]="tituloLocalAccordion(i, j)">
+                            <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="j">
+                              <div class="row g-3">
+                                <div class="col-12 col-md-4"><label class="form-label perm-label">Nombre del local</label>
+                                  <div class="input-group input-group-lg perm-ig"><span
+                                      class="input-group-text fw-bold"><mat-icon>storefront</mat-icon></span>
+                                    <div class="form-floating flex-grow-1"><input type="text" class="form-control"
+                                        formControlName="nombre" placeholder="Ej.: Local A-01" /><label>Ej.: Local
+                                        A-01</label></div>
                                   </div>
                                 </div>
-                              </div>
-                              <div class="col-12 col-md-4"><label class="form-label perm-label">Mensualidad
-                                  (MXN)</label>
-                                <div class="input-group input-group-lg perm-ig"><span
-                                    class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
-                                  <div class="form-floating flex-grow-1"><input type="number" class="form-control"
-                                      formControlName="mensualidad" placeholder="Renta mensual" /><label>Renta
-                                      mensual</label></div>
+                                <div class="col-12 col-md-4"><label class="form-label perm-label">Área (m²)</label>
+                                  <div class="input-group input-group-lg perm-ig"><span
+                                      class="input-group-text fw-bold"><mat-icon>square_foot</mat-icon></span>
+                                    <div class="form-floating flex-grow-1"><input type="number" class="form-control"
+                                        formControlName="areaM2" placeholder="m² del local" /><label>m² del
+                                        local</label></div>
+                                  </div>
                                 </div>
-                              </div>
-                              <div class="col-12 col-md-4"><label class="form-label perm-label">Giro</label>
-                                <div class="input-group input-group-lg perm-ig"><span
-                                    class="input-group-text fw-bold"><mat-icon>category</mat-icon></span>
-                                  <div class="form-floating flex-grow-1"><input type="text" class="form-control"
-                                      formControlName="giro" placeholder="Ej.: Restaurante" /><label>Ej.:
-                                      Restaurante</label></div>
+                                <div class="col-12 col-md-4"><label class="form-label perm-label">Estatus del
+                                    local</label>
+                                  <div class="input-group input-group-lg perm-ig"><span
+                                      class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
+                                    <div class="form-floating flex-grow-1 perm-select-floating">
+                                      <select class="form-select" formControlName="estatus"
+                                        [attr.aria-label]="'Estatus del local ' + (j + 1)">
+                                        <option [ngValue]="null" disabled></option>
+                                        <option [ngValue]="0">Fuera de servicio</option>
+                                        <option [ngValue]="1">Disponible para renta</option>
+                                        <option [ngValue]="2">Ocupado</option>
+                                        <option [ngValue]="3">Apartado</option>
+                                      </select>
+                                      <label>Estatus del local</label>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                              <div class="col-12 col-md-4">
-                                <label class="form-label perm-label d-block mb-2">Fachada del Local</label>
-                                <div class="uploader-hero srv-pago-uploader">
-                                  <div class="uploader srv-pago-uploader__card">
-                                    <div class="uploader__glow"></div>
-                                    <div class="uploader__body">
-                                      <ng-container
-                                        *ngIf="layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value); else localFachadaUploaderDefault">
-                                        <div class="srv-pago-uploader__row srv-pago-uploader__row--archivo-remoto">
-                                          <div class="uploader__cta-actions">
-                                            <button mat-flat-button color="primary" type="button"
-                                              (click)="localFachadaInput.click()">
-                                              Seleccionar
-                                            </button>
+                                <div class="col-12 col-md-4"><label class="form-label perm-label">Mensualidad
+                                    (MXN)</label>
+                                  <div class="input-group input-group-lg perm-ig"><span
+                                      class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+                                    <div class="form-floating flex-grow-1"><input type="number" class="form-control"
+                                        formControlName="mensualidad" placeholder="Renta mensual" /><label>Renta
+                                        mensual</label></div>
+                                  </div>
+                                </div>
+                                <div class="col-12 col-md-4"><label class="form-label perm-label">Giro</label>
+                                  <div class="input-group input-group-lg perm-ig"><span
+                                      class="input-group-text fw-bold"><mat-icon>category</mat-icon></span>
+                                    <div class="form-floating flex-grow-1"><input type="text" class="form-control"
+                                        formControlName="giro" placeholder="Ej.: Restaurante" /><label>Ej.:
+                                        Restaurante</label></div>
+                                  </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                  <label class="form-label perm-label d-block mb-2">Fachada del Local</label>
+                                  <div class="uploader-hero srv-pago-uploader">
+                                    <div class="uploader srv-pago-uploader__card">
+                                      <div class="uploader__glow"></div>
+                                      <div class="uploader__body">
+                                        <ng-container
+                                          *ngIf="layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value); else localFachadaUploaderDefault">
+                                          <div class="srv-pago-uploader__row srv-pago-uploader__row--archivo-remoto">
+                                            <div class="uploader__cta-actions">
+                                              <button mat-flat-button color="primary" type="button"
+                                                (click)="localFachadaInput.click()">
+                                                Seleccionar
+                                              </button>
+                                              <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
+                                                url: localCtrl.get('fachadaUrl')?.value,
+                                                titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
+                                              }"></ng-container>
+                                            </div>
+                                            <span class="uploader__badge uploader__badge--file srv-pago-uploader__formats">
+                                              {{ localCtrl.get('fachadaNombre')?.value }}
+                                            </span>
+                                          </div>
+                                        </ng-container>
+                                        <ng-template #localFachadaUploaderDefault>
+                                          <div class="srv-pago-uploader__row">
+                                            <div class="srv-pago-uploader__left">
+                                              <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
+                                                <mat-icon>photo_camera</mat-icon>
+                                              </div>
+                                              <button mat-flat-button color="primary" type="button"
+                                                (click)="localFachadaInput.click()">
+                                                Selecciona una imagen
+                                              </button>
+                                            </div>
+                                            <span class="uploader__badge srv-pago-uploader__formats"
+                                              [class.uploader__badge--file]="localCtrl.get('fachadaNombre')?.value || localCtrl.get('fachadaUrl')?.value">
+                                              {{ localCtrl.get('fachadaNombre')?.value || etiquetaSoloImagenes }}
+                                            </span>
                                             <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
                                               url: localCtrl.get('fachadaUrl')?.value,
                                               titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
                                             }"></ng-container>
                                           </div>
-                                          <span class="uploader__badge uploader__badge--file srv-pago-uploader__formats">
-                                            {{ localCtrl.get('fachadaNombre')?.value }}
-                                          </span>
-                                        </div>
-                                      </ng-container>
-                                      <ng-template #localFachadaUploaderDefault>
-                                        <div class="srv-pago-uploader__row">
-                                          <div class="srv-pago-uploader__left">
-                                            <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
-                                              <mat-icon>photo_camera</mat-icon>
-                                            </div>
-                                            <button mat-flat-button color="primary" type="button"
-                                              (click)="localFachadaInput.click()">
-                                              Selecciona una imagen
-                                            </button>
-                                          </div>
-                                          <span class="uploader__badge srv-pago-uploader__formats"
-                                            [class.uploader__badge--file]="localCtrl.get('fachadaNombre')?.value || localCtrl.get('fachadaUrl')?.value">
-                                            {{ localCtrl.get('fachadaNombre')?.value || etiquetaSoloImagenes }}
-                                          </span>
-                                          <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
-                                            url: localCtrl.get('fachadaUrl')?.value,
-                                            titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
-                                          }"></ng-container>
-                                        </div>
-                                      </ng-template>
-                                      <h6 class="uploader__title">Sube imagen</h6>
-                                      <p class="uploader__subtitle">Arrastra y suelta o</p>
-                                      <input #localFachadaInput type="file" [accept]="acceptSoloImagenes"
-                                        class="uploader__input"
-                                        (change)="onLocalFachadaFileSelected($event, i, j)" />
+                                        </ng-template>
+                                        <input #localFachadaInput type="file" [accept]="acceptSoloImagenes"
+                                          class="uploader__input"
+                                          (change)="onLocalFachadaFileSelected($event, i, j)" />
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </ng-container>
+                          </dxi-item>
+                        </dx-accordion>
                       </div>
                     </div>
                   </div>
-                </div>
-              </ng-container>
+                </dxi-item>
+              </dx-accordion>
             </div>
           </div>
 
@@ -539,7 +546,7 @@
                 </div>
               </ng-template>
             </ng-template>
-            <div class="row g-3 g-lg-4 mt-1 uploader-wrap docs-uploader-docs-row align-items-stretch">
+            <div class="row g-3 g-lg-4 mt-0 uploader-wrap docs-uploader-docs-row align-items-stretch">
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Licencia / uso de suelo</label>
                 <div class="uploader-hero flex-grow-1">

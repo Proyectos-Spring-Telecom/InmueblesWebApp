@@ -3,9 +3,43 @@ import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { InmuebleGridRow, mapInmueblesApiToGridRows } from '../inmuebles-list.mapper';
+
+interface LocalOcupacionProcesado {
+  id: string;
+  nombre: string;
+  area: number;
+  porcentaje: number;
+  color: string;
+}
+
+interface CeldaOcupacion {
+  id: string;
+  tipo: 'local' | 'disponible';
+  local?: LocalOcupacionProcesado;
+  showLabel?: boolean;
+}
+
+interface OcupacionInmuebleData {
+  totalM2: number;
+  localesRentados: unknown[];
+}
+
+const GRID_COLUMNAS = 20;
+const GRID_FILAS_OBJETIVO = 10;
+const COLORES_LOCALES = [
+  '#5B8DB8',
+  '#7BAFD4',
+  '#85B7EB',
+  '#4A90A4',
+  '#6C9BCF',
+  '#3D7EA6',
+  '#6897BB',
+  '#5289B5',
+];
 
 @Component({
   selector: 'app-lista-inmuebles',
@@ -34,6 +68,12 @@ export class ListaInmueblesComponent implements OnInit {
   private mapaLng: number | null = null;
   private map: unknown = null;
   private marker: unknown = null;
+
+  mostrarModalLugar = false;
+  lugarTitulo = '';
+  lugarCargando = false;
+  private lugarData: OcupacionInmuebleData | null = null;
+
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
   private readonly pinUrl = 'assets/images/logos/marker_spring.webp';
 
@@ -208,6 +248,181 @@ export class ListaInmueblesComponent implements OnInit {
         .then(() => this.initMapaListaModal())
         .catch((err) => console.error('No se pudo cargar Google Maps', err));
     }, 0);
+  }
+
+  verLugarInmueble(row: InmuebleGridRow): void {
+    const id = Number(row?.id);
+    if (!Number.isFinite(id) || id <= 0) return;
+
+    this.lugarTitulo = row.inmueble ?? `Inmueble #${id}`;
+    this.lugarData = null;
+    this.lugarCargando = true;
+    this.mostrarModalLugar = true;
+
+    this.inmueblesService
+      .obtenerMetrosInmueble(Math.floor(id))
+      .pipe(take(1))
+      .subscribe({
+        next: (res: unknown) => {
+          this.lugarData = this.normalizarOcupacionApi(res);
+          this.lugarCargando = false;
+        },
+        error: () => {
+          this.lugarCargando = false;
+        },
+      });
+  }
+
+  cerrarModalLugar(): void {
+    this.mostrarModalLugar = false;
+    this.lugarTitulo = '';
+    this.lugarData = null;
+    this.lugarCargando = false;
+  }
+
+  get data(): OcupacionInmuebleData | null {
+    return this.lugarData;
+  }
+
+  get totalM2(): number {
+    return this.lugarData?.totalM2 ?? 0;
+  }
+
+  get m2Ocupados(): number {
+    return this.localesProcesados.reduce((sum, local) => sum + local.area, 0);
+  }
+
+  get m2Disponibles(): number {
+    return Math.max(0, this.totalM2 - this.m2Ocupados);
+  }
+
+  get porcentajeOcupado(): number {
+    if (this.totalM2 <= 0) return 0;
+    return (this.m2Ocupados / this.totalM2) * 100;
+  }
+
+  get porcentajeDisponible(): number {
+    if (this.totalM2 <= 0) return 0;
+    return (this.m2Disponibles / this.totalM2) * 100;
+  }
+
+  get m2Label(): number {
+    if (this.totalM2 <= 0) return 1;
+    return this.totalM2 / (GRID_COLUMNAS * GRID_FILAS_OBJETIVO);
+  }
+
+  get M2_LABEL(): number {
+    return Math.round(this.m2Label * 10) / 10;
+  }
+
+  get localesProcesados(): LocalOcupacionProcesado[] {
+    const total = this.totalM2;
+    const items = Array.isArray(this.lugarData?.localesRentados)
+      ? this.lugarData!.localesRentados
+      : [];
+
+    return items.map((raw, index) => {
+      const area = this.areaLocalDesdeApi(raw);
+      const porcentaje = total > 0 ? (area / total) * 100 : 0;
+      return {
+        id: `local-${index}`,
+        nombre: this.nombreLocalDesdeApi(raw, index),
+        area,
+        porcentaje,
+        color: COLORES_LOCALES[index % COLORES_LOCALES.length],
+      };
+    });
+  }
+
+  get celdas(): CeldaOcupacion[] {
+    const m2PorCelda = this.m2Label;
+    const totalCeldas =
+      this.totalM2 > 0
+        ? Math.max(GRID_COLUMNAS, Math.ceil(this.totalM2 / m2PorCelda))
+        : 0;
+
+    if (totalCeldas <= 0) return [];
+
+    const celdas: CeldaOcupacion[] = [];
+    let indice = 0;
+
+    for (const local of this.localesProcesados) {
+      const unidades = Math.max(1, Math.round(local.area / m2PorCelda));
+      for (let u = 0; u < unidades && indice < totalCeldas; u++, indice++) {
+        celdas.push({
+          id: `celda-${indice}`,
+          tipo: 'local',
+          local,
+          showLabel: u === 0,
+        });
+      }
+    }
+
+    while (indice < totalCeldas) {
+      celdas.push({
+        id: `celda-${indice}`,
+        tipo: 'disponible',
+      });
+      indice++;
+    }
+
+    return celdas;
+  }
+
+  get gridFilas(): number {
+    if (!this.celdas.length) return 0;
+    return Math.ceil(this.celdas.length / GRID_COLUMNAS);
+  }
+
+  tooltipLocal(local: LocalOcupacionProcesado): string {
+    return `${local.nombre} · ${local.area.toLocaleString('es-MX')} m²`;
+  }
+
+  trackByCelda(_index: number, celda: CeldaOcupacion): string {
+    return celda.id;
+  }
+
+  private normalizarOcupacionApi(res: unknown): OcupacionInmuebleData {
+    const body =
+      res != null && typeof res === 'object' && 'data' in (res as object)
+        ? (res as { data?: unknown }).data
+        : res;
+
+    const raw = (body ?? {}) as Record<string, unknown>;
+    const totalM2 = Number(raw['totalM2'] ?? raw['total_m2'] ?? 0);
+    const localesRentados = Array.isArray(raw['localesRentados'])
+      ? raw['localesRentados']
+      : Array.isArray(raw['locales_rentados'])
+        ? raw['locales_rentados']
+        : [];
+
+    return {
+      totalM2: Number.isFinite(totalM2) ? totalM2 : 0,
+      localesRentados,
+    };
+  }
+
+  private areaLocalDesdeApi(raw: unknown): number {
+    if (raw == null || typeof raw !== 'object') return 0;
+    const item = raw as Record<string, unknown>;
+    const area = Number(
+      item['areaM2'] ??
+        item['area_m2'] ??
+        item['area'] ??
+        item['metros'] ??
+        item['m2'] ??
+        0,
+    );
+    return Number.isFinite(area) && area > 0 ? area : 0;
+  }
+
+  private nombreLocalDesdeApi(raw: unknown, index: number): string {
+    if (raw == null || typeof raw !== 'object') {
+      return `Local ${index + 1}`;
+    }
+    const item = raw as Record<string, unknown>;
+    const nombre = String(item['nombre'] ?? item['local'] ?? '').trim();
+    return nombre || `Local ${index + 1}`;
   }
 
   cerrarModalMapa(): void {

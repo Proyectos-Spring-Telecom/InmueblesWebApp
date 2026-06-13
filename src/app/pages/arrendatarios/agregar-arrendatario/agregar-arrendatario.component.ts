@@ -533,7 +533,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         ],
       ],
       tipoPersona: [null as number | null, Validators.required],
-      /** Ocultos en UI; se envían vacíos en el body del API. */
+      /** Ocultos en UI; no se envían en POST/PUT del arrendatario. */
       renta: [''],
       direccionFiscal: [''],
       fechaInicio: [''],
@@ -575,7 +575,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private crearContratoFormGroup(): FormGroup {
     return this.fb.group({
-      /** Id del registro de contrato en API (solo edición; no se envía en `contratos`). */
+      /** Id del registro de contrato en API (edición); se envía como `id` en PUT. */
       idContrato: [null as number | null],
       idInmueble: [null as number | null],
       /** Locales seleccionados (mismo nombre que el payload API). */
@@ -585,6 +585,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       tipoMoneda: ['MXN'],
       metrosRentados: [''],
       costoPorM2: [''],
+      incluyeMantenimiento: [0],
       pctMantenimiento: [''],
       mesesDeposito: [''],
       montoDeposito: [''],
@@ -636,10 +637,60 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   onContratoPctFocus(index: number): void {
+    if (!this.contratoIncluyeMantenimiento(index)) return;
     this.contratoCalcCampoFoco[index] = {
       ...this.contratoCalcCampoFoco[index],
       pctMantenimiento: true,
     };
+  }
+
+  contratoIncluyeMantenimiento(index: number): boolean {
+    const grupo = this.contratosFormArray.at(index) as FormGroup | null;
+    return Number(grupo?.get('incluyeMantenimiento')?.value) === 1;
+  }
+
+  onContratoIncluyeMantenimientoChange(index: number, activo: boolean): void {
+    const grupo = this.contratosFormArray.at(index) as FormGroup;
+    if (!grupo) return;
+    grupo.get('incluyeMantenimiento')?.setValue(activo ? 1 : 0);
+    if (!activo) {
+      grupo.patchValue(
+        {
+          pctMantenimiento: '',
+          subtotalMantenimiento: '',
+          ivaMantenimiento: '',
+          mantenimientoTotal: '',
+        },
+        { emitEvent: false },
+      );
+      this.setContratoCampoDisplay(index, 'pctMantenimiento', '');
+    }
+    this.recalcularMontosContrato(index, false);
+    this.actualizarDisplaysMonedaContrato(index);
+    this.cdr.markForCheck();
+  }
+
+  private limpiarCamposMantenimientoContrato(grupo: FormGroup): void {
+    grupo.patchValue(
+      {
+        pctMantenimiento: '',
+        subtotalMantenimiento: '',
+        ivaMantenimiento: '',
+        mantenimientoTotal: '',
+      },
+      { emitEvent: false },
+    );
+  }
+
+  private limpiarMontosCalculadosMantenimientoContrato(grupo: FormGroup): void {
+    grupo.patchValue(
+      {
+        subtotalMantenimiento: '',
+        ivaMantenimiento: '',
+        mantenimientoTotal: '',
+      },
+      { emitEvent: false },
+    );
   }
 
   private algunInputCalculoContratoEnfocado(index: number): boolean {
@@ -754,6 +805,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   onContratoPctBlur(index: number): void {
+    if (!this.contratoIncluyeMantenimiento(index)) return;
     const raw = this.contratoCampoDisplay[index]?.['pctMantenimiento'] ?? '';
     const grupo = this.contratosFormArray.at(index) as FormGroup;
     const ctrl = grupo.get('pctMantenimiento');
@@ -784,7 +836,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     const metrosOk = this.valorNumericoContratoCapturado(grupo, 'metrosRentados');
     const costoOk = this.valorNumericoContratoCapturado(grupo, 'costoPorM2');
-    const pctOk = this.valorNumericoContratoCapturado(grupo, 'pctMantenimiento');
+    const incluyeMtto = Number(grupo.get('incluyeMantenimiento')?.value) === 1;
+    const pctOk =
+      incluyeMtto && this.valorNumericoContratoCapturado(grupo, 'pctMantenimiento');
 
     let subR = 0;
     let ivaR = 0;
@@ -810,12 +864,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
           subtotalRenta: '',
           ivaRenta: '',
           rentaTotal: '',
-          subtotalMantenimiento: '',
-          ivaMantenimiento: '',
-          mantenimientoTotal: '',
         },
         { emitEvent: false },
       );
+      this.limpiarMontosCalculadosMantenimientoContrato(grupo);
+      if (!incluyeMtto) {
+        this.limpiarCamposMantenimientoContrato(grupo);
+      }
       this.actualizarDisplaysMontosCalculadosContrato(indexContrato);
       return;
     }
@@ -830,7 +885,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     let totM = 0;
     let mttoListo = false;
 
-    if (pctOk) {
+    if (incluyeMtto && pctOk) {
       const pct = Number(grupo.get('pctMantenimiento')?.value);
       subM = this.redondearMontoCalculado(subR * (pct / 100));
       ivaM = this.redondearMontoCalculado(subM * IVA_CONTRATO);
@@ -843,10 +898,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const prevTotM = grupo.get('mantenimientoTotal')?.value;
 
     if (!mttoListo) {
-      grupo.patchValue(
-        { subtotalMantenimiento: '', ivaMantenimiento: '', mantenimientoTotal: '' },
-        { emitEvent: false },
-      );
+      this.limpiarMontosCalculadosMantenimientoContrato(grupo);
     } else {
       grupo.patchValue(
         { subtotalMantenimiento: subM, ivaMantenimiento: ivaM, mantenimientoTotal: totM },
@@ -2166,6 +2218,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
           tipoMoneda: 'MXN',
           metrosRentados: data.superficieM2 || 100,
           costoPorM2: 350,
+          incluyeMantenimiento: 1,
           pctMantenimiento: 10,
           mesesDeposito: 2,
           montoDeposito: 70000,
@@ -2586,6 +2639,18 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.actualizarEstadoInmuebleContratos();
   }
 
+  private incluyeMantenimientoDesdeContratoApi(c: Record<string, unknown>): number {
+    const raw = c['incluyeMantenimiento'] ?? c['IncluyeMantenimiento'];
+    if (raw != null && String(raw).trim() !== '') {
+      return Number(raw) === 1 ? 1 : 0;
+    }
+    const pct = c['porcentajeMantenimiento'] ?? c['pctMantenimiento'];
+    if (pct != null && String(pct).trim() !== '') return 1;
+    const mt = c['mantenimientoTotal'];
+    if (mt != null && String(mt).trim() !== '' && Number(mt) !== 0) return 1;
+    return 0;
+  }
+
   private patchContratoGrupoDesdeApi(g: FormGroup, c: Record<string, unknown>): void {
     const idContr =
       c['id'] != null &&
@@ -2595,6 +2660,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         ? Math.trunc(Number(c['id']))
         : null;
     const idLoc = this.idLocalesDesdeContrato(c);
+    const incluyeMtto = this.incluyeMantenimientoDesdeContratoApi(c);
     g.patchValue(
       {
         idContrato: idContr,
@@ -2605,7 +2671,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         tipoMoneda: this.strApi(c['moneda'] ?? c['tipoMoneda']) || 'MXN',
         metrosRentados: this.numForm(c['metrosRentados']),
         costoPorM2: this.numForm(c['costoM2'] ?? c['costoPorM2']),
-        pctMantenimiento: this.numForm(c['porcentajeMantenimiento'] ?? c['pctMantenimiento']),
+        incluyeMantenimiento: incluyeMtto,
+        pctMantenimiento:
+          incluyeMtto === 1
+            ? this.numForm(c['porcentajeMantenimiento'] ?? c['pctMantenimiento'])
+            : '',
         mesesDeposito: this.numForm(c['mesesDeposito']),
         montoDeposito: this.numForm(c['montoDeposito']),
         mesesAdelanto: this.numForm(c['mesesAdelanto']),
@@ -2619,9 +2689,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         subtotalRenta: this.numForm(c['subTotalRenta'] ?? c['subtotalRenta']),
         ivaRenta: this.numForm(c['ivaRenta']),
         rentaTotal: this.numForm(c['rentaTotal']),
-        subtotalMantenimiento: this.numForm(c['subTotalMantenimiento'] ?? c['subtotalMantenimiento']),
-        ivaMantenimiento: this.numForm(c['ivaMantenimiento']),
-        mantenimientoTotal: this.numForm(c['mantenimientoTotal']),
+        subtotalMantenimiento:
+          incluyeMtto === 1
+            ? this.numForm(c['subTotalMantenimiento'] ?? c['subtotalMantenimiento'])
+            : '',
+        ivaMantenimiento: incluyeMtto === 1 ? this.numForm(c['ivaMantenimiento']) : '',
+        mantenimientoTotal: incluyeMtto === 1 ? this.numForm(c['mantenimientoTotal']) : '',
         observaciones: this.strApi(c['observaciones']),
       },
       { emitEvent: false },
@@ -2852,6 +2925,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     tipoMoneda: 'Moneda',
     metrosRentados: 'Metros rentados',
     costoPorM2: 'Costo por m²',
+    incluyeMantenimiento: 'Incluye mantenimiento',
     pctMantenimiento: 'Porcentaje mantenimiento',
     mesesDeposito: 'Meses depósito',
     montoDeposito: 'Monto depósito',
@@ -3051,7 +3125,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.actualizarContratoEdicionSnapshotDesdeFormularioActual();
   }
 
-  /** Línea base del arreglo `contratos` (sin `id`, `idArrendatario`, `fhRegistro`, `estatus`) para comparar en actualización. */
+  /** Línea base del arreglo `contratos` para comparar en actualización (incluye `id` de contratos existentes). */
   private actualizarContratoEdicionSnapshotDesdeFormularioActual(): void {
     if (!this.esEdicionArrendatario()) return;
     const contratos = this.construirContratosArrendatarioDesdeFormulario();
@@ -3208,10 +3282,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   /** JSON `arrendatario`: campos ArrendatarioJsonDto (string en multipart FormData). */
   private construirJsonArrendatarioSwagger(v: Record<string, unknown>): string {
     const dto: Record<string, unknown> = {
-      fechaInicio: '',
-      fechaFin: '',
-      renta: '',
-      tiempoRenta: '',
       arrendatario: String(v['arrendatario'] ?? '').trim(),
       rfc: String(v['rfc'] ?? '').trim(),
       correoRepresentante: String(v['correoRepresentante'] ?? '').trim(),
@@ -3427,9 +3497,18 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Objeto enviado en `contratos[]` (sin `id`, `idArrendatario`, `fhRegistro`, `estatus`; incluye `idLocales`). */
+  /** Objeto enviado en `contratos[]` (incluye `id` en actualización; sin `idArrendatario`, `fhRegistro`, `estatus`). */
   private construirContratoArrendatarioObjetoDesdeFormRaw(v: Record<string, unknown>): Record<string, unknown> {
     const contrato: Record<string, unknown> = {};
+    const idContrRaw = v['idContrato'];
+    if (
+      idContrRaw != null &&
+      String(idContrRaw).trim() !== '' &&
+      Number.isFinite(Number(idContrRaw)) &&
+      Number(idContrRaw) > 0
+    ) {
+      contrato['id'] = Math.trunc(Number(idContrRaw));
+    }
     const idInmRaw = v['idInmueble'];
     const idInm =
       idInmRaw != null && String(idInmRaw).trim() !== '' ? Number(idInmRaw) : Number.NaN;
@@ -3449,8 +3528,18 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (mr !== undefined) contrato['metrosRentados'] = mr;
     const cm2 = this.numJson(v['costoPorM2']);
     if (cm2 !== undefined) contrato['costoM2'] = cm2;
-    const pct = this.numJson(v['pctMantenimiento']);
-    if (pct !== undefined) contrato['porcentajeMantenimiento'] = pct;
+    const incluyeMantenimiento = Number(v['incluyeMantenimiento']) === 1 ? 1 : 0;
+    contrato['incluyeMantenimiento'] = incluyeMantenimiento;
+    if (incluyeMantenimiento === 1) {
+      const pct = this.numJson(v['pctMantenimiento']);
+      if (pct !== undefined) contrato['porcentajeMantenimiento'] = pct;
+      const stm = this.numJson(v['subtotalMantenimiento']);
+      if (stm !== undefined) contrato['subTotalMantenimiento'] = stm;
+      const ivaM = this.numJson(v['ivaMantenimiento']);
+      if (ivaM !== undefined) contrato['ivaMantenimiento'] = ivaM;
+      const mt = this.numJson(v['mantenimientoTotal']);
+      if (mt !== undefined) contrato['mantenimientoTotal'] = mt;
+    }
     const mdMes = this.numJson(v['mesesDeposito']);
     if (mdMes !== undefined) contrato['mesesDeposito'] = mdMes;
     const mdMon = this.numJson(v['montoDeposito']);
@@ -3469,12 +3558,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (ivaR !== undefined) contrato['ivaRenta'] = ivaR;
     const rt = this.numJson(v['rentaTotal']);
     if (rt !== undefined) contrato['rentaTotal'] = rt;
-    const stm = this.numJson(v['subtotalMantenimiento']);
-    if (stm !== undefined) contrato['subTotalMantenimiento'] = stm;
-    const ivaM = this.numJson(v['ivaMantenimiento']);
-    if (ivaM !== undefined) contrato['ivaMantenimiento'] = ivaM;
-    const mt = this.numJson(v['mantenimientoTotal']);
-    if (mt !== undefined) contrato['mantenimientoTotal'] = mt;
     return contrato;
   }
 

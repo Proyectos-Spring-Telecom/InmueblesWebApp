@@ -16,28 +16,16 @@ $radius-md:    10px;
 $radius-lg:    14px;
 
 // Colores estatus — texto
-$aldia-text:       #4ade80;
-$cambio-text:      #f87171;
-$finanzas-text:    #fbbf24;
-$incremento-text:  #60a5fa;
+$pagada-text:       #4ade80;
+$incremento-text:   #fa8072;
 
 // Colores estatus — fondo de fila (tinte visible pero suave)
 // Fila renta: opacidad base | Fila mantto: un poco más intensa
-$aldia-row:         rgba(74,  222, 128, 0.08);
-$aldia-row-alt:     rgba(74,  222, 128, 0.13);
-$aldia-hover:       rgba(74,  222, 128, 0.18);
+$pagada-row:         rgba(127, 226, 163, 0.11);
+$pagada-row-alt:     rgba(127, 226, 163, 0.11);
 
-$cambio-row:        rgba(248, 113, 113, 0.08);
-$cambio-row-alt:    rgba(248, 113, 113, 0.13);
-$cambio-hover:      rgba(248, 113, 113, 0.18);
-
-$finanzas-row:      rgba(251, 191,  36, 0.08);
-$finanzas-row-alt:  rgba(251, 191,  36, 0.13);
-$finanzas-hover:    rgba(251, 191,  36, 0.18);
-
-$incremento-row:    rgba(96,  165, 250, 0.08);
-$incremento-row-alt:rgba(96,  165, 250, 0.13);
-$incremento-hover:  rgba(96,  165, 250, 0.18);
+$incremento-row:     rgba(250, 128, 114, 0.10);
+$incremento-row-alt: rgba(250, 128, 114, 0.16);
 
 // ─────────────────────────────────────────────
 //  Page
@@ -161,6 +149,27 @@ $incremento-hover:  rgba(96,  165, 250, 0.18);
     .rr-kpi__label { color: rgba(255,255,255,0.55); }
     .rr-kpi__value { color: #fff; }
   }
+
+  &--arrendatarios {
+    background: linear-gradient(135deg, #0d4f4a 0%, #134e4a 100%);
+    border-color: rgba(45, 212, 191, 0.35);
+    .rr-kpi__label { color: rgba(255,255,255,0.6); }
+    .rr-kpi__value { color: #99f6e4; }
+  }
+
+  &--renta {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+    border-color: rgba(96, 165, 250, 0.35);
+    .rr-kpi__label { color: rgba(255,255,255,0.6); }
+    .rr-kpi__value { color: #93c5fd; }
+  }
+
+  &--mantto {
+    background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+    border-color: rgba(251, 191, 36, 0.35);
+    .rr-kpi__label { color: rgba(255,255,255,0.6); }
+    .rr-kpi__value { color: #fde68a; }
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -198,19 +207,11 @@ $incremento-hover:  rgba(96,  165, 250, 0.18);
     border-radius: 3px; flex-shrink: 0;
   }
 
-  // Sin estatus — sin caja, sin color especial (no aparece en leyenda)
-  // Solo los 4 colores reales
-  &__item--aldia      { color: $aldia-text;
-    .rr-leyenda__caja { background: $aldia-row-alt; border: 1px solid rgba(74,222,128,0.3); } }
-
-  &__item--cambio     { color: $cambio-text;
-    .rr-leyenda__caja { background: $cambio-row-alt; border: 1px solid rgba(248,113,113,0.3); } }
-
-  &__item--finanzas   { color: $finanzas-text;
-    .rr-leyenda__caja { background: $finanzas-row-alt; border: 1px solid rgba(251,191,36,0.3); } }
+  &__item--pagada { color: $pagada-text;
+    .rr-leyenda__caja { background: $pagada-row-alt; border: 1px solid rgba(74,222,128,0.3); } }
 
   &__item--incremento { color: $incremento-text;
-    .rr-leyenda__caja { background: $incremento-row-alt; border: 1px solid rgba(96,165,250,0.3); } }
+    .rr-leyenda__caja { background: $incremento-row-alt; border: 1px solid rgba(250,128,114,0.35); } }
 }
 
 // ─────────────────────────────────────────────
@@ -221,10 +222,8 @@ $incremento-hover:  rgba(96,  165, 250, 0.18);
   padding: 3px 11px; border-radius: 99px;
   font-size: 11px; font-weight: 600; white-space: nowrap;
 
-  &--aldia      { background: rgba(74,222,128,0.15);  color: $aldia-text; }
-  &--cambio     { background: rgba(248,113,113,0.15); color: $cambio-text; }
-  &--finanzas   { background: rgba(251,191,36,0.15);  color: $finanzas-text; }
-  &--incremento { background: rgba(96,165,250,0.15);  color: $incremento-text; }
+  &--pagada     { background: rgba(74,222,128,0.15);  color: $pagada-text; }
+  &--pendiente  { background: rgba(255,255,255,0.06); color: $text-dim; }
   &--neutral    { color: $text-muted; }
 }
 
@@ -314,33 +313,21 @@ $incremento-hover:  rgba(96,  165, 250, 0.18);
   //  Con estatus — colores pintados de base
   // ────────────────────────────────────────────
 
-  // Al día
-  .row-renta.row-estatus--aldia td      { background: $aldia-row; }
-  .row-mant.row-estatus--aldia td       { background: $aldia-row-alt; }
-  .row-renta.row-estatus--aldia td:first-child { border-left: 3px solid $aldia-text; }
-  .row-renta.row-estatus--aldia:hover td,
-  .row-renta.row-estatus--aldia:hover + .row-mant td { background: $aldia-hover; cursor: default; }
+  // Pagada
+  .row-renta.row-estatus--pagada td      { background: $pagada-row; }
+  .row-mant.row-estatus--pagada td       { background: $pagada-row-alt; }
+  .row-renta.row-estatus--pagada td:first-child { border-left: 3px solid $pagada-text; }
 
-  // Cambios
-  .row-renta.row-estatus--cambio td     { background: $cambio-row; }
-  .row-mant.row-estatus--cambio td      { background: $cambio-row-alt; }
-  .row-renta.row-estatus--cambio td:first-child { border-left: 3px solid $cambio-text; }
-  .row-renta.row-estatus--cambio:hover td,
-  .row-renta.row-estatus--cambio:hover + .row-mant td { background: $cambio-hover; cursor: default; }
-
-  // Finanzas
-  .row-renta.row-estatus--finanzas td   { background: $finanzas-row; }
-  .row-mant.row-estatus--finanzas td    { background: $finanzas-row-alt; }
-  .row-renta.row-estatus--finanzas td:first-child { border-left: 3px solid $finanzas-text; }
-  .row-renta.row-estatus--finanzas:hover td,
-  .row-renta.row-estatus--finanzas:hover + .row-mant td { background: $finanzas-hover; cursor: default; }
-
-  // Incremento
+  // Incremento (salmon)
   .row-renta.row-estatus--incremento td { background: $incremento-row; }
   .row-mant.row-estatus--incremento td  { background: $incremento-row-alt; }
   .row-renta.row-estatus--incremento td:first-child { border-left: 3px solid $incremento-text; }
-  .row-renta.row-estatus--incremento:hover td,
-  .row-renta.row-estatus--incremento:hover + .row-mant td { background: $incremento-hover; cursor: default; }
+}
+
+.rr-empty {
+  padding: 28px 16px;
+  color: $text-muted;
+  font-size: 13px;
 }
 
 // ── Empresa ──
@@ -350,7 +337,16 @@ $incremento-hover:  rgba(96,  165, 250, 0.18);
 }
 
 .empresa-nota {
-  font-size: 11px; color: $text-muted; margin-top: 2px;
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: $radius-sm;
+  line-height: 1.45;
 }
 
 // ── Pills concepto ──

@@ -81,19 +81,22 @@ export function valorSinComasParaApi(display: unknown): string {
 
 /**
  * Extrae solo dígitos y un punto decimal (máx. 2 decimales).
- * Ej.: `"$5,325.50"` → `"5325.50"` (mismo valor numérico, solo vista).
+ * Las comas son separador de miles (vista `$3,088.85`), no decimal.
  */
 export function extraerMontoRawDesdeDisplay(display: string): string {
+  const sinMiles = String(display ?? '')
+    .replace(/\$/g, '')
+    .replace(/,/g, '');
   let out = '';
   let dot = false;
-  for (const ch of display) {
+  for (const ch of sinMiles) {
     if (ch >= '0' && ch <= '9') {
       if (dot) {
         const dec = out.split('.')[1] ?? '';
         if (dec.length >= 2) continue;
       }
       out += ch;
-    } else if ((ch === '.' || ch === ',') && !dot) {
+    } else if (ch === '.' && !dot) {
       out += '.';
       dot = true;
     }

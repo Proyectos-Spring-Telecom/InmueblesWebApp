@@ -53,4 +53,8 @@ export class InmueblesService {
   actualizarInmueble(id: number, data: FormData): Observable<unknown> {
     return this.http.put(`${this.base}/${id}`, data);
   }
+
+  obtenerMetrosInmueble(idInmueble: number): Observable<unknown> {
+    return this.http.get(`${this.base}/area-ocupada/${idInmueble}`);
+  }
 }

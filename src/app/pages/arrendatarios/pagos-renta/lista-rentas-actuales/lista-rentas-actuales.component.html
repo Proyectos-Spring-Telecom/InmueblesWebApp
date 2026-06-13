@@ -59,18 +59,19 @@
 
         <dxi-column caption="Acciones" cellTemplate="accionesRentasTpl" alignment="center" [width]="200"
           [allowFiltering]="false" [allowSorting]="false"></dxi-column>
-        <dxi-column dataField="mesLabel" caption="Periodo" alignment="center" [width]="150"></dxi-column>
-        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="160" [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="200"></dxi-column>
-        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="140"></dxi-column>
-        <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120" [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="montoFinalFmt" caption="Monto a cobrar" alignment="center" [width]="130"></dxi-column>
-        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90" [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160" [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110" [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusRentaTpl"
-          [width]="120"></dxi-column>
-        <dxi-column dataField="id" caption="ID" alignment="center" [width]="72" [visible]="false"></dxi-column>
+        <dxi-column dataField="mesLabel" caption="Periodo" alignment="center" ></dxi-column>
+        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center"  [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="250"></dxi-column>
+        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" ></dxi-column>
+        <!-- <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column> -->
+        <dxi-column caption="Desglose" cellTemplate="desgloseRentaTpl" alignment="center" [width]="300"
+          [minWidth]="240" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="130"></dxi-column>
+        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center"  [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center"  [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="100" [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" [width]="250" cellTemplate="estatusRentaTpl"></dxi-column>
+        <dxi-column dataField="id" caption="ID" alignment="center"  [visible]="false"></dxi-column>
 
         <div *dxTemplate="let row of 'estatusRentaTpl'">
           @if (row.data.pagada) {
@@ -80,20 +81,43 @@
           }
         </div>
 
+        <div *dxTemplate="let row of 'desgloseRentaTpl'" class="renta-grid-desglose">
+          @if (row.data.desgloseVm?.muestraRenta || row.data.desgloseVm?.muestraMantenimiento) {
+          @if (row.data.desgloseVm.muestraRenta) {
+          <div class="renta-grid-desglose__item renta-grid-desglose__item--renta">
+            <span class="renta-grid-desglose__label">Renta</span>
+            <span class="renta-grid-desglose__valor">{{ row.data.desgloseVm.rentaFmt }}</span>
+          </div>
+          }
+          @if (row.data.desgloseVm.muestraMantenimiento) {
+          <div class="renta-grid-desglose__item renta-grid-desglose__item--mtto">
+            <span class="renta-grid-desglose__label">Mantenimiento</span>
+            <span class="renta-grid-desglose__valor">{{ row.data.desgloseVm.mantenimientoFmt }}</span>
+          </div>
+          }
+          } @else {
+          <span class="renta-grid-desglose__vacio">—</span>
+          }
+        </div>
+
         <div *dxTemplate="let row of 'accionesRentasTpl'" class="d-flex gap-3 justify-content-center">
+          @if (!row.data.pagada) {
           <div>
             <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
               (click)="abrirModalEdicion(row.data); $event.stopPropagation()">
               <i class="fa fa-edit"></i>
             </button>
           </div>
-          @if (!row.data.pagada) {
           <div>
             <button type="button" id="pinButton" class="btnAcciones" title="Marcar como pagada"
               (click)="marcarRentaPagada(row.data); $event.stopPropagation()">
               <i class="fa fa-check"></i>
             </button>
           </div>
+          } @else {
+          <span class="renta-acciones-vacio" title="La renta ya fue pagada y no admite cambios">
+            Renta Pagada
+          </span>
           }
         </div>
       </dx-data-grid>
@@ -102,10 +126,10 @@
 </ng-template>
 
 <ng-container *ngIf="mostrarModalRenta">
-  <div class="contract-page-dim" (click)="cerrarModalRenta()" [@contractDimAnim]></div>
-  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalRenta()">
+  <div class="contract-page-dim" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim]>
     <div class="docs-modal contract-docs-modal mono-pago-modal" role="dialog" aria-modal="true"
-      aria-labelledby="renta-modal-title" (click)="$event.stopPropagation()">
+      aria-labelledby="renta-modal-title">
       <div class="row docs-modal__header">
         <div class="col-10 col-md-11">
           <h3 class="docs-modal__title" id="renta-modal-title">
@@ -212,22 +236,12 @@
                 </div>
               </ng-container>
 
-              <!-- ── Spinner cargando renta (edición) ── -->
-              <div class="row g-3 mb-3" *ngIf="rentaModalCargando">
-                <div class="col-12">
-                  <div class="mono-pago-servicio-loading mb-0">
-                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                    <span>Cargando renta…</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- ── Fila 2: Total · Monto final · Factor variable ── -->
-              <ng-container *ngIf="!rentaModalCargando">
+              <!-- ── Montos, fórmula y flags (un solo row) ── -->
+              <ng-container>
                 <div class="row g-3 mb-3">
 
                   <!-- Total -->
-                  <div class="col-12 col-lg-4">
+                  <div class="col-12 col-md-6 col-lg-4">
                     <label for="rentaTotal" class="form-label perm-label">
                       Total <span class="text-danger">*</span>
                     </label>
@@ -251,7 +265,7 @@
                   </div>
 
                   <!-- Monto final -->
-                  <div class="col-12 col-lg-4">
+                  <div class="col-12 col-md-6 col-lg-4">
                     <label for="rentaMontoFinal" class="form-label perm-label">
                       Monto final <span class="text-danger">*</span>
                     </label>
@@ -279,7 +293,7 @@
                   </div>
 
                   <!-- Factor variable -->
-                  <div class="col-12 col-lg-4">
+                  <div class="col-12 col-md-6 col-lg-4">
                     <label for="rentaFactor" class="form-label perm-label">
                       Factor variable <span class="text-danger">*</span>
                     </label>
@@ -300,13 +314,60 @@
                     </p>
                   </div>
 
-                </div>
+                  <!-- Total mantenimiento -->
+                  <div class="col-12 col-md-6 col-lg-4" *ngIf="rentaMostrarMantenimiento">
+                    <label for="rentaTotalMantenimiento" class="form-label perm-label">
+                      Total mantenimiento <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">build</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input id="rentaTotalMantenimiento" type="text" inputmode="decimal" class="form-control"
+                          [value]="rentaTotalMantenimientoDisplay" placeholder=" " autocomplete="off"
+                          (input)="onRentaMonedaInput($event, 'totalMantenimiento')"
+                          (blur)="onRentaMonedaBlur($event, 'totalMantenimiento')" />
+                        <label for="rentaTotalMantenimiento">Total mantenimiento</label>
+                      </div>
+                    </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;"
+                        aria-hidden="true">auto_fix_high</mat-icon>
+                      Tomado del contrato · puede modificarse
+                    </p>
+                  </div>
 
-                <!-- ── Fila 3: Fórmula (edición) · Usó fórmula ── -->
-                <div class="row g-3 mb-3">
+                  <!-- Monto final mantenimiento -->
+                  <div class="col-12 col-md-6 col-lg-4" *ngIf="rentaMostrarMantenimiento">
+                    <label for="rentaMontoFinalMantenimiento" class="form-label perm-label">
+                      Monto final mantenimiento <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true"
+                          [class.opacity-50]="evaluandoFormula">handyman</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input id="rentaMontoFinalMantenimiento" type="text" inputmode="decimal" class="form-control"
+                          [value]="rentaMontoFinalMantenimientoDisplay" placeholder=" " autocomplete="off"
+                          [readonly]="evaluandoFormula"
+                          (input)="onRentaMonedaInput($event, 'montoFinalMantenimiento')"
+                          (blur)="onRentaMonedaBlur($event, 'montoFinalMantenimiento')" />
+                        <label for="rentaMontoFinalMantenimiento">
+                          {{ evaluandoFormula ? 'Calculando…' : 'Monto final mantenimiento' }}
+                        </label>
+                      </div>
+                    </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;"
+                        aria-hidden="true">auto_fix_high</mat-icon>
+                      Calculado por fórmula · puede modificarse
+                    </p>
+                  </div>
 
-                  <!-- Fórmula solo edición -->
-                  <div class="col-12 col-lg-4" *ngIf="rentaModalModo === 'edicion'">
+                  <!-- Fórmula (solo edición) -->
+                  <div class="col-12 col-md-6 col-lg-4" *ngIf="rentaModalModo === 'edicion'">
                     <label for="rentaFormula" class="form-label perm-label">
                       Fórmula <span class="text-danger">*</span>
                     </label>
@@ -325,7 +386,7 @@
                   </div>
 
                   <!-- Usó fórmula -->
-                  <div class="col-12 col-lg-4">
+                  <div class="col-12 col-md-6 col-lg-4">
                     <label for="rentaOcupoFormula" class="form-label perm-label">Usó fórmula</label>
                     <div class="input-group input-group-lg perm-ig">
                       <span class="input-group-text fw-bold">
@@ -345,7 +406,7 @@
               </ng-container>
 
               <!-- ── Resumen ── -->
-              <div class="row" *ngIf="!rentaModalCargando && !catalogosModalCargando">
+              <div class="row" *ngIf="!catalogosModalCargando">
                 <div class="col-12">
                   <section class="renta-pago-resumen" *ngIf="resumenRentaModal.listo" @rentaResumenReveal
                     aria-live="polite">
@@ -363,32 +424,43 @@
                     </article>
                     <article class="renta-pago-resumen__card" *ngIf="resumenRentaModal.campos.length || resumenRentaModal.filaMontos">
                       <h5 class="renta-pago-resumen__card-title">Detalle del registro</h5>
-                      <div class="renta-pago-resumen__grid" *ngIf="resumenRentaModal.campos.length">
-                        <div class="renta-pago-resumen__field"
+                      <div class="row g-2">
+                        <div class="col-12 col-md-6 col-lg-3"
                           *ngFor="let campo of resumenRentaModal.campos; trackBy: trackByResumenCampo">
-                          <span>{{ campo.etiqueta }}</span>
-                          <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
-                        </div>
-                      </div>
-                      <div class="row g-2 renta-pago-resumen__montos-row" *ngIf="resumenRentaModal.filaMontos as fm">
-                        <div class="col-3" *ngIf="fm.total as campo">
-                          <div class="renta-pago-resumen__field renta-pago-resumen__field--compact">
+                          <div class="renta-pago-resumen__field h-100">
                             <span>{{ campo.etiqueta }}</span>
                             <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
                           </div>
                         </div>
-                        <div class="col-3" *ngIf="fm.factor as campo">
-                          <div class="renta-pago-resumen__field renta-pago-resumen__field--compact">
-                            <span>{{ campo.etiqueta }}</span>
-                            <p>{{ campo.valor }}</p>
+                        <ng-container *ngIf="resumenRentaModal.filaMontos as fm">
+                          <div class="col-12 col-md-6 col-lg-3" *ngIf="fm.factor as campo">
+                            <div class="renta-pago-resumen__field renta-pago-resumen__field--compact h-100">
+                              <span>{{ campo.etiqueta }}</span>
+                              <p>{{ campo.valor }}</p>
+                            </div>
                           </div>
-                        </div>
-                        <div class="col-6" *ngIf="fm.montoACobrar as campo">
-                          <div class="renta-pago-resumen__field renta-pago-resumen__field--destacado">
-                            <span>{{ campo.etiqueta }}</span>
-                            <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                          <div class="col-12 col-md-6 col-lg-3" *ngIf="fm.montoACobrar as campo">
+                            <div
+                              class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-renta h-100">
+                              <span>{{ campo.etiqueta }}</span>
+                              <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                            </div>
                           </div>
-                        </div>
+                          <div class="col-12 col-md-6 col-lg-3" *ngIf="fm.montoFinalMantenimiento as campo">
+                            <div
+                              class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-mantenimiento h-100">
+                              <span>{{ campo.etiqueta }}</span>
+                              <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                            </div>
+                          </div>
+                          <div class="col-12 col-md-6" *ngIf="fm.montoTotalCombinado as campo">
+                            <div
+                              class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-total h-100">
+                              <span>{{ campo.etiqueta }}</span>
+                              <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
+                            </div>
+                          </div>
+                        </ng-container>
                       </div>
                     </article>
                   </section>
@@ -408,7 +480,7 @@
                       Cancelar
                     </button>
                     <button type="button" class="button-success mono-pago-form-btn" (click)="guardarRentaDesdeModal()"
-                      [disabled]="rentaGuardando || rentaModalCargando || evaluandoFormula">
+                      [disabled]="rentaGuardando || evaluandoFormula">
                       {{ rentaGuardando ? 'Enviando…' : (rentaModalModo === 'edicion' ? 'Guardar' : 'Registrar') }}
                     </button>
                   </div>

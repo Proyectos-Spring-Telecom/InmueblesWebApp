@@ -8,6 +8,7 @@ import {
   FormulaPayload,
   FormulasService,
 } from 'src/app/services/moduleService/formulas.service';
+import { parseValorNumerico } from 'src/app/shared/valor-miles-format';
 
 interface FactorOpcionFormula {
   variable: string;
@@ -170,28 +171,18 @@ export class AgregarFormulaComponent implements OnInit {
           if (!variable || map.has(variable)) continue;
           const desc   = String(item?.descripcion ?? item?.Descripcion ?? '').trim();
           const rawVal = item?.valor ?? item?.Valor ?? null;
-          const valor  = rawVal !== null ? parseFloat(String(rawVal).replace(/,/g, '')) : null;
-          map.set(variable, { desc: desc.slice(0, 80), valor: Number.isFinite(valor!) ? valor : null });
+          const parsed = parseValorNumerico(rawVal);
+          const valor = Number.isFinite(parsed) ? parsed : null;
+          map.set(variable, { desc: desc.slice(0, 80), valor });
         }
 
-        this.factoresParaSelectFormula = [
-          ...[...map.entries()]
-            .sort(([a], [b]) => a.localeCompare(b, 'es'))
-            .map(([variable, { desc, valor }]) => ({
-              variable,
-              etiqueta: desc ? `${variable} — ${desc}` : variable,
-              valor,
-            })),
-          ...Array.from({ length: 20 }, (_, i) => {
-            const n = i + 1;
-            const variable = `VAR_DEMO_${String(n).padStart(2, '0')}`;
-            return {
-              variable,
-              etiqueta: `${variable} — Factor ficticio ${n}`,
-              valor: Number((n * 1.25).toFixed(2)),
-            };
-          }),
-        ];
+        this.factoresParaSelectFormula = [...map.entries()]
+          .sort(([a], [b]) => a.localeCompare(b, 'es'))
+          .map(([variable, { desc, valor }]) => ({
+            variable,
+            etiqueta: desc ? `${variable} — ${desc}` : variable,
+            valor,
+          }));
 
         this.calcularPreview();
       },

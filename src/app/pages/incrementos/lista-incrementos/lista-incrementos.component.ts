@@ -6,8 +6,8 @@ import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { IncrementosService } from 'src/app/services/moduleService/incrementos.service';
 import {
-  InpcBanxicoGridRow,
-  mapBanxicoDatoToRow,
+  InpcPaginatedGridRow,
+  mapInpcPaginatedItemToRow,
 } from '../inpc-historico.data';
 import Swal from 'sweetalert2';
 
@@ -34,12 +34,11 @@ export class ListaIncrementosComponent implements OnInit {
   dataGrid: DxDataGridComponent;
   public autoExpandAllGroups: boolean = true;
   isGrouped: boolean = false;
-  public paginaActualData: InpcBanxicoGridRow[] = [];
+  public paginaActualData: InpcPaginatedGridRow[] = [];
   public filtroActivo: string = '';
 
   fechaInicioFiltro = '';
   fechaFinFiltro = '';
-  private datosBanxicoCache: InpcBanxicoGridRow[] = [];
 
   constructor(
     private router: Router,
@@ -104,7 +103,6 @@ export class ListaIncrementosComponent implements OnInit {
       });
       return;
     }
-    this.datosBanxicoCache = [];
     this.dataGrid?.instance?.pageIndex(0);
     this.dataGrid?.instance?.refresh();
   }
@@ -118,32 +116,32 @@ export class ListaIncrementosComponent implements OnInit {
       load: async (loadOptions: any) => {
         const skipValue = Number(loadOptions?.skip) || 0;
         const takeValue = Number(loadOptions?.take) || defaultPageSize;
+        const page = Math.floor(skipValue / takeValue) + 1;
 
         try {
-          if (!this.datosBanxicoCache.length) {
-            const resp = await lastValueFrom(
-              this.incrementosService.obtenerBanxicoDatos(
-                this.fechaInicioFiltro,
-                this.fechaFinFiltro,
-              ),
-            );
-            const rowsRaw: any[] = Array.isArray(resp?.datos) ? resp.datos : [];
-            this.datosBanxicoCache = rowsRaw
-              .map((item) => mapBanxicoDatoToRow(item))
-              .filter((row): row is InpcBanxicoGridRow => row != null);
-          }
+          const resp = await lastValueFrom(
+            this.incrementosService.obtenerIncrementosData(
+              page,
+              takeValue,
+              this.fechaInicioFiltro,
+              this.fechaFinFiltro,
+            ),
+          );
 
           this.loading = false;
-          const totalRegistros = this.datosBanxicoCache.length;
-          const paginaActual = Math.floor(skipValue / takeValue) + 1;
-          const totalPaginasCalc = Math.max(
-            1,
-            Math.ceil(totalRegistros / takeValue),
-          );
-          const dataTransformada = this.datosBanxicoCache.slice(
-            skipValue,
-            skipValue + takeValue,
-          );
+          const rowsRaw: any[] = Array.isArray(resp?.data) ? resp.data : [];
+          const meta = resp?.paginated || {};
+          const totalRegistros =
+            toNum(meta.total) ?? toNum((resp as any)?.total) ?? rowsRaw.length;
+          const paginaActual = toNum(meta.page) ?? toNum((resp as any)?.page) ?? page;
+          const totalPaginasCalc =
+            toNum(meta.lastPage) ??
+            toNum((resp as any)?.pages) ??
+            Math.max(1, Math.ceil(totalRegistros / takeValue));
+
+          const dataTransformada = rowsRaw
+            .map((item) => mapInpcPaginatedItemToRow(item))
+            .filter((row): row is InpcPaginatedGridRow => row != null);
 
           this.totalRegistros = totalRegistros;
           this.paginaActual = paginaActual;
@@ -156,11 +154,15 @@ export class ListaIncrementosComponent implements OnInit {
           };
         } catch (_error) {
           this.loading = false;
-          this.datosBanxicoCache = [];
           return { data: [], totalCount: 0 };
         }
       },
     });
+
+    function toNum(v: unknown): number | null {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
   }
 
   onGridOptionChanged(e: any) {
@@ -203,10 +205,10 @@ export class ListaIncrementosComponent implements OnInit {
       );
       const extras = [
         normalizar(row?.id),
-        normalizar(row?.indice),
-        normalizar(row?.porcAnual),
-        normalizar(row?.porcAcumAnual),
-        normalizar(String(row?.indiceFmt ?? '').replace(/,/g, '')),
+        normalizar(row?.origenLabel),
+        normalizar(row?.porcentajeAnualFmt),
+        normalizar(row?.porcAcumAnualFmt),
+        normalizar(String(row?.inpcFmt ?? '').replace(/,/g, '')),
       ];
 
       return hitEnColumnas || extras.some((s) => s.includes(texto));
@@ -218,7 +220,6 @@ export class ListaIncrementosComponent implements OnInit {
     const rango = this.rangoFechasPorDefecto();
     this.fechaInicioFiltro = rango.inicio;
     this.fechaFinFiltro = rango.fin;
-    this.datosBanxicoCache = [];
     this.dataGrid.instance.clearGrouping();
     this.isGrouped = false;
     this.dataGrid.instance.pageIndex(0);

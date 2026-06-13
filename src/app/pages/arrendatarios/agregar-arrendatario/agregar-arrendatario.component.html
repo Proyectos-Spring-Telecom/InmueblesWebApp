@@ -271,6 +271,19 @@
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'incluyeMantenimiento' + i">Incluye
+                          Mantenimiento</label>
+                        <div class="contrato-incluye-mtto">
+                          <mat-slide-toggle
+                            [id]="'incluyeMantenimiento' + i"
+                            [checked]="contratoIncluyeMantenimiento(i)"
+                            (change)="onContratoIncluyeMantenimientoChange(i, $event.checked)"
+                          >
+                            {{ contratoIncluyeMantenimiento(i) ? 'Sí' : 'No' }}
+                          </mat-slide-toggle>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4" *ngIf="contratoIncluyeMantenimiento(i)">
                         <label class="form-label perm-label" [attr.for]="'pctMantenimiento' + i">Porcentaje
                           Mantenimiento</label>
                         <div class="input-group input-group-lg perm-ig"><span
@@ -403,7 +416,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="col-12 renta-calc-bloque" [id]="'contratoCalcMantenimiento' + i">
+                      <div class="col-12 renta-calc-bloque" *ngIf="contratoIncluyeMantenimiento(i)" [id]="'contratoCalcMantenimiento' + i">
                         <p class="renta-calc-hint mb-0"
                           [class.renta-calc-hint--destacado]="contratoHintResaltado(i, 'mantenimiento')">
                           <span class="renta-calc-hint__clave">Subtotal renta</span> ×

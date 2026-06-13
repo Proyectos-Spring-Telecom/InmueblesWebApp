@@ -42,6 +42,13 @@ interface HistoricoDetalleVista {
   arrendatario: string;
   contrato: string;
   periodo: string;
+  montoFinalFmt: string;
+  desglose: {
+    rentaFmt: string;
+    mantenimientoFmt: string;
+    muestraRenta: boolean;
+    muestraMantenimiento: boolean;
+  };
   campos: HistoricoDetalleCampo[];
 }
 
@@ -387,7 +394,6 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
       { etiqueta: 'Periodo', valor: row.mesLabel || '—' },
       { etiqueta: 'Registro', valor: row.fhRegistroFmt || '—' },
       { etiqueta: 'Total', valor: row.totalFmt || '—', dinero: true },
-      { etiqueta: 'Monto final', valor: row.montoFinalFmt || '—', dinero: true },
       { etiqueta: 'Factor variable', valor: row.factorVariableFmt || '—' },
       { etiqueta: 'Fórmula', valor: row.formulaLabel || '—' },
       { etiqueta: 'Usó fórmula', valor: row.ocupoFormulaLabel || '—' },
@@ -407,11 +413,20 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
       campos.push({ etiqueta: 'ID contrato', valor: String(idCon) });
     }
 
+    const desgloseVm = row.desgloseVm;
+
     return {
       id: row.id,
       arrendatario: row.arrendatarioLabel || '—',
       contrato: row.contratoLabel || '—',
       periodo: row.mesLabel || '—',
+      montoFinalFmt: row.montoFinalFmt || '—',
+      desglose: {
+        rentaFmt: desgloseVm?.rentaFmt ?? '—',
+        mantenimientoFmt: desgloseVm?.mantenimientoFmt ?? '—',
+        muestraRenta: desgloseVm?.muestraRenta ?? false,
+        muestraMantenimiento: desgloseVm?.muestraMantenimiento ?? false,
+      },
       campos,
     };
   }

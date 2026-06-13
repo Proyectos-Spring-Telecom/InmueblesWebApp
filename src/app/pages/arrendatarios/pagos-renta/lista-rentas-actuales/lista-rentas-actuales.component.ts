@@ -34,11 +34,13 @@ import {
 } from 'src/app/services/moduleService/renta-actual.service';
 import {
   extraerFilasRentasActualApi,
-  extraerRentaActualDetalleApi,
+  extraerRentaActualParaEdicion,
   mapRentaActualApiToGridRow,
   RentaActualGridRow,
 } from './renta-actual-list.mapper';
 import {
+  contarMontoSimbolosAntesCursor,
+  cursorMontoTrasFormato,
   extraerMontoRawDesdeDisplay,
   formatMonedaAlEscribir,
   formatMonedaDesdeNumero,
@@ -64,10 +66,17 @@ interface RentaModalResumenCampo {
 }
 
 interface RentaModalResumenFilaMontos {
-  total?: RentaModalResumenCampo;
   factor?: RentaModalResumenCampo;
   montoACobrar?: RentaModalResumenCampo;
+  montoFinalMantenimiento?: RentaModalResumenCampo;
+  montoTotalCombinado?: RentaModalResumenCampo;
 }
+
+type CampoMonedaRentaModal =
+  | 'total'
+  | 'montoFinal'
+  | 'totalMantenimiento'
+  | 'montoFinalMantenimiento';
 
 interface RentaModalResumenVm {
   listo: boolean;
@@ -105,7 +114,6 @@ export class ListaRentasActualesComponent implements OnInit {
   rentaModalModo: 'alta' | 'edicion' = 'alta';
   rentaEditId: number | null = null;
   rentaGuardando = false;
-  rentaModalCargando = false;
   evaluandoFormula = false;
   rentaForm!: FormGroup;
 
@@ -117,8 +125,23 @@ export class ListaRentasActualesComponent implements OnInit {
   resumenRentaModal: RentaModalResumenVm = this.resumenRentaModalVacio();
   rentaTotalDisplay = '';
   rentaMontoFinalDisplay = '';
+  rentaTotalMantenimientoDisplay = '';
+  rentaMontoFinalMantenimientoDisplay = '';
+  rentaMostrarMantenimiento = false;
+  private ultimaEvaluacionFormula: { resultado?: number; tipoResultado?: string } | null = null;
   private rentaModalPermitirAutoScroll = false;
   private rentaModalScrollTimer: ReturnType<typeof setTimeout> | null = null;
+  private rentaRecalcTimer: ReturnType<typeof setTimeout> | null = null;
+  private rentaModalSuprimirRecalc = false;
+
+  private readonly rentaCamposRecalculoFormula = new Set<CampoMonedaRentaModal>([
+    'total',
+    'totalMantenimiento',
+  ]);
+  private readonly rentaCamposRecalculoFactor = new Set<CampoMonedaRentaModal>([
+    'montoFinal',
+    'montoFinalMantenimiento',
+  ]);
 
   @ViewChild('gridContainer', { static: false })
   dataGrid!: DxDataGridComponent;
@@ -151,6 +174,8 @@ export class ListaRentasActualesComponent implements OnInit {
       total:          [null, Validators.required],
       idFormula:      [null, Validators.required],
       montoFinal:     [null, Validators.required],
+      totalMantenimiento: [null],
+      montoFinalMantenimiento: [null],
       factorVariable: [null, Validators.required],
       ocupoFormula:   [0,    Validators.required],
     });
@@ -162,9 +187,16 @@ export class ListaRentasActualesComponent implements OnInit {
       this.rentaForm.get('idFormula')?.setValue(null, { emitEvent: false });
       this.rentaForm.get('total')?.setValue(null, { emitEvent: false });
       this.rentaForm.get('montoFinal')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('totalMantenimiento')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('montoFinalMantenimiento')?.setValue(null, { emitEvent: false });
       this.rentaForm.get('factorVariable')?.setValue(null, { emitEvent: false });
       this.rentaTotalDisplay = '';
       this.rentaMontoFinalDisplay = '';
+      this.rentaTotalMantenimientoDisplay = '';
+      this.rentaMontoFinalMantenimientoDisplay = '';
+      this.rentaMostrarMantenimiento = false;
+      this.limpiarEvaluacionFormulaCache();
+      this.actualizarValidadoresMantenimientoModal();
       this.actualizarResumenRentaModal();
       this.cdr.markForCheck();
     });
@@ -173,39 +205,103 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaForm.get('idContrato')?.valueChanges.subscribe((idContrato) => {
       this.rentaForm.get('idFormula')?.setValue(null, { emitEvent: false });
       this.rentaForm.get('montoFinal')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('montoFinalMantenimiento')?.setValue(null, { emitEvent: false });
       this.rentaForm.get('factorVariable')?.setValue(null, { emitEvent: false });
       this.rentaMontoFinalDisplay = '';
-      this.autocompletarTotalDesdeContrato(idContrato);
+      this.rentaMontoFinalMantenimientoDisplay = '';
+      this.limpiarEvaluacionFormulaCache();
+      this.autocompletarMontosDesdeContrato(idContrato);
       this.actualizarResumenRentaModal();
       this.cdr.markForCheck();
     });
   
-    // Al cambiar fórmula → recalcular si ya hay arrendatario, contrato y total
-    this.rentaForm.get('idFormula')?.valueChanges.subscribe(() => {
-      this.ejecutarPreviewFormula();
+    // Al cambiar fórmula → recalcular renta y mantenimiento
+    this.rentaForm.get('idFormula')?.valueChanges.subscribe((idFormula) => {
+      if (idFormula == null || idFormula === '') {
+        this.limpiarEvaluacionFormulaCache();
+        return;
+      }
+      this.programarRecalculoRentaModal('formula');
     });
-  
+
+    this.rentaForm.get('factorVariable')?.valueChanges.subscribe(() => {
+      this.programarRecalculoRentaModal('factor');
+    });
+
     this.rentaForm.valueChanges.subscribe(() => this.actualizarResumenRentaModal());
   }
 
-  // ─── Autocompletar total desde contrato ──────────────────────────────────────
+  // ─── Autocompletar montos desde contrato ─────────────────────────────────────
 
-  private autocompletarTotalDesdeContrato(idContrato: unknown): void {
+  private autocompletarMontosDesdeContrato(idContrato: unknown): void {
     const id    = Number(idContrato);
     const idArr = Number(this.rentaForm.getRawValue()['idArrendatario']);
     if (!Number.isFinite(id)    || id    <= 0) return;
     if (!Number.isFinite(idArr) || idArr <= 0) return;
 
     const contrato = this.buscarContratoEnCatalogo(Math.floor(idArr), Math.floor(id));
-    if (!contrato) return;
+    if (!contrato) {
+      this.rentaMostrarMantenimiento = false;
+      this.limpiarMontosMantenimientoModal();
+      this.actualizarValidadoresMantenimientoModal();
+      return;
+    }
 
     const rentaTotal = this.extraerTotalContrato(contrato);
     if (rentaTotal != null) {
       this.rentaForm.get('total')?.setValue(rentaTotal, { emitEvent: false });
-      this.actualizarDisplayMonedaRenta();
-      this.actualizarResumenRentaModal();
-      this.cdr.markForCheck();
     }
+
+    const mttoTotal = this.extraerMantenimientoTotalContrato(contrato);
+    this.rentaMostrarMantenimiento = mttoTotal != null;
+    if (mttoTotal != null) {
+      this.rentaForm.get('totalMantenimiento')?.setValue(mttoTotal, { emitEvent: false });
+    } else {
+      this.limpiarMontosMantenimientoModal();
+    }
+
+    this.actualizarValidadoresMantenimientoModal();
+    this.actualizarDisplayMonedaRenta();
+    this.actualizarResumenRentaModal();
+    this.programarRecalculoRentaModal('formula');
+    this.cdr.markForCheck();
+  }
+
+  private limpiarMontosMantenimientoModal(): void {
+    this.rentaForm.get('totalMantenimiento')?.setValue(null, { emitEvent: false });
+    this.rentaForm.get('montoFinalMantenimiento')?.setValue(null, { emitEvent: false });
+    this.rentaTotalMantenimientoDisplay = '';
+    this.rentaMontoFinalMantenimientoDisplay = '';
+  }
+
+  private actualizarValidadoresMantenimientoModal(): void {
+    const req = [Validators.required];
+    const ctrlTotal = this.rentaForm.get('totalMantenimiento');
+    const ctrlFinal = this.rentaForm.get('montoFinalMantenimiento');
+    if (this.rentaMostrarMantenimiento) {
+      ctrlTotal?.setValidators(req);
+      ctrlFinal?.setValidators(req);
+    } else {
+      ctrlTotal?.clearValidators();
+      ctrlFinal?.clearValidators();
+    }
+    ctrlTotal?.updateValueAndValidity({ emitEvent: false });
+    ctrlFinal?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private actualizarVisibilidadMantenimientoDesdeContratoSeleccionado(): void {
+    const raw = this.rentaForm.getRawValue() as Record<string, unknown>;
+    const idArr = Number(raw['idArrendatario']);
+    const idCon = Number(raw['idContrato']);
+    if (!Number.isFinite(idArr) || idArr <= 0 || !Number.isFinite(idCon) || idCon <= 0) {
+      this.rentaMostrarMantenimiento = false;
+      this.actualizarValidadoresMantenimientoModal();
+      return;
+    }
+    const contrato = this.buscarContratoEnCatalogo(Math.floor(idArr), Math.floor(idCon));
+    const mttoTotal = contrato ? this.extraerMantenimientoTotalContrato(contrato) : null;
+    this.rentaMostrarMantenimiento = mttoTotal != null;
+    this.actualizarValidadoresMantenimientoModal();
   }
 
   private idsPreviewRentaListos(raw: Record<string, unknown>): {
@@ -237,25 +333,42 @@ export class ListaRentasActualesComponent implements OnInit {
   private actualizarDisplayMonedaRenta(): void {
     const total = Number(this.rentaForm?.get('total')?.value);
     const montoFinal = Number(this.rentaForm?.get('montoFinal')?.value);
+    const totalMtto = Number(this.rentaForm?.get('totalMantenimiento')?.value);
+    const montoFinalMtto = Number(this.rentaForm?.get('montoFinalMantenimiento')?.value);
     this.rentaTotalDisplay = Number.isFinite(total) ? formatMonedaDesdeNumero(total) : '';
     this.rentaMontoFinalDisplay = Number.isFinite(montoFinal) ? formatMonedaDesdeNumero(montoFinal) : '';
+    this.rentaTotalMantenimientoDisplay = Number.isFinite(totalMtto)
+      ? formatMonedaDesdeNumero(totalMtto)
+      : '';
+    this.rentaMontoFinalMantenimientoDisplay = Number.isFinite(montoFinalMtto)
+      ? formatMonedaDesdeNumero(montoFinalMtto)
+      : '';
   }
 
-  onRentaMonedaInput(ev: Event, campo: 'total' | 'montoFinal'): void {
+  onRentaMonedaInput(ev: Event, campo: CampoMonedaRentaModal): void {
     const input = ev.target as HTMLInputElement;
+    const cursor = input.selectionStart ?? 0;
+    const simbolosAntes = contarMontoSimbolosAntesCursor(input.value, cursor);
     const raw = extraerMontoRawDesdeDisplay(input.value);
     const n = parseMonedaNumerico(raw);
     this.rentaForm.get(campo)?.setValue(Number.isFinite(n) ? n : null);
     const visible = formatMonedaAlEscribir(input.value);
     input.value = visible;
+    const newCursor = cursorMontoTrasFormato(visible, simbolosAntes);
+    input.setSelectionRange(newCursor, newCursor);
     if (campo === 'total') {
       this.rentaTotalDisplay = visible;
-    } else {
+    } else if (campo === 'montoFinal') {
       this.rentaMontoFinalDisplay = visible;
+    } else if (campo === 'totalMantenimiento') {
+      this.rentaTotalMantenimientoDisplay = visible;
+    } else {
+      this.rentaMontoFinalMantenimientoDisplay = visible;
     }
+    this.despuesDeCambioMonedaRenta(campo);
   }
 
-  onRentaMonedaBlur(ev: Event, campo: 'total' | 'montoFinal'): void {
+  onRentaMonedaBlur(ev: Event, campo: CampoMonedaRentaModal): void {
     const input = ev.target as HTMLInputElement;
     const ctrl = this.rentaForm.get(campo);
     const n = this.parseNumeroFormulario(ctrl?.value);
@@ -265,17 +378,220 @@ export class ListaRentasActualesComponent implements OnInit {
       input.value = fmt;
       if (campo === 'total') {
         this.rentaTotalDisplay = fmt;
-      } else {
+      } else if (campo === 'montoFinal') {
         this.rentaMontoFinalDisplay = fmt;
+      } else if (campo === 'totalMantenimiento') {
+        this.rentaTotalMantenimientoDisplay = fmt;
+      } else {
+        this.rentaMontoFinalMantenimientoDisplay = fmt;
       }
+      this.despuesDeCambioMonedaRenta(campo);
       return;
     }
     input.value = '';
     if (campo === 'total') {
       this.rentaTotalDisplay = '';
-    } else {
+    } else if (campo === 'montoFinal') {
       this.rentaMontoFinalDisplay = '';
+    } else if (campo === 'totalMantenimiento') {
+      this.rentaTotalMantenimientoDisplay = '';
+    } else {
+      this.rentaMontoFinalMantenimientoDisplay = '';
     }
+    this.despuesDeCambioMonedaRenta(campo);
+  }
+
+  private despuesDeCambioMonedaRenta(campo: CampoMonedaRentaModal): void {
+    if (this.rentaCamposRecalculoFormula.has(campo)) {
+      this.programarRecalculoRentaModal('formula');
+      return;
+    }
+    if (this.rentaCamposRecalculoFactor.has(campo)) {
+      this.programarRecalculoRentaModal('factor', campo);
+    }
+  }
+
+  private cancelarRecalculoRentaProgramado(): void {
+    if (this.rentaRecalcTimer != null) {
+      clearTimeout(this.rentaRecalcTimer);
+      this.rentaRecalcTimer = null;
+    }
+  }
+
+  private programarRecalculoRentaModal(
+    origen: 'formula' | 'factor',
+    campoMontos?: CampoMonedaRentaModal,
+  ): void {
+    if (this.rentaModalSuprimirRecalc || !this.mostrarModalRenta) return;
+    this.cancelarRecalculoRentaProgramado();
+    this.rentaRecalcTimer = setTimeout(() => {
+      this.rentaRecalcTimer = null;
+      this.ejecutarRecalculoRentaModal(origen, campoMontos);
+    }, 350);
+  }
+
+  private ejecutarRecalculoRentaModal(
+    origen: 'formula' | 'factor',
+    campoMontos?: CampoMonedaRentaModal,
+  ): void {
+    if (this.rentaModalSuprimirRecalc || !this.mostrarModalRenta) return;
+
+    if (origen === 'formula') {
+      if (this.idsPreviewRentaListos(this.rentaForm.getRawValue() as Record<string, unknown>)) {
+        this.ejecutarPreviewFormula();
+      }
+      return;
+    }
+
+    if (campoMontos === 'montoFinal' || campoMontos === 'montoFinalMantenimiento') {
+      this.recalcularFactorDesdeMontosFinales(campoMontos);
+      return;
+    }
+
+    this.recalcularMontosDesdeFactor();
+  }
+
+  private conRecalcSuspendido(fn: () => void): void {
+    this.rentaModalSuprimirRecalc = true;
+    try {
+      fn();
+    } finally {
+      this.rentaModalSuprimirRecalc = false;
+    }
+  }
+
+  private recalcularMontosDesdeFactor(): void {
+    const raw = this.rentaForm.getRawValue() as Record<string, unknown>;
+    const factor = this.parseNumeroFormulario(raw['factorVariable']);
+    const total = this.parseNumeroFormulario(raw['total']);
+    if (!Number.isFinite(factor) || factor <= 0) return;
+
+    this.conRecalcSuspendido(() => {
+      if (Number.isFinite(total) && total > 0) {
+        const montoFinal = Number((factor * total).toFixed(2));
+        this.rentaForm.get('montoFinal')?.setValue(montoFinal, { emitEvent: false });
+        this.rentaForm.get('ocupoFormula')?.setValue(1, { emitEvent: false });
+      }
+
+      if (this.rentaMostrarMantenimiento) {
+        const totalMtto = this.parseNumeroFormulario(raw['totalMantenimiento']);
+        if (Number.isFinite(totalMtto) && totalMtto > 0) {
+          const montoFinalMtto = Number((factor * totalMtto).toFixed(2));
+          this.rentaForm
+            .get('montoFinalMantenimiento')
+            ?.setValue(montoFinalMtto, { emitEvent: false });
+        }
+      }
+    });
+
+    this.actualizarDisplayMonedaRenta();
+    this.actualizarResumenRentaModal();
+    this.cdr.markForCheck();
+  }
+
+  private recalcularFactorDesdeMontosFinales(
+    campo: 'montoFinal' | 'montoFinalMantenimiento',
+  ): void {
+    const raw = this.rentaForm.getRawValue() as Record<string, unknown>;
+    let factor: number | null = null;
+
+    if (campo === 'montoFinal') {
+      const total = this.parseNumeroFormulario(raw['total']);
+      const montoFinal = this.parseNumeroFormulario(raw['montoFinal']);
+      if (Number.isFinite(total) && total > 0 && Number.isFinite(montoFinal) && montoFinal >= 0) {
+        factor = parseFloat((montoFinal / total).toFixed(4));
+      }
+    } else {
+      const totalMtto = this.parseNumeroFormulario(raw['totalMantenimiento']);
+      const montoFinalMtto = this.parseNumeroFormulario(raw['montoFinalMantenimiento']);
+      if (
+        Number.isFinite(totalMtto) &&
+        totalMtto > 0 &&
+        Number.isFinite(montoFinalMtto) &&
+        montoFinalMtto >= 0
+      ) {
+        factor = parseFloat((montoFinalMtto / totalMtto).toFixed(4));
+      }
+    }
+
+    if (factor == null || !Number.isFinite(factor)) return;
+
+    this.conRecalcSuspendido(() => {
+      this.rentaForm.get('factorVariable')?.setValue(factor, { emitEvent: false });
+      this.rentaForm.get('ocupoFormula')?.setValue(0, { emitEvent: false });
+
+      if (campo === 'montoFinal') {
+        const totalMtto = this.parseNumeroFormulario(raw['totalMantenimiento']);
+        if (this.rentaMostrarMantenimiento && Number.isFinite(totalMtto) && totalMtto > 0) {
+          const montoFinalMtto = Number((factor * totalMtto).toFixed(2));
+          this.rentaForm
+            .get('montoFinalMantenimiento')
+            ?.setValue(montoFinalMtto, { emitEvent: false });
+        }
+      } else {
+        const total = this.parseNumeroFormulario(raw['total']);
+        if (Number.isFinite(total) && total > 0) {
+          const montoFinal = Number((factor * total).toFixed(2));
+          this.rentaForm.get('montoFinal')?.setValue(montoFinal, { emitEvent: false });
+        }
+      }
+    });
+
+    this.actualizarDisplayMonedaRenta();
+    this.actualizarResumenRentaModal();
+    this.cdr.markForCheck();
+  }
+
+  private limpiarEvaluacionFormulaCache(): void {
+    this.ultimaEvaluacionFormula = null;
+  }
+
+  /** Aplica la misma evaluación de fórmula al total de renta y, si aplica, al de mantenimiento. */
+  private aplicarFormulaEvaluadaAMontos(
+    evalNorm: { resultado?: number; tipoResultado?: string },
+  ): boolean {
+    const raw = this.rentaForm.getRawValue() as Record<string, unknown>;
+    const total = this.parseNumeroFormulario(raw['total']);
+    if (!Number.isFinite(total) || total <= 0) return false;
+
+    const aplicado = this.aplicarEvaluacionFormula(evalNorm, total);
+    if (!aplicado) return false;
+
+    this.conRecalcSuspendido(() => {
+      this.rentaForm.get('montoFinal')?.setValue(aplicado.montoFinal, { emitEvent: false });
+      this.rentaForm.get('factorVariable')?.setValue(aplicado.factorVariable, { emitEvent: false });
+      this.rentaForm.get('ocupoFormula')?.setValue(1, { emitEvent: false });
+
+      if (this.rentaMostrarMantenimiento) {
+        const totalMtto = this.parseNumeroFormulario(raw['totalMantenimiento']);
+        if (Number.isFinite(totalMtto) && totalMtto > 0) {
+          const aplicadoMtto = this.aplicarEvaluacionFormula(evalNorm, totalMtto);
+          if (aplicadoMtto) {
+            this.rentaForm
+              .get('montoFinalMantenimiento')
+              ?.setValue(aplicadoMtto.montoFinal, { emitEvent: false });
+          }
+        } else {
+          this.rentaForm.get('montoFinalMantenimiento')?.setValue(null, { emitEvent: false });
+          this.rentaMontoFinalMantenimientoDisplay = '';
+        }
+      } else {
+        this.limpiarMontosMantenimientoModal();
+      }
+    });
+
+    this.actualizarDisplayMonedaRenta();
+    this.actualizarResumenRentaModal();
+    return true;
+  }
+
+  /** Mantenimiento total del contrato (con IVA); solo si `incluyeMantenimiento` es 1. */
+  private extraerMantenimientoTotalContrato(contrato: Record<string, unknown>): number | null {
+    if (Number(contrato['incluyeMantenimiento']) !== 1) return null;
+    const raw = contrato['mantenimientoTotal'];
+    if (raw == null || String(raw).trim() === '') return null;
+    const n = parseValorNumerico(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
   }
 
   /** Renta total del contrato (con IVA); subtotal solo como respaldo. */
@@ -358,19 +674,9 @@ export class ListaRentasActualesComponent implements OnInit {
       )
       .subscribe({
         next: (res: any) => {
-          const total = this.parseNumeroFormulario(this.rentaForm.getRawValue()['total']);
-          const aplicado = this.aplicarEvaluacionFormula(
-            this.normalizarRespuestaFormula(res),
-            total,
-          );
-          if (!aplicado) return;
-
-          this.rentaForm.get('montoFinal')?.setValue(aplicado.montoFinal, { emitEvent: false });
-          this.rentaForm.get('factorVariable')?.setValue(aplicado.factorVariable, { emitEvent: false });
-          this.rentaForm.get('ocupoFormula')?.setValue(1, { emitEvent: false });
-
-          this.actualizarDisplayMonedaRenta();
-          this.actualizarResumenRentaModal();
+          const evalNorm = this.normalizarRespuestaFormula(res);
+          this.ultimaEvaluacionFormula = evalNorm;
+          if (!this.aplicarFormulaEvaluadaAMontos(evalNorm)) return;
           this.scrollRentaModalSiCorresponde();
           this.cdr.markForCheck();
         },
@@ -580,6 +886,8 @@ export class ListaRentasActualesComponent implements OnInit {
       total:          null,
       idFormula:      null,
       montoFinal:     null,
+      totalMantenimiento: null,
+      montoFinalMantenimiento: null,
       factorVariable: null,
       ocupoFormula:   0,
     });
@@ -589,6 +897,11 @@ export class ListaRentasActualesComponent implements OnInit {
     this.resumenRentaModal    = this.resumenRentaModalVacio();
     this.rentaTotalDisplay    = '';
     this.rentaMontoFinalDisplay = '';
+    this.rentaTotalMantenimientoDisplay = '';
+    this.rentaMontoFinalMantenimientoDisplay = '';
+    this.rentaMostrarMantenimiento = false;
+    this.limpiarEvaluacionFormulaCache();
+    this.actualizarValidadoresMantenimientoModal();
     this.rentaModalPermitirAutoScroll = true;
     this.mostrarModalRenta    = true;
     this.cargarCatalogosModal();
@@ -598,71 +911,90 @@ export class ListaRentasActualesComponent implements OnInit {
   // ─── Modal edición ───────────────────────────────────────────────────────────
 
   abrirModalEdicion(row: RentaActualGridRow): void {
+    if (row?.pagada) return;
     const id = Number(row?.id);
     if (!Number.isFinite(id) || id <= 0) return;
     this.rentaModalModo    = 'edicion';
     this.rentaEditId       = Math.floor(id);
     this.rentaModalPermitirAutoScroll = false;
     this.mostrarModalRenta = true;
-    this.rentaModalCargando = true;
     this.rentaForm.reset();
     this.rentaForm.get('idArrendatario')?.disable();
     this.rentaForm.get('idContrato')?.disable();
     this.resumenRentaModal = this.resumenRentaModalVacio();
     this.rentaTotalDisplay = '';
     this.rentaMontoFinalDisplay = '';
+    this.rentaTotalMantenimientoDisplay = '';
+    this.rentaMontoFinalMantenimientoDisplay = '';
+    this.rentaMostrarMantenimiento = false;
+    this.limpiarEvaluacionFormulaCache();
+    this.aplicarDetalleRentaEnFormulario(row.detalle);
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
-
-    this.rentaActualService.obtenerRentaPorId(this.rentaEditId)
-      .pipe(
-        take(1),
-        finalize(() => {
-          this.rentaModalCargando = false;
-          this.cdr.markForCheck();
-        }),
-      )
-      .subscribe({
-        next: (resp) => {
-          const det = extraerRentaActualDetalleApi(resp);
-          if (!det) return;
-          const ocupoRaw = det['ocupoFormula'] ?? det['ocupo_formula'];
-          const ocupo    = ocupoRaw === true || ocupoRaw === 1 || ocupoRaw === '1' ? 1 : 0;
-          this.rentaForm.patchValue({
-            idArrendatario: Number(det['idArrendatario']) || null,
-            idContrato:     Number(det['idContrato'])     || null,
-            total:          Number(det['total']),
-            idFormula:      Number(det['idFormula'])      || null,
-            montoFinal:     Number(det['montoFinal']      ?? det['monto_final']),
-            factorVariable: Number(det['factorVariable']  ?? det['factor_variable']),
-            ocupoFormula:   ocupo,
-          });
-          this.actualizarDisplayMonedaRenta();
-          this.actualizarResumenRentaModal();
-        },
-        error: (err) => {
-          console.error(err);
-          void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
-            icon: 'error',
-            title: 'No se pudo cargar la renta',
-            text: this.mensajeErrorHttp(err),
-            confirmButtonText: 'Entendido',
-          });
-          this.cerrarModalRenta();
-        },
-      });
   }
 
   cerrarModalRenta(): void {
     this.cancelarScrollRentaModalProgramado();
+    this.cancelarRecalculoRentaProgramado();
     this.mostrarModalRenta = false;
     this.rentaEditId       = null;
     this.rentaModalPermitirAutoScroll = false;
     this.resumenRentaModal = this.resumenRentaModalVacio();
     this.rentaTotalDisplay = '';
     this.rentaMontoFinalDisplay = '';
+    this.rentaTotalMantenimientoDisplay = '';
+    this.rentaMontoFinalMantenimientoDisplay = '';
+    this.rentaMostrarMantenimiento = false;
+    this.limpiarEvaluacionFormulaCache();
+    this.cdr.markForCheck();
+  }
+
+  private intentarPreviewFormulaTrasCargarCatalogos(): void {
+    const raw = this.rentaForm.getRawValue() as Record<string, unknown>;
+    const idFormula = Number(raw['idFormula']);
+    if (!Number.isFinite(idFormula) || idFormula <= 0) return;
+    if (!this.idsPreviewRentaListos(raw)) return;
+    this.ejecutarPreviewFormula();
+  }
+
+  /** Hidrata el formulario desde el registro del listado paginado (sin valueChanges). */
+  private aplicarDetalleRentaEnFormulario(det: Record<string, unknown>): void {
+    const vals = extraerRentaActualParaEdicion(det);
+    this.rentaForm.patchValue(
+      {
+        idArrendatario: vals.idArrendatario,
+        idContrato: vals.idContrato,
+        total: vals.total,
+        idFormula: vals.idFormula,
+        montoFinal: vals.montoFinal,
+        totalMantenimiento: vals.totalMantenimiento,
+        montoFinalMantenimiento: vals.montoFinalMantenimiento,
+        factorVariable: vals.factorVariable,
+        ocupoFormula: vals.ocupoFormula,
+      },
+      { emitEvent: false },
+    );
+    this.rentaMostrarMantenimiento =
+      (vals.totalMantenimiento != null && vals.totalMantenimiento > 0) ||
+      (vals.montoFinalMantenimiento != null && vals.montoFinalMantenimiento > 0);
+    this.actualizarValidadoresMantenimientoModal();
+    this.actualizarDisplayMonedaRenta();
+  }
+
+  /** Sincroniza resumen y displays cuando catálogo y detalle de edición están listos. */
+  private finalizarHidratacionModalEdicion(): void {
+    if (this.rentaModalModo !== 'edicion' || this.catalogosModalCargando) return;
+
+    const idArr = Number(this.rentaForm.getRawValue()['idArrendatario']);
+    if (!Number.isFinite(idArr) || idArr <= 0) return;
+
+    this.actualizarVisibilidadMantenimientoDesdeContratoSeleccionado();
+    if (!this.rentaMostrarMantenimiento) {
+      this.limpiarMontosMantenimientoModal();
+    }
+    this.actualizarDisplayMonedaRenta();
+    this.actualizarResumenRentaModal();
+    this.intentarPreviewFormulaTrasCargarCatalogos();
     this.cdr.markForCheck();
   }
 
@@ -726,31 +1058,50 @@ export class ListaRentasActualesComponent implements OnInit {
       campos.push({ etiqueta: 'Vigencia', valor: `${fi} – ${ff}` });
     }
   
-    const moneda = String(contrato?.['moneda'] ?? 'MXN').trim() || 'MXN';
-    this.agregarMontosContratoAlResumen(campos, contrato, moneda);
-  
     const formula = this.etiquetaOpcion(this.formulasOpciones, idFor);
     if (formula) campos.push({ etiqueta: 'Fórmula', valor: formula });
   
-    const total          = String(raw['total']          ?? '').trim();
-    const montoFinal     = String(raw['montoFinal']     ?? '').trim();
+    const montoFinalMtto = String(raw['montoFinalMantenimiento'] ?? '').trim();
     const factorVariable = String(raw['factorVariable'] ?? '').trim();
 
     const filaMontos: RentaModalResumenFilaMontos = {};
-    if (total) {
-      filaMontos.total = {
-        etiqueta: 'Total a registrar',
-        valor: this.esNumeroCaptura(total) ? formatearMoneda(total) : total,
-        dinero: true,
-      };
-    }
     if (factorVariable) {
       filaMontos.factor = { etiqueta: 'Factor INPC', valor: factorVariable };
     }
+    const montoFinal = String(raw['montoFinal'] ?? '').trim();
     if (montoFinal) {
       filaMontos.montoACobrar = {
         etiqueta: 'Monto A Cobrar',
         valor: this.esNumeroCaptura(montoFinal) ? formatearMoneda(montoFinal) : montoFinal,
+        dinero: true,
+        destacado: true,
+      };
+    }
+    if (this.rentaMostrarMantenimiento && montoFinalMtto) {
+      filaMontos.montoFinalMantenimiento = {
+        etiqueta: 'Monto mantenimiento',
+        valor: this.esNumeroCaptura(montoFinalMtto)
+          ? formatearMoneda(montoFinalMtto)
+          : montoFinalMtto,
+        dinero: true,
+        destacado: true,
+      };
+    }
+
+    const numRenta = this.parseNumeroFormulario(raw['montoFinal']);
+    const numMtto = this.rentaMostrarMantenimiento
+      ? this.parseNumeroFormulario(raw['montoFinalMantenimiento'])
+      : NaN;
+    if (
+      this.rentaMostrarMantenimiento &&
+      Number.isFinite(numRenta) &&
+      numRenta > 0 &&
+      Number.isFinite(numMtto) &&
+      numMtto > 0
+    ) {
+      filaMontos.montoTotalCombinado = {
+        etiqueta: 'Total a cobrar',
+        valor: formatearMoneda(numRenta + numMtto),
         dinero: true,
         destacado: true,
       };
@@ -769,21 +1120,20 @@ export class ListaRentasActualesComponent implements OnInit {
     };
   }
 
-  private agregarMontosContratoAlResumen(
-    campos: RentaModalResumenCampo[],
-    contrato: Record<string, unknown> | null,
-    moneda: string,
-  ): void {
-    if (!contrato) return;
-    const totalContrato = this.extraerTotalContrato(contrato);
-    const rentaContrato = totalContrato != null ? formatearMoneda(totalContrato) : '—';
-    if (rentaContrato && rentaContrato !== '—') {
-      campos.push({
-        etiqueta: 'Renta del contrato',
-        valor: `${rentaContrato} ${moneda}`,
-        dinero: true,
-      });
+  private montosMantenimientoDesdeFormulario(raw: Record<string, unknown>): {
+    totalMantenimiento: number;
+    montoFinalMantenimiento: number;
+  } {
+    if (!this.rentaMostrarMantenimiento) {
+      return { totalMantenimiento: 0, montoFinalMantenimiento: 0 };
     }
+    const totalMtto = this.parseNumeroFormulario(raw['totalMantenimiento']);
+    const montoFinalMtto = this.parseNumeroFormulario(raw['montoFinalMantenimiento']);
+    return {
+      totalMantenimiento: Number.isFinite(totalMtto) && totalMtto > 0 ? totalMtto : 0,
+      montoFinalMantenimiento:
+        Number.isFinite(montoFinalMtto) && montoFinalMtto > 0 ? montoFinalMtto : 0,
+    };
   }
 
   private nombreArrendadorPago(
@@ -871,7 +1221,17 @@ export class ListaRentasActualesComponent implements OnInit {
       })
       .finally(() => {
         this.catalogosModalCargando = false;
+        if (this.rentaModalModo === 'edicion') {
+          this.finalizarHidratacionModalEdicion();
+          return;
+        }
+        this.actualizarVisibilidadMantenimientoDesdeContratoSeleccionado();
+        if (!this.rentaMostrarMantenimiento) {
+          this.limpiarMontosMantenimientoModal();
+        }
+        this.actualizarDisplayMonedaRenta();
         this.actualizarResumenRentaModal();
+        this.intentarPreviewFormulaTrasCargarCatalogos();
       });
   }
 
@@ -978,30 +1338,37 @@ export class ListaRentasActualesComponent implements OnInit {
     this.formulasService.evaluar(evaluarBody)
       .pipe(take(1))
       .subscribe({
-        next: (resEvaluar: any) => {
-          const aplicado = this.aplicarEvaluacionFormula(
-            this.normalizarRespuestaFormula(resEvaluar),
-            total,
-          );
+        next: (resEvaluar: unknown) => {
+          this.normalizarRespuestaFormula(resEvaluar);
 
-          if (!aplicado) {
+          const montoFinal = this.parseNumeroFormulario(raw.montoFinal);
+          const factorVariable = this.parseNumeroFormulario(raw.factorVariable);
+
+          if (
+            !Number.isFinite(montoFinal) ||
+            montoFinal <= 0 ||
+            !Number.isFinite(factorVariable) ||
+            factorVariable <= 0
+          ) {
             this.rentaGuardando = false;
             this.cdr.markForCheck();
             void Swal.fire({
               background: '#141a21', color: '#ffffff',
-              icon: 'error', title: 'Error en la fórmula',
-              text: 'La fórmula no devolvió un resultado válido.',
+              icon: 'error', title: 'Montos inválidos',
+              text: 'Revisa el total, monto final y factor variable.',
               confirmButtonText: 'Entendido',
             });
             return;
           }
 
-          const { montoFinal, factorVariable } = aplicado;
-  
+          const montosMtto = this.montosMantenimientoDesdeFormulario(raw);
+
           const putBody: RentaActualPutPayload = {
             total,
             idFormula:      Math.floor(idFormula),
             montoFinal,
+            totalMantenimiento: montosMtto.totalMantenimiento,
+            montoFinalMantenimiento: montosMtto.montoFinalMantenimiento,
             factorVariable,
             ocupoFormula,
           };
@@ -1070,7 +1437,8 @@ export class ListaRentasActualesComponent implements OnInit {
     void Swal.fire({
       background: '#141a21', color: '#ffffff',
       icon: 'error', title: 'No se pudo guardar',
-      text: this.mensajeErrorHttp(err), confirmButtonText: 'Entendido',
+      text: this.mensajeErrorRentaActual(err),
+      confirmButtonText: 'Entendido',
     });
   }
 
@@ -1136,5 +1504,40 @@ export class ListaRentasActualesComponent implements OnInit {
     }
     if (e?.message) return String(e.message);
     return 'Ocurrió un error al comunicarse con el servidor.';
+  }
+
+  private mensajeErrorRentaActual(err: unknown): string {
+    const base = this.mensajeErrorHttp(err);
+    const amigable = this.mensajeConflictoRentaActiva(err, base);
+    return amigable ?? base;
+  }
+
+  private mensajeConflictoRentaActiva(err: unknown, rawMsg: string): string | null {
+    const e = err as { status?: number; error?: { statusCode?: number; message?: string } };
+    const status =
+      e?.status ??
+      (e?.error != null && typeof e.error === 'object' ? e.error.statusCode : undefined);
+    const esConflicto =
+      status === 409 ||
+      /ya existe una renta actual activa para el arrendatario\s+\d+\s+y\s+contrato\s+\d+/i.test(rawMsg);
+    if (!esConflicto) return null;
+
+    const raw = this.rentaForm?.getRawValue() as Record<string, unknown> | undefined;
+    const idArr = Number(raw?.['idArrendatario']);
+    const idCon = Number(raw?.['idContrato']);
+
+    const arrendatario =
+      Number.isFinite(idArr) && idArr > 0
+        ? this.etiquetaOpcion(this.arrendatariosOpciones, idArr) ||
+          `arrendatario #${Math.floor(idArr)}`
+        : 'el arrendatario seleccionado';
+
+    const contrato =
+      Number.isFinite(idCon) && idCon > 0
+        ? this.etiquetaOpcion(this.contratosOpciones, idCon) ||
+          `contrato #${Math.floor(idCon)}`
+        : 'el contrato seleccionado';
+
+    return `Ya existe una renta actual activa para el arrendatario ${arrendatario} y el contrato ${contrato}.`;
   }
 }
