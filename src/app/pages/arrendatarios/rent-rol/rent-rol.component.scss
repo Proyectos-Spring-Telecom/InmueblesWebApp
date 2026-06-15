@@ -120,18 +120,85 @@ $incremento-row-alt: rgba(250, 128, 114, 0.16);
 }
 
 // ─────────────────────────────────────────────
-//  KPI Cards
+//  KPI Cards — brillo solo hacia la derecha, en secuencia
 // ─────────────────────────────────────────────
+$rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
+
+@keyframes rr-kpi-shine-right-1 {
+  0% { left: -100%; opacity: 1; }
+  25% { left: 100%; opacity: 1; }
+  25.01%, 100% { left: 100%; opacity: 0; }
+}
+
+@keyframes rr-kpi-shine-right-2 {
+  0%, 25% { left: -100%; opacity: 0; }
+  25% { left: -100%; opacity: 1; }
+  50% { left: 100%; opacity: 1; }
+  50.01%, 100% { left: 100%; opacity: 0; }
+}
+
+@keyframes rr-kpi-shine-right-3 {
+  0%, 50% { left: -100%; opacity: 0; }
+  50% { left: -100%; opacity: 1; }
+  75% { left: 100%; opacity: 1; }
+  75.01%, 100% { left: 100%; opacity: 0; }
+}
+
+@keyframes rr-kpi-shine-right-4 {
+  0%, 75% { left: -100%; opacity: 0; }
+  75% { left: -100%; opacity: 1; }
+  100% { left: 100%; opacity: 1; }
+}
+
+.rr-kpi-grid > div:nth-child(1) .rr-kpi::before {
+  animation: rr-kpi-shine-right-1 $rr-kpi-seq-duration ease-out infinite;
+}
+
+.rr-kpi-grid > div:nth-child(2) .rr-kpi::before {
+  animation: rr-kpi-shine-right-2 $rr-kpi-seq-duration ease-out infinite;
+}
+
+.rr-kpi-grid > div:nth-child(3) .rr-kpi::before {
+  animation: rr-kpi-shine-right-3 $rr-kpi-seq-duration ease-out infinite;
+}
+
+.rr-kpi-grid > div:nth-child(4) .rr-kpi::before {
+  animation: rr-kpi-shine-right-4 $rr-kpi-seq-duration ease-out infinite;
+}
+
 .rr-kpi {
+  position: relative;
+  overflow: hidden;
   background: $bg-surface;
   border: 1px solid $border;
   border-radius: $radius-md;
   padding: 16px 18px;
   height: 100%;
   display: flex; flex-direction: column; gap: 6px;
-  transition: border-color 0.2s;
 
-  &:hover { border-color: rgba(255,255,255,0.14); }
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.12);
+    transform: skewX(-20deg);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+  }
+
+  &:hover::before {
+    animation: none !important;
+  }
+
+  &__label,
+  &__value {
+    position: relative;
+    z-index: 1;
+  }
 
   &__label {
     font-size: 10px; font-weight: 600;
@@ -144,31 +211,33 @@ $incremento-row-alt: rgba(250, 128, 114, 0.16);
     @media (min-width: 992px) { font-size: 21px; }
   }
 
+  // Mismo patrón que renta-grid-desglose (Pagos del mes en curso)
   &--accent {
-    background: $accent-red; border-color: $accent-red-l;
-    .rr-kpi__label { color: rgba(255,255,255,0.55); }
-    .rr-kpi__value { color: #fff; }
+    border-color: rgba(251, 165, 180, 0.65);
+    background: linear-gradient(135deg, rgba(122, 31, 69, 0.78), rgba(88, 20, 48, 0.72));
+    .rr-kpi__label { color: #fff; }
+    .rr-kpi__value { color: #fbcfe8; }
   }
 
   &--arrendatarios {
-    background: linear-gradient(135deg, #0d4f4a 0%, #134e4a 100%);
-    border-color: rgba(45, 212, 191, 0.35);
-    .rr-kpi__label { color: rgba(255,255,255,0.6); }
-    .rr-kpi__value { color: #99f6e4; }
+    border-color: rgba(45, 212, 191, 0.65);
+    background: linear-gradient(135deg, rgba(13, 79, 74, 0.72), rgba(19, 78, 74, 0.55));
+    .rr-kpi__label { color: #99f6e4; }
+    .rr-kpi__value { color: #ccfbf1; }
   }
 
   &--renta {
-    background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
-    border-color: rgba(96, 165, 250, 0.35);
-    .rr-kpi__label { color: rgba(255,255,255,0.6); }
-    .rr-kpi__value { color: #93c5fd; }
+    border-color: rgba(96, 165, 250, 0.65);
+    background: linear-gradient(135deg, rgba(30, 58, 95, 0.72), rgba(30, 64, 175, 0.55));
+    .rr-kpi__label { color: #bfdbfe; }
+    .rr-kpi__value { color: #dbeafe; }
   }
 
   &--mantto {
-    background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
-    border-color: rgba(251, 191, 36, 0.35);
-    .rr-kpi__label { color: rgba(255,255,255,0.6); }
-    .rr-kpi__value { color: #fde68a; }
+    border-color: rgba(251, 191, 36, 0.65);
+    background: linear-gradient(135deg, rgba(120, 53, 15, 0.72), rgba(146, 64, 14, 0.55));
+    .rr-kpi__label { color: #fde68a; }
+    .rr-kpi__value { color: #fef3c7; }
   }
 }
 
