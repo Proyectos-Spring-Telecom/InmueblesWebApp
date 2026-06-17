@@ -1355,7 +1355,7 @@ export class ListaRentasActualesComponent implements OnInit {
             void Swal.fire({
               background: '#141a21', color: '#ffffff',
               icon: 'error', title: 'Montos inválidos',
-              text: 'Revisa el total, monto final y factor variable.',
+              text: 'Revisa el total, monto final y factor fórmula.',
               confirmButtonText: 'Entendido',
             });
             return;

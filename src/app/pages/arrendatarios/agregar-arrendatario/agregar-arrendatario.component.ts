@@ -148,6 +148,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private contratoCalcHighlightTimers: ReturnType<typeof setTimeout>[][] = [];
   /** Vista ($ / %) por contrato; el FormControl conserva el número para el API. */
   contratoCampoDisplay: Record<string, string>[] = [{}];
+  /** Switch visual «Sí/No» por contrato (independiente de la etiqueta; inicia en Sí). */
+  contratoSwitchMantenimientoSi: boolean[] = [true];
   public listaCatServicios: CatServicioItem[] = [];
   loadingSubmit = false;
   mostrarModalMapa = false;
@@ -626,6 +628,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       metrosRentados: false,
     };
     this.programarRecalculoAlSalirInputsContrato(index);
+    this.cdr.markForCheck();
+  }
+
+  onContratoMetrosInput(index: number): void {
+    this.cdr.markForCheck();
   }
 
   onContratoMonedaFocus(index: number, campo: CampoMonedaContrato): void {
@@ -637,37 +644,57 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   onContratoPctFocus(index: number): void {
-    if (!this.contratoIncluyeMantenimiento(index)) return;
+    if (this.contratoIncluyeMantenimiento(index)) return;
     this.contratoCalcCampoFoco[index] = {
       ...this.contratoCalcCampoFoco[index],
       pctMantenimiento: true,
     };
   }
 
+  /** Estado visual del switch: `true` = Sí (campos ocultos). */
   contratoIncluyeMantenimiento(index: number): boolean {
+    return !!this.contratoSwitchMantenimientoSi[index];
+  }
+
+  contratoSwitchMantenimientoHabilitado(index: number): boolean {
     const grupo = this.contratosFormArray.at(index) as FormGroup | null;
-    return Number(grupo?.get('incluyeMantenimiento')?.value) === 1;
+    if (!grupo) return false;
+    return (
+      this.valorNumericoContratoCapturado(grupo, 'metrosRentados') &&
+      this.valorNumericoContratoCapturado(grupo, 'costoPorM2')
+    );
+  }
+
+  private syncContratoSwitchMantenimientoSi(index: number): void {
+    const grupo = this.contratosFormArray.at(index) as FormGroup | null;
+    const incluyeMtto = Number(grupo?.get('incluyeMantenimiento')?.value) === 1;
+    this.contratoSwitchMantenimientoSi[index] = !incluyeMtto;
   }
 
   onContratoIncluyeMantenimientoChange(index: number, activo: boolean): void {
+    if (!this.contratoSwitchMantenimientoHabilitado(index)) return;
     const grupo = this.contratosFormArray.at(index) as FormGroup;
     if (!grupo) return;
-    grupo.get('incluyeMantenimiento')?.setValue(activo ? 1 : 0);
-    if (!activo) {
-      grupo.patchValue(
-        {
-          pctMantenimiento: '',
-          subtotalMantenimiento: '',
-          ivaMantenimiento: '',
-          mantenimientoTotal: '',
-        },
-        { emitEvent: false },
-      );
-      this.setContratoCampoDisplay(index, 'pctMantenimiento', '');
+    this.contratoSwitchMantenimientoSi[index] = activo;
+    grupo.get('incluyeMantenimiento')?.setValue(activo ? 0 : 1, { emitEvent: false });
+    if (activo) {
+      this.limpiarCamposMantenimientoContrato(grupo);
+      this.limpiarDisplaysMantenimientoContrato(index);
     }
     this.recalcularMontosContrato(index, false);
     this.actualizarDisplaysMonedaContrato(index);
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  private limpiarDisplaysMantenimientoContrato(index: number): void {
+    for (const campo of [
+      'pctMantenimiento',
+      'subtotalMantenimiento',
+      'ivaMantenimiento',
+      'mantenimientoTotal',
+    ] as const) {
+      this.setContratoCampoDisplay(index, campo, '');
+    }
   }
 
   private limpiarCamposMantenimientoContrato(grupo: FormGroup): void {
@@ -759,6 +786,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   private syncPctDisplayDesdeControl(index: number): void {
+    if (this.contratoIncluyeMantenimiento(index)) {
+      this.setContratoCampoDisplay(index, 'pctMantenimiento', '');
+      return;
+    }
     const grupo = this.contratosFormArray.at(index) as FormGroup;
     const n = this.valorNumericoEnControl(grupo, 'pctMantenimiento');
     this.setContratoCampoDisplay(
@@ -777,7 +808,17 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   private actualizarDisplaysMontosCalculadosContrato(index: number): void {
+    const ocultarMtto = this.contratoIncluyeMantenimiento(index);
     for (const campo of CAMPOS_MONEDA_CALCULADOS) {
+      if (
+        ocultarMtto &&
+        (campo === 'subtotalMantenimiento' ||
+          campo === 'ivaMantenimiento' ||
+          campo === 'mantenimientoTotal')
+      ) {
+        this.setContratoCampoDisplay(index, campo, '');
+        continue;
+      }
       this.syncMonedaDisplayDesdeControl(index, campo);
     }
     this.cdr.markForCheck();
@@ -801,11 +842,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         costoPorM2: false,
       };
       this.programarRecalculoAlSalirInputsContrato(index);
+      this.cdr.markForCheck();
     }
   }
 
   onContratoPctBlur(index: number): void {
-    if (!this.contratoIncluyeMantenimiento(index)) return;
+    if (this.contratoIncluyeMantenimiento(index)) return;
     const raw = this.contratoCampoDisplay[index]?.['pctMantenimiento'] ?? '';
     const grupo = this.contratosFormArray.at(index) as FormGroup;
     const ctrl = grupo.get('pctMantenimiento');
@@ -1096,12 +1138,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   placeholderInmuebleContrato(): string {
-    if (!this.arrendadorContratoSeleccionado()) return 'Selecciona arrendador primero';
     if (this.cargandoInmueblesArrendador) return 'Cargando inmuebles…';
-    if (this.inmueblesArrendadorConsultados && this.listaInmuebles.length === 0) {
-      return 'Este arrendador no tiene inmuebles';
-    }
-    return 'Selecciona inmueble';
+    return 'Selecciona un inmueble';
   }
 
   mostrarAvisoSinInmueblesArrendador(): boolean {
@@ -1110,6 +1148,16 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       !this.cargandoInmueblesArrendador &&
       this.inmueblesArrendadorConsultados &&
       this.listaInmuebles.length === 0
+    );
+  }
+
+  mostrarAvisoSeleccionarArrendadorInmueble(): boolean {
+    return !this.arrendadorContratoSeleccionado();
+  }
+
+  mostrarAvisoSeleccionarInmuebleLocales(index: number): boolean {
+    return (
+      this.arrendadorContratoSeleccionado() && !this.inmuebleContratoSeleccionado(index)
     );
   }
 
@@ -1456,16 +1504,20 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   placeholderLocalesContrato(index: number): string {
-    if (!this.arrendadorContratoSeleccionado()) return 'Selecciona arrendador';
-    if (!this.inmuebleContratoSeleccionado(index)) return 'Selecciona inmueble';
     if (this.cargandoLocalesPorContrato[index]) return 'Cargando locales…';
-    if (
-      this.localesLibresConsultadosPorContrato[index] &&
-      (this.localesLibresPorContrato[index]?.length ?? 0) === 0
-    ) {
-      return 'Este inmueble no tiene locales disponibles';
-    }
     return 'Selecciona local(es)';
+  }
+
+  tieneLocalesContratoSeleccionados(index: number): boolean {
+    return this.inmuebleContratoSeleccionado(index) && this.idLocalesContrato(index).length > 0;
+  }
+
+  resumenLocalesContrato(index: number): string {
+    const ids = this.idLocalesContrato(index);
+    if (ids.length === 1) {
+      return this.nombreLocalContrato(index, ids[0]);
+    }
+    return `${ids.length} locales seleccionados`;
   }
 
   toggleLocalesDropdown(index: number, event?: Event): void {
@@ -1601,6 +1653,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratoCalcHighlightTimers.push([]);
     this.contratoCampoDisplay.push({});
     this.contratoCalcCampoFoco.push({});
+    this.contratoSwitchMantenimientoSi.push(true);
     this.contratosCalcBlurTimers.push(undefined);
     this.enlazarInmuebleLocalContrato(nuevoIndex);
     this.enlazarCalculoMontosContrato(nuevoIndex);
@@ -1638,6 +1691,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratoCalcHighlightTimers.splice(index, 1);
     this.contratoCampoDisplay.splice(index, 1);
     this.contratoCalcCampoFoco.splice(index, 1);
+    this.contratoSwitchMantenimientoSi.splice(index, 1);
     this.contratosCalcBlurTimers.splice(index, 1);
     this.localesLibresPorContrato.splice(index, 1);
     this.cargandoLocalesPorContrato.splice(index, 1);
@@ -2237,8 +2291,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         },
         { emitEvent: false },
       );
+      this.syncContratoSwitchMantenimientoSi(0);
       this.cargarLocalesLibresContrato(0, 1);
       this.recalcularMontosContrato(0, false);
+      this.cdr.detectChanges();
     });
 
     const servicios = this.arrendatarioForm.get('servicios') as FormArray;
@@ -2584,6 +2640,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratoCalcHighlightTimers = [];
     this.contratoCampoDisplay = [];
     this.contratoCalcCampoFoco = [];
+    this.contratoSwitchMantenimientoSi = [];
     this.limpiarTimersRecalculoBlurContratos();
     this.contratosFormArray.clear();
     this.localesLibresPorContrato = [];
@@ -2602,6 +2659,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.contratoCalcHighlightTimers.push([]);
       this.contratoCampoDisplay.push({});
       this.contratoCalcCampoFoco.push({});
+      this.contratoSwitchMantenimientoSi.push(true);
       this.contratosCalcBlurTimers.push(undefined);
       this.enlazarInmuebleLocalContrato(0);
       this.enlazarCalculoMontosContrato(0);
@@ -2622,6 +2680,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.contratoCampoDisplay.push({});
       this.contratoCalcCampoFoco.push({});
       this.contratosCalcBlurTimers.push(undefined);
+      this.syncContratoSwitchMantenimientoSi(index);
       this.enlazarInmuebleLocalContrato(index);
       this.enlazarCalculoMontosContrato(index);
       const idIm = this.idInmuebleDesdeContrato(c);

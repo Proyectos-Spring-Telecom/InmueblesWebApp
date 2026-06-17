@@ -27,6 +27,10 @@ $pagada-row-alt:     rgba(127, 226, 163, 0.11);
 $incremento-row:     rgba(250, 128, 114, 0.10);
 $incremento-row-alt: rgba(250, 128, 114, 0.16);
 
+.rr-root {
+  position: relative;
+}
+
 // ─────────────────────────────────────────────
 //  Page
 // ─────────────────────────────────────────────
@@ -150,20 +154,67 @@ $rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
   100% { left: 100%; opacity: 1; }
 }
 
-.rr-kpi-grid > div:nth-child(1) .rr-kpi::before {
+.rr-kpi-grid > .rr-kpi:nth-child(1)::before {
   animation: rr-kpi-shine-right-1 $rr-kpi-seq-duration ease-out infinite;
 }
 
-.rr-kpi-grid > div:nth-child(2) .rr-kpi::before {
+.rr-kpi-grid > .rr-kpi:nth-child(2)::before {
   animation: rr-kpi-shine-right-2 $rr-kpi-seq-duration ease-out infinite;
 }
 
-.rr-kpi-grid > div:nth-child(3) .rr-kpi::before {
+.rr-kpi-grid > .rr-kpi:nth-child(3)::before {
   animation: rr-kpi-shine-right-3 $rr-kpi-seq-duration ease-out infinite;
 }
 
-.rr-kpi-grid > div:nth-child(4) .rr-kpi::before {
+.rr-kpi-grid > .rr-kpi:nth-child(4)::before {
   animation: rr-kpi-shine-right-4 $rr-kpi-seq-duration ease-out infinite;
+}
+
+.rr-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+
+  @media (min-width: 992px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.rr-kpi-slot {
+  width: 100%;
+  margin: 0 0 12px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rr-kpi-float {
+  position: fixed;
+  z-index: 120;
+  pointer-events: none;
+  isolation: isolate;
+
+  .rr-kpi-shell {
+    pointer-events: auto;
+    width: 100%;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, $accent-red 0%, #4a0f24 52%, #2d0816 100%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: $radius-lg;
+    padding: 16px 18px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  }
+
+  .rr-kpi-grid {
+    margin: 0;
+  }
+
+  .rr-kpi {
+    pointer-events: auto;
+    width: 100%;
+  }
 }
 
 .rr-kpi {
@@ -201,41 +252,41 @@ $rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
   }
 
   &__label {
-    font-size: 10px; font-weight: 600;
+    font-size: 12px;
     color: $text-muted; text-transform: uppercase; letter-spacing: 0.5px;
   }
 
   &__value {
-    font-size: 18px; font-weight: 700;
+    font-size: 20px;
     color: $text-main; letter-spacing: -0.4px;
-    @media (min-width: 992px) { font-size: 21px; }
+    @media (min-width: 992px) { font-size: 24px; }
   }
 
   // Mismo patrón que renta-grid-desglose (Pagos del mes en curso)
   &--accent {
-    border-color: rgba(251, 165, 180, 0.65);
-    background: linear-gradient(135deg, rgba(122, 31, 69, 0.78), rgba(88, 20, 48, 0.72));
-    .rr-kpi__label { color: #fff; }
-    .rr-kpi__value { color: #fbcfe8; }
-  }
-
-  &--arrendatarios {
     border-color: rgba(45, 212, 191, 0.65);
-    background: linear-gradient(135deg, rgba(13, 79, 74, 0.72), rgba(19, 78, 74, 0.55));
+    background: linear-gradient(135deg, #0d4f4a 0%, #134e4a 100%);
     .rr-kpi__label { color: #99f6e4; }
     .rr-kpi__value { color: #ccfbf1; }
   }
 
+  &--arrendatarios {
+    border-color: rgba(148, 163, 184, 0.65);
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    .rr-kpi__label { color: #cbd5e1; }
+    .rr-kpi__value { color: #f1f5f9; }
+  }
+
   &--renta {
     border-color: rgba(96, 165, 250, 0.65);
-    background: linear-gradient(135deg, rgba(30, 58, 95, 0.72), rgba(30, 64, 175, 0.55));
+    background: linear-gradient(135deg, rgba(30, 58, 95, 1), rgba(30, 64, 175, 1));
     .rr-kpi__label { color: #bfdbfe; }
     .rr-kpi__value { color: #dbeafe; }
   }
 
   &--mantto {
     border-color: rgba(251, 191, 36, 0.65);
-    background: linear-gradient(135deg, rgba(120, 53, 15, 0.72), rgba(146, 64, 14, 0.55));
+    background: linear-gradient(135deg, rgba(120, 53, 15, 1), rgba(146, 64, 14, 1));
     .rr-kpi__label { color: #fde68a; }
     .rr-kpi__value { color: #fef3c7; }
   }
@@ -300,6 +351,8 @@ $rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
 //  Tabla
 // ─────────────────────────────────────────────
 .rr-table-wrap {
+  position: relative;
+  z-index: 1;
   background: $bg-surface;
   border: 1px solid $border;
   border-radius: $radius-lg;

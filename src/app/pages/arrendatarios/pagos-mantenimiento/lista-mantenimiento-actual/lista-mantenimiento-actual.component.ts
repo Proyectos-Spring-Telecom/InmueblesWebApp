@@ -704,7 +704,7 @@ export class ListaMantenimientoActualComponent implements OnInit {
         color: '#ffffff',
         icon: 'warning',
         title: 'Valores inválidos',
-        text: 'Revisa total, monto final, factor variable y fórmula.',
+        text: 'Revisa total, monto final, factor fórmula y fórmula.',
         confirmButtonText: 'Entendido',
       });
       return;

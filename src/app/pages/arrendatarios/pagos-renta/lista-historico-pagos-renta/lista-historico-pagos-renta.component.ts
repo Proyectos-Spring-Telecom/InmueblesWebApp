@@ -394,7 +394,7 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
       { etiqueta: 'Periodo', valor: row.mesLabel || '—' },
       { etiqueta: 'Registro', valor: row.fhRegistroFmt || '—' },
       { etiqueta: 'Total', valor: row.totalFmt || '—', dinero: true },
-      { etiqueta: 'Factor variable', valor: row.factorVariableFmt || '—' },
+      { etiqueta: 'Factor fórmula', valor: row.factorVariableFmt || '—' },
       { etiqueta: 'Fórmula', valor: row.formulaLabel || '—' },
       { etiqueta: 'Usó fórmula', valor: row.ocupoFormulaLabel || '—' },
     ];

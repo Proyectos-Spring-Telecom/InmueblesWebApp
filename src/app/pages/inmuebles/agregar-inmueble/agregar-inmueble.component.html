@@ -33,7 +33,7 @@
               <div class="form-floating flex-grow-1 perm-select-floating">
                 <select id="idArrendador" class="form-select" formControlName="idArrendador"
                   aria-label="Arrendador (cliente)">
-                  <option [ngValue]="null" disabled></option>
+                  <option [ngValue]="null" disabled>Selecciona arrendador</option>
                   <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
                     {{ cliente.nombre }}
                     <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>

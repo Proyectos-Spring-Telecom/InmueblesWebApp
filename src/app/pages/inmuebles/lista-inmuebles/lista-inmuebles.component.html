@@ -44,7 +44,7 @@
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-sorting mode="multiple"></dxo-sorting>
 
-        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="230" alignment="center"
+        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="270" alignment="center"
           [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
           [allowFiltering]="false" [visible]="false"></dxi-column>
@@ -140,12 +140,18 @@
           </div>
           <div *ngIf="row.data.tieneMapa">
             <button type="button" id="pinButton" class="btnAcciones" title="Ubicación"
-              (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
-              <i class="fa fa-map-marker"></i>
-            </button>
-          </div>
-          <div>
-            <button type="button" id="ubicacionButton" class="btnAcciones" title="Ver lugar"
+            (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
+            <i class="fa fa-map-marker"></i>
+          </button>
+        </div>
+        <div>
+          <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
+            (click)="$event.stopPropagation()">
+            <i class="fa fa-tachometer"></i>
+          </button>
+        </div>
+        <div>
+            <button type="button" id="ubicacionButton" class="btnAcciones" title="Ocupación del inmueble"
               (click)="verLugarInmueble(row.data); $event.stopPropagation()">
               <i class="fa fa-area-chart"></i>
             </button>
@@ -158,6 +164,35 @@
         </div>
         <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
       </dx-data-grid>
+    </div>
+
+    <div class="docs-backdrop" *ngIf="mostrarModalMapa" (click)="cerrarModalMapa()">
+      <div class="docs-modal" (click)="$event.stopPropagation()">
+        <div class="row docs-modal__header">
+          <div class="col-10 col-md-11">
+            <span class="docs-modal__eyebrow">Ubicación del inmueble</span>
+            <h3 class="docs-modal__title">{{ mapaTitulo }}</h3>
+          </div>
+          <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
+            <button type="button" class="docs-modal__close" (click)="cerrarModalMapa()">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <div class="row docs-modal__body">
+          <div class="col-12">
+            <div class="docs-modal__viewer docs-modal__viewer--map" *ngIf="mostrarModalMapa">
+              <div id="mapListaInmueble" class="lista-inmuebles-map-host" role="region"
+                aria-label="Mapa de ubicación del inmueble"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row docs-modal__footer">
+          <div class="col-12 d-flex justify-content-end">
+            <button type="button" class="docs-modal__btn" (click)="cerrarModalMapa()">Cerrar</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="inm-lugar-backdrop docs-backdrop" *ngIf="mostrarModalLugar" (click)="cerrarModalLugar()">
@@ -178,135 +213,153 @@
         <div class="row docs-modal__body inm-lugar-modal__body">
           <div class="col-12 inm-lugar-modal__content">
     
-    
-          </div>
-        </div>
-    
-        <div class="row docs-modal__footer">
-          <div class="col-12 d-flex justify-content-end">
-            <button type="button" class="docs-modal__btn" (click)="cerrarModalLugar()">Cerrar</button>
-          </div>
-        </div>
-    
-      </div>
-    </div>
-
-    <div class="inm-lugar-backdrop docs-backdrop" *ngIf="mostrarModalLugar" (click)="cerrarModalLugar()">
-      <div class="docs-modal inm-lugar-modal" (click)="$event.stopPropagation()">
-        <div class="row docs-modal__header">
-          <div class="col-10 col-md-11">
-            <span class="docs-modal__eyebrow">Lugar</span>
-            <h3 class="docs-modal__title">{{ lugarTitulo || 'Lugar' }}</h3>
-          </div>
-          <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
-            <button type="button" class="docs-modal__close" (click)="cerrarModalLugar()">
-              <i class="fa fa-times"></i>
-            </button>
-          </div>
-        </div>
-        <div class="row docs-modal__body inm-lugar-modal__body">
-          <div class="col-12 inm-lugar-modal__content">
+            <!-- Cargando -->
             <div class="oc-empty" *ngIf="lugarCargando">
               <span>Cargando ocupación…</span>
             </div>
-
+    
             <div class="oc-wrap" *ngIf="data && !lugarCargando">
-
+    
               <!-- Tarjetas de resumen -->
               <div class="oc-stats">
-                <div class="oc-stat">
+                <div class="oc-stat oc-stat--total">
                   <span class="oc-stat__label">Total inmueble</span>
-                  <span class="oc-stat__value">{{ totalM2.toLocaleString('es-MX') }} m²</span>
+                  <div class="oc-stat__body">
+                    <span class="oc-stat__value">{{ totalM2.toLocaleString('es-MX') }} m²</span>
+                    <div class="oc-stat__meta">
+                      <span class="oc-stat__meta-value">100%</span>
+                      <span class="oc-stat__meta-label">del área total</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="oc-stat oc-stat--ocupado">
                   <span class="oc-stat__label">Ocupado</span>
-                  <span class="oc-stat__value">{{ m2Ocupados.toLocaleString('es-MX') }} m²</span>
-                  <span class="oc-stat__sub">{{ porcentajeOcupado.toFixed(1) }}%</span>
+                  <div class="oc-stat__body">
+                    <span class="oc-stat__value">{{ m2Ocupados.toLocaleString('es-MX') }} m²</span>
+                    <div class="oc-stat__meta">
+                      <span class="oc-stat__meta-value">{{ porcentajeOcupado.toFixed(1) }}%</span>
+                      <span class="oc-stat__meta-label">del área total</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="oc-stat oc-stat--disponible">
                   <span class="oc-stat__label">Disponible</span>
-                  <span class="oc-stat__value">{{ m2Disponibles.toLocaleString('es-MX') }} m²</span>
-                  <span class="oc-stat__sub">{{ porcentajeDisponible.toFixed(1) }}%</span>
-                </div>
-              </div>
-            
-              <!-- Barra de progreso general -->
-              <div class="oc-progress">
-                <div class="oc-progress__bar">
-                  <div
-                    class="oc-progress__fill"
-                    *ngFor="let l of localesProcesados"
-                    [style.width.%]="l.porcentaje"
-                    [style.background]="l.color"
-                    [title]="tooltipLocal(l)">
+                  <div class="oc-stat__body">
+                    <span class="oc-stat__value">{{ m2Disponibles.toLocaleString('es-MX') }} m²</span>
+                    <div class="oc-stat__meta">
+                      <span class="oc-stat__meta-value">{{ porcentajeDisponible.toFixed(1) }}%</span>
+                      <span class="oc-stat__meta-label">del área total</span>
+                    </div>
                   </div>
-                </div>
-                <div class="oc-progress__labels">
-                  <span>0 m²</span>
-                  <span>{{ totalM2.toLocaleString('es-MX') }} m²</span>
-                </div>
-              </div>
-            
-              <!-- Grid de celdas -->
-              <p class="oc-grid-label">
-                Cada celda representa ~{{ M2_LABEL }} m² del inmueble
-              </p>
-            
-              <div class="oc-grid-panel" *ngIf="celdas.length">
-                <div
-                  class="oc-grid"
-                  [style.--oc-grid-cols]="20"
-                  [style.--oc-grid-rows]="gridFilas"
-                  role="img"
-                  [attr.aria-label]="'Mapa de ocupación de ' + (lugarTitulo || 'inmueble')">
-                  <ng-container *ngFor="let celda of celdas; trackBy: trackByCelda">
-                    <div
-                      *ngIf="celda.tipo === 'local'"
-                      class="oc-celda oc-celda--local"
-                      [style.background]="celda.local!.color"
-                      [title]="tooltipLocal(celda.local!)">
-                      <span class="oc-celda__nombre" *ngIf="celda.showLabel">{{ celda.local!.nombre }}</span>
-                      <span class="oc-celda__area" *ngIf="celda.showLabel">{{ celda.local!.area.toLocaleString('es-MX') }} m²</span>
-                    </div>
-                    <div
-                      *ngIf="celda.tipo === 'disponible'"
-                      class="oc-celda oc-celda--disponible"
-                      title="Disponible · ~{{ M2_LABEL }} m²">
-                    </div>
-                  </ng-container>
                 </div>
               </div>
 
-              <!-- Sin datos -->
-              <div class="oc-empty oc-empty--inline" *ngIf="!celdas.length">
-                <span>Sin locales registrados</span>
-              </div>
-            
-              <!-- Leyenda -->
-              <div class="oc-legend" *ngIf="localesProcesados.length">
-                <div class="oc-legend__item" *ngFor="let l of localesProcesados">
-                  <span class="oc-legend__dot" [style.background]="l.color"></span>
-                  <span class="oc-legend__text">{{ l.nombre }} · {{ l.area.toLocaleString('es-MX') }} m²</span>
+              <!-- Lista + gráfica -->
+              <div class="row oc-panel-row g-2">
+                <div class="col-6 oc-locales-col">
+                  <div class="oc-locales" *ngIf="localesProcesados.length || m2Disponibles > 0">
+                    <span class="oc-locales__title">Ocupación por local</span>
+                    <div class="oc-locales__list">
+                      <article
+                        class="oc-local"
+                        *ngFor="let local of localesProcesados"
+                        [class.oc-local--activo]="localGraficaHover === local.nombre"
+                        [style.--oc-local-accent]="local.color"
+                        (mouseenter)="resaltarGraficaLocal(local.nombre)"
+                        (mouseleave)="resaltarGraficaLocal(null)">
+                        <span class="oc-local__dot" [style.background-color]="local.color" aria-hidden="true"></span>
+                        <div class="oc-local__main">
+                          <span class="oc-local__nombre">{{ local.nombre }}</span>
+                          <span class="oc-local__zona" *ngIf="local.zona">{{ local.zona }}</span>
+                        </div>
+                        <div class="oc-local__medidas">
+                          <span>{{ local.area.toLocaleString('es-MX') }} m²</span>
+                          <span>{{ local.porcentaje.toFixed(1) }}%</span>
+                        </div>
+                        <div class="oc-local__ocupante">
+                          <span class="oc-local__ocupante-label">Arrendatario</span>
+                          <span class="oc-local__ocupante-nombre">{{ local.arrendatario }}</span>
+                        </div>
+                      </article>
+                      <article
+                        class="oc-local oc-local--disponible"
+                        *ngIf="m2Disponibles > 0"
+                        [class.oc-local--activo]="localGraficaHover === 'Disponible'"
+                        (mouseenter)="resaltarGraficaLocal('Disponible')"
+                        (mouseleave)="resaltarGraficaLocal(null)">
+                        <span class="oc-local__dot oc-local__dot--disponible" aria-hidden="true"></span>
+                        <div class="oc-local__main">
+                          <span class="oc-local__nombre">Disponible</span>
+                          <span class="oc-local__zona">Sin contrato activo</span>
+                        </div>
+                        <div class="oc-local__medidas">
+                          <span>{{ m2Disponibles.toLocaleString('es-MX') }} m²</span>
+                          <span>{{ porcentajeDisponible.toFixed(1) }}%</span>
+                        </div>
+                        <div class="oc-local__ocupante">
+                          <span class="oc-local__ocupante-label">Estado</span>
+                          <span class="oc-local__ocupante-nombre oc-local__ocupante-nombre--libre">Libre</span>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
                 </div>
-                <div class="oc-legend__item">
-                  <span class="oc-legend__dot oc-legend__dot--disponible"></span>
-                  <span class="oc-legend__text">Disponible · {{ m2Disponibles.toLocaleString('es-MX') }} m²</span>
+
+                <div class="col-6">
+                  <div class="oc-dona-wrap" *ngIf="donaData.length">
+                    <dx-pie-chart
+                      #pieOcupacion
+                      id="pieOcupacionInmueble"
+                      [dataSource]="donaData"
+                      [innerRadius]="0.62"
+                      [startAngle]="90"
+                      [resolveLabelOverlapping]="'shift'"
+                      [customizePoint]="customizarPuntoDona">
+                      <dxi-series
+                        argumentField="nombre"
+                        valueField="area">
+                        <dxo-label
+                          [visible]="true"
+                          [customizeText]="customizarLabelDona">
+                          <dxo-connector [visible]="true" [width]="1"></dxo-connector>
+                        </dxo-label>
+                      </dxi-series>
+                      <dxo-tooltip
+                        [enabled]="true"
+                        [customizeTooltip]="customizarTooltipDona">
+                      </dxo-tooltip>
+                      <dxo-legend
+                        verticalAlignment="bottom"
+                        horizontalAlignment="center"
+                        itemTextPosition="right"
+                        [rowCount]="2">
+                      </dxo-legend>
+                      <dxo-size [height]="360"></dxo-size>
+                    </dx-pie-chart>
+                  </div>
+
+                  <div class="oc-empty oc-empty--inline" *ngIf="!donaData.length">
+                    <span>Sin locales registrados</span>
+                  </div>
                 </div>
               </div>
-            
+    
             </div>
-            
+    
             <!-- Sin datos -->
             <div class="oc-empty" *ngIf="!data && !lugarCargando">
               <span>Sin información de ocupación</span>
             </div>
+    
           </div>
         </div>
+    
         <div class="row docs-modal__footer">
           <div class="col-12 d-flex justify-content-end">
             <button type="button" class="docs-modal__btn" (click)="cerrarModalLugar()">Cerrar</button>
           </div>
         </div>
+    
       </div>
     </div>
   </div>

@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ClientesRoutingModule } from './clientes-routing.module';
 import { MatIconModule } from '@angular/material/icon';
 import { DxButtonModule, DxDataGridModule } from 'devextreme-angular';
+import { DxAccordionModule } from 'devextreme-angular/ui/accordion';
 import { ListaClientesComponent } from './lista-clientes/lista-clientes.component';
 import { MaterialModule } from 'src/app/material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -20,6 +21,7 @@ import { ListaClientesDetalleComponent } from './lista-clientes-detalle/lista-cl
     MatIconModule,
     DxDataGridModule,
     DxButtonModule,
+    DxAccordionModule,
     MaterialModule,
     ReactiveFormsModule,
     FormsModule,

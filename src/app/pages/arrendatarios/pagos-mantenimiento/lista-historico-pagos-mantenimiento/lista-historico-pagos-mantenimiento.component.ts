@@ -388,7 +388,7 @@ export class ListaHistoricoPagosMantenimientoComponent implements OnInit {
       { etiqueta: 'Registro', valor: row.fhRegistroFmt || '—' },
       { etiqueta: 'Total', valor: row.totalFmt || '—', dinero: true },
       { etiqueta: 'Monto final', valor: row.montoFinalFmt || '—', dinero: true },
-      { etiqueta: 'Factor variable', valor: row.factorVariableFmt || '—' },
+      { etiqueta: 'Factor fórmula', valor: row.factorVariableFmt || '—' },
       { etiqueta: 'Fórmula', valor: row.formulaLabel || '—' },
       { etiqueta: 'Usó fórmula', valor: row.ocupoFormulaLabel || '—' },
     ];

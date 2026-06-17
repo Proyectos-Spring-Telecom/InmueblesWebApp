@@ -314,6 +314,11 @@
       margin-left: 0;
       overflow: hidden;
       box-sizing: border-box;
+
+      // Tercer nivel: subítems dentro de un subítem (ej. opciones bajo Arrendatarios).
+      .menu-list-item--no-icon .menu-list-item__lead {
+        padding-left: calc(#{$nav-subitem-label-indent} + 15px);
+      }
     }
 
     .nav-submenu-children .nav-submenu-children
