@@ -29,6 +29,12 @@ export const HUB_PAGOS_MES: OperacionPagosHubConfig = {
       descripcion: 'Gestiona agua, luz, gas y otros servicios con su comprobante.',
       icono: 'design_services',
     },
+    {
+      segmento: 'servicios',
+      titulo: 'Servicios',
+      descripcion: 'Gestiona agua, luz, gas y otros servicios con su comprobante.',
+      icono: 'design_services',
+    },
   ],
 };
 
