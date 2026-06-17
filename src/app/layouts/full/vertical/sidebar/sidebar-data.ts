@@ -172,7 +172,7 @@ export const navItems: NavItem[] = [
         ],
       },
       {
-        displayName: 'Rent-rol',
+        displayName: 'Rent Rol',
         route: '/arrendatarios/rent-rol',
         permission: Permiso.CONSULTA_CLIENTE,
       },

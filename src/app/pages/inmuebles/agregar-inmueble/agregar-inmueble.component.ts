@@ -522,6 +522,11 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   agregarLocalZona(zonaIndex: number): void {
     this.localesZonaFormArray(zonaIndex).push(this.crearLocalZonaFormGroup());
+    const nuevoIndex = this.localesZonaFormArray(zonaIndex).length - 1;
+    this.localAccordionIndicesAbiertos[zonaIndex] = this.abrirIndiceAccordion(
+      this.localAccordionIndicesAbiertosDeZona(zonaIndex),
+      nuevoIndex,
+    );
   }
 
   private crearEstacionamientoFormGroup(): FormGroup {
@@ -597,6 +602,95 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     return this.inmuebleForm.get('zonas') as FormArray;
   }
 
+  /** Ítems expandidos en acordeones de arreglos dinámicos. */
+  servicioAccordionIndicesAbiertos: number[] = [0];
+  zonaAccordionIndicesAbiertos: number[] = [0];
+  localAccordionIndicesAbiertos: Record<number, number[]> = { 0: [0] };
+
+  onServicioAccordionIndicesChange(raw: number | number[]): void {
+    if (Array.isArray(raw)) {
+      this.servicioAccordionIndicesAbiertos = raw;
+      return;
+    }
+    this.servicioAccordionIndicesAbiertos = raw >= 0 ? [raw] : [];
+  }
+
+  onZonaAccordionIndicesChange(raw: number | number[]): void {
+    if (Array.isArray(raw)) {
+      this.zonaAccordionIndicesAbiertos = raw;
+      return;
+    }
+    this.zonaAccordionIndicesAbiertos = raw >= 0 ? [raw] : [];
+  }
+
+  onLocalAccordionIndicesChange(zonaIndex: number, raw: number | number[]): void {
+    if (Array.isArray(raw)) {
+      this.localAccordionIndicesAbiertos[zonaIndex] = raw;
+      return;
+    }
+    this.localAccordionIndicesAbiertos[zonaIndex] = raw >= 0 ? [raw] : [];
+  }
+
+  localAccordionIndicesAbiertosDeZona(zonaIndex: number): number[] {
+    if (!this.localAccordionIndicesAbiertos[zonaIndex]) {
+      this.localAccordionIndicesAbiertos[zonaIndex] = [0];
+    }
+    return this.localAccordionIndicesAbiertos[zonaIndex];
+  }
+
+  tituloAccordionCaption(data: unknown): string {
+    if (typeof data === 'string') return data;
+    if (data != null && typeof data === 'object' && 'title' in data) {
+      return String((data as { title: unknown }).title ?? '');
+    }
+    return '';
+  }
+
+  tituloServicioAccordion(index: number): string {
+    const grupo = this.serviciosFormArray.at(index) as FormGroup;
+    const idTipo = Number(grupo.get('idTipoServicio')?.value);
+    const cat = this.listaCatServicios.find((x) => x.id === idTipo);
+    const partes = [`Servicio ${index + 1}`];
+    if (cat) partes.push(this.etiquetaCatServicio(cat));
+    return partes.join(' | ');
+  }
+
+  tituloZonaAccordion(index: number): string {
+    const grupo = this.zonasFormArray.at(index) as FormGroup;
+    const nombre = String(grupo.get('zonaPrincipal')?.value ?? '').trim();
+    const partes = [`Zona ${index + 1}`];
+    if (nombre) partes.push(nombre);
+    return partes.join(' | ');
+  }
+
+  tituloLocalAccordion(zonaIndex: number, localIndex: number): string {
+    const grupo = this.localesZonaFormArray(zonaIndex).at(localIndex) as FormGroup;
+    const nombre = String(grupo.get('nombre')?.value ?? '').trim();
+    const partes = [`Local ${localIndex + 1}`];
+    if (nombre) partes.push(nombre);
+    return partes.join(' | ');
+  }
+
+  private abrirIndiceAccordion(indices: number[], nuevoIndex: number): number[] {
+    const abiertos = new Set(indices);
+    abiertos.add(nuevoIndex);
+    return [...abiertos].sort((a, b) => a - b);
+  }
+
+  private reiniciarIndicesAccordionServicios(): void {
+    this.servicioAccordionIndicesAbiertos =
+      this.serviciosFormArray.length > 0 ? [0] : [];
+  }
+
+  private reiniciarIndicesAccordionZonas(): void {
+    this.zonaAccordionIndicesAbiertos = this.zonasFormArray.length > 0 ? [0] : [];
+    const locales: Record<number, number[]> = {};
+    for (let i = 0; i < this.zonasFormArray.length; i++) {
+      locales[i] = this.localesZonaFormArray(i).length > 0 ? [0] : [];
+    }
+    this.localAccordionIndicesAbiertos = locales;
+  }
+
   get estacionamientosFormArray(): FormArray {
     return this.inmuebleForm.get('estacionamientos') as FormArray;
   }
@@ -641,6 +735,11 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   agregarServicio(): void {
     this.serviciosFormArray.push(this.crearServicioFormGroup());
+    const nuevoIndex = this.serviciosFormArray.length - 1;
+    this.servicioAccordionIndicesAbiertos = this.abrirIndiceAccordion(
+      this.servicioAccordionIndicesAbiertos,
+      nuevoIndex,
+    );
   }
 
   etiquetaCatServicio(item: CatServicioItem): string {
@@ -686,6 +785,12 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   agregarZona(): void {
     this.zonasFormArray.push(this.crearZonaFormGroup());
+    const nuevoIndex = this.zonasFormArray.length - 1;
+    this.zonaAccordionIndicesAbiertos = this.abrirIndiceAccordion(
+      this.zonaAccordionIndicesAbiertos,
+      nuevoIndex,
+    );
+    this.localAccordionIndicesAbiertos[nuevoIndex] = [0];
   }
 
   agregarEstacionamiento(): void {
@@ -1033,6 +1138,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const lista = Array.isArray(servicios) ? servicios : [];
     if (!lista.length) {
       arr.push(this.crearServicioFormGroup());
+      this.reiniciarIndicesAccordionServicios();
       return;
     }
     lista.forEach((s) => {
@@ -1054,6 +1160,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       );
       arr.push(g);
     });
+    this.reiniciarIndicesAccordionServicios();
   }
 
   private rellenarLocalesZonaDesdeApi(zonaGroup: FormGroup, localesApi: unknown): void {
@@ -1104,6 +1211,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const lista = Array.isArray(zonas) ? zonas : [];
     if (!lista.length) {
       arr.push(this.crearZonaFormGroup());
+      this.reiniciarIndicesAccordionZonas();
       return;
     }
     lista.forEach((z) => {
@@ -1124,6 +1232,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       this.rellenarLocalesZonaDesdeApi(g, localesApi);
       arr.push(g);
     });
+    this.reiniciarIndicesAccordionZonas();
   }
 
   private rellenarGaleriaDesdeApi(imagenes: InmuebleArchivoApi[]): void {

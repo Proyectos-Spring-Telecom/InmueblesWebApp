@@ -144,11 +144,39 @@
         <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="200"></dxi-column>
         <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="160"></dxi-column>
         <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column>
+        <dxi-column
+          caption="Desglose"
+          cellTemplate="desgloseRentaTpl"
+          alignment="center"
+          [width]="300"
+          [minWidth]="240"
+          [allowFiltering]="false"
+          [allowSorting]="false"
+        ></dxi-column>
         <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="130"></dxi-column>
         <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90"></dxi-column>
         <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
         <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>
         <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusHistoricoTpl" [width]="120"></dxi-column>
+
+        <div *dxTemplate="let row of 'desgloseRentaTpl'" class="renta-grid-desglose">
+          @if (row.data.desgloseVm?.muestraRenta || row.data.desgloseVm?.muestraMantenimiento) {
+          @if (row.data.desgloseVm.muestraRenta) {
+          <div class="renta-grid-desglose__item renta-grid-desglose__item--renta">
+            <span class="renta-grid-desglose__label">Renta</span>
+            <span class="renta-grid-desglose__valor">{{ row.data.desgloseVm.rentaFmt }}</span>
+          </div>
+          }
+          @if (row.data.desgloseVm.muestraMantenimiento) {
+          <div class="renta-grid-desglose__item renta-grid-desglose__item--mtto">
+            <span class="renta-grid-desglose__label">Mantenimiento</span>
+            <span class="renta-grid-desglose__valor">{{ row.data.desgloseVm.mantenimientoFmt }}</span>
+          </div>
+          }
+          } @else {
+          <span class="renta-grid-desglose__vacio">—</span>
+          }
+        </div>
 
         <div *dxTemplate="let row of 'estatusHistoricoTpl'">
           <span class="estatus estatus-activo">{{ row.data.pagadaLabel }}</span>
@@ -246,6 +274,46 @@
                 </div>
               </div>
             </article>
+
+            <div
+              class="hist-detalle-modal__montos-row"
+              *ngIf="
+                (vista.desglose.muestraRenta || vista.desglose.muestraMantenimiento) &&
+                vista.montoFinalFmt &&
+                vista.montoFinalFmt !== '—'
+              "
+            >
+              <article
+                class="renta-pago-resumen__card hist-detalle-modal__card-desglose"
+                *ngIf="vista.desglose.muestraRenta || vista.desglose.muestraMantenimiento"
+              >
+                <h5 class="renta-pago-resumen__card-title">Desglose</h5>
+                <div class="renta-grid-desglose hist-detalle-modal__desglose">
+                  <div class="renta-grid-desglose__item renta-grid-desglose__item--renta" *ngIf="vista.desglose.muestraRenta">
+                    <span class="renta-grid-desglose__label">Renta</span>
+                    <span class="renta-grid-desglose__valor">{{ vista.desglose.rentaFmt }}</span>
+                  </div>
+                  <div
+                    class="renta-grid-desglose__item renta-grid-desglose__item--mtto"
+                    *ngIf="vista.desglose.muestraMantenimiento"
+                  >
+                    <span class="renta-grid-desglose__label">Mantenimiento</span>
+                    <span class="renta-grid-desglose__valor">{{ vista.desglose.mantenimientoFmt }}</span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="renta-pago-resumen__card hist-detalle-modal__card-mfinal">
+                <div class="renta-pago-resumen__montos-destacados hist-detalle-modal__mfinal-wrap">
+                  <div
+                    class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-total"
+                  >
+                    <span>Monto final</span>
+                    <p class="is-money">{{ vista.montoFinalFmt }}</p>
+                  </div>
+                </div>
+              </article>
+            </div>
           </section>
 
           <div class="mt-3" *ngIf="!detalleModalCargando">

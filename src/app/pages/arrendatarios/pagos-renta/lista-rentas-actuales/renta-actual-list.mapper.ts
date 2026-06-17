@@ -17,6 +17,13 @@ const MESES_PERIODO_ES = [
   'Diciembre',
 ] as const;
 
+export interface RentaActualDesgloseVm {
+  rentaFmt: string;
+  mantenimientoFmt: string;
+  muestraRenta: boolean;
+  muestraMantenimiento: boolean;
+}
+
 export interface RentaActualGridRow {
   id: number;
   idArrendatario: number | null;
@@ -29,6 +36,7 @@ export interface RentaActualGridRow {
   totalFmt: string;
   montoFinal: number | null;
   montoFinalFmt: string;
+  desgloseVm: RentaActualDesgloseVm;
   factorVariable: number | null;
   factorVariableFmt: string;
   ocupoFormula: number;
@@ -138,13 +146,71 @@ function etiquetaPeriodoMes(row: Record<string, unknown>): string {
   return texto || '—';
 }
 
+function extraerMontosFinalesDesglose(row: Record<string, unknown>): {
+  montoFinalRenta: number | null;
+  montoFinalMantenimiento: number | null;
+} {
+  let montoFinalRenta: number | null = null;
+  let montoFinalMantenimiento: number | null = null;
+
+  const desglose = row['desglose'];
+  if (desglose != null && typeof desglose === 'object' && !Array.isArray(desglose)) {
+    const d = desglose as Record<string, unknown>;
+    const renta = d['renta'];
+    if (renta != null && typeof renta === 'object' && !Array.isArray(renta)) {
+      const r = renta as Record<string, unknown>;
+      montoFinalRenta = num(r['montoFinal'] ?? r['monto_final']);
+    }
+    const mantenimiento = d['mantenimiento'];
+    if (mantenimiento != null && typeof mantenimiento === 'object' && !Array.isArray(mantenimiento)) {
+      const m = mantenimiento as Record<string, unknown>;
+      montoFinalMantenimiento = num(m['montoFinalMantenimiento'] ?? m['monto_final_mantenimiento']);
+    }
+  }
+
+  if (montoFinalRenta == null) {
+    montoFinalRenta = num(row['montoFinal'] ?? row['monto_final']);
+  }
+  if (montoFinalMantenimiento == null) {
+    montoFinalMantenimiento = num(row['montoFinalMantenimiento'] ?? row['monto_final_mantenimiento']);
+  }
+
+  return { montoFinalRenta, montoFinalMantenimiento };
+}
+
+/** Columna Monto final: renta + mantenimiento si hay mantenimiento; si no, solo renta. */
+function resolverMontoFinalColumna(row: Record<string, unknown>): number | null {
+  const { montoFinalRenta, montoFinalMantenimiento } = extraerMontosFinalesDesglose(row);
+  if (montoFinalRenta == null && montoFinalMantenimiento == null) return null;
+
+  const renta = montoFinalRenta ?? 0;
+  const tieneMantenimiento = montoFinalMantenimiento != null && montoFinalMantenimiento > 0;
+  if (!tieneMantenimiento) {
+    return montoFinalRenta;
+  }
+
+  return Math.round((renta + (montoFinalMantenimiento ?? 0)) * 100) / 100;
+}
+
+function extraerDesglose(row: Record<string, unknown>): RentaActualDesgloseVm {
+  const { montoFinalRenta, montoFinalMantenimiento } = extraerMontosFinalesDesglose(row);
+  const muestraMantenimiento = montoFinalMantenimiento != null && montoFinalMantenimiento > 0;
+
+  return {
+    rentaFmt: moneyFmt(montoFinalRenta),
+    mantenimientoFmt: moneyFmt(montoFinalMantenimiento),
+    muestraRenta: montoFinalRenta != null,
+    muestraMantenimiento,
+  };
+}
+
 export function mapRentaActualApiToGridRow(item: unknown): RentaActualGridRow | null {
   const row = item as Record<string, unknown>;
   const id = num(row['id'] ?? row['idRentaActual']);
   if (id == null || id <= 0) return null;
 
   const total = num(row['total']);
-  const montoFinal = num(row['montoFinal'] ?? row['monto_final']);
+  const montoFinal = resolverMontoFinalColumna(row);
   const factorVariable = num(row['factorVariable'] ?? row['factor_variable']);
   const ocupoRaw = row['ocupoFormula'] ?? row['ocupo_formula'];
   const ocupoFormula =
@@ -163,6 +229,7 @@ export function mapRentaActualApiToGridRow(item: unknown): RentaActualGridRow | 
     totalFmt: moneyFmt(total),
     montoFinal,
     montoFinalFmt: moneyFmt(montoFinal),
+    desgloseVm: extraerDesglose(row),
     factorVariable,
     factorVariableFmt:
       factorVariable != null ? String(factorVariable) : '—',
@@ -173,6 +240,38 @@ export function mapRentaActualApiToGridRow(item: unknown): RentaActualGridRow | 
     mesLabel: etiquetaPeriodoMes(row),
     fhRegistroFmt: formatearFechaHora(String(row['fhRegistro'] ?? '')) || '—',
     detalle: row,
+  };
+}
+
+/** Valores del formulario de edición a partir del registro del listado paginado. */
+export function extraerRentaActualParaEdicion(det: Record<string, unknown>): {
+  idArrendatario: number | null;
+  idContrato: number | null;
+  total: number | null;
+  idFormula: number | null;
+  montoFinal: number | null;
+  totalMantenimiento: number | null;
+  montoFinalMantenimiento: number | null;
+  factorVariable: number | null;
+  ocupoFormula: number;
+} {
+  const { montoFinalRenta, montoFinalMantenimiento } = extraerMontosFinalesDesglose(det);
+  const ocupoRaw = det['ocupoFormula'] ?? det['ocupo_formula'];
+  const totalMttoRaw = num(det['totalMantenimiento'] ?? det['total_mantenimiento']);
+  const montoFinalMttoRaw =
+    montoFinalMantenimiento ??
+    num(det['montoFinalMantenimiento'] ?? det['monto_final_mantenimiento']);
+
+  return {
+    idArrendatario: num(det['idArrendatario']),
+    idContrato: num(det['idContrato']),
+    total: num(det['total']),
+    idFormula: num(det['idFormula']),
+    montoFinal: montoFinalRenta ?? num(det['montoFinal'] ?? det['monto_final']),
+    totalMantenimiento: totalMttoRaw,
+    montoFinalMantenimiento: montoFinalMttoRaw,
+    factorVariable: num(det['factorVariable'] ?? det['factor_variable']),
+    ocupoFormula: ocupoRaw === true || ocupoRaw === 1 || ocupoRaw === '1' ? 1 : 0,
   };
 }
 

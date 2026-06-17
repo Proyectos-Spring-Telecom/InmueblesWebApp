@@ -469,3 +469,183 @@
     opacity: 1;
   }
 }
+
+.socios-section__body {
+  width: 100%;
+}
+
+/* Bloques FormArray — misma sangría que arrendatarios e inmuebles */
+.arrend-fa-section {
+  margin-top: 1.15rem;
+}
+
+.arrend-fa-section__body {
+  margin-top: 0.75rem;
+  padding-inline: 0.70rem;
+}
+
+.arrend-fa-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(130, 160, 255, 0.35);
+  background: radial-gradient(120% 120% at 0% 0%, rgba(96, 132, 255, 0.18), transparent 55%),
+    linear-gradient(180deg, rgba(22, 32, 52, 0.92), rgba(12, 18, 30, 0.72));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.arrend-fa-hero__icon {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(147, 197, 253, 0.45);
+  background: rgba(59, 130, 246, 0.16);
+  color: #dbeafe;
+}
+
+.arrend-fa-hero__icon mat-icon {
+  font-size: 1.55rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  line-height: 1.55rem;
+}
+
+.arrend-fa-hero__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.arrend-fa-add-btn {
+  min-width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.arrend-fa-title-wrap {
+  min-width: 0;
+}
+
+.arrend-fa-head {
+  width: 100%;
+}
+
+.arrend-fa-section-title {
+  color: #f8fbff;
+  font-size: 1.12rem;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 18px rgba(147, 197, 253, 0.35);
+}
+
+/* Acordeón de socios — mismo patrón que arrendatarios e inmuebles */
+:host ::ng-deep .arrend-accordion-socios {
+  display: block;
+}
+
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item {
+  margin-bottom: 0.75rem;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-title {
+  min-height: 3.6rem;
+  padding: 0.85rem 1.05rem;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(130, 160, 255, 0.22);
+  border-left: 3px solid rgba(96, 165, 250, 0.58);
+  background: #0b0f16;
+  border-radius: 0;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+:host ::ng-deep .arrend-accordion-socios .dx-state-hover .dx-accordion-item-title {
+  background: #121820;
+  border-color: rgba(147, 197, 253, 0.36);
+  border-left-color: rgba(96, 165, 250, 0.82);
+}
+
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-opened .dx-accordion-item-title {
+  background: #0d1219;
+  border-color: rgba(130, 160, 255, 0.26);
+  border-bottom-color: rgba(130, 160, 255, 0.16);
+  border-left-color: rgba(96, 165, 250, 0.68);
+}
+
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-opened.dx-state-hover .dx-accordion-item-title,
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-opened .dx-state-hover .dx-accordion-item-title {
+  background: #161c26;
+  border-color: rgba(147, 197, 253, 0.4);
+  border-left-color: rgba(147, 197, 253, 0.88);
+}
+
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item:not(.dx-accordion-item-opened) .dx-state-focused .dx-accordion-item-title,
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item:not(.dx-accordion-item-opened) .dx-state-active .dx-accordion-item-title {
+  background: #0b0f16;
+  border: 1px solid rgba(130, 160, 255, 0.22);
+  border-left: 3px solid rgba(96, 165, 250, 0.58);
+  box-shadow: none;
+}
+
+:host ::ng-deep .arrend-accordion-socios.dx-state-focused,
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item.dx-state-focused,
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-body {
+  outline: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-opened.dx-state-focused,
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-opened .dx-state-focused {
+  box-shadow: none;
+}
+
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-title-caption {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 2.75rem;
+  height: 100%;
+  color: #eef2ff;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.4rem);
+  letter-spacing: 0.05em;
+  line-height: 1.35;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.arrend-accordion-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 2.75rem;
+}
+
+.arrend-accordion-title-bar__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #eef2ff;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  line-height: 1.35;
+}
+
+.arrend-accordion-inner {
+  width: 100%;
+}

@@ -35,6 +35,14 @@ const valorInpcValidador: ValidatorFn = (c: AbstractControl): ValidationErrors |
   return null;
 };
 
+const valorPorcentajeAnualValidador: ValidatorFn = (c: AbstractControl): ValidationErrors | null => {
+  const raw = String(c.value ?? '').trim();
+  if (!raw) return null;
+  const n = Number(raw.replace(',', '.'));
+  if (!Number.isFinite(n) || n < 0) return { min: true };
+  return null;
+};
+
 /** Año: exactamente 4 dígitos y entre 1990 y 2040 (el valor del control es string). */
 const anioCuatroDigitosValidador: ValidatorFn = (c: AbstractControl): ValidationErrors | null => {
   const s = String(c.value ?? '').trim();
@@ -64,7 +72,7 @@ export class AgregarIncrementoComponent implements OnInit {
     private incrementosService: IncrementosService,
     private activatedRouted: ActivatedRoute,
     private route: Router,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initForm();
@@ -93,6 +101,10 @@ export class AgregarIncrementoComponent implements OnInit {
             anio: String(row.anio || new Date().getFullYear()).replace(/\D/g, '').slice(0, 4),
             mes: row.mes || '',
             valorInpc: formatMilesDesdeNumero(row.valorInpc),
+            porcentajeAnual:
+              row.porcentajeAnual != null && Number.isFinite(row.porcentajeAnual)
+                ? String(row.porcentajeAnual)
+                : '',
           },
           { emitEvent: false },
         );
@@ -121,6 +133,7 @@ export class AgregarIncrementoComponent implements OnInit {
       ],
       mes: ['', Validators.required],
       valorInpc: ['', [Validators.required, valorInpcValidador]],
+      porcentajeAnual: ['', valorPorcentajeAnualValidador],
     });
   }
 
@@ -170,6 +183,7 @@ export class AgregarIncrementoComponent implements OnInit {
     anio: 'Año',
     mes: 'Mes',
     valorInpc: 'INPC',
+    porcentajeAnual: '% Anual',
   };
 
   private mostrarErroresValidacion(esActualizar: boolean) {
@@ -217,10 +231,16 @@ export class AgregarIncrementoComponent implements OnInit {
     const mesNombre = (v.mes ?? '').toString().trim();
     const valor = parseValorNumerico(v.valorInpc);
     const mesNum = mesNombreANumero(mesNombre);
+    const porcentajeRaw = String(v.porcentajeAnual ?? '').trim().replace(',', '.');
+    const porcentajeAnual = porcentajeRaw ? Number(porcentajeRaw) : null;
     return {
       anio,
       mes: mesNum,
       inpc: Number.isFinite(valor) ? valor : 0,
+      porcentajeAnual:
+        porcentajeAnual != null && Number.isFinite(porcentajeAnual)
+          ? porcentajeAnual
+          : null,
     };
   }
 

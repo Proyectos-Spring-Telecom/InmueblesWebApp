@@ -10,6 +10,8 @@ export interface RentaActualPostPayload {
   total: number;
   idFormula: number;
   montoFinal: number;
+  totalMantenimiento: number;
+  montoFinalMantenimiento: number;
   factorVariable: number;
   ocupoFormula: number;
 }
@@ -19,6 +21,8 @@ export interface RentaActualPutPayload {
   total: number;
   idFormula: number;
   montoFinal: number;
+  totalMantenimiento: number;
+  montoFinalMantenimiento: number;
   factorVariable: number;
   ocupoFormula: number;
 }

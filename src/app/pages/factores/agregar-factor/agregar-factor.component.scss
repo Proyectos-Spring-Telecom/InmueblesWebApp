@@ -1,1 +1,160 @@
-// Estilos específicos del componente si son necesarios
+:host {
+  display: block;
+}
+
+.inpc-filtro-fechas__label {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.inpc-filtro-fechas__input {
+  width: 100%;
+  min-width: 0;
+  background: #1c252e;
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #f1f5f9;
+}
+
+.inpc-filtro-fechas__input:focus {
+  border-color: rgba(129, 140, 248, 0.55);
+  box-shadow: none;
+}
+
+.inpc-filtros-panel {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.inpc-filtros-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.inpc-filtros-panel__accion {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.inpc-filtros-panel__btn {
+  width: 100%;
+}
+
+.factor-form {
+  &__campos > [class*='col-'] {
+    min-width: 0;
+  }
+
+  &__ig {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+
+    .form-floating {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .form-control,
+    .form-select {
+      min-width: 0;
+      text-overflow: ellipsis;
+    }
+  }
+
+  &__aviso {
+    word-break: break-word;
+  }
+
+  &__floating--filled > label,
+  .factor-inpc-select--filled > label {
+    opacity: 0.65;
+  }
+
+  &__acciones {
+    gap: 0.75rem;
+  }
+
+  &__btn {
+    min-width: 10.5rem;
+    flex: 1 1 auto;
+  }
+}
+
+.perm-form-nc .perm-ig.input-group-lg .perm-select-floating > select.form-select {
+  font-size: 1rem;
+  line-height: 1.5;
+  padding-top: 1.625rem;
+  padding-bottom: 0.625rem;
+  min-height: calc(3.5rem + 2px);
+}
+
+.perm-form-nc .perm-ig .form-floating > label,
+.perm-form-nc .perm-ig .form-floating > select.form-select + label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 1.75rem);
+}
+
+.factor-inpc-select {
+  > select.form-select {
+    padding-right: 2.75rem;
+  }
+}
+
+.factor-inpc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.85rem;
+
+  &__badge {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .factor-form__btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .inpc-filtros-panel__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inpc-filtros-panel__accion {
+    justify-content: stretch;
+  }
+}
+
+@media (min-width: 769px) {
+  .inpc-filtros-panel__btn {
+    width: auto;
+    min-width: 11rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .factor-form__acciones {
+    justify-content: flex-start;
+  }
+
+  .factor-form__btn {
+    flex: 0 1 auto;
+  }
+}

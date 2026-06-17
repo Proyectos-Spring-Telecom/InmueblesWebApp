@@ -8,7 +8,27 @@ export interface InpcHistoricoItem {
   valorInpc: number;
   /** INPC con separador de miles (coma), igual que en el formulario de alta */
   valorInpcFmt: string;
+  porcentajeAnual: number | null;
   estatus: number;
+}
+
+/** Fila del grid de consulta paginada `/inpc/paginated`. */
+export interface InpcPaginatedGridRow {
+  id: string;
+  fecha: string;
+  anio: number;
+  mes: number;
+  isBanxico: boolean;
+  origenLabel: string;
+  origenClass: string;
+  inpc: number;
+  inpcFmt: string;
+  porcentajeAnual: number | null;
+  porcentajeAnualFmt: string;
+  porcAcumAnual: number | null;
+  porcAcumAnualFmt: string;
+  fhRegistro?: string;
+  estatus?: number;
 }
 
 export const MESES_INPC = [
@@ -36,6 +56,23 @@ export function mesNumeroANombre(mes: number): string {
   return '';
 }
 
+const CELDA_VACIA = '-';
+
+/** Texto de celda cuando el valor es null, undefined o cadena vacía. */
+export function textoCeldaInpc(valor: unknown): string {
+  if (valor == null) return CELDA_VACIA;
+  const s = String(valor).trim();
+  return s ? s : CELDA_VACIA;
+}
+
+export function etiquetaOrigenInpc(isBanxico: boolean): string {
+  return isBanxico ? 'Banxico' : 'Propio';
+}
+
+export function claseOrigenInpc(isBanxico: boolean): string {
+  return isBanxico ? 'estatus estatus-instalado' : 'estatus estatus-activo';
+}
+
 /** Normaliza respuesta de `/inpc/paginated` o `/inpc/{id}` hacia la forma del grid/formulario. */
 export function mapInpcApiItemToRow(item: any): InpcHistoricoItem {
   const id = Number(item?.Id ?? item?.id);
@@ -60,6 +97,20 @@ export function mapInpcApiItemToRow(item: any): InpcHistoricoItem {
   const valorInpcSafe = Number.isFinite(valorInpc) ? valorInpc : 0;
   const valorInpcFmt = formatValorMilesParaLista(fuenteInpc);
 
+  const porcentajeAnualRaw =
+    item?.porcentajeAnual ??
+    item?.PorcentajeAnual ??
+    null;
+  const porcentajeAnualNum = Number(
+    String(porcentajeAnualRaw ?? '').replace(/,/g, '').trim(),
+  );
+  const porcentajeAnual =
+    porcentajeAnualRaw != null &&
+    porcentajeAnualRaw !== '' &&
+    Number.isFinite(porcentajeAnualNum)
+      ? porcentajeAnualNum
+      : null;
+
   const estatus = Number(item?.estatus ?? item?.Estatus ?? 1);
   return {
     id,
@@ -67,53 +118,57 @@ export function mapInpcApiItemToRow(item: any): InpcHistoricoItem {
     mes,
     valorInpc: valorInpcSafe,
     valorInpcFmt,
+    porcentajeAnual,
     estatus: Number.isFinite(estatus) ? estatus : 1,
   };
 }
 
-/** Fila del grid de consulta Banxico (serie SP1). */
-export interface InpcBanxicoGridRow {
-  id: string;
-  fecha: string;
-  anio: number;
-  mes: string;
-  indice: number;
-  indiceFmt: string;
-  porcAnual: number;
-  porcAnualFmt: string;
-  porcAcumAnual: number;
-  porcAcumAnualFmt: string;
-}
-
-function parseNumeroBanxico(valor: unknown): number {
+function parseNumeroInpc(valor: unknown): number {
   const n = Number(String(valor ?? '').replace(/,/g, '').trim());
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Normaliza un elemento de `datos[]` de `/inpc/banxico/datos` hacia la forma del grid. */
-export function mapBanxicoDatoToRow(item: any): InpcBanxicoGridRow | null {
-  const fecha = String(item?.fecha ?? '').trim();
-  if (!fecha) return null;
+function parseNumeroOpcional(valor: unknown): number | null {
+  if (valor == null || valor === '') return null;
+  const n = Number(String(valor).replace(/,/g, '').trim());
+  return Number.isFinite(n) ? n : null;
+}
 
-  const partes = fecha.split('/');
-  const mesNum = partes.length >= 2 ? Number(partes[1]) : 0;
-  const anio = partes.length >= 3 ? Number(partes[2]) : 0;
-  const mes = mesNumeroANombre(mesNum) || '';
-  const mesClave = Number.isFinite(mesNum) && mesNum >= 1 && mesNum <= 12
-    ? String(mesNum).padStart(2, '0')
-    : '00';
+/** Normaliza un elemento de `data[]` de `/inpc/paginated` hacia la forma del grid. */
+export function mapInpcPaginatedItemToRow(item: any): InpcPaginatedGridRow | null {
+  const anio = Number(item?.anio ?? 0);
+  const mes = Number(item?.mes ?? 0);
+  if (!Number.isFinite(anio) || !Number.isFinite(mes) || mes < 1 || mes > 12) {
+    return null;
+  }
+
+  const isBanxico = item?.isBanxico === true;
+  const mesNombre = mesNumeroANombre(mes);
+  const fecha = textoCeldaInpc(mesNombre ? `${mesNombre} ${anio}` : '');
+  const id = isBanxico
+    ? `b-${anio}-${String(mes).padStart(2, '0')}`
+    : String(item?.id ?? `p-${anio}-${mes}`);
+
+  const inpcRaw = item?.inpc;
+  const porcentajeAnualRaw = item?.porcentajeAnual;
+  const porcAcumAnualRaw = item?.porcAcumAnual;
 
   return {
-    id: `${anio}-${mesClave}`,
+    id,
     fecha,
-    anio: Number.isFinite(anio) ? anio : 0,
+    anio,
     mes,
-    indice: parseNumeroBanxico(item?.indice),
-    indiceFmt: formatValorMilesParaLista(item?.indice),
-    porcAnual: parseNumeroBanxico(item?.porcAnual),
-    porcAnualFmt: String(item?.porcAnual ?? '').trim(),
-    porcAcumAnual: parseNumeroBanxico(item?.porcAcumAnual),
-    porcAcumAnualFmt: String(item?.porcAcumAnual ?? '').trim(),
+    isBanxico,
+    origenLabel: etiquetaOrigenInpc(isBanxico),
+    origenClass: claseOrigenInpc(isBanxico),
+    inpc: parseNumeroInpc(inpcRaw),
+    inpcFmt: textoCeldaInpc(formatValorMilesParaLista(inpcRaw) || null),
+    porcentajeAnual: parseNumeroOpcional(porcentajeAnualRaw),
+    porcentajeAnualFmt: textoCeldaInpc(porcentajeAnualRaw),
+    porcAcumAnual: parseNumeroOpcional(porcAcumAnualRaw),
+    porcAcumAnualFmt: textoCeldaInpc(porcAcumAnualRaw),
+    fhRegistro: item?.fhRegistro,
+    estatus: item?.estatus != null ? Number(item.estatus) : undefined,
   };
 }
 

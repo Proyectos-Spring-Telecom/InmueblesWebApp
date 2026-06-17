@@ -526,6 +526,7 @@ export class AgregarClienteComponent implements OnInit {
       this.sociosFormArray.controls.forEach((ctrl) =>
         this.setSocioNombreRequerido(ctrl as FormGroup, false),
       );
+      this.socioAccordionIndicesAbiertos = [0];
       this.syncSociosEdicionSnapshotsDesdeFormulario();
     }
 
@@ -620,9 +621,33 @@ export class AgregarClienteComponent implements OnInit {
     return this.clienteForm.get('socios') as FormArray;
   }
 
-  /** Nombre del primer socio (se muestra junto al título “Socios” mientras escriben). */
-  get primerNombreSocio(): string {
-    const raw = this.sociosFormArray?.at(0)?.get('nombre')?.value;
+  /** Ítems expandidos del acordeón de socios (el primero inicia abierto). */
+  socioAccordionIndicesAbiertos: number[] = [0];
+
+  onSocioAccordionIndicesChange(raw: number | number[]): void {
+    if (Array.isArray(raw)) {
+      this.socioAccordionIndicesAbiertos = raw;
+      return;
+    }
+    this.socioAccordionIndicesAbiertos = raw >= 0 ? [raw] : [];
+  }
+
+  tituloAccordionCaption(data: unknown): string {
+    if (typeof data === 'string') return data;
+    if (data != null && typeof data === 'object' && 'title' in data) {
+      return String((data as { title: unknown }).title ?? '');
+    }
+    return '';
+  }
+
+  tituloSocioAccordion(index: number): string {
+    const nombre = this.nombreSocioEnIndice(index);
+    if (nombre) return `Socio ${index + 1} | ${nombre}`;
+    return `Socio ${index + 1}`;
+  }
+
+  nombreSocioEnIndice(index: number): string {
+    const raw = this.sociosFormArray?.at(index)?.get('nombre')?.value;
     if (raw == null) return '';
     return String(raw).trim();
   }
@@ -691,6 +716,10 @@ export class AgregarClienteComponent implements OnInit {
     const g = this.crearSocioFormGroup();
     this.sociosFormArray.push(g);
     if (this.esPersonaMoral()) this.setSocioNombreRequerido(g, true);
+    const nuevoIndex = this.sociosFormArray.length - 1;
+    const abiertos = new Set(this.socioAccordionIndicesAbiertos);
+    abiertos.add(nuevoIndex);
+    this.socioAccordionIndicesAbiertos = [...abiertos].sort((a, b) => a - b);
   }
 
   openSocioFilePicker(input: HTMLInputElement): void {

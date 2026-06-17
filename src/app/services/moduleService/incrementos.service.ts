@@ -8,27 +8,30 @@ export interface IncrementoPayload {
   anio: number;
   mes: number;
   inpc: number;
+  porcentajeAnual?: number | null;
 }
 
-/** Elemento de `datos[]` en GET `/inpc/banxico/datos`. */
-export interface InpcBanxicoDatoItem {
-  fecha: string;
-  indice: string;
-  porcAnual: string;
-  porcAcumAnual: string;
+/** Elemento de `data[]` en GET `/inpc/paginated`. */
+export interface InpcPaginatedItem {
+  isBanxico: boolean;
+  id?: number;
+  anio: number;
+  mes: number;
+  inpc: string | number;
+  porcentajeAnual?: string | number | null;
+  porcAcumAnual?: string | number | null;
+  fhRegistro?: string;
+  estatus?: number;
 }
 
-/** Respuesta de GET `/inpc/banxico/datos`. */
-export interface InpcBanxicoDatosResponse {
-  idSerie: string;
-  titulo: string;
-  fechaInicial: string;
-  fechaFinal: string;
-  parametros: {
-    decimales: string;
-    incremento: string[];
+/** Respuesta de GET `/inpc/paginated`. */
+export interface InpcPaginatedResponse {
+  data: InpcPaginatedItem[];
+  paginated: {
+    total: number;
+    page: number;
+    lastPage: number;
   };
-  datos: InpcBanxicoDatoItem[];
 }
 
 @Injectable({
@@ -39,23 +42,22 @@ export class IncrementosService {
 
   constructor(private http: HttpClient) {}
 
-  obtenerIncrementosData(page: number, limit: number): Observable<any> {
-    const params = new HttpParams()
+  obtenerIncrementosData(
+    page: number,
+    limit: number,
+    fechaInicio?: string,
+    fechaFin?: string,
+  ): Observable<InpcPaginatedResponse> {
+    let params = new HttpParams()
       .set('page', String(page))
       .set('limit', String(limit));
-    return this.http.get(`${this.base}/paginated`, { params });
-  }
-
-  obtenerBanxicoDatos(
-    fechaInicial: string,
-    fechaFinal: string,
-  ): Observable<InpcBanxicoDatosResponse> {
-    const params = new HttpParams()
-      .set('fechaInicial', fechaInicial)
-      .set('fechaFinal', fechaFinal);
-    return this.http.get<InpcBanxicoDatosResponse>(`${this.base}/banxico/datos`, {
-      params,
-    });
+    if (fechaInicio?.trim()) {
+      params = params.set('fechaInicio', fechaInicio.trim());
+    }
+    if (fechaFin?.trim()) {
+      params = params.set('fechaFin', fechaFin.trim());
+    }
+    return this.http.get<InpcPaginatedResponse>(`${this.base}/paginated`, { params });
   }
 
   obtenerIncremento(id: number): Observable<any> {

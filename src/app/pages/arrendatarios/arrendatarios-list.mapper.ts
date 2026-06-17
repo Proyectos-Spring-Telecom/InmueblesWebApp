@@ -135,16 +135,14 @@ function nombresLocalesContratoApi(c: Record<string, unknown>): string[] {
 }
 
 function resumenLocalesContratoApi(locales: string[]): string {
-  if (locales.length === 0) return '';
-  if (locales.length === 1) return locales[0];
-  return `${locales[0]} (+${locales.length - 1})`;
+  return locales[0] ?? '';
 }
 
-/** Etiqueta corta del select: título identificable + inmueble si aporta contexto. */
+/** Etiqueta corta del select: título identificable + inmueble + descripción si aporta contexto. */
 export function etiquetaContratoArrendatarioApi(c: Record<string, unknown>): string {
   const id = Number(c['id'] ?? c['idContrato']);
   const num = String(c['numeroContrato'] ?? c['numero'] ?? '').trim();
-  const observaciones = truncarEtiquetaContrato(String(c['observaciones'] ?? ''));
+  const descripcion = String(c['descripcion'] ?? c['observaciones'] ?? '').trim();
   const locales = resumenLocalesContratoApi(nombresLocalesContratoApi(c));
 
   const inm = c['inmueble'];
@@ -153,7 +151,7 @@ export function etiquetaContratoArrendatarioApi(c: Record<string, unknown>): str
       ? String((inm as Record<string, unknown>)['inmueble'] ?? '').trim()
       : '';
 
-  let titulo = num || observaciones || locales;
+  let titulo = num || locales;
   if (!titulo && Number.isFinite(id) && id > 0) {
     titulo = `Contrato ${Math.trunc(id)}`;
   }
@@ -163,9 +161,17 @@ export function etiquetaContratoArrendatarioApi(c: Record<string, unknown>): str
     inmueble &&
     !titulo.toLowerCase().includes(inmueble.toLowerCase())
   ) {
-    return truncarEtiquetaContrato(`${titulo} — ${inmueble}`, 56);
+    titulo = `${titulo} — ${inmueble}`;
   }
-  return truncarEtiquetaContrato(titulo, 56);
+
+  if (
+    descripcion &&
+    !titulo.toLowerCase().includes(descripcion.toLowerCase())
+  ) {
+    titulo = `${titulo} · ${descripcion}`;
+  }
+
+  return truncarEtiquetaContrato(titulo, 72);
 }
 
 export function etiquetaTipoPersonaArrendatario(raw: unknown): string {

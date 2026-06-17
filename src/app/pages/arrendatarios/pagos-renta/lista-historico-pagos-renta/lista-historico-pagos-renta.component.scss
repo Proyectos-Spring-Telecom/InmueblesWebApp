@@ -1,5 +1,92 @@
 @import '../../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
 
+.renta-grid-desglose {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.15rem 0;
+}
+
+.renta-grid-desglose__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.32rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.renta-grid-desglose__label {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.renta-grid-desglose__valor {
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  text-align: right;
+  min-width: 0;
+}
+
+.renta-grid-desglose__valor::-webkit-scrollbar {
+  display: none;
+}
+
+.renta-grid-desglose__item--renta {
+  border-color: rgba(96, 165, 250, 0.65);
+  background: linear-gradient(135deg, rgba(30, 58, 95, 0.72), rgba(30, 64, 175, 0.55));
+}
+
+.renta-grid-desglose__item--renta .renta-grid-desglose__label {
+  color: #bfdbfe;
+}
+
+.renta-grid-desglose__item--renta .renta-grid-desglose__valor {
+  color: #dbeafe;
+}
+
+.renta-grid-desglose__item--mtto {
+  border-color: rgba(251, 191, 36, 0.65);
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.72), rgba(146, 64, 14, 0.55));
+}
+
+.renta-grid-desglose__item--mtto .renta-grid-desglose__label {
+  color: #fde68a;
+}
+
+.renta-grid-desglose__item--mtto .renta-grid-desglose__valor {
+  color: #fef3c7;
+}
+
+.renta-grid-desglose__item--total {
+  border-color: rgba(74, 222, 128, 0.72);
+  background: linear-gradient(135deg, rgba(22, 101, 52, 0.82), rgba(6, 95, 70, 0.62));
+}
+
+.renta-grid-desglose__item--total .renta-grid-desglose__label {
+  color: #bbf7d0;
+}
+
+.renta-grid-desglose__item--total .renta-grid-desglose__valor {
+  color: #ecfdf5;
+  font-size: 0.9rem;
+}
+
+.renta-grid-desglose__vacio {
+  color: #94a3b8;
+}
+
 :host {
   display: block;
   min-width: 0;
@@ -121,4 +208,41 @@
 
 .hist-detalle-modal__resumen {
   margin-top: 0;
+}
+
+.hist-detalle-modal__montos-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.hist-detalle-modal__card-desglose,
+.hist-detalle-modal__card-mfinal {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hist-detalle-modal__desglose {
+  flex-direction: column;
+  width: 100%;
+  flex: 1 1 auto;
+}
+
+.hist-detalle-modal__mfinal-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.hist-detalle-modal__mfinal-wrap > .renta-pago-resumen__field {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }

@@ -535,7 +535,8 @@ html .filter-sidebar {
   z-index: 9;
 }
 
-.mat-drawer[style*="visibility: hidden"] {
+/* Solo drawer en modo side cerrado; no ocultar overlay (hamburger móvil). */
+.mat-drawer.sidebarNav.mat-drawer-side[style*="visibility: hidden"] {
   display: none;
 }
 

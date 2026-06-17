@@ -34,7 +34,7 @@
               <div class="form-floating flex-grow-1 perm-select-floating">
                 <select id="idArrendador" class="form-select" formControlName="idArrendador"
                   aria-label="Arrendador (cliente)">
-                  <option [ngValue]="null" disabled></option>
+                  <option [ngValue]="null" disabled>Selecciona arrendador</option>
                   <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
                     {{ cliente.nombre }}
                     <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
@@ -148,7 +148,7 @@
                           <div class="form-floating flex-grow-1 perm-select-floating">
                             <select [id]="'idInmuebleContrato' + i" class="form-select" formControlName="idInmueble"
                               [attr.title]="placeholderInmuebleContrato()" aria-label="Inmueble">
-                              <option [ngValue]="null" disabled></option>
+                              <option [ngValue]="null" disabled>{{ placeholderInmuebleContrato() }}</option>
                               <option *ngFor="let inm of listaInmuebles" [ngValue]="inm.id">
                                 {{ inm.etiqueta }}
                               </option>
@@ -156,6 +156,10 @@
                             <label [attr.for]="'idInmuebleContrato' + i">Inmueble</label>
                           </div>
                         </div>
+                        <p *ngIf="mostrarAvisoSeleccionarArrendadorInmueble()"
+                          class="small mt-2 mb-0 arrend-contrato-aviso arrend-contrato-aviso--info" role="status">
+                          Selecciona arrendador primero.
+                        </p>
                         <p *ngIf="mostrarAvisoSinInmueblesArrendador()"
                           class="small mt-2 mb-0 text-warning arrend-contrato-aviso" role="status">
                           Este arrendador no tiene inmuebles registrados.
@@ -163,54 +167,62 @@
                       </div>
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label">Local(es)</label>
-                        <div class="input-group input-group-lg perm-ig arrend-locales-picker"
-                          (click)="$event.stopPropagation()">
-                          <span class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
-                          <div class="arrend-locales-picker__body"
-                            [class.arrend-locales-picker__body--open]="localesDropdownAbierto(i)">
-                            <div class="arrend-locales-picker__field"
-                              [class.is-disabled]="localesContratoDeshabilitado(i)" role="button" tabindex="0"
-                              aria-haspopup="listbox" [attr.aria-disabled]="localesContratoDeshabilitado(i)"
-                              [attr.aria-expanded]="localesDropdownAbierto(i)"
-                              (click)="toggleLocalesDropdown(i, $event)"
-                              (keydown.enter)="toggleLocalesDropdown(i, $event)"
-                              (keydown.space)="toggleLocalesDropdown(i, $event); $event.preventDefault()">
-                              @if (idLocalesContrato(i).length > 0 && inmuebleContratoSeleccionado(i)) {
-                              <div class="arrend-locales-picker__chips">
-                                @for (idLoc of idLocalesContrato(i); track idLoc) {
-                                <span class="arrend-locales-picker__chip">
-                                  <span>{{ nombreLocalContrato(i, idLoc) }}</span>
-                                  <button type="button" class="arrend-locales-picker__chip-btn"
-                                    [disabled]="localesContratoDeshabilitado(i)" aria-label="Quitar local"
-                                    (click)="quitarLocalContrato(i, idLoc, $event)">
-                                    <mat-icon>close</mat-icon>
-                                  </button>
-                                </span>
+                        <div class="arrend-locales-picker-wrap" (click)="$event.stopPropagation()">
+                          <div class="input-group input-group-lg perm-ig arrend-locales-picker">
+                            <span class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
+                            <div class="arrend-locales-picker__body"
+                              [class.arrend-locales-picker__body--open]="localesDropdownAbierto(i)">
+                              <div class="arrend-locales-picker__field"
+                                [class.is-disabled]="localesContratoDeshabilitado(i)" role="button" tabindex="0"
+                                aria-haspopup="listbox" [attr.aria-disabled]="localesContratoDeshabilitado(i)"
+                                [attr.aria-expanded]="localesDropdownAbierto(i)"
+                                (click)="toggleLocalesDropdown(i, $event)"
+                                (keydown.enter)="toggleLocalesDropdown(i, $event)"
+                                (keydown.space)="toggleLocalesDropdown(i, $event); $event.preventDefault()">
+                                @if (tieneLocalesContratoSeleccionados(i)) {
+                                <span class="arrend-locales-picker__resumen">{{ resumenLocalesContrato(i) }}</span>
+                                } @else {
+                                <span class="arrend-locales-picker__placeholder">{{ placeholderLocalesContrato(i)
+                                  }}</span>
                                 }
+                                <mat-icon class="arrend-locales-picker__chevron">expand_more</mat-icon>
                               </div>
-                              } @else {
-                              <span class="arrend-locales-picker__placeholder">{{ placeholderLocalesContrato(i)
-                                }}</span>
+                              @if (localesDropdownAbierto(i) && !localesContratoDeshabilitado(i)) {
+                              <ul class="arrend-locales-picker__menu" role="listbox" aria-multiselectable="true">
+                                @for (loc of localesLibresPorContrato[i]; track loc.id) {
+                                <li role="presentation">
+                                  <button type="button" class="arrend-locales-picker__option"
+                                    [class.is-selected]="localContratoEstaSeleccionado(i, loc.id)"
+                                    (click)="toggleLocalContrato(i, loc.id, $event)">
+                                    <mat-icon>{{ localContratoEstaSeleccionado(i, loc.id) ? 'check_box' :
+                                      'check_box_outline_blank' }}</mat-icon>
+                                    <span>{{ loc.etiqueta }}</span>
+                                  </button>
+                                </li>
+                                }
+                              </ul>
                               }
-                              <mat-icon class="arrend-locales-picker__chevron">expand_more</mat-icon>
                             </div>
-                            @if (localesDropdownAbierto(i) && !localesContratoDeshabilitado(i)) {
-                            <ul class="arrend-locales-picker__menu" role="listbox" aria-multiselectable="true">
-                              @for (loc of localesLibresPorContrato[i]; track loc.id) {
-                              <li role="presentation">
-                                <button type="button" class="arrend-locales-picker__option"
-                                  [class.is-selected]="localContratoEstaSeleccionado(i, loc.id)"
-                                  (click)="toggleLocalContrato(i, loc.id, $event)">
-                                  <mat-icon>{{ localContratoEstaSeleccionado(i, loc.id) ? 'check_box' :
-                                    'check_box_outline_blank' }}</mat-icon>
-                                  <span>{{ loc.etiqueta }}</span>
-                                </button>
-                              </li>
-                              }
-                            </ul>
+                          </div>
+                          @if (tieneLocalesContratoSeleccionados(i)) {
+                          <div class="arrend-locales-picker__selected">
+                            @for (idLoc of idLocalesContrato(i); track idLoc) {
+                            <span class="arrend-locales-picker__chip">
+                              <span class="arrend-locales-picker__chip-label">{{ nombreLocalContrato(i, idLoc) }}</span>
+                              <button type="button" class="arrend-locales-picker__chip-btn"
+                                [disabled]="localesContratoDeshabilitado(i)" aria-label="Quitar local"
+                                (click)="quitarLocalContrato(i, idLoc, $event)">
+                                <mat-icon>close</mat-icon>
+                              </button>
+                            </span>
                             }
                           </div>
+                          }
                         </div>
+                        <p *ngIf="mostrarAvisoSeleccionarInmuebleLocales(i)"
+                          class="small mt-2 mb-0 arrend-contrato-aviso arrend-contrato-aviso--info" role="status">
+                          Selecciona inmueble primero.
+                        </p>
                         <p *ngIf="mostrarAvisoLocalesLibresVaciosContrato(i)"
                           class="small mt-2 mb-0 text-warning arrend-contrato-aviso" role="status">
                           Este inmueble no tiene locales disponibles.
@@ -253,6 +265,7 @@
                           <div class="form-floating flex-grow-1"><input [id]="'metrosRentados' + i" type="number"
                               class="form-control" formControlName="metrosRentados"
                               placeholder="Metros rentados" (focus)="onContratoMetrosFocus(i)"
+                              (input)="onContratoMetrosInput(i)"
                               (blur)="onContratoMetrosBlur(i)" /><label
                               [attr.for]="'metrosRentados' + i">Metros
                               Rentados</label></div>
@@ -271,6 +284,31 @@
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
+                        <label class="form-label perm-label" [attr.for]="'incluyeMantenimiento' + i">Incluye
+                          Mantenimiento</label>
+                        <div class="contrato-incluye-mtto">
+                          <label
+                            class="toggle-switch"
+                            [class.is-disabled]="!contratoSwitchMantenimientoHabilitado(i)"
+                            [attr.for]="'incluyeMantenimiento' + i"
+                          >
+                            <input
+                              type="checkbox"
+                              [id]="'incluyeMantenimiento' + i"
+                              [checked]="contratoIncluyeMantenimiento(i)"
+                              [disabled]="!contratoSwitchMantenimientoHabilitado(i)"
+                              (change)="onContratoIncluyeMantenimientoChange(i, $any($event.target).checked)"
+                            />
+                            <div class="toggle-switch-background">
+                              <div class="toggle-switch-handle"></div>
+                            </div>
+                          </label>
+                          <span class="contrato-incluye-mtto__estado">{{
+                            contratoIncluyeMantenimiento(i) ? 'Sí' : 'No'
+                          }}</span>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4" *ngIf="!contratoIncluyeMantenimiento(i)">
                         <label class="form-label perm-label" [attr.for]="'pctMantenimiento' + i">Porcentaje
                           Mantenimiento</label>
                         <div class="input-group input-group-lg perm-ig"><span
@@ -403,7 +441,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="col-12 renta-calc-bloque" [id]="'contratoCalcMantenimiento' + i">
+                      <div class="col-12 renta-calc-bloque" *ngIf="!contratoIncluyeMantenimiento(i)" [id]="'contratoCalcMantenimiento' + i">
                         <p class="renta-calc-hint mb-0"
                           [class.renta-calc-hint--destacado]="contratoHintResaltado(i, 'mantenimiento')">
                           <span class="renta-calc-hint__clave">Subtotal renta</span> ×

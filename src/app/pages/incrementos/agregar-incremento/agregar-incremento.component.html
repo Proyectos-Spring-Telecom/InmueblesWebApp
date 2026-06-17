@@ -26,17 +26,8 @@
                 <mat-icon aria-hidden="true">calendar_today</mat-icon>
               </span>
               <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  inputmode="numeric"
-                  maxlength="4"
-                  autocomplete="off"
-                  formControlName="anio"
-                  class="form-control"
-                  id="incAnio"
-                  placeholder=" "
-                  (input)="onAnioInput($event)"
-                />
+                <input type="text" inputmode="numeric" maxlength="4" autocomplete="off" formControlName="anio"
+                  class="form-control" id="incAnio" placeholder=" " (input)="onAnioInput($event)" />
                 <label for="incAnio">Ej.: 2017</label>
               </div>
             </div>
@@ -63,17 +54,22 @@
                 <mat-icon aria-hidden="true">calculate</mat-icon>
               </span>
               <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  inputmode="decimal"
-                  autocomplete="off"
-                  formControlName="valorInpc"
-                  class="form-control"
-                  id="incValorInpc"
-                  placeholder=" "
-                  (input)="onValorInpcInput($event)"
-                />
+                <input type="text" inputmode="decimal" autocomplete="off" formControlName="valorInpc"
+                  class="form-control" id="incValorInpc" placeholder=" " (input)="onValorInpcInput($event)" />
                 <label for="incValorInpc">Valor del índice (ej.: 126.091)</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="incPorcentajeAnual" class="form-label perm-label">% Anual</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">percent</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" inputmode="decimal" autocomplete="off" formControlName="porcentajeAnual"
+                  class="form-control" id="incPorcentajeAnual" placeholder=" " />
+                <label for="incPorcentajeAnual">Porcentaje anual (ej.: 3.79)</label>
               </div>
             </div>
           </div>

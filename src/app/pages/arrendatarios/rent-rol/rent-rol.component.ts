@@ -1,17 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import { finalize } from 'rxjs/operators';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-
-export interface Arrendatario {
-  nombre: string;
-  nota?: string;
-  piso: string;
-  modulo: string;
-  m2: number;
-  precioM2: number;
-  inicioContrato: string;
-  finContrato: string;
-  estatus: 'aldia' | 'cambio' | 'finanzas' | 'incremento';
-}
+import { HistoricoPagosRentaService } from 'src/app/services/moduleService/historico-pagos-renta.service';
+import {
+  extraerFilasRentRolApi,
+  extraerMetaPaginacionRentRol,
+  mapHistoricoPagoRentaToRentRolRow,
+  RentRolRow,
+} from './rent-rol-list.mapper';
 
 @Component({
   selector: 'app-rent-rol',
@@ -20,84 +23,35 @@ export interface Arrendatario {
   standalone: false,
   animations: [routeAnimation],
 })
-export class RentRolComponent implements OnInit {
+export class RentRolComponent implements OnInit, AfterViewInit, OnDestroy {
+  readonly REGISTROS_POR_PAGINA = 20;
 
-  periodoLabel = 'Febrero 2025';
-  readonly IVA = 0.16;
-  readonly PORCENTAJE_MANT = 0.10;
-  readonly REGISTROS_POR_PAGINA = 50;
+  @ViewChild('kpiFloat') private kpiFloatRef?: ElementRef<HTMLElement>;
+  @ViewChild('kpiSlot') private kpiSlotRef?: ElementRef<HTMLElement>;
+
+  kpiAltura = 0;
+  kpiFloatStyle: Record<string, string> = { visibility: 'hidden' };
 
   paginaActual$ = 1;
+  totalRegistros = 0;
+  totalPaginasApi = 1;
+  cargando = false;
 
-  estatusLabel: Record<string, string> = {
-    aldia: 'Al día',
-    cambio: 'Cambios',
-    finanzas: 'Finanzas',
-    incremento: 'Incremento',
-  };
+  fechaInicioFiltro = '';
+  fechaFinFiltro = '';
 
-  arrendatarios: Arrendatario[] = [
-    {
-      nombre: 'Barona Lavín Alberto Javier',
-      nota: '(Notaría 14) JUN 25-ADELANTE',
-      piso: '6to', modulo: '"A1"',
-      m2: 155, precioM2: 221.81,
-      inicioContrato: '01 Dic 2024', finContrato: '30 Nov 2025',
-      estatus: 'aldia',
-    },
-    {
-      nombre: 'Barona Lavín Alberto Javier',
-      nota: '(Notaría 14)',
-      piso: '6to', modulo: '"A" es "B1"',
-      m2: 258.22, precioM2: 233.72,
-      inicioContrato: '01 Dic 2023', finContrato: '30 Nov 2026',
-      estatus: 'aldia',
-    },
-    {
-      nombre: 'Corporativo Jaceved SA de CV',
-      nota: '(Royal Prestige)',
-      piso: '6to', modulo: '"C"',
-      m2: 154, precioM2: 203.56,
-      inicioContrato: '01 Feb 2023', finContrato: '01 Feb 2028',
-      estatus: 'cambio',
-    },
-    {
-      nombre: 'Emilio Porter Gómez / Moment',
-      nota: '(Marqueting)',
-      piso: '5to', modulo: 'No.1',
-      m2: 83.44, precioM2: 444.35,
-      inicioContrato: '01 Jul 2023', finContrato: '20 Jun 2024',
-      estatus: 'finanzas',
-    },
-    {
-      nombre: 'Petroliferos Lobo',
-      nota: '1era renta hasta feb',
-      piso: '4to', modulo: 'B',
-      m2: 246.91, precioM2: 239.32,
-      inicioContrato: '08 Nov 2024', finContrato: '07 Nov 2027',
-      estatus: 'incremento',
-    },
-    {
-      nombre: 'MR Lana',
-      nota: 'Dic a mayo — baja a 30,000 + IVA',
-      piso: '3er', modulo: 'B',
-      m2: 200, precioM2: 150.00,
-      inicioContrato: '01 Ago 2023', finContrato: '20 May 2025',
-      estatus: 'cambio',
-    },
-    {
-      nombre: 'Apex Operadora de Proyectos Empresariales',
-      nota: 'Nuevo',
-      piso: '3er', modulo: '"A"',
-      m2: 90, precioM2: 200.00,
-      inicioContrato: '16 Ago 2024', finContrato: '15 Ago 2025',
-      estatus: 'aldia',
-    },
-  ];
+  registros: RentRolRow[] = [];
 
-  // ── Paginación ────────────────────────────────────────────────
+  private scrollEl: HTMLElement | null = null;
+  private shellResizeObserver: ResizeObserver | null = null;
+  private rafId = 0;
+  private readonly onScrollKpi = () => this.programarSyncKpi();
+  private readonly onResizeKpi = () => this.programarSyncKpi();
+
+  constructor(private historicoPagosRentaService: HistoricoPagosRentaService) {}
+
   get totalPaginas(): number {
-    return Math.ceil(this.arrendatarios.length / this.REGISTROS_POR_PAGINA);
+    return this.totalPaginasApi;
   }
 
   get paginaInicio(): number {
@@ -105,11 +59,11 @@ export class RentRolComponent implements OnInit {
   }
 
   get paginaFin(): number {
-    return Math.min(this.paginaInicio + this.REGISTROS_POR_PAGINA, this.arrendatarios.length);
+    return Math.min(this.paginaInicio + this.registros.length, this.totalRegistros);
   }
 
-  get paginaActual(): Arrendatario[] {
-    return this.arrendatarios.slice(this.paginaInicio, this.paginaFin);
+  get paginaActual(): RentRolRow[] {
+    return this.registros;
   }
 
   get paginas(): number[] {
@@ -131,64 +85,182 @@ export class RentRolComponent implements OnInit {
     return [...new Set(range)];
   }
 
+  claseFilaRenta(r: RentRolRow): string {
+    if (r.tieneIncrementoRenta) return 'row-estatus--incremento';
+    if (r.pagada) return 'row-estatus--pagada';
+    return 'row-estatus--neutral';
+  }
+
+  claseFilaMantenimiento(r: RentRolRow): string {
+    if (r.tieneIncrementoMantenimiento) return 'row-estatus--incremento';
+    if (r.pagada) return 'row-estatus--pagada';
+    return 'row-estatus--neutral';
+  }
+
   irPagina(p: number): void {
-    if (p >= 1 && p <= this.totalPaginas) {
+    if (p >= 1 && p <= this.totalPaginas && p !== this.paginaActual$) {
       this.paginaActual$ = p;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.cargarRegistros();
+      this.scrollEl?.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
-  anterior():  void { this.irPagina(this.paginaActual$ - 1); }
-  siguiente(): void { this.irPagina(this.paginaActual$ + 1); }
-  irPrimera(): void { this.irPagina(1); }
-  irUltima():  void { this.irPagina(this.totalPaginas); }
-
-  // ── Cálculos Renta ────────────────────────────────────────────
-  calcSubtotal(m2: number, pm2: number): number {
-    return Math.round(m2 * pm2 * 100) / 100;
-  }
-  calcIva(m2: number, pm2: number): number {
-    return Math.round(this.calcSubtotal(m2, pm2) * this.IVA * 100) / 100;
-  }
-  calcTotal(m2: number, pm2: number): number {
-    return Math.round((this.calcSubtotal(m2, pm2) + this.calcIva(m2, pm2)) * 100) / 100;
+  anterior(): void {
+    this.irPagina(this.paginaActual$ - 1);
   }
 
-  // ── Cálculos Mantto ───────────────────────────────────────────
-  calcSubtotalMant(m2: number, pm2: number): number {
-    return Math.round(this.calcSubtotal(m2, pm2) * this.PORCENTAJE_MANT * 100) / 100;
-  }
-  calcIvaMant(m2: number, pm2: number): number {
-    return Math.round(this.calcSubtotalMant(m2, pm2) * this.IVA * 100) / 100;
-  }
-  calcTotalMant(m2: number, pm2: number): number {
-    return Math.round((this.calcSubtotalMant(m2, pm2) + this.calcIvaMant(m2, pm2)) * 100) / 100;
+  siguiente(): void {
+    this.irPagina(this.paginaActual$ + 1);
   }
 
-  // ── Totales globales ──────────────────────────────────────────
+  irPrimera(): void {
+    this.irPagina(1);
+  }
+
+  irUltima(): void {
+    this.irPagina(this.totalPaginas);
+  }
+
   get totalRenta(): number {
-    return Math.round(this.arrendatarios.reduce((s, a) => s + this.calcSubtotal(a.m2, a.precioM2), 0) * 100) / 100;
+    return Math.round(this.registros.reduce((s, r) => s + r.renta.subTotal, 0) * 100) / 100;
   }
+
   get totalIvaRenta(): number {
-    return Math.round(this.totalRenta * this.IVA * 100) / 100;
+    return Math.round(this.registros.reduce((s, r) => s + r.renta.iva, 0) * 100) / 100;
   }
+
   get totalRentaConIva(): number {
-    return Math.round((this.totalRenta + this.totalIvaRenta) * 100) / 100;
+    return Math.round(this.registros.reduce((s, r) => s + r.renta.montoFinal, 0) * 100) / 100;
   }
+
   get totalMantto(): number {
-    return Math.round(this.totalRenta * this.PORCENTAJE_MANT * 100) / 100;
+    return Math.round(this.registros.reduce((s, r) => s + r.mantenimiento.subTotal, 0) * 100) / 100;
   }
+
   get totalIvaMantto(): number {
-    return Math.round(this.totalMantto * this.IVA * 100) / 100;
+    return Math.round(this.registros.reduce((s, r) => s + r.mantenimiento.iva, 0) * 100) / 100;
   }
+
   get totalManttoConIva(): number {
-    return Math.round((this.totalMantto + this.totalIvaMantto) * 100) / 100;
+    return Math.round(this.registros.reduce((s, r) => s + r.mantenimiento.montoFinal, 0) * 100) / 100;
   }
+
   get granTotal(): number {
     return Math.round((this.totalRentaConIva + this.totalManttoConIva) * 100) / 100;
   }
 
   ngOnInit(): void {
-    // this.rentRolService.getArrendatarios().subscribe(data => this.arrendatarios = data);
+    const rango = this.rangoFechasPorDefecto();
+    this.fechaInicioFiltro = rango.inicio;
+    this.fechaFinFiltro = rango.fin;
+    this.cargarRegistros();
+  }
+
+  ngAfterViewInit(): void {
+    this.scrollEl = document.querySelector('.layout-content-scroll');
+
+    const shell = this.kpiFloatRef?.nativeElement?.querySelector('.rr-kpi-shell');
+    if (shell instanceof HTMLElement && typeof ResizeObserver !== 'undefined') {
+      this.shellResizeObserver = new ResizeObserver(() => this.programarSyncKpi());
+      this.shellResizeObserver.observe(shell);
+    }
+
+    this.scrollEl?.addEventListener('scroll', this.onScrollKpi, { passive: true });
+    window.addEventListener('resize', this.onResizeKpi, { passive: true });
+    setTimeout(() => this.syncKpiFloat());
+  }
+
+  ngOnDestroy(): void {
+    cancelAnimationFrame(this.rafId);
+    this.scrollEl?.removeEventListener('scroll', this.onScrollKpi);
+    window.removeEventListener('resize', this.onResizeKpi);
+    this.shellResizeObserver?.disconnect();
+  }
+
+  private programarSyncKpi(): void {
+    cancelAnimationFrame(this.rafId);
+    this.rafId = requestAnimationFrame(() => this.syncKpiFloat());
+  }
+
+  private syncKpiFloat(): void {
+    const slot = this.kpiSlotRef?.nativeElement;
+    const float = this.kpiFloatRef?.nativeElement;
+    const scroll = this.scrollEl;
+    if (!slot || !float || !scroll) return;
+
+    const shell = float.querySelector('.rr-kpi-shell');
+    const altura = shell instanceof HTMLElement ? shell.offsetHeight : 0;
+    if (altura > 0) {
+      this.kpiAltura = altura;
+    }
+
+    const scrollRect = scroll.getBoundingClientRect();
+    const slotRect = slot.getBoundingClientRect();
+    const topeFlotante = scrollRect.top;
+    const top = Math.max(slotRect.top, topeFlotante);
+
+    this.kpiFloatStyle = {
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${slotRect.left}px`,
+      width: `${slotRect.width}px`,
+      zIndex: '120',
+      visibility: 'visible',
+    };
+  }
+
+  private rangoFechasPorDefecto(): { inicio: string; fin: string } {
+    const hoy = new Date();
+    const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
+    return {
+      inicio: this.toIsoFecha(inicioAnio),
+      fin: this.toIsoFecha(hoy),
+    };
+  }
+
+  private toIsoFecha(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  private cargarRegistros(): void {
+    this.cargando = true;
+    this.historicoPagosRentaService
+      .obtenerHistoricoPaginado({
+        page: this.paginaActual$,
+        limit: this.REGISTROS_POR_PAGINA,
+        fechaInicio: this.fechaInicioFiltro,
+        fechaFin: this.fechaFinFiltro,
+      })
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          setTimeout(() => this.syncKpiFloat());
+        }),
+      )
+      .subscribe({
+        next: (resp) => {
+          const rowsRaw = extraerFilasRentRolApi(resp);
+          const meta = extraerMetaPaginacionRentRol(
+            resp,
+            this.paginaActual$,
+            this.REGISTROS_POR_PAGINA,
+          );
+          this.totalRegistros = meta.total;
+          this.totalPaginasApi = meta.totalPaginas;
+          this.paginaActual$ = meta.page;
+          this.registros = rowsRaw
+            .map((item) => mapHistoricoPagoRentaToRentRolRow(item))
+            .filter((r): r is RentRolRow => r != null);
+        },
+        error: (err) => {
+          console.error('Error al cargar rent-rol:', err);
+          this.registros = [];
+          this.totalRegistros = 0;
+          this.totalPaginasApi = 1;
+        },
+      });
   }
 }

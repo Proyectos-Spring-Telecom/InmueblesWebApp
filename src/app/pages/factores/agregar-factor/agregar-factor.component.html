@@ -15,44 +15,99 @@
   </header>
 
   <div class="surface">
-    <section class="perm-form-nc container-fluid py-4">
+    <section class="perm-form-nc container-fluid py-4 factor-form">
       <form [formGroup]="factorForm" class="perm-form-body">
-        <div class="row g-4">
+        <div class="inpc-filtros-panel w-100 mb-4">
+          <div class="inpc-filtros-panel__grid">
+            <div>
+              <label class="form-label mb-1 inpc-filtro-fechas__label" for="facInpcFechaInicio">
+                Fecha inicio
+              </label>
+              <input
+                id="facInpcFechaInicio"
+                type="date"
+                class="form-control form-control-sm inpc-filtro-fechas__input"
+                [(ngModel)]="fechaInicioFiltro"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+            <div>
+              <label class="form-label mb-1 inpc-filtro-fechas__label" for="facInpcFechaFin">
+                Fecha fin
+              </label>
+              <input
+                id="facInpcFechaFin"
+                type="date"
+                class="form-control form-control-sm inpc-filtro-fechas__input"
+                [(ngModel)]="fechaFinFiltro"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+            <div class="inpc-filtros-panel__accion">
+              <button
+                type="button"
+                (click)="aplicarFiltrosInpcCatalogo()"
+                mat-flat-button
+                class="bg-primary inpc-filtros-panel__btn"
+                [disabled]="cargandoInpc"
+              >
+                <i class="fa fa-filter"></i> Consultar INPC
+              </button>
+            </div>
+          </div>
+        </div>
 
-          <!-- Variable -->
+        <div class="row g-4 factor-form__campos">
+
+          <!-- INPC -->
           <div class="col-12 col-md-4">
-            <label for="facVariable" class="form-label perm-label">Nombre de la variable</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
-                <mat-icon aria-hidden="true">title</mat-icon>
+            <label for="facInpc" class="form-label perm-label">INPC</label>
+            <div class="input-group input-group-lg perm-ig factor-form__ig">
+              <span class="input-group-text">
+                <mat-icon aria-hidden="true">show_chart</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  formControlName="variable"
-                  class="form-control"
-                  id="facVariable"
-                  placeholder="Ej.: INPC_ACTUAL"
-                  required
-                  autocomplete="off"
-                  style="text-transform: uppercase;"
-                />
-                <label for="facVariable">Ej.: INPC_ACTUAL, RENTA_BASE</label>
+              <div
+                class="form-floating flex-grow-1 perm-select-floating factor-inpc-select"
+                [class.factor-inpc-select--filled]="!!inpcSeleccionado"
+              >
+                <select
+                  class="form-select"
+                  id="facInpc"
+                  formControlName="inpcId"
+                  aria-label="Seleccionar INPC"
+                  [disabled]="cargandoInpc || inpcOpciones.length === 0"
+                >
+                  <option [ngValue]="null" disabled>
+                    {{ cargandoInpc ? 'Cargando INPC…' : 'Selecciona un INPC' }}
+                  </option>
+                  <option *ngFor="let row of inpcOpciones" [ngValue]="row.id">
+                    {{ etiquetaOpcionInpc(row) }}
+                  </option>
+                </select>
+                <label for="facInpc">Selecciona un INPC</label>
               </div>
             </div>
-            <p class="small opacity-50 mt-1 mb-0">
-              Use solo letras mayúsculas, números y guiones bajos
+            <p class="factor-form__aviso small opacity-50 mt-2 mb-0" *ngIf="!cargandoInpc && inpcOpciones.length === 0">
+              No hay registros de INPC disponibles.
             </p>
+            <div class="factor-inpc-meta mt-2" *ngIf="inpcSeleccionado">
+              <span class="factor-inpc-meta__badge" [ngClass]="inpcSeleccionado.origenClass">
+                {{ inpcSeleccionado.origenLabel }}
+              </span>
+            </div>
           </div>
 
           <!-- Valor -->
           <div class="col-12 col-md-4">
             <label for="facValor" class="form-label perm-label">Valor</label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
+            <div class="input-group input-group-lg perm-ig factor-form__ig">
+              <span class="input-group-text">
                 <mat-icon aria-hidden="true">pin</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1">
+              <div
+                class="form-floating flex-grow-1"
+                [class.factor-form__floating--filled]="!!factorForm.get('valor')?.value"
+              >
                 <input
                   type="text"
                   autocomplete="off"
@@ -62,7 +117,7 @@
                   placeholder=" "
                   (input)="onValorInput($event)"
                 />
-                <label for="facValor">Ej.: 140.0000 o 75,000</label>
+                <label for="facValor">Índice del INPC</label>
               </div>
             </div>
           </div>
@@ -70,33 +125,36 @@
           <!-- Descripción -->
           <div class="col-12 col-md-4">
             <label for="facDescripcion" class="form-label perm-label">
-              Descripción <span class="opacity-50 fw-normal">(opcional)</span>
+              Descripción <span class="opacity-50">(opcional)</span>
             </label>
-            <div class="input-group input-group-lg perm-ig">
-              <span class="input-group-text fw-bold">
+            <div class="input-group input-group-lg perm-ig factor-form__ig">
+              <span class="input-group-text">
                 <mat-icon aria-hidden="true">notes</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1">
+              <div
+                class="form-floating flex-grow-1"
+                [class.factor-form__floating--filled]="!!factorForm.get('descripcion')?.value"
+              >
                 <input
                   type="text"
                   formControlName="descripcion"
                   class="form-control"
                   id="facDescripcion"
-                  placeholder="Ej.: INPC junio 2025"
+                  placeholder=" "
                   autocomplete="off"
                 />
-                <label for="facDescripcion">Explique brevemente para qué sirve este factor</label>
+                <label for="facDescripcion">Ej.: INPC mayo 2026</label>
               </div>
             </div>
           </div>
 
         </div>
 
-        <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
-          <button class="button-success" role="button" (click)="submit()" [disabled]="loading">
+        <div class="factor-form__acciones d-flex flex-wrap gap-3 justify-content-start mt-4">
+          <button class="button-success factor-form__btn" role="button" (click)="submit()" [disabled]="loading">
             <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
           </button>
-          <button type="button" class="button-danger" (click)="regresar()" [disabled]="loading">
+          <button type="button" class="button-danger factor-form__btn" (click)="regresar()" [disabled]="loading">
             <i class="fa fa-times"></i>&nbsp;&nbsp;Cancelar
           </button>
         </div>

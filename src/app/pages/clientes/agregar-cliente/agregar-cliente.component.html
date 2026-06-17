@@ -834,20 +834,20 @@
                             </div>
                         </ng-container>
 
-                        <div class="col-12 mt-5 pt-3 socios-section socios-section--after-uploads"
+                        <div class="col-12 arrend-fa-section mt-5 pt-3 socios-section socios-section--after-uploads"
                             *ngIf="esPersonaMoral()">
-                            <div class="socios-hero">
-                                <div class="socios-hero__icon" aria-hidden="true">
+                            <div class="arrend-fa-hero">
+                                <div class="arrend-fa-hero__icon" aria-hidden="true">
                                     <mat-icon>groups</mat-icon>
                                 </div>
-                                <div class="socios-hero__body">
+                                <div class="arrend-fa-hero__body">
                                     <div
-                                        class="socios-head d-flex align-items-center justify-content-between flex-wrap gap-3 w-100">
-                                        <div class="d-flex align-items-center flex-wrap gap-2 socios-title-wrap">
-                                            <h6 class="socios-section-title m-0">Socios</h6>
+                                        class="arrend-fa-head d-flex align-items-center justify-content-between flex-wrap gap-3 w-100">
+                                        <div class="d-flex align-items-center flex-wrap gap-2 arrend-fa-title-wrap">
+                                            <h6 class="arrend-fa-section-title m-0">Socios</h6>
 
                                         </div>
-                                        <button class="socios-add-btn ms-md-auto" mat-flat-button color="primary"
+                                        <button class="arrend-fa-add-btn ms-md-auto" mat-flat-button color="primary"
                                             type="button" (click)="agregarSocio()">
                                             <mat-icon>add</mat-icon> Agregar
                                         </button>
@@ -855,16 +855,20 @@
                                 </div>
                             </div>
 
-                            <div formArrayName="socios" class="row g-5 mt-0">
-                                <ng-container *ngFor="let socioCtrl of sociosFormArray.controls; let i = index"
-                                    [formGroupName]="i">
-                                    <div class="col-12">
-                                        <div class="socios-socio">
-                                            <div
-                                                class="socios-socio__toolbar d-flex align-items-center flex-wrap gap-2">
-                                                <span class="socios-live-name" *ngIf="primerNombreSocio">{{ 'Socio:
-                                                    ' + primerNombreSocio }}</span>
-                                            </div>
+                            <div class="arrend-fa-section__body" formArrayName="socios">
+                                <dx-accordion class="arrend-accordion-socios" width="100%" [collapsible]="true"
+                                    [multiple]="true" [animationDuration]="260"
+                                    [selectedIndex]="$any(socioAccordionIndicesAbiertos)" [focusStateEnabled]="false"
+                                    (selectedIndexChange)="onSocioAccordionIndicesChange($event)"
+                                    itemTitleTemplate="socioAccordionTitle">
+                                    <div *dxTemplate="let data of 'socioAccordionTitle'"
+                                        class="arrend-accordion-title-bar">
+                                        <span class="arrend-accordion-title-bar__label">{{
+                                            tituloAccordionCaption(data) }}</span>
+                                    </div>
+                                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index"
+                                        [title]="tituloSocioAccordion(i)">
+                                        <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                                             <div class="row g-3 socios-identidad">
                                                 <div class="col-12 col-md-6">
                                                     <label class="form-label perm-label">Nombre</label>
@@ -898,12 +902,7 @@
                                                 </div>
                                             </div>
 
-                                            <!-- <p class="socios-subhead socios-subhead--docs">
-                                                <mat-icon class="socios-subhead__icon"
-                                                    aria-hidden="true">folder_special</mat-icon>
-                                                Documentación
-                                            </p> -->
-                                            <div class="row mt-2 g-3 socios-docs align-items-stretch">
+                                            <div class="row g-3 mt-1 socios-docs align-items-stretch">
                                                 <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
                                                     <label class="form-label perm-label d-block mb-2">Constancia De
                                                         Situación Fiscal</label>
@@ -1022,8 +1021,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </ng-container>
+                                    </dxi-item>
+                                </dx-accordion>
                             </div>
                         </div>
 

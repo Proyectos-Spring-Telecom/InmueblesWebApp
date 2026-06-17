@@ -22,26 +22,16 @@
     <div class="inpc-filtros-panel w-100">
       <div class="inpc-filtros-panel__grid">
         <div>
-          <label class="form-label mb-1 inpc-filtro-fechas__label" for="inpcFechaInicio"
-            >Fecha inicio <span class="text-danger">*</span></label
-          >
-          <input
-            id="inpcFechaInicio"
-            type="date"
-            class="form-control form-control-sm inpc-filtro-fechas__input"
-            [(ngModel)]="fechaInicioFiltro"
-          />
+          <label class="form-label mb-1 inpc-filtro-fechas__label" for="inpcFechaInicio">Fecha inicio <span
+              class="text-danger">*</span></label>
+          <input id="inpcFechaInicio" type="date" class="form-control form-control-sm inpc-filtro-fechas__input"
+            [(ngModel)]="fechaInicioFiltro" />
         </div>
         <div>
-          <label class="form-label mb-1 inpc-filtro-fechas__label" for="inpcFechaFin"
-            >Fecha fin <span class="text-danger">*</span></label
-          >
-          <input
-            id="inpcFechaFin"
-            type="date"
-            class="form-control form-control-sm inpc-filtro-fechas__input"
-            [(ngModel)]="fechaFinFiltro"
-          />
+          <label class="form-label mb-1 inpc-filtro-fechas__label" for="inpcFechaFin">Fecha fin <span
+              class="text-danger">*</span></label>
+          <input id="inpcFechaFin" type="date" class="form-control form-control-sm inpc-filtro-fechas__input"
+            [(ngModel)]="fechaFinFiltro" />
         </div>
         <div class="inpc-filtros-panel__accion">
           <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
@@ -52,10 +42,10 @@
     </div>
 
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100 mt-3">
-      <!-- <div *appHasPermission="['47', '55']">
+      <div *appHasPermission="['47', '55']">
         <button (click)="agregarIncremento()" mat-flat-button class="bg-secondary">
           <i class="fa fa-plus"></i> Agregar INPC</button>
-      </div> -->
+      </div>
       <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
       <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
         <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
@@ -63,66 +53,37 @@
       </button>
     </div>
     <div class="mt-3">
-      <dx-data-grid
-        #gridContainer
-        id="gridIncrementos"
-        class="inm-data-grid"
-        [columnHidingEnabled]="false"
-        [hoverStateEnabled]="false"
-        [showBorders]="true"
-        [showColumnLines]="false"
-        [showRowLines]="true"
-        [rowAlternationEnabled]="true"
-        [dataSource]="listaIncrementos"
-        [keyExpr]="'id'"
-        [width]="'100%'"
-        [remoteOperations]="{ paging: true }"
-        [paging]="{ pageSize: pageSize }"
-        [noDataText]="'Sin registros para mostrar'"
-        [pager]="{
+      <dx-data-grid #gridContainer id="gridIncrementos" class="inm-data-grid" [columnHidingEnabled]="false"
+        [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+        [rowAlternationEnabled]="true" [dataSource]="listaIncrementos" [keyExpr]="'id'" [width]="'100%'"
+        [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'" [pager]="{
           showPageSizeSelector: true,
           allowedPageSizes: [20],
           showInfo: true,
           showNavigationButtons: true,
           visible: true
-        }"
-        (onPageIndexChanged)="onPageIndexChanged($event)"
-        (onOptionChanged)="onGridOptionChanged($event)"
-      >
+        }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
         <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar..."></dxo-search-panel>
         <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
         <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
         <dxi-column dataField="fecha" caption="Fecha" alignment="center" dataType="string"></dxi-column>
-        <dxi-column dataField="anio" caption="Año" alignment="center" dataType="number"></dxi-column>
-        <dxi-column dataField="mes" caption="Mes" alignment="center" dataType="string"></dxi-column>
-        <dxi-column
-          dataField="indiceFmt"
-          caption="Índice INPC"
-          alignment="center"
-          dataType="string"
-        ></dxi-column>
-        <dxi-column
-          dataField="porcAnualFmt"
-          caption="% Anual"
-          alignment="center"
-          dataType="string"
-        ></dxi-column>
-        <dxi-column
-          dataField="porcAcumAnualFmt"
-          caption="% Acum. Anual"
-          alignment="center"
-          dataType="string"
-        ></dxi-column>
-        <dxo-export
-          [enabled]="true"
-          [allowExportSelectedData]="true"
-          [texts]="{
+        <dxi-column dataField="origenLabel" caption="Origen" alignment="center" dataType="string"
+          cellTemplate="origenInpcTpl"></dxi-column>
+        <dxi-column dataField="inpcFmt" caption="Índice INPC" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="porcentajeAnualFmt" caption="% Anual" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="porcAcumAnualFmt" caption="% Acum. Anual" alignment="center"
+          dataType="string"></dxi-column>
+
+        <div *dxTemplate="let cell of 'origenInpcTpl'">
+          <span [ngClass]="cell.data.origenClass">{{ cell.data.origenLabel }}</span>
+        </div>
+        <dxo-export [enabled]="true" [allowExportSelectedData]="true" [texts]="{
             exportAll: 'Exportar todos los datos',
             exportSelectedRows: 'Exportar filas seleccionadas'
-          }"
-        >
+          }">
         </dxo-export>
       </dx-data-grid>
     </div>

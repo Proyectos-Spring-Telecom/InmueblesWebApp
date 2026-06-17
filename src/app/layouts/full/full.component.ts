@@ -213,18 +213,13 @@ export class FullComponent implements OnInit, AfterViewInit {
     private layoutScroll: LayoutScrollService,
   ) {
     this.htmlElement = document.querySelector('html')!;
+    // Evaluar viewport de forma síncrona antes del primer render para evitar
+    // que el sidenav arranque en modo desktop (side) en móvil tras F5.
+    this.applyLayoutBreakpoints(this.readBreakpointMatches());
     this.layoutChangesSubscription = this.breakpointObserver
       .observe([MOBILE_VIEW, TABLET_VIEW, MONITOR_VIEW, BELOWMONITOR])
       .subscribe((state) => {
-        // SidenavOpened must be reset true when layout changes
-        this.options.sidenavOpened = true;
-        // Solo móvil real: overlay. Tablet (769–1023) empuja layout como desktop.
-        this.isMobileScreen = state.breakpoints[MOBILE_VIEW];
-        if (this.options.sidenavCollapsed == false) {
-          this.options.sidenavCollapsed = state.breakpoints[TABLET_VIEW];
-        }
-        this.isContentWidthFixed = state.breakpoints[MONITOR_VIEW];
-        this.resView = state.breakpoints[BELOWMONITOR];
+        this.applyLayoutBreakpoints(state.breakpoints);
       });
 
     // Initialize project theme with options
@@ -249,6 +244,27 @@ export class FullComponent implements OnInit, AfterViewInit {
 
   ngOnDestroy() {
     this.layoutChangesSubscription.unsubscribe();
+  }
+
+  private readBreakpointMatches(): Record<string, boolean> {
+    return {
+      [MOBILE_VIEW]: this.mediaMatcher.matchMedia(MOBILE_VIEW).matches,
+      [TABLET_VIEW]: this.mediaMatcher.matchMedia(TABLET_VIEW).matches,
+      [MONITOR_VIEW]: this.mediaMatcher.matchMedia(MONITOR_VIEW).matches,
+      [BELOWMONITOR]: this.mediaMatcher.matchMedia(BELOWMONITOR).matches,
+    };
+  }
+
+  private applyLayoutBreakpoints(breakpoints: Record<string, boolean>): void {
+    // SidenavOpened must be reset true when layout changes
+    this.options.sidenavOpened = true;
+    // Solo móvil real: overlay. Tablet (769–1023) empuja layout como desktop.
+    this.isMobileScreen = breakpoints[MOBILE_VIEW];
+    if (this.options.sidenavCollapsed == false) {
+      this.options.sidenavCollapsed = breakpoints[TABLET_VIEW];
+    }
+    this.isContentWidthFixed = breakpoints[MONITOR_VIEW];
+    this.resView = breakpoints[BELOWMONITOR];
   }
 
   toggleCollapsed() {

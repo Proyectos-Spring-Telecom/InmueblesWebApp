@@ -102,13 +102,544 @@
   min-height: 200px;
 }
 
+.inm-lugar-backdrop {
+  z-index: 100001;
+  padding: 0.75rem;
+  align-items: center;
+}
+
+.inm-lugar-modal {
+  width: min(980px, 100%);
+  max-height: min(92vh, 920px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .docs-modal__eyebrow {
+    font-size: 0.82rem;
+  }
+
+  .docs-modal__title {
+    font-size: 1.5rem;
+    letter-spacing: 0.02em;
+    color: #ffffff;
+  }
+}
+
+.inm-lugar-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  margin-bottom: 0.45rem;
+}
+
+.inm-lugar-modal__content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.inm-lugar-modal .docs-modal__footer {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
 @media (max-width: 1200px) {
   .inm-row-chips {
     align-items: flex-start;
   }
 }
 
-/* Mapa en lista: por encima del layout (import de documento-preview trae z-index 9999) */
 .docs-backdrop {
   z-index: 100000;
+}
+
+// ─── Ocupación ───────────────────────────────────────────────────────────────
+
+.oc-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: 0.25rem 0 0;
+}
+
+.oc-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.oc-stat {
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  display: grid;
+  grid-template-rows: auto minmax(2.75rem, auto);
+  gap: 0.28rem;
+  border: 1px solid transparent;
+  align-content: start;
+
+  &__label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.72);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    min-height: 1.2em;
+  }
+
+  &__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: 0.75rem;
+    min-width: 0;
+  }
+
+  &__value {
+    font-size: 25px;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.1;
+    min-width: 0;
+    align-self: end;
+  }
+
+  &__meta {
+    display: grid;
+    grid-template-rows: auto auto;
+    gap: 2px;
+    justify-items: end;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  &__meta-value {
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.1;
+  }
+
+  &__meta-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  &--total {
+    background: rgba(96, 165, 250, 0.28);
+    border-color: rgba(186, 230, 253, 0.74);
+
+    .oc-stat__meta-value { color: rgba(255, 255, 255, 0.95); }
+  }
+
+  &--ocupado {
+    background: rgba(245, 158, 11, 0.28);
+    border-color: rgba(254, 243, 199, 0.74);
+
+    .oc-stat__value,
+    .oc-stat__meta-value { color: #fbbf24; }
+  }
+
+  &--disponible {
+    background: rgba(55, 163, 22, 0.28);
+    border-color: rgba(187, 247, 208, 0.74);
+
+    .oc-stat__value,
+    .oc-stat__meta-value { color: #4ade80; }
+  }
+}
+
+.oc-panel-row {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+
+  > [class*='col-'] {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+  }
+}
+
+.oc-locales-col {
+  justify-content: center;
+  align-items: stretch;
+  min-height: 360px;
+}
+
+.oc-locales {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  max-height: 100%;
+  min-height: 0;
+
+  &__title {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: min(360px, 100%);
+    overflow: auto;
+    padding-right: 0.15rem;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+.oc-local {
+  --oc-local-accent: rgba(130, 160, 255, 0.8);
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1.2fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(130, 160, 255, 0.18);
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover,
+  &--activo {
+    border-color: color-mix(in srgb, var(--oc-local-accent) 55%, white 12%);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow:
+      inset 3px 0 0 var(--oc-local-accent),
+      0 0 18px color-mix(in srgb, var(--oc-local-accent) 22%, transparent);
+    transform: translateX(2px);
+  }
+
+  &__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+
+    &--disponible {
+      background: rgba(34, 197, 94, 0.25);
+      border: 1px solid rgba(34, 197, 94, 0.55);
+    }
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  &__nombre {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__zona {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.42);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__medidas {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  &__ocupante {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    min-width: 0;
+    text-align: right;
+  }
+
+  &__ocupante-label {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+    line-height: 1.1;
+  }
+
+  &__ocupante-nombre {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+
+    &--libre {
+      color: #4ade80;
+    }
+  }
+
+  &--disponible {
+    --oc-local-accent: #22c55e;
+    border-color: rgba(34, 197, 94, 0.28);
+    background: rgba(34, 197, 94, 0.08);
+  }
+}
+
+@media (max-width: 768px) {
+  .oc-local {
+    grid-template-columns: 10px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    align-items: start;
+
+    &__medidas,
+    &__ocupante {
+      grid-column: 2;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    &__medidas {
+      flex-direction: row;
+      gap: 0.65rem;
+    }
+  }
+}
+
+.oc-progress {
+  flex-shrink: 0;
+
+  &__bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    display: flex;
+  }
+
+  &__fill {
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+
+  &__labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 3px;
+  }
+}
+
+.oc-grid-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.oc-grid-panel {
+  flex: 1 1 auto;
+  min-height: 160px;
+  max-height: min(52vh, 520px);
+  overflow: auto;
+  padding: 0.65rem;
+  border-radius: 12px;
+  border: 1px solid rgba(130, 160, 255, 0.22);
+  background: rgba(0, 0, 0, 0.2);
+  -webkit-overflow-scrolling: touch;
+}
+
+.oc-grid {
+  --oc-grid-cols: 20;
+  --oc-grid-rows: 10;
+  --oc-cell-size: clamp(10px, 2.4vw, 18px);
+  display: grid;
+  grid-template-columns: repeat(var(--oc-grid-cols), var(--oc-cell-size));
+  grid-auto-rows: var(--oc-cell-size);
+  gap: 2px;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.oc-celda {
+  width: var(--oc-cell-size);
+  height: var(--oc-cell-size);
+  border-radius: 2px;
+  cursor: default;
+  transition: opacity 0.15s;
+  box-sizing: border-box;
+
+  &--local {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1px;
+    opacity: 0.94;
+    overflow: hidden;
+
+    &:hover { opacity: 0.78; }
+  }
+
+  &--disponible {
+    background: rgba(34, 197, 94, 0.08);
+    border: 0.5px solid rgba(34, 197, 94, 0.22);
+
+    &:hover { background: rgba(34, 197, 94, 0.14); }
+  }
+
+  &__nombre {
+    font-size: 7px;
+    color: rgba(255, 255, 255, 0.92);
+    text-align: center;
+    line-height: 1.15;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__area {
+    font-size: 6px;
+    color: rgba(255, 255, 255, 0.65);
+    text-align: center;
+    line-height: 1.1;
+  }
+}
+
+.oc-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-shrink: 0;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+
+    &--disponible {
+      background: rgba(34, 197, 94, 0.15);
+      border: 0.5px solid rgba(34, 197, 94, 0.4);
+    }
+  }
+
+  &__text {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+.oc-dona-wrap {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 360px;
+  height: 100%;
+  transition: opacity 0.18s ease;
+
+  ::ng-deep #pieOcupacionInmueble,
+  ::ng-deep .dx-pie-chart {
+    width: 100%;
+    min-height: 360px;
+  }
+
+  ::ng-deep .dxc-series .dxc-markers path,
+  ::ng-deep .dxc-series path {
+    transition: opacity 0.18s ease, filter 0.18s ease;
+  }
+
+  ::ng-deep .dxc-title text,
+  ::ng-deep .dxc-legend text,
+  ::ng-deep .dxc-labels text {
+    fill: rgba(230, 241, 255, 0.88) !important;
+    font-size: 13px !important;
+  }
+}
+
+.oc-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+
+  &--inline {
+    min-height: 120px;
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 768px) {
+  .inm-lugar-backdrop {
+    padding: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .inm-lugar-modal {
+    max-height: 96vh;
+    border-radius: 16px 16px 0 0;
+    padding: 1rem 1rem 0.85rem;
+  }
+
+  .oc-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .oc-grid {
+    --oc-cell-size: clamp(9px, 3.2vw, 14px);
+  }
+
+  .oc-grid-panel {
+    max-height: min(42vh, 360px);
+  }
+}
+
+@media (max-width: 480px) {
+  .oc-grid {
+    --oc-cell-size: clamp(8px, 4.2vw, 12px);
+  }
+
+  .oc-legend__text {
+    font-size: 10px;
+  }
 }
