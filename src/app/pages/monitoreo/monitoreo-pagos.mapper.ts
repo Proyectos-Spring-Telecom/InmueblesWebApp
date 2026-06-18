@@ -197,6 +197,8 @@ function textoServicioPago(
     const etiqueta = resolverServicio(id);
     if (etiqueta.trim()) return etiqueta;
   }
+  const concepto = String(item.concepto ?? '').trim();
+  if (concepto) return concepto;
   return '—';
 }
 

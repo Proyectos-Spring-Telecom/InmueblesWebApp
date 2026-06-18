@@ -140,7 +140,7 @@
               <i class="fa fa-eye"></i>
             </button>
           </div>
-          <div>
+          <div *ngIf="row.data?.estatus !== 'Pagado'">
             <button
               type="button"
               id="actualizarButton"
@@ -161,7 +161,7 @@
   <div class="contract-page-dim" (click)="cerrarModalDetalle()" [@contractDimAnim]></div>
   <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalDetalle()">
     <div
-      class="docs-modal contract-docs-modal mono-pago-modal"
+      class="docs-modal contract-docs-modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="reg-srv-inm-detalle-title"
@@ -202,11 +202,11 @@
                   <button
                     *ngIf="pv.tieneComprobante"
                     type="button"
-                    mat-flat-button
-                    class="bg-warn"
+                    class="mono-grid-action-btn d-inline-flex align-items-center gap-1"
                     (click)="verComprobanteDetalle()"
                   >
-                    <i class="fa fa-eye"></i> Comprobante
+                    <mat-icon aria-hidden="true">visibility</mat-icon>
+                    <span>Comprobante de pago</span>
                   </button>
                 </div>
               </article>
@@ -221,7 +221,7 @@
                   <div class="contract-docs-field">
                     <span>Estatus</span>
                     <p>
-                      <span class="reg-srv-pago-estatus" [ngClass]="clasesEstatusPago(pv.estatus)">
+                      <span class="mono-pago-estatus" [ngClass]="clasesEstatusPago(pv.estatus)">
                         {{ pv.estatus }}
                       </span>
                     </p>
@@ -234,7 +234,7 @@
       </div>
 
       <div class="row docs-modal__footer">
-        <div class="col-12 d-flex justify-content-end">
+        <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
           <button type="button" class="docs-modal__btn" (click)="cerrarModalDetalle()">Cerrar</button>
         </div>
       </div>

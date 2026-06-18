@@ -313,12 +313,12 @@ export class ListaRegistroServiciosInmueblesComponent implements OnInit {
   }
 
   clasesEstatusPago(estatus: unknown): Record<string, boolean> {
-    const e = String(estatus ?? '');
+    const e = String(estatus ?? '') as PagoEstatusUi;
     return {
-      'reg-srv-pago-estatus': true,
-      'reg-srv-pago-estatus--pagado': e === 'Pagado',
-      'reg-srv-pago-estatus--pendiente': e === 'Pendiente',
-      'reg-srv-pago-estatus--cancelado': e === 'Cancelado',
+      'mono-pago-estatus': true,
+      'mono-pago-estatus--pagado': e === 'Pagado',
+      'mono-pago-estatus--pendiente': e === 'Pendiente',
+      'mono-pago-estatus--cancelado': e === 'Cancelado',
     };
   }
 
@@ -349,6 +349,7 @@ export class ListaRegistroServiciosInmueblesComponent implements OnInit {
           }
           this.detallePagoVista = mapPagoApiToVistaDetalle(item, {
             resolverMetodo: (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
+            resolverServicio: (_idSrv) => String(row.concepto ?? '').trim(),
           });
           if (!this.detallePagoVista) {
             this.detalleModalError = 'No se pudo interpretar el pago.';
