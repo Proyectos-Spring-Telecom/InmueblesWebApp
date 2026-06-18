@@ -18,6 +18,9 @@
     <section class="perm-form-nc container-fluid py-4 factor-form">
       <form [formGroup]="factorForm" class="perm-form-body">
         <div class="inpc-filtros-panel w-100 mb-4">
+          <p class="factor-form__aviso small opacity-50 mb-2 mb-md-3">
+            Rango de consulta del catálogo INPC (por defecto, año vigente). Puede ajustarlo y volver a consultar.
+          </p>
           <div class="inpc-filtros-panel__grid">
             <div>
               <label class="form-label mb-1 inpc-filtro-fechas__label" for="facInpcFechaInicio">
@@ -59,12 +62,36 @@
 
         <div class="row g-4 factor-form__campos">
 
-          <!-- INPC -->
-          <div class="col-12 col-md-4">
-            <label for="facInpc" class="form-label perm-label">INPC</label>
+          <!-- Variable -->
+          <div class="col-12 col-md-6 col-xl-3">
+            <label for="facVariable" class="form-label perm-label">Variable</label>
             <div class="input-group input-group-lg perm-ig factor-form__ig">
               <span class="input-group-text">
-                <mat-icon aria-hidden="true">show_chart</mat-icon>
+                <mat-icon aria-hidden="true">code</mat-icon>
+              </span>
+              <div
+                class="form-floating flex-grow-1"
+                [class.factor-form__floating--filled]="!!factorForm.get('variable')?.value"
+              >
+                <input
+                  type="text"
+                  formControlName="variable"
+                  class="form-control"
+                  id="facVariable"
+                  placeholder=" "
+                  autocomplete="off"
+                />
+                <label for="facVariable">Ej.: FactorA</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Periodo INPC (año + mes) -->
+          <div class="col-12 col-md-6 col-xl-3">
+            <label for="facInpc" class="form-label perm-label">Periodo INPC</label>
+            <div class="input-group input-group-lg perm-ig factor-form__ig">
+              <span class="input-group-text">
+                <mat-icon aria-hidden="true">calendar_month</mat-icon>
               </span>
               <div
                 class="form-floating flex-grow-1 perm-select-floating factor-inpc-select"
@@ -74,31 +101,26 @@
                   class="form-select"
                   id="facInpc"
                   formControlName="inpcId"
-                  aria-label="Seleccionar INPC"
+                  aria-label="Seleccionar periodo INPC"
                   [disabled]="cargandoInpc || inpcOpciones.length === 0"
                 >
                   <option [ngValue]="null" disabled>
-                    {{ cargandoInpc ? 'Cargando INPC…' : 'Selecciona un INPC' }}
+                    {{ cargandoInpc ? 'Cargando INPC…' : 'Selecciona mes y año' }}
                   </option>
                   <option *ngFor="let row of inpcOpciones" [ngValue]="row.id">
                     {{ etiquetaOpcionInpc(row) }}
                   </option>
                 </select>
-                <label for="facInpc">Selecciona un INPC</label>
+                <label for="facInpc">Mes y año del INPC</label>
               </div>
             </div>
             <p class="factor-form__aviso small opacity-50 mt-2 mb-0" *ngIf="!cargandoInpc && inpcOpciones.length === 0">
-              No hay registros de INPC disponibles.
+              No hay registros de INPC en el rango seleccionado.
             </p>
-            <div class="factor-inpc-meta mt-2" *ngIf="inpcSeleccionado">
-              <span class="factor-inpc-meta__badge" [ngClass]="inpcSeleccionado.origenClass">
-                {{ inpcSeleccionado.origenLabel }}
-              </span>
-            </div>
           </div>
 
-          <!-- Valor -->
-          <div class="col-12 col-md-4">
+          <!-- Valor (desde INPC) -->
+          <div class="col-12 col-md-6 col-xl-3">
             <label for="facValor" class="form-label perm-label">Valor</label>
             <div class="input-group input-group-lg perm-ig factor-form__ig">
               <span class="input-group-text">
@@ -110,12 +132,13 @@
               >
                 <input
                   type="text"
-                  autocomplete="off"
                   formControlName="valor"
                   class="form-control"
                   id="facValor"
                   placeholder=" "
-                  (input)="onValorInput($event)"
+                  readonly
+                  tabindex="-1"
+                  aria-readonly="true"
                 />
                 <label for="facValor">Índice del INPC</label>
               </div>
@@ -123,7 +146,7 @@
           </div>
 
           <!-- Descripción -->
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-6 col-xl-3">
             <label for="facDescripcion" class="form-label perm-label">
               Descripción <span class="opacity-50">(opcional)</span>
             </label>
@@ -143,7 +166,7 @@
                   placeholder=" "
                   autocomplete="off"
                 />
-                <label for="facDescripcion">Ej.: INPC mayo 2026</label>
+                <label for="facDescripcion">Descripción del factor</label>
               </div>
             </div>
           </div>

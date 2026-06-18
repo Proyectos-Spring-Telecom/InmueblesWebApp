@@ -31,8 +31,6 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       return of(this.router.createUrlTree(['/login']));
     }
 
-    return this.auth.ensureSessionValid().pipe(
-      map((valid) => (valid ? true : this.router.createUrlTree(['/login'])))
-    );
+    return this.auth.ensureSessionValid().pipe(map(() => true));
   }
 }

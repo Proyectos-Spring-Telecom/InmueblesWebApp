@@ -93,6 +93,7 @@ import {
   urlsGaleriaArrendatario,
   urlContratoRentaArrendatario,
 } from '../monitoreo-arrendatario-detalle.mapper';
+import { esServicioArrendatarioExcluidoHub } from '../../arrendatarios/pagos-servicios/pago-servicio-actual-list.mapper';
 
 const IVA_CONTRATO = 0.16;
 
@@ -324,11 +325,9 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     { nombrePensionado: 'Marta López', numeroTarjeta: 'TAR-1108', arrendatario: 'Poder Judicial del Estado' },
   ];
   pagosData: PagoGridRow[] = [];
-  pagosDataGrid: PagoGridRow[] = [];
-  mesFiltroPagosSeleccionado = '__all__';
-  mesesFiltroPagosOpciones: Array<{ value: string; label: string }> = [
-    { value: '__all__', label: 'Todos los meses' },
-  ];
+  fechaInicioFiltroPagos = '';
+  fechaFinFiltroPagos = '';
+  pagosCargando = false;
 
   numeroSerie: string = '';
 
@@ -806,18 +805,20 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     if (this.vistaEntidad === 'local' && this.arrendatarioApi) {
       this.serviciosInmueblePago = serviciosArrendatarioPagoOpciones(
         this.arrendatarioApi,
-      );
+      ).filter((s) => !esServicioArrendatarioExcluidoHub(s.nombre));
       return;
     }
     if (this.vistaEntidad !== 'local') {
-      this.serviciosInmueblePago = this.serviciosDataSource.map((row, i) => {
-        const idApi = Number(row.idServicioInmueble);
-        const hasApiId = Number.isFinite(idApi) && idApi > 0;
-        return {
-          id: hasApiId ? Math.floor(idApi) : -(i + 1),
-          nombre: String(row.concepto ?? '').trim() || 'Servicio',
-        };
-      });
+      this.serviciosInmueblePago = this.serviciosDataSource
+        .map((row, i) => {
+          const idApi = Number(row.idServicioInmueble);
+          const hasApiId = Number.isFinite(idApi) && idApi > 0;
+          return {
+            id: hasApiId ? Math.floor(idApi) : -(i + 1),
+            nombre: String(row.concepto ?? '').trim() || 'Servicio',
+          };
+        })
+        .filter((s) => !esServicioArrendatarioExcluidoHub(s.nombre));
       return;
     }
     this.serviciosInmueblePago = [];
@@ -833,18 +834,83 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.serviciosDataSource = this.buildServiciosLista();
   }
 
+  aplicarFiltrosPagos(): void {
+    if (!this.fechaInicioFiltroPagos?.trim() || !this.fechaFinFiltroPagos?.trim()) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'warning',
+        title: 'Fechas obligatorias',
+        text: 'Indica fecha inicial y fecha final.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    if (this.fechaInicioFiltroPagos > this.fechaFinFiltroPagos) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        icon: 'warning',
+        title: 'Rango inválido',
+        text: 'La fecha inicial no puede ser posterior a la final.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    this.cargarPagosGrid();
+  }
+
+  limpiarFiltrosPagos(): void {
+    const rango = this.rangoFechasPagosPorDefecto();
+    this.fechaInicioFiltroPagos = rango.inicio;
+    this.fechaFinFiltroPagos = rango.fin;
+    this.cargarPagosGrid();
+  }
+
+  private rangoFechasPagosPorDefecto(): { inicio: string; fin: string } {
+    const hoy = new Date();
+    const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
+    return {
+      inicio: this.toIsoFechaPagos(inicioAnio),
+      fin: this.toIsoFechaPagos(hoy),
+    };
+  }
+
+  private toIsoFechaPagos(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   private cargarPagosGrid(): void {
+    const fechaInicio = this.fechaInicioFiltroPagos?.trim();
+    const fechaFin = this.fechaFinFiltroPagos?.trim();
+    if (!fechaInicio || !fechaFin) {
+      this.pagosData = [];
+      return;
+    }
+
     if (this.vistaEntidad === 'local') {
       if (this.idArrendatarioContext == null) {
         this.pagosData = [];
-        this.refrescarMesesFiltroPagosOpciones();
         return;
       }
+      this.pagosCargando = true;
       this.pagoArrendatarioService
-        .obtenerPagosPaginados(1, 200)
+        .obtenerPagosPaginados({
+          page: 1,
+          limit: 200,
+          fechaInicio,
+          fechaFin,
+          idArrendatario: this.idArrendatarioContext,
+        })
         .pipe(
           take(1),
-          finalize(() => this.cdr.markForCheck()),
+          finalize(() => {
+            this.pagosCargando = false;
+            this.cdr.markForCheck();
+          }),
         )
         .subscribe({
           next: (res) => {
@@ -857,11 +923,9 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
               },
               (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
             );
-            this.refrescarMesesFiltroPagosOpciones();
           },
           error: () => {
             this.pagosData = [];
-            this.refrescarMesesFiltroPagosOpciones();
           },
         });
       return;
@@ -869,15 +933,24 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
 
     if (this.idInmuebleContext == null) {
       this.pagosData = [];
-      this.refrescarMesesFiltroPagosOpciones();
       return;
     }
 
+    this.pagosCargando = true;
     this.pagoInmuebleService
-      .obtenerPagosPaginados(1, 200)
+      .obtenerPagosPaginados({
+        page: 1,
+        limit: 200,
+        fechaInicio,
+        fechaFin,
+        idInmueble: this.idInmuebleContext,
+      })
       .pipe(
         take(1),
-        finalize(() => this.cdr.markForCheck()),
+        finalize(() => {
+          this.pagosCargando = false;
+          this.cdr.markForCheck();
+        }),
       )
       .subscribe({
         next: (res) => {
@@ -890,11 +963,9 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
             },
             (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
           );
-          this.refrescarMesesFiltroPagosOpciones();
         },
         error: () => {
           this.pagosData = [];
-          this.refrescarMesesFiltroPagosOpciones();
         },
       });
   }
@@ -1089,74 +1160,6 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         maximumFractionDigits: 2,
       })
     );
-  }
-
-  onMesFiltroPagosChange(event: Event): void {
-    const input = event.target as HTMLSelectElement | null;
-    this.mesFiltroPagosSeleccionado = input?.value || '__all__';
-    this.aplicarFiltroPagosGrid();
-  }
-
-  private refrescarMesesFiltroPagosOpciones(): void {
-    const meses = new Set<string>();
-    this.pagosData.forEach((r) => {
-      const k = this.obtenerClaveMes(r.fechaPago);
-      if (k) meses.add(k);
-    });
-
-    const ordenados = Array.from(meses).sort();
-    const opciones = ordenados.map((value) => ({
-      value,
-      label: this.formatearEtiquetaMes(value),
-    }));
-    this.mesesFiltroPagosOpciones = [
-      { value: '__all__', label: 'Todos los meses' },
-      ...opciones,
-    ];
-
-    const existeSeleccion = this.mesesFiltroPagosOpciones.some(
-      (o) => o.value === this.mesFiltroPagosSeleccionado,
-    );
-    if (!existeSeleccion) this.mesFiltroPagosSeleccionado = '__all__';
-    this.aplicarFiltroPagosGrid();
-  }
-
-  private aplicarFiltroPagosGrid(): void {
-    if (this.mesFiltroPagosSeleccionado === '__all__') {
-      this.pagosDataGrid = [...this.pagosData];
-      return;
-    }
-    this.pagosDataGrid = this.pagosData.filter(
-      (r) => this.obtenerClaveMes(r.fechaPago) === this.mesFiltroPagosSeleccionado,
-    );
-  }
-
-  private obtenerClaveMes(fechaIso: string): string {
-    const s = String(fechaIso ?? '').trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
-    return s.slice(0, 7);
-  }
-
-  private formatearEtiquetaMes(ym: string): string {
-    if (!/^\d{4}-\d{2}$/.test(ym)) return ym;
-    const [yy, mm] = ym.split('-');
-    const m = Number(mm);
-    const meses = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre',
-    ];
-    const nombreMes = meses[m - 1] ?? mm;
-    return `${nombreMes} ${yy}`;
   }
 
   private fechaIsoMasDias(isoDate: string, dias: number): string {
@@ -1806,6 +1809,9 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const rangoPagos = this.rangoFechasPagosPorDefecto();
+    this.fechaInicioFiltroPagos = rangoPagos.inicio;
+    this.fechaFinFiltroPagos = rangoPagos.fin;
     this.initPagoForm();
     this.cargarCatalogoMetodosPago();
     this.numeroSerie = this.route.snapshot.paramMap.get('numeroSerie') ?? '';
@@ -2056,7 +2062,9 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         }),
       )
       .subscribe((resp) => {
-        const lista = extraerServiciosArrendatarioListaPago(resp);
+        const lista = extraerServiciosArrendatarioListaPago(resp).filter(
+          (s) => !esServicioArrendatarioExcluidoHub(s.etiquetaTipoServicio),
+        );
         this.serviciosArrendatarioModalPago = lista;
         this.serviciosInmueblePago = lista.map((s) => ({
           id: s.id,
@@ -2284,7 +2292,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
           color: '#ffffff',
           icon: 'warning',
           title: 'Selecciona un servicio',
-          text: 'Elige el servicio pagado (Renta, Mantenimiento, …).',
+          text: 'Elige el tipo de servicio pagado (Agua, Internet, …).',
           confirmButtonText: 'Entendido',
         });
         return;

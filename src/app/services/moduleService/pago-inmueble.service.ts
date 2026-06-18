@@ -17,10 +17,22 @@ export class PagoInmuebleService {
     return this.http.post<unknown>(this.url, formData);
   }
 
-  obtenerPagosPaginados(page: number, limit: number): Observable<unknown> {
-    const params = new HttpParams()
-      .set('page', String(page))
-      .set('limit', String(limit));
+  obtenerPagosPaginados(opts: {
+    page: number;
+    limit: number;
+    fechaInicio: string;
+    fechaFin: string;
+    idInmueble?: number | null;
+  }): Observable<unknown> {
+    let params = new HttpParams()
+      .set('page', String(opts.page))
+      .set('limit', String(opts.limit))
+      .set('fechaInicio', opts.fechaInicio)
+      .set('fechaFin', opts.fechaFin);
+    const idInmueble = Number(opts.idInmueble);
+    if (Number.isFinite(idInmueble) && idInmueble > 0) {
+      params = params.set('idInmueble', String(Math.floor(idInmueble)));
+    }
     return this.http.get(`${this.url}/paginated`, { params });
   }
 

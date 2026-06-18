@@ -1,19 +1,5 @@
 /* Paridad exacta con monitoreo-instalacion (modal Agregar Pago). Estilos globales. */
 
-/* --- Botones y layout del formulario --- */
-.mono-pago-modal .docs-modal__btn--ghost {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  color: #e2e8f0 !important;
-  box-shadow: none !important;
-}
-
-.mono-pago-modal .docs-modal__btn--ghost:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.22) !important;
-}
-
 .mono-pago-modal .mono-pago-form-btn {
   min-height: 44px;
   padding: 0.62rem 1.5rem;
@@ -581,6 +567,8 @@ body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal 
 }
 
 .mono-pago-modal .renta-pago-resumen__field--destacado-total {
+  align-items: center;
+  text-align: center;
   border: 1px solid rgba(74, 222, 128, 0.78);
   background: linear-gradient(135deg, rgba(22, 101, 52, 0.88), rgba(6, 95, 70, 0.72));
   box-shadow:
@@ -591,10 +579,15 @@ body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal 
 
 .mono-pago-modal .renta-pago-resumen__field--destacado-total > span {
   color: #bbf7d0;
+  width: 100%;
+  text-align: center;
 }
 
 .mono-pago-modal .renta-pago-resumen__field--destacado-total p.is-money {
   color: #ecfdf5;
+  text-align: center;
+  font-size: clamp(1.18rem, 3.4vw, 1.62rem);
+  letter-spacing: 0.02em;
 }
 
 @keyframes renta-pago-resumen-monto-pulse {
@@ -666,6 +659,10 @@ body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal 
 
   .mono-pago-modal .renta-pago-resumen__field--destacado p.is-money {
     font-size: clamp(1.05rem, 5vw, 1.32rem);
+  }
+
+  .mono-pago-modal .renta-pago-resumen__field--destacado-total p.is-money {
+    font-size: clamp(1.28rem, 6vw, 1.72rem);
   }
 
   .mono-pago-modal .renta-pago-resumen__hero-row {

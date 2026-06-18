@@ -81,7 +81,9 @@ export class AuthInterceptor implements HttpInterceptor {
         }),
         catchError((refreshErr: HttpErrorResponse) => {
           this.refreshTokenSubject.next('');
-          this.authService.blockRefresh();
+          if (refreshErr?.status === 401) {
+            this.authService.blockRefresh();
+          }
           return throwError(() => refreshErr);
         }),
         finalize(() => {

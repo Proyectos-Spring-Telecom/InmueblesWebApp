@@ -185,10 +185,32 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
     return hit?.label ?? '';
   }
 
+  private rangoFechasApiPorDefecto(): { inicio: string; fin: string } {
+    const hoy = new Date();
+    const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
+    return {
+      inicio: this.toIsoFecha(inicioAnio),
+      fin: this.toIsoFecha(hoy),
+    };
+  }
+
+  private toIsoFecha(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   cargarPagosGrid(): void {
     this.loading = true;
+    const rango = this.rangoFechasApiPorDefecto();
     this.pagoArrendatarioService
-      .obtenerPagosPaginados(1, 500)
+      .obtenerPagosPaginados({
+        page: 1,
+        limit: 500,
+        fechaInicio: rango.inicio,
+        fechaFin: rango.fin,
+      })
       .pipe(
         take(1),
         finalize(() => {

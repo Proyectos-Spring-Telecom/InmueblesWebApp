@@ -179,6 +179,21 @@ export const navItems: NavItem[] = [
       
     ],
   },
+  {
+    navCap: 'Reportes',
+  },
+  {
+    displayName: 'Servicios Inmueble',
+    iconName: 'building',
+    route: '/registro-servicios-inmuebles',
+    permission: Permiso.CONSULTA_CLIENTE,
+  },
+  {
+    displayName: 'Servicios Arrendatarios',
+    iconName: 'users',
+    route: '/registro-servicios-arrendatarios',
+    permission: Permiso.CONSULTA_CLIENTE,
+  },
   /* {
     displayName: 'Oficinas Centrales',
     iconName: 'antenna',

@@ -333,3 +333,48 @@ export function construirFormDataPagoArrendatario(
   fd.append('ComprobantePagoArchivo', comprobante, comprobante.name);
   return fd;
 }
+
+export function construirFormDataPagoInmueble(
+  idInmueble: number,
+  v: {
+    idServicioInmueble: number | null;
+    concepto: string;
+    fechaPago: string;
+    monto: string;
+    idMetodoPago: number | null;
+    estatus: PagoEstatusUi;
+  },
+  montoN: number,
+  comprobante: File,
+): FormData {
+  const fd = new FormData();
+  const fecha = String(v.fechaPago ?? '').trim();
+  const fechaPagoApi = fecha.length === 10 ? `${fecha}T12:00:00.000Z` : fecha;
+
+  fd.append('idInmueble', String(Math.floor(idInmueble)));
+
+  const idServicio = Number(v.idServicioInmueble);
+  if (Number.isFinite(idServicio) && idServicio > 0) {
+    fd.append('idServicioInmueble', String(Math.floor(idServicio)));
+  }
+
+  const concepto = String(v.concepto ?? '').trim();
+  if (concepto) {
+    fd.append('concepto', concepto);
+  }
+
+  fd.append('fechaPago', fechaPagoApi);
+  fd.append('monto', String(montoN));
+
+  const idMetodo = Number(v.idMetodoPago);
+  if (Number.isFinite(idMetodo) && idMetodo > 0) {
+    fd.append('idMetodoPago', String(Math.floor(idMetodo)));
+  }
+
+  if (v.estatus != null) {
+    fd.append('estatus', String(estatusPagoToApi(v.estatus)));
+  }
+
+  fd.append('ComprobantePagoArchivo', comprobante, comprobante.name);
+  return fd;
+}

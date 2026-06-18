@@ -1,14 +1,28 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { DxDataGridComponent } from 'devextreme-angular';
+import { DxDataGridComponent, DxPieChartComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import {
   ArrendatarioGridRow,
   mapArrendatariosApiToGridRows,
 } from '../arrendatarios-list.mapper';
+import {
+  ArrendatarioDashboardData,
+  construirGraficaMensualidadLocales,
+  construirGraficaPagosConcepto,
+  construirGraficaRentaEstado,
+  DashboardMensualidadLocalBar,
+  DashboardPagoConceptoBar,
+  DashboardRentaEstadoSlice,
+  etiquetaMes,
+  formatearFecha,
+  formatearMoneda,
+  normalizarDashboardArrendatario,
+} from '../arrendatario-dashboard.mapper';
 
 @Component({
   selector: 'app-lista-arrendatarios',
@@ -41,12 +55,31 @@ export class ListaArrendatariosComponent implements OnInit {
   private readonly apiKey = 'AIzaSyDuJ3IBZIs2mRbR4alTg7OZIsk0sXEJHhg';
   private readonly pinUrl = 'assets/images/logos/marker_spring.webp';
 
-  @ViewChild('gridContainer', { static: false })
-  dataGrid!: DxDataGridComponent;
+  mostrarModalDashboard = false;
+  dashboardTitulo = '';
+  dashboardCargando = false;
+  private dashboardData: ArrendatarioDashboardData | null = null;
+  dashboardRentaEstadoData: DashboardRentaEstadoSlice[] = [];
+  dashboardMensualidadData: DashboardMensualidadLocalBar[] = [];
+  dashboardPagosData: DashboardPagoConceptoBar[] = [];
+
+  formatearFecha = formatearFecha;
+  formatearMoneda = formatearMoneda;
+  etiquetaMes = etiquetaMes;
+
+  @ViewChild('pieDashboardRentaEstado', { static: false })
+  pieDashboardRentaEstado?: DxPieChartComponent;
+
+  @ViewChild('chartDashboardMensualidad', { static: false })
+  chartDashboardMensualidad?: { instance?: { render?: () => void } };
+
+  @ViewChild('chartDashboardPagos', { static: false })
+  chartDashboardPagos?: { instance?: { render?: () => void } };
 
   constructor(
     private router: Router,
     private arrendatariosService: ArrendatariosService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -210,6 +243,172 @@ export class ListaArrendatariosComponent implements OnInit {
     this.mapaLng = null;
   }
 
+  verDashboardArrendatario(row: ArrendatarioGridRow): void {
+    const id = Number(row?.id);
+    if (!Number.isFinite(id) || id <= 0) return;
+    this.dashboardTitulo = row.arrendatario ?? `Arrendatario #${id}`;
+    this.dashboardData = null;
+    this.dashboardRentaEstadoData = [];
+    this.dashboardMensualidadData = [];
+    this.dashboardPagosData = [];
+    this.dashboardCargando = true;
+    this.mostrarModalDashboard = true;
+
+    const { fechaInicio, fechaFin } = this.rangoFechasDashboard();
+    this.arrendatariosService.obtenerDashboardArrendatario(Math.floor(id), fechaInicio, fechaFin)
+      .pipe(take(1))
+      .subscribe({
+        next: (res: unknown) => {
+          this.dashboardData = normalizarDashboardArrendatario(res);
+          this.dashboardRentaEstadoData = construirGraficaRentaEstado(
+            this.dashboardData?.resumen ?? null,
+          );
+          this.dashboardMensualidadData = construirGraficaMensualidadLocales(
+            this.dashboardData?.locales ?? [],
+          );
+          this.dashboardPagosData = construirGraficaPagosConcepto(
+            this.dashboardData?.pagos ?? [],
+          );
+          if (this.dashboardData?.arrendatario?.nombre) {
+            this.dashboardTitulo = this.dashboardData.arrendatario.nombre;
+          }
+          this.dashboardCargando = false;
+          this.refrescarGraficasDashboard();
+        },
+        error: () => {
+          this.dashboardCargando = false;
+        },
+      });
+  }
+
+  cerrarModalDashboard(): void {
+    this.mostrarModalDashboard = false;
+    this.dashboardTitulo = '';
+    this.dashboardData = null;
+    this.dashboardRentaEstadoData = [];
+    this.dashboardMensualidadData = [];
+    this.dashboardPagosData = [];
+    this.dashboardCargando = false;
+  }
+
+  get dashboard(): ArrendatarioDashboardData | null { return this.dashboardData; }
+
+  get dashboardResumen() { return this.dashboardData?.resumen ?? null; }
+
+  get dashboardInfo() { return this.dashboardData?.arrendatario ?? null; }
+
+  get dashboardContratos() { return this.dashboardData?.contratos ?? []; }
+
+  get dashboardZonas() { return this.dashboardData?.zonas ?? []; }
+
+  get dashboardLocales() { return this.dashboardData?.locales ?? []; }
+
+  get dashboardRentaActual() { return this.dashboardData?.rentaActual ?? []; }
+
+  get dashboardPagos() { return this.dashboardData?.pagos ?? []; }
+
+  get dashboardRentaPagadaTotal(): number {
+    return this.dashboardRentaActual
+      .filter((r) => r.pagada)
+      .reduce((sum, r) => sum + r.montoFinalTotal, 0);
+  }
+
+  get dashboardRentaPendienteTotal(): number {
+    return this.dashboardRentaActual
+      .filter((r) => !r.pagada)
+      .reduce((sum, r) => sum + r.montoFinalTotal, 0);
+  }
+
+  get dashboardFiltros() { return this.dashboardData?.filtros ?? null; }
+
+  claseEstatusPago(estatus: string): string {
+    const e = (estatus ?? '').toLowerCase();
+    if (e.includes('pagad')) return 'dash-badge dash-badge--pagado';
+    if (e.includes('pend')) return 'dash-badge dash-badge--pendiente';
+    return 'dash-badge';
+  }
+
+  customizarPuntoRentaEstadoDashboard = (pointInfo: {
+    data?: DashboardRentaEstadoSlice;
+  }): Record<string, unknown> => ({
+    color: pointInfo?.data?.color ?? '#888',
+  });
+
+  customizarTooltipRentaEstadoDashboard = (info: {
+    argumentText?: string;
+    valueText?: string;
+    percentText?: string;
+    point?: { data?: DashboardRentaEstadoSlice };
+  }): { text: string } => {
+    const data = info.point?.data;
+    const cantidad = Number(data?.cantidad ?? info.valueText ?? 0);
+    const total = Number(data?.totalRentas ?? this.dashboardResumen?.rentasPagadas ?? 0)
+      + Number(this.dashboardResumen?.rentasPendientes ?? 0);
+    const lineas = [
+      String(info.argumentText ?? ''),
+      total > 0 ? `${cantidad} de ${total} rentas` : `${cantidad} rentas`,
+      info.percentText ?? '',
+    ];
+    return { text: lineas.filter(Boolean).join('\n') };
+  };
+
+  customizarLabelRentaEstadoDashboard = (info: {
+    point?: { data?: DashboardRentaEstadoSlice };
+  }): string => {
+    const data = info.point?.data;
+    const cantidad = Number(data?.cantidad ?? 0);
+    const total = Number(data?.totalRentas ?? 0);
+    if (total > 0) return `${cantidad} de ${total}`;
+    return String(cantidad);
+  };
+
+  customizarLeyendaRentaEstadoDashboard = (info: { pointName?: string }): string => {
+    const resumen = this.dashboardResumen;
+    const nombre = String(info.pointName ?? '');
+    if (!resumen) return nombre;
+    const total = resumen.rentasPagadas + resumen.rentasPendientes;
+    if (nombre === 'Pagadas') return `Pagadas (${resumen.rentasPagadas} de ${total})`;
+    if (nombre === 'Pendientes') return `Pendientes (${resumen.rentasPendientes} de ${total})`;
+    return nombre;
+  };
+
+  customizarTooltipMonedaDashboard = (info: {
+    argumentText?: string;
+    valueText?: string;
+    seriesName?: string;
+  }): { text: string } => {
+    const monto = Number(String(info.valueText ?? '').replace(/[^\d.-]/g, ''));
+    const valor = Number.isFinite(monto)
+      ? formatearMoneda(monto)
+      : String(info.valueText ?? '');
+    return {
+      text: [info.seriesName ?? info.argumentText ?? '', valor].filter(Boolean).join('\n'),
+    };
+  };
+
+  private refrescarGraficasDashboard(): void {
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.pieDashboardRentaEstado?.instance?.render?.();
+      this.chartDashboardMensualidad?.instance?.render?.();
+      this.chartDashboardPagos?.instance?.render?.();
+    }, 0);
+  }
+
+  private rangoFechasDashboard(): { fechaInicio: string; fechaFin: string } {
+    return {
+      fechaInicio: '2026-01-01',
+      fechaFin: this.fechaApiDesdeDate(new Date()),
+    };
+  }
+
+  private fechaApiDesdeDate(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
   private limpiarMapaListaModal(): void {
     const marker = this.marker as { setMap?: (m: null) => void } | null;
     if (marker?.setMap) marker.setMap(null);
@@ -287,4 +486,7 @@ export class ListaArrendatariosComponent implements OnInit {
       },
     });
   }
+
+  @ViewChild('gridContainer', { static: false })
+  dataGrid!: DxDataGridComponent;
 }

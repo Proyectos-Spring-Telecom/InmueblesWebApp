@@ -1444,23 +1444,6 @@ dx-tag-container {
   padding-top: 0.55rem;
 }
 
-.docs-modal__btn {
-  padding: 0.35rem 0.9rem;
-  border-radius: 999px;
-  border: none;
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  background: linear-gradient(135deg, #596dff, #8a9dff);
-  color: #ffffff;
-  cursor: pointer;
-}
-
-.docs-modal__btn--ghost {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  color: #d8e2ff;
-}
-
 .locales-builder {
   border: 1px solid rgba(150, 173, 211, 0.25);
   border-radius: 14px;

@@ -333,21 +333,36 @@
           <header class="mono-grid-card__head mono-grid-card__head--actions">
             <h5 class="m-0">Pagos</h5>
             <div class="mono-pagos-head-actions">
-              <div class="mono-pagos-mes-filter">
-                <label class="form-label mb-1 mono-pagos-mes-filter__label">Filtrar mes</label>
-                <select
-                  class="form-select form-select-sm mono-pagos-mes-filter__select"
-                  [value]="mesFiltroPagosSeleccionado"
-                  (change)="onMesFiltroPagosChange($event)"
-                >
-                  <option
-                    *ngFor="let mes of mesesFiltroPagosOpciones"
-                    [value]="mes.value"
-                  >
-                    {{ mes.label }}
-                  </option>
-                </select>
+              <div class="mono-pagos-fechas-filter">
+                <label class="form-label mb-1 mono-pagos-fechas-filter__label" for="monoPagosFechaInicio">
+                  Fecha inicio <span class="text-danger">*</span>
+                </label>
+                <input
+                  id="monoPagosFechaInicio"
+                  type="date"
+                  class="form-control form-control-sm mono-pagos-fechas-filter__input"
+                  [(ngModel)]="fechaInicioFiltroPagos"
+                />
               </div>
+              <div class="mono-pagos-fechas-filter">
+                <label class="form-label mb-1 mono-pagos-fechas-filter__label" for="monoPagosFechaFin">
+                  Fecha fin <span class="text-danger">*</span>
+                </label>
+                <input
+                  id="monoPagosFechaFin"
+                  type="date"
+                  class="form-control form-control-sm mono-pagos-fechas-filter__input"
+                  [(ngModel)]="fechaFinFiltroPagos"
+                />
+              </div>
+              <button type="button" class="mono-grid-action-btn mono-grid-action-btn--filter" (click)="aplicarFiltrosPagos()">
+                <mat-icon aria-hidden="true">search</mat-icon>
+                <span>Consultar</span>
+              </button>
+              <button type="button" class="mono-grid-action-btn mono-grid-action-btn--filter" (click)="limpiarFiltrosPagos()">
+                <mat-icon aria-hidden="true">refresh</mat-icon>
+                <span>Restablecer</span>
+              </button>
               <button type="button" class="mono-grid-action-btn" (click)="abrirModalPago()">
                 <mat-icon aria-hidden="true">add</mat-icon>
                 <span>Agregar Pago</span>
@@ -356,7 +371,7 @@
           </header>
           <div class="mono-grid-card__body">
             <dx-data-grid
-              [dataSource]="pagosDataGrid"
+              [dataSource]="pagosData"
               [columnAutoWidth]="true"
               [showBorders]="false"
               [rowAlternationEnabled]="true"
