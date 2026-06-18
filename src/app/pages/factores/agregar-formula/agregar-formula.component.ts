@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { FactoresService } from 'src/app/services/moduleService/factores.service';
+import { environment } from 'src/environments/environment';
 import {
   FormulaPayload,
   FormulasService,
@@ -116,7 +117,7 @@ export class AgregarFormulaComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private formulasService: FormulasService,
-    private factoresService: FactoresService,
+    private http: HttpClient,
     private activatedRouted: ActivatedRoute,
     private route: Router,
   ) {}
@@ -154,36 +155,51 @@ export class AgregarFormulaComponent implements OnInit {
     });
   }
 
+  private roundValorFactor(valor: number): number {
+    return parseFloat(valor.toFixed(3));
+  }
+
+  private formatValorFactor(valor: number): string {
+    return this.roundValorFactor(valor).toFixed(3);
+  }
+
   private cargarCatalogoFactoresParaFormula(): void {
     this.cargandoVariablesFactores = true;
-    this.factoresService.obtenerFactoresData(1, 300).subscribe({
-      next: (resp: any) => {
+    this.http.get<{ data?: unknown[] }>(`${environment.API_SECURITY}/factores/listado`).subscribe({
+      next: (resp) => {
         this.cargandoVariablesFactores = false;
-        const rows: any[] = Array.isArray(resp?.data) ? resp.data : [];
-        const map = new Map<string, { desc: string; valor: number | null }>();
+        const rows = (Array.isArray(resp?.data) ? resp.data : [])
+          .map((item) => item as Record<string, unknown>)
+          .sort(
+            (a, b) =>
+              Number(a['id'] ?? a['Id'] ?? 0) - Number(b['id'] ?? b['Id'] ?? 0),
+          );
 
-        for (const item of rows) {
-          const est = Number(item?.estatus ?? item?.Estatus ?? 1);
+        const vistos = new Set<string>();
+        const factores: FactorOpcionFormula[] = [];
+
+        for (const row of rows) {
+          const est = Number(row['estatus'] ?? row['Estatus'] ?? 1);
           if (est === 0) continue;
           const variable = String(
-            item?.variable ?? item?.Variable ?? item?.nombre ?? item?.Nombre ?? '',
+            row['variable'] ?? row['Variable'] ?? row['nombre'] ?? row['Nombre'] ?? '',
           ).trim();
-          if (!variable || map.has(variable)) continue;
-          const desc   = String(item?.descripcion ?? item?.Descripcion ?? '').trim();
-          const rawVal = item?.valor ?? item?.Valor ?? null;
-          const parsed = parseValorNumerico(rawVal);
-          const valor = Number.isFinite(parsed) ? parsed : null;
-          map.set(variable, { desc: desc.slice(0, 80), valor });
-        }
+          if (!variable || vistos.has(variable)) continue;
+          vistos.add(variable);
 
-        this.factoresParaSelectFormula = [...map.entries()]
-          .sort(([a], [b]) => a.localeCompare(b, 'es'))
-          .map(([variable, { desc, valor }]) => ({
+          const desc = String(row['descripcion'] ?? row['Descripcion'] ?? '').trim();
+          const rawVal = row['valor'] ?? row['Valor'] ?? null;
+          const parsed = parseValorNumerico(rawVal);
+          const valor = Number.isFinite(parsed) ? this.roundValorFactor(parsed) : null;
+
+          factores.push({
             variable,
             etiqueta: desc ? `${variable} — ${desc}` : variable,
             valor,
-          }));
+          });
+        }
 
+        this.factoresParaSelectFormula = factores;
         this.calcularPreview();
       },
       error: () => {
@@ -191,6 +207,33 @@ export class AgregarFormulaComponent implements OnInit {
         this.factoresParaSelectFormula = [];
       },
     });
+  }
+
+  private variablesEnExpresion(expr: string): string[] {
+    const encontradas: string[] = [];
+    const ordenadas = [...this.factoresParaSelectFormula].sort(
+      (a, b) => b.variable.length - a.variable.length,
+    );
+
+    for (const factor of ordenadas) {
+      const variable = factor.variable;
+      if (!variable || !expr.includes(variable)) continue;
+      if (!encontradas.includes(variable)) {
+        encontradas.push(variable);
+      }
+    }
+
+    return encontradas;
+  }
+
+  private tokensDesconocidosEnExpresion(expr: string, conocidas: string[]): string[] {
+    let limpia = expr;
+    const ordenadas = [...conocidas].sort((a, b) => b.length - a.length);
+    for (const variable of ordenadas) {
+      limpia = limpia.split(variable).join(' ');
+    }
+    limpia = limpia.replace(/[0-9.+\-*/()\s]/g, ' ').trim();
+    return [...new Set(limpia.split(/\s+/).filter(Boolean))];
   }
 
   // ─── Constructor de expresión por botones ─────────────────────────────────
@@ -201,9 +244,7 @@ export class AgregarFormulaComponent implements OnInit {
 
   variableUsadaEnFormula(variable: string): boolean {
     const expr = String(this.formulaForm?.get('formula')?.value ?? '');
-    if (!expr.trim()) return false;
-    const escaped = variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(`(^|[^A-Z0-9_])${escaped}([^A-Z0-9_]|$)`).test(expr);
+    return variable !== '' && expr.includes(variable);
   }
 
   agregarToken(token: string): void {
@@ -235,10 +276,21 @@ export class AgregarFormulaComponent implements OnInit {
   borrarUltimo(): void {
     const ctrl = this.formulaForm.get('formula');
     if (!ctrl) return;
-    const current = String(ctrl.value ?? '');
-    // Borrar el último token completo (variable, operador o número)
-    const trimmed = current.trimEnd();
-    const match   = trimmed.match(/^(.*?)(\s*[A-Z0-9_.]+|\s*[+\-*/()])\s*$/s);
+    const current = String(ctrl.value ?? '').trimEnd();
+    if (!current) return;
+
+    const variablesOrdenadas = [...this.factoresParaSelectFormula]
+      .map((f) => f.variable)
+      .sort((a, b) => b.length - a.length);
+    for (const variable of variablesOrdenadas) {
+      if (variable && current.endsWith(variable)) {
+        ctrl.setValue(current.slice(0, current.length - variable.length).trimEnd());
+        ctrl.markAsDirty();
+        return;
+      }
+    }
+
+    const match = current.match(/^(.*?)(\s*[+\-*/()]|\s*[0-9.]+)\s*$/);
     if (match) {
       ctrl.setValue(match[1].trimEnd());
     } else {
@@ -263,21 +315,22 @@ export class AgregarFormulaComponent implements OnInit {
       return;
     }
 
-    const variables: string[] = [...new Set<string>(expr.match(/[A-Z_][A-Z0-9_]*/g) ?? [])];
+    const variables = this.variablesEnExpresion(expr);
+    const desconocidas = this.tokensDesconocidosEnExpresion(expr, variables);
 
-    const faltantes: string[] = [];
-    const sinValor:  string[] = [];
+    const faltantes: string[] = [...desconocidas];
+    const sinValor: string[] = [];
 
     for (const v of variables) {
       const factor = this.factoresParaSelectFormula.find((f) => f.variable === v);
-      if (!factor)            faltantes.push(v);
-      else if (!factor.valor && factor.valor !== 0) sinValor.push(v);
+      if (!factor) faltantes.push(v);
+      else if (factor.valor == null || !Number.isFinite(factor.valor)) sinValor.push(v);
     }
 
     if (faltantes.length) {
       this.previewState = {
         ok: false,
-        mensaje: `Variable${faltantes.length > 1 ? 's' : ''} no encontrada${faltantes.length > 1 ? 's' : ''} en Factores: ${faltantes.join(', ')}`,
+        mensaje: `Variable${faltantes.length > 1 ? 's' : ''} no encontrada${faltantes.length > 1 ? 's' : ''} en Factores: ${[...new Set(faltantes)].join(', ')}`,
       };
       return;
     }
@@ -290,27 +343,12 @@ export class AgregarFormulaComponent implements OnInit {
       return;
     }
 
-    // Sustituir — reemplazar cada variable por su valor numérico
+    // Sustituir — reemplazar cada variable por su valor numérico (más largas primero)
     let sustituida = expr;
-    for (const v of variables) {
+    const variablesOrdenadas = [...variables].sort((a, b) => b.length - a.length);
+    for (const v of variablesOrdenadas) {
       const factor = this.factoresParaSelectFormula.find((f) => f.variable === v)!;
-      // Reemplazar todas las ocurrencias exactas de la variable
-      let result = '';
-      let i = 0;
-      while (i < sustituida.length) {
-        if (
-          sustituida.startsWith(v, i) &&
-          !/[A-Z0-9_]/.test(sustituida[i - 1] ?? '') &&
-          !/[A-Z0-9_]/.test(sustituida[i + v.length] ?? '')
-        ) {
-          result += String(factor.valor);
-          i += v.length;
-        } else {
-          result += sustituida[i];
-          i++;
-        }
-      }
-      sustituida = result;
+      sustituida = sustituida.split(v).join(this.formatValorFactor(factor.valor!));
     }
 
     try {
@@ -318,7 +356,7 @@ export class AgregarFormulaComponent implements OnInit {
       this.previewState = {
         ok: true,
         expresionSustituida: sustituida.trim(),
-        resultado: parseFloat(resultado.toFixed(4)),
+        resultado: this.roundValorFactor(resultado),
       };
     } catch (e: any) {
       this.previewState = {
@@ -332,7 +370,7 @@ export class AgregarFormulaComponent implements OnInit {
     if (!this.previewState?.ok) return '';
     const resultado = (this.previewState as PreviewResultado).resultado;
     const tipo      = this.formulaForm.get('tipoResultado')?.value;
-    if (tipo === 'PORCENTAJE') return `${resultado.toFixed(4)}`;
+    if (tipo === 'PORCENTAJE') return this.formatValorFactor(resultado);
     return resultado.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 });
   }
 

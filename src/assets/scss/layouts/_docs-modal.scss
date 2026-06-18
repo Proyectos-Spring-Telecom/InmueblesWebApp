@@ -1,0 +1,101 @@
+/* Botones de pie y acciones en modales docs-modal / contract-docs-modal.
+   Presentación alineada al contrato de botones del proyecto (borde claro, fondo semitransparente, radio 8px). */
+
+.docs-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  appearance: button;
+  min-height: 44px;
+  min-width: 9rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  border: 2px solid rgba(138, 157, 255, 0.92);
+  background: rgba(89, 109, 255, 0.26);
+  color: #ffffff;
+  cursor: pointer;
+  font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
+  font-size: 0.9375rem;
+  line-height: 1.15;
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow:
+    rgba(255, 255, 255, 0.14) 0 1px 2px inset,
+    0 0 0 1px rgba(89, 109, 255, 0.2);
+  box-sizing: border-box;
+  transition:
+    color 0.13s ease-in-out,
+    background 0.13s ease-in-out,
+    opacity 0.13s ease-in-out,
+    box-shadow 0.13s ease-in-out,
+    filter 0.13s ease-in-out;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.docs-modal__btn:hover {
+  filter: brightness(1.08);
+}
+
+.docs-modal__btn:active {
+  filter: brightness(0.92);
+}
+
+.docs-modal__btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.24);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.docs-modal__btn--ghost:hover {
+  filter: brightness(1.08);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.docs-modal__btn--ghost:active {
+  filter: brightness(0.92);
+}
+
+.contract-docs-modal .docs-modal__btn {
+  min-height: 44px;
+  padding: 0.62rem 1.5rem;
+  font-size: 0.95rem;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #ffffff;
+  background: rgba(91, 110, 246, 0.26);
+  border: 2px solid rgba(129, 140, 248, 0.92);
+  box-shadow:
+    rgba(255, 255, 255, 0.14) 0 1px 2px inset,
+    0 0 0 1px rgba(91, 110, 246, 0.2);
+}
+
+.contract-docs-modal .docs-modal__btn:hover,
+.contract-docs-modal .docs-modal__btn:active {
+  transform: none;
+  filter: brightness(1.08);
+}
+
+.contract-docs-modal .docs-modal__btn:active {
+  filter: brightness(0.92);
+}
+
+@media (max-width: 768px) {
+  .docs-modal__footer .d-flex {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .docs-modal__btn {
+    width: 100%;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .contract-docs-modal .docs-modal__btn {
+    width: 100%;
+  }
+}

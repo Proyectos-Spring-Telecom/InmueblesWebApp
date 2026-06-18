@@ -120,27 +120,6 @@
     margin-top: 0.1rem;
 }
 
-.docs-modal__btn {
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    border: none;
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: linear-gradient(135deg, #596dff, #8a9dff);
-    color: #ffffff;
-    cursor: pointer;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
-    transition: background 0.15s ease-out, transform 0.12s ease-out, box-shadow 0.15s ease-out;
-}
-
-.docs-modal__btn:hover {
-    background: linear-gradient(135deg, #6a7cff, #9faeff);
-    transform: translateY(-1px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
-}
-
 .docs-modal__link {
     display: inline-flex;
     align-items: center;
@@ -173,12 +152,6 @@
     .docs-modal__footer .d-flex {
         flex-direction: column;
         align-items: stretch !important;
-    }
-
-    .docs-modal__btn {
-        width: 100%;
-        justify-content: center;
-        text-align: center;
     }
 }
 

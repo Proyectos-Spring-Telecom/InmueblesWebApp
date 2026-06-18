@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { DxButtonModule, DxDataGridModule, DxPieChartModule } from 'devextreme-angular';
+import { DxButtonModule, DxChartModule, DxDataGridModule, DxPieChartModule } from 'devextreme-angular';
 import { DxAccordionModule } from 'devextreme-angular/ui/accordion';
 import { MaterialModule } from 'src/app/material.module';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
@@ -31,6 +31,7 @@ import { ListaInmueblesComponent } from './lista-inmuebles/lista-inmuebles.compo
     HasPermissionDirective,
     DocumentoPreviewModule,
     DxPieChartModule,
+    DxChartModule,
   ],
 })
 export class InmueblesModule {}

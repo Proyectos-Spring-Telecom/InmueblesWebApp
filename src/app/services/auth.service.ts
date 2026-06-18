@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import {
   Observable,
@@ -90,7 +90,8 @@ export class AuthenticationService extends BaseServicesService {
 
   /**
    * Comprueba con el servidor que la sesión sigue vigente.
-   * Si hay tokens locales inválidos o expirados, limpia la sesión y devuelve false.
+   * Si falla (p. ej. access expirado), no limpia tokens ni fuerza login: el interceptor
+   * renovará con /login/refresh ante 401 en peticiones de negocio.
    */
   public ensureSessionValid(): Observable<boolean> {
     if (!this.isAuthenticated()) {
@@ -102,10 +103,7 @@ export class AuthenticationService extends BaseServicesService {
     if (!this.sessionCheck$) {
       this.sessionCheck$ = this.getMe().pipe(
         map(() => true),
-        catchError(() => {
-          this.clearSessionOnly();
-          return of(false);
-        }),
+        catchError(() => of(this.isAuthenticated())),
         finalize(() => {
           this.sessionCheck$ = null;
         }),
@@ -128,15 +126,7 @@ export class AuthenticationService extends BaseServicesService {
         { refreshToken },
         { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
       )
-      .pipe(
-        tap((resp) => this.persistTokens(resp)),
-        catchError((err: unknown) => {
-          if (err instanceof HttpErrorResponse && err.status === 401) {
-            this.clearSessionOnly();
-          }
-          return throwError(() => err);
-        })
-      );
+      .pipe(tap((resp) => this.persistTokens(resp)));
   }
 
   public logout(): Observable<void> {

@@ -17,10 +17,22 @@ export class PagoArrendatarioService {
     return this.http.post<unknown>(this.url, formData);
   }
 
-  obtenerPagosPaginados(page: number, limit: number): Observable<unknown> {
-    const params = new HttpParams()
-      .set('page', String(page))
-      .set('limit', String(limit));
+  obtenerPagosPaginados(opts: {
+    page: number;
+    limit: number;
+    fechaInicio: string;
+    fechaFin: string;
+    idArrendatario?: number | null;
+  }): Observable<unknown> {
+    let params = new HttpParams()
+      .set('page', String(opts.page))
+      .set('limit', String(opts.limit))
+      .set('fechaInicio', opts.fechaInicio)
+      .set('fechaFin', opts.fechaFin);
+    const idArrendatario = Number(opts.idArrendatario);
+    if (Number.isFinite(idArrendatario) && idArrendatario > 0) {
+      params = params.set('idArrendatario', String(Math.floor(idArrendatario)));
+    }
     return this.http.get(`${this.url}/paginated`, { params });
   }
 

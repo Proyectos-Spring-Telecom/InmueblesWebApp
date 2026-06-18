@@ -158,6 +158,20 @@ export const routes: Routes = [
             (m) => m.EstacionamientoModule
           ),
       },
+      {
+        path: 'registro-servicios-inmuebles',
+        loadChildren: () =>
+          import('./pages/registro-servicios-inmuebles/registro-servicios-inmuebles.module').then(
+            (m) => m.RegistroServiciosInmueblesModule,
+          ),
+      },
+      {
+        path: 'registro-servicios-arrendatarios',
+        loadChildren: () =>
+          import('./pages/registro-servicios-arrendatarios/registro-servicios-arrendatarios.module').then(
+            (m) => m.RegistroServiciosArrendatariosModule,
+          ),
+      },
     ],
   },
 

@@ -1,0 +1,494 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
+  <header class="perm-head" role="region" aria-label="Sección: Servicios inmueble">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>apartment</mat-icon>
+    </div>
+    <div class="perm-head__text">
+      <span class="eyebrow">Reportes</span>
+      <h2>Servicios inmueble</h2>
+    </div>
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Reportes</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Servicios inmueble</span>
+    </nav>
+  </header>
+
+  <div class="surface">
+    <div class="hist-renta-filtros-panel w-100">
+      <div class="hist-renta-filtros-panel__grid">
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvInmFechaInicio">
+            Fecha inicio <span class="text-danger">*</span>
+          </label>
+          <input
+            id="regSrvInmFechaInicio"
+            type="date"
+            class="form-control form-control-sm hist-renta-filtro-fechas__input"
+            [(ngModel)]="fechaInicioFiltro"
+          />
+        </div>
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvInmFechaFin">
+            Fecha fin <span class="text-danger">*</span>
+          </label>
+          <input
+            id="regSrvInmFechaFin"
+            type="date"
+            class="form-control form-control-sm hist-renta-filtro-fechas__input"
+            [(ngModel)]="fechaFinFiltro"
+          />
+        </div>
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvInmInmueble">Inmueble</label>
+          <select
+            id="regSrvInmInmueble"
+            class="form-select form-select-sm hist-renta-filtro-fechas__input"
+            [(ngModel)]="idInmuebleFiltro"
+            [disabled]="catalogosFiltroCargando"
+          >
+            <option [ngValue]="null">Todos</option>
+            <option *ngFor="let i of inmueblesOpciones" [ngValue]="i.id">{{ i.label }}</option>
+          </select>
+        </div>
+        <div class="hist-renta-filtros-panel__accion">
+          <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
+            <i class="fa fa-filter"></i> Filtrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-10 align-items-end justify-content-end w-100 inm-lista__toolbar mt-5">
+      <button type="button" (click)="abrirModalPago()" mat-flat-button class="bg-primary">
+        <i class="fa fa-plus" aria-hidden="true"></i> Registrar pago
+      </button>
+      <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
+        <i class="fa fa-eraser"></i> Limpiar
+      </button>
+    </div>
+
+    <div class="mt-1">
+      <dx-data-grid
+        #gridContainer
+        id="gridRegistroServiciosInmuebles"
+        class="inm-data-grid"
+        [columnAutoWidth]="true"
+        [columnHidingEnabled]="true"
+        [hoverStateEnabled]="false"
+        [showBorders]="true"
+        [showColumnLines]="false"
+        [showRowLines]="true"
+        [rowAlternationEnabled]="true"
+        [dataSource]="listaPagos"
+        [keyExpr]="'id'"
+        [width]="'100%'"
+        [remoteOperations]="{ paging: true }"
+        [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin pagos de servicios en el rango seleccionado'"
+        [pager]="{
+          showPageSizeSelector: true,
+          allowedPageSizes: [20],
+          showInfo: true,
+          visible: true
+        }"
+        (onPageIndexChanged)="onPageIndexChanged($event)"
+        (onOptionChanged)="onGridOptionChanged($event)"
+      >
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar pago..."></dxo-search-panel>
+        <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+        <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+
+        <dxi-column
+          caption="Acciones"
+          cellTemplate="accionesTpl"
+          alignment="center"
+          [allowFiltering]="false"
+          [allowSorting]="false"
+        ></dxi-column>
+        <dxi-column dataField="entidadLabel" caption="Inmueble" alignment="center"></dxi-column>
+        <dxi-column dataField="concepto" caption="Concepto" alignment="center"></dxi-column>
+        <dxi-column dataField="fechaPago" caption="Fecha de pago" dataType="date" alignment="center"></dxi-column>
+        <dxi-column
+          dataField="monto"
+          caption="Monto"
+          dataType="number"
+          [customizeText]="formatoMoneda"
+          alignment="center"
+        ></dxi-column>
+        <dxi-column dataField="metodo" caption="Método" alignment="center"></dxi-column>
+        <dxi-column
+          dataField="estatus"
+          caption="Estatus"
+          alignment="center"
+          cellTemplate="estatusTpl"
+        ></dxi-column>
+
+        <div *dxTemplate="let cell of 'estatusTpl'" class="d-flex justify-content-center">
+          <span [ngClass]="clasesEstatusPago(cell.value)">{{ cell.value }}</span>
+        </div>
+
+        <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
+          <div>
+            <button
+              type="button"
+              id="detalleIns"
+              class="btnAcciones"
+              title="Ver detalle"
+              (click)="abrirModalDetalle(row.data); $event.stopPropagation()"
+            >
+              <i class="fa fa-eye"></i>
+            </button>
+          </div>
+          <div>
+            <button
+              type="button"
+              id="actualizarButton"
+              class="btnAcciones"
+              title="Cambiar estatus"
+              (click)="solicitarCambioEstatus(row.data); $event.stopPropagation()"
+            >
+              <i class="fa fa-exchange"></i>
+            </button>
+          </div>
+        </div>
+      </dx-data-grid>
+    </div>
+  </div>
+</div>
+
+<ng-container *ngIf="mostrarModalDetalle">
+  <div class="contract-page-dim" (click)="cerrarModalDetalle()" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalDetalle()">
+    <div
+      class="docs-modal contract-docs-modal mono-pago-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reg-srv-inm-detalle-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <span class="docs-modal__eyebrow">Servicios inmueble</span>
+          <h3 class="docs-modal__title" id="reg-srv-inm-detalle-title">Detalle del pago</h3>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button type="button" class="docs-modal__close" (click)="cerrarModalDetalle()" aria-label="Cerrar">
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body">
+        <div class="col-12 contract-docs__scroll">
+          <div *ngIf="detalleModalCargando" class="contract-docs__loading">
+            <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+            <p>Obteniendo datos del pago…</p>
+          </div>
+
+          <div *ngIf="!detalleModalCargando && detalleModalError" class="contract-docs__alert">
+            <mat-icon>error_outline</mat-icon>
+            <p>{{ detalleModalError }}</p>
+          </div>
+
+          <ng-container *ngIf="!detalleModalCargando && detallePagoVista as pv">
+            <section class="contract-docs-shell">
+              <article class="contract-docs-card contract-docs-card--hero">
+                <div class="contract-docs-card__hero-row">
+                  <div>
+                    <span class="contract-docs-card__kicker">Pago #{{ pv.id }}</span>
+                    <h4 class="contract-docs-card__hero-title">{{ pv.concepto }}</h4>
+                  </div>
+                  <button
+                    *ngIf="pv.tieneComprobante"
+                    type="button"
+                    mat-flat-button
+                    class="bg-warn"
+                    (click)="verComprobanteDetalle()"
+                  >
+                    <i class="fa fa-eye"></i> Comprobante
+                  </button>
+                </div>
+              </article>
+
+              <article class="contract-docs-card">
+                <h5 class="contract-docs-card__title">Información del pago</h5>
+                <div class="contract-docs-grid">
+                  <div class="contract-docs-field"><span>Servicio</span><p>{{ pv.servicio }}</p></div>
+                  <div class="contract-docs-field"><span>Fecha de pago</span><p>{{ pv.fechaPago }}</p></div>
+                  <div class="contract-docs-field"><span>Monto</span><p class="is-money">{{ pv.monto }}</p></div>
+                  <div class="contract-docs-field"><span>Método de pago</span><p>{{ pv.metodo }}</p></div>
+                  <div class="contract-docs-field">
+                    <span>Estatus</span>
+                    <p>
+                      <span class="reg-srv-pago-estatus" [ngClass]="clasesEstatusPago(pv.estatus)">
+                        {{ pv.estatus }}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </article>
+            </section>
+          </ng-container>
+        </div>
+      </div>
+
+      <div class="row docs-modal__footer">
+        <div class="col-12 d-flex justify-content-end">
+          <button type="button" class="docs-modal__btn" (click)="cerrarModalDetalle()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="mostrarModalPago">
+  <div class="contract-page-dim" (click)="cerrarModalPago()" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarModalPago()">
+    <div
+      class="docs-modal contract-docs-modal mono-pago-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reg-srv-inm-pago-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <h3 class="docs-modal__title" id="reg-srv-inm-pago-title">Agregar pago</h3>
+          <p class="docs-modal__subtitle">Captura el pago del inmueble y adjunta el comprobante.</p>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button
+            type="button"
+            class="docs-modal__close"
+            (click)="cerrarModalPago()"
+            aria-label="Cerrar modal de pago"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body">
+        <div class="col-12">
+          <div class="perm-form-nc">
+            <form [formGroup]="pagoForm" class="perm-form-body mono-pago-form">
+              <div class="row g-3 align-items-end">
+                <div class="col-12 col-lg-4">
+                  <label for="regSrvInmPagoInmueble" class="form-label perm-label">
+                    Inmueble <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">apartment</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select
+                        id="regSrvInmPagoInmueble"
+                        class="form-select"
+                        formControlName="idInmueble"
+                      >
+                        <option [ngValue]="null" disabled hidden>Seleccione inmueble</option>
+                        <option *ngFor="let opt of inmueblesOpciones" [ngValue]="opt.id">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                      <label for="regSrvInmPagoInmueble">Inmueble</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="regSrvInmPagoServicio" class="form-label perm-label">Servicio</label>
+                  <div *ngIf="serviciosInmuebleModalPagoCargando" class="mono-pago-servicio-loading mb-0">
+                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                    <span>Cargando servicios del inmueble…</span>
+                  </div>
+                  <div class="input-group input-group-lg perm-ig" *ngIf="!serviciosInmuebleModalPagoCargando">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">design_services</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select
+                        id="regSrvInmPagoServicio"
+                        class="form-select"
+                        formControlName="idServicioInmueble"
+                        (change)="onPagoServicioInmuebleChange()"
+                      >
+                        <option [ngValue]="null" disabled hidden>
+                          {{
+                            serviciosInmuebleModalPago.length
+                              ? 'Seleccione servicio'
+                              : 'Seleccione inmueble primero'
+                          }}
+                        </option>
+                        <option *ngFor="let srv of serviciosInmuebleModalPago" [ngValue]="srv.id">
+                          {{ srv.nombre }}
+                        </option>
+                      </select>
+                      <label for="regSrvInmPagoServicio">Servicio del inmueble</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="regSrvInmPagoConcepto" class="form-label perm-label">Concepto</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">receipt_long</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input
+                        id="regSrvInmPagoConcepto"
+                        type="text"
+                        class="form-control"
+                        formControlName="concepto"
+                        placeholder="Ej.: Agua potable"
+                      />
+                      <label for="regSrvInmPagoConcepto">Ej.: Agua potable</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="regSrvInmPagoFecha" class="form-label perm-label">
+                    Fecha de pago <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">event</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="regSrvInmPagoFecha" type="date" class="form-control" formControlName="fechaPago" />
+                      <label for="regSrvInmPagoFecha">Fecha de pago</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="regSrvInmPagoMonto" class="form-label perm-label">
+                    Monto <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">payments</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <input
+                        #pagoMontoInput
+                        id="regSrvInmPagoMonto"
+                        type="text"
+                        inputmode="decimal"
+                        class="form-control"
+                        placeholder=" "
+                        autocomplete="off"
+                        (keydown)="onMontoKeydown($event)"
+                        (paste)="onMontoPaste($event)"
+                        (blur)="onMontoBlur()"
+                        aria-label="Monto del pago"
+                      />
+                      <label for="regSrvInmPagoMonto">Monto</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="regSrvInmPagoMetodo" class="form-label perm-label">Método de pago</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">credit_card</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select
+                        id="regSrvInmPagoMetodo"
+                        class="form-select"
+                        formControlName="idMetodoPago"
+                        [disabled]="metodosPagoCargando"
+                      >
+                        <option [ngValue]="null" disabled hidden>
+                          {{ metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago' }}
+                        </option>
+                        <option *ngFor="let mp of listaCatMetodosPago" [ngValue]="mp.id">
+                          {{ etiquetaCatMetodoPago(mp) }}
+                        </option>
+                      </select>
+                      <label for="regSrvInmPagoMetodo">Método de pago</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label for="regSrvInmPagoEstatus" class="form-label perm-label">Estatus</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold">
+                      <mat-icon aria-hidden="true">flag</mat-icon>
+                    </span>
+                    <div class="form-floating flex-grow-1">
+                      <select id="regSrvInmPagoEstatus" class="form-select" formControlName="estatus">
+                        <option [ngValue]="'Pagado'">Pagado</option>
+                        <option [ngValue]="'Pendiente'">Pendiente</option>
+                        <option [ngValue]="'Cancelado'">Cancelado</option>
+                      </select>
+                      <label for="regSrvInmPagoEstatus">Estatus</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <label class="form-label perm-label d-block mb-2">
+                    Comprobante de pago <span class="text-danger">*</span>
+                  </label>
+                  <div class="uploader-hero srv-pago-uploader">
+                    <div class="uploader srv-pago-uploader__card">
+                      <div class="uploader__glow"></div>
+                      <div class="uploader__body mono-pago-comprobante-uploader__body">
+                        <button
+                          mat-flat-button
+                          color="primary"
+                          type="button"
+                          class="mono-pago-comprobante-btn"
+                          (click)="pagoComprobanteInput.click()"
+                        >
+                          {{
+                            pagoForm.get('comprobantePagoNombre')?.value
+                              ? pagoForm.get('comprobantePagoNombre')?.value
+                              : 'Selecciona un archivo · PDF · PNG · JPG'
+                          }}
+                        </button>
+                        <input
+                          #pagoComprobanteInput
+                          type="file"
+                          accept="application/pdf,image/png,image/jpeg,image/jpg"
+                          class="uploader__input"
+                          (change)="onPagoComprobanteFileSelected($event)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+                    <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalPago()">
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      class="button-success mono-pago-form-btn"
+                      (click)="guardarPagoDesdeModal()"
+                      [disabled]="pagoGuardando"
+                    >
+                      {{ pagoGuardando ? 'Enviando…' : 'Agregar' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<app-documento-preview #docPreview eyebrow="Comprobante de pago"></app-documento-preview>

@@ -34,6 +34,22 @@ export interface InpcPaginatedResponse {
   };
 }
 
+/** Elemento de `data[]` en GET `/inpc/listado`. */
+export interface InpcListadoItem {
+  id: number;
+  anio: number;
+  mes: number;
+  inpc: string | number;
+  porcentajeAnual?: string | number | null;
+  fhRegistro?: string;
+  estatus?: number;
+}
+
+/** Respuesta de GET `/inpc/listado`. */
+export interface InpcListadoResponse {
+  data: InpcListadoItem[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -58,6 +74,13 @@ export class IncrementosService {
       params = params.set('fechaFin', fechaFin.trim());
     }
     return this.http.get<InpcPaginatedResponse>(`${this.base}/paginated`, { params });
+  }
+
+  obtenerInpcListado(fechaInicio: string, fechaFin: string): Observable<InpcListadoResponse> {
+    const params = new HttpParams()
+      .set('fechaInicio', fechaInicio.trim())
+      .set('fechaFin', fechaFin.trim());
+    return this.http.get<InpcListadoResponse>(`${this.base}/listado`, { params });
   }
 
   obtenerIncremento(id: number): Observable<any> {

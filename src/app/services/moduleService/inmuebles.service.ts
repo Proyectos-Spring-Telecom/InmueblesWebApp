@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -56,5 +56,16 @@ export class InmueblesService {
 
   obtenerMetrosInmueble(idInmueble: number): Observable<unknown> {
     return this.http.get(`${this.base}/area-ocupada/${idInmueble}`);
+  }
+
+  obtenerDashboardInmueble(
+    idInmueble: number,
+    fechaInicio: string,
+    fechaFin: string,
+  ): Observable<unknown> {
+    const params = new HttpParams()
+      .set('fechaInicio', fechaInicio)
+      .set('fechaFin', fechaFin);
+    return this.http.get(`${this.base}/dashboard/${idInmueble}`, { params });
   }
 }

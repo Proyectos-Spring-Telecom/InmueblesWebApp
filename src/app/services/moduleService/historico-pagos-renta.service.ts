@@ -41,4 +41,11 @@ export class HistoricoPagosRentaService {
   obtenerHistoricoPorId(id: number): Observable<unknown> {
     return this.http.get(`${this.url}/${id}`);
   }
+
+  obtenerUltimoPagoRenta(idArrendatario: number, idContrato: number): Observable<unknown> {
+    const params = new HttpParams()
+      .set('idArrendatario', String(Math.floor(idArrendatario)))
+      .set('idContrato', String(Math.floor(idContrato)));
+    return this.http.get(`${this.url}/ultimo`, { params });
+  }
 }

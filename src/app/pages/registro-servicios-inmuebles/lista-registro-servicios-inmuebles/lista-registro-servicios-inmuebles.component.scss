@@ -1,0 +1,34 @@
+@import '../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
+@import '../../arrendatarios/pagos-renta/lista-historico-pagos-renta/lista-historico-pagos-renta.component.scss';
+@import '../../inmuebles/lista-inmuebles-detalle/swal-estatus-local.scss';
+
+.reg-srv-pago-estatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.reg-srv-pago-estatus--pagado {
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.35);
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.reg-srv-pago-estatus--pendiente {
+  color: #fde68a;
+  background: rgba(120, 53, 15, 0.35);
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.reg-srv-pago-estatus--cancelado {
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.35);
+  border-color: rgba(248, 113, 113, 0.45);
+}

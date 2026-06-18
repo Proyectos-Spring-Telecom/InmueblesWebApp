@@ -146,7 +146,7 @@
         </div>
         <div>
           <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
-            (click)="$event.stopPropagation()">
+            (click)="verDashboardInmueble(row.data); $event.stopPropagation()">
             <i class="fa fa-tachometer"></i>
           </button>
         </div>
@@ -257,30 +257,46 @@
               <!-- Lista + gráfica -->
               <div class="row oc-panel-row g-2">
                 <div class="col-6 oc-locales-col">
-                  <div class="oc-locales" *ngIf="localesProcesados.length || m2Disponibles > 0">
-                    <span class="oc-locales__title">Ocupación por local</span>
+                  <div class="oc-locales" *ngIf="zonasProcesadas.length || m2Disponibles > 0">
+                    <span class="oc-locales__title">Ocupación por zona</span>
                     <div class="oc-locales__list">
-                      <article
-                        class="oc-local"
-                        *ngFor="let local of localesProcesados"
-                        [class.oc-local--activo]="localGraficaHover === local.nombre"
-                        [style.--oc-local-accent]="local.color"
-                        (mouseenter)="resaltarGraficaLocal(local.nombre)"
-                        (mouseleave)="resaltarGraficaLocal(null)">
-                        <span class="oc-local__dot" [style.background-color]="local.color" aria-hidden="true"></span>
-                        <div class="oc-local__main">
-                          <span class="oc-local__nombre">{{ local.nombre }}</span>
-                          <span class="oc-local__zona" *ngIf="local.zona">{{ local.zona }}</span>
-                        </div>
-                        <div class="oc-local__medidas">
-                          <span>{{ local.area.toLocaleString('es-MX') }} m²</span>
-                          <span>{{ local.porcentaje.toFixed(1) }}%</span>
-                        </div>
-                        <div class="oc-local__ocupante">
-                          <span class="oc-local__ocupante-label">Arrendatario</span>
-                          <span class="oc-local__ocupante-nombre">{{ local.arrendatario }}</span>
-                        </div>
-                      </article>
+                      <section
+                        class="oc-zona"
+                        *ngFor="let zona of zonasProcesadas"
+                        [attr.aria-label]="zona.nombre || 'Zona ' + zona.numeroZona">
+                        <header class="oc-zona__header" *ngIf="zona.nombre">
+                          <span class="oc-zona__nombre">{{ zona.nombre }}</span>
+                          <span class="oc-zona__meta">
+                            {{ zona.superficieM2.toLocaleString('es-MX') }} m²
+                            <span *ngIf="zona.superficieDisponibleM2 > 0">
+                              · {{ zona.superficieDisponibleM2.toLocaleString('es-MX') }} m² disp.
+                            </span>
+                          </span>
+                        </header>
+                        <article
+                          class="oc-local"
+                          *ngFor="let local of zona.locales"
+                          [class.oc-local--activo]="localGraficaHover === local.nombre"
+                          [style.--oc-local-accent]="local.color"
+                          (mouseenter)="resaltarGraficaLocal(local.nombre)"
+                          (mouseleave)="resaltarGraficaLocal(null)">
+                          <span class="oc-local__dot" [style.background-color]="local.color" aria-hidden="true"></span>
+                          <div class="oc-local__main">
+                            <span class="oc-local__nombre">{{ local.nombre }}</span>
+                            <span class="oc-local__zona" *ngIf="zonasProcesadas.length === 1 && local.zona">
+                              {{ local.zona }}
+                            </span>
+                          </div>
+                          <div class="oc-local__medidas">
+                            <span>{{ local.area.toLocaleString('es-MX') }} m²</span>
+                            <span>{{ local.porcentaje.toFixed(1) }}%</span>
+                          </div>
+                          <div class="oc-local__ocupante">
+                            <span class="oc-local__ocupante-label">Arrendatario</span>
+                            <span class="oc-local__ocupante-nombre">{{ local.arrendatario }}</span>
+                          </div>
+                        </article>
+                      </section>
                       <article
                         class="oc-local oc-local--disponible"
                         *ngIf="m2Disponibles > 0"
@@ -360,6 +376,316 @@
           </div>
         </div>
     
+      </div>
+    </div>
+
+    <div class="inm-dash-backdrop docs-backdrop" *ngIf="mostrarModalDashboard" (click)="cerrarModalDashboard()">
+      <div class="docs-modal inm-dash-modal" (click)="$event.stopPropagation()">
+
+        <div class="row docs-modal__header">
+          <div class="col-10 col-md-11">
+            <span class="docs-modal__eyebrow">Dashboard del inmueble</span>
+            <h3 class="docs-modal__title">{{ dashboardTitulo || 'Inmueble' }}</h3>
+            <p class="docs-modal__subtitle" *ngIf="dashboardInmueble">
+              {{ dashboardInmueble.direccionFiscal }}
+              <span *ngIf="dashboardInmueble.totalM2"> · {{ dashboardInmueble.totalM2.toLocaleString('es-MX') }} m²</span>
+              <span *ngIf="dashboardInmueble.estado"> · {{ dashboardInmueble.estado }}</span>
+            </p>
+          </div>
+          <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
+            <button type="button" class="docs-modal__close" (click)="cerrarModalDashboard()">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="row docs-modal__body inm-dash-modal__body">
+          <div class="col-12 inm-dash-modal__content">
+
+            <div class="oc-empty" *ngIf="dashboardCargando">
+              <span>Cargando dashboard…</span>
+            </div>
+
+            <div class="dash-wrap" *ngIf="dashboard && !dashboardCargando">
+
+              <div class="dash-stats" *ngIf="dashboardResumen">
+                <div class="dash-stat dash-stat--total">
+                  <span class="dash-stat__label">Total locales</span>
+                  <span class="dash-stat__value">{{ dashboardResumen.totalLocales }}</span>
+                </div>
+                <div class="dash-stat dash-stat--ocupado">
+                  <span class="dash-stat__label">Ocupados</span>
+                  <span class="dash-stat__value">{{ dashboardResumen.localesOcupados }}</span>
+                </div>
+                <div class="dash-stat dash-stat--libre">
+                  <span class="dash-stat__label">Libres</span>
+                  <span class="dash-stat__value">{{ dashboardResumen.localesLibres }}</span>
+                </div>
+                <div class="dash-stat dash-stat--ingreso">
+                  <span class="dash-stat__label">Ingreso mensual est.</span>
+                  <span class="dash-stat__value">{{ formatearMoneda(dashboardResumen.ingresoMensualEstimado) }}</span>
+                </div>
+              </div>
+
+              <div class="row g-2 dash-charts-row">
+                <div class="col-12 col-lg-4">
+                  <section class="dash-panel" aria-label="Ocupación de locales">
+                    <div class="dash-panel__head">
+                      <span class="dash-panel__title">Ocupación de locales</span>
+                      <span class="dash-panel__meta" *ngIf="dashboardResumen">
+                        {{ dashboardResumen.localesOcupados }} de {{ dashboardResumen.totalLocales }} ocupados
+                      </span>
+                    </div>
+                    <div class="dash-chart-wrap dash-chart-wrap--ocupacion" *ngIf="dashboardOcupacionData.length">
+                      <div class="dash-chart-center" *ngIf="dashboardResumen" aria-hidden="true">
+                        <span class="dash-chart-center__value">
+                          {{ dashboardResumen.localesOcupados }}/{{ dashboardResumen.totalLocales }}
+                        </span>
+                        <span class="dash-chart-center__label">locales</span>
+                      </div>
+                      <dx-pie-chart
+                        #pieDashboardOcupacion
+                        id="pieDashboardOcupacion"
+                        [dataSource]="dashboardOcupacionData"
+                        [innerRadius]="0.58"
+                        [customizePoint]="customizarPuntoOcupacionDashboard">
+                        <dxi-series argumentField="categoria" valueField="cantidad">
+                          <dxo-label
+                            [visible]="true"
+                            [customizeText]="customizarLabelOcupacionDashboard">
+                          </dxo-label>
+                        </dxi-series>
+                        <dxo-tooltip
+                          [enabled]="true"
+                          [customizeTooltip]="customizarTooltipOcupacionDashboard">
+                        </dxo-tooltip>
+                        <dxo-legend
+                          verticalAlignment="bottom"
+                          horizontalAlignment="center"
+                          [customizeText]="customizarLeyendaOcupacionDashboard">
+                        </dxo-legend>
+                        <dxo-size [height]="200"></dxo-size>
+                      </dx-pie-chart>
+                    </div>
+                    <div class="oc-empty oc-empty--inline" *ngIf="!dashboardOcupacionData.length">
+                      <span>Sin datos de ocupación</span>
+                    </div>
+                  </section>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <section class="dash-panel" aria-label="Renta del mes por arrendatario">
+                    <span class="dash-panel__title">Renta del mes</span>
+                    <div class="dash-chart-wrap" *ngIf="dashboardRentaData.length">
+                      <dx-chart
+                        #chartDashboardRenta
+                        id="chartDashboardRenta"
+                        [dataSource]="dashboardRentaData">
+                        <dxo-common-series-settings argumentField="arrendatario" type="stackedBar"></dxo-common-series-settings>
+                        <dxi-series valueField="renta" name="Renta" color="#3b82f6"></dxi-series>
+                        <dxi-series valueField="mantenimiento" name="Mantenimiento" color="#06b6d4"></dxi-series>
+                        <dxo-legend [visible]="true" verticalAlignment="bottom" horizontalAlignment="center"></dxo-legend>
+                        <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipMonedaDashboard"></dxo-tooltip>
+                        <dxo-size [height]="200"></dxo-size>
+                      </dx-chart>
+                    </div>
+                    <div class="oc-empty oc-empty--inline" *ngIf="!dashboardRentaData.length">
+                      <span>Sin rentas del mes</span>
+                    </div>
+                  </section>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <section class="dash-panel" aria-label="Mensualidad base por local">
+                    <span class="dash-panel__title">Mensualidad base por local</span>
+                    <div class="dash-chart-wrap" *ngIf="dashboardMensualidadData.length">
+                      <dx-chart
+                        #chartDashboardMensualidad
+                        id="chartDashboardMensualidad"
+                        [dataSource]="dashboardMensualidadData"
+                        [customizePoint]="customizarPuntoMensualidadDashboard">
+                        <dxo-common-series-settings argumentField="local" type="bar"></dxo-common-series-settings>
+                        <dxi-series valueField="mensualidad" name="Mensualidad"></dxi-series>
+                        <dxo-legend [visible]="false"></dxo-legend>
+                        <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipMonedaDashboard"></dxo-tooltip>
+                        <dxo-size [height]="200"></dxo-size>
+                      </dx-chart>
+                    </div>
+                    <div class="oc-empty oc-empty--inline" *ngIf="!dashboardMensualidadData.length">
+                      <span>Sin locales registrados</span>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-12 col-lg-5" *ngIf="dashboardArrendador">
+                  <section class="dash-panel dash-panel--info" aria-label="Arrendador">
+                    <span class="dash-panel__title">Arrendador</span>
+                    <div class="dash-info">
+                      <span class="dash-info__nombre">{{ dashboardArrendador.nombre }}</span>
+                      <span class="dash-info__line" *ngIf="dashboardArrendador.telefono">
+                        <i class="fa fa-phone"></i> {{ dashboardArrendador.telefono }}
+                      </span>
+                      <span class="dash-info__line" *ngIf="dashboardArrendador.correo">
+                        <i class="fa fa-envelope-o"></i> {{ dashboardArrendador.correo }}
+                      </span>
+                      <div class="dash-info__sub" *ngIf="dashboardArrendador.encargado">
+                        <span class="dash-info__sub-label">Encargado</span>
+                        <span class="dash-info__line">{{ dashboardArrendador.encargado.nombre }}</span>
+                        <span class="dash-info__line" *ngIf="dashboardArrendador.encargado.telefono">
+                          <i class="fa fa-phone"></i> {{ dashboardArrendador.encargado.telefono }}
+                        </span>
+                        <span class="dash-info__line" *ngIf="dashboardArrendador.encargado.correo">
+                          <i class="fa fa-envelope-o"></i> {{ dashboardArrendador.encargado.correo }}
+                        </span>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div class="col-12" [ngClass]="dashboardArrendador ? 'col-lg-7' : 'col-lg-12'">
+                  <section class="dash-panel" aria-label="Zonas y locales">
+                    <span class="dash-panel__title">Zonas y locales</span>
+                    <div class="dash-zonas" *ngIf="dashboardZonas.length; else sinZonasDash">
+                      <article class="dash-zona" *ngFor="let zona of dashboardZonas">
+                        <header class="dash-zona__header">
+                          <span class="dash-zona__nombre">{{ zona.nombre }}</span>
+                          <span class="dash-zona__meta">
+                            {{ zona.superficieTotalM2.toLocaleString('es-MX') }} m²
+                            · {{ zona.superficieDisponibleM2.toLocaleString('es-MX') }} m² disp.
+                          </span>
+                        </header>
+                        <div class="dash-locales">
+                          <div class="dash-local" *ngFor="let local of zona.locales">
+                            <div class="dash-local__main">
+                              <span class="dash-local__nombre">{{ local.nombre }}</span>
+                              <span class="dash-local__giro">{{ local.giro }}</span>
+                            </div>
+                            <div class="dash-local__meta">
+                              <span>{{ local.areaM2.toLocaleString('es-MX') }} m²</span>
+                              <span>{{ formatearMoneda(local.mensualidadBase) }}</span>
+                            </div>
+                            <span [ngClass]="claseEstadoLocal(local.estado)">{{ local.estado }}</span>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                    <ng-template #sinZonasDash>
+                      <div class="oc-empty oc-empty--inline"><span>Sin zonas registradas</span></div>
+                    </ng-template>
+                  </section>
+                </div>
+              </div>
+
+              <section class="dash-panel" aria-label="Arrendatarios" *ngIf="dashboardArrendatarios.length">
+                <span class="dash-panel__title">Arrendatarios</span>
+                <div class="dash-arr-list">
+                  <article class="dash-arr" *ngFor="let arr of dashboardArrendatarios">
+                    <header class="dash-arr__header">
+                      <div class="dash-arr__titulo">
+                        <span class="dash-arr__nombre">{{ arr.nombre }}</span>
+                        <span class="dash-arr__rfc" *ngIf="arr.rfc">RFC: {{ arr.rfc }}</span>
+                      </div>
+                      <div class="dash-arr__contacto">
+                        <span *ngIf="arr.representanteLegal">{{ arr.representanteLegal }}</span>
+                        <span *ngIf="arr.telefono"><i class="fa fa-phone"></i> {{ arr.telefono }}</span>
+                        <span *ngIf="arr.correo"><i class="fa fa-envelope-o"></i> {{ arr.correo }}</span>
+                      </div>
+                    </header>
+
+                    <div class="dash-arr__locales" *ngIf="arr.localesAsignados.length">
+                      <span class="dash-arr__chip" *ngFor="let local of arr.localesAsignados">{{ local }}</span>
+                    </div>
+
+                    <div class="row g-2 dash-arr__detalle" *ngIf="arr.contratoActivo || arr.rentaDelMes">
+                      <div class="col-12 col-md-6" *ngIf="arr.contratoActivo">
+                        <div class="dash-mini-card">
+                          <span class="dash-mini-card__label">Contrato activo</span>
+                          <span class="dash-mini-card__line">
+                            {{ formatearFecha(arr.contratoActivo.fechaInicio) }}
+                            – {{ formatearFecha(arr.contratoActivo.fechaFin) }}
+                          </span>
+                          <span class="dash-mini-card__line">
+                            Renta: {{ formatearMoneda(arr.contratoActivo.rentaTotal) }}
+                            <span *ngIf="arr.contratoActivo.mantenimientoTotal != null">
+                              · Mant.: {{ formatearMoneda(arr.contratoActivo.mantenimientoTotal) }}
+                            </span>
+                          </span>
+                          <span class="dash-mini-card__line">
+                            Depósito: {{ formatearMoneda(arr.contratoActivo.montoDeposito) }}
+                            · Adelanto: {{ formatearMoneda(arr.contratoActivo.montoAdelanto) }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6" *ngIf="arr.rentaDelMes">
+                        <div class="dash-mini-card">
+                          <span class="dash-mini-card__label">
+                            Renta del mes
+                            <span [ngClass]="arr.rentaDelMes.pagada ? 'dash-badge dash-badge--pagado' : 'dash-badge dash-badge--pendiente'">
+                              {{ arr.rentaDelMes.pagada ? 'Pagada' : 'Pendiente' }}
+                            </span>
+                          </span>
+                          <span class="dash-mini-card__line">
+                            {{ formatearMoneda(arr.rentaDelMes.montoRenta) }}
+                            <span *ngIf="arr.rentaDelMes.montoMantenimiento">
+                              + {{ formatearMoneda(arr.rentaDelMes.montoMantenimiento) }} mant.
+                            </span>
+                          </span>
+                          <span class="dash-mini-card__line" *ngIf="arr.rentaDelMes.factorAplicado">
+                            Factor {{ arr.rentaDelMes.factorAplicado }}
+                            <span *ngIf="arr.rentaDelMes.formulaUsada"> · {{ arr.rentaDelMes.formulaUsada }}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="dash-pagos-mini" *ngIf="arr.pagosRecientes.length">
+                      <span class="dash-pagos-mini__title">Pagos recientes</span>
+                      <div class="dash-pago-row" *ngFor="let pago of arr.pagosRecientes">
+                        <span class="dash-pago-row__concepto">{{ pago.concepto }}</span>
+                        <span class="dash-pago-row__monto">{{ formatearMoneda(pago.monto) }}</span>
+                        <span class="dash-pago-row__fecha">{{ formatearFecha(pago.fecha) }}</span>
+                        <span [ngClass]="claseEstatusPago(pago.estatus)">{{ pago.estatus }}</span>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              </section>
+
+              <section class="dash-panel" aria-label="Pagos del inmueble" *ngIf="dashboardPagosInmueble.length">
+                <span class="dash-panel__title">Pagos del inmueble</span>
+                <div class="dash-pagos-mini">
+                  <div class="dash-pago-row dash-pago-row--header">
+                    <span>Concepto</span>
+                    <span>Monto</span>
+                    <span>Fecha</span>
+                    <span>Estatus</span>
+                  </div>
+                  <div class="dash-pago-row" *ngFor="let pago of dashboardPagosInmueble">
+                    <span class="dash-pago-row__concepto">{{ pago.concepto }}</span>
+                    <span class="dash-pago-row__monto">{{ formatearMoneda(pago.monto) }}</span>
+                    <span class="dash-pago-row__fecha">{{ formatearFecha(pago.fecha) }}</span>
+                    <span [ngClass]="claseEstatusPago(pago.estatus)">{{ pago.estatus }}</span>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+
+            <div class="oc-empty" *ngIf="!dashboard && !dashboardCargando">
+              <span>No se pudo cargar el dashboard</span>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="row docs-modal__footer">
+          <div class="col-12 d-flex justify-content-end">
+            <button type="button" class="docs-modal__btn" (click)="cerrarModalDashboard()">Cerrar</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

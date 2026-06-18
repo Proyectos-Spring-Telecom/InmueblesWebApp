@@ -7,6 +7,18 @@ import { take } from 'rxjs/operators';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { InmuebleGridRow, mapInmueblesApiToGridRows } from '../inmuebles-list.mapper';
+import {
+  construirGraficaMensualidadLocales,
+  construirGraficaOcupacionLocales,
+  construirGraficaRentaArrendatarios,
+  DashboardMensualidadLocalBar,
+  DashboardOcupacionSlice,
+  DashboardRentaArrendatarioBar,
+  formatearFecha,
+  formatearMoneda,
+  InmuebleDashboardData,
+  normalizarDashboardInmueble,
+} from '../inmueble-dashboard.mapper';
 
 interface LocalOcupacionProcesado {
   id: string;
@@ -18,9 +30,18 @@ interface LocalOcupacionProcesado {
   zona: string;
 }
 
+interface ZonaOcupacionProcesada {
+  id: number;
+  nombre: string;
+  superficieM2: number;
+  superficieDisponibleM2: number;
+  numeroZona: number;
+  locales: LocalOcupacionProcesado[];
+}
+
 interface OcupacionInmuebleData {
   totalM2: number;
-  localesRentados: unknown[];
+  zonas: ZonaOcupacionProcesada[];
 }
 
 interface DonaSlice {
@@ -70,6 +91,17 @@ export class ListaInmueblesComponent implements OnInit {
   lugarCargando      = false;
   private lugarData: OcupacionInmuebleData | null = null;
 
+  mostrarModalDashboard = false;
+  dashboardTitulo = '';
+  dashboardCargando = false;
+  private dashboardData: InmuebleDashboardData | null = null;
+  dashboardOcupacionData: DashboardOcupacionSlice[] = [];
+  dashboardRentaData: DashboardRentaArrendatarioBar[] = [];
+  dashboardMensualidadData: DashboardMensualidadLocalBar[] = [];
+
+  formatearFecha = formatearFecha;
+  formatearMoneda = formatearMoneda;
+
   // ─── Dona ────────────────────────────────────────────────────────────────────
   donaData: DonaSlice[] = [];
   localGraficaHover: string | null = null;
@@ -83,6 +115,15 @@ export class ListaInmueblesComponent implements OnInit {
 
   @ViewChild('pieOcupacion', { static: false })
   pieOcupacion?: DxPieChartComponent;
+
+  @ViewChild('pieDashboardOcupacion', { static: false })
+  pieDashboardOcupacion?: DxPieChartComponent;
+
+  @ViewChild('chartDashboardRenta', { static: false })
+  chartDashboardRenta?: { instance?: { render?: () => void } };
+
+  @ViewChild('chartDashboardMensualidad', { static: false })
+  chartDashboardMensualidad?: { instance?: { render?: () => void } };
 
   constructor(
     private router: Router,
@@ -255,32 +296,196 @@ export class ListaInmueblesComponent implements OnInit {
     this.localGraficaHover = null;
   }
 
+  verDashboardInmueble(row: InmuebleGridRow): void {
+    const id = Number(row?.id);
+    if (!Number.isFinite(id) || id <= 0) return;
+    this.dashboardTitulo = row.inmueble ?? `Inmueble #${id}`;
+    this.dashboardData = null;
+    this.dashboardOcupacionData = [];
+    this.dashboardRentaData = [];
+    this.dashboardMensualidadData = [];
+    this.dashboardCargando = true;
+    this.mostrarModalDashboard = true;
+
+    const { fechaInicio, fechaFin } = this.rangoFechasDashboard();
+    this.inmueblesService.obtenerDashboardInmueble(Math.floor(id), fechaInicio, fechaFin)
+      .pipe(take(1))
+      .subscribe({
+        next: (res: unknown) => {
+          this.dashboardData = normalizarDashboardInmueble(res);
+          this.dashboardOcupacionData = construirGraficaOcupacionLocales(
+            this.dashboardData?.resumenOcupacion ?? null,
+          );
+          this.dashboardRentaData = construirGraficaRentaArrendatarios(
+            this.dashboardData?.arrendatarios ?? [],
+          );
+          this.dashboardMensualidadData = construirGraficaMensualidadLocales(
+            this.dashboardData?.zonas ?? [],
+          );
+          if (this.dashboardData?.inmueble?.nombre) {
+            this.dashboardTitulo = this.dashboardData.inmueble.nombre;
+          }
+          this.dashboardCargando = false;
+          this.refrescarGraficasDashboard();
+        },
+        error: () => {
+          this.dashboardCargando = false;
+        },
+      });
+  }
+
+  cerrarModalDashboard(): void {
+    this.mostrarModalDashboard = false;
+    this.dashboardTitulo = '';
+    this.dashboardData = null;
+    this.dashboardOcupacionData = [];
+    this.dashboardRentaData = [];
+    this.dashboardMensualidadData = [];
+    this.dashboardCargando = false;
+  }
+
+  get dashboard(): InmuebleDashboardData | null { return this.dashboardData; }
+
+  get dashboardResumen() { return this.dashboardData?.resumenOcupacion ?? null; }
+
+  get dashboardZonas() { return this.dashboardData?.zonas ?? []; }
+
+  get dashboardArrendatarios() { return this.dashboardData?.arrendatarios ?? []; }
+
+  get dashboardPagosInmueble() { return this.dashboardData?.pagosInmueble ?? []; }
+
+  get dashboardArrendador() { return this.dashboardData?.arrendador ?? null; }
+
+  get dashboardInmueble() { return this.dashboardData?.inmueble ?? null; }
+
+  claseEstadoLocal(estado: string): string {
+    const e = (estado ?? '').toLowerCase();
+    if (e === 'ocupado') return 'dash-badge dash-badge--ocupado';
+    if (e === 'libre' || e === 'disponible') return 'dash-badge dash-badge--libre';
+    return 'dash-badge';
+  }
+
+  claseEstatusPago(estatus: string): string {
+    const e = (estatus ?? '').toLowerCase();
+    if (e.includes('pagad')) return 'dash-badge dash-badge--pagado';
+    if (e.includes('pend')) return 'dash-badge dash-badge--pendiente';
+    return 'dash-badge';
+  }
+
+  customizarPuntoOcupacionDashboard = (pointInfo: {
+    argument?: string;
+    data?: DashboardOcupacionSlice;
+  }): Record<string, unknown> => ({
+    color: pointInfo?.data?.color ?? '#888',
+  });
+
+  customizarTooltipOcupacionDashboard = (info: {
+    argumentText?: string;
+    valueText?: string;
+    percentText?: string;
+    point?: { data?: DashboardOcupacionSlice };
+  }): { text: string } => {
+    const data = info.point?.data;
+    const cantidad = Number(data?.cantidad ?? info.valueText ?? 0);
+    const total = Number(data?.totalLocales ?? this.dashboardResumen?.totalLocales ?? 0);
+    const lineas = [
+      String(info.argumentText ?? ''),
+      total > 0 ? `${cantidad} de ${total} locales` : `${cantidad} locales`,
+      info.percentText ?? '',
+    ];
+    return { text: lineas.filter(Boolean).join('\n') };
+  };
+
+  customizarLabelOcupacionDashboard = (info: {
+    point?: { data?: DashboardOcupacionSlice };
+  }): string => {
+    const data = info.point?.data;
+    const cantidad = Number(data?.cantidad ?? 0);
+    const total = Number(data?.totalLocales ?? this.dashboardResumen?.totalLocales ?? 0);
+    if (total > 0) return `${cantidad} de ${total}`;
+    return String(cantidad);
+  };
+
+  customizarLeyendaOcupacionDashboard = (info: {
+    pointName?: string;
+    pointIndex?: number;
+  }): string => {
+    const resumen = this.dashboardResumen;
+    const nombre = String(info.pointName ?? '');
+    if (!resumen) return nombre;
+    const total = resumen.totalLocales;
+    if (nombre === 'Ocupados') return `Ocupados (${resumen.localesOcupados} de ${total})`;
+    if (nombre === 'Libres') return `Libres (${resumen.localesLibres} de ${total})`;
+    return nombre;
+  };
+
+  customizarTooltipMonedaDashboard = (info: {
+    argumentText?: string;
+    valueText?: string;
+    seriesName?: string;
+  }): { text: string } => {
+    const monto = Number(String(info.valueText ?? '').replace(/[^\d.-]/g, ''));
+    const valor = Number.isFinite(monto)
+      ? formatearMoneda(monto)
+      : String(info.valueText ?? '');
+    return {
+      text: [info.seriesName ?? info.argumentText ?? '', valor].filter(Boolean).join('\n'),
+    };
+  };
+
+  customizarPuntoMensualidadDashboard = (pointInfo: {
+    data?: DashboardMensualidadLocalBar;
+  }): Record<string, unknown> => {
+    const estado = (pointInfo?.data?.estado ?? '').toLowerCase();
+    const color = estado === 'ocupado' ? '#f59e0b' : '#22c55e';
+    return { color };
+  };
+
+  private refrescarGraficasDashboard(): void {
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const pie = this.pieDashboardOcupacion?.instance;
+      const chartRenta = this.chartDashboardRenta?.instance;
+      const chartMens = this.chartDashboardMensualidad?.instance;
+      pie?.render?.();
+      chartRenta?.render?.();
+      chartMens?.render?.();
+    }, 0);
+  }
+
+  private rangoFechasDashboard(): { fechaInicio: string; fechaFin: string } {
+    return {
+      fechaInicio: '2026-01-01',
+      fechaFin: this.fechaApiDesdeDate(new Date()),
+    };
+  }
+
+  private fechaApiDesdeDate(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
   // ─── Getters para el template ─────────────────────────────────────────────
 
   get data(): OcupacionInmuebleData | null { return this.lugarData; }
 
   get totalM2(): number { return this.lugarData?.totalM2 ?? 0; }
 
-  get localesProcesados(): LocalOcupacionProcesado[] {
-    const total = this.totalM2;
-    const items = Array.isArray(this.lugarData?.localesRentados) ? this.lugarData!.localesRentados : [];
-    return items.map((raw, index) => {
-      const area      = this.areaLocalDesdeApi(raw);
-      const porcentaje = total > 0 ? (area / total) * 100 : 0;
-      return {
-        id:           `local-${index}`,
-        nombre:       this.nombreLocalDesdeApi(raw, index),
-        area,
-        porcentaje,
-        color:        COLORES_LOCALES[index % COLORES_LOCALES.length],
-        arrendatario: this.arrendatarioLocalDesdeApi(raw),
-        zona:         this.zonaLocalDesdeApi(raw),
-      };
-    });
+  get zonasProcesadas(): ZonaOcupacionProcesada[] {
+    return this.lugarData?.zonas ?? [];
   }
 
-  get m2Ocupados(): number    { return this.localesProcesados.reduce((s, l) => s + l.area, 0); }
-  get m2Disponibles(): number { return Math.max(0, this.totalM2 - this.m2Ocupados); }
+  get localesProcesados(): LocalOcupacionProcesado[] {
+    return this.zonasProcesadas.flatMap((z) => z.locales);
+  }
+
+  get m2Ocupados(): number { return this.localesProcesados.reduce((s, l) => s + l.area, 0); }
+
+  get m2Disponibles(): number {
+    return Math.max(0, this.totalM2 - this.m2Ocupados);
+  }
   get porcentajeOcupado(): number    { return this.totalM2 > 0 ? (this.m2Ocupados    / this.totalM2) * 100 : 0; }
   get porcentajeDisponible(): number { return this.totalM2 > 0 ? (this.m2Disponibles / this.totalM2) * 100 : 0; }
 
@@ -424,12 +629,89 @@ export class ListaInmueblesComponent implements OnInit {
   private normalizarOcupacionApi(res: unknown): OcupacionInmuebleData {
     const body = res != null && typeof res === 'object' && 'data' in (res as object)
       ? (res as { data?: unknown }).data : res;
-    const raw        = (body ?? {}) as Record<string, unknown>;
-    const totalM2    = Number(raw['totalM2'] ?? raw['total_m2'] ?? 0);
+    const raw     = (body ?? {}) as Record<string, unknown>;
+    const totalM2 = this.numeroDesdeApi(raw['totalM2'] ?? raw['total_m2']);
+
+    const zonasRaw = Array.isArray(raw['zonas']) ? raw['zonas'] : [];
+    if (zonasRaw.length) {
+      let colorIndex = 0;
+      const zonas = zonasRaw.map((zonaRaw, zi) => {
+        const zona = (zonaRaw ?? {}) as Record<string, unknown>;
+        const nombreZona = String(
+          zona['zonaPrincipal'] ?? zona['zona_principal'] ?? `Zona ${zi + 1}`,
+        ).trim();
+        const localesRaw = Array.isArray(zona['localesRentados'])
+          ? zona['localesRentados']
+          : Array.isArray(zona['locales_rentados']) ? zona['locales_rentados'] : [];
+        const locales = localesRaw.map((localRaw, li) => {
+          const local = this.procesarLocalOcupacion(
+            localRaw, li, colorIndex, totalM2, nombreZona,
+          );
+          colorIndex += 1;
+          return local;
+        });
+        return {
+          id: Number(zona['id'] ?? zi),
+          nombre: nombreZona,
+          superficieM2: this.numeroDesdeApi(zona['superficieZonaM2'] ?? zona['superficie_zona_m2']),
+          superficieDisponibleM2: this.numeroDesdeApi(
+            zona['superficieDisponibleM2'] ?? zona['superficie_disponible_m2'],
+          ),
+          numeroZona: Number(zona['numeroZona'] ?? zona['numero_zona'] ?? zi + 1),
+          locales,
+        };
+      });
+      return { totalM2, zonas };
+    }
+
     const localesRentados = Array.isArray(raw['localesRentados'])
       ? raw['localesRentados']
       : Array.isArray(raw['locales_rentados']) ? raw['locales_rentados'] : [];
-    return { totalM2: Number.isFinite(totalM2) ? totalM2 : 0, localesRentados };
+    const locales = localesRentados.map((localRaw, index) =>
+      this.procesarLocalOcupacion(
+        localRaw,
+        index,
+        index,
+        totalM2,
+        this.zonaLocalDesdeApi(localRaw),
+      ),
+    );
+    const ocupado = locales.reduce((s, l) => s + l.area, 0);
+    return {
+      totalM2,
+      zonas: [{
+        id: 0,
+        nombre: '',
+        superficieM2: totalM2,
+        superficieDisponibleM2: Math.max(0, totalM2 - ocupado),
+        numeroZona: 1,
+        locales,
+      }],
+    };
+  }
+
+  private procesarLocalOcupacion(
+    raw: unknown,
+    index: number,
+    colorIndex: number,
+    totalM2: number,
+    zonaNombre: string,
+  ): LocalOcupacionProcesado {
+    const area = this.areaLocalDesdeApi(raw);
+    return {
+      id: `local-${colorIndex}`,
+      nombre: this.nombreLocalDesdeApi(raw, index),
+      area,
+      porcentaje: totalM2 > 0 ? (area / totalM2) * 100 : 0,
+      color: COLORES_LOCALES[colorIndex % COLORES_LOCALES.length],
+      arrendatario: this.arrendatarioLocalDesdeApi(raw),
+      zona: zonaNombre || this.zonaLocalDesdeApi(raw),
+    };
+  }
+
+  private numeroDesdeApi(value: unknown): number {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
   }
 
   private areaLocalDesdeApi(raw: unknown): number {

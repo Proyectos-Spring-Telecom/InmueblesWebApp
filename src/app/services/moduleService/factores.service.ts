@@ -8,6 +8,8 @@ export interface FactorPayload {
   variable: string;
   valor: string;
   descripcion?: string | null;
+  anioInpc: number;
+  mesInpc: number;
 }
 
 @Injectable({

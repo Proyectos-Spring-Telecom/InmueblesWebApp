@@ -157,7 +157,7 @@
                 <div class="row g-3 mb-3">
 
                   <!-- Arrendatario -->
-                  <div class="col-12 col-lg-4">
+                  <div class="col-12 col-lg-4 renta-modal-campo">
                     <label for="rentaArrendatario" class="form-label perm-label">
                       Arrendatario <span class="text-danger">*</span>
                     </label>
@@ -182,7 +182,10 @@
                   </div>
 
                   <!-- Contrato -->
-                  <div class="col-12 col-lg-4">
+                  <div
+                    class="col-12 col-lg-4 renta-modal-campo"
+                    [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'contrato'"
+                  >
                     <label for="rentaContrato" class="form-label perm-label">
                       Contrato <span class="text-danger">*</span>
                     </label>
@@ -205,7 +208,10 @@
                   </div>
 
                   <!-- Fórmula -->
-                  <div class="col-12 col-lg-4">
+                  <div
+                    class="col-12 col-lg-4 renta-modal-campo"
+                    [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'formula'"
+                  >
                     <label for="rentaFormulaAlta" class="form-label perm-label">
                       Fórmula <span class="text-danger">*</span>
                     </label>
@@ -249,18 +255,17 @@
                       <span class="input-group-text fw-bold">
                         <mat-icon aria-hidden="true">payments</mat-icon>
                       </span>
-                      <div class="form-floating flex-grow-1">
-                        <input id="rentaTotal" type="text" inputmode="decimal" class="form-control"
+                      <div class="form-floating flex-grow-1 renta-modal-monto-bloqueado">
+                        <input id="rentaTotal" type="text" class="form-control"
                           [value]="rentaTotalDisplay" placeholder=" " autocomplete="off"
-                          (input)="onRentaMonedaInput($event, 'total')"
-                          (blur)="onRentaMonedaBlur($event, 'total')" />
+                          readonly tabindex="-1" aria-readonly="true" />
                         <label for="rentaTotal">Total</label>
                       </div>
                     </div>
                     <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
                       <mat-icon style="font-size:12px;height:12px;width:12px;"
-                        aria-hidden="true">auto_fix_high</mat-icon>
-                      Tomado del contrato · puede modificarse
+                        aria-hidden="true">lock</mat-icon>
+                      Calculado automáticamente · no editable
                     </p>
                   </div>
 
@@ -292,28 +297,6 @@
                     </p>
                   </div>
 
-                  <!-- Factor formula -->
-                  <div class="col-12 col-md-6 col-lg-4">
-                    <label for="rentaFactor" class="form-label perm-label">
-                      Factor fórmula <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group input-group-lg perm-ig">
-                      <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true">percent</mat-icon>
-                      </span>
-                      <div class="form-floating flex-grow-1">
-                        <input id="rentaFactor" type="text" inputmode="decimal" class="form-control"
-                          formControlName="factorVariable" placeholder=" " autocomplete="off" />
-                        <label for="rentaFactor">Factor INPC</label>
-                      </div>
-                    </div>
-                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
-                      <mat-icon style="font-size:12px;height:12px;width:12px;"
-                        aria-hidden="true">auto_fix_high</mat-icon>
-                      Calculado por fórmula · puede modificarse
-                    </p>
-                  </div>
-
                   <!-- Total mantenimiento -->
                   <div class="col-12 col-md-6 col-lg-4" *ngIf="rentaMostrarMantenimiento">
                     <label for="rentaTotalMantenimiento" class="form-label perm-label">
@@ -323,18 +306,17 @@
                       <span class="input-group-text fw-bold">
                         <mat-icon aria-hidden="true">build</mat-icon>
                       </span>
-                      <div class="form-floating flex-grow-1">
-                        <input id="rentaTotalMantenimiento" type="text" inputmode="decimal" class="form-control"
+                      <div class="form-floating flex-grow-1 renta-modal-monto-bloqueado">
+                        <input id="rentaTotalMantenimiento" type="text" class="form-control"
                           [value]="rentaTotalMantenimientoDisplay" placeholder=" " autocomplete="off"
-                          (input)="onRentaMonedaInput($event, 'totalMantenimiento')"
-                          (blur)="onRentaMonedaBlur($event, 'totalMantenimiento')" />
+                          readonly tabindex="-1" aria-readonly="true" />
                         <label for="rentaTotalMantenimiento">Total mantenimiento</label>
                       </div>
                     </div>
                     <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
                       <mat-icon style="font-size:12px;height:12px;width:12px;"
-                        aria-hidden="true">auto_fix_high</mat-icon>
-                      Tomado del contrato · puede modificarse
+                        aria-hidden="true">lock</mat-icon>
+                      Calculado automáticamente · no editable
                     </p>
                   </div>
 
@@ -357,6 +339,27 @@
                         <label for="rentaMontoFinalMantenimiento">
                           {{ evaluandoFormula ? 'Calculando…' : 'Monto final mantenimiento' }}
                         </label>
+                      </div>
+                    </div>
+                    <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
+                      <mat-icon style="font-size:12px;height:12px;width:12px;"
+                        aria-hidden="true">auto_fix_high</mat-icon>
+                      Calculado por fórmula · puede modificarse
+                    </p>
+                  </div>
+
+                  <div class="col-12 col-md-6 col-lg-4">
+                    <label for="rentaFactor" class="form-label perm-label">
+                      Factor fórmula <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">percent</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <input id="rentaFactor" type="text" inputmode="decimal" class="form-control"
+                          formControlName="factorVariable" placeholder=" " autocomplete="off" />
+                        <label for="rentaFactor">Factor INPC</label>
                       </div>
                     </div>
                     <p class="small opacity-50 mt-1 mb-0" *ngIf="rentaModalModo === 'alta'">
