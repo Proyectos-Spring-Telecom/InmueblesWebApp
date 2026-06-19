@@ -113,7 +113,7 @@ export class AppSideLoginComponent implements OnInit {
       )
       .subscribe(() => {
         const perms = this.authService.getPermissions() || [];
-        const hasMonitoreo = perms.includes(String(Permiso.CONSULTAR_MONITOREO));
+        const hasMonitoreo = perms.includes(String(Permiso.CONSULTAR_ARRENDADORES_MAPA));
         const route = hasMonitoreo ? ['/monitoreo'] : ['/usuarios/perfil-usuario'];
         this.completeLoginNavigation(route);
       });

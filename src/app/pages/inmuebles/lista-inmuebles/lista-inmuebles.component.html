@@ -16,9 +16,11 @@
 
   <div class="surface">
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
-      <button (click)="agregarInmueble()" mat-flat-button class="bg-secondary">
-        <i class="fa fa-plus"></i> Agregar
-      </button>
+      <div *appHasPermission="'43'">
+        <button (click)="agregarInmueble()" mat-flat-button class="bg-secondary">
+          <i class="fa fa-plus"></i> Agregar
+        </button>
+      </div>
       <button (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
       </button>
@@ -45,6 +47,7 @@
         <dxo-sorting mode="multiple"></dxo-sorting>
 
         <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="270" alignment="center"
+          *appHasPermission="['41', '42']"
           [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
           [allowFiltering]="false" [visible]="false"></dxi-column>
@@ -132,25 +135,27 @@
         </div>
 
         <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
-          <div>
+          <div *appHasPermission="'42'">
             <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
               (click)="editarInmueble(row.data); $event.stopPropagation()">
               <i class="fa fa-edit"></i>
             </button>
           </div>
-          <div *ngIf="row.data.tieneMapa">
-            <button type="button" id="pinButton" class="btnAcciones" title="Ubicación"
-            (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
-            <i class="fa fa-map-marker"></i>
-          </button>
-        </div>
-        <div>
+          <div *appHasPermission="'41'">
+            <div *ngIf="row.data.tieneMapa">
+              <button type="button" id="pinButton" class="btnAcciones" title="Ubicación"
+              (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
+              <i class="fa fa-map-marker"></i>
+            </button>
+            </div>
+          </div>
+        <div *appHasPermission="'41'">
           <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
             (click)="verDashboardInmueble(row.data); $event.stopPropagation()">
             <i class="fa fa-tachometer"></i>
           </button>
         </div>
-        <div>
+        <div *appHasPermission="'41'">
             <button type="button" id="ubicacionButton" class="btnAcciones" title="Ocupación del inmueble"
               (click)="verLugarInmueble(row.data); $event.stopPropagation()">
               <i class="fa fa-area-chart"></i>

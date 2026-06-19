@@ -414,12 +414,13 @@
 }
 
 .uploader-wrap .uploader__cta,
-.srv-pago-uploader .srv-pago-uploader__row {
+.srv-pago-uploader .uploader__cta {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .uploader-wrap .uploader__cta button[mat-flat-button],
@@ -430,7 +431,7 @@
 }
 
 .uploader-wrap .uploader__badge,
-.srv-pago-uploader .srv-pago-uploader__formats {
+.srv-pago-uploader .uploader__badge {
   font-size: clamp(0.68rem, 0.64rem + 0.2vw, 0.8rem);
   display: inline-block;
   width: fit-content;
@@ -444,7 +445,7 @@
 }
 
 .uploader-wrap .uploader__badge.uploader__badge--file,
-.srv-pago-uploader .srv-pago-uploader__formats.uploader__badge--file {
+.srv-pago-uploader .uploader__badge.uploader__badge--file {
   text-transform: none;
   letter-spacing: 0.01em;
   color: #f1f6ff;
@@ -517,7 +518,7 @@
 
 /* Edición por id: archivo remoto → botones centrados, nombre debajo */
 .uploader-wrap .uploader__cta.uploader__cta--archivo-remoto,
-.srv-pago-uploader__row--archivo-remoto {
+.srv-pago-uploader .uploader__cta.uploader__cta--archivo-remoto {
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -535,7 +536,7 @@
 }
 
 .uploader__cta--archivo-remoto .uploader__badge,
-.srv-pago-uploader__row--archivo-remoto .srv-pago-uploader__formats {
+.srv-pago-uploader .uploader__cta--archivo-remoto .uploader__badge {
   width: fit-content;
   max-width: 100%;
   margin-left: 0;
@@ -546,7 +547,7 @@
   text-overflow: ellipsis;
 }
 
-.srv-pago-uploader__row .docs-uploader-ver-btn {
+.srv-pago-uploader .uploader__cta .docs-uploader-ver-btn {
   align-self: center;
 }
 
@@ -818,79 +819,22 @@
 }
 
 .srv-pago-uploader .uploader__body {
-  padding: 0.35rem 0.55rem !important;
+  padding: 0.65rem 0.75rem !important;
   display: flex !important;
   flex-direction: column;
-  align-items: stretch;
-  justify-items: stretch;
+  align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  text-align: left;
-}
-
-.srv-pago-uploader .srv-pago-uploader__row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-
-.srv-pago-uploader .srv-pago-uploader__left {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-/* Conserva el look global de `.uploader__icon` (gradiente/sombra), solo lo compactamos */
-.srv-pago-uploader .srv-pago-uploader__icon.uploader__icon {
-  width: 2.55rem;
-  height: 2.55rem;
-  border-radius: 12px;
-  flex: 0 0 auto;
-}
-
-.srv-pago-uploader .srv-pago-uploader__icon.uploader__icon mat-icon {
-  font-size: 1.15rem;
-  width: 1.15rem;
-  height: 1.15rem;
-  line-height: 1.15rem;
-}
-
-.srv-pago-uploader .uploader__title {
-  display: none;
-}
-
-.srv-pago-uploader .uploader__subtitle {
-  display: none;
+  text-align: center;
 }
 
 .srv-pago-uploader button[mat-flat-button] {
-  min-height: 2.55rem !important;
+  min-height: 2.45rem !important;
   padding: 0 0.85rem !important;
-  font-size: 0.78rem !important;
+  font-size: clamp(0.74rem, 0.7rem + 0.22vw, 0.86rem) !important;
   line-height: 1 !important;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
-}
-
-.srv-pago-uploader .srv-pago-uploader__formats {
-  margin-left: auto;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.22rem 0.62rem;
-  white-space: nowrap;
-  color: #eaf2ff;
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.12));
-  border: 1px dashed rgba(147, 197, 253, 0.75);
-  box-shadow:
-    0 0 0 1px rgba(59, 130, 246, 0.18),
-    0 10px 22px rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .srv-pago-uploader .uploader__status {
@@ -916,7 +860,7 @@
   }
 
   .uploader-wrap .uploader__cta,
-  .srv-pago-uploader .srv-pago-uploader__row {
+  .srv-pago-uploader .uploader__cta {
     flex-direction: column;
     align-items: center;
   }
@@ -928,7 +872,7 @@
   }
 
   .uploader-wrap .uploader__badge,
-  .srv-pago-uploader .srv-pago-uploader__formats {
+  .srv-pago-uploader .uploader__badge {
     width: fit-content;
     max-width: 100%;
     text-align: center;

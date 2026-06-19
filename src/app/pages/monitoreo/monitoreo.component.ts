@@ -19,6 +19,10 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
+import {
+  esClienteListadoVacioEnApi,
+  esErrorHttpListadoClientesVacio,
+} from '../clientes/clientes-list.mapper';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
@@ -312,6 +316,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly imagenLocalListaDefault = this.imagenesLocales[0];
   clienteSearchTerm = '';
   cargandoClientes = false;
+  errorCargaArrendadores = false;
   cargandoInmueblesArrendador = false;
   cargandoLocalesInmueble = false;
   /** Vista Zonas: una lista (catálogo + libres + ocupados). */
@@ -839,12 +844,24 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   obtenerInstalacionesCentral(): void {
     this.cargandoClientes = true;
+    this.errorCargaArrendadores = false;
 
     this.clientesService
       .obtenerClientes()
       .pipe(
         catchError((err) => {
+          if (esErrorHttpListadoClientesVacio(err)) {
+            return of([]);
+          }
+          console.warn('clientes/list falló, intentando listado paginado…', err);
+          return this.clientesService.obtenerClientesData(1, 5000);
+        }),
+        catchError((err) => {
+          if (esErrorHttpListadoClientesVacio(err)) {
+            return of([]);
+          }
           console.error('Error al cargar arrendadores:', err);
+          this.errorCargaArrendadores = true;
           this.toastr.error('No se pudo cargar la lista de arrendadores.', 'Monitoreo');
           return of(null);
         }),
@@ -852,6 +869,18 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe({
         next: (clientes) => {
           this.cargandoClientes = false;
+
+          if (clientes != null && esClienteListadoVacioEnApi(clientes)) {
+            this.aplicarCentralesMonitoreo([]);
+            this.cdr.markForCheck();
+            return;
+          }
+
+          if (clientes == null) {
+            this.aplicarCentralesMonitoreo([]);
+            this.cdr.markForCheck();
+            return;
+          }
 
           const filasCliente = extraerFilasListadoApi(clientes);
           const centrales = filasCliente
@@ -863,9 +892,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         error: (err) => {
           this.cargandoClientes = false;
+          this.errorCargaArrendadores = true;
           console.error('Error al cargar monitoreo:', err);
           this.toastr.error('No se pudo cargar el monitoreo.', 'Monitoreo');
-          this.listaInstalaciones = [];
+          this.aplicarCentralesMonitoreo([]);
           this.cdr.markForCheck();
         },
       });
@@ -887,28 +917,19 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private aplicarCentralesMonitoreo(data: any[]): void {
-    if (this.isRol1) {
-      this.listaInstalaciones = data;
+    if (!data.length) {
+      this.listaInstalaciones = [];
       this.viewMode = 'centrales';
       this.flowMode = 'clientes';
       this.selectedCentral = null;
-    } else {
-      this.listaInstalaciones = data;
-      this.selectedCentral = data[0] ?? null;
-      this.viewMode = 'instalaciones';
-      this.flowMode = 'inmuebles';
-    }
-
-    if (this.map && this.flowMode === 'inmuebles' && !this.cargandoInmueblesArrendador) {
-      this.renderAccordingMode();
-    }
-
-    if (!this.isRol1 && this.selectedCentral) {
-      this.cargarYMostrarInmueblesArrendador(this.selectedCentral, () =>
-        this.aplicarRetornoDesdeDetalleSiCorresponde(),
-      );
+      this.cdr.markForCheck();
       return;
     }
+
+    this.listaInstalaciones = data;
+    this.viewMode = 'centrales';
+    this.flowMode = 'clientes';
+    this.selectedCentral = null;
 
     this.aplicarRetornoDesdeDetalleSiCorresponde();
   }
@@ -1003,7 +1024,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!retorno) return;
 
     const idClienteRaw = qp.get('idCliente');
-    if (idClienteRaw != null && String(idClienteRaw).trim() !== '' && this.isRol1) {
+    if (idClienteRaw != null && String(idClienteRaw).trim() !== '') {
       const idStr = String(idClienteRaw).trim();
       const c = this.listaInstalaciones.find(
         (x: any) => String(x?.idCliente ?? x?.id ?? '') === idStr,

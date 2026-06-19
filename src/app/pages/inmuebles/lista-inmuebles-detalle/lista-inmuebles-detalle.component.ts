@@ -1,5 +1,14 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastrService } from 'ngx-toastr';
 import { take } from 'rxjs';
@@ -10,6 +19,7 @@ import {
   claseChipEstatusLocal,
   esImagenArchivo,
   esPdfArchivo,
+  extraerInmuebleDetalleApi,
   formatearFecha,
   formatearMoneda,
   InmuebleApiItem,
@@ -22,6 +32,7 @@ import {
   nombreArrendador,
   nombreServicio,
   OPCIONES_ESTATUS_LOCAL,
+  urlFachadaLocal,
   urlPdfMiniatura,
 } from '../inmuebles-list.mapper';
 
@@ -31,7 +42,7 @@ import {
   styleUrl: './lista-inmuebles-detalle.component.scss',
   standalone: false,
 })
-export class ListaInmueblesDetalleComponent {
+export class ListaInmueblesDetalleComponent implements OnInit, OnChanges {
   @Input({ required: true }) row!: InmuebleGridRow;
 
   /** Tras PATCH de estatus: el padre debe refrescar GET /inmuebles/paginated. */
@@ -53,9 +64,12 @@ export class ListaInmueblesDetalleComponent {
   detalleTab = 0;
   filtroLocal = '';
   guardandoEstatusLocalId: number | null = null;
+  cargandoDetalleAnidado = false;
+  private detallePorId: InmuebleApiItem | null = null;
 
   esImagenArchivo = esImagenArchivo;
   esPdfArchivo = esPdfArchivo;
+  urlFachadaLocal = urlFachadaLocal;
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -64,8 +78,43 @@ export class ListaInmueblesDetalleComponent {
     private http: HttpClient,
   ) {}
 
+  ngOnInit(): void {
+    this.cargarDetalleCompletoPorId();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['row']) {
+      this.detallePorId = null;
+      this.cargarDetalleCompletoPorId();
+    }
+  }
+
+  private cargarDetalleCompletoPorId(): void {
+    const id = Number(this.row?.id);
+    if (!Number.isFinite(id) || id <= 0) {
+      this.detallePorId = this.row?.detalle ?? {};
+      return;
+    }
+
+    this.cargandoDetalleAnidado = true;
+    this.inmueblesService
+      .obtenerInmueble(id)
+      .pipe(take(1))
+      .subscribe({
+        next: (resp) => {
+          this.detallePorId = extraerInmuebleDetalleApi(resp);
+          this.cargandoDetalleAnidado = false;
+        },
+        error: (err) => {
+          console.error('Error al cargar detalle del inmueble:', err);
+          this.detallePorId = this.row?.detalle ?? {};
+          this.cargandoDetalleAnidado = false;
+        },
+      });
+  }
+
   get item(): InmuebleApiItem {
-    return this.row?.detalle ?? {};
+    return this.detallePorId ?? this.row?.detalle ?? {};
   }
 
   get zonas() {

@@ -1,3 +1,54 @@
+/** Mensajes del API cuando no hay clientes pero responde como error. */
+const MENSAJES_LISTADO_CLIENTES_VACIO = [
+  'ocurrio un error al obtener listado de los clientes',
+];
+
+function normalizarMensajeApi(message: unknown): string {
+  if (typeof message !== 'string' || !message.trim()) return '';
+  return message
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim();
+}
+
+/** El backend a veces responde error HTTP o `{ message }` cuando el listado está vacío. */
+export function mensajeIndicaListadoClientesVacio(message: unknown): boolean {
+  const norm = normalizarMensajeApi(message);
+  if (!norm) return false;
+  return MENSAJES_LISTADO_CLIENTES_VACIO.some((fragmento) => norm.includes(fragmento));
+}
+
+export function esClienteListadoVacioEnApi(resp: unknown): boolean {
+  if (resp == null) return false;
+  if (Array.isArray(resp)) return resp.length === 0;
+  if (typeof resp !== 'object') return false;
+
+  const body = resp as Record<string, unknown>;
+  if (Array.isArray(body['data'])) {
+    return body['data'].length === 0;
+  }
+  return mensajeIndicaListadoClientesVacio(body['message']);
+}
+
+export function esErrorHttpListadoClientesVacio(err: unknown): boolean {
+  if (err == null || typeof err !== 'object') return false;
+
+  const e = err as Record<string, unknown>;
+  if (mensajeIndicaListadoClientesVacio(e['message'])) return true;
+
+  const nested = e['error'];
+  if (nested != null && typeof nested === 'object') {
+    return mensajeIndicaListadoClientesVacio(
+      (nested as Record<string, unknown>)['message'],
+    );
+  }
+  if (typeof nested === 'string') {
+    return mensajeIndicaListadoClientesVacio(nested);
+  }
+  return false;
+}
+
 /** Respuesta GET `/clientes/{id}` (con o sin envoltorio `data`). */
 export function extraerClienteDetalleApi(resp: unknown): Record<string, unknown> {
   if (resp == null || typeof resp !== 'object') return {};

@@ -20,9 +20,11 @@
 
   <div class="surface">
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
-      <button (click)="agregarServicio()" mat-flat-button class="bg-secondary">
-        <i class="fa fa-plus"></i> Agregar servicio
-      </button>
+      <div *appHasPermission="'35'">
+        <button (click)="agregarServicio()" mat-flat-button class="bg-secondary">
+          <i class="fa fa-plus"></i> Agregar servicio
+        </button>
+      </div>
       <button (click)="limpiarCampos()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
       </button>
@@ -67,6 +69,7 @@
           caption="Acciones"
           cellTemplate="AccionesServicios"
           alignment="center"
+          *appHasPermission="['36', '38']"
           dataType="string"
           [width]="180"
         ></dxi-column>
@@ -81,7 +84,7 @@
           </div>
         </dxi-column>
         <div *dxTemplate="let row of 'AccionesServicios'" class="d-flex gap-3 justify-content-center">
-          <div >
+          <div *appHasPermission="'36'">
             <button
               valueExpr="id" id="actualizarButton" class="btnAcciones"
               (click)="editarServicio(row.data.id)"
@@ -89,7 +92,7 @@
               <i class="fa fa-edit"></i>
             </button>
           </div>
-          <div>
+          <div *appHasPermission="'38'">
             @if (row.data.estatus === 0) {
               <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
                   <i class="fa fa-arrow-up"></i>

@@ -83,16 +83,16 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-md-4" *ngIf="showInputsId">
-                        <label for="permClave" class="form-label perm-label">Correo Electrónico</label>
+                    <div class="col-12 col-md-4">
+                        <label for="permCorreo" class="form-label perm-label">Correo Electrónico</label>
                         <div class="input-group input-group-lg perm-ig">
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">mail</mat-icon>
                             </span>
                             <div class="form-floating flex-grow-1">
-                                <input type="text" formControlName="userName" class="form-control" id="permClave"
-                                    placeholder="Ej.: juan.perez@empresa.com" required>
-                                <label for="permClave">Ej.: juan.perez&#64;empresa.com</label>
+                                <input type="text" formControlName="userName" class="form-control" id="permCorreo"
+                                    placeholder="Ej.: juan.perez@empresa.com" [readonly]="!!idUsuario" required>
+                                <label for="permCorreo">Ej.: juan.perez&#64;empresa.com</label>
                             </div>
                         </div>
                     </div>
@@ -255,7 +255,7 @@
 
                         <div class="perm-modules-scroll">
                             <div class="row g-4">
-                                <div class="col-12 col-lg-6" *ngFor="let modulo of listaModulos">
+                                <div class="col-12 col-lg-4" *ngFor="let modulo of listaModulos">
                                     <section class="perm-module-card h-100">
                                         <header class="perm-module-card__head">
                                             <div class="perm-module-card__icon">

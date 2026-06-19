@@ -134,6 +134,8 @@
               title="Seleccionar ubicación del inmueble" (click)="abrirModalMapa()"><i class="fa fa-map-marker"></i>
               Seleccionar ubicación</button></div> -->
 
+          <ng-container *ngIf="!cargandoDetalle; else cargandoDetalleInmuebleTpl">
+
           <div class="col-12 arrend-fa-section mt-5">
             <div class="arrend-fa-hero">
               <div class="arrend-fa-hero__icon" aria-hidden="true"><mat-icon>home_repair_service</mat-icon></div>
@@ -153,10 +155,10 @@
                 [focusStateEnabled]="false" (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
                 itemTitleTemplate="servicioAccordionTitle">
                 <div *dxTemplate="let data of 'servicioAccordionTitle'" class="arrend-accordion-title-bar">
-                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                  <span class="arrend-accordion-title-bar__label">{{ tituloServicioAccordionDesdeClave(data) }}</span>
                 </div>
-                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index"
-                  [title]="tituloServicioAccordion(i)">
+                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice"
+                  [title]="claveEstableServicioAccordion(i)">
                   <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
@@ -212,7 +214,7 @@
                             <div class="uploader__glow"></div>
                             <div class="uploader__body">
                               <ng-container *ngIf="layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value); else srvPagoUploaderDefault">
-                                <div class="srv-pago-uploader__row srv-pago-uploader__row--archivo-remoto">
+                                <div class="uploader__cta uploader__cta--archivo-remoto">
                                   <div class="uploader__cta-actions">
                                     <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
                                       Seleccionar
@@ -222,22 +224,17 @@
                                       titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
                                     }"></ng-container>
                                   </div>
-                                  <span class="uploader__badge uploader__badge--file srv-pago-uploader__formats">
+                                  <span class="uploader__badge uploader__badge--file">
                                     {{ srvCtrl.get('servicioComprobantePagoNombre')?.value }}
                                   </span>
                                 </div>
                               </ng-container>
                               <ng-template #srvPagoUploaderDefault>
-                                <div class="srv-pago-uploader__row">
-                                  <div class="srv-pago-uploader__left">
-                                    <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
-                                      <mat-icon>receipt</mat-icon>
-                                    </div>
-                                    <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
-                                      Selecciona un archivo
-                                    </button>
-                                  </div>
-                                  <span class="uploader__badge srv-pago-uploader__formats"
+                                <div class="uploader__cta">
+                                  <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
+                                    Seleccionar
+                                  </button>
+                                  <span class="uploader__badge"
                                     [class.uploader__badge--file]="srvCtrl.get('servicioComprobantePagoNombre')?.value || srvCtrl.get('servicioComprobantePagoUrl')?.value">
                                     {{ srvCtrl.get('servicioComprobantePagoNombre')?.value || etiquetaPdfImagenes }}
                                   </span>
@@ -279,10 +276,10 @@
                 [focusStateEnabled]="false" (selectedIndexChange)="onZonaAccordionIndicesChange($event)"
                 itemTitleTemplate="zonaAccordionTitle">
                 <div *dxTemplate="let data of 'zonaAccordionTitle'" class="arrend-accordion-title-bar">
-                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                  <span class="arrend-accordion-title-bar__label">{{ tituloZonaAccordionDesdeClave(data) }}</span>
                 </div>
-                <dxi-item *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index"
-                  [title]="tituloZonaAccordion(i)">
+                <dxi-item *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index; trackBy: trackZonaPorIndice"
+                  [title]="claveEstableZonaAccordion(i)">
                   <div class="arrend-accordion-item-body arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                     <div class="row g-4 arrend-contrato-fila-campos">
                       <div class="col-12 col-md-4"><label class="form-label perm-label">Zona principal</label>
@@ -329,10 +326,10 @@
                           (selectedIndexChange)="onLocalAccordionIndicesChange(i, $event)"
                           itemTitleTemplate="localAccordionTitle">
                           <div *dxTemplate="let data of 'localAccordionTitle'" class="arrend-accordion-title-bar">
-                            <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                            <span class="arrend-accordion-title-bar__label">{{ tituloLocalAccordionDesdeClave(data) }}</span>
                           </div>
-                          <dxi-item *ngFor="let localCtrl of localesZonaFormArray(i).controls; let j = index"
-                            [title]="tituloLocalAccordion(i, j)">
+                          <dxi-item *ngFor="let localCtrl of localesZonaFormArray(i).controls; let j = index; trackBy: trackLocalPorIndice"
+                            [title]="claveEstableLocalAccordion(i, j)">
                             <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="j">
                               <div class="row g-3">
                                 <div class="col-12 col-md-4"><label class="form-label perm-label">Nombre del local</label>
@@ -393,7 +390,7 @@
                                       <div class="uploader__body">
                                         <ng-container
                                           *ngIf="layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value); else localFachadaUploaderDefault">
-                                          <div class="srv-pago-uploader__row srv-pago-uploader__row--archivo-remoto">
+                                          <div class="uploader__cta uploader__cta--archivo-remoto">
                                             <div class="uploader__cta-actions">
                                               <button mat-flat-button color="primary" type="button"
                                                 (click)="localFachadaInput.click()">
@@ -404,23 +401,18 @@
                                                 titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
                                               }"></ng-container>
                                             </div>
-                                            <span class="uploader__badge uploader__badge--file srv-pago-uploader__formats">
+                                            <span class="uploader__badge uploader__badge--file">
                                               {{ localCtrl.get('fachadaNombre')?.value }}
                                             </span>
                                           </div>
                                         </ng-container>
                                         <ng-template #localFachadaUploaderDefault>
-                                          <div class="srv-pago-uploader__row">
-                                            <div class="srv-pago-uploader__left">
-                                              <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
-                                                <mat-icon>photo_camera</mat-icon>
-                                              </div>
-                                              <button mat-flat-button color="primary" type="button"
-                                                (click)="localFachadaInput.click()">
-                                                Selecciona una imagen
-                                              </button>
-                                            </div>
-                                            <span class="uploader__badge srv-pago-uploader__formats"
+                                          <div class="uploader__cta">
+                                            <button mat-flat-button color="primary" type="button"
+                                              (click)="localFachadaInput.click()">
+                                              Seleccionar
+                                            </button>
+                                            <span class="uploader__badge"
                                               [class.uploader__badge--file]="localCtrl.get('fachadaNombre')?.value || localCtrl.get('fachadaUrl')?.value">
                                               {{ localCtrl.get('fachadaNombre')?.value || etiquetaSoloImagenes }}
                                             </span>
@@ -962,6 +954,14 @@
               </div> -->
             </div>
           </div>
+
+          </ng-container>
+          <ng-template #cargandoDetalleInmuebleTpl>
+            <div class="col-12 text-center py-5 text-muted" role="status" aria-live="polite">
+              Cargando servicios, zonas, locales, documentos e imágenes…
+            </div>
+          </ng-template>
+
         </div>
 
         <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">

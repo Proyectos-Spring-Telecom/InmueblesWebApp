@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { DxDataGridModule } from 'devextreme-angular';
 import { MaterialModule } from 'src/app/material.module';
 import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documento-preview.module';
+import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { RegistroServiciosInmueblesRoutingModule } from './registro-servicios-inmuebles-routing.module';
 import { ListaRegistroServiciosInmueblesComponent } from './lista-registro-servicios-inmuebles/lista-registro-servicios-inmuebles.component';
 
@@ -18,6 +19,7 @@ import { ListaRegistroServiciosInmueblesComponent } from './lista-registro-servi
     DxDataGridModule,
     MaterialModule,
     DocumentoPreviewModule,
+    HasPermissionDirective,
     RegistroServiciosInmueblesRoutingModule,
   ],
 })

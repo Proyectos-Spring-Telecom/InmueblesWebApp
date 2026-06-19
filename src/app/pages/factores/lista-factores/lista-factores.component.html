@@ -25,7 +25,7 @@
           class="d-flex flex-wrap justify-content-between align-items-center gap-2 gap-md-3 mb-2 mb-md-3 flex-shrink-0 w-100">
           <h5 class="mb-0">Factores</h5>
           <div class="d-flex flex-wrap gap-2 gap-md-3 justify-content-end">
-            <div *appHasPermission="['47', '59']">
+            <div *appHasPermission="'21'">
               <button (click)="agregarFactor()" mat-flat-button class="bg-secondary">
                 <i class="fa fa-plus"></i> Agregar
               </button>
@@ -62,7 +62,7 @@
               <dxo-grouping [autoExpandAll]="autoExpandAllGroupsFactores"></dxo-grouping>
 
               <dxi-column caption="Acciones" cellTemplate="AccionesFactores" alignment="center"
-                *appHasPermission="['46', '48', '58', '60']" dataType="string" [width]="120" [fixed]="true"
+                *appHasPermission="['22', '24']" dataType="string" [width]="120" [fixed]="true"
                 fixedPosition="left"></dxi-column>
               <dxi-column dataField="variable" caption="Variable" alignment="center" dataType="string"
                 [minWidth]="120"></dxi-column>
@@ -82,7 +82,7 @@
               </dxi-column>
 
               <div *dxTemplate="let row of 'AccionesFactores'" class="d-flex gap-3 justify-content-center">
-                <div *appHasPermission="['46', '54']">
+                <div *appHasPermission="'22'">
                   <button
                   valueExpr="id"
                   id="actualizarButton"
@@ -92,7 +92,7 @@
                     <i class="fa fa-edit"></i>
                   </button>
                 </div>
-                <div *appHasPermission="['48', '56']">
+                <div *appHasPermission="'24'">
                   @if (row.data.estatus === 0) {
                   <button id="pinButton" class="btnAcciones" (click)="activarFactor(row.data)">
                     <i class="fa fa-arrow-up"></i>
@@ -120,7 +120,7 @@
           class="d-flex flex-wrap justify-content-between align-items-center gap-2 gap-md-3 mb-2 mb-md-3 flex-shrink-0 w-100">
           <h5 class="mb-0">Fórmulas</h5>
           <div class="d-flex flex-wrap gap-2 gap-md-3 justify-content-end">
-            <div *appHasPermission="['47', '59']">
+            <div *appHasPermission="'25'">
               <button (click)="agregarFormula()" mat-flat-button class="bg-secondary">
                 <i class="fa fa-plus"></i> Agregar
               </button>
@@ -157,7 +157,7 @@
               <dxo-grouping [autoExpandAll]="autoExpandAllGroupsFormulas"></dxo-grouping>
 
               <dxi-column caption="Acciones" cellTemplate="AccionesFormulas" alignment="center"
-                *appHasPermission="['46', '48', '58', '60']" dataType="string" [width]="120" [fixed]="true"
+                *appHasPermission="['26', '28']" dataType="string" [width]="120" [fixed]="true"
                 fixedPosition="left"></dxi-column>
               <dxi-column dataField="nombre" caption="Nombre" alignment="center" dataType="string"
                 [minWidth]="160"></dxi-column>
@@ -183,12 +183,12 @@
               </dxi-column>
 
               <div *dxTemplate="let row of 'AccionesFormulas'" class="d-flex gap-3 justify-content-center">
-                <div *appHasPermission="['46', '54']">
+                <div *appHasPermission="'26'">
                   <button valueExpr="id" id="actualizarButton" class="btnAcciones" (click)="editarFormula(row.data)">
                     <i class="fa fa-edit"></i>
                   </button>
                 </div>
-                <div *appHasPermission="['48', '56']">
+                <div *appHasPermission="'28'">
                   @if (row.data.estatus === 0) {
                   <button id="pinButton" class="btnAcciones" (click)="activarFormula(row.data)">
                     <i class="fa fa-arrow-up"></i>

@@ -60,9 +60,11 @@
     </div>
 
     <div class="d-flex flex-wrap gap-10 align-items-end justify-content-end w-100 inm-lista__toolbar mt-5">
-      <button type="button" (click)="abrirModalPago()" mat-flat-button class="bg-primary">
-        <i class="fa fa-plus" aria-hidden="true"></i> Registrar pago
-      </button>
+      <div *appHasPermission="'50'">
+        <button type="button" (click)="abrirModalPago()" mat-flat-button class="bg-primary">
+          <i class="fa fa-plus" aria-hidden="true"></i> Registrar pago
+        </button>
+      </div>
       <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
       </button>
@@ -103,6 +105,7 @@
           caption="Acciones"
           cellTemplate="accionesTpl"
           alignment="center"
+          *appHasPermission="'50'"
           [allowFiltering]="false"
           [allowSorting]="false"
         ></dxi-column>
@@ -129,7 +132,7 @@
         </div>
 
         <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
-          <div>
+          <div *appHasPermission="'50'">
             <button
               type="button"
               id="detalleIns"
@@ -140,7 +143,8 @@
               <i class="fa fa-eye"></i>
             </button>
           </div>
-          <div *ngIf="row.data?.estatus !== 'Pagado'">
+          <div *appHasPermission="'50'">
+            <div *ngIf="row.data?.estatus !== 'Pagado'">
             <button
               type="button"
               id="actualizarButton"
@@ -150,6 +154,7 @@
             >
               <i class="fa fa-exchange"></i>
             </button>
+            </div>
           </div>
         </div>
       </dx-data-grid>
