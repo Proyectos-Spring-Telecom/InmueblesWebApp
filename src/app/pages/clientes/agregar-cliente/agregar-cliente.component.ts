@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
@@ -552,6 +552,16 @@ export class AgregarClienteComponent implements OnInit {
       ?.setValue(inputElement.value, { emitEvent: false });
   }
 
+  sanitizeSocioRfc(event: Event, index: number): void {
+    const inputElement = event.target as HTMLInputElement;
+    const sanitizedValue = inputElement.value.replace(/[^A-Za-z0-9]/g, '');
+    inputElement.value = sanitizedValue.slice(0, 13);
+    this.sociosFormArray
+      .at(index)
+      ?.get('rfc')
+      ?.setValue(inputElement.value, { emitEvent: false });
+  }
+
   allowOnlyNumbers(event: KeyboardEvent): void {
     const charCode = event.keyCode ? event.keyCode : event.which;
     if (charCode < 48 || charCode > 57) {
@@ -566,7 +576,7 @@ export class AgregarClienteComponent implements OnInit {
     this.sociosEdicionSnapshots = null;
     this.clienteForm = this.fb.group({
       idPadre: [null as number | null],
-      rfc: ['', Validators.required],
+      rfc: ['', [Validators.required, Validators.maxLength(13)]],
       tipoPersona: [null, Validators.required],
       estatus: [1],
       logotipo: [null],
@@ -604,7 +614,7 @@ export class AgregarClienteComponent implements OnInit {
     return this.fb.group({
       id: [null as number | null],
       nombre: [''],
-      rfc: [''],
+      rfc: ['', [Validators.maxLength(13)]],
       constanciaFiscalArchivo: [null],
       comprobanteDomicilioArchivo: [null],
       identificacionOficialArchivo: [null],
@@ -644,6 +654,22 @@ export class AgregarClienteComponent implements OnInit {
     const nombre = this.nombreSocioEnIndice(index);
     if (nombre) return `Socio ${index + 1} | ${nombre}`;
     return `Socio ${index + 1}`;
+  }
+
+  /** Clave estable para el acordeón; evita recrear el ítem al escribir el nombre. */
+  claveEstableSocioAccordion(index: number): string {
+    return `socio-${index}`;
+  }
+
+  tituloSocioAccordionDesdeClave(data: unknown): string {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^socio-(\d+)$/.exec(clave);
+    if (!match) return clave;
+    return this.tituloSocioAccordion(Number(match[1]));
+  }
+
+  trackSocioPorIndice(index: number): number {
+    return index;
   }
 
   nombreSocioEnIndice(index: number): string {
@@ -911,76 +937,141 @@ export class AgregarClienteComponent implements OnInit {
     return fd;
   }
 
-  agregar() {
-    this.submitButton = 'Cargando...';
-    this.loading = true;
+  private readonly etiquetasValidacionCliente: Record<string, string> = {
+    idPadre: 'Arrendador vinculado',
+    rfc: 'RFC',
+    tipoPersona: 'Tipo de Persona',
+    estatus: 'Estatus',
+    logotipo: 'Logotipo',
+    constanciaSituacionFiscal: 'Constancia De Situación Fiscal (RFC De La Empresa)',
+    comprobanteDomicilio: 'Comprobante De Domicilio Fiscal',
+    actaConstitutiva: 'Acta Constitutiva',
+    poderRepresentanteLegal: 'Poder Del Representante Legal',
+    ineRepresentanteLegal: 'Identificación Oficial Del Representante Legal',
+    licenciaFuncionamiento: 'Licencia De Funcionamiento',
+    constanciaProteccionCivil: 'Constancia De Protección Civil',
+    usoSuelo: 'Uso De Suelo',
+    planoCatastral: 'Plano Catastral',
+    nombre: 'Nombre / Razón Social',
+    apellidoPaterno: 'Apellido Paterno',
+    apellidoMaterno: 'Apellido Materno',
+    telefono: 'Teléfono',
+    correo: 'Correo Electrónico',
+    estado: 'Estado',
+    municipio: 'Municipio',
+    colonia: 'Colonia',
+    calle: 'Calle',
+    numeroExterior: 'Número Exterior',
+    cp: 'Código Postal',
+    nombreEncargado: 'Nombre del Representante Legal',
+    telefonoEncargado: 'Teléfono del Representante Legal',
+    correoEncargado: 'Email del Representante Legal',
+  };
 
-    this.onTipoPersonaChange(null);
+  private recolectarCamposInvalidosCliente(): string[] {
+    const mensajes: string[] = [];
+    this.recorrerControlInvalido(this.clienteForm, '', mensajes);
+    return [...new Set(mensajes)];
+  }
 
-    if (this.clienteForm.invalid) {
-      this.submitButton = 'Guardar';
-      this.loading = false;
+  private recorrerControlInvalido(
+    control: AbstractControl | null,
+    path: string,
+    mensajes: string[],
+  ): void {
+    if (!control || control.disabled) return;
 
-      const etiquetas: Record<string, string> = {
-        idPadre: 'Arrendador vinculado',
-        rfc: 'RFC',
-        tipoPersona: 'Tipo de Persona',
-        estatus: 'Estatus',
-        logotipo: 'Logotipo',
-        constanciaSituacionFiscal: 'Constancia De Situación Fiscal (RFC De La Empresa)',
-        comprobanteDomicilio: 'Comprobante De Domicilio Fiscal',
-        actaConstitutiva: 'Acta Constitutiva',
-        poderRepresentanteLegal: 'Poder Del Representante Legal',
-        ineRepresentanteLegal: 'Identificación Oficial Del Representante Legal',
-        nombre: 'Nombre / Razón Social',
-        apellidoPaterno: 'Apellido Paterno',
-        apellidoMaterno: 'Apellido Materno',
-        telefono: 'Teléfono',
-        correo: 'Correo Electrónico',
-        estado: 'Estado',
-        municipio: 'Municipio',
-        colonia: 'Colonia',
-        calle: 'Calle',
-        numeroExterior: 'Número Exterior',
-        cp: 'Código Postal',
-        nombreEncargado: 'Nombre del Representante Legal',
-        telefonoEncargado: 'Teléfono del Representante Legal',
-        correoEncargado: 'Email del Representante Legal',
-      };
-
-      const camposFaltantes: string[] = [];
-      Object.keys(this.clienteForm.controls).forEach((key) => {
-        const control = this.clienteForm.get(key);
-        if (control?.invalid && control.errors?.['required']) {
-          camposFaltantes.push(etiquetas[key] || key);
-        }
+    if (control instanceof FormGroup) {
+      Object.entries(control.controls).forEach(([key, child]) => {
+        const childPath = path ? `${path}.${key}` : key;
+        this.recorrerControlInvalido(child, childPath, mensajes);
       });
+      return;
+    }
 
-      const lista = camposFaltantes
-        .map(
-          (campo, index) => `
+    if (control instanceof FormArray) {
+      control.controls.forEach((child, index) => {
+        this.recorrerControlInvalido(child, `${path}[${index}]`, mensajes);
+      });
+      return;
+    }
+
+    if (!control.invalid) return;
+
+    const msg = this.mensajeCampoInvalido(path, control);
+    if (msg) mensajes.push(msg);
+  }
+
+  private mensajeCampoInvalido(path: string, control: AbstractControl): string {
+    const socioMatch = /^socios\[(\d+)\]\.(\w+)$/.exec(path);
+    if (socioMatch) {
+      const numero = Number(socioMatch[1]) + 1;
+      const campo = socioMatch[2];
+      if (campo === 'nombre') {
+        if (control.errors?.['required']) return `Nombre del Socio ${numero}`;
+        return `Nombre del Socio ${numero} (revisar valor)`;
+      }
+      if (campo === 'rfc' && control.errors?.['maxlength']) {
+        return `RFC del Socio ${numero} (máximo 13 caracteres)`;
+      }
+      return '';
+    }
+
+    const etiqueta = this.etiquetasValidacionCliente[path] || path;
+    if (control.errors?.['required']) return etiqueta;
+    if (control.errors?.['email']) return `${etiqueta} (correo inválido)`;
+    if (control.errors?.['maxlength']) return `${etiqueta} (máximo 13 caracteres)`;
+    if (control.errors?.['invalid']) return etiqueta;
+    return etiqueta;
+  }
+
+  private mostrarSwalCamposInvalidos(esActualizar: boolean): void {
+    this.submitButton = esActualizar ? 'Actualizar' : 'Guardar';
+    this.loading = false;
+
+    const camposFaltantes = this.recolectarCamposInvalidosCliente();
+    const lista = camposFaltantes.length
+      ? camposFaltantes
+          .map(
+            (campo, index) => `
       <div style="padding:8px 12px;border-left:4px solid #d9534f;background:#caa8a8;text-align:center;margin-bottom:8px;border-radius:4px;">
         <strong style="color:#b02a37;">${index + 1}. ${campo}</strong>
       </div>
-    `
-        )
-        .join('');
+    `,
+          )
+          .join('')
+      : `
+      <div style="padding:8px 12px;border-left:4px solid #d9534f;background:#caa8a8;text-align:center;margin-bottom:8px;border-radius:4px;">
+        <strong style="color:#b02a37;">Revise los campos marcados en el formulario.</strong>
+      </div>`;
 
-      Swal.fire({
-        color: '#ffffff',
-        background: '#141a21',
-        title: '¡Faltan campos obligatorios!',
-        html: `
+    Swal.fire({
+      color: '#ffffff',
+      background: '#141a21',
+      title: '¡Faltan campos obligatorios!',
+      html: `
         <p style="text-align:center;font-size:15px;margin-bottom:16px;color:white">
           Los siguientes <strong>campos obligatorios</strong> están vacíos.<br>
           Por favor complétalos antes de continuar:
         </p>
         <div style="max-height:350px;overflow-y:auto;">${lista}</div>
       `,
-        icon: 'error',
-        confirmButtonText: 'Entendido',
-        customClass: { popup: 'swal2-padding swal2-border' },
-      });
+      icon: 'error',
+      confirmButtonText: 'Entendido',
+      customClass: { popup: 'swal2-padding swal2-border' },
+    });
+  }
+
+  agregar() {
+    this.submitButton = 'Cargando...';
+    this.loading = true;
+
+    this.onTipoPersonaChange(null);
+
+    this.clienteForm.markAllAsTouched();
+
+    if (this.clienteForm.invalid) {
+      this.mostrarSwalCamposInvalidos(false);
       return;
     }
 
@@ -1025,69 +1116,10 @@ export class AgregarClienteComponent implements OnInit {
 
     this.onTipoPersonaChange(null);
 
+    this.clienteForm.markAllAsTouched();
+
     if (this.clienteForm.invalid) {
-      this.submitButton = 'Actualizar';
-      this.loading = false;
-
-      const etiquetas: Record<string, string> = {
-        idPadre: 'Arrendador vinculado',
-        rfc: 'RFC',
-        tipoPersona: 'Tipo de Persona',
-        estatus: 'Estatus',
-        logotipo: 'Logotipo',
-        constanciaSituacionFiscal: 'Constancia De Situación Fiscal (RFC De La Empresa)',
-        comprobanteDomicilio: 'Comprobante De Domicilio Fiscal',
-        actaConstitutiva: 'Acta Constitutiva',
-        poderRepresentanteLegal: 'Poder Del Representante Legal',
-        ineRepresentanteLegal: 'Identificación Oficial Del Representante Legal',
-        nombre: 'Nombre / Razón Social',
-        apellidoPaterno: 'Apellido Paterno',
-        apellidoMaterno: 'Apellido Materno',
-        telefono: 'Teléfono',
-        correo: 'Correo Electrónico',
-        estado: 'Estado',
-        municipio: 'Municipio',
-        colonia: 'Colonia',
-        calle: 'Calle',
-        numeroExterior: 'Número Exterior',
-        cp: 'Código Postal',
-        nombreEncargado: 'Nombre del Representante Legal',
-        telefonoEncargado: 'Teléfono del Representante Legal',
-        correoEncargado: 'Email del Representante Legal',
-      };
-
-      const camposFaltantes: string[] = [];
-      Object.keys(this.clienteForm.controls).forEach((key) => {
-        const control = this.clienteForm.get(key);
-        if (control?.invalid && control.errors?.['required']) {
-          camposFaltantes.push(etiquetas[key] || key);
-        }
-      });
-
-      const lista = camposFaltantes
-        .map(
-          (campo, index) => `
-        <div style="padding:8px 12px;border-left:4px solid #d9534f;background:#caa8a8;text-align:center;margin-bottom:8px;border-radius:4px;">
-          <strong style="color:#b02a37;">${index + 1}. ${campo}</strong>
-        </div>`
-        )
-        .join('');
-
-      Swal.fire({
-        color: '#ffffff',
-        background: '#141a21',
-        title: '¡Faltan campos obligatorios!',
-        html: `
-        <p style="text-align:center;font-size:15px;margin-bottom:16px;color:white">
-          Los siguientes <strong>campos obligatorios</strong> están vacíos.<br>
-          Por favor complétalos antes de continuar:
-        </p>
-        <div style="max-height:350px;overflow-y:auto;">${lista}</div>
-      `,
-        icon: 'error',
-        confirmButtonText: 'Entendido',
-        customClass: { popup: 'swal2-padding swal2-border' },
-      });
+      this.mostrarSwalCamposInvalidos(true);
       return;
     }
 

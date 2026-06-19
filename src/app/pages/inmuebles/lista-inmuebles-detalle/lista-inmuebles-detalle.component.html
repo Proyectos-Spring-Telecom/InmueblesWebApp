@@ -1,4 +1,9 @@
 <div class="inm-detalle" *ngIf="row">
+  <p class="inm-detalle__loading text-muted text-center py-3" *ngIf="cargandoDetalleAnidado" role="status">
+    Cargando zonas, locales, servicios y archivos…
+  </p>
+
+  <ng-container *ngIf="!cargandoDetalleAnidado">
   <nav class="inm-detalle__tabs" aria-label="Secciones del inmueble">
     <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
       (click)="detalleTab = 0">Zonas ({{ zonas.length }}) · Locales ({{ totalLocales() }})</button>
@@ -62,6 +67,7 @@
               <thead>
                 <tr>
                   <th scope="col">Local</th>
+                  <th scope="col">Fachada</th>
                   <th scope="col">Área</th>
                   <th scope="col">Estatus</th>
                   <th scope="col">Mensualidad</th>
@@ -73,6 +79,15 @@
                 <tr *ngFor="let loc of localesZona(z)">
                   <td class="inm-locales-table__nombre" [attr.data-label]="'Local'">
                     {{ loc.nombre || 'Sin nombre' }}
+                  </td>
+                  <td class="inm-locales-table__fachada" [attr.data-label]="'Fachada'">
+                    <button *ngIf="urlFachadaLocal(loc); else sinFachadaLocal" type="button"
+                      class="inm-local-fachada-btn"
+                      (click)="abrirDocumento(urlFachadaLocal(loc), loc.nombre || 'Fachada')"
+                      [title]="'Ver fachada — ' + (loc.nombre || 'Local')">
+                      <img [src]="urlFachadaLocal(loc)" [alt]="'Fachada — ' + (loc.nombre || 'Local')" loading="lazy" />
+                    </button>
+                    <ng-template #sinFachadaLocal><span>—</span></ng-template>
                   </td>
                   <td [attr.data-label]="'Área'">
                     <span *ngIf="loc.areaM2 != null && loc.areaM2 !== ''; else sinArea">{{ loc.areaM2 }} m²</span>
@@ -126,6 +141,9 @@
           <p *ngIf="s.numeroContrato">Contrato: {{ s.numeroContrato }}</p>
           <p *ngIf="s.fechaPago">Pago: {{ formatearFecha(s.fechaPago) }}</p>
           <p *ngIf="s.ultimoDiaPago">Último día: {{ formatearFecha(s.ultimoDiaPago) }}</p>
+          <div class="inm-servicio-card__thumb" *ngIf="s.urlComprobante && esImagenArchivo(s.urlComprobante)">
+            <img [src]="s.urlComprobante" alt="Comprobante de pago" loading="lazy" />
+          </div>
         </div>
         <button *ngIf="s.urlComprobante" type="button" mat-flat-button class="bg-warn inm-servicio-card__btn"
           (click)="abrirDocumento(s.urlComprobante, 'Comprobante de pago')">
@@ -178,6 +196,7 @@
       <p class="inm-empty">Sin documentos adjuntos.</p>
     </ng-template>
   </div>
+  </ng-container>
 </div>
 
 <app-documento-preview #docPreview eyebrow="Documento del inmueble"></app-documento-preview>

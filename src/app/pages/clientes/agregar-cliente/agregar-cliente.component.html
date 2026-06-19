@@ -48,6 +48,7 @@
                             </span>
                             <div class="form-floating flex-grow-1">
                                 <input type="text" formControlName="rfc" class="form-control" id="rfc"
+                                    maxlength="13" (input)="sanitizeInput($event)"
                                     placeholder="Ej.: ABCD800101XX0" required>
                                 <label for="rfc">Ej.: ABCD800101XX0</label>
                             </div>
@@ -864,10 +865,10 @@
                                     <div *dxTemplate="let data of 'socioAccordionTitle'"
                                         class="arrend-accordion-title-bar">
                                         <span class="arrend-accordion-title-bar__label">{{
-                                            tituloAccordionCaption(data) }}</span>
+                                            tituloSocioAccordionDesdeClave(data) }}</span>
                                     </div>
-                                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index"
-                                        [title]="tituloSocioAccordion(i)">
+                                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index; trackBy: trackSocioPorIndice"
+                                        [title]="claveEstableSocioAccordion(i)">
                                         <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                                             <div class="row g-3 socios-identidad">
                                                 <div class="col-12 col-md-6">
@@ -895,6 +896,7 @@
                                                             <input type="text" class="form-control"
                                                                 formControlName="rfc"
                                                                 maxlength="13"
+                                                                (input)="sanitizeSocioRfc($event, i)"
                                                                 placeholder="RFC del socio" />
                                                             <label>RFC del socio</label>
                                                         </div>

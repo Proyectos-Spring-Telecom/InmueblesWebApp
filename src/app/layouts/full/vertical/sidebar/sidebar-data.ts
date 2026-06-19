@@ -1,81 +1,120 @@
 import { NavItem } from './nav-item/nav-item';
 import { Permiso } from 'src/app/entities/permiso.enum';
 
+const permisosArrendadores = [
+  Permiso.CONSULTA_ARRENDADORES,
+  Permiso.ACTUALIZAR_ARRENDADORES,
+  Permiso.AGREGAR_ARRENDADOR,
+  Permiso.ELIMINAR_ARRENDADOR,
+];
+
+const permisosInmuebles = [
+  Permiso.CONSULTAR_INMUEBLES,
+  Permiso.ACTUALIZAR_INMUEBLE,
+  Permiso.AGREGAR_INMUEBLE,
+  Permiso.ELIMINAR_INMUEBLE,
+];
+
+const permisosArrendatarios = [
+  Permiso.CONSULTAR_ARRENDATARIOS,
+  Permiso.ACTUALIZAR_ARRENDATARIOS,
+  Permiso.AGREGAR_ARRENDATARIOS,
+  Permiso.ELIMINAR_ARRENDATARIOS,
+];
+
 export const navItems: NavItem[] = [
   {
     navCap: 'Menú',
   },
-  // {
-  //   displayName: 'Tablero',
-  //   iconName: 'home',
-  //   route: '/dashboard',
-  // },
   {
     displayName: 'Administración',
     iconName: 'box-multiple',
     route: '/menu-level',
-    // Mostrar si tiene al menos un permiso de administración
     permission: [
       Permiso.CONSULTAR_MODULO,
+      Permiso.AGREGAR_MODULO,
+      Permiso.ACTUALIZAR_MODULO,
+      Permiso.ELIMINAR_MODULO,
       Permiso.CONSULTAR_PERMISOS,
-      Permiso.CONSULTAR_PRODUCTOS,
-      Permiso.CONSULTAR_MARCAS,
-      Permiso.CONSULTAR_MODELOS,
-      Permiso.CONSULTAR_EQUIPOS,
-      Permiso.CONSULTAR_DEPARTAMENTOS,
-      Permiso.CONSULTAR_INCREMENTOS,
+      Permiso.AGREGAR_PERMISO,
+      Permiso.ACTUALIZAR_PERMISO,
+      Permiso.ELIMINAR_PERMISO,
+      Permiso.CONSULTAR_INPC,
+      Permiso.AGREGAR_INPC,
+      Permiso.ACTUALIZAR_INPC,
+      Permiso.ELIMINAR_INPC,
       Permiso.CONSULTAR_FACTORES,
+      Permiso.AGREGAR_FACTORES,
+      Permiso.ACTUALIZAR_FACTOR,
+      Permiso.ELIMINAR_FACTOR,
+      Permiso.CONSULTAR_SERVICIOS,
+      Permiso.AGREGAR_SERVICIO,
+      Permiso.ACTUALIZAR_SERVICIO,
+      Permiso.ELIMINAR_SERVICIO,
+      Permiso.CONSULTAR_METODOS_DE_PAGO,
     ],
     children: [
       {
         displayName: 'Módulos',
-        // iconName: 'puzzle',
         route: '/modulos',
-        permission: Permiso.CONSULTAR_MODULO,
+        permission: [
+          Permiso.CONSULTAR_MODULO,
+          Permiso.AGREGAR_MODULO,
+          Permiso.ACTUALIZAR_MODULO,
+          Permiso.ELIMINAR_MODULO,
+        ],
       },
       {
         displayName: 'Permisos',
-        // iconName: 'shield-lock',
         route: '/permisos',
-        permission: Permiso.CONSULTAR_PERMISOS,
+        permission: [
+          Permiso.CONSULTAR_PERMISOS,
+          Permiso.AGREGAR_PERMISO,
+          Permiso.ACTUALIZAR_PERMISO,
+          Permiso.ELIMINAR_PERMISO,
+        ],
       },
-      
       {
         displayName: 'INPC',
         route: '/incrementos',
-        /* permission: [
-          Permiso.CONSULTAR_DEPARTAMENTOS,
-          Permiso.CONSULTAR_INCREMENTOS,
-        ], */
+        permission: [
+          Permiso.CONSULTAR_INPC,
+          Permiso.AGREGAR_INPC,
+          Permiso.ACTUALIZAR_INPC,
+          Permiso.ELIMINAR_INPC,
+        ],
       },
       {
         displayName: 'Factores',
         route: '/factores',
-        /* permission: [
-          Permiso.CONSULTAR_DEPARTAMENTOS,
+        permission: [
           Permiso.CONSULTAR_FACTORES,
-        ], */
+          Permiso.AGREGAR_FACTORES,
+          Permiso.ACTUALIZAR_FACTOR,
+          Permiso.ELIMINAR_FACTOR,
+        ],
       },
       {
         displayName: 'Servicios',
         route: '/servicios',
+        permission: [
+          Permiso.CONSULTAR_SERVICIOS,
+          Permiso.AGREGAR_SERVICIO,
+          Permiso.ACTUALIZAR_SERVICIO,
+          Permiso.ELIMINAR_SERVICIO,
+        ],
       },
       {
         displayName: 'Métodos de pago',
         route: '/metodos-pago',
+        permission: Permiso.CONSULTAR_METODOS_DE_PAGO,
       },
-      // {
-      //   displayName: 'Bitácora',
-      //   iconName: 'date',
-      //   permission: Permiso.CONSULTAR_BITACORA,
-      // },
     ],
   },
   {
     displayName: 'Usuarios',
     iconName: 'users',
     route: '/menu-level',
-    // Mostrar si tiene al menos un permiso de usuarios
     permission: [
       Permiso.CONSULTAR_USUARIO,
       Permiso.AGREGAR_USUARIO,
@@ -85,13 +124,11 @@ export const navItems: NavItem[] = [
     children: [
       {
         displayName: 'Agregar Usuario',
-        // iconName: 'user-cog',
         route: '/usuarios/agregar-usuario',
         permission: Permiso.AGREGAR_USUARIO,
       },
       {
         displayName: 'Lista Usuarios',
-        // iconName: 'user-cog',
         route: '/usuarios',
         permission: Permiso.CONSULTAR_USUARIO,
       },
@@ -101,7 +138,6 @@ export const navItems: NavItem[] = [
     displayName: 'Roles',
     iconName: 'user-cog',
     route: '/menu-level',
-    // Mostrar si tiene al menos un permiso de roles
     permission: [
       Permiso.CONSULTAR_ROLES,
       Permiso.AGREGAR_ROL,
@@ -111,13 +147,11 @@ export const navItems: NavItem[] = [
     children: [
       {
         displayName: 'Agregar Rol',
-        // iconName: 'user-cog',
         route: '/roles/agregar-rol',
         permission: Permiso.AGREGAR_ROL,
       },
       {
         displayName: 'Lista Roles',
-        // iconName: 'user-cog',
         route: '/roles',
         permission: Permiso.CONSULTAR_ROLES,
       },
@@ -130,53 +164,62 @@ export const navItems: NavItem[] = [
     displayName: 'Arrendadores',
     iconName: 'building',
     route: '/monitoreo',
-    permission: Permiso.CONSULTAR_MONITOREO,
+    permission: [
+      Permiso.CONSULTAR_ARRENDADORES_MAPA,
+      ...permisosArrendadores,
+    ],
   },
   {
     displayName: 'Catálogos',
     iconName: 'address-book',
     route: '/menu-level',
-    permission: Permiso.CONSULTA_CLIENTE,
+    permission: [
+      ...permisosArrendadores,
+      ...permisosInmuebles,
+      ...permisosArrendatarios,
+      Permiso.PERMISO_RESERVADO_RENT_ROL,
+    ],
     children: [
       {
         displayName: 'Lista Arrendadores',
         route: '/clientes',
-        permission: Permiso.CONSULTA_CLIENTE,
+        permission: permisosArrendadores,
       },
       {
         displayName: 'Lista Inmuebles',
         route: '/inmuebles',
-        permission: Permiso.CONSULTA_CLIENTE,
+        permission: permisosInmuebles,
       },
       {
         displayName: 'Arrendatarios',
         route: '/menu-level',
-        permission: Permiso.CONSULTA_CLIENTE,
+        permission: permisosArrendatarios,
         children: [
           {
             displayName: 'Lista de Arrendatarios',
             route: '/arrendatarios',
-            permission: Permiso.CONSULTA_CLIENTE,
+            permission: Permiso.CONSULTAR_ARRENDATARIOS,
           },
           {
             displayName: 'Pagos del mes',
             route: '/arrendatarios/pagos-mes',
-            permission: Permiso.CONSULTA_CLIENTE,
+            permission: Permiso.CONSULTAR_ARRENDATARIOS,
           },
           {
             displayName: 'Histórico de pagos',
             route: '/arrendatarios/pagos-historico',
-            permission: Permiso.CONSULTA_CLIENTE,
+            permission: Permiso.CONSULTAR_ARRENDATARIOS,
           },
-          
         ],
       },
       {
         displayName: 'Rent Rol',
         route: '/arrendatarios/rent-rol',
-        permission: Permiso.CONSULTA_CLIENTE,
+        permission: [
+          Permiso.PERMISO_RESERVADO_RENT_ROL,
+          Permiso.CONSULTAR_ARRENDATARIOS,
+        ],
       },
-      
     ],
   },
   {
@@ -186,58 +229,14 @@ export const navItems: NavItem[] = [
     displayName: 'Servicios Inmueble',
     iconName: 'building',
     route: '/registro-servicios-inmuebles',
-    permission: Permiso.CONSULTA_CLIENTE,
+    permission: Permiso.CONSULTAR_SERVICIOS_INMUEBLES,
   },
   {
     displayName: 'Servicios Arrendatarios',
     iconName: 'users',
     route: '/registro-servicios-arrendatarios',
-    permission: Permiso.CONSULTA_CLIENTE,
+    permission: Permiso.CONSULTAR_SERVICIOS_ARRENDATARIOS,
   },
-  /* {
-    displayName: 'Oficinas Centrales',
-    iconName: 'antenna',
-    route: '/instalaciones-centrales',
-    permission: Permiso.CONSULTAR_OFICINA_CENTRAL,
-  }, */
-  /* {
-    displayName: 'Estacionamiento',
-    iconName: 'parking',
-    route: '/estacionamiento',
-  }, */
-  /* {
-    displayName: 'Instalaciones',
-    iconName: 'building-warehouse',
-    route: '/instalaciones',
-    permission: Permiso.CONSULTAR_INSTALACIONES_GRID,
-  },
-  {
-    displayName: 'Departamentos',
-    iconName: 'building-community',
-    route: '/departamentos',
-    permission: Permiso.CONSULTAR_DEPARTAMENTOS,
-  }, */
-  /* {
-    displayName: 'Contratos',
-    iconName: 'file-text',
-    route: '/contratos',
-    permission: Permiso.CONSULTAR_DEPARTAMENTOS,
-  }, */
-  //{
-  //  navCap: 'Reportes',
-  //},
-  // {
-  //   displayName: 'Incidencias',
-  //   iconName: 'alert-triangle',
-  //   permission: Permiso.CONSULTAR_INCIDENCIAS,
-  // },
-  // {
-  //   displayName: 'Dashboard',
-  //   iconName: 'home',
-  //   route: '/dashboard',
-  //   permission: Permiso.CONSULTAR_TABLERO,
-  // },
-
   {
     navCap: 'Ajustes',
   },
@@ -250,37 +249,5 @@ export const navItems: NavItem[] = [
     displayName: 'Cerrar Sesión',
     iconName: 'lock',
     route: '/login',
-    // Sin permiso requerido - siempre visible
   },
-  // {
-  //   displayName: 'Register',
-  //   iconName: 'user-edit',
-  //   route: '/authentication/register',
-  // },
-  // {
-  //   navCap: 'Other',
-  // },
-
-  // {
-  //   displayName: 'Chip',
-  //   iconName: 'mood-smile',
-  //   route: '/',
-  //   chip: true,
-  //   chipClass: 'bg-secondary text-white',
-  //   chipContent: '9',
-  // },
-  // {
-  //   displayName: 'Outlined',
-  //   iconName: 'mood-smile',
-  //   route: '/',
-  //   chip: true,
-  //   chipClass: 'b-1 border-secondary text-secondary',
-  //   chipContent: 'outlined',
-  // },
-  // {
-  //   displayName: 'External Link',
-  //   iconName: 'star',
-  //   route: 'https://www.google.com/',
-  //   external: true,
-  // },
 ];

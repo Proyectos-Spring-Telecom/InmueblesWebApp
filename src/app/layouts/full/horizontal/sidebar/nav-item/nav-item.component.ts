@@ -26,7 +26,7 @@ export class AppHorizontalNavItemComponent implements OnInit {
 
   ngOnInit() { }
 
-  isDirectlyActive(item: { route?: string }): boolean {
+  isDirectlyActive(item: { route?: string; children?: unknown[] }): boolean {
     if (!item?.route || item.route === '/menu-level') return false;
 
     const normalize = (path: string) =>
@@ -35,13 +35,24 @@ export class AppHorizontalNavItemComponent implements OnInit {
     const url = normalize(this.router.url);
 
     if (url === route) return true;
-    if (!url.startsWith(route + '/')) return false;
 
-    if (route === '/arrendatarios') {
-      return !/^\/arrendatarios\/pagos-(renta|mantenimiento)(\/|$)/.test(url);
+    if (item.children?.length) {
+      return url.startsWith(route + '/');
     }
 
-    return true;
+    if (this.matchesEditarAlias(route, url)) return true;
+
+    const depth = route.split('/').filter(Boolean).length;
+    return depth >= 2 && url.startsWith(route + '/');
+  }
+
+  private matchesEditarAlias(route: string, url: string): boolean {
+    const match = route.match(/^(.*)\/agregar-([^/]+)$/);
+    if (!match) return false;
+
+    const [, base, suffix] = match;
+    const editRoute = `${base}/editar-${suffix}`;
+    return url === editRoute || url.startsWith(editRoute + '/');
   }
 
   onItemSelected(item: any) {

@@ -12,10 +12,12 @@ import {
   idArrendadorDesdeApi,
   InmuebleApiItem,
   InmuebleArchivoApi,
+  InmuebleLocalApi,
   InmuebleServicioApi,
   InmuebleZonaApi,
   separarArchivosInmueble,
   SlotDocumentoInmueble,
+  urlFachadaLocal,
 } from '../inmuebles-list.mapper';
 import {
   CatServicioItem,
@@ -122,6 +124,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   /** Catálogo GET `/cat-servicios/paginated` para el select de servicios. */
   public listaCatServicios: CatServicioItem[] = [];
   public loadingSubmit = false;
+  /** SweetAlert de guardado activo tras confirmar ubicación en el mapa. */
+  private swalGuardadoInmuebleActivo = false;
   public cargandoDetalle = false;
   public mostrarCamposRenta = false;
   /** Fachada y galería: solo imágenes. Plano: imágenes o PDF (como licencia). */
@@ -655,12 +659,36 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     return partes.join(' | ');
   }
 
+  /** Clave estable para el acordeón; evita recrear el ítem al cambiar campos del servicio. */
+  claveEstableServicioAccordion(index: number): string {
+    return `servicio-${index}`;
+  }
+
+  tituloServicioAccordionDesdeClave(data: unknown): string {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^servicio-(\d+)$/.exec(clave);
+    if (!match) return clave;
+    return this.tituloServicioAccordion(Number(match[1]));
+  }
+
   tituloZonaAccordion(index: number): string {
     const grupo = this.zonasFormArray.at(index) as FormGroup;
     const nombre = String(grupo.get('zonaPrincipal')?.value ?? '').trim();
     const partes = [`Zona ${index + 1}`];
     if (nombre) partes.push(nombre);
     return partes.join(' | ');
+  }
+
+  /** Clave estable para el acordeón; evita recrear el ítem al escribir el nombre de la zona. */
+  claveEstableZonaAccordion(index: number): string {
+    return `zona-${index}`;
+  }
+
+  tituloZonaAccordionDesdeClave(data: unknown): string {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^zona-(\d+)$/.exec(clave);
+    if (!match) return clave;
+    return this.tituloZonaAccordion(Number(match[1]));
   }
 
   tituloLocalAccordion(zonaIndex: number, localIndex: number): string {
@@ -671,6 +699,30 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     return partes.join(' | ');
   }
 
+  /** Clave estable para el acordeón; evita recrear el ítem al escribir el nombre del local. */
+  claveEstableLocalAccordion(zonaIndex: number, localIndex: number): string {
+    return `local-${zonaIndex}-${localIndex}`;
+  }
+
+  tituloLocalAccordionDesdeClave(data: unknown): string {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^local-(\d+)-(\d+)$/.exec(clave);
+    if (!match) return clave;
+    return this.tituloLocalAccordion(Number(match[1]), Number(match[2]));
+  }
+
+  trackServicioPorIndice(index: number): number {
+    return index;
+  }
+
+  trackZonaPorIndice(index: number): number {
+    return index;
+  }
+
+  trackLocalPorIndice(index: number): number {
+    return index;
+  }
+
   private abrirIndiceAccordion(indices: number[], nuevoIndex: number): number[] {
     const abiertos = new Set(indices);
     abiertos.add(nuevoIndex);
@@ -679,14 +731,21 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   private reiniciarIndicesAccordionServicios(): void {
     this.servicioAccordionIndicesAbiertos =
-      this.serviciosFormArray.length > 0 ? [0] : [];
+      this.serviciosFormArray.length > 0
+        ? Array.from({ length: this.serviciosFormArray.length }, (_, i) => i)
+        : [];
   }
 
   private reiniciarIndicesAccordionZonas(): void {
-    this.zonaAccordionIndicesAbiertos = this.zonasFormArray.length > 0 ? [0] : [];
+    this.zonaAccordionIndicesAbiertos =
+      this.zonasFormArray.length > 0
+        ? Array.from({ length: this.zonasFormArray.length }, (_, i) => i)
+        : [];
     const locales: Record<number, number[]> = {};
     for (let i = 0; i < this.zonasFormArray.length; i++) {
-      locales[i] = this.localesZonaFormArray(i).length > 0 ? [0] : [];
+      const count = this.localesZonaFormArray(i).length;
+      locales[i] =
+        count > 0 ? Array.from({ length: count }, (_, j) => j) : [];
     }
     this.localAccordionIndicesAbiertos = locales;
   }
@@ -1130,6 +1189,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.rellenarGaleriaDesdeApi(galeria);
     this.asignarDocumentosDesdeApi(documentos);
     this.capturarSnapshotEdicion(item, documentos, galeria);
+    this.cdr.detectChanges();
   }
 
   private rellenarServiciosDesdeApi(servicios?: InmuebleServicioApi[]): void {
@@ -1467,14 +1527,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   /** URL de fachada del local (GET) antes de subir archivo nuevo. */
   private urlFachadaLocalDesdeApi(l: Record<string, unknown>): string {
-    const direct = String(l['urlFachada'] ?? l['imagenFachada'] ?? '').trim();
-    if (direct) return direct;
-    const fachada = l['fachada'];
-    if (fachada != null && typeof fachada === 'object' && !Array.isArray(fachada)) {
-      return String((fachada as Record<string, unknown>)['url'] ?? '').trim();
-    }
-    if (typeof fachada === 'string' && fachada.trim()) return fachada.trim();
-    return '';
+    return urlFachadaLocal(l as InmuebleLocalApi);
   }
 
   submit(): void {
@@ -1614,10 +1667,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const fd = this.construirFormDataInmueble();
     this.inmueblesService.actualizarInmueble(this.idInmueble, fd).subscribe({
       next: () => {
-        this.mostrarExitoInmuebleYRedirigir(true);
+        this.cerrarSwalGuardandoInmuebleTrasExito(() =>
+          this.mostrarExitoInmuebleYRedirigir(true),
+        );
       },
       error: (err: unknown) => {
         this.loadingSubmit = false;
+        this.cerrarSwalGuardandoInmuebleInmediato();
         const e = err as { error?: { message?: string }; message?: string };
         const text =
           e?.error?.message ??
@@ -1641,10 +1697,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const fd = this.construirFormDataInmueble();
     this.inmueblesService.crearInmueble(fd).subscribe({
       next: () => {
-        this.mostrarExitoInmuebleYRedirigir(false);
+        this.cerrarSwalGuardandoInmuebleTrasExito(() =>
+          this.mostrarExitoInmuebleYRedirigir(false),
+        );
       },
       error: (err: unknown) => {
         this.loadingSubmit = false;
+        this.cerrarSwalGuardandoInmuebleInmediato();
         const e = err as { error?: { message?: string }; message?: string };
         const text =
           e?.error?.message ??
@@ -1661,6 +1720,42 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         });
       },
     });
+  }
+
+  /** Muestra carga al confirmar ubicación en el mapa (antes del POST/PUT). */
+  private mostrarSwalGuardandoInmueble(): void {
+    this.swalGuardadoInmuebleActivo = true;
+    void Swal.fire({
+      title: 'Guardando inmueble…',
+      text: 'Registrando la ubicación y los datos, por favor espera.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      background: '#141a21',
+      color: '#ffffff',
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+  }
+
+  /** Tras respuesta OK del servicio: espera 1 s y cierra la alerta de carga. */
+  private cerrarSwalGuardandoInmuebleTrasExito(onCerrado: () => void): void {
+    if (!this.swalGuardadoInmuebleActivo) {
+      onCerrado();
+      return;
+    }
+    this.swalGuardadoInmuebleActivo = false;
+    setTimeout(() => {
+      Swal.close();
+      onCerrado();
+    }, 1000);
+  }
+
+  private cerrarSwalGuardandoInmuebleInmediato(): void {
+    if (!this.swalGuardadoInmuebleActivo) return;
+    this.swalGuardadoInmuebleActivo = false;
+    Swal.close();
   }
 
   /** Muestra el mismo éxito que en el resto del sistema; luego navega. */
@@ -2397,6 +2492,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       lng: this.lngSeleccionada,
     });
     this.limpiarEstadoMapaModal();
+    this.mostrarSwalGuardandoInmueble();
     if (this.idInmueble != null) {
       this.ejecutarActualizacionInmueble();
     } else {

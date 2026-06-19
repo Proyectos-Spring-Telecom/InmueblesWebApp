@@ -45,6 +45,7 @@ export interface InmuebleLocalApi {
   giro?: string;
   idZona?: number;
   urlFachada?: string;
+  fachadaUrl?: string;
   imagenFachada?: string;
   fachada?: string | InmuebleArchivoApi;
 }
@@ -93,23 +94,161 @@ export interface InmuebleGridRow {
   detalle: InmuebleApiItem;
 }
 
+function esObjetoRecordo(val: unknown): val is Record<string, unknown> {
+  return val != null && typeof val === 'object' && !Array.isArray(val);
+}
+
+function leerArreglo(val: unknown): unknown[] {
+  return Array.isArray(val) ? val : [];
+}
+
+function valorTextoONumero(val: unknown): string | number | undefined {
+  if (val == null || val === '') return undefined;
+  if (typeof val === 'number' && Number.isFinite(val)) return val;
+  if (typeof val === 'string') return val;
+  return String(val);
+}
+
+function normalizarLocalApi(raw: unknown): InmuebleLocalApi | null {
+  if (!esObjetoRecordo(raw)) return null;
+  const l = raw;
+  const fachadaObj = l['fachada'];
+  const fachadaUrl = String(
+    l['fachadaUrl'] ??
+      l['urlFachada'] ??
+      l['imagenFachada'] ??
+      (esObjetoRecordo(fachadaObj) ? fachadaObj['url'] : fachadaObj) ??
+      '',
+  ).trim();
+  return {
+    id: l['id'] != null ? Number(l['id']) : undefined,
+    nombre: l['nombre'] != null ? String(l['nombre']) : undefined,
+    areaM2:
+      valorTextoONumero(l['areaM2']) ?? valorTextoONumero(l['superficieM2']),
+    estatus: l['estatus'] != null ? Number(l['estatus']) : undefined,
+    mensualidad:
+      valorTextoONumero(l['mensualidad']) ??
+      valorTextoONumero(l['mensualidadMxn']),
+    giro: l['giro'] != null ? String(l['giro']) : undefined,
+    idZona: l['idZona'] != null ? Number(l['idZona']) : undefined,
+    fachadaUrl: fachadaUrl || undefined,
+    urlFachada: fachadaUrl || undefined,
+    imagenFachada: fachadaUrl || undefined,
+  };
+}
+
+function normalizarZonaApi(raw: unknown): InmuebleZonaApi | null {
+  if (!esObjetoRecordo(raw)) return null;
+  const z = raw;
+  const localesRaw = leerArreglo(z['locales'] ?? z['Locales']);
+  return {
+    id: z['id'] != null ? Number(z['id']) : undefined,
+    idInmueble: z['idInmueble'] != null ? Number(z['idInmueble']) : undefined,
+    zonaPrincipal: z['zonaPrincipal'] != null ? String(z['zonaPrincipal']) : undefined,
+    superficieZonaM2:
+      valorTextoONumero(z['superficieZonaM2']) ??
+      valorTextoONumero(z['zonaSuperficieM2']),
+    superficieDisponibleM2:
+      valorTextoONumero(z['superficieDisponibleM2']) ??
+      valorTextoONumero(z['superficieDisponiblePredioM2']),
+    numeroZona: z['numeroZona'] != null ? Number(z['numeroZona']) : undefined,
+    locales: localesRaw
+      .map(normalizarLocalApi)
+      .filter((x): x is InmuebleLocalApi => x != null),
+  };
+}
+
+function normalizarServicioApi(raw: unknown): InmuebleServicioApi | null {
+  if (!esObjetoRecordo(raw)) return null;
+  const s = raw;
+  const urlComprobante = String(
+    s['urlComprobante'] ?? s['comprobanteUrl'] ?? s['urlComprobantePago'] ?? '',
+  ).trim();
+  return {
+    id: s['id'] != null ? Number(s['id']) : undefined,
+    idServicioInmueble:
+      s['idServicioInmueble'] != null ? Number(s['idServicioInmueble']) : undefined,
+    idTipoServicio:
+      s['idTipoServicio'] != null ? Number(s['idTipoServicio']) : undefined,
+    numeroContrato:
+      s['numeroContrato'] != null ? String(s['numeroContrato']) : undefined,
+    fechaPago: s['fechaPago'] != null ? String(s['fechaPago']) : undefined,
+    ultimoDiaPago:
+      s['ultimoDiaPago'] != null ? String(s['ultimoDiaPago']) : undefined,
+    urlComprobante: urlComprobante || undefined,
+    tipoServicio: esObjetoRecordo(s['tipoServicio'])
+      ? (s['tipoServicio'] as InmuebleServicioApi['tipoServicio'])
+      : undefined,
+  };
+}
+
+function normalizarArchivoApi(raw: unknown): InmuebleArchivoApi | null {
+  if (!esObjetoRecordo(raw)) return null;
+  const a = raw;
+  const url = String(a['url'] ?? a['archivoUrl'] ?? '').trim();
+  const nombre = a['nombre'] != null ? String(a['nombre']).trim() : '';
+  if (!url && !nombre) return null;
+  return {
+    id: a['id'] != null ? Number(a['id']) : undefined,
+    url: url || undefined,
+    nombre: nombre || undefined,
+  };
+}
+
+/** Normaliza arreglos anidados del GET `/inmuebles/{id}`. */
+export function normalizarInmuebleDetalleApi(raw: unknown): InmuebleApiItem {
+  if (!esObjetoRecordo(raw)) return {};
+  const r = raw;
+  const servicios = leerArreglo(r['servicios'] ?? r['Servicios'])
+    .map(normalizarServicioApi)
+    .filter((x): x is InmuebleServicioApi => x != null);
+  const zonas = leerArreglo(r['zonas'] ?? r['Zonas'])
+    .map(normalizarZonaApi)
+    .filter((x): x is InmuebleZonaApi => x != null);
+  const archivos = leerArreglo(r['archivos'] ?? r['Archivos'])
+    .map(normalizarArchivoApi)
+    .filter((x): x is InmuebleArchivoApi => x != null);
+  const imagenes = leerArreglo(r['imagenes'] ?? r['Imagenes'])
+    .map(normalizarArchivoApi)
+    .filter((x): x is InmuebleArchivoApi => x != null);
+
+  return {
+    ...(r as InmuebleApiItem),
+    servicios,
+    zonas,
+    archivos,
+    imagenes: imagenes.length ? imagenes : r['imagenes'] as InmuebleArchivoApi[] | undefined,
+  };
+}
+
 /** Respuesta de GET `/inmuebles/{id}` (con o sin envoltorio `data`). */
 export function extraerInmuebleDetalleApi(resp: unknown): InmuebleApiItem {
   if (resp == null || typeof resp !== 'object') return {};
   const r = resp as Record<string, unknown>;
 
-  const envuelto = r['data'];
-  if (envuelto != null && typeof envuelto === 'object' && !Array.isArray(envuelto)) {
-    return envuelto as InmuebleApiItem;
+  const envuelto = r['data'] ?? r['result'];
+  if (
+    esObjetoRecordo(envuelto) &&
+    (envuelto['id'] != null || envuelto['direccionFiscal'] != null)
+  ) {
+    return normalizarInmuebleDetalleApi(envuelto);
   }
 
   // El cuerpo ya es el inmueble ({ id, inmueble: "nombre", direccionFiscal, ... }).
   // No usar r['inmueble'] aquí: ese campo es el nombre (string), no el objeto.
   if (r['id'] != null || r['direccionFiscal'] != null) {
-    return r as InmuebleApiItem;
+    return normalizarInmuebleDetalleApi(r);
   }
 
   return {};
+}
+
+/** URL de fachada de un local (GET detalle). */
+export function urlFachadaLocal(loc: InmuebleLocalApi): string {
+  const raw = loc as Record<string, unknown>;
+  return String(
+    loc.fachadaUrl ?? loc.urlFachada ?? loc.imagenFachada ?? raw['fachadaUrl'] ?? '',
+  ).trim();
 }
 
 export function estatusInmuebleDesdeApi(estatus: unknown): string | null {
@@ -245,7 +384,7 @@ export function mapInmueblesApiToGridRows(items: unknown[]): InmuebleGridRow[] {
       tieneMapa: item.lat != null && item.lng != null && Number.isFinite(Number(item.lat)),
       lat: item.lat != null ? Number(item.lat) : null,
       lng: item.lng != null ? Number(item.lng) : null,
-      detalle: { ...item, id: idFinal, archivos },
+      detalle: normalizarInmuebleDetalleApi({ ...item, id: idFinal, archivos }),
     };
   });
 }

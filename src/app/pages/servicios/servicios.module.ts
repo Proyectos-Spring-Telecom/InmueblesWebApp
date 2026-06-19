@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { DxButtonModule, DxDataGridModule } from 'devextreme-angular';
 import { MaterialModule } from 'src/app/material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { ServiciosRoutingModule } from './servicios-routing.module';
 import { ListaServiciosComponent } from './lista-servicios/lista-servicios.component';
 import { AgregarServicioComponent } from './agregar-servicio/agregar-servicio.component';
@@ -19,6 +20,7 @@ import { AgregarServicioComponent } from './agregar-servicio/agregar-servicio.co
     MaterialModule,
     ReactiveFormsModule,
     FormsModule,
+    HasPermissionDirective,
   ],
 })
 export class ServiciosModule {}

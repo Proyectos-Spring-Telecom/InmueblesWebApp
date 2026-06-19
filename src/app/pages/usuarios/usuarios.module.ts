@@ -8,6 +8,7 @@ import { ListaUsuariosComponent } from './lista-usuarios/lista-usuarios.componen
 import { AgregarUsuarioComponent } from './agregar-usuario/agregar-usuario.component';
 import { MaterialModule } from 'src/app/material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { PerfilUsuarioComponent } from './perfil-usuario/perfil-usuario.component';
 
 
@@ -25,7 +26,8 @@ import { PerfilUsuarioComponent } from './perfil-usuario/perfil-usuario.componen
     DxButtonModule,
     MaterialModule,
     ReactiveFormsModule,
-    FormsModule
+    FormsModule,
+    HasPermissionDirective,
   ]
 })
 export class UsuariosModule { }

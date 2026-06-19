@@ -19,10 +19,8 @@
 
     <div class="surface">
         <div class="d-flex flex-wrap gap-10 justify-content-end w-100">
-            <div *appHasPermission="'51'">
-                <button mat-flat-button (click)="agregarInstalacion()" class="bg-secondary">
-                    <i class="fa fa-plus"></i> Agregar</button>
-            </div>
+            <button mat-flat-button (click)="agregarInstalacion()" class="bg-secondary">
+                <i class="fa fa-plus"></i> Agregar</button>
             <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i>
                 Limpiar</button>
             <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
@@ -50,7 +48,7 @@
                 <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
                 <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
                 <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
-                <dxi-column caption="Acciones" cellTemplate="Acciones" alignment="center" *appHasPermission="['50', '52']" dataType="string"
+                <dxi-column caption="Acciones" cellTemplate="Acciones" alignment="center" *appHasPermission="'52'" dataType="string"
                     [width]="220"></dxi-column>
                 <dxi-column dataField="nombreCliente" caption="Arrendador" alignment="center" cellTemplate="client"
                     dataType="string">
@@ -112,12 +110,6 @@
                     </div>
                 </dxi-column>
                 <div *dxTemplate="let row of 'Acciones'" class="d-flex gap-3 justify-content-center">
-                    <div *appHasPermission="'50'">
-                        <button valueExpr="id" id="actualizarButton" class="btnAcciones"
-                            (click)="actualizarInstalacion(row.data.id)">
-                            <i class="fa fa-edit"></i>
-                        </button>
-                    </div>
                     <div *appHasPermission="'52'">
                         @if (row.data.estatus === 0) {
                         <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">

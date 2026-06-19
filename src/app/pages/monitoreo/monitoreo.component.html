@@ -43,7 +43,7 @@
                     (click)="volverListaInmueblesDesdeZonas()">
                     Inmuebles
                   </button>
-                  <button *ngIf="isRol1" type="button" class="btn btn-sm monitor-head-btn monitor-head-btn--amber"
+                  <button type="button" class="btn btn-sm monitor-head-btn monitor-head-btn--amber"
                     (click)="goToCentrales()">
                     Arrendadores
                   </button>
@@ -433,11 +433,19 @@
         </div>
         <div class="insta-empty" *ngIf="!cargandoClientes && clientesFiltrados.length === 0">
           <div class="insta-empty-icon">
-            <mat-icon>business</mat-icon>
+            <mat-icon>{{ errorCargaArrendadores ? 'error_outline' : 'business' }}</mat-icon>
           </div>
           <div class="insta-empty-text">
-            <h6>Sin arrendadores</h6>
-            <p>No hay arrendadores que coincidan con la búsqueda.</p>
+            <h6>{{ errorCargaArrendadores ? 'Error al cargar arrendadores' : 'Sin arrendadores' }}</h6>
+            <p *ngIf="errorCargaArrendadores">
+              No se pudo obtener el listado desde el servidor. Verifica la conexión o contacta al administrador.
+            </p>
+            <p *ngIf="!errorCargaArrendadores && clienteSearchTerm.trim().length > 0">
+              No hay arrendadores que coincidan con la búsqueda.
+            </p>
+            <p *ngIf="!errorCargaArrendadores && clienteSearchTerm.trim().length === 0">
+              No hay arrendadores registrados en el sistema.
+            </p>
           </div>
         </div>
         <div class="clientes-cards-grid" [class.clientes-cards-grid--solo]="clientesFiltrados.length === 1"

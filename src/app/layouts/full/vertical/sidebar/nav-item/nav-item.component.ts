@@ -236,14 +236,25 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
     const url = this.currentPath();
 
     if (url === route) return true;
-    if (!url.startsWith(route + '/')) return false;
 
-    // Lista de arrendatarios: solo activa en la ruta exacta del listado
-    if (route === '/arrendatarios') {
-      return url === '/arrendatarios';
+    if (item.children?.length) {
+      return url.startsWith(route + '/');
     }
 
-    return true;
+    if (this.matchesEditarAlias(route, url)) return true;
+
+    const depth = route.split('/').filter(Boolean).length;
+    return depth >= 2 && url.startsWith(route + '/');
+  }
+
+  /** /modulo/agregar-x también resalta en /modulo/editar-x/:id */
+  private matchesEditarAlias(route: string, url: string): boolean {
+    const match = route.match(/^(.*)\/agregar-([^/]+)$/);
+    if (!match) return false;
+
+    const [, base, suffix] = match;
+    const editRoute = `${base}/editar-${suffix}`;
+    return url === editRoute || url.startsWith(editRoute + '/');
   }
 
   isChildActive(item: NavItem): boolean {
