@@ -16,6 +16,8 @@ import {
   InmuebleServicioApi,
   InmuebleZonaApi,
   separarArchivosInmueble,
+  archivosImagenGaleriaInmueble,
+  urlArchivoNavegador,
   SlotDocumentoInmueble,
   urlFachadaLocal,
 } from '../inmuebles-list.mapper';
@@ -137,7 +139,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   readonly acceptSoloPdf = 'application/pdf';
   readonly etiquetaSoloPdf = 'PDF';
   archivoEscrituraNombre: string | null = null;
-  imagenLicenciaNombre: string | null = null;
+  imagenLicenciaFuncionamientoNombre: string | null = null;
+  imagenUsoSueloNombre: string | null = null;
   imagenFachadaNombre: string | null = null;
   imagenPlanoNombre: string | null = null;
   contratoRentaNombre: string | null = null;
@@ -147,7 +150,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   ineRepresentanteNombre: string | null = null;
   boletaPredialNombre: string | null = null;
   reciboAguaServiciosNombre: string | null = null;
-  imagenLicenciaUrl: string | null = null;
+  imagenLicenciaFuncionamientoUrl: string | null = null;
+  imagenUsoSueloUrl: string | null = null;
   imagenFachadaUrl: string | null = null;
   imagenPlanoUrl: string | null = null;
   contratoRentaUrl: string | null = null;
@@ -185,7 +189,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     'documentoEscritura',
     'documentoBoletaPredial',
     'documentoReciboAguaServicios',
-    'documentoLicencia',
+    'documentoLicenciaFuncionamiento',
+    'documentoUsoSuelo',
     'documentoFachada',
     'documentoPlano',
     'documentoContratoRenta',
@@ -217,7 +222,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private readonly PIN_URL = 'assets/images/logos/marker_spring.webp';
 
   @ViewChild('archivoEscrituraInput') archivoEscrituraInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('imagenLicenciaInput') imagenLicenciaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenLicenciaFuncionamientoInput') imagenLicenciaFuncionamientoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagenUsoSueloInput') imagenUsoSueloInput?: ElementRef<HTMLInputElement>;
   @ViewChild('imagenFachadaInput') imagenFachadaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('imagenPlanoInput') imagenPlanoInput?: ElementRef<HTMLInputElement>;
   @ViewChild('contratoRentaInput') contratoRentaInput?: ElementRef<HTMLInputElement>;
@@ -406,7 +412,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       documentoEscritura: [null],
       documentoBoletaPredial: [null],
       documentoReciboAguaServicios: [null],
-      documentoLicencia: [null],
+      documentoLicenciaFuncionamiento: [null],
+      documentoUsoSuelo: [null],
       documentoFachada: [null],
       documentoPlano: [null],
       documentoContratoRenta: [null],
@@ -918,9 +925,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   }
 
   verArchivoRemoto(url: string | null | undefined, titulo: string): void {
-    if (!url?.trim()) return;
+    const urlSegura = urlArchivoNavegador(url);
+    if (!urlSegura) return;
     const subtitulo = String(this.inmuebleForm.get('nombreInmueble')?.value ?? '').trim();
-    this.docPreview?.abrir(url, titulo, subtitulo);
+    this.docPreview?.abrir(urlSegura, titulo, subtitulo);
   }
 
   /** Edición por id con archivo ya guardado en el servidor (URL remota). */
@@ -931,7 +939,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   abrirSelectorArchivo(
     ref:
       | 'escritura'
-      | 'licencia'
+      | 'licenciaFuncionamiento'
+      | 'usoSuelo'
       | 'fachada'
       | 'plano'
       | 'contratoRenta'
@@ -946,7 +955,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       escritura: this.archivoEscrituraInput,
       boletaPredial: this.boletaPredialInput,
       reciboAgua: this.reciboAguaServiciosInput,
-      licencia: this.imagenLicenciaInput,
+      licenciaFuncionamiento: this.imagenLicenciaFuncionamientoInput,
+      usoSuelo: this.imagenUsoSueloInput,
       fachada: this.imagenFachadaInput,
       plano: this.imagenPlanoInput,
       contratoRenta: this.contratoRentaInput,
@@ -990,9 +1000,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       this.archivoEscrituraNombre = name;
       this.archivoEscrituraUrl = null;
     }
-    if (controlName === 'documentoLicencia') {
-      this.imagenLicenciaNombre = name;
-      this.imagenLicenciaUrl = null;
+    if (controlName === 'documentoLicenciaFuncionamiento') {
+      this.imagenLicenciaFuncionamientoNombre = name;
+      this.imagenLicenciaFuncionamientoUrl = null;
+    }
+    if (controlName === 'documentoUsoSuelo') {
+      this.imagenUsoSueloNombre = name;
+      this.imagenUsoSueloUrl = null;
     }
     if (controlName === 'documentoFachada') {
       this.imagenFachadaNombre = name;
@@ -1185,10 +1199,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
     this.rellenarServiciosDesdeApi(item.servicios);
     this.rellenarZonasDesdeApi(item.zonas);
-    const { documentos, galeria } = separarArchivosInmueble(item.archivos, item.imagenes);
-    this.rellenarGaleriaDesdeApi(galeria);
+    const { documentos } = separarArchivosInmueble(item.archivos, item.imagenes);
+    this.rellenarGaleriaDesdeApi(archivosImagenGaleriaInmueble(item));
     this.asignarDocumentosDesdeApi(documentos);
-    this.capturarSnapshotEdicion(item, documentos, galeria);
+    this.capturarSnapshotEdicion(item, documentos, archivosImagenGaleriaInmueble(item));
     this.cdr.detectChanges();
   }
 
@@ -1306,12 +1320,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     lista.forEach((img) => {
       const g = this.crearGaleriaImagenFormGroup();
       const idArch = Number(img.id);
+      const urlRaw = String(img.url ?? '').trim();
       g.patchValue(
         {
           idArchivo: Number.isFinite(idArch) && idArch > 0 ? idArch : null,
           archivo: null,
-          nombre: img.nombre || this.nombreArchivoDesdeUrl(img.url, 'Imagen'),
-          url: img.url?.trim() ?? '',
+          nombre: img.nombre || this.nombreArchivoDesdeUrl(urlRaw, 'Imagen'),
+          url: urlArchivoNavegador(urlRaw),
         },
         { emitEvent: false },
       );
@@ -1324,13 +1339,20 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   ): void {
     this.limpiarArchivosRemotos();
     const asignar = (slot: SlotDocumentoInmueble, archivo?: InmuebleArchivoApi): void => {
-      if (!archivo?.url?.trim()) return;
-      const nombre = archivo.nombre || this.nombreArchivoDesdeUrl(archivo.url, 'Documento');
-      const url = archivo.url.trim();
+      const urlRaw = String(
+        archivo?.url ?? (archivo as Record<string, unknown> | undefined)?.['archivoUrl'] ?? '',
+      ).trim();
+      if (!urlRaw) return;
+      const nombre = archivo?.nombre || this.nombreArchivoDesdeUrl(urlRaw, 'Documento');
+      const url = urlArchivoNavegador(urlRaw);
       switch (slot) {
-        case 'licencia':
-          this.imagenLicenciaNombre = nombre;
-          this.imagenLicenciaUrl = url;
+        case 'licenciaFuncionamiento':
+          this.imagenLicenciaFuncionamientoNombre = nombre;
+          this.imagenLicenciaFuncionamientoUrl = url;
+          break;
+        case 'usoSuelo':
+          this.imagenUsoSueloNombre = nombre;
+          this.imagenUsoSueloUrl = url;
           break;
         case 'fachada':
           this.imagenFachadaNombre = nombre;
@@ -1497,7 +1519,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   private limpiarArchivosRemotos(): void {
     this.archivoEscrituraNombre = null;
-    this.imagenLicenciaNombre = null;
+    this.imagenLicenciaFuncionamientoNombre = null;
+    this.imagenUsoSueloNombre = null;
     this.imagenFachadaNombre = null;
     this.imagenPlanoNombre = null;
     this.contratoRentaNombre = null;
@@ -1507,7 +1530,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.ineRepresentanteNombre = null;
     this.boletaPredialNombre = null;
     this.archivoEscrituraUrl = null;
-    this.imagenLicenciaUrl = null;
+    this.imagenLicenciaFuncionamientoUrl = null;
+    this.imagenUsoSueloUrl = null;
     this.imagenFachadaUrl = null;
     this.imagenPlanoUrl = null;
     this.contratoRentaUrl = null;
@@ -2205,10 +2229,19 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.appendDocumentoSlotActualizacion(
       fd,
       contadores,
-      'licencia',
-      'Licencia o uso de suelo',
-      'documentoLicencia',
-      this.imagenLicenciaNombre,
+      'licenciaFuncionamiento',
+      'Licencia de funcionamiento',
+      'documentoLicenciaFuncionamiento',
+      this.imagenLicenciaFuncionamientoNombre,
+      true,
+    );
+    this.appendDocumentoSlotActualizacion(
+      fd,
+      contadores,
+      'usoSuelo',
+      'Uso de suelo',
+      'documentoUsoSuelo',
+      this.imagenUsoSueloNombre,
       true,
     );
     this.appendDocumentoSlotActualizacion(
@@ -2399,7 +2432,8 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       }
     };
 
-    pushImagen(v['documentoLicencia'], 'Licencia o uso de suelo');
+    pushImagen(v['documentoLicenciaFuncionamiento'], 'Licencia de funcionamiento');
+    pushImagen(v['documentoUsoSuelo'], 'Uso de suelo');
     pushImagen(v['documentoFachada'], 'Fachada');
     pushImagen(v['documentoPlano'], 'Plano');
 

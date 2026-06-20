@@ -448,7 +448,7 @@
             </p>
           </div>
         </div>
-        <div class="clientes-cards-grid" [class.clientes-cards-grid--solo]="clientesFiltrados.length === 1"
+        <div class="clientes-cards-grid"
           *ngIf="!cargandoClientes && clientesFiltrados.length > 0">
           <div class="clientes-cards-grid__item" *ngFor="let cliente of clientesFiltrados">
             <div class="inmueble-card-shell cliente-grid-card cliente-card-v2">

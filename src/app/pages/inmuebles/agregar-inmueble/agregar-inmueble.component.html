@@ -540,7 +540,7 @@
             </ng-template>
             <div class="row g-3 g-lg-4 mt-0 uploader-wrap docs-uploader-docs-row align-items-stretch">
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
-                <label class="form-label perm-label docs-uploader-label">Licencia / uso de suelo</label>
+                <label class="form-label perm-label docs-uploader-label">Licencia de funcionamiento</label>
                 <div class="uploader-hero flex-grow-1">
                   <div class="uploader">
                     <div class="uploader__glow"></div>
@@ -549,15 +549,39 @@
                       <h6 class="uploader__title">Sube archivo</h6>
                       <p class="uploader__subtitle">Arrastra y suelta o</p>
                       <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
-                        url: imagenLicenciaUrl,
-                        nombreRemoto: imagenLicenciaNombre,
-                        controlName: 'documentoLicencia',
+                        url: imagenLicenciaFuncionamientoUrl,
+                        nombreRemoto: imagenLicenciaFuncionamientoNombre,
+                        controlName: 'documentoLicenciaFuncionamiento',
                         placeholder: etiquetaPdfImagenes,
-                        tituloVer: imagenLicenciaNombre || 'Licencia / uso de suelo',
-                        selector: 'licencia'
+                        tituloVer: imagenLicenciaFuncionamientoNombre || 'Licencia de funcionamiento',
+                        selector: 'licenciaFuncionamiento'
                       }"></ng-container>
-                      <input #imagenLicenciaInput type="file" [accept]="acceptPdfImagenes"
-                        class="uploader__input" (change)="onFileSelected($event, 'documentoLicencia')" />
+                      <input #imagenLicenciaFuncionamientoInput type="file" [accept]="acceptPdfImagenes"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoLicenciaFuncionamiento')" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                <label class="form-label perm-label docs-uploader-label">Uso de suelo</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>image</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: imagenUsoSueloUrl,
+                        nombreRemoto: imagenUsoSueloNombre,
+                        controlName: 'documentoUsoSuelo',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: imagenUsoSueloNombre || 'Uso de suelo',
+                        selector: 'usoSuelo'
+                      }"></ng-container>
+                      <input #imagenUsoSueloInput type="file" [accept]="acceptPdfImagenes"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoUsoSuelo')" />
                     </div>
                   </div>
                 </div>

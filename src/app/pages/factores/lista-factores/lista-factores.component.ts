@@ -7,6 +7,7 @@ import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { FactoresService } from 'src/app/services/moduleService/factores.service';
 import { FormulasService } from 'src/app/services/moduleService/formulas.service';
 import { formatearFechaHora } from 'src/app/pages/inmuebles/inmuebles-list.mapper';
+import { mesNumeroANombre } from 'src/app/pages/incrementos/inpc-historico.data';
 import { formatValorMilesParaLista } from 'src/app/shared/valor-miles-format';
 import Swal from 'sweetalert2';
 
@@ -15,6 +16,10 @@ function mapFactorGridRow(item: any) {
     item?.variable ?? item?.Variable ?? item?.nombre ?? item?.Nombre ?? '',
   ).trim();
   const valorRaw = item?.valor ?? item?.Valor ?? '';
+  const anioInpc = Number(item?.anioInpc ?? item?.anioINPC ?? item?.AnioInpc ?? 0);
+  const mesInpc = Number(item?.mesInpc ?? item?.mesINPC ?? item?.MesInpc ?? 0);
+  const anioInpcValido = Number.isFinite(anioInpc) && anioInpc > 0;
+  const mesInpcValido = Number.isFinite(mesInpc) && mesInpc >= 1 && mesInpc <= 12;
   return {
     ...item,
     id: Number(item?.id ?? item?.Id),
@@ -23,6 +28,10 @@ function mapFactorGridRow(item: any) {
     valorFmt: formatValorMilesParaLista(valorRaw),
     descripcion: item?.descripcion ?? item?.Descripcion ?? '',
     estatus: Number(item?.estatus ?? item?.Estatus ?? 1),
+    anioInpc: anioInpcValido ? anioInpc : null,
+    mesInpc: mesInpcValido ? mesInpc : null,
+    mesInpcLabel: mesInpcValido ? mesNumeroANombre(mesInpc) : '—',
+    anioInpcFmt: anioInpcValido ? String(anioInpc) : '—',
   };
 }
 

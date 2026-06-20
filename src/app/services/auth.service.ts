@@ -149,7 +149,7 @@ export class AuthenticationService extends BaseServicesService {
       );
   }
 
-  /** Limpia credenciales sin navegar (p. ej. refresh rechazado: el usuario permanece en la pantalla actual). */
+  /** Limpia credenciales sin navegar (p. ej. logout remoto fallido). */
   public clearSessionOnly(): void {
     this.user = null;
     this.cleanSession();

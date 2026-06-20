@@ -10,6 +10,9 @@ import {
   FormulasService,
 } from 'src/app/services/moduleService/formulas.service';
 import { parseValorNumerico } from 'src/app/shared/valor-miles-format';
+import {
+  evaluarExpresionFormulaEditor,
+} from '../formula-eval-local';
 
 interface FactorOpcionFormula {
   variable: string;
@@ -42,56 +45,6 @@ function parentesisBalanceadosValidator(control: AbstractControl): ValidationErr
     if (count < 0) return { parentesisDesbalanceados: true };
   }
   return count === 0 ? null : { parentesisDesbalanceados: true };
-}
-
-// ─── Parser seguro ────────────────────────────────────────────────────────────
-
-function evaluarExpresionSegura(expresion: string): number {
-  let pos = 0;
-  const s = expresion.replace(/\s+/g, '');
-
-  function parseExpresion(): number {
-    let resultado = parseTerm();
-    while (pos < s.length && (s[pos] === '+' || s[pos] === '-')) {
-      const op = s[pos++];
-      const t  = parseTerm();
-      resultado = op === '+' ? resultado + t : resultado - t;
-    }
-    return resultado;
-  }
-
-  function parseTerm(): number {
-    let resultado = parseFactor();
-    while (pos < s.length && (s[pos] === '*' || s[pos] === '/')) {
-      const op = s[pos++];
-      const f  = parseFactor();
-      if (op === '/' && f === 0) throw new Error('División entre cero');
-      resultado = op === '*' ? resultado * f : resultado / f;
-    }
-    return resultado;
-  }
-
-  function parseFactor(): number {
-    if (s[pos] === '(') {
-      pos++;
-      const resultado = parseExpresion();
-      if (s[pos] !== ')') throw new Error('Paréntesis desbalanceados');
-      pos++;
-      return resultado;
-    }
-    if (s[pos] === '-') {
-      pos++;
-      return -parseFactor();
-    }
-    const start = pos;
-    while (pos < s.length && /[0-9.]/.test(s[pos])) pos++;
-    if (pos === start) throw new Error('Token inesperado en posición ' + pos);
-    return parseFloat(s.slice(start, pos));
-  }
-
-  const resultado = parseExpresion();
-  if (pos !== s.length) throw new Error('Expresión inválida');
-  return resultado;
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -209,33 +162,6 @@ export class AgregarFormulaComponent implements OnInit {
     });
   }
 
-  private variablesEnExpresion(expr: string): string[] {
-    const encontradas: string[] = [];
-    const ordenadas = [...this.factoresParaSelectFormula].sort(
-      (a, b) => b.variable.length - a.variable.length,
-    );
-
-    for (const factor of ordenadas) {
-      const variable = factor.variable;
-      if (!variable || !expr.includes(variable)) continue;
-      if (!encontradas.includes(variable)) {
-        encontradas.push(variable);
-      }
-    }
-
-    return encontradas;
-  }
-
-  private tokensDesconocidosEnExpresion(expr: string, conocidas: string[]): string[] {
-    let limpia = expr;
-    const ordenadas = [...conocidas].sort((a, b) => b.length - a.length);
-    for (const variable of ordenadas) {
-      limpia = limpia.split(variable).join(' ');
-    }
-    limpia = limpia.replace(/[0-9.+\-*/()\s]/g, ' ').trim();
-    return [...new Set(limpia.split(/\s+/).filter(Boolean))];
-  }
-
   // ─── Constructor de expresión por botones ─────────────────────────────────
 
   insertarVariable(variable: string): void {
@@ -315,55 +241,21 @@ export class AgregarFormulaComponent implements OnInit {
       return;
     }
 
-    const variables = this.variablesEnExpresion(expr);
-    const desconocidas = this.tokensDesconocidosEnExpresion(expr, variables);
+    const catalogo = this.factoresParaSelectFormula
+      .filter((f) => f.valor != null && Number.isFinite(f.valor))
+      .map((f) => ({ variable: f.variable, valor: f.valor as number }));
 
-    const faltantes: string[] = [...desconocidas];
-    const sinValor: string[] = [];
-
-    for (const v of variables) {
-      const factor = this.factoresParaSelectFormula.find((f) => f.variable === v);
-      if (!factor) faltantes.push(v);
-      else if (factor.valor == null || !Number.isFinite(factor.valor)) sinValor.push(v);
-    }
-
-    if (faltantes.length) {
-      this.previewState = {
-        ok: false,
-        mensaje: `Variable${faltantes.length > 1 ? 's' : ''} no encontrada${faltantes.length > 1 ? 's' : ''} en Factores: ${[...new Set(faltantes)].join(', ')}`,
-      };
+    const result = evaluarExpresionFormulaEditor(expr, catalogo);
+    if (!result.ok) {
+      this.previewState = { ok: false, mensaje: result.mensaje };
       return;
     }
 
-    if (sinValor.length) {
-      this.previewState = {
-        ok: false,
-        mensaje: `Variable${sinValor.length > 1 ? 's' : ''} sin valor numérico: ${sinValor.join(', ')}`,
-      };
-      return;
-    }
-
-    // Sustituir — reemplazar cada variable por su valor numérico (más largas primero)
-    let sustituida = expr;
-    const variablesOrdenadas = [...variables].sort((a, b) => b.length - a.length);
-    for (const v of variablesOrdenadas) {
-      const factor = this.factoresParaSelectFormula.find((f) => f.variable === v)!;
-      sustituida = sustituida.split(v).join(this.formatValorFactor(factor.valor!));
-    }
-
-    try {
-      const resultado = evaluarExpresionSegura(sustituida);
-      this.previewState = {
-        ok: true,
-        expresionSustituida: sustituida.trim(),
-        resultado: this.roundValorFactor(resultado),
-      };
-    } catch (e: any) {
-      this.previewState = {
-        ok: false,
-        mensaje: e?.message ?? 'Error al evaluar la expresión',
-      };
-    }
+    this.previewState = {
+      ok: true,
+      expresionSustituida: result.expresionSustituida,
+      resultado: result.resultado,
+    };
   }
 
   get previewResultadoFormateado(): string {

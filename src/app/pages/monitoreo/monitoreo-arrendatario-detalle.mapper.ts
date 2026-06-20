@@ -2,6 +2,7 @@ import {
   esImagenArchivo,
   esPdfArchivo,
   formatearMoneda,
+  urlArchivoNavegador,
 } from '../inmuebles/inmuebles-list.mapper';
 import {
   MonitoreoExpedienteDoc,
@@ -207,15 +208,20 @@ export function serviciosArrendatarioPagoOpciones(
 
 export function urlsGaleriaArrendatario(item: ArrendatarioApiItem): string[] {
   const archivos = Array.isArray(item.archivos) ? item.archivos : [];
+  const vistos = new Set<string>();
   return archivos
     .filter((a) => {
-      const url = String(a.url ?? '').trim();
+      const url = String(
+        a.url ?? (a as Record<string, unknown>)['archivoUrl'] ?? '',
+      ).trim();
       const nombre = String(a.nombre ?? '').trim();
-      if (!url) return false;
-      if (nombre.toLowerCase() === 'fachada') return false;
-      return esImagenArchivo(url, nombre);
+      if (!url || !esImagenArchivo(url, nombre)) return false;
+      const clave = url.toLowerCase();
+      if (vistos.has(clave)) return false;
+      vistos.add(clave);
+      return true;
     })
-    .map((a) => String(a.url ?? '').trim())
+    .map((a) => urlArchivoNavegador(String(a.url ?? '').trim()))
     .filter((u) => u.length > 0);
 }
 

@@ -29,15 +29,34 @@ $incremento-row-alt: rgba(250, 128, 114, 0.16);
 
 .rr-root {
   position: relative;
+  min-width: 0;
+}
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.rr-rent-rol {
+  min-width: 0;
+
+  .surface {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
 }
 
 // ─────────────────────────────────────────────
-//  Page
+//  Contenido principal
 // ─────────────────────────────────────────────
-.rr-page {
-  background: $bg-base;
-  min-height: 100vh;
-  padding: 24px 20px 56px;
+.rr-body {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: $text-main;
@@ -184,20 +203,13 @@ $rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
 
 .rr-kpi-slot {
   width: 100%;
-  margin: 0 0 12px;
+  min-width: 0;
+  margin: 0;
   flex-shrink: 0;
   padding: 0;
   border: 0;
-}
-
-.rr-kpi-float {
-  position: fixed;
-  z-index: 120;
-  pointer-events: none;
-  isolation: isolate;
 
   .rr-kpi-shell {
-    pointer-events: auto;
     width: 100%;
     box-sizing: border-box;
     background: linear-gradient(135deg, $accent-red 0%, #4a0f24 52%, #2d0816 100%);
@@ -212,7 +224,6 @@ $rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
   }
 
   .rr-kpi {
-    pointer-events: auto;
     width: 100%;
   }
 }
@@ -301,10 +312,12 @@ $rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 0.25rem;
 }
 
 .rr-pag-info {
-  font-size: 11px; color: $text-muted; white-space: nowrap;
+  font-size: 11px;
+  color: $text-muted;
 }
 
 // ─────────────────────────────────────────────
@@ -353,12 +366,17 @@ $rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
 .rr-table-wrap {
   position: relative;
   z-index: 1;
+  width: 100%;
+  min-width: 0;
   background: $bg-surface;
   border: 1px solid $border;
   border-radius: $radius-lg;
   overflow: hidden;
 
   .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
     border-radius: $radius-lg;
     -webkit-overflow-scrolling: touch;
   }
@@ -368,17 +386,17 @@ $rr-kpi-seq-duration: 9.6s; // 4 turnos × 2.4s
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 0;
-  min-width: 1100px;
+  table-layout: auto;
 
-  .col-empresa  { width: 18%; }
-  .col-piso     { width: 5%; }
-  .col-modulo   { width: 7%; }
-  .col-m2       { width: 6%; }
-  .col-pm2      { width: 8%; }
-  .col-concepto { width: 7%; }
-  .col-num      { width: 8%; }
-  .col-fecha    { width: 9%; }
-  .col-estatus  { width: 8%; }
+  .col-empresa  { min-width: 140px; }
+  .col-piso     { min-width: 72px; }
+  .col-modulo   { min-width: 72px; }
+  .col-m2       { min-width: 88px; }
+  .col-pm2      { min-width: 88px; }
+  .col-concepto { min-width: 88px; }
+  .col-num      { min-width: 96px; }
+  .col-fecha    { min-width: 108px; }
+  .col-estatus  { min-width: 88px; }
 
   // ── Thead ──
   thead tr { background: $bg-thead; }
@@ -513,7 +531,21 @@ tfoot {
 // ─────────────────────────────────────────────
 //  Paginado
 // ─────────────────────────────────────────────
-.rr-pagination { padding: 4px 2px; }
+.rr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.25rem 0 0;
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
 
 .rr-pag-btn {
   min-width: 34px; height: 34px;
@@ -543,5 +575,52 @@ tfoot {
   &.dots {
     border-color: transparent; background: transparent;
     cursor: default; color: $text-muted;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .rr-rent-rol .surface {
+    padding-inline: 14px;
+    gap: 0.85rem;
+  }
+
+  .rr-kpi-slot .rr-kpi-shell {
+    padding: 12px 14px;
+  }
+
+  .rr-kpi {
+    padding: 12px 14px;
+  }
+
+  .rr-kpi__value {
+    font-size: 18px;
+  }
+
+  .rr-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rr-leyenda {
+    justify-content: flex-start;
+  }
+
+  .rr-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rr-pagination__controls {
+    justify-content: center;
+  }
+
+  .rr-table thead th,
+  .rr-table tbody td {
+    padding-inline: 8px;
+  }
+
+  .rr-table thead th:first-child,
+  .rr-table tbody td:first-child {
+    padding-left: 12px;
   }
 }

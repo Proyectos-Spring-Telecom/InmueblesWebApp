@@ -1,11 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { HistoricoPagosRentaService } from 'src/app/services/moduleService/historico-pagos-renta.service';
@@ -23,14 +16,8 @@ import {
   standalone: false,
   animations: [routeAnimation],
 })
-export class RentRolComponent implements OnInit, AfterViewInit, OnDestroy {
+export class RentRolComponent implements OnInit {
   readonly REGISTROS_POR_PAGINA = 20;
-
-  @ViewChild('kpiFloat') private kpiFloatRef?: ElementRef<HTMLElement>;
-  @ViewChild('kpiSlot') private kpiSlotRef?: ElementRef<HTMLElement>;
-
-  kpiAltura = 0;
-  kpiFloatStyle: Record<string, string> = { visibility: 'hidden' };
 
   paginaActual$ = 1;
   totalRegistros = 0;
@@ -41,12 +28,6 @@ export class RentRolComponent implements OnInit, AfterViewInit, OnDestroy {
   fechaFinFiltro = '';
 
   registros: RentRolRow[] = [];
-
-  private scrollEl: HTMLElement | null = null;
-  private shellResizeObserver: ResizeObserver | null = null;
-  private rafId = 0;
-  private readonly onScrollKpi = () => this.programarSyncKpi();
-  private readonly onResizeKpi = () => this.programarSyncKpi();
 
   constructor(private historicoPagosRentaService: HistoricoPagosRentaService) {}
 
@@ -101,7 +82,7 @@ export class RentRolComponent implements OnInit, AfterViewInit, OnDestroy {
     if (p >= 1 && p <= this.totalPaginas && p !== this.paginaActual$) {
       this.paginaActual$ = p;
       this.cargarRegistros();
-      this.scrollEl?.scrollTo({ top: 0, behavior: 'smooth' });
+      document.querySelector('.layout-content-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
@@ -156,59 +137,6 @@ export class RentRolComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cargarRegistros();
   }
 
-  ngAfterViewInit(): void {
-    this.scrollEl = document.querySelector('.layout-content-scroll');
-
-    const shell = this.kpiFloatRef?.nativeElement?.querySelector('.rr-kpi-shell');
-    if (shell instanceof HTMLElement && typeof ResizeObserver !== 'undefined') {
-      this.shellResizeObserver = new ResizeObserver(() => this.programarSyncKpi());
-      this.shellResizeObserver.observe(shell);
-    }
-
-    this.scrollEl?.addEventListener('scroll', this.onScrollKpi, { passive: true });
-    window.addEventListener('resize', this.onResizeKpi, { passive: true });
-    setTimeout(() => this.syncKpiFloat());
-  }
-
-  ngOnDestroy(): void {
-    cancelAnimationFrame(this.rafId);
-    this.scrollEl?.removeEventListener('scroll', this.onScrollKpi);
-    window.removeEventListener('resize', this.onResizeKpi);
-    this.shellResizeObserver?.disconnect();
-  }
-
-  private programarSyncKpi(): void {
-    cancelAnimationFrame(this.rafId);
-    this.rafId = requestAnimationFrame(() => this.syncKpiFloat());
-  }
-
-  private syncKpiFloat(): void {
-    const slot = this.kpiSlotRef?.nativeElement;
-    const float = this.kpiFloatRef?.nativeElement;
-    const scroll = this.scrollEl;
-    if (!slot || !float || !scroll) return;
-
-    const shell = float.querySelector('.rr-kpi-shell');
-    const altura = shell instanceof HTMLElement ? shell.offsetHeight : 0;
-    if (altura > 0) {
-      this.kpiAltura = altura;
-    }
-
-    const scrollRect = scroll.getBoundingClientRect();
-    const slotRect = slot.getBoundingClientRect();
-    const topeFlotante = scrollRect.top;
-    const top = Math.max(slotRect.top, topeFlotante);
-
-    this.kpiFloatStyle = {
-      position: 'fixed',
-      top: `${top}px`,
-      left: `${slotRect.left}px`,
-      width: `${slotRect.width}px`,
-      zIndex: '120',
-      visibility: 'visible',
-    };
-  }
-
   private rangoFechasPorDefecto(): { inicio: string; fin: string } {
     const hoy = new Date();
     const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
@@ -234,12 +162,7 @@ export class RentRolComponent implements OnInit, AfterViewInit, OnDestroy {
         fechaInicio: this.fechaInicioFiltro,
         fechaFin: this.fechaFinFiltro,
       })
-      .pipe(
-        finalize(() => {
-          this.cargando = false;
-          setTimeout(() => this.syncKpiFloat());
-        }),
-      )
+      .pipe(finalize(() => { this.cargando = false; }))
       .subscribe({
         next: (resp) => {
           const rowsRaw = extraerFilasRentRolApi(resp);

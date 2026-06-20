@@ -21,24 +21,12 @@ import { AppSettings } from 'src/app/config';
 import { AuthenticationService } from 'src/app/services/auth.service';
 import { NavItem } from '../sidebar/nav-item/nav-item';
 import {
-  ContratoDetalleDialogComponent,
-  ContratoDetalleDialogData,
-} from './contrato-detalle-dialog/contrato-detalle-dialog.component';
-import {
   NotificacionesService,
   NotificacionesResponse,
   PagoSeguimientoDto,
   PagoServicioInmuebleDto,
   VencimientoRenovacionContratoDto,
 } from 'src/app/services/moduleService/notificaciones.service';
-import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
-import { nombreArrendador } from 'src/app/pages/inmuebles/inmuebles-list.mapper';
-import {
-  extraerArrendatarioDetalleApi,
-  primerInmuebleContrato,
-} from 'src/app/pages/arrendatarios/arrendatarios-list.mapper';
-import { finalize } from 'rxjs/operators';
-import Swal from 'sweetalert2';
 import { LoginSuccessSoundService } from 'src/app/services/login-success-sound.service';
 
 /** Rutas mostradas en Panel de accesos para ítems que en sidebar usan `/menu-level`. */
@@ -94,15 +82,12 @@ function buildPanelAccessItems(items: NavItem[]): NavItem[] {
 /** Mensajes / avisos (contratos, alertas generales) */
 interface AvisoNotificacion {
   id: number;
-  /** Para GET `/arrendatarios/{id}` al abrir el modal (vencimientos). */
-  idArrendatario?: number;
   title: string;
   subtitle: string;
   /** Semáforo: success = bien (verde), warning = próximo (amarillo), danger = crítico (rojo). */
   tone?: 'success' | 'warning' | 'amber' | 'danger';
   /** Días restantes para vencer (si aplica). */
   daysLeft?: number;
-  detalle?: Partial<ContratoDetalleDialogData>;
 }
 
 /** Categorías de estado de recibos (inmuebles / predios) */
@@ -224,7 +209,6 @@ export class HeaderComponent implements OnInit {
     private users: AuthenticationService,
     private router: Router,
     private notificacionesService: NotificacionesService,
-    private arrendatariosService: ArrendatariosService,
     public loginSuccessSound: LoginSuccessSoundService,
   ) {
     const user = this.users.getUser();
@@ -274,22 +258,13 @@ export class HeaderComponent implements OnInit {
     const diasTxt = Number.isFinite(dias) ? `${dias}` : '—';
     const termino = this.formatNotifyDate(v.fechaTerminoContrato);
     const tone = this.tonePorDiasFaltantesNotificacion(dias);
-    const idArrRaw = Number(v.idArrendatario);
-    const idArrendatario =
-      Number.isFinite(idArrRaw) && idArrRaw > 0 ? Math.floor(idArrRaw) : undefined;
 
     return {
       id: v.id,
-      idArrendatario,
       title: 'Vencimiento de contrato',
       subtitle: `Inmueble: ${inmueble} — Arrendatario: ${arrendatario} — Término: ${termino} — Días: ${diasTxt}`,
       daysLeft: Number.isFinite(dias) ? dias : undefined,
       tone,
-      detalle: {
-        inmueble,
-        arrendatario,
-        fechaTermino: termino,
-      },
     };
   }
 
@@ -401,51 +376,6 @@ export class HeaderComponent implements OnInit {
     this.users.logout().subscribe();
   }
 
-  onAvisoContratoClick(a: AvisoNotificacion, event: Event): void {
-    event.stopPropagation();
-    const idArr = a.idArrendatario;
-    if (idArr == null || !Number.isFinite(idArr) || idArr <= 0) {
-      void Swal.fire({
-        background: '#141a21',
-        color: '#ffffff',
-        icon: 'warning',
-        title: 'Sin arrendatario asociado',
-        text: 'Esta notificación no incluye id de arrendatario para cargar el detalle.',
-        confirmButtonText: 'Entendido',
-      });
-      return;
-    }
-
-    void Swal.fire({
-      background: '#141a21',
-      color: '#ffffff',
-      title: 'Cargando arrendatario…',
-      allowOutsideClick: false,
-      showConfirmButton: false,
-      didOpen: () => Swal.showLoading(),
-    });
-
-    this.arrendatariosService
-      .obtenerArrendatario(idArr)
-      .pipe(finalize(() => Swal.close()))
-      .subscribe({
-        next: (raw) => {
-          const data = this.buildDetalleDesdeArrendatarioApi(raw, a);
-          this.openContratoDetalleDialog(data);
-        },
-        error: () => {
-          void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
-            icon: 'error',
-            title: 'No se pudo cargar el arrendatario',
-            text: 'Verifica tu conexión o vuelve a intentar.',
-            confirmButtonText: 'Entendido',
-          });
-        },
-      });
-  }
-
   /** Pagos de servicios y seguimiento de arrendatarios: no abren modal. */
   onReciboContratoClick(_r: ReciboEstadoItem, event: Event): void {
     event.stopPropagation();
@@ -464,70 +394,6 @@ export class HeaderComponent implements OnInit {
   /** Pie del menú Arrendatarios: listado de arrendatarios. */
   verTodoArrendatariosNotif(): void {
     void this.router.navigate(['/arrendatarios']);
-  }
-
-  private openContratoDetalleDialog(data: ContratoDetalleDialogData): void {
-    this.dialog.open(ContratoDetalleDialogComponent, {
-      data,
-      panelClass: 'contrato-detalle-dialog-shell',
-      autoFocus: false,
-      maxWidth: '95vw',
-      width: 'min(600px, 95vw)',
-    });
-  }
-
-  private defaultContratoDetalle(): ContratoDetalleDialogData {
-    return {
-      predio: 'Desarrollo Inmobiliario BHV SA de CV',
-      inmueble: 'Oficinas corporativas — Torre B, Piso 4',
-      arrendatario: 'Prestalana SA de CV',
-      arrendador: 'Desarrollo Inmobiliario BHV SA de CV',
-      contrato: 'PC-0001',
-      fechaInicio: '01/01/2025',
-      fechaTermino: '31/12/2027',
-    };
-  }
-
-  private buildDetalleDesdeArrendatarioApi(
-    raw: unknown,
-    aviso: AvisoNotificacion,
-  ): ContratoDetalleDialogData {
-    const item = extraerArrendatarioDetalleApi(raw);
-    const base = this.defaultContratoDetalle();
-    const inv = primerInmuebleContrato(item);
-    const arrendatarioAviso = String(aviso.detalle?.arrendatario ?? '').trim();
-    const terminoAviso = String(aviso.detalle?.fechaTermino ?? '').trim();
-    const arrNombre = String(item['arrendatario'] ?? '').trim();
-
-    return {
-      titulo: 'Vencimientos y renovaciones',
-      predio: inv.direccion !== '—' ? inv.direccion : base.predio,
-      inmueble:
-        inv.nombre !== '—'
-          ? inv.nombre
-          : String(aviso.detalle?.inmueble ?? base.inmueble),
-      arrendatario: arrendatarioAviso || arrNombre || base.arrendatario,
-      arrendador: nombreArrendador(item['arrendador'] as Record<string, unknown> | undefined),
-      contrato: this.primerNumeroContratoArrendatario(item),
-      fechaInicio: this.formatNotifyDate(
-        item['fechaInicio'] != null ? String(item['fechaInicio']) : undefined,
-      ),
-      fechaTermino:
-        terminoAviso && terminoAviso !== '—'
-          ? terminoAviso
-          : this.formatNotifyDate(
-              item['fechaFin'] != null ? String(item['fechaFin']) : undefined,
-            ),
-    };
-  }
-
-  private primerNumeroContratoArrendatario(item: Record<string, unknown>): string {
-    const contratos = item['contratos'];
-    if (!Array.isArray(contratos) || contratos.length === 0) return '—';
-    const c0 = contratos[0] as Record<string, unknown>;
-    const n = c0?.['numeroContrato'] ?? c0?.['numero_contrato'] ?? c0?.['numero'];
-    const s = String(n ?? '').trim();
-    return s || '—';
   }
 
   /** Contador sobre el ícono (se llena desde GET /notificaciones). */

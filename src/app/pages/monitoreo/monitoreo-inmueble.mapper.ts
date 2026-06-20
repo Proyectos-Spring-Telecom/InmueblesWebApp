@@ -2,6 +2,7 @@ import {
   esImagenArchivo,
   esPdfArchivo,
   extraerInmuebleDetalleApi,
+  urlArchivoNavegador,
   urlPdfMiniatura,
   formatearFecha,
   formatearFechaHora,
@@ -97,7 +98,7 @@ export function buildArchivosInmuebleLista(
     })
     .map((a) => {
       const nombre = String(a.nombre ?? '').trim() || 'Documento';
-      const url = String(a.url ?? '').trim();
+      const url = urlArchivoNavegador(String(a.url ?? '').trim());
       return {
         etiqueta: nombre,
         detalle: nombre,
@@ -190,27 +191,50 @@ export function buildServiciosMonitoreoInmueble(
 }
 
 export function urlsGaleriaInmueble(item: InmuebleApiItem): string[] {
-  const { galeria } = separarArchivosInmueble(item.archivos, item.imagenes);
-  return galeria
-    .map((a) => String(a.url ?? '').trim())
+  const todos: InmuebleArchivoApi[] = [
+    ...(Array.isArray(item.archivos) ? item.archivos : []),
+    ...(Array.isArray(item.imagenes) ? item.imagenes : []),
+  ];
+  const vistos = new Set<string>();
+
+  return todos
+    .filter((a) => {
+      const url = String(
+        a.url ?? (a as Record<string, unknown>)['archivoUrl'] ?? '',
+      ).trim();
+      const nombre = String(a.nombre ?? '').trim();
+      if (!url || !esImagenArchivo(url, nombre)) return false;
+      const clave = url.toLowerCase();
+      if (vistos.has(clave)) return false;
+      vistos.add(clave);
+      return true;
+    })
+    .sort((a, b) => {
+      const fa = String((a as Record<string, unknown>)['fhRegistro'] ?? '');
+      const fb = String((b as Record<string, unknown>)['fhRegistro'] ?? '');
+      return fb.localeCompare(fa);
+    })
+    .map((a) => urlArchivoNavegador(String(a.url ?? '').trim()))
     .filter((u) => u.length > 0);
 }
 
 export function urlFachadaInmueble(item: InmuebleApiItem): string {
   const { documentos } = separarArchivosInmueble(item.archivos, item.imagenes);
-  return String(documentos.fachada?.url ?? '').trim();
+  return urlArchivoNavegador(String(documentos.fachada?.url ?? '').trim());
 }
 
 /** Archivo con nombre «Plano» en `archivos`. */
 export function urlPlanoInmueble(item: InmuebleApiItem): string {
   const { documentos } = separarArchivosInmueble(item.archivos, item.imagenes);
-  return String(documentos.plano?.url ?? '').trim();
+  return urlArchivoNavegador(String(documentos.plano?.url ?? '').trim());
 }
 
-/** Archivo con nombre «Licencia o uso de suelo» en `archivos`. */
+/** Archivo con nombre «Licencia de funcionamiento» en `imagenes`. */
 export function urlLicenciaInmueble(item: InmuebleApiItem): string {
   const { documentos } = separarArchivosInmueble(item.archivos, item.imagenes);
-  return String(documentos.licencia?.url ?? '').trim();
+  return urlArchivoNavegador(
+    String(documentos.licenciaFuncionamiento?.url ?? '').trim(),
+  );
 }
 
 export function esRentaDesdeEstatusInmueble(estatus: unknown): boolean {
@@ -240,7 +264,7 @@ export function coordenadasInmuebleDesdeApi(
 
 /** URL apta para `<img [src]>` en tarjetas de plano / licencia. */
 export function urlImagenTarjetaInmueble(url: string, nombre = ''): string | null {
-  const u = String(url ?? '').trim();
+  const u = urlArchivoNavegador(String(url ?? '').trim());
   if (!u) return null;
   if (esImagenArchivo(u, nombre || u)) return u;
   return null;

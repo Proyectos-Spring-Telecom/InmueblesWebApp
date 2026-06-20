@@ -138,6 +138,19 @@
   background: #0ea5e9;
 }
 
+.mono-gallery__empty {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  color: #9eb4d6;
+  font-size: 0.84rem;
+  text-align: center;
+}
+
 .mono-docs {
   background: #121b2c;
   border: 1px solid rgba(255, 255, 255, 0.08);

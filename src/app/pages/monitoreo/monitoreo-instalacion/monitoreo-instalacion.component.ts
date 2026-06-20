@@ -57,6 +57,7 @@ import {
   MonitoreoZonaFila,
   superficieDisponiblePredioTexto,
   tituloInmuebleDesdeApi,
+  urlFachadaInmueble,
   urlLicenciaInmueble,
   urlPdfTarjetaInmueble,
   urlPlanoInmueble,
@@ -733,7 +734,12 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.actualizarEmbedsMapa(coords.lat, coords.lng);
 
     const galeria = urlsGaleriaInmueble(item);
-    this.galleryImages = galeria.length ? galeria : [...this.galleryImagesDemo];
+    if (galeria.length) {
+      this.galleryImages = galeria;
+    } else {
+      const fachada = urlFachadaInmueble(item);
+      this.galleryImages = fachada ? [fachada] : [];
+    }
     if (this.galleryIndex >= this.galleryImages.length) {
       this.galleryIndex = 0;
     }
@@ -1808,6 +1814,18 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.galleryIndex = index;
   }
 
+  onGalleryImageError(index: number): void {
+    if (index < 0 || index >= this.galleryImages.length) return;
+    this.galleryImages = this.galleryImages.filter((_, i) => i !== index);
+    if (!this.galleryImages.length) {
+      this.galleryIndex = 0;
+      return;
+    }
+    if (this.galleryIndex >= this.galleryImages.length) {
+      this.galleryIndex = 0;
+    }
+  }
+
   ngOnInit(): void {
     const rangoPagos = this.rangoFechasPagosPorDefecto();
     this.fechaInicioFiltroPagos = rangoPagos.inicio;
@@ -1822,7 +1840,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       this.applyVistaDesdeQuery(qp),
     );
     if (!this.galleryImages.length) {
-      this.galleryImages = [...this.galleryImagesDemo];
+      this.galleryIndex = 0;
     }
 
     // Fecha fin: hoy a la hora actual
