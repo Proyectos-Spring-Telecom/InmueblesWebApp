@@ -422,7 +422,7 @@ export class AgregarClienteComponent implements OnInit {
     return n === 1 || n === 2;
   }
 
-  /** Persona moral (2): representante legal, acta/INE del representante y socios. */
+  /** Persona moral (2): representante legal, acta/INE del representante; socios opcionales. */
   esPersonaMoral(): boolean {
     return Number(this.clienteForm?.get('tipoPersona')?.value) === 2;
   }
@@ -467,7 +467,7 @@ export class AgregarClienteComponent implements OnInit {
     this.aplicarSeccionMoral(value === 2);
   }
 
-  /** Representante legal, acta/INE y socios solo aplican a persona moral. */
+  /** Representante legal y acta/INE solo aplican a persona moral; socios son opcionales. */
   private aplicarSeccionMoral(activar: boolean): void {
     const ne = this.clienteForm.get('nombreEncargado');
     const te = this.clienteForm.get('telefonoEncargado');
@@ -484,7 +484,7 @@ export class AgregarClienteComponent implements OnInit {
       poder?.setValidators([Validators.required]);
       ine?.setValidators([Validators.required]);
       this.sociosFormArray.controls.forEach((ctrl) =>
-        this.setSocioNombreRequerido(ctrl as FormGroup, true),
+        this.setSocioNombreRequerido(ctrl as FormGroup, false),
       );
     } else {
       ne?.clearValidators();
@@ -741,7 +741,6 @@ export class AgregarClienteComponent implements OnInit {
   agregarSocio(): void {
     const g = this.crearSocioFormGroup();
     this.sociosFormArray.push(g);
-    if (this.esPersonaMoral()) this.setSocioNombreRequerido(g, true);
     const nuevoIndex = this.sociosFormArray.length - 1;
     const abiertos = new Set(this.socioAccordionIndicesAbiertos);
     abiertos.add(nuevoIndex);

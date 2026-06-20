@@ -195,6 +195,117 @@ export function claseEstatusArrendatarioRegistro(raw: unknown): string {
   return 'estatus';
 }
 
+function fhContratoArrendatario(c: Record<string, unknown>): string {
+  return String(c['fhRegistro'] ?? c['fh_registro'] ?? '').trim();
+}
+
+/** Contrato principal: el más reciente por `fhRegistro`; si empatan, el primero en el arreglo. */
+export function contratoPrincipalArrendatarioApi(
+  item: Record<string, unknown>,
+): Record<string, unknown> | null {
+  const contratos = item['contratos'];
+  if (!Array.isArray(contratos) || contratos.length === 0) return null;
+
+  const validos = contratos.filter(
+    (x): x is Record<string, unknown> =>
+      x != null && typeof x === 'object' && !Array.isArray(x),
+  );
+  if (validos.length === 0) return null;
+
+  return [...validos].sort((a, b) =>
+    fhContratoArrendatario(b).localeCompare(fhContratoArrendatario(a)),
+  )[0];
+}
+
+function fechaIsoVigenciaContrato(
+  contrato: Record<string, unknown> | null,
+  keysContrato: readonly string[],
+  keyLegacyItem: string,
+  item: Record<string, unknown>,
+): string {
+  if (contrato) {
+    for (const k of keysContrato) {
+      const v = contrato[k];
+      if (v != null && String(v).trim()) return String(v).trim();
+    }
+  }
+  const legacy = item[keyLegacyItem];
+  if (legacy != null && String(legacy).trim()) return String(legacy).trim();
+  return '';
+}
+
+/** Fechas de vigencia desde el contrato principal o campos legacy del arrendatario. */
+export function fechasVigenciaArrendatarioApi(item: Record<string, unknown>): {
+  inicio: string;
+  fin: string;
+} {
+  const contrato = contratoPrincipalArrendatarioApi(item);
+  return {
+    inicio: fechaIsoVigenciaContrato(
+      contrato,
+      ['fechaInicioContrato', 'fecha_inicio_contrato'],
+      'fechaInicio',
+      item,
+    ),
+    fin: fechaIsoVigenciaContrato(
+      contrato,
+      ['fechaTerminoContrato', 'fecha_termino_contrato'],
+      'fechaFin',
+      item,
+    ),
+  };
+}
+
+function parseFechaUtc(raw: string): Date | null {
+  const s = raw.trim();
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Duración legible entre inicio y fin de contrato (años, meses o días). */
+export function textoDuracionContratoApi(inicioRaw: string, finRaw: string): string {
+  const inicio = parseFechaUtc(inicioRaw);
+  const fin = parseFechaUtc(finRaw);
+  if (!inicio || !fin || fin < inicio) return '—';
+
+  const utcDia = (d: Date): number =>
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const diffDays = Math.round((utcDia(fin) - utcDia(inicio)) / 86400000);
+  if (diffDays <= 0) return '1 día';
+
+  let years =
+    fin.getUTCFullYear() -
+    inicio.getUTCFullYear() -
+    (fin.getUTCMonth() < inicio.getUTCMonth() ||
+    (fin.getUTCMonth() === inicio.getUTCMonth() && fin.getUTCDate() < inicio.getUTCDate())
+      ? 1
+      : 0);
+  if (years >= 1) return years === 1 ? '1 año' : `${years} años`;
+
+  let months =
+    (fin.getUTCFullYear() - inicio.getUTCFullYear()) * 12 +
+    (fin.getUTCMonth() - inicio.getUTCMonth());
+  if (fin.getUTCDate() < inicio.getUTCDate()) months -= 1;
+  if (months >= 1) return months === 1 ? '1 mes' : `${months} meses`;
+
+  return diffDays === 1 ? '1 día' : `${diffDays} días`;
+}
+
+function textoTiempoRentaLegacy(item: Record<string, unknown>): string {
+  const legacy = item['tiempoRenta'];
+  if (legacy == null || String(legacy).trim() === '') return '—';
+  const tr = String(legacy).trim();
+  if (/^\d+$/.test(tr)) return `${tr} ${tr === '1' ? 'año' : 'años'}`;
+  return tr;
+}
+
+export function textoTiempoRentaArrendatarioApi(item: Record<string, unknown>): string {
+  const { inicio, fin } = fechasVigenciaArrendatarioApi(item);
+  if (inicio && fin) return textoDuracionContratoApi(inicio, fin);
+  return textoTiempoRentaLegacy(item);
+}
+
 export function primerInmuebleContrato(item: Record<string, unknown>): {
   nombre: string;
   direccion: string;
@@ -301,6 +412,7 @@ export function mapArrendatariosApiToGridRows(rows: unknown[]): ArrendatarioGrid
       (lat !== 0 || lng !== 0);
 
     const inv = primerInmuebleContrato(item);
+    const vigencia = fechasVigenciaArrendatarioApi(item);
     const estatusRaw = item['estatus'];
     const servicios = Array.isArray(item['servicios']) ? item['servicios'] : [];
     const archivos = Array.isArray(item['archivos']) ? item['archivos'] : [];
@@ -315,12 +427,12 @@ export function mapArrendatariosApiToGridRows(rows: unknown[]): ArrendatarioGrid
       tipoPersonaLabel: etiquetaTipoPersonaArrendatario(item['tipoPersona']),
       rfc: String(item['rfc'] ?? '').trim() || '—',
       rentaFmt: formatearMoneda(item['renta']),
-      fechaInicioFmt: formatearFecha(String(item['fechaInicio'] ?? '')) || '—',
-      fechaFinFmt: formatearFecha(String(item['fechaFin'] ?? '')) || '—',
+      fechaInicioFmt: formatearFecha(vigencia.inicio) || '—',
+      fechaFinFmt: formatearFecha(vigencia.fin) || '—',
       tiempoRentaTexto:
-        item['tiempoRenta'] != null && String(item['tiempoRenta']).trim() !== ''
-          ? String(item['tiempoRenta']).trim()
-          : '—',
+        vigencia.inicio && vigencia.fin
+          ? textoDuracionContratoApi(vigencia.inicio, vigencia.fin)
+          : textoTiempoRentaLegacy(item),
       representanteNombre: String(item['representanteLegal'] ?? '—').trim() || '—',
       telefonoRepresentante: String(item['telefonoRepresentante'] ?? '—').trim() || '—',
       correoRepresentante: String(item['correoRepresentante'] ?? '—').trim() || '—',

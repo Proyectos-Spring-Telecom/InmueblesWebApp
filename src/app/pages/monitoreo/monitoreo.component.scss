@@ -1843,18 +1843,22 @@
   }
 }
 
-/* Arrendadores: rejilla por ancho de tarjeta (no breakpoint de viewport) para evitar columnas demasiado estrechas con sidebar. */
+/* Arrendadores: rejilla responsive — 1 / 2 / 3 columnas según ancho de pantalla. */
 .surface .monitor-flow-panel--clientes .clientes-cards-grid {
   display: grid;
-  /* auto-fit: sin columnas fantasma a la derecha; las tarjetas existentes reparten todo el ancho. */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   align-items: stretch;
-}
+  width: 100%;
+  min-width: 0;
 
-.surface .monitor-flow-panel--clientes .clientes-cards-grid--solo {
-  max-width: 420px;
-  margin-inline: auto;
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 992px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .surface .monitor-flow-panel--clientes .clientes-cards-grid__item {

@@ -1,5 +1,5 @@
 <div class="rr-root" [@routeAnimation]>
-  <div class="card card--panel perm-wrapper">
+  <div class="card card--panel perm-wrapper rr-rent-rol">
     <header class="perm-head" role="region" aria-label="Sección: Rent-rol">
       <div class="perm-head__icon" aria-hidden="true">
         <mat-icon>table_view</mat-icon>
@@ -17,14 +17,32 @@
       </nav>
     </header>
     <div class="surface">
-      <div class="mt-3">
-        <div class="rr-page">
-
-          <!-- Espacio reservado para las KPI flotantes -->
-          <div #kpiSlot class="rr-kpi-slot" [style.height.px]="kpiAltura || null" aria-hidden="true"></div>
+      <div class="rr-kpi-slot" role="region" aria-label="Resumen de página">
+        <div class="rr-kpi-shell">
+          <div class="rr-kpi-grid">
+            <div class="rr-kpi rr-kpi--arrendatarios">
+              <span class="rr-kpi__label">Registros (página)</span>
+              <span class="rr-kpi__value">{{ registros.length }}</span>
+            </div>
+            <div class="rr-kpi rr-kpi--renta">
+              <span class="rr-kpi__label">Sub-total renta</span>
+              <span class="rr-kpi__value">{{ totalRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+            </div>
+            <div class="rr-kpi rr-kpi--mantto">
+              <span class="rr-kpi__label">Sub-total mantto</span>
+              <span class="rr-kpi__value">{{ totalMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+            </div>
+            <div class="rr-kpi rr-kpi--accent">
+              <span class="rr-kpi__label">Gran total (página)</span>
+              <span class="rr-kpi__value">{{ granTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rr-body">
 
           <!-- Barra inferior: leyenda a la derecha + registros a la izquierda -->
-          <div class="rr-toolbar mb-3 mt-4">
+          <div class="rr-toolbar">
             <span class="rr-pag-info">
               <ng-container *ngIf="!cargando">
                 Registros {{ paginaInicio + 1 }}–{{ paginaFin }} de {{ totalRegistros }}
@@ -133,12 +151,12 @@
           </div>
 
           <!-- Paginado -->
-          <div class="rr-pagination d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+          <div class="rr-pagination">
             <span class="rr-pag-info">
               Página <strong>{{ paginaActual$ }}</strong> de <strong>{{ totalPaginas }}</strong>
               &nbsp;·&nbsp; {{ totalRegistros }} registros totales
             </span>
-            <div class="d-flex gap-1 flex-wrap align-items-center">
+            <div class="rr-pagination__controls">
               <button class="rr-pag-btn" (click)="irPrimera()" [disabled]="paginaActual$ === 1 || cargando" title="Primera">
                 <i class="fa fa-angle-double-left"></i>
               </button>
@@ -163,31 +181,6 @@
             </div>
           </div>
 
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- KPI flotantes: fuera del panel para no ser recortadas por overflow:hidden -->
-  <div #kpiFloat class="rr-kpi-float" [ngStyle]="kpiFloatStyle" role="region" aria-label="Resumen de página">
-    <div class="rr-kpi-shell">
-      <div class="rr-kpi-grid">
-        <div class="rr-kpi rr-kpi--arrendatarios">
-          <span class="rr-kpi__label">Registros (página)</span>
-          <span class="rr-kpi__value">{{ registros.length }}</span>
-        </div>
-        <div class="rr-kpi rr-kpi--renta">
-          <span class="rr-kpi__label">Sub-total renta</span>
-          <span class="rr-kpi__value">{{ totalRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-        </div>
-        <div class="rr-kpi rr-kpi--mantto">
-          <span class="rr-kpi__label">Sub-total mantto</span>
-          <span class="rr-kpi__value">{{ totalMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-        </div>
-        <div class="rr-kpi rr-kpi--accent">
-          <span class="rr-kpi__label">Gran total (página)</span>
-          <span class="rr-kpi__value">{{ granTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-        </div>
       </div>
     </div>
   </div>

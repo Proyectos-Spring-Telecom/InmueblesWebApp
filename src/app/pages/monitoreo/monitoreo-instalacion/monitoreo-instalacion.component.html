@@ -470,7 +470,6 @@
                           <th scope="col">Estatus</th>
                           <th scope="col">Mensualidad</th>
                           <th scope="col">Giro</th>
-                          <th scope="col">Registro</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -482,7 +481,6 @@
                           </td>
                           <td>{{ loc.mensualidad }}</td>
                           <td>{{ loc.giro }}</td>
-                          <td>{{ loc.fhRegistro }}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -603,21 +601,35 @@
               <h5 class="m-0">Galería</h5>
             </header>
             <div class="mono-card__body">
-              <div class="mono-gallery">
+              <div class="mono-gallery" *ngIf="galleryImages.length; else sinGaleriaMonitoreo">
                 <img
                   [src]="galleryImages[galleryIndex]"
                   [@gallerySwap]="galleryIndex"
                   alt="Galería del inmueble"
                   class="mono-gallery__img"
+                  (error)="onGalleryImageError(galleryIndex)"
                 />
-                <button type="button" class="mono-gallery__nav mono-gallery__nav--prev" (click)="prevGallery()">
+                <button
+                  type="button"
+                  class="mono-gallery__nav mono-gallery__nav--prev"
+                  *ngIf="galleryImages.length > 1"
+                  (click)="prevGallery()"
+                >
                   <mat-icon>chevron_left</mat-icon>
                 </button>
-                <button type="button" class="mono-gallery__nav mono-gallery__nav--next" (click)="nextGallery()">
+                <button
+                  type="button"
+                  class="mono-gallery__nav mono-gallery__nav--next"
+                  *ngIf="galleryImages.length > 1"
+                  (click)="nextGallery()"
+                >
                   <mat-icon>chevron_right</mat-icon>
                 </button>
               </div>
-              <div class="mono-gallery__dots">
+              <ng-template #sinGaleriaMonitoreo>
+                <p class="mono-gallery__empty m-0">Sin imágenes en la galería.</p>
+              </ng-template>
+              <div class="mono-gallery__dots" *ngIf="galleryImages.length > 1">
                 <button
                   type="button"
                   *ngFor="let image of galleryImages; let i = index"

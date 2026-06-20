@@ -185,7 +185,7 @@ function normalizarServicioApi(raw: unknown): InmuebleServicioApi | null {
 function normalizarArchivoApi(raw: unknown): InmuebleArchivoApi | null {
   if (!esObjetoRecordo(raw)) return null;
   const a = raw;
-  const url = String(a['url'] ?? a['archivoUrl'] ?? '').trim();
+  const url = urlArchivoNavegador(String(a['url'] ?? a['archivoUrl'] ?? '').trim());
   const nombre = a['nombre'] != null ? String(a['nombre']).trim() : '';
   if (!url && !nombre) return null;
   return {
@@ -193,6 +193,41 @@ function normalizarArchivoApi(raw: unknown): InmuebleArchivoApi | null {
     url: url || undefined,
     nombre: nombre || undefined,
   };
+}
+
+/** Une listas de archivos del API sin duplicar por id o url. */
+export function fusionarArchivosInmuebleApi(
+  ...fuentes: unknown[]
+): InmuebleArchivoApi[] {
+  const vistos = new Set<string>();
+  const out: InmuebleArchivoApi[] = [];
+
+  for (const fuente of fuentes) {
+    for (const raw of leerArreglo(fuente)) {
+      const archivo = normalizarArchivoApi(raw);
+      if (!archivo) continue;
+      const clave =
+        archivo.id != null && Number.isFinite(archivo.id)
+          ? `id:${archivo.id}`
+          : String(archivo.url ?? archivo.nombre ?? '').trim().toLowerCase();
+      if (!clave || vistos.has(clave)) continue;
+      vistos.add(clave);
+      out.push(archivo);
+    }
+  }
+
+  return out;
+}
+
+function archivosDesdeRecordoApi(r: Record<string, unknown>): InmuebleArchivoApi[] {
+  return fusionarArchivosInmuebleApi(
+    r['archivos'],
+    r['Archivos'],
+    r['archivosInmueble'],
+    r['inmuebleArchivos'],
+    r['imagenes'],
+    r['Imagenes'],
+  );
 }
 
 /** Normaliza arreglos anidados del GET `/inmuebles/{id}`. */
@@ -205,19 +240,18 @@ export function normalizarInmuebleDetalleApi(raw: unknown): InmuebleApiItem {
   const zonas = leerArreglo(r['zonas'] ?? r['Zonas'])
     .map(normalizarZonaApi)
     .filter((x): x is InmuebleZonaApi => x != null);
-  const archivos = leerArreglo(r['archivos'] ?? r['Archivos'])
-    .map(normalizarArchivoApi)
-    .filter((x): x is InmuebleArchivoApi => x != null);
-  const imagenes = leerArreglo(r['imagenes'] ?? r['Imagenes'])
-    .map(normalizarArchivoApi)
-    .filter((x): x is InmuebleArchivoApi => x != null);
+  const archivos = archivosDesdeRecordoApi(r);
+  const imagenes = fusionarArchivosInmuebleApi(r['imagenes'], r['Imagenes']).filter(
+    (a) => !archivos.some((x) => x.id === a.id && a.id != null) &&
+      !archivos.some((x) => x.url === a.url && !!a.url),
+  );
 
   return {
     ...(r as InmuebleApiItem),
     servicios,
     zonas,
     archivos,
-    imagenes: imagenes.length ? imagenes : r['imagenes'] as InmuebleArchivoApi[] | undefined,
+    imagenes: imagenes.length ? imagenes : undefined,
   };
 }
 
@@ -225,22 +259,40 @@ export function normalizarInmuebleDetalleApi(raw: unknown): InmuebleApiItem {
 export function extraerInmuebleDetalleApi(resp: unknown): InmuebleApiItem {
   if (resp == null || typeof resp !== 'object') return {};
   const r = resp as Record<string, unknown>;
-
   const envuelto = r['data'] ?? r['result'];
-  if (
-    esObjetoRecordo(envuelto) &&
-    (envuelto['id'] != null || envuelto['direccionFiscal'] != null)
-  ) {
-    return normalizarInmuebleDetalleApi(envuelto);
+
+  let cuerpo: Record<string, unknown> | null = null;
+  if (esObjetoRecordo(envuelto)) {
+    if (envuelto['id'] != null || envuelto['direccionFiscal'] != null) {
+      cuerpo = envuelto;
+    } else if (esObjetoRecordo(envuelto['inmueble'])) {
+      cuerpo = { ...(envuelto['inmueble'] as Record<string, unknown>), ...envuelto };
+    }
+  } else if (r['id'] != null || r['direccionFiscal'] != null) {
+    cuerpo = r;
   }
 
-  // El cuerpo ya es el inmueble ({ id, inmueble: "nombre", direccionFiscal, ... }).
-  // No usar r['inmueble'] aquí: ese campo es el nombre (string), no el objeto.
-  if (r['id'] != null || r['direccionFiscal'] != null) {
-    return normalizarInmuebleDetalleApi(r);
+  if (!cuerpo) return {};
+
+  const archivosFusionados = fusionarArchivosInmuebleApi(
+    cuerpo['archivos'],
+    cuerpo['Archivos'],
+    cuerpo['archivosInmueble'],
+    cuerpo['inmuebleArchivos'],
+    esObjetoRecordo(envuelto) ? archivosDesdeRecordoApi(envuelto) : [],
+    archivosDesdeRecordoApi(r),
+  );
+
+  const item = normalizarInmuebleDetalleApi({
+    ...cuerpo,
+    archivos: archivosFusionados,
+  });
+
+  if (archivosFusionados.length > 0) {
+    item.archivos = archivosFusionados;
   }
 
-  return {};
+  return item;
 }
 
 /** URL de fachada de un local (GET detalle). */
@@ -279,7 +331,8 @@ export function idArrendadorDesdeApi(item: InmuebleApiItem): number | null {
 }
 
 export type SlotDocumentoInmueble =
-  | 'licencia'
+  | 'licenciaFuncionamiento'
+  | 'usoSuelo'
   | 'fachada'
   | 'plano'
   | 'contratoRenta'
@@ -313,7 +366,8 @@ export function clasificarDocumentoInmueble(
     return 'ineRepresentante';
   }
   if (n.includes('representante') && n.includes('fiscal')) return 'constanciaRepLegal';
-  if (n.includes('licencia') || n.includes('uso de suelo')) return 'licencia';
+  if (n.includes('uso de suelo')) return 'usoSuelo';
+  if (n.includes('licencia')) return 'licenciaFuncionamiento';
   if (n === 'fachada' || n.startsWith('fachada')) return 'fachada';
   if (n === 'plano' || n.startsWith('plano')) return 'plano';
   if (n.includes('comprobante') && n.includes('domicilio')) return 'comprobanteDomicilio';
@@ -331,20 +385,33 @@ export function separarArchivosInmueble(
 ): ArchivosInmuebleSeparados {
   const documentos: Partial<Record<SlotDocumentoInmueble, InmuebleArchivoApi>> = {};
   const galeria: InmuebleArchivoApi[] = [];
-  const todos = [...(Array.isArray(archivos) ? archivos : []), ...(Array.isArray(imagenes) ? imagenes : [])];
+  const todos = fusionarArchivosInmuebleApi(archivos, imagenes);
 
   for (const a of todos) {
-    if (!a?.url?.trim() && !a?.nombre?.trim()) continue;
-    const tipo = clasificarDocumentoInmueble(a.nombre ?? '', a.url ?? '');
+    const url = String(a.url ?? '').trim();
+    const nombre = String(a.nombre ?? '').trim();
+    if (!url && !nombre) continue;
+    const tipo = clasificarDocumentoInmueble(nombre, url);
     if (tipo === 'galeria') {
       galeria.push(a);
       continue;
     }
     if (tipo === 'otro') continue;
-    if (!documentos[tipo]) documentos[tipo] = a;
+    if (!documentos[tipo]) {
+      documentos[tipo] = a;
+      continue;
+    }
+    if (esImagenArchivo(url, nombre)) {
+      galeria.push(a);
+    }
   }
 
   return { documentos, galeria };
+}
+
+/** Imágenes adicionales para la galería del formulario (duplicados de slot o sin slot). */
+export function archivosImagenGaleriaInmueble(item: InmuebleApiItem): InmuebleArchivoApi[] {
+  return separarArchivosInmueble(item.archivos, item.imagenes).galeria;
 }
 
 export function mapInmueblesApiToGridRows(items: unknown[]): InmuebleGridRow[] {
@@ -508,6 +575,36 @@ export function esImagenUrl(url: string): boolean {
   return /\.(png|jpe?g|gif|webp)(\?|$)/i.test(url ?? '');
 }
 
+/** Codifica espacios y caracteres especiales en rutas S3/API para `<img src>` y enlaces. */
+export function urlArchivoNavegador(url?: string | null): string {
+  const raw = String(url ?? '').trim();
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const parsed = new URL(raw);
+      parsed.pathname = parsed.pathname
+        .split('/')
+        .map((seg) => encodeURIComponent(decodeURIComponent(seg)))
+        .join('/');
+      return parsed.toString();
+    } catch {
+      return encodeURI(raw);
+    }
+  }
+  return encodeURI(raw);
+}
+
+export function urlDesdeArchivoApi(raw: unknown): string {
+  if (raw == null) return '';
+  if (typeof raw === 'string') return urlArchivoNavegador(raw);
+  if (typeof raw === 'object' && !Array.isArray(raw)) {
+    const o = raw as Record<string, unknown>;
+    const u = String(o['url'] ?? o['archivoUrl'] ?? o['Url'] ?? '').trim();
+    return urlArchivoNavegador(u);
+  }
+  return '';
+}
+
 export function esImagenArchivo(url?: string, nombre?: string): boolean {
   const ref = `${url ?? ''} ${nombre ?? ''}`;
   return (
@@ -525,6 +622,6 @@ export function esPdfArchivo(url?: string, nombre?: string): boolean {
 
 /** URL del PDF sin barra de herramientas, para miniatura en card */
 export function urlPdfMiniatura(url: string): string {
-  const base = url.trim().split('#')[0];
+  const base = urlArchivoNavegador(url.trim().split('#')[0]);
   return `${base}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
 }

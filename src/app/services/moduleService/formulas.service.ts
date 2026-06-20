@@ -26,6 +26,28 @@ export interface PreviewFormulaResponse {
   tipoResultado: 'MONTO' | 'PORCENTAJE';
 }
 
+/** Elemento de `data[]` en GET `/formulas/listado`. */
+export interface FormulaListadoItem {
+  id: number;
+  nombre: string;
+  formula: string;
+  descripcion?: string | null;
+  tipoResultado: 'MONTO' | 'PORCENTAJE' | string;
+  estatus?: number;
+  fhRegistro?: string;
+  fhActualizacion?: string;
+}
+
+/** Respuesta de GET `/formulas/listado`. */
+export interface FormulasListadoResponse {
+  data: FormulaListadoItem[];
+  paginated?: {
+    total: number;
+    page: number;
+    lastPage: number;
+  };
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -39,6 +61,10 @@ export class FormulasService {
       .set('page', String(page))
       .set('limit', String(limit));
     return this.http.get(`${this.base}/paginated`, { params });
+  }
+
+  obtenerFormulasListado(): Observable<FormulasListadoResponse> {
+    return this.http.get<FormulasListadoResponse>(`${this.base}/listado`);
   }
 
   obtenerFormula(id: number): Observable<any> {
