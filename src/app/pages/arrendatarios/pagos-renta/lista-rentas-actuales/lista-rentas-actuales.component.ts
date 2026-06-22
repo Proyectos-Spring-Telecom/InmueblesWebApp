@@ -145,6 +145,8 @@ export class ListaRentasActualesComponent implements OnInit {
   private rentaModalScrollTimer: ReturnType<typeof setTimeout> | null = null;
   private rentaRecalcTimer: ReturnType<typeof setTimeout> | null = null;
   private rentaModalSuprimirRecalc = false;
+  /** Invalida respuestas de preview obsoletas al cambiar fórmula o catálogo. */
+  private previewFormulaSeq = 0;
 
   private readonly rentaCamposRecalculoFormula = new Set<CampoMonedaRentaModal>([]);
   private readonly rentaCamposRecalculoFactor = new Set<CampoMonedaRentaModal>([
@@ -223,6 +225,7 @@ export class ListaRentasActualesComponent implements OnInit {
   
     // Al cambiar contrato → limpiar fórmula y cargar totales desde último pago histórico
     this.rentaForm.get('idContrato')?.valueChanges.subscribe((idContrato) => {
+      this.previewFormulaSeq++;
       this.rentaForm.get('idFormula')?.setValue(null, { emitEvent: false });
       this.rentaForm.get('montoFinal')?.setValue(null, { emitEvent: false });
       this.rentaForm.get('montoFinalMantenimiento')?.setValue(null, { emitEvent: false });
@@ -250,13 +253,9 @@ export class ListaRentasActualesComponent implements OnInit {
       }
     });
   
-    // Al cambiar fórmula → recalcular renta y mantenimiento
+    // Al cambiar fórmula → refrescar resumen y recalcular montos derivados
     this.rentaForm.get('idFormula')?.valueChanges.subscribe((idFormula) => {
-      if (idFormula == null || idFormula === '') {
-        this.limpiarEvaluacionFormulaCache();
-        return;
-      }
-      this.programarRecalculoRentaModal('formula');
+      this.onCambioFormulaRentaModal(idFormula);
     });
 
     this.rentaForm.get('factorVariable')?.valueChanges.subscribe(() => {
@@ -616,10 +615,47 @@ export class ListaRentasActualesComponent implements OnInit {
   ): void {
     if (this.rentaModalSuprimirRecalc || !this.mostrarModalRenta) return;
     this.cancelarRecalculoRentaProgramado();
+
+    if (origen === 'formula') {
+      this.ejecutarRecalculoRentaModal(origen, campoMontos);
+      return;
+    }
+
     this.rentaRecalcTimer = setTimeout(() => {
       this.rentaRecalcTimer = null;
       this.ejecutarRecalculoRentaModal(origen, campoMontos);
     }, 350);
+  }
+
+  /** Reacción inmediata al elegir otra fórmula en el modal (solo UI local). */
+  private onCambioFormulaRentaModal(idFormula: unknown): void {
+    this.previewFormulaSeq++;
+    this.limpiarEvaluacionFormulaCache();
+    this.cancelarRecalculoRentaProgramado();
+
+    if (idFormula == null || idFormula === '') {
+      this.limpiarMontosDerivadosFormulaModal();
+      this.actualizarResumenRentaModal();
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.limpiarMontosDerivadosFormulaModal();
+    this.actualizarResumenRentaModal();
+    this.programarRecalculoRentaModal('formula');
+    this.cdr.markForCheck();
+  }
+
+  /** Limpia montos calculados por fórmula sin tocar el total base. */
+  private limpiarMontosDerivadosFormulaModal(): void {
+    this.conRecalcSuspendido(() => {
+      this.rentaForm.get('montoFinal')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('montoFinalMantenimiento')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('factorVariable')?.setValue(null, { emitEvent: false });
+      this.rentaForm.get('ocupoFormula')?.setValue(0, { emitEvent: false });
+    });
+    this.rentaMontoFinalDisplay = '';
+    this.rentaMontoFinalMantenimientoDisplay = '';
   }
 
   private ejecutarRecalculoRentaModal(
@@ -852,6 +888,7 @@ export class ListaRentasActualesComponent implements OnInit {
     const ids = this.idsPreviewRentaListos(raw);
     if (!ids) return;
 
+    const seq = this.previewFormulaSeq;
     this.evaluandoFormula = true;
     this.cdr.markForCheck();
 
@@ -859,6 +896,7 @@ export class ListaRentasActualesComponent implements OnInit {
       .pipe(
         take(1),
         finalize(() => {
+          if (seq !== this.previewFormulaSeq) return;
           this.evaluandoFormula = false;
           this.scrollRentaModalSiCorresponde();
           this.cdr.markForCheck();
@@ -866,6 +904,7 @@ export class ListaRentasActualesComponent implements OnInit {
       )
       .subscribe({
         next: (res: any) => {
+          if (seq !== this.previewFormulaSeq) return;
           const evalNorm = this.normalizarRespuestaFormula(res);
           this.ultimaEvaluacionFormula = evalNorm;
           if (!this.aplicarFormulaEvaluadaAMontos(evalNorm)) return;
@@ -917,7 +956,7 @@ export class ListaRentasActualesComponent implements OnInit {
   }
 
   trackByResumenCampo(_index: number, campo: RentaModalResumenCampo): string {
-    return campo.etiqueta;
+    return `${campo.etiqueta}\u0000${campo.valor}`;
   }
 
   private actualizarResumenRentaModal(): void {
@@ -1096,6 +1135,7 @@ export class ListaRentasActualesComponent implements OnInit {
     this.limpiarEvaluacionFormulaCache();
     this.actualizarValidadoresMantenimientoModal();
     this.rentaModalPermitirAutoScroll = true;
+    this.previewFormulaSeq = 0;
     this.mostrarModalRenta    = true;
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
@@ -1110,6 +1150,7 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaModalModo    = 'edicion';
     this.rentaEditId       = Math.floor(id);
     this.rentaModalPermitirAutoScroll = false;
+    this.previewFormulaSeq = 0;
     this.mostrarModalRenta = true;
     this.rentaForm.reset();
     this.rentaForm.get('idArrendatario')?.disable();
@@ -1127,6 +1168,7 @@ export class ListaRentasActualesComponent implements OnInit {
   }
 
   cerrarModalRenta(): void {
+    this.previewFormulaSeq++;
     this.cancelarScrollRentaModalProgramado();
     this.cancelarRecalculoRentaProgramado();
     this.limpiarEfectoPasoRentaModal();

@@ -631,8 +631,16 @@ $haloB: #4f7cff; // azul brillante
   --mdc-outlined-text-field-focus-outline-color: rgba($brandBlue, 0.75);
   --mdc-outlined-text-field-label-text-color: rgba(255, 255, 255, 0.76);
   --mdc-outlined-text-field-input-text-color: rgba(255, 255, 255, 0.92);
+  --mdc-outlined-text-field-input-text-placeholder-color: rgba(255, 255, 255, 0.28);
   --mdc-outlined-text-field-caret-color: rgba($brandWine, 0.95);
   --mdc-outlined-text-field-focus-label-text-color: rgba($brandBlue, 0.92);
+}
+
+:host ::ng-deep .ul-card input.mat-mdc-input-element::placeholder,
+:host ::ng-deep .ul-card textarea.mat-mdc-input-element::placeholder,
+:host ::ng-deep .ul-card .mdc-text-field__input::placeholder {
+  color: rgba(255, 255, 255, 0.28) !important;
+  opacity: 1 !important;
 }
 
 :host ::ng-deep .ul-card .mat-mdc-form-field:hover {
