@@ -866,3 +866,29 @@ body {
 .bg-primary{
   border-radius: 10px !important;
 }
+
+/* Authentication — placeholders más tenues que el texto capturado */
+.ul-root .ul-card .mat-mdc-form-field {
+  --mdc-outlined-text-field-input-text-placeholder-color: rgba(255, 255, 255, 0.28);
+}
+
+.ul-root .ul-card input.mat-mdc-input-element::placeholder,
+.ul-root .ul-card textarea.mat-mdc-input-element::placeholder,
+.ul-root .ul-card .mdc-text-field__input::placeholder {
+  color: rgba(255, 255, 255, 0.28) !important;
+  opacity: 1 !important;
+}
+
+.ul-root .ul-card input.mat-mdc-input-element::-webkit-input-placeholder,
+.ul-root .ul-card textarea.mat-mdc-input-element::-webkit-input-placeholder,
+.ul-root .ul-card .mdc-text-field__input::-webkit-input-placeholder {
+  color: rgba(255, 255, 255, 0.28) !important;
+  opacity: 1 !important;
+}
+
+.ul-root .ul-card input.mat-mdc-input-element::-moz-placeholder,
+.ul-root .ul-card textarea.mat-mdc-input-element::-moz-placeholder,
+.ul-root .ul-card .mdc-text-field__input::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.28) !important;
+  opacity: 1 !important;
+}
