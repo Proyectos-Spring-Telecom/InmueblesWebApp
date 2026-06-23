@@ -279,6 +279,7 @@
                               class="form-control" [(ngModel)]="displayContrato(i)['costoPorM2']"
                               [ngModelOptions]="{ standalone: true }" placeholder="Costo por m²" autocomplete="off"
                               (focus)="onContratoMonedaFocus(i, 'costoPorM2')"
+                              (input)="onContratoCostoInput(i)"
                               (blur)="onContratoMonedaBlur(i, 'costoPorM2')" /><label
                               [attr.for]="'costoPorM2' + i">Costo Por M²</label></div>
                         </div>
@@ -290,13 +291,15 @@
                           <label
                             class="toggle-switch"
                             [class.is-disabled]="!contratoSwitchMantenimientoHabilitado(i)"
-                            [attr.for]="'incluyeMantenimiento' + i"
+                            (click)="onContratoIncluyeMantenimientoClick($event, i)"
                           >
                             <input
                               type="checkbox"
                               [id]="'incluyeMantenimiento' + i"
                               [checked]="contratoIncluyeMantenimiento(i)"
                               [disabled]="!contratoSwitchMantenimientoHabilitado(i)"
+                              [attr.aria-disabled]="!contratoSwitchMantenimientoHabilitado(i)"
+                              tabindex="-1"
                               (change)="onContratoIncluyeMantenimientoChange(i, $any($event.target).checked)"
                             />
                             <div class="toggle-switch-background">

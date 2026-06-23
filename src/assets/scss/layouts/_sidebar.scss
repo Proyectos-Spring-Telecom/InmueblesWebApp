@@ -245,7 +245,8 @@
 
 @media (min-width: 769px) {
   .sidebarNav-mini {
-    .contentWrapper {
+    .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
+      .contentWrapper {
       margin-left: $sidenav-mini !important;
     }
   }
