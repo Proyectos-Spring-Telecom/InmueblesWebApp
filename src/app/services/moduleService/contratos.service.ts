@@ -26,4 +26,8 @@ export class ContratosService {
   actualizarContrato(id: number, data: FormData): Observable<any> {
     return this.http.patch(`${this.base}/${id}`, data);
   }
+
+  cancelarContrato(id: number): Observable<unknown> {
+    return this.http.patch(`${this.base}/${id}/cancelar`, {});
+  }
 }

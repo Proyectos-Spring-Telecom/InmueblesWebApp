@@ -301,6 +301,61 @@ button.arr-socio-doc__link {
   white-space: nowrap;
 }
 
+.arr-ctr-panel__head-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem 0.65rem;
+  margin-left: auto;
+  min-width: 0;
+}
+
+@keyframes arr-ctr-cancel-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(248, 113, 113, 0.35),
+      0 0 10px rgba(220, 53, 69, 0.2);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(248, 113, 113, 0.12),
+      0 0 18px rgba(220, 53, 69, 0.45);
+  }
+}
+
+.arr-ctr-head-cancel {
+  flex-shrink: 0;
+  color: #fff;
+  border-radius: 999px !important;
+  animation: arr-ctr-cancel-pulse 2.4s ease-in-out infinite;
+  border: 1px solid rgba(252, 165, 165, 0.55) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.arr-ctr-head-cancel:hover {
+  animation: none;
+  transform: scale(1.04);
+  box-shadow: 0 0 22px rgba(220, 53, 69, 0.55);
+}
+
+:host ::ng-deep .arr-ctr-head-cancel.mat-mdc-unelevated-button {
+  --mdc-filled-button-container-height: 34px;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 0.85rem !important;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+:host ::ng-deep .arr-ctr-head-cancel.mat-mdc-unelevated-button .mdc-button {
+  height: 34px;
+  min-height: 34px;
+}
+
 .arr-ctr-panel__body {
   padding: 1rem;
   display: flex;
@@ -310,39 +365,44 @@ button.arr-socio-doc__link {
 }
 
 .arr-ctr-top-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
   width: 100%;
+  margin-inline: 0;
   align-items: stretch;
 }
 
-.arr-ctr-top-row:has(> .arr-ctr-tile:only-child) {
-  grid-template-columns: minmax(0, 1fr);
+.arr-ctr-top-row__fin,
+.arr-ctr-top-row__inm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
-.arr-ctr-top-row:has(> .arr-ctr-tile:nth-child(2):last-child) {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.arr-ctr-top-row__inm .arr-ctr-tile--inm {
+  flex: 1 1 auto;
+  height: 100%;
 }
 
 .arr-ctr-tile {
+  width: 100%;
+  max-width: 100%;
   padding: 0.65rem 0.85rem;
   border-radius: 12px;
   border: 1px solid rgba(130, 160, 255, 0.2);
   min-width: 0;
-  height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
 }
 
 .arr-ctr-tile__stack {
-  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 0.2rem;
-  min-height: 100%;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 0.25rem;
+  width: 100%;
 }
 
 .arr-ctr-tile--renta {
@@ -364,17 +424,17 @@ button.arr-socio-doc__link {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 0.45rem;
+  justify-content: flex-start;
+  gap: 0.55rem;
   width: 100%;
   min-width: 0;
-  min-height: 100%;
 }
 
 .arr-ctr-inm__row--top {
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
   width: 100%;
   min-width: 0;
 }
@@ -383,7 +443,7 @@ button.arr-socio-doc__link {
   display: flex;
   align-items: flex-start;
   gap: 0.55rem;
-  flex: 0 1 42%;
+  width: 100%;
   min-width: 0;
 }
 
@@ -417,61 +477,94 @@ button.arr-socio-doc__link {
 
 .arr-ctr-inm__nombre {
   display: block;
-  font-size: 1.05rem;
+  margin: 0;
+  font-size: clamp(0.92rem, 0.86rem + 0.35vw, 1.05rem);
   letter-spacing: 0.02em;
   color: #f4f6ff;
-  line-height: 1.2;
+  line-height: 1.25;
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .arr-ctr-inm__addr {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
   margin: 0;
-  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
-  padding: 0.35rem 0.5rem;
+  box-sizing: border-box;
+  padding: 0.45rem 0.55rem;
   border-radius: 8px;
   font-size: 0.76rem;
   letter-spacing: 0.02em;
   color: #c8d2f0;
-  line-height: 1.35;
-  text-align: right;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
+  background: rgba(8, 12, 20, 0.55);
+  border: 1px solid rgba(130, 160, 255, 0.12);
 }
 
 .arr-ctr-inm__addr i {
-  margin-right: 0.3rem;
+  flex-shrink: 0;
+  margin-top: 0.12rem;
   color: #8ea5ff;
+}
+
+.arr-ctr-inm__addr-text {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .arr-ctr-inm__row--contact {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.35rem 0.5rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
   width: 100%;
   min-width: 0;
-  padding-top: 0.4rem;
+  padding-top: 0.45rem;
   border-top: 1px solid rgba(130, 160, 255, 0.12);
 }
 
 .arr-ctr-inm__channel {
-  flex: 1 1 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   font-size: 0.74rem;
   letter-spacing: 0.02em;
   color: #aeb9d9;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  line-height: 1.4;
 }
 
 .arr-ctr-inm__channel i {
-  margin-right: 0.28rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
   color: #8ea5ff;
+}
+
+.arr-ctr-inm__channel-text {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .arr-ctr-tile__label {
@@ -536,15 +629,6 @@ button.arr-socio-doc__link {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-}
-
-.arr-ctr-inm__nombre {
-  margin: 0 0 0.45rem;
-  font-size: clamp(0.92rem, 0.86rem + 0.35vw, 1.05rem);
-  letter-spacing: 0.02em;
-  color: #f4f6ff;
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .arr-ctr-inm__line {
@@ -683,12 +767,6 @@ button.arr-socio-doc__link {
   background: rgba(120, 83, 9, 0.28);
 }
 
-@media (max-width: 991.98px) {
-  .arr-ctr-top-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 767.98px) {
 
   .arr-ctr-panel__head::after {
@@ -697,8 +775,9 @@ button.arr-socio-doc__link {
     text-align: center;
   }
 
-  .arr-ctr-panel__renta {
+  .arr-ctr-panel__head-actions {
     flex: 1 1 100%;
+    justify-content: flex-end;
   }
 
   .arr-ctr-dl__row {

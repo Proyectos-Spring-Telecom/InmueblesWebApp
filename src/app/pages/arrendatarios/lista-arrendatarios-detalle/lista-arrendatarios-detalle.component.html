@@ -6,7 +6,7 @@
       [class.inm-detalle__tab--active]="detalleTab === 0"
       (click)="detalleTab = 0"
     >
-      Servicios ({{ servicios.length }})
+      Contratos ({{ contratos.length }})
     </button>
     <button
       type="button"
@@ -14,7 +14,7 @@
       [class.inm-detalle__tab--active]="detalleTab === 1"
       (click)="detalleTab = 1"
     >
-      Documentos ({{ archivos.length }})
+      Servicios ({{ servicios.length }})
     </button>
     <button
       type="button"
@@ -22,7 +22,7 @@
       [class.inm-detalle__tab--active]="detalleTab === 2"
       (click)="detalleTab = 2"
     >
-      Socios ({{ socios.length }})
+      Documentos ({{ archivos.length }})
     </button>
     <button
       type="button"
@@ -30,12 +30,12 @@
       [class.inm-detalle__tab--active]="detalleTab === 3"
       (click)="detalleTab = 3"
     >
-      Contratos ({{ contratos.length }})
+      Socios ({{ socios.length }})
     </button>
   </nav>
 
   <!-- Servicios -->
-  <div class="inm-detalle__panel" *ngIf="detalleTab === 0">
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
     <div class="inm-servicios-grid" *ngIf="servicios.length; else sinServicios">
       <article class="inm-servicio-card" *ngFor="let s of servicios">
         <div class="inm-servicio-card__icon"><i class="fa fa-bolt"></i></div>
@@ -64,7 +64,7 @@
   </div>
 
   <!-- Documentos -->
-  <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 2">
     <div class="inm-docs-grid" *ngIf="archivos.length; else sinDocs">
       <article class="inm-doc-card" *ngFor="let a of archivos">
         <div
@@ -130,7 +130,7 @@
   </div>
 
   <!-- Socios -->
-  <div class="inm-detalle__panel" *ngIf="detalleTab === 2">
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 3">
     <div class="arr-socios-grid" *ngIf="socios.length; else sinSocios">
       <article class="arr-socio-card" *ngFor="let so of socios; let si = index">
         <header class="arr-socio-card__head">
@@ -241,7 +241,7 @@
   </div>
 
   <!-- Contratos -->
-  <div class="inm-detalle__panel inm-detalle__panel--contratos" *ngIf="detalleTab === 3">
+  <div class="inm-detalle__panel inm-detalle__panel--contratos" *ngIf="detalleTab === 0">
     <div class="arr-ctr-list" *ngIf="contratos.length; else sinContratos">
       <details
         class="arr-ctr-panel"
@@ -265,81 +265,103 @@
               {{ cantidadLocalesContrato(c) === 1 ? 'local' : 'locales' }}
             </span>
           </span>
-          <span class="arr-ctr-panel__renta" *ngIf="c['rentaTotal'] != null">
-            {{ formatearMoneda(c['rentaTotal']) }}
+          <span class="arr-ctr-panel__head-actions">
+            <span class="arr-ctr-panel__renta" *ngIf="c['rentaTotal'] != null">
+              {{ formatearMoneda(c['rentaTotal']) }}
+            </span>
+            <button
+              *ngIf="contratoEsCancelable(c)"
+              type="button"
+              mat-flat-button
+              class="bg-error arr-ctr-head-cancel"
+              title="Cancelar contrato"
+              (click)="confirmarCancelarContrato(c, $event)"
+            >
+              <i class="fa fa-ban"></i> Cancelar Contrato
+            </button>
           </span>
         </summary>
 
         <div class="arr-ctr-panel__body">
           <div
-            class="arr-ctr-top-row"
+            class="arr-ctr-top-row row g-2"
             *ngIf="
               c['rentaTotal'] != null ||
               c['mantenimientoTotal'] != null ||
               inmuebleDesdeContrato(c)
             "
           >
-            <div class="arr-ctr-tile arr-ctr-tile--renta" *ngIf="c['rentaTotal'] != null">
-              <div class="arr-ctr-tile__stack">
-                <span class="arr-ctr-tile__label">Renta mensual total</span>
-                <span class="arr-ctr-tile__value">{{ formatearMoneda(c['rentaTotal']) }}</span>
-                <span class="arr-ctr-tile__hint" *ngIf="c['subTotalRenta'] != null && c['ivaRenta'] != null">
-                  Subtotal {{ formatearMoneda(c['subTotalRenta']) }} + IVA
-                  {{ formatearMoneda(c['ivaRenta']) }}
-                </span>
-              </div>
-            </div>
-            <div class="arr-ctr-tile arr-ctr-tile--mant" *ngIf="c['mantenimientoTotal'] != null">
-              <div class="arr-ctr-tile__stack">
-                <span class="arr-ctr-tile__label">Mantenimiento total</span>
-                <span class="arr-ctr-tile__value">{{ formatearMoneda(c['mantenimientoTotal']) }}</span>
-                <span
-                  class="arr-ctr-tile__hint"
-                  *ngIf="c['subTotalMantenimiento'] != null && c['ivaMantenimiento'] != null"
-                >
-                  Subtotal {{ formatearMoneda(c['subTotalMantenimiento']) }} + IVA
-                  {{ formatearMoneda(c['ivaMantenimiento']) }}
-                </span>
-              </div>
-            </div>
-            <div class="arr-ctr-tile arr-ctr-tile--inm" *ngIf="inmuebleDesdeContrato(c) as inm">
-              <div class="arr-ctr-inm">
-                <div class="arr-ctr-inm__row arr-ctr-inm__row--top">
-                  <div class="arr-ctr-inm__head">
-                    <span class="arr-ctr-inm__icon" aria-hidden="true">
-                      <i class="fa fa-building-o"></i>
-                    </span>
-                    <div class="arr-ctr-inm__title-wrap">
-                      <span class="arr-ctr-inm__eyebrow">Inmueble</span>
-                      <span class="arr-ctr-inm__nombre">{{ inm['inmueble'] || '—' }}</span>
-                    </div>
-                  </div>
-                  <p class="arr-ctr-inm__addr" *ngIf="inm['direccionFiscal']">
-                    <i class="fa fa-map-marker" aria-hidden="true"></i>
-                    {{ inm['direccionFiscal'] }}
-                  </p>
+            <div
+              class="col-12 col-md-6 arr-ctr-top-row__fin"
+              *ngIf="c['rentaTotal'] != null || c['mantenimientoTotal'] != null"
+            >
+              <div class="arr-ctr-tile arr-ctr-tile--renta" *ngIf="c['rentaTotal'] != null">
+                <div class="arr-ctr-tile__stack">
+                  <span class="arr-ctr-tile__label">Renta mensual total</span>
+                  <span class="arr-ctr-tile__value">{{ formatearMoneda(c['rentaTotal']) }}</span>
+                  <span class="arr-ctr-tile__hint" *ngIf="c['subTotalRenta'] != null && c['ivaRenta'] != null">
+                    Subtotal {{ formatearMoneda(c['subTotalRenta']) }} + IVA
+                    {{ formatearMoneda(c['ivaRenta']) }}
+                  </span>
                 </div>
+              </div>
+              <div class="arr-ctr-tile arr-ctr-tile--mant" *ngIf="c['mantenimientoTotal'] != null">
+                <div class="arr-ctr-tile__stack">
+                  <span class="arr-ctr-tile__label">Mantenimiento total</span>
+                  <span class="arr-ctr-tile__value">{{ formatearMoneda(c['mantenimientoTotal']) }}</span>
+                  <span
+                    class="arr-ctr-tile__hint"
+                    *ngIf="c['subTotalMantenimiento'] != null && c['ivaMantenimiento'] != null"
+                  >
+                    Subtotal {{ formatearMoneda(c['subTotalMantenimiento']) }} + IVA
+                    {{ formatearMoneda(c['ivaMantenimiento']) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="col-12 col-md-6 arr-ctr-top-row__inm"
+              *ngIf="inmuebleDesdeContrato(c) as inm"
+            >
+              <div class="arr-ctr-tile arr-ctr-tile--inm">
+                <div class="arr-ctr-inm">
+                  <div class="arr-ctr-inm__row arr-ctr-inm__row--top">
+                    <div class="arr-ctr-inm__head">
+                      <span class="arr-ctr-inm__icon" aria-hidden="true">
+                        <i class="fa fa-building-o"></i>
+                      </span>
+                      <div class="arr-ctr-inm__title-wrap">
+                        <span class="arr-ctr-inm__eyebrow">Inmueble</span>
+                        <span class="arr-ctr-inm__nombre">{{ inm['inmueble'] || '—' }}</span>
+                      </div>
+                    </div>
+                    <p class="arr-ctr-inm__addr" *ngIf="inm['direccionFiscal']">
+                      <i class="fa fa-map-marker" aria-hidden="true"></i>
+                      <span class="arr-ctr-inm__addr-text">{{ inm['direccionFiscal'] }}</span>
+                    </p>
+                  </div>
 
-                <div
-                  class="arr-ctr-inm__row arr-ctr-inm__row--contact"
-                  *ngIf="
-                    inm['nombreRepresentante'] ||
-                    inm['telefonoRepresentante'] ||
-                    inm['correoRepresentante']
-                  "
-                >
-                  <span class="arr-ctr-inm__channel" *ngIf="inm['nombreRepresentante']">
-                    <i class="fa fa-user" aria-hidden="true"></i>
-                    {{ inm['nombreRepresentante'] }}
-                  </span>
-                  <span class="arr-ctr-inm__channel" *ngIf="inm['telefonoRepresentante']">
-                    <i class="fa fa-phone" aria-hidden="true"></i>
-                    {{ inm['telefonoRepresentante'] }}
-                  </span>
-                  <span class="arr-ctr-inm__channel" *ngIf="inm['correoRepresentante']">
-                    <i class="fa fa-envelope-o" aria-hidden="true"></i>
-                    {{ inm['correoRepresentante'] }}
-                  </span>
+                  <div
+                    class="arr-ctr-inm__row arr-ctr-inm__row--contact"
+                    *ngIf="
+                      inm['nombreRepresentante'] ||
+                      inm['telefonoRepresentante'] ||
+                      inm['correoRepresentante']
+                    "
+                  >
+                    <span class="arr-ctr-inm__channel" *ngIf="inm['nombreRepresentante']">
+                      <i class="fa fa-user" aria-hidden="true"></i>
+                      <span class="arr-ctr-inm__channel-text">{{ inm['nombreRepresentante'] }}</span>
+                    </span>
+                    <span class="arr-ctr-inm__channel" *ngIf="inm['telefonoRepresentante']">
+                      <i class="fa fa-phone" aria-hidden="true"></i>
+                      <span class="arr-ctr-inm__channel-text">{{ inm['telefonoRepresentante'] }}</span>
+                    </span>
+                    <span class="arr-ctr-inm__channel" *ngIf="inm['correoRepresentante']">
+                      <i class="fa fa-envelope-o" aria-hidden="true"></i>
+                      <span class="arr-ctr-inm__channel-text">{{ inm['correoRepresentante'] }}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

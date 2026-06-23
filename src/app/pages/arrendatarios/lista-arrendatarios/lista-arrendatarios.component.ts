@@ -203,6 +203,10 @@ export class ListaArrendatariosComponent implements OnInit {
     grid?.option('dataSource', dataFiltrada);
   }
 
+  refrescarListaArrendatarios(): void {
+    this.dataGrid?.instance?.refresh();
+  }
+
   limpiarVista(): void {
     const inst = this.dataGrid?.instance;
     if (!inst) return;

@@ -163,7 +163,10 @@
         </div>
 
         <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
-          <app-lista-arrendatarios-detalle [row]="row.data"></app-lista-arrendatarios-detalle>
+          <app-lista-arrendatarios-detalle
+            [row]="row.data"
+            (contratoCancelado)="refrescarListaArrendatarios()"
+          ></app-lista-arrendatarios-detalle>
         </div>
         <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
       </dx-data-grid>
