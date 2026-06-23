@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { take } from 'rxjs';
 import Swal from 'sweetalert2';
+import { ContratosService } from 'src/app/services/moduleService/contratos.service';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import { ArrendatarioGridRow } from '../arrendatarios-list.mapper';
 import {
@@ -34,6 +35,7 @@ export interface GrupoMetricasContrato {
 })
 export class ListaArrendatariosDetalleComponent {
   @Input({ required: true }) row!: ArrendatarioGridRow;
+  @Output() contratoCancelado = new EventEmitter<void>();
 
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
 
@@ -61,6 +63,7 @@ export class ListaArrendatariosDetalleComponent {
   constructor(
     private sanitizer: DomSanitizer,
     private http: HttpClient,
+    private contratosService: ContratosService,
   ) {}
 
   get item(): Record<string, unknown> {
@@ -327,6 +330,183 @@ export class ListaArrendatariosDetalleComponent {
     const inm = c['inmueble'];
     if (inm != null && typeof inm === 'object') return inm as Record<string, unknown>;
     return null;
+  }
+
+  contratoEsCancelable(c: Record<string, unknown>): boolean {
+    const id = Number(c['id']);
+    if (!Number.isFinite(id) || id <= 0) return false;
+    const estatus = Number(c['estatus']);
+    return !Number.isFinite(estatus) || estatus !== 0;
+  }
+
+  confirmarCancelarContrato(c: Record<string, unknown>, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+
+    const idContrato = Number(c['id']);
+    if (!Number.isFinite(idContrato) || idContrato <= 0) return;
+
+    const indice = this.contratos.indexOf(c);
+    const etiquetaContrato =
+      indice >= 0 ? `Contrato ${indice + 1}` : `Contrato #${idContrato}`;
+
+    void Swal.fire({
+      title: '¡Cancelación de contrato!',
+      html: this.htmlModalCancelarContrato(c, etiquetaContrato, Math.trunc(idContrato)),
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      width: '36rem',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, cancelar contrato',
+      cancelButtonText: 'No, volver',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      this.contratosService
+        .cancelarContrato(Math.trunc(idContrato))
+        .pipe(take(1))
+        .subscribe({
+          next: () => {
+            c['estatus'] = 0;
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Contrato cancelado!',
+              html: `El ${etiquetaContrato} fue cancelado correctamente.`,
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+            this.contratoCancelado.emit();
+          },
+          error: (err: unknown) => {
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Ops!',
+              html: this.mensajeErrorHttp(err),
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+          },
+        });
+    });
+  }
+
+  private mensajeErrorHttp(err: unknown): string {
+    const e = err as { error?: { message?: string }; message?: string };
+    return String(e?.error?.message ?? e?.message ?? 'No se pudo cancelar el contrato.');
+  }
+
+  private htmlModalCancelarContrato(
+    c: Record<string, unknown>,
+    etiquetaContrato: string,
+    idContrato: number,
+  ): string {
+    const inmueble = this.inmuebleDesdeContrato(c);
+    const locales = this.localesDesdeContrato(c);
+    const nombresLocales = locales
+      .map((loc) => String(loc['nombre'] ?? '').trim())
+      .filter(Boolean);
+    const fechaInicio = formatearFecha(
+      String(c['fechaInicioContrato'] ?? c['fechaInicio'] ?? ''),
+    );
+    const fechaFin = formatearFecha(
+      String(c['fechaTerminoContrato'] ?? c['fechaFin'] ?? ''),
+    );
+    const vigencia =
+      fechaInicio && fechaFin && fechaInicio !== '—' && fechaFin !== '—'
+        ? `${fechaInicio} – ${fechaFin}`
+        : '';
+    const renta =
+      c['rentaTotal'] != null && c['rentaTotal'] !== ''
+        ? formatearMoneda(c['rentaTotal'])
+        : '';
+    const moneda = String(c['moneda'] ?? '').trim();
+    const metros = c['metrosRentados'];
+    const metrosTxt =
+      metros != null && metros !== '' && Number.isFinite(Number(metros))
+        ? `${Number(metros)} m²`
+        : '';
+
+    const lineasArrendatario = [
+      this.lineaResumenCancelacion('Nombre', this.item['arrendatario']),
+      this.lineaResumenCancelacion('RFC', this.item['rfc']),
+      this.lineaResumenCancelacion('Representante', this.item['representanteLegal']),
+      this.lineaResumenCancelacion('Teléfono', this.item['telefonoRepresentante']),
+      this.lineaResumenCancelacion('Correo', this.item['correoRepresentante']),
+      this.lineaResumenCancelacion(
+        'Arrendador',
+        nombreArrendador(this.item['arrendador'] as Record<string, unknown> | undefined),
+      ),
+    ].filter(Boolean);
+
+    const lineasContrato = [
+      this.lineaResumenCancelacion('Referencia', etiquetaContrato),
+      this.lineaResumenCancelacion('ID contrato', String(idContrato)),
+      this.lineaResumenCancelacion('Inmueble', inmueble?.['inmueble']),
+      this.lineaResumenCancelacion('Dirección', inmueble?.['direccionFiscal']),
+      this.lineaResumenCancelacion('Vigencia', vigencia),
+      this.lineaResumenCancelacion(
+        'Renta mensual',
+        renta && moneda ? `${renta} ${moneda}` : renta,
+      ),
+      this.lineaResumenCancelacion(
+        'Mantenimiento',
+        c['mantenimientoTotal'] != null && c['mantenimientoTotal'] !== ''
+          ? formatearMoneda(c['mantenimientoTotal'])
+          : '',
+      ),
+      this.lineaResumenCancelacion('Metros rentados', metrosTxt),
+      this.lineaResumenCancelacion(
+        'Locales vinculados',
+        nombresLocales.length
+          ? `${nombresLocales.length}: ${nombresLocales.join(', ')}`
+          : '',
+      ),
+    ].filter(Boolean);
+
+    const bloque = (titulo: string, lineas: string[]): string => {
+      if (!lineas.length) return '';
+      return [
+        `<p style="margin:0 0 0.45rem;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:#8f9bc4;">${this.escapeHtmlSwal(titulo)}</p>`,
+        `<ul style="margin:0 0 0.85rem;padding-left:1.1rem;font-size:0.86rem;color:#dce3ff;line-height:1.5;list-style:disc;">${lineas.join('')}</ul>`,
+      ].join('');
+    };
+
+    return [
+      '<p style="margin:0 0 0.85rem;font-size:0.92rem;line-height:1.5;color:#ecefff;">',
+      'Está realizando una <strong>cancelación</strong>. Revise los datos antes de confirmar:',
+      '</p>',
+      '<div style="text-align:left;margin:0 0 0.85rem;padding:0.85rem;border-radius:10px;border:1px solid rgba(130,160,255,0.28);background:rgba(8,12,20,0.72);">',
+      bloque('Arrendatario', lineasArrendatario),
+      bloque('Contrato', lineasContrato),
+      '</div>',
+      '<p style="margin:0 0 0.75rem;font-size:0.86rem;line-height:1.45;color:#fcd34d;">',
+      'Esta acción dará de baja el contrato, cancelará los locales vinculados y los marcará como disponibles.',
+      '</p>',
+      '<p style="margin:0;font-size:0.9rem;line-height:1.45;color:#ecefff;">',
+      '¿Confirma que desea continuar con la cancelación?',
+      '</p>',
+    ].join('');
+  }
+
+  private lineaResumenCancelacion(label: string, valor: unknown): string {
+    const v = String(valor ?? '').trim();
+    if (!v || v === '—') return '';
+    return `<li style="margin-bottom:0.2rem;"><span style="color:#9aa6c8;">${this.escapeHtmlSwal(label)}:</span> ${this.escapeHtmlSwal(v)}</li>`;
+  }
+
+  private escapeHtmlSwal(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
 }

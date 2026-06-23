@@ -557,6 +557,7 @@ const permisosAsignadosIds: number[] = Array.from(
     const v = this.usuarioForm.value;
     const formData = new FormData();
 
+    formData.append('userName', v.userName);
     formData.append(
       'emailConfirmado',
       String(v.emailConfirmado ?? 0)
