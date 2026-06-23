@@ -627,11 +627,18 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       ...this.contratoCalcCampoFoco[index],
       metrosRentados: false,
     };
+    this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(index);
     this.programarRecalculoAlSalirInputsContrato(index);
     this.cdr.markForCheck();
   }
 
   onContratoMetrosInput(index: number): void {
+    this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(index);
+    this.cdr.markForCheck();
+  }
+
+  onContratoCostoInput(index: number): void {
+    this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(index);
     this.cdr.markForCheck();
   }
 
@@ -661,8 +668,36 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (!grupo) return false;
     return (
       this.valorNumericoContratoCapturado(grupo, 'metrosRentados') &&
-      this.valorNumericoContratoCapturado(grupo, 'costoPorM2')
+      this.contratoCostoPorM2Capturado(index)
     );
+  }
+
+  private contratoCostoPorM2Capturado(index: number): boolean {
+    const grupo = this.contratosFormArray.at(index) as FormGroup | null;
+    if (!grupo) return false;
+    if (this.valorNumericoContratoCapturado(grupo, 'costoPorM2')) return true;
+    const raw = this.contratoCampoDisplay[index]?.['costoPorM2'] ?? '';
+    return Number.isFinite(parseMonedaNumerico(raw));
+  }
+
+  /** Sin metros y costo/m² el switch queda en Sí y no conserva toggles accidentales. */
+  private forzarContratoSwitchMantenimientoInactivoSiIncompleto(index: number): void {
+    if (this.contratoSwitchMantenimientoHabilitado(index)) return;
+    this.contratoSwitchMantenimientoSi[index] = true;
+    const grupo = this.contratosFormArray.at(index) as FormGroup | null;
+    if (!grupo) return;
+    if (Number(grupo.get('incluyeMantenimiento')?.value) === 0) return;
+    grupo.get('incluyeMantenimiento')?.setValue(0, { emitEvent: false });
+    this.limpiarCamposMantenimientoContrato(grupo);
+    this.limpiarDisplaysMantenimientoContrato(index);
+  }
+
+  onContratoIncluyeMantenimientoClick(event: Event, index: number): void {
+    if (this.contratoSwitchMantenimientoHabilitado(index)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(index);
+    this.cdr.markForCheck();
   }
 
   private syncContratoSwitchMantenimientoSi(index: number): void {
@@ -672,7 +707,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   onContratoIncluyeMantenimientoChange(index: number, activo: boolean): void {
-    if (!this.contratoSwitchMantenimientoHabilitado(index)) return;
+    if (!this.contratoSwitchMantenimientoHabilitado(index)) {
+      this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(index);
+      this.cdr.markForCheck();
+      return;
+    }
     const grupo = this.contratosFormArray.at(index) as FormGroup;
     if (!grupo) return;
     this.contratoSwitchMantenimientoSi[index] = activo;
@@ -841,6 +880,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         ...this.contratoCalcCampoFoco[index],
         costoPorM2: false,
       };
+      this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(index);
       this.programarRecalculoAlSalirInputsContrato(index);
       this.cdr.markForCheck();
     }
@@ -876,8 +916,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const grupo = this.contratosFormArray.at(indexContrato) as FormGroup;
     if (!grupo) return;
 
+    this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(indexContrato);
+
     const metrosOk = this.valorNumericoContratoCapturado(grupo, 'metrosRentados');
-    const costoOk = this.valorNumericoContratoCapturado(grupo, 'costoPorM2');
+    const costoOk = this.contratoCostoPorM2Capturado(indexContrato);
     const incluyeMtto = Number(grupo.get('incluyeMantenimiento')?.value) === 1;
     const pctOk =
       incluyeMtto && this.valorNumericoContratoCapturado(grupo, 'pctMantenimiento');

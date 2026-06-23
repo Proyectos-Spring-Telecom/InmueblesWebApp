@@ -45,10 +45,10 @@ body {
 
   @media (min-width: 769px) {
     &.page-container:not(.sidebarNav-horizontal)
-      > .mainWrapper.mat-drawer-container
+      > .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
       > .mat-drawer-content.contentWrapper,
     &.page-container:not(.sidebarNav-horizontal)
-      > .mainWrapper.mat-drawer-container
+      > .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
       > .mat-sidenav-content.contentWrapper {
       margin-right: $sidenav-desktop !important;
       margin-left: 0 !important;
@@ -56,10 +56,10 @@ body {
     }
 
     &.page-container.sidebarNav-mini:not(.sidebarNav-horizontal)
-      > .mainWrapper.mat-drawer-container
+      > .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
       > .mat-drawer-content.contentWrapper,
     &.page-container.sidebarNav-mini:not(.sidebarNav-horizontal)
-      > .mainWrapper.mat-drawer-container
+      > .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
       > .mat-sidenav-content.contentWrapper {
       margin-right: $sidenav-mini !important;
       margin-left: 0 !important;

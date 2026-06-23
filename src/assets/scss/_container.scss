@@ -95,24 +95,24 @@ html body .mat-drawer-container:has(.docs-backdrop) > .mat-drawer-content {
 
 /*
  * Sidebar vertical con position:fixed: Material no empuja mat-sidenav-content.
- * Header y footer ya compensan left/width; el área principal debe hacer lo mismo.
+ * El margen solo aplica cuando el drawer lateral está realmente abierto.
  */
 @media (min-width: 769px) {
   .page-container:not(.sidebarNav-horizontal)
-    > .mainWrapper.mat-drawer-container
+    > .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
     > .mat-drawer-content.contentWrapper,
   .page-container:not(.sidebarNav-horizontal)
-    > .mainWrapper.mat-drawer-container
+    > .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
     > .mat-sidenav-content.contentWrapper {
     margin-left: $sidenav-desktop !important;
     transition: margin-left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 
   .page-container.sidebarNav-mini:not(.sidebarNav-horizontal)
-    > .mainWrapper.mat-drawer-container
+    > .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
     > .mat-drawer-content.contentWrapper,
   .page-container.sidebarNav-mini:not(.sidebarNav-horizontal)
-    > .mainWrapper.mat-drawer-container
+    > .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
     > .mat-sidenav-content.contentWrapper {
     margin-left: $sidenav-mini !important;
   }
@@ -142,9 +142,8 @@ html body .mat-drawer-container:has(.docs-backdrop) > .mat-drawer-content {
   position: fixed;
   right: 0;
   bottom: 0;
-  left: $sidenav-desktop;
-  /* Ancho explícito: evita huecos y scroll horizontal al contraer sidebar */
-  width: calc(100% - #{$sidenav-desktop});
+  left: 0;
+  width: 100%;
   overflow: hidden;
   /* Permite apilar el footer según el ancho real del bloque (p. ej. con sidebar), no solo el viewport */
   container-type: inline-size;
@@ -427,10 +426,21 @@ html body .mat-drawer-container:has(.docs-backdrop) > .mat-drawer-content {
   }
 }
 
-/* Sidebar mini: footer arranca después del menú colapsado */
-.page-container.sidebarNav-mini .layout-app-footer {
-  left: $sidenav-mini;
-  width: calc(100% - #{$sidenav-mini});
+/* Sidebar abierto: footer alineado al contenido principal */
+@media (min-width: 769px) {
+  .page-container:not(.sidebarNav-horizontal)
+    .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
+    .layout-app-footer {
+    left: $sidenav-desktop;
+    width: calc(100% - #{$sidenav-desktop});
+  }
+
+  .page-container.sidebarNav-mini:not(.sidebarNav-horizontal)
+    .mainWrapper.mat-drawer-container:has(> .mat-drawer.sidebarNav.mat-drawer-opened)
+    .layout-app-footer {
+    left: $sidenav-mini;
+    width: calc(100% - #{$sidenav-mini});
+  }
 }
 
 /* Horizontal o móvil/tablet: footer a todo el ancho */

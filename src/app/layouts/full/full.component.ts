@@ -89,6 +89,7 @@ export class FullComponent implements OnInit, AfterViewInit {
   private isContentWidthFixed = true;
   private isCollapsedWidthFixed = false;
   private htmlElement!: HTMLHtmlElement;
+  private viewReady = false;
 
   get isOver(): boolean {
     return this.isMobileScreen;
@@ -240,6 +241,8 @@ export class FullComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     const el = this.mainScroll?.nativeElement;
     if (el) this.layoutScroll.register(el);
+    this.viewReady = true;
+    this.ensureSidenavOpen();
   }
 
   ngOnDestroy() {
@@ -265,6 +268,26 @@ export class FullComponent implements OnInit, AfterViewInit {
     }
     this.isContentWidthFixed = breakpoints[MONITOR_VIEW];
     this.resView = breakpoints[BELOWMONITOR];
+
+    if (this.viewReady) {
+      queueMicrotask(() => this.ensureSidenavOpen());
+    }
+  }
+
+  private ensureSidenavOpen(): void {
+    if (
+      this.options.horizontal ||
+      this.isOver ||
+      this.options.navPos !== 'side' ||
+      !this.sidenav
+    ) {
+      return;
+    }
+
+    this.options.sidenavOpened = true;
+    if (!this.sidenav.opened) {
+      void this.sidenav.open();
+    }
   }
 
   toggleCollapsed() {
@@ -287,6 +310,19 @@ export class FullComponent implements OnInit, AfterViewInit {
 
   onSidenavOpenedChange(isOpened: boolean) {
     this.isCollapsedWidthFixed = !this.isOver;
+
+    // Evita que un openedChange espurio al recargar deje hueco sin menú en desktop.
+    if (
+      !isOpened &&
+      !this.isOver &&
+      !this.options.horizontal &&
+      this.options.navPos === 'side'
+    ) {
+      this.options.sidenavOpened = true;
+      queueMicrotask(() => this.ensureSidenavOpen());
+      return;
+    }
+
     this.options.sidenavOpened = isOpened;
     this.settings.setOptions(this.options);
   }
