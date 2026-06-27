@@ -113,6 +113,41 @@ export interface DashboardPagoConceptoBar {
   monto: number;
 }
 
+/** Ítem de lista para la card «Pagos por concepto». */
+export interface DashboardPagoConceptoItem {
+  id: string;
+  concepto: string;
+  monto: number;
+}
+
+/** Ítem de local dentro de la card «Locales asignados». */
+export interface DashboardLocalAsignadoItem {
+  id: number;
+  nombre: string;
+  giro: string;
+  zonaNombre: string;
+  areaM2: number;
+  mensualidad: number;
+}
+
+/** Grupo de locales por zona para la card «Locales asignados». */
+export interface DashboardZonaLocalesGrupo {
+  id: number;
+  nombre: string;
+  superficieM2: number;
+  locales: DashboardLocalAsignadoItem[];
+}
+
+/** Ítem de lista para la card «Contratos en el periodo». */
+export interface DashboardContratoPeriodoItem {
+  id: number;
+  inmuebleNombre: string;
+  vigencia: string;
+  localesNombres: string[];
+  lineasResumen: string[];
+  observaciones: string;
+}
+
 function num(value: unknown, fallback = 0): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
@@ -384,12 +419,89 @@ export function construirGraficaMensualidadLocales(
 export function construirGraficaPagosConcepto(
   pagos: ArrendatarioDashboardPago[],
 ): DashboardPagoConceptoBar[] {
+  return construirItemsPagosConcepto(pagos).map(({ concepto, monto }) => ({ concepto, monto }));
+}
+
+export function construirItemsPagosConcepto(
+  pagos: ArrendatarioDashboardPago[],
+): DashboardPagoConceptoItem[] {
   const mapa = new Map<string, number>();
   pagos.forEach((pago) => {
     const key = pago.concepto || 'Pago';
     mapa.set(key, (mapa.get(key) ?? 0) + pago.monto);
   });
-  return Array.from(mapa.entries()).map(([concepto, monto]) => ({ concepto, monto }));
+  return Array.from(mapa.entries()).map(([concepto, monto], index) => ({
+    id: `${index}-${concepto}`,
+    concepto,
+    monto,
+  }));
+}
+
+export function construirGruposLocalesDashboard(
+  zonas: ArrendatarioDashboardZona[],
+  locales: ArrendatarioDashboardLocal[],
+): DashboardZonaLocalesGrupo[] {
+  if (zonas.length) {
+    return zonas
+      .map((zona) => ({
+        id: zona.id,
+        nombre: zona.nombre,
+        superficieM2: zona.superficieM2,
+        locales: zona.locales.map((local) => ({
+          id: local.id,
+          nombre: local.nombre,
+          giro: local.giro,
+          zonaNombre: local.zonaNombre || zona.nombre,
+          areaM2: local.areaM2,
+          mensualidad: local.mensualidad,
+        })),
+      }))
+      .filter((grupo) => grupo.locales.length > 0);
+  }
+
+  if (!locales.length) return [];
+
+  return [
+    {
+      id: 0,
+      nombre: 'Locales',
+      superficieM2: locales.reduce((sum, local) => sum + local.areaM2, 0),
+      locales: locales.map((local) => ({
+        id: local.id,
+        nombre: local.nombre,
+        giro: local.giro,
+        zonaNombre: local.zonaNombre,
+        areaM2: local.areaM2,
+        mensualidad: local.mensualidad,
+      })),
+    },
+  ];
+}
+
+export function construirItemsContratosPeriodo(
+  contratos: ArrendatarioDashboardContrato[],
+): DashboardContratoPeriodoItem[] {
+  return contratos.map((contrato) => {
+    const lineasResumen: string[] = [
+      `Renta: ${formatearMoneda(contrato.rentaTotal)}${
+        contrato.mantenimientoTotal != null
+          ? ` · Mant.: ${formatearMoneda(contrato.mantenimientoTotal)}`
+          : ''
+      }`,
+      `Depósito: ${formatearMoneda(contrato.montoDeposito)} · Adelanto: ${formatearMoneda(contrato.montoAdelanto)}`,
+    ];
+    if (contrato.observaciones) {
+      lineasResumen.push(contrato.observaciones);
+    }
+    return {
+      id: contrato.id,
+      inmuebleNombre: contrato.inmuebleNombre,
+      vigencia: `${formatearFecha(contrato.fechaInicio)} – ${formatearFecha(contrato.fechaFin)}`,
+      localesNombres: contrato.localesNombres,
+      lineasResumen,
+      observaciones: contrato.observaciones,
+    };
+  });
 }
 
 export function etiquetaMes(raw: string): string {

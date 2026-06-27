@@ -12,12 +12,18 @@ import {
 } from '../arrendatarios-list.mapper';
 import {
   ArrendatarioDashboardData,
+  construirGruposLocalesDashboard,
   construirGraficaMensualidadLocales,
   construirGraficaPagosConcepto,
   construirGraficaRentaEstado,
+  construirItemsContratosPeriodo,
+  construirItemsPagosConcepto,
+  DashboardContratoPeriodoItem,
   DashboardMensualidadLocalBar,
   DashboardPagoConceptoBar,
+  DashboardPagoConceptoItem,
   DashboardRentaEstadoSlice,
+  DashboardZonaLocalesGrupo,
   etiquetaMes,
   formatearFecha,
   formatearMoneda,
@@ -62,6 +68,9 @@ export class ListaArrendatariosComponent implements OnInit {
   dashboardRentaEstadoData: DashboardRentaEstadoSlice[] = [];
   dashboardMensualidadData: DashboardMensualidadLocalBar[] = [];
   dashboardPagosData: DashboardPagoConceptoBar[] = [];
+  dashboardPagosConceptoItems: DashboardPagoConceptoItem[] = [];
+  dashboardGruposLocales: DashboardZonaLocalesGrupo[] = [];
+  dashboardContratosItems: DashboardContratoPeriodoItem[] = [];
 
   formatearFecha = formatearFecha;
   formatearMoneda = formatearMoneda;
@@ -255,6 +264,9 @@ export class ListaArrendatariosComponent implements OnInit {
     this.dashboardRentaEstadoData = [];
     this.dashboardMensualidadData = [];
     this.dashboardPagosData = [];
+    this.dashboardPagosConceptoItems = [];
+    this.dashboardGruposLocales = [];
+    this.dashboardContratosItems = [];
     this.dashboardCargando = true;
     this.mostrarModalDashboard = true;
 
@@ -272,6 +284,16 @@ export class ListaArrendatariosComponent implements OnInit {
           );
           this.dashboardPagosData = construirGraficaPagosConcepto(
             this.dashboardData?.pagos ?? [],
+          );
+          this.dashboardPagosConceptoItems = construirItemsPagosConcepto(
+            this.dashboardData?.pagos ?? [],
+          );
+          this.dashboardGruposLocales = construirGruposLocalesDashboard(
+            this.dashboardData?.zonas ?? [],
+            this.dashboardData?.locales ?? [],
+          );
+          this.dashboardContratosItems = construirItemsContratosPeriodo(
+            this.dashboardData?.contratos ?? [],
           );
           if (this.dashboardData?.arrendatario?.nombre) {
             this.dashboardTitulo = this.dashboardData.arrendatario.nombre;
@@ -292,6 +314,9 @@ export class ListaArrendatariosComponent implements OnInit {
     this.dashboardRentaEstadoData = [];
     this.dashboardMensualidadData = [];
     this.dashboardPagosData = [];
+    this.dashboardPagosConceptoItems = [];
+    this.dashboardGruposLocales = [];
+    this.dashboardContratosItems = [];
     this.dashboardCargando = false;
   }
 
@@ -324,6 +349,22 @@ export class ListaArrendatariosComponent implements OnInit {
   }
 
   get dashboardFiltros() { return this.dashboardData?.filtros ?? null; }
+
+  trackByDashboardItemId(_index: number, item: DashboardPagoConceptoItem): string {
+    return item.id;
+  }
+
+  trackByDashboardZonaId(_index: number, grupo: DashboardZonaLocalesGrupo): number {
+    return grupo.id;
+  }
+
+  trackByDashboardLocalId(_index: number, local: { id: number }): number {
+    return local.id;
+  }
+
+  trackByDashboardContratoId(_index: number, contrato: DashboardContratoPeriodoItem): number {
+    return contrato.id;
+  }
 
   claseEstatusPago(estatus: string): string {
     const e = (estatus ?? '').toLowerCase();

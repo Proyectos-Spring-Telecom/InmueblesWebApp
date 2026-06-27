@@ -1,3 +1,4 @@
+import { animate, style, transition, trigger } from '@angular/animations';
 import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -96,7 +97,24 @@ interface SnapshotEdicionInmueble {
   templateUrl: './agregar-inmueble.component.html',
   styleUrl: './agregar-inmueble.component.scss',
   standalone: false,
-  animations: [routeAnimation],
+  animations: [
+    routeAnimation,
+    trigger('camposRentaReveal', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-20px) scale(0.97)' }),
+        animate(
+          '340ms cubic-bezier(0.22, 1, 0.36, 1)',
+          style({ opacity: 1, transform: 'translateY(0) scale(1)' }),
+        ),
+      ]),
+      transition(':leave', [
+        animate(
+          '220ms cubic-bezier(0.4, 0, 1, 1)',
+          style({ opacity: 0, transform: 'translateY(-14px) scale(0.98)' }),
+        ),
+      ]),
+    ]),
+  ],
 })
 export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private readonly swalToastOcrExito = Swal.mixin({

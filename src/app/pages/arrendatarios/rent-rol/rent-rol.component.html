@@ -17,23 +17,19 @@
       </nav>
     </header>
     <div class="surface">
-      <div class="rr-kpi-slot" role="region" aria-label="Resumen de página">
+      <div class="rr-kpi-slot" role="region" aria-label="Resumen del periodo">
         <div class="rr-kpi-shell">
           <div class="rr-kpi-grid">
-            <div class="rr-kpi rr-kpi--arrendatarios">
-              <span class="rr-kpi__label">Registros (página)</span>
-              <span class="rr-kpi__value">{{ registros.length }}</span>
-            </div>
             <div class="rr-kpi rr-kpi--renta">
-              <span class="rr-kpi__label">Sub-total renta</span>
+              <span class="rr-kpi__label">Sub-total Renta:</span>
               <span class="rr-kpi__value">{{ totalRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
             </div>
             <div class="rr-kpi rr-kpi--mantto">
-              <span class="rr-kpi__label">Sub-total mantto</span>
+              <span class="rr-kpi__label">Sub-total Mantenimiento:</span>
               <span class="rr-kpi__value">{{ totalMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
             </div>
             <div class="rr-kpi rr-kpi--accent">
-              <span class="rr-kpi__label">Gran total (página)</span>
+              <span class="rr-kpi__label">Total:</span>
               <span class="rr-kpi__value">{{ granTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
             </div>
           </div>
@@ -41,146 +37,181 @@
       </div>
       <div class="rr-body">
 
-          <!-- Barra inferior: leyenda a la derecha + registros a la izquierda -->
-          <div class="rr-toolbar">
-            <span class="rr-pag-info">
-              <ng-container *ngIf="!cargando">
-                Registros {{ paginaInicio + 1 }}–{{ paginaFin }} de {{ totalRegistros }}
-              </ng-container>
-              <ng-container *ngIf="cargando">Cargando registros…</ng-container>
-            </span>
-            <div class="rr-leyenda">
-              <div class="rr-leyenda__item rr-leyenda__item--pagada">
-                <span class="rr-leyenda__caja"></span>
-                <span>Pagada</span>
-              </div>
-              <div class="rr-leyenda__item rr-leyenda__item--incremento">
-                <span class="rr-leyenda__caja"></span>
-                <span>Incremento</span>
-              </div>
+        <div class="rr-toolbar">
+          <span class="rr-pag-info">
+            <ng-container *ngIf="!cargando">
+              Registros {{ paginaInicio + 1 }}–{{ paginaFin }} de {{ totalRegistros }}
+            </ng-container>
+            <ng-container *ngIf="cargando">Cargando registros…</ng-container>
+          </span>
+          <div class="rr-leyenda">
+            <div class="rr-leyenda__item rr-leyenda__item--pagada">
+              <span class="rr-leyenda__caja"></span>
+              <span>Pagada</span>
+            </div>
+            <div class="rr-leyenda__item rr-leyenda__item--incremento">
+              <span class="rr-leyenda__caja"></span>
+              <span>Incremento</span>
             </div>
           </div>
+        </div>
 
-          <!-- Tabla -->
-          <div class="rr-table-wrap">
-            <div class="table-responsive">
-              <table class="rr-table">
-                <thead>
-                  <tr>
-                    <th class="col-empresa">Arrendatario</th>
-                    <th class="col-piso">Inmueble</th>
-                    <th class="col-modulo">Locales</th>
-                    <th class="col-m2">Metros rentados</th>
-                    <th class="col-pm2">Costo M²</th>
-                    <th class="col-concepto">Concepto</th>
-                    <th class="col-num">Sub-total</th>
-                    <th class="col-num">IVA</th>
-                    <th class="col-num">Total</th>
-                    <th class="col-fecha">Fecha Inicio Contrato</th>
-                    <th class="col-fecha">Fecha Termino Contrato</th>
-                    <th class="col-estatus">Pagada</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <ng-container *ngFor="let r of paginaActual">
-                    <!-- Fila Renta -->
-                    <tr class="row-renta" [class]="claseFilaRenta(r)">
-                      <td class="col-empresa" rowspan="2">
-                        <div class="empresa-nombre">{{ r.nombre }}</div>
-                        <div class="empresa-nota" *ngIf="r.representanteLegal || r.telefonoRepresentante">
-                          <span *ngIf="r.representanteLegal">{{ r.representanteLegal }}</span>
-                          <span *ngIf="r.representanteLegal && r.telefonoRepresentante"> · </span>
-                          <span *ngIf="r.telefonoRepresentante">{{ r.telefonoRepresentante }}</span>
-                        </div>
-                      </td>
-                      <td rowspan="2" class="cell-center col-inmueble">
-                        <div class="empresa-nombre">{{ r.inmueble }}</div>
-                        <div class="empresa-nota" *ngIf="r.zona">{{ r.zona }}</div>
-                      </td>
-                      <td rowspan="2" class="cell-center">{{ r.modulo }}</td>
-                      <td rowspan="2" class="cell-right">{{ r.metrosRentados | number:'1.2-2' }}</td>
-                      <td rowspan="2" class="cell-right">{{ r.costoM2 | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                      <td class="cell-center">
-                        <span class="concepto-pill concepto-pill--renta">Renta</span>
-                      </td>
-                      <td class="cell-right">{{ r.renta.subTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                      <td class="cell-right">{{ r.renta.iva | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                      <td class="cell-right cell-total">{{ r.renta.montoFinal | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                      <td rowspan="2" class="cell-center cell-fecha">{{ r.inicioContrato }}</td>
-                      <td rowspan="2" class="cell-center cell-fecha">{{ r.finContrato }}</td>
-                      <td rowspan="2" class="cell-center">
-                        <span class="rr-tag" [class.rr-tag--pagada]="r.pagada" [class.rr-tag--pendiente]="!r.pagada">
-                          {{ r.pagadaLabel }}
-                        </span>
-                      </td>
-                    </tr>
-                    <!-- Fila Mantto -->
-                    <tr class="row-mant" [class]="claseFilaMantenimiento(r)">
-                      <td class="cell-center">
-                        <span class="concepto-pill concepto-pill--mant">Mantto</span>
-                      </td>
-                      <td class="cell-right">{{ r.mantenimiento.subTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                      <td class="cell-right">{{ r.mantenimiento.iva | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                      <td class="cell-right cell-total">{{ r.mantenimiento.montoFinal | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                    </tr>
-                  </ng-container>
-                  <tr *ngIf="!cargando && paginaActual.length === 0">
-                    <td colspan="12" class="cell-center rr-empty">Sin registros en el periodo seleccionado.</td>
-                  </tr>
-                </tbody>
-                <!-- <tfoot>
-                  <tr class="foot-row">
-                    <td colspan="5" class="foot-label">Total global (página)</td>
-                    <td class="cell-center"><span class="concepto-pill concepto-pill--renta">Ingreso Renta</span></td>
-                    <td class="cell-right">{{ totalRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                    <td class="cell-right">{{ totalIvaRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                    <td class="cell-right foot-highlight">{{ totalRentaConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                    <td colspan="3"></td>
-                  </tr>
-                  <tr class="foot-row foot-row--last">
-                    <td colspan="5"></td>
-                    <td class="cell-center"><span class="concepto-pill concepto-pill--mant">Ingreso Mantto</span></td>
-                    <td class="cell-right">{{ totalMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                    <td class="cell-right">{{ totalIvaMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                    <td class="cell-right foot-highlight">{{ totalManttoConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</td>
-                    <td colspan="3"></td>
-                  </tr>
-                </tfoot> -->
-              </table>
-            </div>
-          </div>
-
-          <!-- Paginado -->
-          <div class="rr-pagination">
-            <span class="rr-pag-info">
-              Página <strong>{{ paginaActual$ }}</strong> de <strong>{{ totalPaginas }}</strong>
-              &nbsp;·&nbsp; {{ totalRegistros }} registros totales
-            </span>
-            <div class="rr-pagination__controls">
-              <button class="rr-pag-btn" (click)="irPrimera()" [disabled]="paginaActual$ === 1 || cargando" title="Primera">
-                <i class="fa fa-angle-double-left"></i>
-              </button>
-              <button class="rr-pag-btn" (click)="anterior()" [disabled]="paginaActual$ === 1 || cargando" title="Anterior">
-                <i class="fa fa-angle-left"></i>
-              </button>
-              <ng-container *ngFor="let p of paginas">
-                <button class="rr-pag-btn"
-                  [class.active]="p === paginaActual$"
-                  [class.dots]="p === -1"
-                  [disabled]="p === -1 || cargando"
-                  (click)="p !== -1 && irPagina(p)">
-                  {{ p === -1 ? '…' : p }}
+        <div class="rr-table-wrap rr-grid-wrap">
+          <div class="clientes-flow-head rr-busqueda-head">
+            <div class="clientes-search" role="search">
+              <label class="clientes-search-label" for="rentRolSearchInput">Buscar registro</label>
+              <div class="clientes-search-field">
+                <span class="clientes-search-icon" aria-hidden="true">
+                  <mat-icon>search</mat-icon>
+                </span>
+                <input
+                  id="rentRolSearchInput"
+                  type="search"
+                  class="clientes-search-input"
+                  [value]="busquedaTexto"
+                  (input)="onBusquedaInput($event)"
+                  placeholder="Arrendatario, inmueble, local, montos, fechas, estatus…"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="Buscar en toda la tabla"
+                />
+                <button
+                  type="button"
+                  class="clientes-search-clear"
+                  *ngIf="busquedaTexto.trim().length > 0"
+                  (click)="limpiarBusqueda()"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <mat-icon>close</mat-icon>
                 </button>
-              </ng-container>
-              <button class="rr-pag-btn" (click)="siguiente()" [disabled]="paginaActual$ === totalPaginas || cargando" title="Siguiente">
-                <i class="fa fa-angle-right"></i>
-              </button>
-              <button class="rr-pag-btn" (click)="irUltima()" [disabled]="paginaActual$ === totalPaginas || cargando" title="Última">
-                <i class="fa fa-angle-double-right"></i>
-              </button>
+              </div>
             </div>
           </div>
 
+          <dx-data-grid #gridRentRol id="gridRentRol" class="inm-data-grid rr-data-grid" [columnHidingEnabled]="false"
+            [allowColumnReordering]="false" [allowColumnResizing]="true" [columnAutoWidth]="false"
+            [wordWrapEnabled]="true" [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+            [rowAlternationEnabled]="false" [dataSource]="listaRentRol" [keyExpr]="'gridKey'" [width]="'100%'"
+            [remoteOperations]="{ paging: true }" [paging]="{ pageSize: FILAS_GRID_POR_PAGINA }"
+            [noDataText]="modoBusquedaActivo ? 'Sin coincidencias para la búsqueda.' : 'Sin registros en el periodo seleccionado.'" [pager]="{
+                showPageSizeSelector: false,
+                showInfo: true,
+                infoText: 'Página {0} de {1}',
+                visible: true
+              }" (onRowPrepared)="onRowPrepared($event)" (onCellPrepared)="onCellPrepared($event)">
+            <dxo-scrolling mode="standard" columnRenderingMode="standard" showScrollbar="always" [useNative]="true"></dxo-scrolling>
+            <dxi-column dataField="nombre" caption="Arrendatario" cellTemplate="empresaTpl" [minWidth]="220" [allowHiding]="false" alignment="left"></dxi-column>
+            <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" [minWidth]="120" [allowHiding]="false" alignment="center"></dxi-column>
+            <dxi-column dataField="modulo" caption="Locales" [minWidth]="72" [allowHiding]="false" alignment="center"></dxi-column>
+            <dxi-column dataField="metrosRentados" caption="Metros rentados" cellTemplate="metrosTpl" [minWidth]="88" [allowHiding]="false" alignment="right"></dxi-column>
+            <dxi-column dataField="costoM2" caption="Costo M²" cellTemplate="costoM2Tpl" [minWidth]="88" [allowHiding]="false" alignment="right"></dxi-column>
+            <dxi-column dataField="tipoConcepto" caption="Concepto" cellTemplate="conceptoTpl" [minWidth]="88" [allowHiding]="false" alignment="center" [allowSorting]="false"></dxi-column>
+            <dxi-column dataField="subTotal" caption="Sub-total" cellTemplate="monedaTpl" [minWidth]="96" [allowHiding]="false" alignment="right"></dxi-column>
+            <dxi-column dataField="iva" caption="IVA" cellTemplate="monedaTpl" [minWidth]="96" [allowHiding]="false" alignment="right"></dxi-column>
+            <dxi-column dataField="montoFinal" caption="Total" cellTemplate="totalTpl" [minWidth]="96" [allowHiding]="false" alignment="right"></dxi-column>
+            <dxi-column dataField="inicioContrato" caption="Fecha Inicio Contrato" cssClass="cell-fecha" [minWidth]="108" [allowHiding]="false" alignment="center"></dxi-column>
+            <dxi-column dataField="finContrato" caption="Fecha Termino Contrato" cssClass="cell-fecha" [minWidth]="108" [allowHiding]="false" alignment="center"></dxi-column>
+            <dxi-column dataField="pagadaLabel" caption="Pagada" cellTemplate="pagadaTpl" [minWidth]="88" [allowHiding]="false" alignment="center"></dxi-column>
+            <div *dxTemplate="let cell of 'empresaTpl'">
+              <div class="empresa-nombre">{{ cell.data.nombre }}</div>
+              <div class="empresa-nota" *ngIf="cell.data.representanteLegal || cell.data.telefonoRepresentante">
+                <span *ngIf="cell.data.representanteLegal">{{ cell.data.representanteLegal }}</span>
+                <span *ngIf="cell.data.representanteLegal && cell.data.telefonoRepresentante"> · </span>
+                <span *ngIf="cell.data.telefonoRepresentante">{{ cell.data.telefonoRepresentante }}</span>
+              </div>
+            </div>
+            <div *dxTemplate="let cell of 'inmuebleTpl'">
+              <div class="empresa-nombre">{{ cell.data.inmueble }}</div>
+              <div class="empresa-nota" *ngIf="cell.data.zona">{{ cell.data.zona }}</div>
+            </div>
+            <div *dxTemplate="let cell of 'metrosTpl'" class="cell-right cell-num">
+              {{ cell.data.metrosRentados | number:'1.2-2' }} M²
+            </div>
+            <div *dxTemplate="let cell of 'costoM2Tpl'" class="cell-right cell-num">
+              {{ cell.data.costoM2 | currency:'MXN':'symbol-narrow':'1.2-2' }}
+            </div>
+            <div *dxTemplate="let cell of 'conceptoTpl'" class="cell-center">
+              <span class="concepto-pill" [class.concepto-pill--renta]="cell.data.tipoConcepto === 'Renta'"
+                [class.concepto-pill--mant]="cell.data.tipoConcepto === 'Mantto'">
+                {{ cell.data.tipoConcepto === 'Renta' ? 'Renta' : 'Mantto' }}
+              </span>
+            </div>
+            <div *dxTemplate="let cell of 'monedaTpl'" class="cell-right cell-num">
+              {{ cell.value | currency:'MXN':'symbol-narrow':'1.2-2' }}
+            </div>
+            <div *dxTemplate="let cell of 'totalTpl'" class="cell-right cell-num cell-total">
+              {{ cell.value | currency:'MXN':'symbol-narrow':'1.2-2' }}
+            </div>
+            <div *dxTemplate="let cell of 'pagadaTpl'" class="cell-center">
+              <span class="rr-tag" [class.rr-tag--pagada]="cell.data.pagada"
+                [class.rr-tag--pendiente]="!cell.data.pagada">
+                {{ cell.data.pagadaLabel }}
+              </span>
+            </div>
+          </dx-data-grid>
+
+          <!-- <section class="rr-totales-panel" *ngIf="registrosVisibles.length" aria-label="Totalizadores">
+            <div class="rr-totales-grid">
+              <article class="rr-total-card rr-total-card--renta">
+                <div class="rr-total-card__head">
+                  <span class="concepto-pill concepto-pill--renta">Ingreso Renta</span>
+                </div>
+                <dl class="rr-total-card__cols">
+                  <div class="rr-total-card__item">
+                    <dt>Sub-total</dt>
+                    <dd>{{ totalRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                  <div class="rr-total-card__item">
+                    <dt>IVA</dt>
+                    <dd>{{ totalIvaRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                  <div class="rr-total-card__item rr-total-card__item--destacado">
+                    <dt>Total</dt>
+                    <dd>{{ totalRentaConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                </dl>
+              </article>
+              <article class="rr-total-card rr-total-card--mant">
+                <div class="rr-total-card__head">
+                  <span class="concepto-pill concepto-pill--mant">Ingreso Mantto</span>
+                </div>
+                <dl class="rr-total-card__cols">
+                  <div class="rr-total-card__item">
+                    <dt>Sub-total</dt>
+                    <dd>{{ totalMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                  <div class="rr-total-card__item">
+                    <dt>IVA</dt>
+                    <dd>{{ totalIvaMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                  <div class="rr-total-card__item rr-total-card__item--destacado">
+                    <dt>Total</dt>
+                    <dd>{{ totalManttoConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                </dl>
+              </article>
+              <article class="rr-total-card rr-total-card--general">
+                <div class="rr-total-card__head">
+                  <span class="rr-total-card__badge">Resumen general</span>
+                </div>
+                <dl class="rr-total-card__cols">
+                  <div class="rr-total-card__item">
+                    <dt>Sub-total</dt>
+                    <dd>{{ subTotalCombinado | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                  <div class="rr-total-card__item">
+                    <dt>IVA</dt>
+                    <dd>{{ ivaCombinado | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                  <div class="rr-total-card__item rr-total-card__item--destacado">
+                    <dt>Total</dt>
+                    <dd>{{ granTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+                  </div>
+                </dl>
+              </article>
+            </div>
+          </section> -->
+        </div>
       </div>
     </div>
   </div>
