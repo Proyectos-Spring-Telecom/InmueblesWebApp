@@ -252,6 +252,42 @@
               </div>
 
               <div class="row g-2 dash-charts-row">
+                <div class="col-12 col-lg-4" *ngIf="dashboardInfo">
+                  <section class="dash-panel dash-panel--info" aria-label="Arrendatario y arrendador">
+                    <div class="dash-info">
+                      <div class="dash-info__block">
+                        <span class="dash-info__sub-label">Arrendatario</span>
+                        <span class="dash-info__nombre">{{ dashboardInfo.nombre }}</span>
+                        <span class="dash-info__line" *ngIf="dashboardInfo.representanteLegal">
+                          {{ dashboardInfo.representanteLegal }}
+                        </span>
+                        <span class="dash-info__line" *ngIf="dashboardInfo.telefonoRepresentante">
+                          <i class="fa fa-phone"></i> {{ dashboardInfo.telefonoRepresentante }}
+                        </span>
+                        <span class="dash-info__line" *ngIf="dashboardInfo.correoRepresentante">
+                          <i class="fa fa-envelope-o"></i> {{ dashboardInfo.correoRepresentante }}
+                        </span>
+                        <span class="dash-info__line">
+                          Vigencia: {{ formatearFecha(dashboardInfo.fechaInicio) }} – {{ formatearFecha(dashboardInfo.fechaFin) }}
+                        </span>
+                        <span class="dash-info__line">
+                          Renta base: {{ formatearMoneda(dashboardInfo.renta) }}
+                        </span>
+                      </div>
+                      <div class="dash-info__block dash-info__sub" *ngIf="dashboardInfo.arrendadorNombre">
+                        <span class="dash-info__sub-label">Arrendador</span>
+                        <span class="dash-info__nombre">{{ dashboardInfo.arrendadorNombre }}</span>
+                        <span class="dash-info__line" *ngIf="dashboardInfo.arrendadorTelefono">
+                          <i class="fa fa-phone"></i> {{ dashboardInfo.arrendadorTelefono }}
+                        </span>
+                        <span class="dash-info__line" *ngIf="dashboardInfo.arrendadorCorreo">
+                          <i class="fa fa-envelope-o"></i> {{ dashboardInfo.arrendadorCorreo }}
+                        </span>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
                 <div class="col-12 col-lg-4">
                   <section class="dash-panel" aria-label="Estado de rentas del mes">
                     <div class="dash-panel__head">
@@ -309,27 +345,6 @@
                     </div>
                     <div class="oc-empty oc-empty--inline" *ngIf="!dashboardMensualidadData.length">
                       <span>Sin locales asignados</span>
-                    </div>
-                  </section>
-                </div>
-
-                <div class="col-12 col-lg-4">
-                  <section class="dash-panel" aria-label="Pagos por concepto">
-                    <span class="dash-panel__title">Pagos por concepto</span>
-                    <div class="dash-chart-wrap" *ngIf="dashboardPagosData.length">
-                      <dx-chart
-                        #chartDashboardPagos
-                        id="chartDashboardPagosArr"
-                        [dataSource]="dashboardPagosData">
-                        <dxo-common-series-settings argumentField="concepto" type="bar"></dxo-common-series-settings>
-                        <dxi-series valueField="monto" name="Monto" color="#3b82f6"></dxi-series>
-                        <dxo-legend [visible]="false"></dxo-legend>
-                        <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipMonedaDashboard"></dxo-tooltip>
-                        <dxo-size [height]="200"></dxo-size>
-                      </dx-chart>
-                    </div>
-                    <div class="oc-empty oc-empty--inline" *ngIf="!dashboardPagosData.length">
-                      <span>Sin pagos en el periodo</span>
                     </div>
                   </section>
                 </div>
@@ -416,78 +431,72 @@
                 </div>
               </section>
 
-              <div class="row g-2" *ngIf="dashboardInfo">
+              <div class="row g-2 dash-seccion-inferior">
                 <div class="col-12 col-lg-5">
-                  <section class="dash-panel dash-panel--info" aria-label="Datos del arrendatario">
-                    <span class="dash-panel__title">Arrendatario</span>
-                    <div class="dash-info">
-                      <span class="dash-info__nombre">{{ dashboardInfo.nombre }}</span>
-                      <span class="dash-info__line" *ngIf="dashboardInfo.representanteLegal">
-                        {{ dashboardInfo.representanteLegal }}
-                      </span>
-                      <span class="dash-info__line" *ngIf="dashboardInfo.telefonoRepresentante">
-                        <i class="fa fa-phone"></i> {{ dashboardInfo.telefonoRepresentante }}
-                      </span>
-                      <span class="dash-info__line" *ngIf="dashboardInfo.correoRepresentante">
-                        <i class="fa fa-envelope-o"></i> {{ dashboardInfo.correoRepresentante }}
-                      </span>
-                      <span class="dash-info__line">
-                        Vigencia: {{ formatearFecha(dashboardInfo.fechaInicio) }} – {{ formatearFecha(dashboardInfo.fechaFin) }}
-                      </span>
-                      <span class="dash-info__line">
-                        Renta base: {{ formatearMoneda(dashboardInfo.renta) }}
-                      </span>
-                      <div class="dash-info__sub" *ngIf="dashboardInfo.arrendadorNombre">
-                        <span class="dash-info__sub-label">Arrendador</span>
-                        <span class="dash-info__line">{{ dashboardInfo.arrendadorNombre }}</span>
-                        <span class="dash-info__line" *ngIf="dashboardInfo.arrendadorTelefono">
-                          <i class="fa fa-phone"></i> {{ dashboardInfo.arrendadorTelefono }}
-                        </span>
-                        <span class="dash-info__line" *ngIf="dashboardInfo.arrendadorCorreo">
-                          <i class="fa fa-envelope-o"></i> {{ dashboardInfo.arrendadorCorreo }}
-                        </span>
+                  <section class="dash-panel dash-panel--scroll" aria-label="Pagos por concepto">
+                    <span class="dash-panel__title">Pagos por concepto</span>
+                    <div class="dash-list-body" *ngIf="dashboardPagosConceptoItems.length; else pagosConceptoVacios">
+                      <article
+                        class="dash-list-card"
+                        *ngFor="let item of dashboardPagosConceptoItems; trackBy: trackByDashboardItemId"
+                      >
+                        <div class="dash-list-card__main">
+                          <span class="dash-list-card__title">{{ item.concepto }}</span>
+                        </div>
+                        <span class="dash-list-card__meta">{{ formatearMoneda(item.monto) }}</span>
+                      </article>
+                    </div>
+                    <ng-template #pagosConceptoVacios>
+                      <div class="oc-empty oc-empty--inline">
+                        <span>Sin pagos en el periodo</span>
                       </div>
+                    </ng-template>
+                    <div
+                      class="dash-chart-wrap dash-chart-wrap--compact dash-chart-wrap--desktop-only"
+                      *ngIf="dashboardPagosData.length"
+                    >
+                      <dx-chart
+                        #chartDashboardPagos
+                        id="chartDashboardPagosArr"
+                        [dataSource]="dashboardPagosData">
+                        <dxo-common-series-settings argumentField="concepto" type="bar"></dxo-common-series-settings>
+                        <dxi-series valueField="monto" name="Monto" color="#3b82f6"></dxi-series>
+                        <dxo-legend [visible]="false"></dxo-legend>
+                        <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipMonedaDashboard"></dxo-tooltip>
+                        <dxo-size [height]="180"></dxo-size>
+                      </dx-chart>
                     </div>
                   </section>
                 </div>
 
                 <div class="col-12 col-lg-7">
-                  <section class="dash-panel" aria-label="Locales asignados">
+                  <section class="dash-panel dash-panel--scroll" aria-label="Locales asignados">
                     <span class="dash-panel__title">Locales asignados</span>
-                    <div class="dash-zonas" *ngIf="dashboardZonas.length; else localesPlanosDash">
-                      <article class="dash-zona" *ngFor="let zona of dashboardZonas">
+                    <div class="dash-list-body" *ngIf="dashboardGruposLocales.length; else localesVacios">
+                      <article class="dash-zona" *ngFor="let grupo of dashboardGruposLocales; trackBy: trackByDashboardZonaId">
                         <header class="dash-zona__header">
-                          <span class="dash-zona__nombre">{{ zona.nombre }}</span>
-                          <span class="dash-zona__meta">{{ zona.superficieM2.toLocaleString('es-MX') }} m²</span>
+                          <span class="dash-zona__nombre">{{ grupo.nombre }}</span>
+                          <span class="dash-zona__meta">{{ grupo.superficieM2.toLocaleString('es-MX') }} m²</span>
                         </header>
-                        <div class="dash-locales">
-                          <div class="dash-local" *ngFor="let local of zona.locales">
-                            <div class="dash-local__main">
-                              <span class="dash-local__nombre">{{ local.nombre }}</span>
-                              <span class="dash-local__giro">{{ local.giro }}</span>
-                            </div>
-                            <div class="dash-local__meta">
-                              <span>{{ local.areaM2.toLocaleString('es-MX') }} m²</span>
-                              <span>{{ formatearMoneda(local.mensualidad) }}</span>
-                            </div>
+                        <div class="dash-list-card" *ngFor="let local of grupo.locales; trackBy: trackByDashboardLocalId">
+                          <div class="dash-list-card__main">
+                            <span class="dash-list-card__title">{{ local.nombre }}</span>
+                            <span class="dash-list-card__subtitle">
+                              {{ local.giro || '—' }}
+                              <ng-container *ngIf="local.zonaNombre && grupo.nombre !== local.zonaNombre">
+                                · {{ local.zonaNombre }}
+                              </ng-container>
+                            </span>
                           </div>
-                        </div>
-                      </article>
-                    </div>
-                    <ng-template #localesPlanosDash>
-                      <div class="dash-locales" *ngIf="dashboardLocales.length">
-                        <div class="dash-local" *ngFor="let local of dashboardLocales">
-                          <div class="dash-local__main">
-                            <span class="dash-local__nombre">{{ local.nombre }}</span>
-                            <span class="dash-local__giro">{{ local.giro }} · {{ local.zonaNombre }}</span>
-                          </div>
-                          <div class="dash-local__meta">
+                          <div class="dash-list-card__meta dash-list-card__meta--stack">
                             <span>{{ local.areaM2.toLocaleString('es-MX') }} m²</span>
                             <span>{{ formatearMoneda(local.mensualidad) }}</span>
                           </div>
                         </div>
-                      </div>
-                      <div class="oc-empty oc-empty--inline" *ngIf="!dashboardLocales.length">
+                      </article>
+                    </div>
+                    <ng-template #localesVacios>
+                      <div class="oc-empty oc-empty--inline">
                         <span>Sin locales asignados</span>
                       </div>
                     </ng-template>
@@ -495,34 +504,24 @@
                 </div>
               </div>
 
-              <section class="dash-panel" aria-label="Contratos" *ngIf="dashboardContratos.length">
+              <section class="dash-panel dash-panel--scroll" aria-label="Contratos" *ngIf="dashboardContratosItems.length">
                 <span class="dash-panel__title">Contratos en el periodo</span>
-                <div class="dash-arr-list">
-                  <article class="dash-arr" *ngFor="let contrato of dashboardContratos">
+                <div class="dash-arr-list dash-arr-list--grid">
+                  <article class="dash-arr" *ngFor="let contrato of dashboardContratosItems; trackBy: trackByDashboardContratoId">
                     <header class="dash-arr__header">
                       <div class="dash-arr__titulo">
                         <span class="dash-arr__nombre">Contrato #{{ contrato.id }}</span>
                         <span class="dash-arr__rfc">{{ contrato.inmuebleNombre }}</span>
                       </div>
                       <div class="dash-arr__contacto">
-                        <span>{{ formatearFecha(contrato.fechaInicio) }} – {{ formatearFecha(contrato.fechaFin) }}</span>
+                        <span>{{ contrato.vigencia }}</span>
                       </div>
                     </header>
                     <div class="dash-arr__locales" *ngIf="contrato.localesNombres.length">
                       <span class="dash-arr__chip" *ngFor="let local of contrato.localesNombres">{{ local }}</span>
                     </div>
                     <div class="dash-mini-card">
-                      <span class="dash-mini-card__line">
-                        Renta: {{ formatearMoneda(contrato.rentaTotal) }}
-                        <span *ngIf="contrato.mantenimientoTotal != null">
-                          · Mant.: {{ formatearMoneda(contrato.mantenimientoTotal) }}
-                        </span>
-                      </span>
-                      <span class="dash-mini-card__line">
-                        Depósito: {{ formatearMoneda(contrato.montoDeposito) }}
-                        · Adelanto: {{ formatearMoneda(contrato.montoAdelanto) }}
-                      </span>
-                      <span class="dash-mini-card__line" *ngIf="contrato.observaciones">{{ contrato.observaciones }}</span>
+                      <span class="dash-mini-card__line" *ngFor="let linea of contrato.lineasResumen">{{ linea }}</span>
                     </div>
                   </article>
                 </div>

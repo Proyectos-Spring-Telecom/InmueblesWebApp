@@ -170,7 +170,7 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    displayName: 'Catálogos',
+    displayName: 'Gestión',
     iconName: 'address-book',
     route: '/menu-level',
     permission: [

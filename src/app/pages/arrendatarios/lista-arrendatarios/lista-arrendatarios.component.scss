@@ -36,7 +36,11 @@
   }
 }
 
-// ─── Rentas del dashboard arrendatario ───────────────────────────────────────
+.dash-info__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
 
 .dash-rentas {
   display: flex;
@@ -283,5 +287,212 @@
 @media (max-width: 575.98px) {
   .dash-rentas {
     padding: 0.75rem 0.8rem 0.9rem;
+  }
+}
+
+// ─── Dashboard arrendatario: listas y responsive ─────────────────────────────
+
+.dash-seccion-inferior {
+  > [class*='col-'] {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+}
+
+.dash-panel--scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.dash-list-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: min(320px, 42vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(130, 160, 255, 0.4);
+    border-radius: 999px;
+  }
+}
+
+.dash-list-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(148, 163, 255, 0.28);
+  min-width: 0;
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.92);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__subtitle {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.62);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.88);
+    white-space: nowrap;
+    text-align: right;
+
+    &--stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+    }
+  }
+}
+
+.dash-chart-wrap--compact {
+  min-height: 180px;
+  margin-top: 0.55rem;
+}
+
+.dash-chart-wrap--desktop-only {
+  display: none;
+}
+
+.dash-arr-list--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+:host ::ng-deep .inm-dash-modal {
+  width: min(1420px, calc(100vw - 1.5rem));
+  max-width: min(1420px, calc(100vw - 1.5rem));
+}
+
+@media (max-width: 1199.98px) {
+  .dash-arr-list--grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 991.98px) {
+  :host ::ng-deep .inm-dash-modal {
+    height: min(90vh, 860px);
+    max-height: 90vh;
+  }
+
+  .dash-charts-row > [class*='col-'] {
+    margin-bottom: 0.15rem;
+  }
+
+  .dash-list-body {
+    max-height: none;
+  }
+
+  .dash-chart-wrap {
+    min-height: 170px;
+  }
+}
+
+@media (min-width: 992px) {
+  .dash-chart-wrap--desktop-only {
+    display: block;
+  }
+}
+
+@media (max-width: 767.98px) {
+  :host ::ng-deep .inm-dash-backdrop {
+    padding: 0.35rem;
+    align-items: flex-end;
+  }
+
+  :host ::ng-deep .inm-dash-modal {
+    width: 100%;
+    max-width: 100%;
+    height: min(94vh, 920px);
+    max-height: 94vh;
+    border-radius: 16px 16px 0 0;
+    padding: 0.85rem 0.85rem 0.75rem;
+  }
+
+  :host ::ng-deep .inm-dash-modal .docs-modal__title {
+    font-size: 1.12rem;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  :host ::ng-deep .inm-dash-modal .docs-modal__subtitle {
+    font-size: 0.74rem;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .dash-list-card {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+
+    &__meta {
+      text-align: left;
+
+      &--stack {
+        align-items: flex-start;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+      }
+    }
+  }
+
+  .dash-arr__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dash-arr__contacto {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .dash-renta-card__item-valor {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 575.98px) {
+  :host ::ng-deep .inm-dash-modal .docs-modal__header {
+    margin-bottom: 0.25rem;
+  }
+
+  .dash-stats {
+    gap: 8px;
+  }
+
+  .dash-panel {
+    padding: 0.55rem 0.65rem;
   }
 }

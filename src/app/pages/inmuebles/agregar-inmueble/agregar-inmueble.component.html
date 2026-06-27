@@ -44,15 +44,6 @@
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-4" *ngIf="mostrarCamposRenta"><label for="rentaMxn"
-              class="form-label perm-label">Renta (MXN)</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="rentaMxn" type="number" class="form-control"
-                  formControlName="rentaMxn" placeholder="Monto de renta" /><label for="rentaMxn">Monto de renta</label>
-              </div>
-            </div>
-          </div>
           <div class="col-12 col-md-4"><label for="direccionInmueble" class="form-label perm-label">Dirección
               fiscal</label>
             <div class="input-group input-group-lg perm-ig"><span
@@ -91,15 +82,6 @@
                   formControlName="fechaFin" /><label for="fechaFin">Fin de vigencia</label></div>
             </div>
           </div>
-          <div class="col-12 col-md-4" *ngIf="mostrarCamposRenta"><label for="tiempoRentaAnios"
-              class="form-label perm-label">Tiempo de renta (años)</label>
-            <div class="input-group input-group-lg perm-ig"><span
-                class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="tiempoRentaAnios" type="number" class="form-control"
-                  formControlName="tiempoRentaAnios" placeholder="Tiempo de renta" /><label
-                  for="tiempoRentaAnios">Tiempo de renta</label></div>
-            </div>
-          </div>
           <div class="col-12 col-md-4"><label for="nombreRepresentanteLegal"
               class="form-label perm-label">Nombre Representante Legal</label>
             <div class="input-group input-group-lg perm-ig"><span class="input-group-text fw-bold"><mat-icon
@@ -129,6 +111,48 @@
                   representante&#64;empresa.com</label></div>
             </div>
           </div>
+
+          <div
+            class="col-12 col-md-4"
+            *ngIf="mostrarCamposRenta"
+            @camposRentaReveal
+          >
+            <label for="rentaMxn" class="form-label perm-label">Renta (MXN)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  id="rentaMxn"
+                  type="number"
+                  class="form-control"
+                  formControlName="rentaMxn"
+                  placeholder="Monto de renta"
+                />
+                <label for="rentaMxn">Monto de renta</label>
+              </div>
+            </div>
+          </div>
+          <div
+            class="col-12 col-md-4"
+            *ngIf="mostrarCamposRenta"
+            @camposRentaReveal
+          >
+            <label for="tiempoRentaAnios" class="form-label perm-label">Tiempo de renta (años)</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold"><mat-icon>hourglass_bottom</mat-icon></span>
+              <div class="form-floating flex-grow-1">
+                <input
+                  id="tiempoRentaAnios"
+                  type="number"
+                  class="form-control"
+                  formControlName="tiempoRentaAnios"
+                  placeholder="Tiempo de renta"
+                />
+                <label for="tiempoRentaAnios">Tiempo de renta</label>
+              </div>
+            </div>
+          </div>
+
           <!-- <div class="col-12 col-md-3 col-xl-3" style="display:grid;"><label class="form-label perm-label">Ubicación del
               inmueble</label><button type="button" class="inmueble-geo-trigger"
               title="Seleccionar ubicación del inmueble" (click)="abrirModalMapa()"><i class="fa fa-map-marker"></i>
@@ -636,31 +660,6 @@
               </div>
 
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
-                *ngIf="mostrarCamposRenta">
-                <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
-                <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
-                    <div class="uploader__glow"></div>
-                    <div class="uploader__body">
-                      <div class="uploader__icon"><mat-icon>description</mat-icon></div>
-                      <h6 class="uploader__title">Sube archivo</h6>
-                      <p class="uploader__subtitle">Arrastra y suelta o</p>
-                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
-                        url: contratoRentaUrl,
-                        nombreRemoto: contratoRentaNombre,
-                        controlName: 'documentoContratoRenta',
-                        placeholder: etiquetaPdfImagenes,
-                        tituloVer: contratoRentaNombre || 'Contrato de renta',
-                        selector: 'contratoRenta'
-                      }"></ng-container>
-                      <input #contratoRentaInput type="file" [accept]="acceptPdfImagenes"
-                        class="uploader__input" (change)="onFileSelected($event, 'documentoContratoRenta')" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
                 #autocargaCsfCardInmueble
                 [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
                 <label class="form-label perm-label docs-uploader-label">Constancia de Situación Fiscal</label>
@@ -847,6 +846,34 @@
                       }"></ng-container>
                       <input #boletaPredialInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
                         (change)="onFileSelected($event, 'documentoBoletaPredial')" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                *ngIf="mostrarCamposRenta"
+                @camposRentaReveal
+              >
+                <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
+                <div class="uploader-hero flex-grow-1">
+                  <div class="uploader">
+                    <div class="uploader__glow"></div>
+                    <div class="uploader__body">
+                      <div class="uploader__icon"><mat-icon>description</mat-icon></div>
+                      <h6 class="uploader__title">Sube archivo</h6>
+                      <p class="uploader__subtitle">Arrastra y suelta o</p>
+                      <ng-container *ngTemplateOutlet="docsUploaderCta; context: {
+                        url: contratoRentaUrl,
+                        nombreRemoto: contratoRentaNombre,
+                        controlName: 'documentoContratoRenta',
+                        placeholder: etiquetaPdfImagenes,
+                        tituloVer: contratoRentaNombre || 'Contrato de renta',
+                        selector: 'contratoRenta'
+                      }"></ng-container>
+                      <input #contratoRentaInput type="file" [accept]="acceptPdfImagenes"
+                        class="uploader__input" (change)="onFileSelected($event, 'documentoContratoRenta')" />
                     </div>
                   </div>
                 </div>

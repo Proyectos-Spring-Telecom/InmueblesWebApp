@@ -29,6 +29,46 @@ export interface RentRolRow {
   mantenimiento: RentRolConceptoVm;
 }
 
+/** Fila del grid DevExtreme (2 por registro histórico: Renta + Mantto). */
+export interface RentRolGridLine {
+  gridKey: string;
+  parentId: number;
+  tipoConcepto: 'Renta' | 'Mantto';
+  esLineaRenta: boolean;
+  claseEstatusRenta: string;
+  claseEstatusMantenimiento: string;
+  nombre: string;
+  representanteLegal: string;
+  telefonoRepresentante: string;
+  inmueble: string;
+  zona: string;
+  modulo: string;
+  metrosRentados: number;
+  costoM2: number;
+  inicioContrato: string;
+  finContrato: string;
+  pagada: boolean;
+  pagadaLabel: string;
+  subTotal: number;
+  iva: number;
+  montoFinal: number;
+}
+
+export const RENT_ROL_COLUMNAS_ROWSPAN: readonly string[] = [
+  'nombre',
+  'inmueble',
+  'modulo',
+  'metrosRentados',
+  'costoM2',
+  'inicioContrato',
+  'finContrato',
+  'pagadaLabel',
+];
+
+export const RENT_ROL_REGISTROS_POR_PAGINA = 20;
+
+export const RENT_ROL_FILAS_GRID_POR_PAGINA = RENT_ROL_REGISTROS_POR_PAGINA * 2;
+
 function num(v: unknown): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -189,6 +229,120 @@ function extraerConceptoMantenimiento(
   const iva = num(contrato?.['ivaMantenimiento']);
 
   return { subTotal, iva, total: montoFinal, montoFinal };
+}
+
+function claseEstatusRentaRow(row: RentRolRow): string {
+  if (row.tieneIncrementoRenta) return 'row-estatus--incremento';
+  if (row.pagada) return 'row-estatus--pagada';
+  return 'row-estatus--neutral';
+}
+
+function claseEstatusMantenimientoRow(row: RentRolRow): string {
+  if (row.tieneIncrementoMantenimiento) return 'row-estatus--incremento';
+  if (row.pagada) return 'row-estatus--pagada';
+  return 'row-estatus--neutral';
+}
+
+function baseGridLineDesdeRow(row: RentRolRow): Omit<
+  RentRolGridLine,
+  'gridKey' | 'tipoConcepto' | 'esLineaRenta' | 'subTotal' | 'iva' | 'montoFinal'
+> {
+  return {
+    parentId: row.id,
+    claseEstatusRenta: claseEstatusRentaRow(row),
+    claseEstatusMantenimiento: claseEstatusMantenimientoRow(row),
+    nombre: row.nombre,
+    representanteLegal: row.representanteLegal,
+    telefonoRepresentante: row.telefonoRepresentante,
+    inmueble: row.inmueble,
+    zona: row.zona,
+    modulo: row.modulo,
+    metrosRentados: row.metrosRentados,
+    costoM2: row.costoM2,
+    inicioContrato: row.inicioContrato,
+    finContrato: row.finContrato,
+    pagada: row.pagada,
+    pagadaLabel: row.pagadaLabel,
+  };
+}
+
+export function mapRentRolRowToGridLines(row: RentRolRow): RentRolGridLine[] {
+  const base = baseGridLineDesdeRow(row);
+  return [
+    {
+      ...base,
+      gridKey: `${row.id}-renta`,
+      tipoConcepto: 'Renta',
+      esLineaRenta: true,
+      subTotal: row.renta.subTotal,
+      iva: row.renta.iva,
+      montoFinal: row.renta.montoFinal,
+    },
+    {
+      ...base,
+      gridKey: `${row.id}-mant`,
+      tipoConcepto: 'Mantto',
+      esLineaRenta: false,
+      subTotal: row.mantenimiento.subTotal,
+      iva: row.mantenimiento.iva,
+      montoFinal: row.mantenimiento.montoFinal,
+    },
+  ];
+}
+
+export function flattenRentRolRowsToGridLines(rows: RentRolRow[]): RentRolGridLine[] {
+  return rows.flatMap((row) => mapRentRolRowToGridLines(row));
+}
+
+function normalizarTextoBusqueda(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+export function textoBusquedaDesdeRentRolRow(row: RentRolRow): string {
+  const fmtMoneda = (n: number): string =>
+    new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
+  return [
+    row.nombre,
+    row.representanteLegal,
+    row.telefonoRepresentante,
+    row.inmueble,
+    row.zona,
+    row.modulo,
+    String(row.metrosRentados),
+    fmtMoneda(row.costoM2),
+    row.inicioContrato,
+    row.finContrato,
+    row.pagadaLabel,
+    row.pagada ? 'pagada' : 'pendiente',
+    'renta',
+    'mantto',
+    'mantenimiento',
+    fmtMoneda(row.renta.subTotal),
+    fmtMoneda(row.renta.iva),
+    fmtMoneda(row.renta.montoFinal),
+    fmtMoneda(row.mantenimiento.subTotal),
+    fmtMoneda(row.mantenimiento.iva),
+    fmtMoneda(row.mantenimiento.montoFinal),
+    String(row.id),
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+export function rentRolRowCoincideBusqueda(row: RentRolRow, texto: string): boolean {
+  const needle = normalizarTextoBusqueda(texto);
+  if (!needle) return true;
+  return normalizarTextoBusqueda(textoBusquedaDesdeRentRolRow(row)).includes(needle);
+}
+
+export function filtrarRegistrosRentRol(rows: RentRolRow[], texto: string): RentRolRow[] {
+  const needle = normalizarTextoBusqueda(texto);
+  if (!needle) return rows;
+  return rows.filter((row) => rentRolRowCoincideBusqueda(row, texto));
 }
 
 function extraerArrendatario(row: Record<string, unknown>): Record<string, unknown> | null {
