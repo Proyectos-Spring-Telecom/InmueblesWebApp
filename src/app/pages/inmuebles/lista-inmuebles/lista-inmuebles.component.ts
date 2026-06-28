@@ -94,9 +94,13 @@ export class ListaInmueblesComponent implements OnInit {
   mostrarModalDashboard = false;
   dashboardTitulo = '';
   dashboardCargando = false;
+  dashboardFechaInicio = '';
+  dashboardFechaFin = '';
+  private dashboardInmuebleId: number | null = null;
   private dashboardData: InmuebleDashboardData | null = null;
   dashboardOcupacionData: DashboardOcupacionSlice[] = [];
   dashboardRentaData: DashboardRentaArrendatarioBar[] = [];
+  readonly zIndexTooltipDashboard = 100010;
   dashboardMensualidadData: DashboardMensualidadLocalBar[] = [];
 
   formatearFecha = formatearFecha;
@@ -300,15 +304,35 @@ export class ListaInmueblesComponent implements OnInit {
     const id = Number(row?.id);
     if (!Number.isFinite(id) || id <= 0) return;
     this.dashboardTitulo = row.inmueble ?? `Inmueble #${id}`;
+    this.dashboardInmuebleId = Math.floor(id);
+    const def = this.fechasDefaultDashboard();
+    this.dashboardFechaInicio = def.fechaInicio;
+    this.dashboardFechaFin = def.fechaFin;
     this.dashboardData = null;
     this.dashboardOcupacionData = [];
     this.dashboardRentaData = [];
     this.dashboardMensualidadData = [];
-    this.dashboardCargando = true;
     this.mostrarModalDashboard = true;
+    this.cargarDashboardInmueble();
+  }
+
+  aplicarFiltroDashboard(): void {
+    if (this.dashboardInmuebleId == null) return;
+    this.cargarDashboardInmueble();
+  }
+
+  private cargarDashboardInmueble(): void {
+    const id = this.dashboardInmuebleId;
+    if (id == null) return;
+
+    this.dashboardCargando = true;
+    this.dashboardData = null;
+    this.dashboardOcupacionData = [];
+    this.dashboardRentaData = [];
+    this.dashboardMensualidadData = [];
 
     const { fechaInicio, fechaFin } = this.rangoFechasDashboard();
-    this.inmueblesService.obtenerDashboardInmueble(Math.floor(id), fechaInicio, fechaFin)
+    this.inmueblesService.obtenerDashboardInmueble(id, fechaInicio, fechaFin)
       .pipe(take(1))
       .subscribe({
         next: (res: unknown) => {
@@ -337,6 +361,9 @@ export class ListaInmueblesComponent implements OnInit {
   cerrarModalDashboard(): void {
     this.mostrarModalDashboard = false;
     this.dashboardTitulo = '';
+    this.dashboardInmuebleId = null;
+    this.dashboardFechaInicio = '';
+    this.dashboardFechaFin = '';
     this.dashboardData = null;
     this.dashboardOcupacionData = [];
     this.dashboardRentaData = [];
@@ -372,6 +399,12 @@ export class ListaInmueblesComponent implements OnInit {
     return 'dash-badge';
   }
 
+  alturaGraficaRentaDashboard(): number {
+    const n = this.dashboardRentaData.length;
+    if (n <= 0) return 220;
+    return Math.max(220, Math.min(n * 44, 520));
+  }
+
   customizarPuntoOcupacionDashboard = (pointInfo: {
     argument?: string;
     data?: DashboardOcupacionSlice;
@@ -386,12 +419,19 @@ export class ListaInmueblesComponent implements OnInit {
     point?: { data?: DashboardOcupacionSlice };
   }): { text: string } => {
     const data = info.point?.data;
+    const categoria = String(info.argumentText ?? data?.categoria ?? '');
     const cantidad = Number(data?.cantidad ?? info.valueText ?? 0);
     const total = Number(data?.totalLocales ?? this.dashboardResumen?.totalLocales ?? 0);
+    const descripcion = categoria === 'Ocupados'
+      ? 'Locales con arrendatario asignado'
+      : categoria === 'Libres'
+        ? 'Locales disponibles sin arrendatario'
+        : 'Cantidad de locales';
     const lineas = [
-      String(info.argumentText ?? ''),
+      categoria,
+      descripcion,
       total > 0 ? `${cantidad} de ${total} locales` : `${cantidad} locales`,
-      info.percentText ?? '',
+      info.percentText ? `Participación: ${info.percentText}` : '',
     ];
     return { text: lineas.filter(Boolean).join('\n') };
   };
@@ -419,18 +459,76 @@ export class ListaInmueblesComponent implements OnInit {
     return nombre;
   };
 
+  private montoDesdeTooltip(info: {
+    valueText?: string;
+    originalValue?: number | string;
+    value?: number | string;
+  }): string {
+    const directo = Number(info.originalValue ?? info.value);
+    if (Number.isFinite(directo)) {
+      return formatearMoneda(directo);
+    }
+    const parsed = Number(String(info.valueText ?? '').replace(/[^\d.-]/g, ''));
+    if (Number.isFinite(parsed)) {
+      return formatearMoneda(parsed);
+    }
+    return String(info.valueText ?? '');
+  }
+
   customizarTooltipMonedaDashboard = (info: {
     argumentText?: string;
     valueText?: string;
     seriesName?: string;
+    originalValue?: number;
+    value?: number;
   }): { text: string } => {
-    const monto = Number(String(info.valueText ?? '').replace(/[^\d.-]/g, ''));
-    const valor = Number.isFinite(monto)
-      ? formatearMoneda(monto)
-      : String(info.valueText ?? '');
+    const valor = this.montoDesdeTooltip(info);
     return {
       text: [info.seriesName ?? info.argumentText ?? '', valor].filter(Boolean).join('\n'),
     };
+  };
+
+  customizarTooltipMensualidadDashboard = (info: {
+    argumentText?: string;
+    valueText?: string;
+    originalValue?: number;
+    value?: number;
+    point?: { data?: DashboardMensualidadLocalBar };
+  }): { text: string } => {
+    const local = String(info.argumentText ?? '');
+    const data = info.point?.data;
+    const valor = this.montoDesdeTooltip(info);
+    const estado = String(data?.estado ?? '').trim();
+    const lineas = [
+      local ? `Local: ${local}` : '',
+      'Mensualidad base del local',
+      `Monto: ${valor}`,
+      estado ? `Estatus: ${estado}` : '',
+    ];
+    return { text: lineas.filter(Boolean).join('\n') };
+  };
+
+  customizarTooltipRentaDashboard = (info: {
+    argumentText?: string;
+    valueText?: string;
+    seriesName?: string;
+    originalValue?: number;
+    value?: number;
+  }): { text: string } => {
+    const arrendatario = String(info.argumentText ?? '');
+    const serie = String(info.seriesName ?? '');
+    const valor = this.montoDesdeTooltip(info);
+    const concepto = serie === 'Renta'
+      ? 'Renta del periodo'
+      : serie === 'Mantenimiento'
+        ? 'Mantenimiento del periodo'
+        : serie;
+    const lineas = [
+      arrendatario ? `Arrendatario: ${arrendatario}` : '',
+      concepto,
+      `Monto: ${valor}`,
+    ];
+    return { text: lineas.filter(Boolean).join('\n') };
   };
 
   customizarPuntoMensualidadDashboard = (pointInfo: {
@@ -453,11 +551,20 @@ export class ListaInmueblesComponent implements OnInit {
     }, 0);
   }
 
-  private rangoFechasDashboard(): { fechaInicio: string; fechaFin: string } {
+  private fechasDefaultDashboard(): { fechaInicio: string; fechaFin: string } {
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     return {
-      fechaInicio: '2026-01-01',
-      fechaFin: this.fechaApiDesdeDate(new Date()),
+      fechaInicio: this.fechaApiDesdeDate(inicioMes),
+      fechaFin: this.fechaApiDesdeDate(hoy),
     };
+  }
+
+  private rangoFechasDashboard(): { fechaInicio: string; fechaFin: string } {
+    const def = this.fechasDefaultDashboard();
+    const fechaInicio = this.dashboardFechaInicio.trim() || def.fechaInicio;
+    const fechaFin = this.dashboardFechaFin.trim() || def.fechaFin;
+    return { fechaInicio, fechaFin };
   }
 
   private fechaApiDesdeDate(fecha: Date): string {

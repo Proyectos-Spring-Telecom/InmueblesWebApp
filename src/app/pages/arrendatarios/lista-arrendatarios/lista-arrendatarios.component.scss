@@ -5,6 +5,94 @@
   min-width: 0;
 }
 
+:host ::ng-deep .inm-data-grid {
+  .inm-row-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .inm-row-card--nombre {
+    min-width: 0;
+  }
+
+  .inm-row-card__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(89, 109, 255, 0.16);
+    border: 1px solid rgba(130, 160, 255, 0.28);
+    flex-shrink: 0;
+  }
+
+  .inm-row-card__icon mat-icon {
+    font-size: 1.35rem;
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .inm-row-card__title {
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    min-width: 0;
+  }
+
+  .inm-cell-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    min-width: 0;
+  }
+
+  .inm-cell-stack--center {
+    align-items: center;
+    text-align: center;
+  }
+
+  .inm-cell-line {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .inm-cell-line--muted {
+    font-size: 0.74rem;
+  }
+
+  .inm-cell-line i {
+    margin-right: 0.28rem;
+    opacity: 0.85;
+  }
+
+  .inm-row-chips {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .inm-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(130, 160, 255, 0.22);
+    color: #c0cbeb;
+    background: rgba(14, 20, 32, 0.88);
+  }
+
+  .inm-chip--muted {
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #aeb9d9;
+  }
+}
+
 .inm-lista {
   min-width: 0;
 }
@@ -49,12 +137,15 @@
   padding: 0.85rem 0.95rem 1rem;
   border-radius: 14px;
   border: 1px solid rgba(129, 140, 248, 0.55);
-  background:
-    linear-gradient(145deg, rgba(67, 56, 202, 0.22) 0%, rgba(15, 23, 42, 0.94) 48%),
-    rgba(12, 18, 32, 0.96);
+  background: #121a29;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 14px 34px rgba(0, 0, 0, 0.28);
+
+  &--contratos {
+    border-color: rgba(99, 102, 241, 0.62);
+    background: #121a29;
+  }
 
   &__header {
     padding-bottom: 0.65rem;
@@ -281,6 +372,140 @@
     font-size: 0.74rem;
     color: rgba(255, 255, 255, 0.68);
     line-height: 1.3;
+  }
+}
+
+.dash-contrato-card {
+  --dash-renta-accent: #6366f1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1 1 auto;
+  height: 100%;
+  padding: 0.75rem 0.8rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(129, 140, 248, 0.42);
+  background: rgba(8, 12, 24, 0.88);
+  box-shadow:
+    inset 3px 0 0 var(--dash-renta-accent),
+    0 8px 22px rgba(0, 0, 0, 0.22);
+  min-width: 0;
+
+  &__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.55rem;
+  }
+
+  &__ident {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  &__eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(199, 210, 254, 0.75);
+  }
+
+  &__num {
+    font-size: 1.05rem;
+    color: #f8fafc;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+  }
+
+  &__inmueble {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__moneda {
+    flex-shrink: 0;
+    padding: 0.16rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #c7d2fe;
+    border: 1px solid rgba(129, 140, 248, 0.45);
+    background: rgba(49, 46, 129, 0.45);
+  }
+
+  .dash-renta-card__item-valor {
+    white-space: normal;
+  }
+}
+
+// Cards a ancho completo: compactar monto, desglose y footer
+.dash-rentas__cards > .col-12 {
+  .dash-renta-card,
+  .dash-contrato-card {
+    gap: 0.45rem;
+    height: auto;
+  }
+
+  .dash-renta-card__monto-block {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.35rem 0.65rem;
+
+    .dash-pair {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.65rem;
+      width: 100%;
+    }
+
+    .dash-pair__value {
+      font-size: 1.12rem;
+      line-height: 1.2;
+      text-align: right;
+      white-space: nowrap;
+    }
+  }
+
+  .dash-renta-card__monto-label {
+    margin: 0;
+  }
+
+  .dash-renta-card__monto {
+    font-size: 1.12rem;
+    line-height: 1.2;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .dash-renta-card__desglose {
+    margin-top: 0.05rem;
+  }
+
+  .dash-renta-card__footer {
+    display: block;
+    padding-top: 0.45rem;
+    margin-top: 0.1rem;
+
+    &.row {
+      display: flex;
+    }
+  }
+
+  .dash-renta-card__formula {
+    flex: 1 1 auto;
+    min-width: min(100%, 12rem);
+    margin: 0;
+    line-height: 1.25;
   }
 }
 

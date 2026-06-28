@@ -109,6 +109,35 @@ function valorTextoONumero(val: unknown): string | number | undefined {
   return String(val);
 }
 
+/** Giro legible desde variantes del API (string, id o objeto catálogo). */
+export function resolverGiroLocalApi(raw: unknown): string | undefined {
+  if (!esObjetoRecordo(raw)) return undefined;
+  const l = raw;
+  const candidatos = [
+    l['giro'],
+    l['giroActividad'],
+    l['giroComercial'],
+    l['rubro'],
+    l['actividad'],
+    l['tipoNegocio'],
+    l['descripcionGiro'],
+  ];
+  for (const c of candidatos) {
+    if (c == null || c === '') continue;
+    if (esObjetoRecordo(c)) {
+      const anidado = c as Record<string, unknown>;
+      const s = String(
+        anidado['nombre'] ?? anidado['giro'] ?? anidado['descripcion'] ?? '',
+      ).trim();
+      if (s) return s;
+      continue;
+    }
+    const s = String(c).trim();
+    if (s && s !== '[object Object]') return s;
+  }
+  return undefined;
+}
+
 function normalizarLocalApi(raw: unknown): InmuebleLocalApi | null {
   if (!esObjetoRecordo(raw)) return null;
   const l = raw;
@@ -129,7 +158,7 @@ function normalizarLocalApi(raw: unknown): InmuebleLocalApi | null {
     mensualidad:
       valorTextoONumero(l['mensualidad']) ??
       valorTextoONumero(l['mensualidadMxn']),
-    giro: l['giro'] != null ? String(l['giro']) : undefined,
+    giro: resolverGiroLocalApi(l),
     idZona: l['idZona'] != null ? Number(l['idZona']) : undefined,
     fachadaUrl: fachadaUrl || undefined,
     urlFachada: fachadaUrl || undefined,

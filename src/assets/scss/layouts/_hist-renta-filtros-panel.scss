@@ -1,0 +1,120 @@
+/* Panel de filtros por fechas — histórico de pagos y reportes relacionados */
+
+.hist-renta-filtro-fechas__label {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.hist-renta-filtros-panel {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.45);
+  min-width: 0;
+}
+
+.hist-renta-filtros-panel__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.hist-renta-filtros-panel__grid > div {
+  min-width: 0;
+}
+
+.hist-renta-filtros-panel__accion {
+  display: flex;
+  justify-content: stretch;
+}
+
+.hist-renta-filtros-panel__accion .mat-mdc-unelevated-button,
+.hist-renta-filtros-panel__accion button.mat-mdc-button-base {
+  width: 100%;
+}
+
+.hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-control,
+.hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: calc(1.5em + 0.5rem + 2px);
+  background-color: #1c252e;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  color: #f1f5f9;
+  color-scheme: dark;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.35);
+}
+
+.hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-control:focus,
+.hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-select:focus {
+  border-color: rgba(129, 140, 248, 0.55);
+  background-color: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.15);
+  color: #f8fafc;
+  outline: 0;
+}
+
+.hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-control:disabled,
+.hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-select:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+  cursor: pointer;
+}
+
+.hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit,
+.hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-fields-wrapper,
+.hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-text,
+.hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-month-field,
+.hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-day-field,
+.hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-year-field {
+  color: #f1f5f9;
+}
+
+.hist-renta-filtros-panel select.hist-renta-filtro-fechas__input option {
+  background-color: #1c252e;
+  color: #f1f5f9;
+}
+
+html.dark-theme .hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-control,
+html.dark-theme .hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-select {
+  background-color: rgba(15, 23, 42, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #e5e7eb;
+}
+
+@media (min-width: 576px) {
+  .hist-renta-filtros-panel__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hist-renta-filtros-panel__accion {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .hist-renta-filtros-panel__accion .mat-mdc-unelevated-button,
+  .hist-renta-filtros-panel__accion button.mat-mdc-button-base {
+    width: auto;
+    min-width: 9rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .hist-renta-filtros-panel__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  }
+
+  .hist-renta-filtros-panel__accion {
+    grid-column: auto;
+  }
+}

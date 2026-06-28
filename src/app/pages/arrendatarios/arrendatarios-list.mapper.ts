@@ -199,6 +199,16 @@ function fhContratoArrendatario(c: Record<string, unknown>): string {
   return String(c['fhRegistro'] ?? c['fh_registro'] ?? '').trim();
 }
 
+/** Renta total del contrato principal; fallback al campo legacy `renta` del arrendatario. */
+export function rentaTotalArrendatarioApi(item: Record<string, unknown>): unknown {
+  const contrato = contratoPrincipalArrendatarioApi(item);
+  const rentaContrato = contrato?.['rentaTotal'];
+  if (rentaContrato != null && String(rentaContrato).trim() !== '') {
+    return rentaContrato;
+  }
+  return item['renta'];
+}
+
 /** Contrato principal: el más reciente por `fhRegistro`; si empatan, el primero en el arreglo. */
 export function contratoPrincipalArrendatarioApi(
   item: Record<string, unknown>,
@@ -426,7 +436,7 @@ export function mapArrendatariosApiToGridRows(rows: unknown[]): ArrendatarioGrid
       arrendatario: String(item['arrendatario'] ?? 'Sin nombre').trim() || 'Sin nombre',
       tipoPersonaLabel: etiquetaTipoPersonaArrendatario(item['tipoPersona']),
       rfc: String(item['rfc'] ?? '').trim() || '—',
-      rentaFmt: formatearMoneda(item['renta']),
+      rentaFmt: formatearMoneda(rentaTotalArrendatarioApi(item)),
       fechaInicioFmt: formatearFecha(vigencia.inicio) || '—',
       fechaFinFmt: formatearFecha(vigencia.fin) || '—',
       tiempoRentaTexto:

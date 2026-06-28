@@ -11,6 +11,47 @@
   margin-bottom: 1rem;
 }
 
+.inm-detalle__panel-stage {
+  width: 100%;
+  min-height: 7rem;
+  position: relative;
+}
+
+.inm-detalle__panel-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 2rem 1rem;
+  min-height: 7rem;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px dashed rgba(130, 160, 255, 0.22);
+  background: rgba(10, 14, 22, 0.55);
+}
+
+.inm-detalle__panel-loader-ring {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(130, 160, 255, 0.18);
+  border-top-color: rgba(147, 170, 255, 0.95);
+  animation: inm-detalle-spin 0.7s linear infinite;
+}
+
+.inm-detalle__panel-loader-text {
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: #9aa6d8;
+}
+
+@keyframes inm-detalle-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .inm-detalle__panel {
   width: 100%;
   display: flex;
@@ -19,6 +60,9 @@
 }
 
 .inm-detalle__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   border: 1px solid rgba(130, 160, 255, 0.28);
   background: rgba(14, 20, 32, 0.85);
   color: #b8c4e8;
@@ -27,6 +71,26 @@
   font-size: 0.78rem;
   letter-spacing: 0.03em;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.inm-detalle__tab:disabled {
+  cursor: wait;
+  opacity: 0.92;
+}
+
+.inm-detalle__tab-label {
+  line-height: 1.2;
+}
+
+.inm-detalle__tab-spinner {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  border: 1.5px solid rgba(180, 195, 255, 0.25);
+  border-top-color: #dbe4ff;
+  animation: inm-detalle-spin 0.65s linear infinite;
+  flex-shrink: 0;
 }
 
 .inm-detalle__tab:hover:not(.inm-detalle__tab--active) {
@@ -41,6 +105,11 @@
   color: #f4f6ff;
 }
 
+.inm-detalle__tab--loading.inm-detalle__tab--active {
+  background: rgba(89, 109, 255, 0.28);
+  border-color: rgba(160, 180, 255, 0.65);
+}
+
 .inm-detalle__grid,
 .inm-docs-grid {
   display: grid;
@@ -53,12 +122,14 @@
 .inm-detalle__panel--zonas {
   align-items: stretch;
   max-width: 100%;
+  min-height: 0;
 }
 
 .inm-servicios-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 340px));
   justify-content: center;
+  align-items: start;
   gap: 0.85rem;
   width: 100%;
 }
@@ -168,10 +239,33 @@
   color: #9aa6d8;
 }
 
-.inm-zonas-accordion {
+.inm-zonas-scroll {
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
+  max-height: min(52vh, 520px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 0.2rem;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(130, 160, 255, 0.32);
+    border-radius: 999px;
+  }
+}
+
+.inm-zonas-accordion {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
@@ -404,13 +498,24 @@
 
 .inm-servicio-card {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
   min-width: 0;
+  height: auto;
   padding: 0.85rem;
   border-radius: 12px;
   border: 1px solid rgba(130, 160, 255, 0.22);
   background: rgba(12, 18, 28, 0.9);
+}
+
+.inm-servicio-card__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
 }
 
 .inm-servicio-card__icon {
@@ -425,44 +530,59 @@
   flex-shrink: 0;
 }
 
-.inm-servicio-card__body {
-  flex: 1;
-  min-width: 0;
-}
-
-.inm-servicio-card__body h4 {
-  margin: 0 0 0.25rem;
+.inm-servicio-card__title {
+  margin: 0;
   font-size: 0.9rem;
   color: #f0f3ff;
-  font-weight: 800;
+  line-height: 1.3;
 }
 
-.inm-servicio-card__body p {
+.inm-servicio-card__meta {
+  width: 100%;
+}
+
+.inm-servicio-card__meta p {
   margin: 0.15rem 0 0;
   font-size: 0.78rem;
   color: #adb8da;
-  font-weight: 600;
+  line-height: 1.35;
 }
 
-.inm-servicio-card__btn {
-  flex-shrink: 0;
-  align-self: center;
+.inm-servicio-card__meta p:first-child {
+  margin-top: 0;
 }
 
 .inm-servicio-card__thumb {
-  margin-top: 0.45rem;
   width: 100%;
-  max-width: 140px;
-  border-radius: 10px;
+  height: 120px;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(130, 160, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(8, 12, 20, 0.65);
 
   img {
     display: block;
     width: 100%;
-    height: 72px;
+    height: 100%;
     object-fit: cover;
   }
+}
+
+.inm-servicio-card__thumb--pdf iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  pointer-events: none;
+  background: #1a2230;
+}
+
+.inm-servicio-card__actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 0.15rem;
 }
 
 .inm-local-fachada-btn {

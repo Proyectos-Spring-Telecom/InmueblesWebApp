@@ -49,6 +49,8 @@ export interface ArrendatarioDashboardContrato {
   mantenimientoTotal: number | null;
   montoDeposito: number;
   montoAdelanto: number;
+  metrosRentados: number;
+  costoM2: number;
   localesNombres: string[];
   observaciones: string;
 }
@@ -106,6 +108,13 @@ export interface DashboardRentaEstadoSlice {
 export interface DashboardMensualidadLocalBar {
   local: string;
   mensualidad: number;
+  estado: string;
+}
+
+export interface DashboardRentaPeriodoBar {
+  periodo: string;
+  renta: number;
+  mantenimiento: number;
 }
 
 export interface DashboardPagoConceptoBar {
@@ -211,9 +220,19 @@ function normalizarContrato(raw: unknown): ArrendatarioDashboardContrato {
     mantenimientoTotal: mantRaw == null ? null : num(mantRaw),
     montoDeposito: num(item['montoDeposito'] ?? item['monto_deposito']),
     montoAdelanto: num(item['montoAdelanto'] ?? item['monto_adelanto']),
+    metrosRentados: num(item['metrosRentados'] ?? item['metros_rentados']),
+    costoM2: num(item['costoM2'] ?? item['costo_m2']),
     localesNombres: localesDesdeContrato(item),
     observaciones: str(item['observaciones']),
   };
+}
+
+function contratosDesdeRentaRaw(rentaRaw: unknown[]): ArrendatarioDashboardContrato[] {
+  return deduplicarContratos(
+    rentaRaw
+      .map((row) => normalizarContrato(record(record(row)['contrato'])))
+      .filter((contrato) => contrato.id > 0),
+  );
 }
 
 function normalizarRentaActual(raw: unknown): ArrendatarioDashboardRentaActual {
@@ -275,7 +294,7 @@ function construirResumen(data: {
   const montoPagos = data.pagos.reduce((s, p) => s + p.monto, 0);
   return {
     totalContratos: data.contratos.length,
-    totalLocales: data.locales.length,
+    totalLocales: data.locales.length || data.contratos.length,
     rentaMesTotal,
     rentasPagadas,
     rentasPendientes,
@@ -315,7 +334,7 @@ export function normalizarDashboardArrendatario(res: unknown): ArrendatarioDashb
   }
 
   const contratosRaw = Array.isArray(raw['contratos']) ? raw['contratos'] : [];
-  const contratos = deduplicarContratos(contratosRaw.map(normalizarContrato));
+  let contratos = deduplicarContratos(contratosRaw.map(normalizarContrato));
 
   const zonasRaw = Array.isArray(raw['zonas']) ? raw['zonas'] : [];
   const zonas = zonasRaw.map((zonaRaw, zi) => {
@@ -349,6 +368,10 @@ export function normalizarDashboardArrendatario(res: unknown): ArrendatarioDashb
       ? raw['renta_actual']
       : [];
   const rentaActual = rentaRaw.map(normalizarRentaActual);
+
+  if (!contratos.length && rentaRaw.length) {
+    contratos = contratosDesdeRentaRaw(rentaRaw);
+  }
 
   const pagosRaw = Array.isArray(raw['pagosArrendatarios'])
     ? raw['pagosArrendatarios']
@@ -413,7 +436,52 @@ export function construirGraficaMensualidadLocales(
   return locales.map((local) => ({
     local: local.nombre,
     mensualidad: local.mensualidad,
+    estado: 'ocupado',
   }));
+}
+
+/** Locales del API; si vienen vacíos, usa la renta mensual de cada contrato activo. */
+export function construirGraficaMensualidadDashboard(
+  locales: ArrendatarioDashboardLocal[],
+  contratos: ArrendatarioDashboardContrato[],
+): DashboardMensualidadLocalBar[] {
+  const desdeLocales = construirGraficaMensualidadLocales(locales);
+  if (desdeLocales.length) return desdeLocales;
+
+  return contratos
+    .map((contrato) => {
+      const metros = contrato.metrosRentados > 0
+        ? `${contrato.metrosRentados.toLocaleString('es-MX')} m²`
+        : '';
+      const local = contrato.localesNombres[0]
+        || (contrato.inmuebleNombre
+          ? `${contrato.inmuebleNombre}${metros ? ` (${metros})` : ''}`
+          : `Contrato #${contrato.id}`);
+      return {
+        local,
+        mensualidad: contrato.rentaTotal,
+        estado: 'ocupado',
+      };
+    })
+    .filter((bar) => bar.mensualidad > 0);
+}
+
+export function construirGraficaRentaPeriodo(
+  rentas: ArrendatarioDashboardRentaActual[],
+): DashboardRentaPeriodoBar[] {
+  return rentas
+    .map((renta) => {
+      const mes = etiquetaMes(renta.mes);
+      const periodo = renta.inmuebleNombre && mes !== '—'
+        ? `${mes} · ${renta.inmuebleNombre}`
+        : renta.inmuebleNombre || mes || `Renta ${renta.id}`;
+      return {
+        periodo,
+        renta: renta.montoRenta,
+        mantenimiento: renta.montoMantenimiento,
+      };
+    })
+    .filter((bar) => bar.renta > 0 || bar.mantenimiento > 0);
 }
 
 export function construirGraficaPagosConcepto(

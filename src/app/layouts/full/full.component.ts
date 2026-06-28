@@ -78,18 +78,30 @@ interface quicklinks {
 export class FullComponent implements OnInit, AfterViewInit {
   navItems: NavItem[] = [];
 
-  @ViewChild('leftsidenav')
-  public sidenav: MatSidenav;
+  @ViewChild('verticalSidenav')
+  private verticalSidenav?: MatSidenav;
+  @ViewChild('horizontalSidenav')
+  private horizontalSidenav?: MatSidenav;
   resView = false;
   @ViewChild('mainScroll') private mainScroll?: ElementRef<HTMLDivElement>;
-  //get options from service
-  options = this.settings.getOptions();
   private layoutChangesSubscription = Subscription.EMPTY;
   private isMobileScreen = false;
-  private isContentWidthFixed = true;
-  private isCollapsedWidthFixed = false;
   private htmlElement!: HTMLHtmlElement;
   private viewReady = false;
+  /** Overlay móvil / horizontal en pantallas pequeñas */
+  mobileNavOpen = false;
+  /** Preferencia explícita del usuario al contraer/expandir (botón del header) */
+  private collapsedByUser: boolean | null = null;
+  private layoutInitialized = false;
+  private prevIsMobile = false;
+
+  get sidenav(): MatSidenav | undefined {
+    return this.verticalSidenav ?? this.horizontalSidenav;
+  }
+
+  get options(): AppSettings {
+    return this.settings.getOptions();
+  }
 
   get isOver(): boolean {
     return this.isMobileScreen;
@@ -97,6 +109,22 @@ export class FullComponent implements OnInit, AfterViewInit {
 
   get isTablet(): boolean {
     return this.resView;
+  }
+
+  /** Vertical: en desktop/tablet el drawer lateral permanece abierto; el mini es solo CSS. */
+  get sidenavIsOpen(): boolean {
+    if (this.options.horizontal || this.options.navPos !== 'side') {
+      return false;
+    }
+    if (this.isMobileScreen) {
+      return this.mobileNavOpen;
+    }
+    return true;
+  }
+
+  /** Horizontal en viewport reducido: overlay controlado por hamburger. */
+  get horizontalOverlayOpen(): boolean {
+    return this.resView && this.options.horizontal && this.mobileNavOpen;
   }
 
   // for mobile app sidebar
@@ -259,17 +287,30 @@ export class FullComponent implements OnInit, AfterViewInit {
   }
 
   private applyLayoutBreakpoints(breakpoints: Record<string, boolean>): void {
-    // SidenavOpened must be reset true when layout changes
-    this.options.sidenavOpened = true;
-    // Solo móvil real: overlay. Tablet (769–1023) empuja layout como desktop.
-    this.isMobileScreen = breakpoints[MOBILE_VIEW];
-    if (this.options.sidenavCollapsed == false) {
-      this.options.sidenavCollapsed = breakpoints[TABLET_VIEW];
+    const isMobile = breakpoints[MOBILE_VIEW];
+    const isTablet = breakpoints[TABLET_VIEW];
+
+    if (isMobile) {
+      this.mobileNavOpen = false;
+    } else if (this.prevIsMobile && !isMobile) {
+      queueMicrotask(() => this.ensureSidenavOpen());
     }
-    this.isContentWidthFixed = breakpoints[MONITOR_VIEW];
+    this.prevIsMobile = isMobile;
+
+    // Solo móvil real: overlay. Tablet (769–1023) empuja layout como desktop.
+    this.isMobileScreen = isMobile;
     this.resView = breakpoints[BELOWMONITOR];
 
-    if (this.viewReady) {
+    if (!this.layoutInitialized) {
+      if (!isMobile && isTablet && this.collapsedByUser === null) {
+        this.settings.setOptions({ sidenavCollapsed: true });
+      }
+      this.layoutInitialized = true;
+    } else if (this.collapsedByUser !== null && !isMobile) {
+      this.settings.setOptions({ sidenavCollapsed: this.collapsedByUser });
+    }
+
+    if (this.viewReady && !isMobile && !this.options.horizontal) {
       queueMicrotask(() => this.ensureSidenavOpen());
     }
   }
@@ -277,54 +318,66 @@ export class FullComponent implements OnInit, AfterViewInit {
   private ensureSidenavOpen(): void {
     if (
       this.options.horizontal ||
-      this.isOver ||
+      this.isMobileScreen ||
       this.options.navPos !== 'side' ||
       !this.sidenav
     ) {
       return;
     }
 
-    this.options.sidenavOpened = true;
     if (!this.sidenav.opened) {
       void this.sidenav.open();
     }
   }
 
-  toggleCollapsed() {
-    this.isContentWidthFixed = false;
-    this.options.sidenavCollapsed = !this.options.sidenavCollapsed;
+  toggleCollapsed(): void {
+    const next = !this.options.sidenavCollapsed;
+    this.collapsedByUser = next;
+    this.settings.setOptions({ sidenavCollapsed: next });
     // Si se contrae el sidebar, cerrar submenús para evitar huecos visuales.
-    if (this.options.sidenavCollapsed) {
+    if (next) {
       AppNavItemComponent.collapseAll();
     }
-    this.resetCollapsedState();
   }
 
-  resetCollapsedState(timer = 400) {
-    setTimeout(() => this.settings.setOptions(this.options), timer);
+  toggleMobileNav(): void {
+    if (!this.sidenav) {
+      return;
+    }
+    void this.sidenav.toggle();
   }
 
-  onSidenavClosedStart() {
-    this.isContentWidthFixed = false;
+  closeMobileNav(): void {
+    const isOverlay =
+      this.isMobileScreen || (this.resView && this.options.horizontal);
+    if (!isOverlay) {
+      return;
+    }
+    this.mobileNavOpen = false;
+    void this.sidenav?.close();
   }
 
-  onSidenavOpenedChange(isOpened: boolean) {
-    this.isCollapsedWidthFixed = !this.isOver;
+  onSidenavClosedStart(): void {
+    const isOverlay =
+      this.isMobileScreen || (this.resView && this.options.horizontal);
+    if (isOverlay) {
+      this.mobileNavOpen = false;
+    }
+  }
 
-    // Evita que un openedChange espurio al recargar deje hueco sin menú en desktop.
-    if (
-      !isOpened &&
-      !this.isOver &&
-      !this.options.horizontal &&
-      this.options.navPos === 'side'
-    ) {
-      this.options.sidenavOpened = true;
-      queueMicrotask(() => this.ensureSidenavOpen());
+  onSidenavOpenedChange(isOpened: boolean): void {
+    const isOverlay =
+      this.isMobileScreen || (this.resView && this.options.horizontal);
+
+    if (isOverlay) {
+      this.mobileNavOpen = isOpened;
       return;
     }
 
-    this.options.sidenavOpened = isOpened;
-    this.settings.setOptions(this.options);
+    // Desktop/tablet vertical: el drawer lateral no debe cerrarse (solo mini/full vía CSS).
+    if (!isOpened && !this.options.horizontal && this.options.navPos === 'side') {
+      queueMicrotask(() => this.ensureSidenavOpen());
+    }
   }
 
   receiveOptions(options: AppSettings): void {

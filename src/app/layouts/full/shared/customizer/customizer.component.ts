@@ -25,7 +25,9 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 })
 export class CustomizerComponent {
 
-  options = this.settings.getOptions();
+  get options(): AppSettings {
+    return this.settings.getOptions();
+  }
 
 
 
@@ -48,13 +50,13 @@ export class CustomizerComponent {
     this.emitOptions();
   }
 
-  setSidebar(sidenavOpened: boolean) {
-    this.settings.setOptions({ sidenavOpened: sidenavOpened });
+  setSidebarCollapsed(sidenavCollapsed: boolean) {
+    this.settings.setOptions({ sidenavCollapsed });
     this.emitOptions();
   }
 
   private emitOptions() {
-    this.optionsChange.emit(this.options);
+    this.optionsChange.emit(this.settings.getOptions());
   }
 }
 
