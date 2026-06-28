@@ -1,19 +1,32 @@
 <div class="inm-detalle" *ngIf="row">
-  <p class="inm-detalle__loading text-muted text-center py-3" *ngIf="cargandoDetalleAnidado" role="status">
-    Cargando zonas, locales, servicios y archivos…
-  </p>
-
-  <ng-container *ngIf="!cargandoDetalleAnidado">
   <nav class="inm-detalle__tabs" aria-label="Secciones del inmueble">
     <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
-      (click)="detalleTab = 0">Zonas ({{ zonas.length }}) · Locales ({{ totalLocales() }})</button>
+      [class.inm-detalle__tab--loading]="tabEstaCargando(0)" [disabled]="cargandoTabPanel"
+      (click)="cambiarTab(0)">
+      <span class="inm-detalle__tab-label">Zonas ({{ zonas.length }}) · Locales ({{ totalLocales() }})</span>
+      <span class="inm-detalle__tab-spinner" *ngIf="tabEstaCargando(0)" aria-hidden="true"></span>
+    </button>
     <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 1"
-      (click)="detalleTab = 1">Servicios ({{ servicios.length }})</button>
+      [class.inm-detalle__tab--loading]="tabEstaCargando(1)" [disabled]="cargandoTabPanel"
+      (click)="cambiarTab(1)">
+      <span class="inm-detalle__tab-label">Servicios ({{ servicios.length }})</span>
+      <span class="inm-detalle__tab-spinner" *ngIf="tabEstaCargando(1)" aria-hidden="true"></span>
+    </button>
     <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 2"
-      (click)="detalleTab = 2">Documentos ({{ archivos.length }})</button>
+      [class.inm-detalle__tab--loading]="tabEstaCargando(2)" [disabled]="cargandoTabPanel"
+      (click)="cambiarTab(2)">
+      <span class="inm-detalle__tab-label">Documentos ({{ archivos.length }})</span>
+      <span class="inm-detalle__tab-spinner" *ngIf="tabEstaCargando(2)" aria-hidden="true"></span>
+    </button>
   </nav>
 
-  <div class="inm-detalle__panel inm-detalle__panel--zonas" *ngIf="detalleTab === 0">
+  <div class="inm-detalle__panel-stage">
+    <div class="inm-detalle__panel-loader" *ngIf="mostrarCargaPanel" role="status" aria-live="polite">
+      <span class="inm-detalle__panel-loader-ring" aria-hidden="true"></span>
+      <span class="inm-detalle__panel-loader-text">{{ mensajeCargaPanel }}</span>
+    </div>
+
+  <div class="inm-detalle__panel inm-detalle__panel--zonas" *ngIf="detalleTab === 0 && !mostrarCargaPanel">
     <div class="inm-zonas-resumen" *ngIf="zonas.length">
       <span class="inm-chip inm-chip--muted">
         <i class="fa fa-object-group"></i> Superficie total: {{ superficieTotalZonas() | number:'1.0-2' }} m²
@@ -30,13 +43,14 @@
     <div class="inm-zonas-toolbar" *ngIf="zonas.length && totalLocales()">
       <label class="inm-zonas-toolbar__label" for="inm-filtro-local">Buscar local</label>
       <input id="inm-filtro-local" type="search" class="inm-zonas-toolbar__input" [(ngModel)]="filtroLocal"
-        placeholder="Nombre, giro o estatus…" autocomplete="off" />
+        placeholder="Local, estatus, mensualidad o giro…" autocomplete="off" />
       <span class="inm-zonas-toolbar__hint" *ngIf="filtroLocal.trim()">
         {{ totalLocalesVisibles() }} de {{ totalLocales() }} visibles
       </span>
     </div>
 
-    <div class="inm-zonas-accordion" *ngIf="zonas.length; else sinZonas">
+    <div class="inm-zonas-scroll" *ngIf="zonas.length; else sinZonas">
+      <div class="inm-zonas-accordion">
       <details class="inm-zona-panel" *ngFor="let z of zonasOrdenadas"
         [hidden]="filtroLocal.trim() && !zonaTieneLocalesVisibles(z)"
         [attr.open]="zonasOrdenadas.length <= 6 ? true : null">
@@ -126,29 +140,41 @@
       <p class="inm-empty" *ngIf="filtroLocal.trim() && !totalLocalesVisibles()">
         Ningún local coincide con «{{ filtroLocal.trim() }}».
       </p>
+      </div>
     </div>
     <ng-template #sinZonas>
       <p class="inm-empty">Sin zonas registradas.</p>
     </ng-template>
   </div>
 
-  <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 1 && !mostrarCargaPanel">
     <div class="inm-servicios-grid" *ngIf="servicios.length; else sinServicios">
       <article class="inm-servicio-card" *ngFor="let s of servicios">
-        <div class="inm-servicio-card__icon"><i class="fa fa-tint"></i></div>
-        <div class="inm-servicio-card__body">
-          <h4>{{ nombreServicio(s) }}</h4>
+        <div class="inm-servicio-card__head">
+          <div class="inm-servicio-card__icon"><i class="fa fa-tint"></i></div>
+          <h4 class="inm-servicio-card__title">{{ nombreServicio(s) }}</h4>
+        </div>
+        <div class="inm-servicio-card__meta">
           <p *ngIf="s.numeroContrato">Contrato: {{ s.numeroContrato }}</p>
-          <p *ngIf="s.fechaPago">Pago: {{ formatearFecha(s.fechaPago) }}</p>
+          <p *ngIf="s.fechaPago">Fecha de pago: {{ formatearFecha(s.fechaPago) }}</p>
           <p *ngIf="s.ultimoDiaPago">Último día: {{ formatearFecha(s.ultimoDiaPago) }}</p>
-          <div class="inm-servicio-card__thumb" *ngIf="s.urlComprobante && esImagenArchivo(s.urlComprobante)">
+        </div>
+        <ng-container *ngIf="s.urlComprobante">
+          <div class="inm-servicio-card__thumb" *ngIf="esImagenArchivo(s.urlComprobante)">
             <img [src]="s.urlComprobante" alt="Comprobante de pago" loading="lazy" />
           </div>
-        </div>
-        <button *ngIf="s.urlComprobante" type="button" mat-flat-button class="bg-warn inm-servicio-card__btn"
-          (click)="abrirDocumento(s.urlComprobante, 'Comprobante de pago')">
-          <i class="fa fa-eye"></i> Ver
-        </button>
+          <div class="inm-servicio-card__thumb inm-servicio-card__thumb--pdf"
+            *ngIf="!esImagenArchivo(s.urlComprobante) && urlVistaPreviaComprobante(s.urlComprobante)">
+            <iframe [src]="urlVistaPreviaComprobante(s.urlComprobante)!" title="Comprobante de pago"
+              loading="lazy"></iframe>
+          </div>
+          <div class="inm-servicio-card__actions">
+            <button type="button" mat-flat-button class="bg-warn inm-doc-pill"
+              (click)="abrirDocumento(s.urlComprobante, 'Comprobante de pago')">
+              <i class="fa fa-eye"></i> Ver
+            </button>
+          </div>
+        </ng-container>
       </article>
     </div>
     <ng-template #sinServicios>
@@ -156,7 +182,7 @@
     </ng-template>
   </div>
 
-  <div class="inm-detalle__panel" *ngIf="detalleTab === 2">
+  <div class="inm-detalle__panel" *ngIf="detalleTab === 2 && !mostrarCargaPanel">
     <div class="inm-docs-grid" *ngIf="archivos.length; else sinDocs">
       <article class="inm-doc-card" *ngFor="let a of archivos">
         <div class="inm-doc-card__thumb" *ngIf="a.url && esImagenArchivo(a.url, a.nombre)">
@@ -196,7 +222,7 @@
       <p class="inm-empty">Sin documentos adjuntos.</p>
     </ng-template>
   </div>
-  </ng-container>
+  </div>
 </div>
 
 <app-documento-preview #docPreview eyebrow="Documento del inmueble"></app-documento-preview>

@@ -1525,7 +1525,18 @@ export class ListaRentasActualesComponent implements OnInit {
         const id = Number(r['id'] ?? r['idFormula']);
         if (!Number.isFinite(id) || id <= 0) return null;
         const nombre = String(r['nombre'] ?? '').trim();
-        return { id: Math.floor(id), label: nombre || `Fórmula #${id}` };
+        const formula = String(r['formula'] ?? '').trim();
+        let label: string;
+        if (nombre && formula) {
+          label = `${nombre} - ${formula}`;
+        } else if (nombre) {
+          label = nombre;
+        } else if (formula) {
+          label = formula;
+        } else {
+          label = `Fórmula #${id}`;
+        }
+        return { id: Math.floor(id), label };
       })
       .filter((x): x is SelectOpcion => x != null);
   }

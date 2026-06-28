@@ -415,6 +415,7 @@
                   <mat-icon aria-hidden="true">visibility</mat-icon>
                 </button>
                 <button
+                  *ngIf="row.data?.estatus !== 'Pagado'"
                   type="button"
                   class="mono-grid-row-action-btn mono-grid-row-action-btn--icon"
                   (click)="solicitarCambioEstatusPago(row.data)"

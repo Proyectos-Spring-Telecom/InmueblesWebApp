@@ -57,14 +57,14 @@
         <dxi-column dataField="numSocios" caption="Socios" [visible]="false"></dxi-column>
         <dxi-column dataField="numContratos" caption="Contratos" [visible]="false"></dxi-column>
         <dxi-column dataField="arrendatario" caption="Arrendatario" cellTemplate="arrendatarioTpl" alignment="center"
-          [width]="220" [allowFiltering]="true"></dxi-column>
+          [width]="250" [allowFiltering]="true"></dxi-column>
         <dxi-column dataField="tipoPersonaLabel" caption="Tipo persona" alignment="center" [width]="130"></dxi-column>
         <dxi-column dataField="rfc" caption="RFC" alignment="center" [width]="130"></dxi-column>
         <dxi-column dataField="rentaFmt" caption="Renta" alignment="center" [width]="120"></dxi-column>
         <dxi-column caption="Vigencia" cellTemplate="vigenciaTpl" alignment="center" [width]="200"
           [allowSorting]="false" [allowFiltering]="false"></dxi-column>
-        <dxi-column dataField="arrendadorNombre" caption="Arrendador" alignment="center" [width]="170"></dxi-column>
-        <dxi-column dataField="inmuebleVinculado" caption="Inmueble" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="arrendadorNombre" caption="Arrendador" alignment="center" [width]="230"></dxi-column>
+        <dxi-column dataField="inmuebleVinculado" caption="Inmueble" alignment="center" [width]="150"></dxi-column>
         <dxi-column dataField="direccionInmuebleVinculado" caption="Dirección inmueble" alignment="center" [width]="220"
           [visible]="false"></dxi-column>
         <dxi-column caption="Representante legal" cellTemplate="representanteTpl" alignment="center" [width]="200"
@@ -92,7 +92,7 @@
         </div>
 
         <div *dxTemplate="let cell of 'vigenciaTpl'">
-          <div class="inm-cell-stack inm-cell-stack--center">
+          <div class="d-flex flex-column gap-1">
             <span class="inm-cell-line" *ngIf="cell.data.tiempoRentaTexto !== '—'">
               Tiempo renta: {{ cell.data.tiempoRentaTexto }}
             </span>
@@ -208,13 +208,24 @@
           <div class="col-10 col-md-11">
             <span class="docs-modal__eyebrow">Dashboard del arrendatario</span>
             <h3 class="docs-modal__title">{{ dashboardTitulo || 'Arrendatario' }}</h3>
-            <p class="docs-modal__subtitle" *ngIf="dashboardInfo">
-              RFC: {{ dashboardInfo.rfc || '—' }}
-              <span *ngIf="dashboardInfo.tiempoRenta"> · {{ dashboardInfo.tiempoRenta }}</span>
-              <span *ngIf="dashboardFiltros">
-                · {{ formatearFecha(dashboardFiltros.fechaInicio) }} – {{ formatearFecha(dashboardFiltros.fechaFin) }}
-              </span>
-            </p>
+            <div class="inm-dash-header-bar">
+              <p class="docs-modal__subtitle inm-dash-header-bar__dir" *ngIf="dashboardInfo">
+                RFC: {{ dashboardInfo.rfc || '—' }}
+                <span *ngIf="dashboardInfo.tiempoRenta"> · {{ dashboardInfo.tiempoRenta }}</span>
+              </p>
+              <div class="inm-dash-filtros">
+                <label class="inm-dash-filtros__inline" for="dash-arr-fecha-inicio">
+                  <span class="inm-dash-filtros__label">Desde</span>
+                  <input id="dash-arr-fecha-inicio" type="date" class="inm-dash-filtros__input"
+                    [(ngModel)]="dashboardFechaInicio" (change)="aplicarFiltroDashboard()" />
+                </label>
+                <label class="inm-dash-filtros__inline" for="dash-arr-fecha-fin">
+                  <span class="inm-dash-filtros__label">Hasta</span>
+                  <input id="dash-arr-fecha-fin" type="date" class="inm-dash-filtros__input"
+                    [(ngModel)]="dashboardFechaFin" (change)="aplicarFiltroDashboard()" />
+                </label>
+              </div>
+            </div>
           </div>
           <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
             <button type="button" class="docs-modal__close" (click)="cerrarModalDashboard()">
@@ -313,7 +324,12 @@
                         <dxi-series argumentField="categoria" valueField="cantidad">
                           <dxo-label [visible]="true" [customizeText]="customizarLabelRentaEstadoDashboard"></dxo-label>
                         </dxi-series>
-                        <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipRentaEstadoDashboard"></dxo-tooltip>
+                        <dxo-tooltip
+                          [enabled]="true"
+                          container="body"
+                          [zIndex]="zIndexTooltipDashboard"
+                          [customizeTooltip]="customizarTooltipRentaEstadoDashboard">
+                        </dxo-tooltip>
                         <dxo-legend
                           verticalAlignment="bottom"
                           horizontalAlignment="center"
@@ -330,16 +346,27 @@
 
                 <div class="col-12 col-lg-4">
                   <section class="dash-panel" aria-label="Mensualidad por local">
-                    <span class="dash-panel__title">Mensualidad por local</span>
+                    <div class="dash-panel__head">
+                      <span class="dash-panel__title">Mensualidad por local</span>
+                      <span class="dash-panel__meta" *ngIf="mensualidadDesdeContratos && dashboardMensualidadData.length">
+                        Por contrato activo
+                      </span>
+                    </div>
                     <div class="dash-chart-wrap" *ngIf="dashboardMensualidadData.length">
                       <dx-chart
                         #chartDashboardMensualidad
                         id="chartDashboardMensualidadArr"
-                        [dataSource]="dashboardMensualidadData">
+                        [dataSource]="dashboardMensualidadData"
+                        [customizePoint]="customizarPuntoMensualidadDashboard">
                         <dxo-common-series-settings argumentField="local" type="bar"></dxo-common-series-settings>
-                        <dxi-series valueField="mensualidad" name="Mensualidad" color="#f59e0b"></dxi-series>
+                        <dxi-series valueField="mensualidad" name="Mensualidad"></dxi-series>
                         <dxo-legend [visible]="false"></dxo-legend>
-                        <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipMonedaDashboard"></dxo-tooltip>
+                        <dxo-tooltip
+                          [enabled]="true"
+                          container="body"
+                          [zIndex]="zIndexTooltipDashboard"
+                          [customizeTooltip]="customizarTooltipMensualidadDashboard">
+                        </dxo-tooltip>
                         <dxo-size [height]="200"></dxo-size>
                       </dx-chart>
                     </div>
@@ -350,197 +377,236 @@
                 </div>
               </div>
 
-              <section class="dash-rentas" aria-label="Renta actual del periodo" *ngIf="dashboardRentaActual.length">
-                <div class="row g-2 dash-rentas__header align-items-end">
-                  <div class="col-12 col-lg">
-                    <div class="dash-rentas__headline">
-                      <span class="dash-rentas__eyebrow">Renta del periodo</span>
-                      <span class="dash-rentas__total" *ngIf="dashboardResumen">
-                        {{ formatearMoneda(dashboardResumen.rentaMesTotal) }}
-                      </span>
+              <div class="row g-2">
+                <div class="col-12">
+                  <section class="dash-panel" aria-label="Renta del periodo">
+                    <span class="dash-panel__title">Renta del periodo</span>
+                    <div class="dash-panel-scroll dash-panel-scroll--renta">
+                      <div class="dash-chart-wrap" *ngIf="dashboardRentaPeriodoData.length">
+                        <dx-chart
+                          #chartDashboardRenta
+                          id="chartDashboardRentaArr"
+                          [dataSource]="dashboardRentaPeriodoData">
+                          <dxo-common-series-settings argumentField="periodo" type="stackedBar"></dxo-common-series-settings>
+                          <dxi-series valueField="renta" name="Renta" color="#3b82f6"></dxi-series>
+                          <dxi-series valueField="mantenimiento" name="Mantenimiento" color="#06b6d4"></dxi-series>
+                          <dxo-legend [visible]="true" verticalAlignment="bottom" horizontalAlignment="center"></dxo-legend>
+                          <dxo-tooltip
+                            [enabled]="true"
+                            container="body"
+                            [zIndex]="zIndexTooltipDashboard"
+                            [customizeTooltip]="customizarTooltipRentaPeriodoDashboard">
+                          </dxo-tooltip>
+                          <dxo-size [height]="alturaGraficaRentaDashboard()"></dxo-size>
+                        </dx-chart>
+                      </div>
+                      <div class="oc-empty oc-empty--inline" *ngIf="!dashboardRentaPeriodoData.length">
+                        <span>Sin rentas en el periodo</span>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-12 col-lg-auto" *ngIf="dashboardResumen">
-                    <div class="dash-rentas__pills">
-                      <span class="dash-rentas__pill dash-rentas__pill--pagado">
-                        {{ dashboardResumen.rentasPagadas }} pagada{{ dashboardResumen.rentasPagadas === 1 ? '' : 's' }}
-                        · {{ formatearMoneda(dashboardRentaPagadaTotal) }}
-                      </span>
-                      <span class="dash-rentas__pill dash-rentas__pill--pendiente" *ngIf="dashboardResumen.rentasPendientes">
-                        {{ dashboardResumen.rentasPendientes }} pendiente{{ dashboardResumen.rentasPendientes === 1 ? '' : 's' }}
-                        · {{ formatearMoneda(dashboardRentaPendienteTotal) }}
-                      </span>
+                  </section>
+                </div>
+              </div>
+
+              <section class="dash-rentas dash-rentas--contratos" aria-label="Contratos en el periodo" *ngIf="dashboardContratos.length">
+                <div class="row g-2 dash-rentas__header align-items-end">
+                  <div class="col-12">
+                    <div class="dash-rentas__headline">
+                      <span class="dash-rentas__eyebrow">Contratos en el periodo</span>
                     </div>
                   </div>
                 </div>
 
                 <div class="row g-2 dash-rentas__cards">
-                  <div
-                    class="col-12 col-md-6 col-xl-4"
-                    *ngFor="let renta of dashboardRentaActual">
-                    <article
-                      class="dash-renta-card"
-                      [class.dash-renta-card--pagada]="renta.pagada"
-                      [class.dash-renta-card--pendiente]="!renta.pagada">
-                      <div class="dash-renta-card__top">
-                        <div class="dash-renta-card__mes">
-                          <span class="dash-renta-card__mes-label">Mes</span>
-                          <span class="dash-renta-card__mes-valor">{{ etiquetaMes(renta.mes) }}</span>
+                  <div class="col-12" *ngFor="let contrato of dashboardContratos; trackBy: trackByDashboardContratoId">
+                    <article class="dash-contrato-card">
+                      <div class="row g-2 align-items-start">
+                        <div class="col-6 col-md-4">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Contrato:</span>
+                            <span class="dash-pair__value">#{{ contrato.id }}</span>
+                          </span>
                         </div>
-                        <span
-                          class="dash-renta-card__estatus"
-                          [class.dash-renta-card__estatus--pagada]="renta.pagada"
-                          [class.dash-renta-card__estatus--pendiente]="!renta.pagada">
-                          {{ renta.pagada ? 'Pagada' : 'Pendiente' }}
-                        </span>
+                        <div class="col-6 col-md-4" *ngIf="contrato.inmuebleNombre">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Inmueble:</span>
+                            <span class="dash-pair__value">{{ contrato.inmuebleNombre }}</span>
+                          </span>
+                        </div>
+                        <div class="col-6 col-md-4">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Moneda:</span>
+                            <span class="dash-pair__value">{{ contrato.moneda }}</span>
+                          </span>
+                        </div>
                       </div>
 
                       <div class="dash-renta-card__monto-block">
-                        <span class="dash-renta-card__monto-label">Total a pagar</span>
-                        <span class="dash-renta-card__monto">{{ formatearMoneda(renta.montoFinalTotal) }}</span>
+                        <span class="dash-pair">
+                          <span class="dash-pair__label">Renta mensual:</span>
+                          <span class="dash-pair__value">{{ formatearMoneda(contrato.rentaTotal) }}</span>
+                        </span>
                       </div>
 
                       <div class="row g-2 dash-renta-card__desglose">
-                        <div class="col-12 col-sm-4">
-                          <div class="dash-renta-card__item">
-                            <span class="dash-renta-card__item-label">Renta</span>
-                            <span class="dash-renta-card__item-valor">{{ formatearMoneda(renta.montoRenta) }}</span>
-                          </div>
+                        <div class="col-6 col-lg-4">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Vigencia:</span>
+                            <span class="dash-pair__value">
+                              {{ formatearFecha(contrato.fechaInicio) }} – {{ formatearFecha(contrato.fechaFin) }}
+                            </span>
+                          </span>
                         </div>
-                        <div class="col-12 col-sm-4">
-                          <div class="dash-renta-card__item">
-                            <span class="dash-renta-card__item-label">Mantenimiento</span>
-                            <span class="dash-renta-card__item-valor">{{ formatearMoneda(renta.montoMantenimiento) }}</span>
-                          </div>
+                        <div class="col-6 col-lg-4" *ngIf="etiquetaMetrosContrato(contrato)">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Superficie:</span>
+                            <span class="dash-pair__value">{{ etiquetaMetrosContrato(contrato) }}</span>
+                          </span>
                         </div>
-                        <div class="col-12 col-sm-4" *ngIf="renta.factorAplicado">
-                          <div class="dash-renta-card__item">
-                            <span class="dash-renta-card__item-label">Factor</span>
-                            <span class="dash-renta-card__item-valor">{{ renta.factorAplicado }}</span>
-                          </div>
+                        <div class="col-6 col-lg-4" *ngIf="contrato.mantenimientoTotal != null">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Mantenimiento:</span>
+                            <span class="dash-pair__value">{{ formatearMoneda(contrato.mantenimientoTotal) }}</span>
+                          </span>
                         </div>
                       </div>
 
-                      <footer class="dash-renta-card__footer">
-                        <span class="dash-renta-card__chip">Contrato #{{ renta.contratoId }}</span>
-                        <span class="dash-renta-card__chip" *ngIf="renta.inmuebleNombre">{{ renta.inmuebleNombre }}</span>
-                        <span class="dash-renta-card__formula" *ngIf="renta.formulaUsada">{{ renta.formulaUsada }}</span>
+                      <footer class="dash-renta-card__footer row g-2" *ngIf="contrato.localesNombres.length || contrato.observaciones">
+                        <div class="col-6 col-md-4" *ngIf="contrato.localesNombres.length">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Local:</span>
+                            <span class="dash-pair__value">{{ contrato.localesNombres.join(', ') }}</span>
+                          </span>
+                        </div>
+                        <div class="col-12 col-md" *ngIf="contrato.observaciones">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Observaciones:</span>
+                            <span class="dash-pair__value">{{ contrato.observaciones }}</span>
+                          </span>
+                        </div>
                       </footer>
                     </article>
                   </div>
                 </div>
               </section>
 
-              <div class="row g-2 dash-seccion-inferior">
-                <div class="col-12 col-lg-5">
-                  <section class="dash-panel dash-panel--scroll" aria-label="Pagos por concepto">
-                    <span class="dash-panel__title">Pagos por concepto</span>
-                    <div class="dash-list-body" *ngIf="dashboardPagosConceptoItems.length; else pagosConceptoVacios">
-                      <article
-                        class="dash-list-card"
-                        *ngFor="let item of dashboardPagosConceptoItems; trackBy: trackByDashboardItemId"
-                      >
-                        <div class="dash-list-card__main">
-                          <span class="dash-list-card__title">{{ item.concepto }}</span>
-                        </div>
-                        <span class="dash-list-card__meta">{{ formatearMoneda(item.monto) }}</span>
-                      </article>
+              <section class="dash-rentas" aria-label="Rentas del periodo" *ngIf="dashboardRentaActual.length">
+                <div class="row g-2 dash-rentas__header align-items-end">
+                  <div class="col-12">
+                    <div class="dash-rentas__headline">
+                      <span class="dash-rentas__eyebrow">Rentas del periodo</span>
                     </div>
-                    <ng-template #pagosConceptoVacios>
-                      <div class="oc-empty oc-empty--inline">
-                        <span>Sin pagos en el periodo</span>
-                      </div>
-                    </ng-template>
-                    <div
-                      class="dash-chart-wrap dash-chart-wrap--compact dash-chart-wrap--desktop-only"
-                      *ngIf="dashboardPagosData.length"
-                    >
-                      <dx-chart
-                        #chartDashboardPagos
-                        id="chartDashboardPagosArr"
-                        [dataSource]="dashboardPagosData">
-                        <dxo-common-series-settings argumentField="concepto" type="bar"></dxo-common-series-settings>
-                        <dxi-series valueField="monto" name="Monto" color="#3b82f6"></dxi-series>
-                        <dxo-legend [visible]="false"></dxo-legend>
-                        <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipMonedaDashboard"></dxo-tooltip>
-                        <dxo-size [height]="180"></dxo-size>
-                      </dx-chart>
-                    </div>
-                  </section>
+                  </div>
                 </div>
 
-                <div class="col-12 col-lg-7">
-                  <section class="dash-panel dash-panel--scroll" aria-label="Locales asignados">
-                    <span class="dash-panel__title">Locales asignados</span>
-                    <div class="dash-list-body" *ngIf="dashboardGruposLocales.length; else localesVacios">
-                      <article class="dash-zona" *ngFor="let grupo of dashboardGruposLocales; trackBy: trackByDashboardZonaId">
-                        <header class="dash-zona__header">
-                          <span class="dash-zona__nombre">{{ grupo.nombre }}</span>
-                          <span class="dash-zona__meta">{{ grupo.superficieM2.toLocaleString('es-MX') }} m²</span>
-                        </header>
-                        <div class="dash-list-card" *ngFor="let local of grupo.locales; trackBy: trackByDashboardLocalId">
-                          <div class="dash-list-card__main">
-                            <span class="dash-list-card__title">{{ local.nombre }}</span>
-                            <span class="dash-list-card__subtitle">
-                              {{ local.giro || '—' }}
-                              <ng-container *ngIf="local.zonaNombre && grupo.nombre !== local.zonaNombre">
-                                · {{ local.zonaNombre }}
-                              </ng-container>
+                <div class="row g-2 dash-rentas__cards">
+                  <div class="col-12" *ngFor="let renta of dashboardRentaActual">
+                    <article
+                      class="dash-renta-card"
+                      [class.dash-renta-card--pagada]="renta.pagada"
+                      [class.dash-renta-card--pendiente]="!renta.pagada">
+                      <div class="row g-2 align-items-start">
+                        <div class="col-6 col-md-4">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Mes:</span>
+                            <span class="dash-pair__value">{{ etiquetaMes(renta.mes) }}</span>
+                          </span>
+                        </div>
+                        <div class="col-6 col-md-4">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Estatus:</span>
+                            <span class="dash-pair__value">
+                              <span [ngClass]="renta.pagada ? 'dash-badge dash-badge--pagado' : 'dash-badge dash-badge--pendiente'">
+                                {{ renta.pagada ? 'Pagada' : 'Pendiente' }}
+                              </span>
                             </span>
-                          </div>
-                          <div class="dash-list-card__meta dash-list-card__meta--stack">
-                            <span>{{ local.areaM2.toLocaleString('es-MX') }} m²</span>
-                            <span>{{ formatearMoneda(local.mensualidad) }}</span>
-                          </div>
+                          </span>
                         </div>
-                      </article>
-                    </div>
-                    <ng-template #localesVacios>
-                      <div class="oc-empty oc-empty--inline">
-                        <span>Sin locales asignados</span>
+                        <div class="col-6 col-md-4" *ngIf="renta.inmuebleNombre">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Inmueble:</span>
+                            <span class="dash-pair__value">{{ renta.inmuebleNombre }}</span>
+                          </span>
+                        </div>
                       </div>
-                    </ng-template>
-                  </section>
-                </div>
-              </div>
 
-              <section class="dash-panel dash-panel--scroll" aria-label="Contratos" *ngIf="dashboardContratosItems.length">
-                <span class="dash-panel__title">Contratos en el periodo</span>
-                <div class="dash-arr-list dash-arr-list--grid">
-                  <article class="dash-arr" *ngFor="let contrato of dashboardContratosItems; trackBy: trackByDashboardContratoId">
-                    <header class="dash-arr__header">
-                      <div class="dash-arr__titulo">
-                        <span class="dash-arr__nombre">Contrato #{{ contrato.id }}</span>
-                        <span class="dash-arr__rfc">{{ contrato.inmuebleNombre }}</span>
+                      <div class="dash-renta-card__monto-block">
+                        <span class="dash-pair">
+                          <span class="dash-pair__label">Total a pagar:</span>
+                          <span class="dash-pair__value">{{ formatearMoneda(renta.montoFinalTotal) }}</span>
+                        </span>
                       </div>
-                      <div class="dash-arr__contacto">
-                        <span>{{ contrato.vigencia }}</span>
+
+                      <div class="row g-2 dash-renta-card__desglose">
+                        <div class="col-6 col-lg-3">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Contrato:</span>
+                            <span class="dash-pair__value">#{{ renta.contratoId }}</span>
+                          </span>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Renta:</span>
+                            <span class="dash-pair__value">{{ formatearMoneda(renta.montoRenta) }}</span>
+                          </span>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Mantenimiento:</span>
+                            <span class="dash-pair__value">{{ formatearMoneda(renta.montoMantenimiento) }}</span>
+                          </span>
+                        </div>
+                        <div class="col-6 col-lg-3" *ngIf="renta.factorAplicado && renta.factorAplicado !== 1">
+                          <span class="dash-pair dash-pair--block">
+                            <span class="dash-pair__label">Factor:</span>
+                            <span class="dash-pair__value">{{ renta.factorAplicado }}</span>
+                          </span>
+                        </div>
                       </div>
-                    </header>
-                    <div class="dash-arr__locales" *ngIf="contrato.localesNombres.length">
-                      <span class="dash-arr__chip" *ngFor="let local of contrato.localesNombres">{{ local }}</span>
-                    </div>
-                    <div class="dash-mini-card">
-                      <span class="dash-mini-card__line" *ngFor="let linea of contrato.lineasResumen">{{ linea }}</span>
-                    </div>
-                  </article>
+
+                      <footer class="dash-renta-card__footer" *ngIf="renta.formulaUsada">
+                        <span class="dash-pair dash-pair--block">
+                          <span class="dash-pair__label">Fórmula:</span>
+                          <span class="dash-pair__value">{{ renta.formulaUsada }}</span>
+                        </span>
+                      </footer>
+                    </article>
+                  </div>
                 </div>
               </section>
 
               <section class="dash-panel" aria-label="Pagos del arrendatario" *ngIf="dashboardPagos.length">
                 <span class="dash-panel__title">Pagos del arrendatario</span>
-                <div class="dash-pagos-mini">
-                  <div class="dash-pago-row dash-pago-row--header">
-                    <span>Concepto</span>
-                    <span>Monto</span>
-                    <span>Fecha</span>
-                    <span>Estatus</span>
-                  </div>
-                  <div class="dash-pago-row" *ngFor="let pago of dashboardPagos">
-                    <span class="dash-pago-row__concepto">{{ pago.concepto }}</span>
-                    <span class="dash-pago-row__monto">{{ formatearMoneda(pago.monto) }}</span>
-                    <span class="dash-pago-row__fecha">{{ formatearFecha(pago.fecha) }}</span>
-                    <span [ngClass]="claseEstatusPago(pago.estatusLabel)">{{ pago.estatusLabel }}</span>
+                <div class="dash-pagos-kv-list">
+                  <div class="dash-pago-line" *ngFor="let pago of dashboardPagos">
+                    <div class="row g-2 align-items-center">
+                      <div class="col-6 col-md-3">
+                        <span class="dash-pair">
+                          <span class="dash-pair__label">Concepto:</span>
+                          <span class="dash-pair__value">{{ pago.concepto }}</span>
+                        </span>
+                      </div>
+                      <div class="col-6 col-md-3">
+                        <span class="dash-pair">
+                          <span class="dash-pair__label">Monto:</span>
+                          <span class="dash-pair__value">{{ formatearMoneda(pago.monto) }}</span>
+                        </span>
+                      </div>
+                      <div class="col-6 col-md-3">
+                        <span class="dash-pair">
+                          <span class="dash-pair__label">Fecha:</span>
+                          <span class="dash-pair__value">{{ formatearFecha(pago.fecha) }}</span>
+                        </span>
+                      </div>
+                      <div class="col-6 col-md-3">
+                        <span class="dash-pair">
+                          <span class="dash-pair__label">Estatus:</span>
+                          <span class="dash-pair__value">
+                            <span [ngClass]="claseEstatusPago(pago.estatusLabel)">{{ pago.estatusLabel }}</span>
+                          </span>
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </section>

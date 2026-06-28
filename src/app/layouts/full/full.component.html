@@ -4,38 +4,16 @@
   cardBorder: options.cardBorder,
 }" class="page-container" [dir]="options.dir!">
   @if(!options.horizontal) {
-  <app-header [showToggle]="!isOver" (toggleCollapsed)="toggleCollapsed()" (toggleMobileNav)="sidenav.toggle()"
+  <app-header [showToggle]="!isOver" (toggleCollapsed)="toggleCollapsed()" (toggleMobileNav)="toggleMobileNav()"
     (toggleMobileFilterNav)="filterNavRight.toggle()" (optionsChange)="receiveOptions($event)"></app-header>
   } @else {
-  <app-horizontal-header (toggleMobileNav)="sidenav.toggle()" (toggleMobileFilterNav)="filterNavRight.toggle()"
+  <app-horizontal-header (toggleMobileNav)="toggleMobileNav()" (toggleMobileFilterNav)="filterNavRight.toggle()"
     (optionsChange)="receiveOptions($event)"></app-horizontal-header>
   }
 
   <mat-sidenav-container class="mainWrapper">
     @if(!options.horizontal) {
-    <mat-sidenav align="start" #leftsidenav [mode]="isOver ? 'over' : 'side'" [opened]="
-        options.navPos === 'side' &&
-        options.sidenavOpened &&
-        !isOver
-      " (openedChange)="onSidenavOpenedChange($event)" (closedStart)="onSidenavClosedStart()" class="sidebarNav">
-      <app-sidebar> </app-sidebar>
-      <ng-scrollbar
-        class="position-relative mini-scroll sidebar-menu-scroll"
-        orientation="vertical"
-        style="height: calc(100vh - 230px)"
-      >
-        <mat-nav-list class="sidebar-list">
-          @for(item of navItems; track item) {
-          <app-nav-item [item]="item" (notify)="sidenav.toggle()" class="top-parent">
-          </app-nav-item>
-          }
-        </mat-nav-list>
-      </ng-scrollbar>
-    </mat-sidenav>
-    }
-
-    @if(resView && options.horizontal) {
-    <mat-sidenav #leftsidenav [mode]="'over'" [opened]="options.sidenavOpened && !isTablet"
+    <mat-sidenav align="start" #verticalSidenav [mode]="isOver ? 'over' : 'side'" [opened]="sidenavIsOpen"
       (openedChange)="onSidenavOpenedChange($event)" (closedStart)="onSidenavClosedStart()" class="sidebarNav">
       <app-sidebar> </app-sidebar>
       <ng-scrollbar
@@ -45,7 +23,26 @@
       >
         <mat-nav-list class="sidebar-list">
           @for(item of navItems; track item) {
-          <app-nav-item [item]="item" (notify)="sidenav.toggle()">
+          <app-nav-item [item]="item" (notify)="closeMobileNav()" class="top-parent">
+          </app-nav-item>
+          }
+        </mat-nav-list>
+      </ng-scrollbar>
+    </mat-sidenav>
+    }
+
+    @if(resView && options.horizontal) {
+    <mat-sidenav #horizontalSidenav [mode]="'over'" [opened]="horizontalOverlayOpen"
+      (openedChange)="onSidenavOpenedChange($event)" (closedStart)="onSidenavClosedStart()" class="sidebarNav">
+      <app-sidebar> </app-sidebar>
+      <ng-scrollbar
+        class="position-relative mini-scroll sidebar-menu-scroll"
+        orientation="vertical"
+        style="height: calc(100vh - 230px)"
+      >
+        <mat-nav-list class="sidebar-list">
+          @for(item of navItems; track item) {
+          <app-nav-item [item]="item" (notify)="closeMobileNav()">
           </app-nav-item>
           }
         </mat-nav-list>

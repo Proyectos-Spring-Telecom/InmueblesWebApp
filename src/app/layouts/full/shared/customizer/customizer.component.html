@@ -92,7 +92,7 @@
         </h6>
 
         <mat-button-toggle-group #group="matButtonToggleGroup" [(ngModel)]="options.sidenavCollapsed"
-          (change)="setSidebar($event.value)" class="customizer-button-group gap-16"
+          (change)="setSidebarCollapsed($event.value)" class="customizer-button-group gap-16"
           [hideSingleSelectionIndicator]="hideSingleSelectionIndicator()">
           <mat-button-toggle [value]="false">
             <div class="d-flex align-items-center f-w-500">

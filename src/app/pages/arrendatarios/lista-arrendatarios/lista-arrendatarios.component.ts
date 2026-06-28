@@ -11,19 +11,14 @@ import {
   mapArrendatariosApiToGridRows,
 } from '../arrendatarios-list.mapper';
 import {
+  ArrendatarioDashboardContrato,
   ArrendatarioDashboardData,
-  construirGruposLocalesDashboard,
-  construirGraficaMensualidadLocales,
-  construirGraficaPagosConcepto,
+  construirGraficaMensualidadDashboard,
   construirGraficaRentaEstado,
-  construirItemsContratosPeriodo,
-  construirItemsPagosConcepto,
-  DashboardContratoPeriodoItem,
+  construirGraficaRentaPeriodo,
   DashboardMensualidadLocalBar,
-  DashboardPagoConceptoBar,
-  DashboardPagoConceptoItem,
   DashboardRentaEstadoSlice,
-  DashboardZonaLocalesGrupo,
+  DashboardRentaPeriodoBar,
   etiquetaMes,
   formatearFecha,
   formatearMoneda,
@@ -64,13 +59,16 @@ export class ListaArrendatariosComponent implements OnInit {
   mostrarModalDashboard = false;
   dashboardTitulo = '';
   dashboardCargando = false;
+  private dashboardArrendatarioId: number | null = null;
+  dashboardFechaInicio = '';
+  dashboardFechaFin = '';
   private dashboardData: ArrendatarioDashboardData | null = null;
   dashboardRentaEstadoData: DashboardRentaEstadoSlice[] = [];
   dashboardMensualidadData: DashboardMensualidadLocalBar[] = [];
-  dashboardPagosData: DashboardPagoConceptoBar[] = [];
-  dashboardPagosConceptoItems: DashboardPagoConceptoItem[] = [];
-  dashboardGruposLocales: DashboardZonaLocalesGrupo[] = [];
-  dashboardContratosItems: DashboardContratoPeriodoItem[] = [];
+  dashboardRentaPeriodoData: DashboardRentaPeriodoBar[] = [];
+  readonly zIndexTooltipDashboard = 100010;
+  /** true cuando la gráfica de mensualidad usa contratos porque el API no envió locales. */
+  mensualidadDesdeContratos = false;
 
   formatearFecha = formatearFecha;
   formatearMoneda = formatearMoneda;
@@ -82,8 +80,8 @@ export class ListaArrendatariosComponent implements OnInit {
   @ViewChild('chartDashboardMensualidad', { static: false })
   chartDashboardMensualidad?: { instance?: { render?: () => void } };
 
-  @ViewChild('chartDashboardPagos', { static: false })
-  chartDashboardPagos?: { instance?: { render?: () => void } };
+  @ViewChild('chartDashboardRenta', { static: false })
+  chartDashboardRenta?: { instance?: { render?: () => void } };
 
   constructor(
     private router: Router,
@@ -260,18 +258,37 @@ export class ListaArrendatariosComponent implements OnInit {
     const id = Number(row?.id);
     if (!Number.isFinite(id) || id <= 0) return;
     this.dashboardTitulo = row.arrendatario ?? `Arrendatario #${id}`;
+    this.dashboardArrendatarioId = Math.floor(id);
+    const def = this.fechasDefaultDashboard();
+    this.dashboardFechaInicio = def.fechaInicio;
+    this.dashboardFechaFin = def.fechaFin;
     this.dashboardData = null;
     this.dashboardRentaEstadoData = [];
     this.dashboardMensualidadData = [];
-    this.dashboardPagosData = [];
-    this.dashboardPagosConceptoItems = [];
-    this.dashboardGruposLocales = [];
-    this.dashboardContratosItems = [];
-    this.dashboardCargando = true;
+    this.dashboardRentaPeriodoData = [];
+    this.mensualidadDesdeContratos = false;
     this.mostrarModalDashboard = true;
+    this.cargarDashboardArrendatario();
+  }
+
+  aplicarFiltroDashboard(): void {
+    if (this.dashboardArrendatarioId == null) return;
+    this.cargarDashboardArrendatario();
+  }
+
+  private cargarDashboardArrendatario(): void {
+    const id = this.dashboardArrendatarioId;
+    if (id == null) return;
+
+    this.dashboardCargando = true;
+    this.dashboardData = null;
+    this.dashboardRentaEstadoData = [];
+    this.dashboardMensualidadData = [];
+    this.dashboardRentaPeriodoData = [];
+    this.mensualidadDesdeContratos = false;
 
     const { fechaInicio, fechaFin } = this.rangoFechasDashboard();
-    this.arrendatariosService.obtenerDashboardArrendatario(Math.floor(id), fechaInicio, fechaFin)
+    this.arrendatariosService.obtenerDashboardArrendatario(id, fechaInicio, fechaFin)
       .pipe(take(1))
       .subscribe({
         next: (res: unknown) => {
@@ -279,21 +296,13 @@ export class ListaArrendatariosComponent implements OnInit {
           this.dashboardRentaEstadoData = construirGraficaRentaEstado(
             this.dashboardData?.resumen ?? null,
           );
-          this.dashboardMensualidadData = construirGraficaMensualidadLocales(
+          this.dashboardMensualidadData = construirGraficaMensualidadDashboard(
             this.dashboardData?.locales ?? [],
-          );
-          this.dashboardPagosData = construirGraficaPagosConcepto(
-            this.dashboardData?.pagos ?? [],
-          );
-          this.dashboardPagosConceptoItems = construirItemsPagosConcepto(
-            this.dashboardData?.pagos ?? [],
-          );
-          this.dashboardGruposLocales = construirGruposLocalesDashboard(
-            this.dashboardData?.zonas ?? [],
-            this.dashboardData?.locales ?? [],
-          );
-          this.dashboardContratosItems = construirItemsContratosPeriodo(
             this.dashboardData?.contratos ?? [],
+          );
+          this.mensualidadDesdeContratos = !(this.dashboardData?.locales?.length);
+          this.dashboardRentaPeriodoData = construirGraficaRentaPeriodo(
+            this.dashboardData?.rentaActual ?? [],
           );
           if (this.dashboardData?.arrendatario?.nombre) {
             this.dashboardTitulo = this.dashboardData.arrendatario.nombre;
@@ -310,13 +319,14 @@ export class ListaArrendatariosComponent implements OnInit {
   cerrarModalDashboard(): void {
     this.mostrarModalDashboard = false;
     this.dashboardTitulo = '';
+    this.dashboardArrendatarioId = null;
+    this.dashboardFechaInicio = '';
+    this.dashboardFechaFin = '';
     this.dashboardData = null;
     this.dashboardRentaEstadoData = [];
     this.dashboardMensualidadData = [];
-    this.dashboardPagosData = [];
-    this.dashboardPagosConceptoItems = [];
-    this.dashboardGruposLocales = [];
-    this.dashboardContratosItems = [];
+    this.dashboardRentaPeriodoData = [];
+    this.mensualidadDesdeContratos = false;
     this.dashboardCargando = false;
   }
 
@@ -350,20 +360,17 @@ export class ListaArrendatariosComponent implements OnInit {
 
   get dashboardFiltros() { return this.dashboardData?.filtros ?? null; }
 
-  trackByDashboardItemId(_index: number, item: DashboardPagoConceptoItem): string {
-    return item.id;
-  }
-
-  trackByDashboardZonaId(_index: number, grupo: DashboardZonaLocalesGrupo): number {
-    return grupo.id;
-  }
-
-  trackByDashboardLocalId(_index: number, local: { id: number }): number {
-    return local.id;
-  }
-
-  trackByDashboardContratoId(_index: number, contrato: DashboardContratoPeriodoItem): number {
+  trackByDashboardContratoId(_index: number, contrato: ArrendatarioDashboardContrato): number {
     return contrato.id;
+  }
+
+  etiquetaMetrosContrato(contrato: ArrendatarioDashboardContrato): string {
+    if (contrato.metrosRentados <= 0) return '';
+    const metros = `${contrato.metrosRentados.toLocaleString('es-MX')} m²`;
+    if (contrato.costoM2 > 0) {
+      return `${metros} · ${formatearMoneda(contrato.costoM2)}/m²`;
+    }
+    return metros;
   }
 
   claseEstatusPago(estatus: string): string {
@@ -386,13 +393,20 @@ export class ListaArrendatariosComponent implements OnInit {
     point?: { data?: DashboardRentaEstadoSlice };
   }): { text: string } => {
     const data = info.point?.data;
+    const categoria = String(info.argumentText ?? data?.categoria ?? '');
     const cantidad = Number(data?.cantidad ?? info.valueText ?? 0);
     const total = Number(data?.totalRentas ?? this.dashboardResumen?.rentasPagadas ?? 0)
       + Number(this.dashboardResumen?.rentasPendientes ?? 0);
+    const descripcion = categoria === 'Pagadas'
+      ? 'Rentas liquidadas en el periodo'
+      : categoria === 'Pendientes'
+        ? 'Rentas por cobrar en el periodo'
+        : 'Cantidad de rentas';
     const lineas = [
-      String(info.argumentText ?? ''),
+      categoria,
+      descripcion,
       total > 0 ? `${cantidad} de ${total} rentas` : `${cantidad} rentas`,
-      info.percentText ?? '',
+      info.percentText ? `Participación: ${info.percentText}` : '',
     ];
     return { text: lineas.filter(Boolean).join('\n') };
   };
@@ -417,34 +431,115 @@ export class ListaArrendatariosComponent implements OnInit {
     return nombre;
   };
 
+  private montoDesdeTooltip(info: {
+    valueText?: string;
+    originalValue?: number | string;
+    value?: number | string;
+  }): string {
+    const directo = Number(info.originalValue ?? info.value);
+    if (Number.isFinite(directo)) {
+      return formatearMoneda(directo);
+    }
+    const parsed = Number(String(info.valueText ?? '').replace(/[^\d.-]/g, ''));
+    if (Number.isFinite(parsed)) {
+      return formatearMoneda(parsed);
+    }
+    return String(info.valueText ?? '');
+  }
+
   customizarTooltipMonedaDashboard = (info: {
     argumentText?: string;
     valueText?: string;
     seriesName?: string;
+    originalValue?: number;
+    value?: number;
   }): { text: string } => {
-    const monto = Number(String(info.valueText ?? '').replace(/[^\d.-]/g, ''));
-    const valor = Number.isFinite(monto)
-      ? formatearMoneda(monto)
-      : String(info.valueText ?? '');
+    const valor = this.montoDesdeTooltip(info);
     return {
       text: [info.seriesName ?? info.argumentText ?? '', valor].filter(Boolean).join('\n'),
     };
   };
+
+  customizarTooltipMensualidadDashboard = (info: {
+    argumentText?: string;
+    valueText?: string;
+    originalValue?: number;
+    value?: number;
+    point?: { data?: DashboardMensualidadLocalBar };
+  }): { text: string } => {
+    const local = String(info.argumentText ?? '');
+    const data = info.point?.data;
+    const valor = this.montoDesdeTooltip(info);
+    const estado = String(data?.estado ?? '').trim();
+    const lineas = [
+      local ? `Local: ${local}` : '',
+      'Mensualidad base del local',
+      `Monto: ${valor}`,
+      estado ? `Estatus: ${estado}` : '',
+    ];
+    return { text: lineas.filter(Boolean).join('\n') };
+  };
+
+  customizarTooltipRentaPeriodoDashboard = (info: {
+    argumentText?: string;
+    valueText?: string;
+    seriesName?: string;
+    originalValue?: number;
+    value?: number;
+  }): { text: string } => {
+    const periodo = String(info.argumentText ?? '');
+    const serie = String(info.seriesName ?? '');
+    const valor = this.montoDesdeTooltip(info);
+    const concepto = serie === 'Renta'
+      ? 'Renta del periodo'
+      : serie === 'Mantenimiento'
+        ? 'Mantenimiento del periodo'
+        : serie;
+    const lineas = [
+      periodo ? `Periodo: ${periodo}` : '',
+      concepto,
+      `Monto: ${valor}`,
+    ];
+    return { text: lineas.filter(Boolean).join('\n') };
+  };
+
+  customizarPuntoMensualidadDashboard = (pointInfo: {
+    data?: DashboardMensualidadLocalBar;
+  }): Record<string, unknown> => {
+    const estado = (pointInfo?.data?.estado ?? '').toLowerCase();
+    const color = estado === 'ocupado' ? '#f59e0b' : '#22c55e';
+    return { color };
+  };
+
+  alturaGraficaRentaDashboard(): number {
+    const n = this.dashboardRentaPeriodoData.length;
+    if (n <= 0) return 220;
+    return Math.max(220, Math.min(n * 44, 520));
+  }
 
   private refrescarGraficasDashboard(): void {
     this.cdr.detectChanges();
     setTimeout(() => {
       this.pieDashboardRentaEstado?.instance?.render?.();
       this.chartDashboardMensualidad?.instance?.render?.();
-      this.chartDashboardPagos?.instance?.render?.();
+      this.chartDashboardRenta?.instance?.render?.();
     }, 0);
   }
 
-  private rangoFechasDashboard(): { fechaInicio: string; fechaFin: string } {
+  private fechasDefaultDashboard(): { fechaInicio: string; fechaFin: string } {
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     return {
-      fechaInicio: '2026-01-01',
-      fechaFin: this.fechaApiDesdeDate(new Date()),
+      fechaInicio: this.fechaApiDesdeDate(inicioMes),
+      fechaFin: this.fechaApiDesdeDate(hoy),
     };
+  }
+
+  private rangoFechasDashboard(): { fechaInicio: string; fechaFin: string } {
+    const def = this.fechasDefaultDashboard();
+    const fechaInicio = this.dashboardFechaInicio.trim() || def.fechaInicio;
+    const fechaFin = this.dashboardFechaFin.trim() || def.fechaFin;
+    return { fechaInicio, fechaFin };
   }
 
   private fechaApiDesdeDate(fecha: Date): string {

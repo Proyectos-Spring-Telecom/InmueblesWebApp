@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   Output,
   SimpleChanges,
@@ -32,6 +33,7 @@ import {
   nombreArrendador,
   nombreServicio,
   OPCIONES_ESTATUS_LOCAL,
+  resolverGiroLocalApi,
   urlFachadaLocal,
   urlPdfMiniatura,
 } from '../inmuebles-list.mapper';
@@ -42,7 +44,7 @@ import {
   styleUrl: './lista-inmuebles-detalle.component.scss',
   standalone: false,
 })
-export class ListaInmueblesDetalleComponent implements OnInit, OnChanges {
+export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) row!: InmuebleGridRow;
 
   /** Tras PATCH de estatus: el padre debe refrescar GET /inmuebles/paginated. */
@@ -65,7 +67,10 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges {
   filtroLocal = '';
   guardandoEstatusLocalId: number | null = null;
   cargandoDetalleAnidado = false;
+  cargandoTabPanel = false;
   private detallePorId: InmuebleApiItem | null = null;
+  private tabLoadTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly tabLoadDelayMs = 300;
 
   esImagenArchivo = esImagenArchivo;
   esPdfArchivo = esPdfArchivo;
@@ -85,8 +90,59 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['row']) {
       this.detallePorId = null;
+      this.detalleTab = 0;
       this.cargarDetalleCompletoPorId();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.limpiarTimerTab();
+  }
+
+  get mostrarCargaPanel(): boolean {
+    return this.cargandoDetalleAnidado || this.cargandoTabPanel;
+  }
+
+  get mensajeCargaPanel(): string {
+    switch (this.detalleTab) {
+      case 1:
+        return 'Cargando servicios…';
+      case 2:
+        return 'Cargando documentos…';
+      default:
+        return 'Cargando zonas y locales…';
+    }
+  }
+
+  cambiarTab(index: number): void {
+    if (this.detalleTab === index && !this.mostrarCargaPanel) return;
+
+    this.limpiarTimerTab();
+    this.detalleTab = index;
+
+    if (this.cargandoDetalleAnidado) return;
+
+    this.iniciarCargaTabPanel();
+  }
+
+  tabEstaCargando(index: number): boolean {
+    return this.mostrarCargaPanel && this.detalleTab === index;
+  }
+
+  private iniciarCargaTabPanel(): void {
+    this.cargandoTabPanel = true;
+    this.tabLoadTimer = setTimeout(() => {
+      this.cargandoTabPanel = false;
+      this.tabLoadTimer = null;
+    }, this.tabLoadDelayMs);
+  }
+
+  private limpiarTimerTab(): void {
+    if (this.tabLoadTimer != null) {
+      clearTimeout(this.tabLoadTimer);
+      this.tabLoadTimer = null;
+    }
+    this.cargandoTabPanel = false;
   }
 
   private cargarDetalleCompletoPorId(): void {
@@ -96,6 +152,7 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges {
       return;
     }
 
+    this.limpiarTimerTab();
     this.cargandoDetalleAnidado = true;
     this.inmueblesService
       .obtenerInmueble(id)
@@ -158,14 +215,71 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges {
 
   localesZona(z: InmuebleZonaApi): InmuebleLocalApi[] {
     const list = localesDeZona(z);
-    const q = this.filtroLocal.trim().toLowerCase();
+    const q = this.filtroLocal.trim();
     if (!q) return list;
-    return list.filter((loc) => {
-      const nom = String(loc.nombre ?? '').toLowerCase();
-      const giro = String(loc.giro ?? '').toLowerCase();
-      const est = etiquetaEstatusLocal(loc.estatus).toLowerCase();
-      return nom.includes(q) || giro.includes(q) || est.includes(q);
-    });
+    return list.filter((loc) => this.localCoincideConFiltro(loc, q));
+  }
+
+  private localCoincideConFiltro(loc: InmuebleLocalApi, filtro: string): boolean {
+    const q = this.normalizarTextoBusqueda(filtro);
+    if (!q) return true;
+
+    const tokens = this.tokensBusquedaLocal(loc).map((t) =>
+      this.normalizarTextoBusqueda(t),
+    );
+    if (tokens.some((t) => t.includes(q))) return true;
+
+    const qMonto = this.normalizarMontoBusqueda(filtro);
+    if (qMonto && tokens.some((t) => this.normalizarMontoBusqueda(t).includes(qMonto))) {
+      return true;
+    }
+
+    const qDigitos = this.soloDigitos(filtro);
+    if (qDigitos.length >= 2) {
+      return tokens.some((t) => this.soloDigitos(t).includes(qDigitos));
+    }
+
+    return false;
+  }
+
+  private normalizarTextoBusqueda(val: string): string {
+    return val
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '');
+  }
+
+  private tokensBusquedaLocal(loc: InmuebleLocalApi): string[] {
+    const out: string[] = [];
+    const push = (v: unknown): void => {
+      const s = String(v ?? '').trim();
+      if (s) out.push(s);
+    };
+
+    push(loc.nombre);
+    push(resolverGiroLocalApi(loc) ?? loc.giro);
+    push(etiquetaEstatusLocal(loc.estatus));
+
+    const mensualidad = loc.mensualidad;
+    if (mensualidad != null && String(mensualidad).trim() !== '') {
+      push(mensualidad);
+      const fmt = formatearMoneda(mensualidad);
+      if (fmt !== '—') {
+        out.push(fmt);
+        out.push(fmt.replace(/\$/g, '').trim());
+      }
+    }
+
+    return out;
+  }
+
+  private normalizarMontoBusqueda(val: string): string {
+    return val.trim().toLowerCase().replace(/[^\d.,]/g, '');
+  }
+
+  private soloDigitos(val: string): string {
+    return val.replace(/\D/g, '');
   }
 
   totalLocalesVisibles(): number {
@@ -323,6 +437,12 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges {
 
   urlVistaPreviaPdf(url?: string): SafeResourceUrl | null {
     if (!url?.trim() || !esPdfArchivo(url)) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(urlPdfMiniatura(url));
+  }
+
+  /** Miniatura iframe para comprobantes no imagen (PDF u otros archivos embebibles). */
+  urlVistaPreviaComprobante(url?: string): SafeResourceUrl | null {
+    if (!url?.trim() || esImagenArchivo(url)) return null;
     return this.sanitizer.bypassSecurityTrustResourceUrl(urlPdfMiniatura(url));
   }
 

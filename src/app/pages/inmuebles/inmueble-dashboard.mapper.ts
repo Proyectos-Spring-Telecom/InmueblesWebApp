@@ -179,16 +179,46 @@ function normalizarContrato(raw: unknown): InmuebleDashboardContrato | null {
   };
 }
 
+function record(value: unknown): Record<string, unknown> {
+  return value != null && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
 function normalizarRentaMes(raw: unknown): InmuebleDashboardRentaMes | null {
   if (raw == null || typeof raw !== 'object') return null;
-  const item = raw as Record<string, unknown>;
+  const item = record(raw);
+  const desglose = record(item['desglose']);
+  const rentaDesglose = record(desglose['renta']);
+  const mantDesglose = record(desglose['mantenimiento']);
+  const formula = record(item['formula']);
+
+  const montoRenta = num(
+    item['montoRenta'] ?? item['monto_renta']
+    ?? item['montoFinal'] ?? rentaDesglose['montoFinal'] ?? item['total'],
+  );
+  const montoMantenimiento = num(
+    item['montoMantenimiento'] ?? item['monto_mantenimiento']
+    ?? item['montoFinalMantenimiento'] ?? mantDesglose['montoFinalMantenimiento']
+    ?? item['totalMantenimiento'] ?? item['total_mantenimiento'],
+  );
+  const mes = str(item['mes']);
+  const pagada = bool(item['pagada']);
+  const factorAplicado = num(
+    item['factorAplicado'] ?? item['factor_aplicado'] ?? item['factorVariable'] ?? item['factor_variable'],
+    1,
+  );
+  const formulaUsada = str(item['formulaUsada'] ?? item['formula_usada'] ?? formula['nombre']);
+
+  if (!mes && !pagada && montoRenta <= 0 && montoMantenimiento <= 0) {
+    return null;
+  }
+
   return {
-    mes: str(item['mes']),
-    montoRenta: num(item['montoRenta'] ?? item['monto_renta']),
-    montoMantenimiento: num(item['montoMantenimiento'] ?? item['monto_mantenimiento']),
-    factorAplicado: num(item['factorAplicado'] ?? item['factor_aplicado'], 1),
-    formulaUsada: str(item['formulaUsada'] ?? item['formula_usada']),
-    pagada: bool(item['pagada']),
+    mes,
+    montoRenta,
+    montoMantenimiento,
+    factorAplicado,
+    formulaUsada,
+    pagada,
   };
 }
 
@@ -324,12 +354,23 @@ export function construirGraficaRentaArrendatarios(
   arrendatarios: InmuebleDashboardArrendatario[],
 ): DashboardRentaArrendatarioBar[] {
   return arrendatarios
-    .filter((a) => a.rentaDelMes != null)
-    .map((a) => ({
-      arrendatario: a.nombre,
-      renta: a.rentaDelMes?.montoRenta ?? 0,
-      mantenimiento: a.rentaDelMes?.montoMantenimiento ?? 0,
-    }));
+    .map((a) => {
+      const rentaMes = a.rentaDelMes;
+      let renta = rentaMes?.montoRenta ?? 0;
+      let mantenimiento = rentaMes?.montoMantenimiento ?? 0;
+
+      if (renta <= 0 && mantenimiento <= 0 && a.contratoActivo) {
+        renta = a.contratoActivo.rentaTotal;
+        mantenimiento = a.contratoActivo.mantenimientoTotal ?? 0;
+      }
+
+      return {
+        arrendatario: a.nombre,
+        renta,
+        mantenimiento,
+      };
+    })
+    .filter((bar) => bar.renta > 0 || bar.mantenimiento > 0);
 }
 
 export function construirGraficaMensualidadLocales(
