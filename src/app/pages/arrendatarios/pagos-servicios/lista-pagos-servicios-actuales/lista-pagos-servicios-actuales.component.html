@@ -54,6 +54,20 @@
         />
       </label>
 
+      <div class="pagos-servicios-estatus-filter">
+        <label class="pagos-servicios-mes-filter__label" for="hubPagosServiciosEstatus">Estatus</label>
+        <select
+          id="hubPagosServiciosEstatus"
+          class="form-select form-select-sm pagos-servicios-mes-filter__select"
+          [(ngModel)]="estatusFiltroPagos"
+          (ngModelChange)="cambiarEstatusFiltro()"
+        >
+          <option *ngFor="let op of opcionesEstatusPagoFiltro" [ngValue]="op.value">
+            {{ op.label }}
+          </option>
+        </select>
+      </div>
+
       <div class="hub-vista-simple__meses" role="group" aria-label="Filtrar por mes">
         @for (mes of mesesFiltroPagosOpciones; track mes.value) {
           <button

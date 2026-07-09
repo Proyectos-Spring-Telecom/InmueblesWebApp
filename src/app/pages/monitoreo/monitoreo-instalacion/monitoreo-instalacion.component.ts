@@ -70,6 +70,8 @@ import {
   mapPagoApiToVistaDetalle,
   mapPagosApiToGridRows,
   OPCIONES_ESTATUS_PAGO_API,
+  OPCIONES_ESTATUS_PAGO_FILTRO_PANEL,
+  filtrarFilasPagoPorEstatusApi,
   PagoGridRow,
   VistaPagoDetalleModal,
 } from '../monitoreo-pagos.mapper';
@@ -328,6 +330,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   pagosData: PagoGridRow[] = [];
   fechaInicioFiltroPagos = '';
   fechaFinFiltroPagos = '';
+  estatusFiltroPagos: number | null = null;
+  readonly opcionesEstatusPagoFiltro = OPCIONES_ESTATUS_PAGO_FILTRO_PANEL;
   pagosCargando = false;
 
   numeroSerie: string = '';
@@ -870,6 +874,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     const rango = this.rangoFechasPagosPorDefecto();
     this.fechaInicioFiltroPagos = rango.inicio;
     this.fechaFinFiltroPagos = rango.fin;
+    this.estatusFiltroPagos = null;
     this.cargarPagosGrid();
   }
 
@@ -887,6 +892,20 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
+  }
+
+  private mapearPagosGridConFiltroEstatus(
+    filas: ReturnType<typeof extraerFilasPagosApi>,
+    ctx:
+      | { modo: 'arrendatario'; idArrendatario: number | null }
+      | { modo: 'inmueble'; idInmueble: number | null },
+  ): PagoGridRow[] {
+    const filasGrid = mapPagosApiToGridRows(
+      filas,
+      ctx,
+      (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
+    );
+    return filtrarFilasPagoPorEstatusApi(filasGrid, this.estatusFiltroPagos);
   }
 
   private cargarPagosGrid(): void {
@@ -910,6 +929,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
           fechaInicio,
           fechaFin,
           idArrendatario: this.idArrendatarioContext,
+          estatus: this.estatusFiltroPagos,
         })
         .pipe(
           take(1),
@@ -921,14 +941,10 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (res) => {
             const filas = extraerFilasPagosApi(res);
-            this.pagosData = mapPagosApiToGridRows(
-              filas,
-              {
-                modo: 'arrendatario',
-                idArrendatario: this.idArrendatarioContext,
-              },
-              (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
-            );
+            this.pagosData = this.mapearPagosGridConFiltroEstatus(filas, {
+              modo: 'arrendatario',
+              idArrendatario: this.idArrendatarioContext,
+            });
           },
           error: () => {
             this.pagosData = [];
@@ -950,6 +966,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
         fechaInicio,
         fechaFin,
         idInmueble: this.idInmuebleContext,
+        estatus: this.estatusFiltroPagos,
       })
       .pipe(
         take(1),
@@ -961,14 +978,10 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           const filas = extraerFilasPagosApi(res);
-          this.pagosData = mapPagosApiToGridRows(
-            filas,
-            {
-              modo: 'inmueble',
-              idInmueble: this.idInmuebleContext,
-            },
-            (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
-          );
+          this.pagosData = this.mapearPagosGridConFiltroEstatus(filas, {
+            modo: 'inmueble',
+            idInmueble: this.idInmuebleContext,
+          });
         },
         error: () => {
           this.pagosData = [];

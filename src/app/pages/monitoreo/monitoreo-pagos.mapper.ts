@@ -281,6 +281,25 @@ export const OPCIONES_ESTATUS_PAGO_API = [
   { value: 0, label: 'Cancelado' },
 ] as const;
 
+/** Select de panel de filtros: Todos + estatus API. */
+export const OPCIONES_ESTATUS_PAGO_FILTRO_PANEL: ReadonlyArray<{
+  value: number | null;
+  label: string;
+}> = [
+  { value: null, label: 'Todos' },
+  ...OPCIONES_ESTATUS_PAGO_API.map((o) => ({ value: o.value, label: o.label })),
+];
+
+/** Filtra filas del grid por estatus API (null = sin filtro). */
+export function filtrarFilasPagoPorEstatusApi<T extends { estatus: PagoEstatusUi }>(
+  filas: T[],
+  estatusApi: number | null | undefined,
+): T[] {
+  if (estatusApi == null || !Number.isFinite(Number(estatusApi))) return filas;
+  const ui = estatusPagoDesdeApi(estatusApi);
+  return filas.filter((r) => r.estatus === ui);
+}
+
 /** API `estatus`: 2 Pendiente, 1 Pagado, 0 Cancelado (Swagger). */
 export function estatusPagoToApi(estatus: PagoEstatusUi): number {
   switch (estatus) {

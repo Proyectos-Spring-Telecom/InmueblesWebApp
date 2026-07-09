@@ -11,6 +11,9 @@ export interface EntradasSalidasPaginatedQuery {
   fechaFin?: string;
 }
 
+/** Registros por página del GET paginado y del grid de monitoreo. */
+export const ENTRADAS_SALIDAS_PAGE_SIZE = 50;
+
 @Injectable({ providedIn: 'root' })
 export class EntradasSalidasEstacionamientoService {
   private readonly base = `${environment.API_SECURITY}/entradas-salidas-estacionamiento`;
@@ -25,7 +28,7 @@ export class EntradasSalidasEstacionamientoService {
     let params = new HttpParams()
       .set('idInmueble', String(Math.floor(query.idInmueble)))
       .set('page', String(query.page ?? 1))
-      .set('limit', String(query.limit ?? 50));
+      .set('limit', String(query.limit ?? ENTRADAS_SALIDAS_PAGE_SIZE));
     const ini = (query.fechaInicio ?? '').trim();
     const fin = (query.fechaFin ?? '').trim();
     if (ini) params = params.set('fechaInicio', ini);

@@ -23,6 +23,7 @@ export class PagoArrendatarioService {
     fechaInicio: string;
     fechaFin: string;
     idArrendatario?: number | null;
+    estatus?: number | null;
   }): Observable<unknown> {
     let params = new HttpParams()
       .set('page', String(opts.page))
@@ -32,6 +33,10 @@ export class PagoArrendatarioService {
     const idArrendatario = Number(opts.idArrendatario);
     if (Number.isFinite(idArrendatario) && idArrendatario > 0) {
       params = params.set('idArrendatario', String(Math.floor(idArrendatario)));
+    }
+    const estatus = Number(opts.estatus);
+    if (Number.isFinite(estatus) && (estatus === 0 || estatus === 1 || estatus === 2)) {
+      params = params.set('estatus', String(Math.floor(estatus)));
     }
     return this.http.get(`${this.url}/paginated`, { params });
   }

@@ -15,10 +15,12 @@ import {
   EstacionamientoCrearActualizarPayload,
   EstacionamientoService,
 } from 'src/app/services/moduleService/estacionamiento.service';
-import { EntradasSalidasEstacionamientoService } from 'src/app/services/moduleService/entradas-salidas-estacionamiento.service';
+import { EntradasSalidasEstacionamientoService, ENTRADAS_SALIDAS_PAGE_SIZE } from 'src/app/services/moduleService/entradas-salidas-estacionamiento.service';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { extraerArrendatariosInmuebleApi } from '../../monitoreo/monitoreo-arrendatarios.mapper';
 import {
+  calcularTotalesEntradasSalidasDesdeFilas,
+  EntradaSalidaGridFila,
   extraerFilasEntradasSalidasApi,
   extraerTotalEntradasSalidasPaginated,
 } from '../entradas-salidas.mapper';
@@ -57,7 +59,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
 
   /** Store remoto del grid Entradas y Salidas (50 por página). */
   public entradasSalidasStore!: CustomStore;
-  public readonly pageSizeEntradasSalidas = 50;
+  readonly pageSizeEntradasSalidas = ENTRADAS_SALIDAS_PAGE_SIZE;
   readonly pagerEntradasSalidasRemote = { paging: true };
   readonly pagerEntradasSalidasPaging = { pageSize: this.pageSizeEntradasSalidas };
   readonly pagerEntradasSalidasConfig = {
@@ -107,6 +109,13 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
   public cargandoArrendatarios = false;
   public cargandoGrid = false;
   public cargandoGridEntradasSalidas = false;
+  public cargandoTotalesEntradasSalidas = false;
+  public totalEntradasMonitoreo = 0;
+  public totalSalidasMonitoreo = 0;
+  public montoTotalEntradasSalidas = 0;
+  public paginaTotalesEntradasSalidas = 1;
+  /** Solo monta el grid de entradas/salidas al abrir ese acordeón (evita GET al cargar la vista). */
+  public panelEntradasSalidasAbierto = false;
 
   /** Si falta contexto del inmueble en alta mostramos mensaje en plantilla (sin select de predios). */
   public sinIdInmuebleEnAlta = false;
@@ -114,6 +123,7 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
   private readonly destroyed$ = new Subject<void>();
 
   private idClienteParaMonitoreo: string | null = null;
+  private entradasSalidasStoreInmuebleId: number | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -239,12 +249,12 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
 
     if (this.idInmuebleNumerico != null) {
       this.recargarArrendatariosYGrid();
-      this.refrescarGridEntradasSalidas();
       return;
     }
 
     this.filasEstacionamientosGrid = [];
     this.configurarStoreEntradasSalidasVacio();
+    this.resetTotalesEntradasSalidas();
     this.opcionesArrendatario = [];
     this.mapaNombreArrendatario.clear();
     this.estacionamientoForm.patchValue({
@@ -313,7 +323,9 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
                 });
                 this.estacionamientoForm.markAsPristine();
                 this.recargarSoloGrid();
-                this.refrescarGridEntradasSalidas();
+                if (this.panelEntradasSalidasAbierto) {
+                  this.refrescarGridEntradasSalidas();
+                }
               },
               error: (_err) => {
                 void Swal.fire({
@@ -336,7 +348,9 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
                       : null,
                 });
                 this.recargarSoloGrid();
-                this.refrescarGridEntradasSalidas();
+                if (this.panelEntradasSalidasAbierto) {
+                  this.refrescarGridEntradasSalidas();
+                }
               },
             });
         },
@@ -397,7 +411,9 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
           });
           this.estacionamientoForm.markAsUntouched();
           this.recargarSoloGrid();
-          this.refrescarGridEntradasSalidas();
+          if (this.panelEntradasSalidasAbierto) {
+            this.refrescarGridEntradasSalidas();
+          }
         },
         error: (_err) => {
           void Swal.fire({
@@ -411,19 +427,22 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
             confirmButtonText: 'Entendido',
           });
           this.recargarSoloGrid();
-          this.refrescarGridEntradasSalidas();
+          if (this.panelEntradasSalidasAbierto) {
+            this.refrescarGridEntradasSalidas();
+          }
         },
       });
   }
 
   private configurarStoreEntradasSalidasVacio(): void {
+    this.entradasSalidasStoreInmuebleId = null;
     this.entradasSalidasStore = new CustomStore({
       key: 'id',
       load: () => Promise.resolve({ data: [], totalCount: 0 }),
     });
   }
 
-  /** CustomStore: cada página del grid pide GET con `limit` 50. */
+  /** CustomStore: una sola petición por página visible del grid. */
   configurarStoreEntradasSalidas(): void {
     const idImm = this.idInmuebleNumerico;
     if (idImm == null || idImm <= 0) {
@@ -431,39 +450,85 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
       return;
     }
     const idInmueble = Math.floor(idImm);
+    if (this.entradasSalidasStoreInmuebleId === idInmueble && this.entradasSalidasStore) {
+      return;
+    }
+    this.entradasSalidasStoreInmuebleId = idInmueble;
     this.entradasSalidasStore = new CustomStore({
       key: 'id',
       load: (loadOptions: { take?: number; skip?: number }) => {
-        const take = Number(loadOptions?.take) || this.pageSizeEntradasSalidas;
+        const limit = this.pageSizeEntradasSalidas;
         const skip = Number(loadOptions?.skip) || 0;
-        const page = Math.floor(skip / take) + 1;
+        const page = Math.floor(skip / limit) + 1;
         this.cargandoGridEntradasSalidas = true;
+        this.cargandoTotalesEntradasSalidas = true;
         return lastValueFrom(
           this.entradasSalidasService.listarPaginado({
             idInmueble,
             page,
-            limit: take,
+            limit,
           }),
         )
-          .then((resp) => ({
-            data: extraerFilasEntradasSalidasApi(resp),
-            totalCount: extraerTotalEntradasSalidasPaginated(resp),
-          }))
-          .catch(() => ({ data: [], totalCount: 0 }))
+          .then((resp) => {
+            const data = extraerFilasEntradasSalidasApi(resp);
+            const totalCount = extraerTotalEntradasSalidasPaginated(resp);
+            this.actualizarTotalesEntradasSalidasPorPagina(data, page);
+            return { data, totalCount };
+          })
+          .catch(() => {
+            this.resetTotalesEntradasSalidas();
+            return { data: [], totalCount: 0 };
+          })
           .finally(() => {
             this.cargandoGridEntradasSalidas = false;
+            this.cargandoTotalesEntradasSalidas = false;
           });
       },
     });
   }
 
+  onAccordionEstacionamientoSelectionChanged(e: {
+    component?: { option: (name: string) => unknown };
+  }): void {
+    const idx = Number(e?.component?.option('selectedIndex') ?? 0);
+    const abierto = idx === 1;
+    if (abierto === this.panelEntradasSalidasAbierto) return;
+    this.panelEntradasSalidasAbierto = abierto;
+    if (abierto) {
+      this.configurarStoreEntradasSalidas();
+    }
+  }
+
   refrescarGridEntradasSalidas(): void {
+    if (this.idInmuebleNumerico == null) return;
+    const idInmueble = Math.floor(this.idInmuebleNumerico);
+    const yaConfigurado = this.entradasSalidasStoreInmuebleId === idInmueble;
     this.configurarStoreEntradasSalidas();
+    if (!yaConfigurado) return;
     const grid = this.gridEntradasSalidas?.instance;
     if (grid) {
       grid.pageIndex(0);
       grid.refresh();
     }
+  }
+
+  private resetTotalesEntradasSalidas(): void {
+    this.totalEntradasMonitoreo = 0;
+    this.totalSalidasMonitoreo = 0;
+    this.montoTotalEntradasSalidas = 0;
+    this.paginaTotalesEntradasSalidas = 1;
+  }
+
+  /** KPIs de la hoja/página actual del grid (misma respuesta del paginado, sin GET extra). */
+  private actualizarTotalesEntradasSalidasPorPagina(
+    filasPagina: EntradaSalidaGridFila[],
+    page: number,
+  ): void {
+    const totales = calcularTotalesEntradasSalidasDesdeFilas(filasPagina);
+    this.totalEntradasMonitoreo = totales.entradas;
+    this.totalSalidasMonitoreo = totales.salidas;
+    this.montoTotalEntradasSalidas = totales.montoTotal;
+    this.paginaTotalesEntradasSalidas = page;
   }
 
   private recargarSoloGrid(): void {
@@ -988,7 +1053,11 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.resetModalEntradasSalidasExcel();
-          this.refrescarGridEntradasSalidas();
+          this.entradasSalidasStoreInmuebleId = null;
+          this.resetTotalesEntradasSalidas();
+          if (this.panelEntradasSalidasAbierto) {
+            this.refrescarGridEntradasSalidas();
+          }
           window.setTimeout(() => {
             void Swal.fire({
               background: '#141a21',

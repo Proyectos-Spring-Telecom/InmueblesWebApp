@@ -47,6 +47,8 @@ import {
   extraerPagoDetalleApi,
   mapPagoApiToVistaDetalle,
   OPCIONES_ESTATUS_PAGO_API,
+  OPCIONES_ESTATUS_PAGO_FILTRO_PANEL,
+  filtrarFilasPagoPorEstatusApi,
   PagoEstatusUi,
   VistaPagoDetalleModal,
 } from '../../monitoreo/monitoreo-pagos.mapper';
@@ -76,12 +78,15 @@ export class ListaRegistroServiciosArrendatariosComponent implements OnInit {
   totalPaginas = 0;
   paginaActualData: RegistroServicioPagoGridRow[] = [];
   filtroActivo = '';
+  autoExpandAllGroups = true;
   mensajeAgrupar =
     'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
 
   fechaInicioFiltro = '';
   fechaFinFiltro = '';
   idArrendatarioFiltro: number | null = null;
+  estatusFiltroPagos: number | null = null;
+  readonly opcionesEstatusPagoFiltro = OPCIONES_ESTATUS_PAGO_FILTRO_PANEL;
   arrendatariosOpciones: SelectOpcion[] = [];
   catalogosFiltroCargando = false;
 
@@ -211,14 +216,18 @@ export class ListaRegistroServiciosArrendatariosComponent implements OnInit {
               fechaInicio: this.fechaInicioFiltro,
               fechaFin: this.fechaFinFiltro,
               idArrendatario: this.idArrendatarioFiltro,
+              estatus: this.estatusFiltroPagos,
             }),
           );
           this.loading = false;
           const meta = extraerMetaPaginadaRegistroServicios(resp);
-          const dataTransformada = mapRegistroServiciosPagosApi(
-            resp,
-            'arrendatario',
-            (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
+          const dataTransformada = filtrarFilasPagoPorEstatusApi(
+            mapRegistroServiciosPagosApi(
+              resp,
+              'arrendatario',
+              (idMet) => this.etiquetaCatMetodoPagoPorId(idMet),
+            ),
+            this.estatusFiltroPagos,
           );
           this.totalRegistros = meta.total || dataTransformada.length;
           this.paginaActual = meta.page || page;
@@ -265,6 +274,7 @@ export class ListaRegistroServiciosArrendatariosComponent implements OnInit {
     this.fechaInicioFiltro = rango.inicio;
     this.fechaFinFiltro = rango.fin;
     this.idArrendatarioFiltro = null;
+    this.estatusFiltroPagos = null;
     const inst = this.dataGrid?.instance;
     if (!inst) return;
     inst.clearFilter();
@@ -272,6 +282,27 @@ export class ListaRegistroServiciosArrendatariosComponent implements OnInit {
     inst.pageIndex(0);
     inst.option('searchPanel.text', '');
     this.filtroActivo = '';
+    inst.refresh();
+  }
+
+  toggleExpandGroups(): void {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    const groupedColumns = inst
+      .getVisibleColumns()
+      .filter((col) => (col.groupIndex ?? -1) >= 0);
+    if (groupedColumns.length === 0) {
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: 'Agrupación',
+        text: 'Arrastre el encabezado de una columna al panel de agrupación.',
+        icon: 'warning',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    this.autoExpandAllGroups = !this.autoExpandAllGroups;
     inst.refresh();
   }
 
