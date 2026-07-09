@@ -63,7 +63,7 @@
       </div>
 
       <dx-accordion class="est-accordion-estacionamiento" width="100%" [collapsible]="true" [multiple]="false"
-        [selectedIndex]="0">
+        [selectedIndex]="0" (onSelectionChanged)="onAccordionEstacionamientoSelectionChanged($event)">
         <dxi-item title="Estacionamiento">
           <div class="est-accordion-item-body est-accordion-inner pt-3 pb-2">
             <div class="est-vista-previa-grid pb-3">
@@ -326,6 +326,48 @@
 
         <dxi-item title="Entradas y Salidas">
           <div class="est-accordion-item-body est-accordion-inner pt-3 pb-2">
+            @if (panelEntradasSalidasAbierto && idInmuebleNumerico != null) {
+            <div class="est-kpi-slot mb-3" role="region" aria-label="Resumen de entradas y salidas">
+              <div class="est-kpi-shell">
+                <div class="est-kpi-grid">
+                  <div class="est-kpi est-kpi--entradas">
+                    <span class="est-kpi__label">Entradas</span>
+                    <span class="est-kpi__value">
+                      @if (cargandoTotalesEntradasSalidas) {
+                      …
+                      } @else {
+                      {{ totalEntradasMonitoreo | number:'1.0-0' }}
+                      }
+                    </span>
+                  </div>
+                  <div class="est-kpi est-kpi--salidas">
+                    <span class="est-kpi__label">Salidas</span>
+                    <span class="est-kpi__value">
+                      @if (cargandoTotalesEntradasSalidas) {
+                      …
+                      } @else {
+                      {{ totalSalidasMonitoreo | number:'1.0-0' }}
+                      }
+                    </span>
+                  </div>
+                  <div class="est-kpi est-kpi--monto">
+                    <span class="est-kpi__label">Monto total</span>
+                    <span class="est-kpi__value">
+                      @if (cargandoTotalesEntradasSalidas) {
+                      …
+                      } @else {
+                      {{ montoTotalEntradasSalidas | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            @if (!cargandoTotalesEntradasSalidas) {
+            <p class="est-kpi-aviso small opacity-50 mb-3">
+              Totalizadores de la página {{ paginaTotalesEntradasSalidas }} ({{ pageSizeEntradasSalidas }} registros por hoja).
+            </p>
+            }
             @if (cargandoGridEntradasSalidas) {
             <p class="text-body-secondary mb-3">Cargando entradas y salidas…</p>
             }
@@ -374,6 +416,7 @@
                   [paging]="pagerEntradasSalidasPaging"
                   [pager]="pagerEntradasSalidasConfig"
                 >
+                  <dxo-paging [pageSize]="pageSizeEntradasSalidas"></dxo-paging>
                   <dxo-search-panel [visible]="true" [width]="200" placeholder="Buscar..."></dxo-search-panel>
                   <dxo-toolbar>
                     <dxi-item name="groupPanel" location="before"></dxi-item>
@@ -410,6 +453,9 @@
                 </dx-data-grid>
               </div>
             </div>
+            } @else if (idInmuebleNumerico != null) {
+            <p class="text-body-secondary mb-0">Abra esta sección para consultar entradas y salidas del predio.</p>
+            }
           </div>
         </dxi-item>
       </dx-accordion>

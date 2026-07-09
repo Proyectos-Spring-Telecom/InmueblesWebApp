@@ -355,15 +355,29 @@
                   [(ngModel)]="fechaFinFiltroPagos"
                 />
               </div>
-              <button type="button" class="mono-grid-action-btn mono-grid-action-btn--filter" (click)="aplicarFiltrosPagos()">
+              <div class="mono-pagos-fechas-filter">
+                <label class="form-label mb-1 mono-pagos-fechas-filter__label" for="monoPagosEstatus">
+                  Estatus
+                </label>
+                <select
+                  id="monoPagosEstatus"
+                  class="form-select form-select-sm mono-pagos-fechas-filter__input"
+                  [(ngModel)]="estatusFiltroPagos"
+                >
+                  <option *ngFor="let op of opcionesEstatusPagoFiltro" [ngValue]="op.value">
+                    {{ op.label }}
+                  </option>
+                </select>
+              </div>
+              <button type="button" class="mono-grid-action-btn mono-grid-action-btn--consult" (click)="aplicarFiltrosPagos()">
                 <mat-icon aria-hidden="true">search</mat-icon>
                 <span>Consultar</span>
               </button>
-              <button type="button" class="mono-grid-action-btn mono-grid-action-btn--filter" (click)="limpiarFiltrosPagos()">
+              <button type="button" class="mono-grid-action-btn mono-grid-action-btn--reset" (click)="limpiarFiltrosPagos()">
                 <mat-icon aria-hidden="true">refresh</mat-icon>
                 <span>Restablecer</span>
               </button>
-              <button type="button" class="mono-grid-action-btn" (click)="abrirModalPago()">
+              <button type="button" class="mono-grid-action-btn mono-grid-action-btn--add" (click)="abrirModalPago()">
                 <mat-icon aria-hidden="true">add</mat-icon>
                 <span>Agregar Pago</span>
               </button>
@@ -408,7 +422,7 @@
               <div *dxTemplate="let row of 'monoPagoAcciones'" class="d-flex justify-content-center align-items-center gap-1 flex-wrap">
                 <button
                   type="button"
-                  class="mono-grid-row-action-btn mono-grid-row-action-btn--icon"
+                  class="mono-grid-row-action-btn mono-grid-row-action-btn--icon mono-grid-row-action-btn--view"
                   (click)="abrirModalPagoDetalle(row.data)"
                   aria-label="Ver detalle del pago"
                 >
@@ -417,7 +431,7 @@
                 <button
                   *ngIf="row.data?.estatus !== 'Pagado'"
                   type="button"
-                  class="mono-grid-row-action-btn mono-grid-row-action-btn--icon"
+                  class="mono-grid-row-action-btn mono-grid-row-action-btn--icon mono-grid-row-action-btn--status"
                   (click)="solicitarCambioEstatusPago(row.data)"
                   aria-label="Cambiar estatus del pago"
                   title="Cambiar estatus"

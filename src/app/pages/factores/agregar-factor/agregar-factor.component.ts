@@ -173,12 +173,18 @@ export class AgregarFactorComponent implements OnInit {
   onInpcSeleccionadoChange(id: string | null): void {
     const row = this.inpcPorId(id);
     this.inpcSeleccionado = row;
-    if (!row) {
-      this.factorForm.get('valor')?.setValue('', { emitEvent: false });
-      return;
-    }
+    this.factorForm
+      .get('valor')
+      ?.setValue(row ? this.formatValorInpcVista(row) : '', { emitEvent: false });
+  }
 
-    this.factorForm.get('valor')?.setValue(formatValorMilesParaLista(row.inpc), { emitEvent: false });
+  /** Solo presentación en el input; el payload usa `inpc.inpc` del periodo seleccionado. */
+  private formatValorInpcVista(row: InpcPaginatedGridRow): string {
+    const inpc = formatValorMilesParaLista(row.inpc);
+    const pctRaw = String(row.porcentajeAnualFmt ?? '').trim();
+    if (!pctRaw || pctRaw === '-') return inpc;
+    const pct = pctRaw.endsWith('%') ? pctRaw : `${pctRaw}%`;
+    return `${inpc} - ${pct}`;
   }
 
   etiquetaOpcionInpc(row: InpcPaginatedGridRow): string {
@@ -200,7 +206,7 @@ export class AgregarFactorComponent implements OnInit {
       {
         variable: data['variable'] ?? data['nombre'] ?? '',
         inpcId: match?.id ?? null,
-        valor: formatValorMilesParaLista(match?.inpc ?? data['valor'] ?? ''),
+        valor: match ? this.formatValorInpcVista(match) : formatValorMilesParaLista(data['valor'] ?? ''),
         descripcion: data['descripcion'] ?? '',
       },
       { emitEvent: false },

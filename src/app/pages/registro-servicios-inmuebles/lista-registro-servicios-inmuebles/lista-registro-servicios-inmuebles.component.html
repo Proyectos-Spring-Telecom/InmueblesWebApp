@@ -51,6 +51,18 @@
             <option *ngFor="let i of inmueblesOpciones" [ngValue]="i.id">{{ i.label }}</option>
           </select>
         </div>
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvInmEstatus">Estatus</label>
+          <select
+            id="regSrvInmEstatus"
+            class="form-select form-select-sm hist-renta-filtro-fechas__input"
+            [(ngModel)]="estatusFiltroPagos"
+          >
+            <option *ngFor="let op of opcionesEstatusPagoFiltro" [ngValue]="op.value">
+              {{ op.label }}
+            </option>
+          </select>
+        </div>
         <div class="hist-renta-filtros-panel__accion">
           <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
             <i class="fa fa-filter"></i> Buscar
@@ -67,6 +79,10 @@
       </div>
       <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
+      </button>
+      <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+        {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
       </button>
     </div>
 
@@ -98,8 +114,10 @@
         (onOptionChanged)="onGridOptionChanged($event)"
       >
         <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar pago..."></dxo-search-panel>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
         <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+        <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
 
         <dxi-column
           caption="Acciones"

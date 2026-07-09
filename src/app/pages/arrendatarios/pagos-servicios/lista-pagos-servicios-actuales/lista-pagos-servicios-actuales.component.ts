@@ -40,6 +40,8 @@ import {
   extraerPagoDetalleApi,
   mapPagoApiToVistaDetalle,
   OPCIONES_ESTATUS_PAGO_API,
+  OPCIONES_ESTATUS_PAGO_FILTRO_PANEL,
+  filtrarFilasPagoPorEstatusApi,
   PagoEstatusUi,
   VistaPagoDetalleModal,
 } from '../../../monitoreo/monitoreo-pagos.mapper';
@@ -79,6 +81,8 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
 
   mesFiltroPagosSeleccionado = claveMesActual();
   mesesFiltroPagosOpciones: { value: string; label: string }[] = [];
+  estatusFiltroPagos: number | null = null;
+  readonly opcionesEstatusPagoFiltro = OPCIONES_ESTATUS_PAGO_FILTRO_PANEL;
 
   mostrarModalPago = false;
   mostrarModalPagoDetalle = false;
@@ -210,6 +214,7 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
         limit: 500,
         fechaInicio: rango.inicio,
         fechaFin: rango.fin,
+        estatus: this.estatusFiltroPagos,
       })
       .pipe(
         take(1),
@@ -237,6 +242,10 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
   seleccionarMesFiltro(value: string): void {
     this.mesFiltroPagosSeleccionado = value || claveMesActual();
     this.aplicarFiltrosVista();
+  }
+
+  cambiarEstatusFiltro(): void {
+    this.cargarPagosGrid();
   }
 
   get conteoPagados(): number {
@@ -321,6 +330,8 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
       rows = rows.filter((r) => r.mesClave === this.mesFiltroPagosSeleccionado);
     }
 
+    rows = filtrarFilasPagoPorEstatusApi(rows, this.estatusFiltroPagos);
+
     const q = this.busquedaPagos.trim().toLowerCase();
     if (q) {
       rows = rows.filter((r) =>
@@ -335,6 +346,7 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
 
   limpiarVista(): void {
     this.busquedaPagos = '';
+    this.estatusFiltroPagos = null;
     this.mesFiltroPagosSeleccionado = claveMesActual();
     const mesActualExiste = this.mesesFiltroPagosOpciones.some(
       (o) => o.value === this.mesFiltroPagosSeleccionado,
@@ -342,7 +354,7 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
     if (!mesActualExiste) {
       this.mesFiltroPagosSeleccionado = '__all__';
     }
-    this.aplicarFiltrosVista();
+    this.cargarPagosGrid();
   }
 
   clasesEstatusPago(estatus: unknown): Record<string, boolean> {

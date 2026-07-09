@@ -1065,6 +1065,39 @@
   min-height: 38px;
 }
 
+.mono-grid-action-btn--consult {
+  border-color: rgba(186, 230, 253, 0.74);
+  background: rgba(96, 165, 250, 0.28);
+  color: #ffffff;
+
+  &:hover {
+    border-color: rgba(186, 230, 253, 0.92);
+    background: rgba(96, 165, 250, 0.38);
+  }
+}
+
+.mono-grid-action-btn--reset {
+  border-color: rgba(187, 247, 208, 0.74);
+  background: rgba(55, 163, 22, 0.28);
+  color: #ffffff;
+
+  &:hover {
+    border-color: rgba(187, 247, 208, 0.92);
+    background: rgba(55, 163, 22, 0.38);
+  }
+}
+
+.mono-grid-action-btn--add {
+  border-color: rgba(251, 165, 180, 0.74);
+  background: rgba(104, 19, 48, 0.28);
+  color: #ffffff;
+
+  &:hover {
+    border-color: rgba(251, 165, 180, 0.92);
+    background: rgba(104, 19, 48, 0.38);
+  }
+}
+
 .mono-pago-modal .mono-pago-form-btn {
   /* Mantener tamaño actual del modal, con estilos de formulario */
   min-height: 44px;
@@ -1201,6 +1234,26 @@
     height: 20px;
     font-size: 20px;
     line-height: 20px;
+  }
+}
+
+.mono-grid-row-action-btn--view {
+  border-color: rgba(186, 230, 253, 0.74);
+  background: rgba(96, 165, 250, 0.28);
+
+  &:hover {
+    background: rgba(96, 165, 250, 0.38);
+    border-color: rgba(186, 230, 253, 0.92);
+  }
+}
+
+.mono-grid-row-action-btn--status {
+  border-color: rgba(254, 243, 199, 0.74);
+  background: rgba(245, 158, 11, 0.28);
+
+  &:hover {
+    background: rgba(245, 158, 11, 0.38);
+    border-color: rgba(254, 243, 199, 0.92);
   }
 }
 
