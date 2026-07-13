@@ -6,6 +6,7 @@ import { AppComponent } from './app/app.component';
 import config from 'devextreme/core/config';
 import { locale } from 'devextreme/localization';
 import { environment } from './environments/environment';
+// import { installInmGridOverflowTooltip } from './app/shared/inm-grid-overflow-tooltip';
 
 // Configurar locale de DevExtreme en español
 // DevExtreme cargará automáticamente los mensajes si están disponibles en node_modules
@@ -15,6 +16,9 @@ if (environment?.dxLicenseKey) {
   // 'as any' evita que TypeScript se queje del tipo
   config({ licenseKey: environment.dxLicenseKey } as any);
 }
+
+// Tooltip de celdas truncadas (desactivado por ahora)
+// installInmGridOverflowTooltip();
 
 bootstrapApplication(AppComponent, appConfig).catch((err) =>
   console.error(err)

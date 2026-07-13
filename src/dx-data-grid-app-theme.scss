@@ -4,6 +4,24 @@
 .inm-data-grid .dx-datagrid-headers {
   background: #131920;
   border-bottom: 1px solid rgba(130, 160, 255, 0.2);
+  font-size: 15px;
+}
+
+.inm-data-grid .dx-datagrid-headers .dx-header-row > td {
+  font-size: 15px;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+  vertical-align: middle;
+  height: auto;
+}
+
+.inm-data-grid .dx-datagrid-headers .dx-datagrid-text-content {
+  white-space: normal !important;
+  text-overflow: clip;
+  overflow: visible;
+  word-break: break-word;
+  line-height: 1.25;
 }
 
 .inm-data-grid .dx-datagrid-rowsview .dx-row {
@@ -30,6 +48,14 @@
   padding-bottom: 0.75rem;
   vertical-align: middle;
   font-size: 0.78rem;
+}
+
+.inm-data-grid--master-ops .dx-datagrid-rowsview .dx-data-row > td {
+  font-size: 0.88rem;
+}
+
+.inm-data-grid--master-ops .dx-datagrid-rowsview .dx-data-row {
+  cursor: pointer;
 }
 
 .inm-data-grid .dx-datagrid-rowsview .dx-data-row > td .btnAcciones {
@@ -62,6 +88,10 @@
     font-size: 0.82rem;
   }
 
+  .inm-data-grid--master-ops .dx-datagrid-rowsview .dx-data-row > td {
+    font-size: 0.9rem;
+  }
+
   .inm-master-detail {
     padding-left: 0;
     padding-right: 0;
@@ -76,3 +106,6 @@
 .inm-master-detail {
   width: 100%;
 }
+
+// Tooltip de celdas truncadas desactivado (ver inm-grid-overflow-tooltip.ts / main.ts)
+

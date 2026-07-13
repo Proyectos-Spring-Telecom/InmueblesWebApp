@@ -82,7 +82,6 @@
                 <tr>
                   <th scope="col">Local</th>
                   <th scope="col">Fachada</th>
-                  <th scope="col">Área</th>
                   <th scope="col">Estatus</th>
                   <th scope="col">Mensualidad</th>
                   <th scope="col">Giro</th>
@@ -102,10 +101,6 @@
                       <img [src]="urlFachadaLocal(loc)" [alt]="'Fachada — ' + (loc.nombre || 'Local')" loading="lazy" />
                     </button>
                     <ng-template #sinFachadaLocal><span>—</span></ng-template>
-                  </td>
-                  <td [attr.data-label]="'Área'">
-                    <span *ngIf="loc.areaM2 != null && loc.areaM2 !== ''; else sinArea">{{ loc.areaM2 }} m²</span>
-                    <ng-template #sinArea>—</ng-template>
                   </td>
                   <td [attr.data-label]="'Estatus'">
                     <span [ngClass]="claseChipEstatusLocal(loc.estatus)">

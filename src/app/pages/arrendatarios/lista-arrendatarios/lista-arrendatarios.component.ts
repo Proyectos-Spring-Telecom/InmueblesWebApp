@@ -226,6 +226,25 @@ export class ListaArrendatariosComponent implements OnInit {
     inst.refresh();
   }
 
+  onMasterRowClick(e: any): void {
+    if (e?.rowType !== 'data' || e?.key == null) return;
+    const target = (e?.event?.target ?? null) as HTMLElement | null;
+    if (
+      target?.closest(
+        'button, a, input, textarea, select, .btnAcciones, .mat-mdc-button-base, .dx-command-expand',
+      )
+    ) {
+      return;
+    }
+    const grid = this.dataGrid?.instance;
+    if (!grid) return;
+    if (grid.isRowExpanded(e.key)) {
+      void grid.collapseRow(e.key);
+    } else {
+      void grid.expandRow(e.key);
+    }
+  }
+
   verMapaDesdeDetalle(row: ArrendatarioGridRow): void {
     if (row.lat == null || row.lng == null) return;
     const lat = Number(row.lat);

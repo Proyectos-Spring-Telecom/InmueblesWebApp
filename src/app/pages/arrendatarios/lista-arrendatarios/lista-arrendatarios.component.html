@@ -29,7 +29,7 @@
     </div>
 
     <div class="mt-3">
-      <dx-data-grid #gridContainer id="gridArrendatarios" class="inm-data-grid" [columnHidingEnabled]="true"
+      <dx-data-grid #gridContainer id="gridArrendatarios" class="inm-data-grid inm-data-grid--master-ops" [columnHidingEnabled]="true"
         [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
         [rowAlternationEnabled]="true" [dataSource]="listaArrendatarios" [keyExpr]="'id'" [width]="'100%'"
         [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
@@ -39,7 +39,8 @@
           showInfo: true,
           infoText: 'Página {0} de {1}',
           visible: true
-        }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
+        }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)"
+        (onRowClick)="onMasterRowClick($event)">
         <dxo-search-panel [visible]="true" [width]="240"
           placeholder="Buscar arrendatario, arrendador, inmueble..."></dxo-search-panel>
         <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
@@ -58,7 +59,7 @@
         <dxi-column dataField="numContratos" caption="Contratos" [visible]="false"></dxi-column>
         <dxi-column dataField="arrendatario" caption="Arrendatario" cellTemplate="arrendatarioTpl" alignment="center"
           [width]="250" [allowFiltering]="true"></dxi-column>
-        <dxi-column dataField="tipoPersonaLabel" caption="Tipo persona" alignment="center" [width]="130"></dxi-column>
+        <dxi-column dataField="tipoPersonaLabel" caption="Tipo persona" alignment="center" [width]="180"></dxi-column>
         <dxi-column dataField="rfc" caption="RFC" alignment="center" [width]="130"></dxi-column>
         <dxi-column dataField="rentaFmt" caption="Renta" alignment="center" [width]="120"></dxi-column>
         <dxi-column caption="Vigencia" cellTemplate="vigenciaTpl" alignment="center" [width]="200"

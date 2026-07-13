@@ -27,7 +27,7 @@
     </div>
 
     <div class="mt-3">
-      <dx-data-grid #gridContainer id="gridInmuebles" class="inm-data-grid" [columnHidingEnabled]="true"
+      <dx-data-grid #gridContainer id="gridInmuebles" class="inm-data-grid inm-data-grid--master-ops" [columnHidingEnabled]="true"
         [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
         [rowAlternationEnabled]="true" [dataSource]="listaInmuebles" [keyExpr]="'id'" [width]="'100%'"
         [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
@@ -37,7 +37,8 @@
           showInfo: true,
           infoText: 'Página {0} de {1}',
           visible: true
-        }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
+        }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)"
+        (onRowClick)="onMasterRowClick($event)">
 
         <dxo-search-panel [visible]="true" [width]="240"
           placeholder="Buscar inmueble, arrendador..."></dxo-search-panel>
