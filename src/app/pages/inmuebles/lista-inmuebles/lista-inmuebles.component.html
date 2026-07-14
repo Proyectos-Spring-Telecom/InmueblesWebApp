@@ -56,24 +56,15 @@
         <dxi-column dataField="numLocales" caption="Locales" [visible]="false"></dxi-column>
         <dxi-column dataField="numServicios" caption="Servicios" [visible]="false"></dxi-column>
         <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
-        <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="center" [width]="250"
-          [allowFiltering]="true"></dxi-column>
-        <dxi-column dataField="direccionFiscal" caption="Dirección fiscal" [width]="250"
-          alignment="center"></dxi-column>
+        <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="left" cssClass="inm-col-nombre" [width]="250" [allowFiltering]="true"></dxi-column>
+        <dxi-column dataField="direccionFiscal" caption="Dirección fiscal" [width]="250" alignment="center"></dxi-column>
         <dxi-column dataField="arrendadorNombre" caption="Arrendador" [width]="200" alignment="center"></dxi-column>
-        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="200"
-          alignment="center"></dxi-column>
-        <dxi-column caption="Representante Legal" cellTemplate="representanteTpl" [width]="250" alignment="center"
-          [allowSorting]="false" [allowFiltering]="false"></dxi-column>
-        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" [width]="80"
-          alignment="center"></dxi-column>
-        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false"
-          alignment="center"></dxi-column>
-        <dxi-column dataField="correoRepresentante" caption="Correo representante" [visible]="false"
-          alignment="center"></dxi-column>
-        <dxi-column dataField="telefonoRepresentante" caption="Teléfono representante" [visible]="false"
-          alignment="center"></dxi-column>
-
+        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="200" alignment="center"></dxi-column>
+        <dxi-column caption="Representante Legal" cellTemplate="representanteTpl" [width]="200" alignment="center" [allowSorting]="false" [allowFiltering]="false"></dxi-column>
+        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" [width]="150" alignment="center"></dxi-column>
+        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false" alignment="center"></dxi-column>
+        <dxi-column dataField="correoRepresentante" caption="Correo representante" [visible]="false" alignment="center"></dxi-column>
+        <dxi-column dataField="telefonoRepresentante" caption="Teléfono representante" [visible]="false" alignment="center"></dxi-column>
         <div *dxTemplate="let cell of 'inmuebleTpl'">
           <div class="inm-row-card inm-row-card--nombre">
             <div class="inm-row-card__icon" aria-hidden="true">
@@ -82,7 +73,6 @@
             <span class="inm-row-card__title">{{ cell.data.inmueble }}</span>
           </div>
         </div>
-
         <div *dxTemplate="let cell of 'vigenciaTpl'">
           <div class="inm-cell-stack inm-cell-stack--center">
             <span class="inm-cell-line inm-cell-line--muted">
@@ -90,11 +80,9 @@
             </span>
           </div>
         </div>
-
         <div *dxTemplate="let cell of 'estatusTpl'">
           <span [ngClass]="cell.data.estatusClass">{{ cell.data.estatusLabel }}</span>
         </div>
-
         <div *dxTemplate="let cell of 'representanteTpl'">
           <div class="inm-cell-stack">
             <span class="inm-cell-line">{{ cell.data.representanteNombre }}</span>
@@ -106,14 +94,12 @@
             </span>
           </div>
         </div>
-
         <div *dxTemplate="let cell of 'registroTpl'">
           <div class="inm-cell-stack inm-cell-stack--center">
             <span class="inm-cell-line inm-cell-line--muted">{{ cell.data.fhRegistroFmt }}</span>
             <span [ngClass]="cell.data.estatusRegistroClass">{{ cell.data.estatusRegistroLabel }}</span>
           </div>
         </div>
-
         <div *dxTemplate="let cell of 'chipsTpl'">
           <div class="inm-row-chips">
             <span class="inm-chip inm-chip--muted">
@@ -134,7 +120,6 @@
             </span>
           </div>
         </div>
-
         <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
           <div *appHasPermission="'42'">
             <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"

@@ -153,6 +153,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   public listaCatServicios: CatServicioItem[] = [];
   loadingSubmit = false;
   mostrarModalMapa = false;
+  /** Error de lat/lng visible bajo el mapa cuando confirman sin marcar punto. */
+  mostrarErrorCoordsMapa = false;
   /** Índice del slot de galería para animación de entrada (una vez). */
   indiceGaleriaAnimando: number | null = null;
   private readonly mapaCentroCuernavaca = { lat: 18.9186, lng: -99.2341 };
@@ -525,28 +527,20 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratoEdicionSnapshotJson = null;
     this.arrendatarioForm = this.fb.group({
       arrendatario: ['', Validators.required],
-      rfc: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(12),
-          Validators.maxLength(13),
-          Validators.pattern(/^[A-Za-z0-9]+$/),
-        ],
-      ],
-      tipoPersona: [null as number | null, Validators.required],
+      rfc: [''],
+      tipoPersona: [null as number | null],
       /** Ocultos en UI; no se envían en POST/PUT del arrendatario. */
       renta: [''],
       direccionFiscal: [''],
       fechaInicio: [''],
       fechaFin: [''],
-      idArrendador: [null as number | null, Validators.required],
+      idArrendador: [null as number | null],
       /** Sin selector en UI; puede venir de demos u otras rutas. */
       estatusInmueble: [null as string | null],
       tiempoRenta: [''],
-      representanteLegal: ['', Validators.required],
-      telefonoRepresentante: ['', Validators.required],
-      correoRepresentante: ['', [Validators.required, Validators.email]],
+      representanteLegal: [''],
+      telefonoRepresentante: [''],
+      correoRepresentante: ['', Validators.email],
       lat: [''],
       lng: [''],
       documentoPlano: [null],
@@ -1480,7 +1474,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private crearLocalFormGroup(): FormGroup {
     return this.fb.group({
-      nombreLocal: ['', Validators.required],
+      nombreLocal: [''],
       estadoLocal: [''],
       mensualidadLocalMxn: [''],
       zonaLocal: [''],
@@ -1850,6 +1844,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private abrirModalMapaParaGuardar(): void {
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
+    this.mostrarErrorCoordsMapa = false;
     this.mostrarModalMapa = true;
     this.cdr.detectChanges();
     setTimeout(() => {
@@ -1862,27 +1857,27 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   cancelarModalMapa(): void {
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
+    this.mostrarErrorCoordsMapa = false;
     this.limpiarEstadoMapaModal();
   }
 
   private limpiarEstadoMapaModal(): void {
     this.mostrarModalMapa = false;
+    this.mostrarErrorCoordsMapa = false;
     this.map = null;
     this.marker = null;
   }
 
   confirmarUbicacionMapa(): void {
     if (this.latSeleccionada == null || this.lngSeleccionada == null) {
-      void Swal.fire({
-        background: '#141a21',
-        color: '#ffffff',
-        title: 'Selecciona una ubicación',
-        text: 'Debes hacer clic en el mapa para marcar latitud y longitud antes de guardar.',
-        icon: 'warning',
-        confirmButtonColor: '#3085d6',
-      });
+      this.mostrarErrorCoordsMapa = true;
+      this.mostrarAlertaCamposFaltantes([
+        this.etiquetasCampos['lat'],
+        this.etiquetasCampos['lng'],
+      ]);
       return;
     }
+    this.mostrarErrorCoordsMapa = false;
     this.arrendatarioForm.patchValue({
       lat: this.latSeleccionada,
       lng: this.lngSeleccionada,
@@ -1975,7 +1970,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         const p = { lat: e.latLng.lat(), lng: e.latLng.lng() };
         this.latSeleccionada = p.lat;
         this.lngSeleccionada = p.lng;
+        this.mostrarErrorCoordsMapa = false;
         this.actualizarMarcadorMapa(p);
+        this.cdr.detectChanges();
       },
     );
   }
@@ -2984,76 +2981,35 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     return hit?.id ?? null;
   }
 
-  private readonly controlesExcluidosValidacion = new Set<string>([
-    'locales',
-    'contratos',
-    'pagos',
-    'servicios',
-    'socios',
-    'galeriaImagenes',
-    'documentoPlano',
-    'documentoContratoRenta',
-    'documentoConstanciaFiscal',
-    'constanciaSituacionFiscalRepresentanteLegal',
-    'documentoComprobanteDomicilio',
-    'ineRepresentanteLegal',
-    'lat',
-    'lng',
-    'fechaInicio',
-    'fechaFin',
-    'renta',
-    'tiempoRenta',
-  ]);
-
   private readonly etiquetasCampos: Record<string, string> = {
-    arrendatario: 'Nombre del arrendatario',
-    rfc: 'RFC',
-    tipoPersona: 'Tipo de persona',
-    renta: 'Renta',
-    direccionFiscal: 'Dirección fiscal',
-    estatusInmueble: 'Estatus del arrendamiento',
-    fechaInicio: 'Fecha de inicio',
-    fechaFin: 'Fecha de fin',
-    idArrendador: 'Arrendador',
-    tiempoRenta: 'Tiempo de renta',
-    representanteLegal: 'Representante legal',
-    telefonoRepresentante: 'Teléfono del representante',
-    correoRepresentante: 'Correo del representante',
-    idInmueble: 'Inmueble',
-    idLocal: 'Local',
-    fechaInicioContrato: 'Inicio de contrato',
-    fechaTerminoContrato: 'Término de contrato',
-    tipoMoneda: 'Moneda',
-    metrosRentados: 'Metros rentados',
-    costoPorM2: 'Costo por m²',
-    incluyeMantenimiento: 'Incluye mantenimiento',
-    pctMantenimiento: 'Porcentaje mantenimiento',
-    mesesDeposito: 'Meses depósito',
-    montoDeposito: 'Monto depósito',
-    mesesAdelanto: 'Meses adelanto',
-    montoAdelanto: 'Monto adelanto',
-    anosForzososArrendador: 'Años forzosos arrendador',
-    anosForzososArrendatario: 'Años forzosos arrendatario',
-    subtotalRenta: 'Subtotal renta',
-    ivaRenta: 'IVA renta',
-    rentaTotal: 'Renta total',
-    subtotalMantenimiento: 'Subtotal mantenimiento',
-    ivaMantenimiento: 'IVA mantenimiento',
-    mantenimientoTotal: 'Mantenimiento total',
-    observaciones: 'Observaciones',
+    arrendatario: 'Arrendatario',
+    lat: 'Latitud',
+    lng: 'Longitud',
   };
 
   private validarFormularioAntesMapa(): boolean {
-    this.aplicarValidadoresTipoPersona(this.arrendatarioForm.get('tipoPersona')?.value);
+    this.arrendatarioForm.get('arrendatario')?.markAsTouched();
 
-    this.arrendatarioForm.markAllAsTouched();
-    this.contratosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
-    this.serviciosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
-    this.sociosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
+    const faltantesKeys = this.recopilarCamposFaltantes();
+    if (faltantesKeys.length === 0) return true;
 
-    const faltantes = this.recopilarCamposFaltantes();
-    if (faltantes.length === 0) return true;
+    this.mostrarAlertaCamposFaltantes(
+      faltantesKeys.map((key) => this.etiquetasCampos[key] ?? key),
+    );
+    return false;
+  }
 
+  /** Claves de control en orden de aparición en el formulario. */
+  private recopilarCamposFaltantes(): string[] {
+    const faltantes: string[] = [];
+    const nombre = String(this.arrendatarioForm.get('arrendatario')?.value ?? '').trim();
+    if (!nombre) {
+      faltantes.push('arrendatario');
+    }
+    return faltantes;
+  }
+
+  private mostrarAlertaCamposFaltantes(faltantes: string[]): void {
     const lista = faltantes
       .map(
         (campo, index) => `
@@ -3070,8 +3026,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       title: '¡Revise el formulario!',
       html: `
         <p style="text-align: center; font-size: 15px; margin-bottom: 16px; color: white">
-          Faltan campos obligatorios según el formulario y el API.
-          Los campos excluidos de validación (documentos, coordenadas, etc.) no se listan aquí.
+          Faltan los siguientes campos obligatorios.
         </p>
         <div style="max-height: 350px; overflow-y: auto;">${lista}</div>
       `,
@@ -3081,78 +3036,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       background: '#141a21',
       color: '#ffffff',
       customClass: { popup: 'swal2-padding swal2-border' },
-    });
-    return false;
-  }
-
-  /** Fila de servicios considerada «en uso»: si eligieron tipo de servicio, deben completar datos mínimos. */
-  private servicioFilaActiva(grupo: FormGroup): boolean {
-    const raw = grupo.get('idTipoServicio')?.value;
-    if (raw == null || raw === '') return false;
-    return Number.isFinite(Number(raw));
-  }
-
-  private recopilarCamposFaltantes(): string[] {
-    const faltantes: string[] = [];
-    Object.keys(this.arrendatarioForm.controls).forEach((key) => {
-      if (this.controlesExcluidosValidacion.has(key)) return;
-
-      const control = this.arrendatarioForm.get(key);
-      if (!control || control.disabled) return;
-      if (control.invalid) {
-        faltantes.push(this.etiquetasCampos[key] ?? key);
-      }
-    });
-
-    this.serviciosFormArray.controls.forEach((ctrl, i) => {
-      const g = ctrl as FormGroup;
-      if (!this.servicioFilaActiva(g)) return;
-      const etiquetaPref = `Servicio ${i + 1}`;
-      const nc = String(g.get('servicioNumeroContrato')?.value ?? '').trim();
-      const fp = String(g.get('servicioFechaPago')?.value ?? '').trim();
-      const ulp = String(g.get('servicioUltimoDiaPago')?.value ?? '').trim();
-      if (!nc) faltantes.push(`${etiquetaPref}: número de contrato`);
-      if (!fp) faltantes.push(`${etiquetaPref}: fecha de pago`);
-      if (!ulp) faltantes.push(`${etiquetaPref}: último día de pago`);
-    });
-
-    /** Socios: sin validadores en filas vacías; no se bloquean filas incompletasssss. */
-
-    this.recopilarFaltantesLocalContrato(faltantes);
-
-    return faltantes;
-  }
-
-  /**
-   * Validación por fila de contrato: inmueble elegido y al menos un local en `idLocales`.
-   */
-  private recopilarFaltantesLocalContrato(faltantes: string[]): void {
-    this.contratosFormArray.controls.forEach((ctrl, index) => {
-      const g = ctrl as FormGroup;
-      const idInmRaw = g.get('idInmueble')?.value;
-      const idInmSeleccionado =
-        idInmRaw != null &&
-        String(idInmRaw).trim() !== '' &&
-        Number.isFinite(Number(idInmRaw)) &&
-        Number(idInmRaw) > 0;
-      const pref = `Contrato ${index + 1}`;
-
-      if (!idInmSeleccionado) return;
-
-      if (this.cargandoLocalesPorContrato[index]) {
-        faltantes.push(`${pref}: espera a que termine la carga de locales`);
-        return;
-      }
-
-      if ((this.localesLibresPorContrato[index] ?? []).length === 0) {
-        faltantes.push(`${pref}: no hay locales disponibles para el inmueble seleccionado`);
-        return;
-      }
-
-      const idsOk = this.normalizarIdLocalesValue(g.get('idLocales')?.value).length > 0;
-      if (!idsOk) {
-        faltantes.push(`${pref}: ${this.etiquetasCampos['idLocal'] ?? 'Local'}`);
-      }
     });
   }
 

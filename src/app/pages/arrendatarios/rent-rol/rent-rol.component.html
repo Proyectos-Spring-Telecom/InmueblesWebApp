@@ -17,6 +17,12 @@
       </nav>
     </header>
     <div class="surface">
+      <div class="d-flex flex-wrap gap-10 justify-content-end w-100 rr-lista-toolbar">
+        <button type="button" mat-flat-button class="bg-secondary rr-captura-btn" (click)="abrirModalCaptura()">
+          <i class="fa fa-plus" aria-hidden="true"></i> Capturar
+        </button>
+      </div>
+
       <div class="rr-kpi-slot" role="region" aria-label="Resumen del periodo">
         <div class="rr-kpi-shell">
           <div class="rr-kpi-grid">
@@ -216,3 +222,413 @@
     </div>
   </div>
 </div>
+
+<!-- ── Modal captura rápida ───────────────────────────────────────── -->
+<ng-container *ngIf="mostrarModalCaptura">
+  <div class="contract-page-dim" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop rr-captura-backdrop" [@contractModalAnim]
+    (click)="cerrarModalCaptura()">
+    <div class="docs-modal contract-docs-modal mono-pago-modal rr-captura-modal" role="dialog" aria-modal="true"
+      aria-labelledby="rr-captura-title" (click)="onCapturaModalClick($event)">
+      <div class="row docs-modal__header">
+        <div class="col-10 col-md-11">
+          <h3 class="docs-modal__title" id="rr-captura-title">Capturar registro</h3>
+          <p class="docs-modal__subtitle">
+            Captura rápida del arrendatario y contrato. La ubicación se pide al guardar.
+          </p>
+        </div>
+        <div class="col-2 col-md-1 docs-modal__close-col">
+          <button type="button" class="docs-modal__close" (click)="cerrarModalCaptura()"
+            aria-label="Cerrar captura">
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="row docs-modal__body rr-captura-body">
+        <div class="col-12">
+          <div class="perm-form-nc">
+            <form [formGroup]="capturaForm" class="perm-form-body mono-pago-form rr-captura-form" novalidate>
+              <div class="row g-3 mb-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label perm-label" for="rrCapArrendatario">
+                    Arrendatario <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">person</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapArrendatario" type="text" class="form-control" formControlName="arrendatario"
+                        placeholder="Nombre del arrendatario" autocomplete="organization" />
+                      <label for="rrCapArrendatario">Nombre del arrendatario</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label perm-label" for="rrCapArrendador">
+                    Arrendador <span class="text-danger">*</span>
+                  </label>
+                  <div *ngIf="catalogosCapturaCargando" class="rr-captura-loading" @rrCapturaFade>Cargando arrendadores…</div>
+                  <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosCapturaCargando" @rrCapturaFade>
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">person_outline</mat-icon></span>
+                    <div class="form-floating flex-grow-1 perm-select-floating">
+                      <select id="rrCapArrendador" class="form-select" formControlName="idArrendador">
+                        <option [ngValue]="null" disabled>Selecciona arrendador</option>
+                        <option *ngFor="let a of arrendadoresOpciones" [ngValue]="a.id">{{ a.label }}</option>
+                      </select>
+                      <label for="rrCapArrendador">Arrendador</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rr-captura-section rr-captura-section--inmueble" aria-labelledby="rr-sec-inmueble">
+                <header class="rr-captura-section__head">
+                  <mat-icon aria-hidden="true">domain</mat-icon>
+                  <div>
+                    <h4 id="rr-sec-inmueble">Inmueble y locales</h4>
+                    <p>Lista de inmuebles del arrendador seleccionado y sus locales libres.</p>
+                  </div>
+                </header>
+
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label perm-label" for="rrCapInmueble">
+                      Inmueble <span class="text-danger">*</span>
+                    </label>
+                    <div class="rr-inmueble-field">
+                      <div class="input-group input-group-lg perm-ig rr-inmueble-field__select"
+                        [class.is-loading]="cargandoInmuebles">
+                        <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">home_work</mat-icon></span>
+                        <div class="form-floating flex-grow-1 perm-select-floating">
+                          <select id="rrCapInmueble" class="form-select" formControlName="idInmueble"
+                            (change)="onInmuebleChange()">
+                            <option [ngValue]="null" disabled>{{ placeholderInmueble }}</option>
+                            <option *ngFor="let i of inmueblesOpciones" [ngValue]="i.id">{{ i.label }}</option>
+                          </select>
+                          <label for="rrCapInmueble">Inmueble</label>
+                        </div>
+                      </div>
+                      <button type="button" mat-mini-fab class="bg-secondary rr-inmueble-add-btn"
+                        *ngIf="mostrarBotonAltaInmueble"
+                        [disabled]="!puedeAgregarInmuebleNuevo"
+                        matTooltip="Agregar un inmueble nuevo para este arrendador"
+                        matTooltipPosition="above"
+                        aria-label="Agregar un inmueble nuevo para este arrendador"
+                        (click)="mostrarAltaInmueble()">
+                        <mat-icon aria-hidden="true">add</mat-icon>
+                      </button>
+                    </div>
+                    <p *ngIf="mostrarAvisoSeleccionarArrendadorInmueble"
+                      class="small mt-2 mb-0 arrend-contrato-aviso arrend-contrato-aviso--info" role="status">
+                      Selecciona arrendador primero.
+                    </p>
+                    <p *ngIf="puedeAgregarInmuebleNuevo && inmueblesOpciones.length === 0 && !mostrarFormularioNuevoInmueble"
+                      class="small mt-2 mb-0 text-warning arrend-contrato-aviso" role="status">
+                      Este arrendador no tiene inmuebles. Usa el botón + para agregar uno.
+                    </p>
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <label class="form-label perm-label">Local(es) <span class="text-danger">*</span></label>
+                    <div class="arrend-locales-picker-wrap" (click)="$event.stopPropagation()">
+                      <div class="input-group input-group-lg perm-ig arrend-locales-picker">
+                        <span class="input-group-text fw-bold"><mat-icon>store</mat-icon></span>
+                        <div class="arrend-locales-picker__body"
+                          [class.arrend-locales-picker__body--open]="localesDropdownAbierto">
+                          <div class="arrend-locales-picker__field"
+                            [class.is-disabled]="localesPickerDeshabilitado" role="button" tabindex="0"
+                            aria-haspopup="listbox" [attr.aria-disabled]="localesPickerDeshabilitado"
+                            [attr.aria-expanded]="localesDropdownAbierto"
+                            (click)="toggleLocalesDropdown($event)"
+                            (keydown.enter)="toggleLocalesDropdown($event)"
+                            (keydown.space)="toggleLocalesDropdown($event); $event.preventDefault()">
+                            <span class="arrend-locales-picker__resumen" *ngIf="tieneLocalesSeleccionados">{{ resumenLocalesSeleccionados }}</span>
+                            <span class="arrend-locales-picker__placeholder" *ngIf="!tieneLocalesSeleccionados">{{ placeholderLocales }}</span>
+                            <mat-icon class="arrend-locales-picker__chevron">expand_more</mat-icon>
+                          </div>
+                          <ul class="arrend-locales-picker__menu" role="listbox" aria-multiselectable="true"
+                            *ngIf="localesDropdownAbierto && !localesPickerDeshabilitado" @rrCapturaReveal>
+                            <li role="presentation" *ngFor="let loc of localesOpciones">
+                              <button type="button" class="arrend-locales-picker__option"
+                                [class.is-selected]="localSeleccionado(loc.id)"
+                                (click)="toggleLocal(loc.id, $event)">
+                                <mat-icon>{{ localSeleccionado(loc.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                                <span>{{ loc.etiqueta }}</span>
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div class="arrend-locales-picker__selected" *ngIf="tieneLocalesSeleccionados" @rrCapturaReveal>
+                        <span class="arrend-locales-picker__chip" *ngFor="let idLoc of idLocalesSeleccionados" @rrCapturaFade>
+                          <span class="arrend-locales-picker__chip-label">{{ nombreLocalPorId(idLoc) }}</span>
+                          <button type="button" class="arrend-locales-picker__chip-btn"
+                            [disabled]="localesPickerDeshabilitado" aria-label="Quitar local"
+                            (click)="quitarLocal(idLoc, $event)">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                    <p *ngIf="mostrarAvisoSeleccionarInmuebleLocales"
+                      class="small mt-2 mb-0 arrend-contrato-aviso arrend-contrato-aviso--info" role="status"
+                      @rrCapturaFade>
+                      Selecciona inmueble primero.
+                    </p>
+                    <p *ngIf="mostrarAvisoLocalesVacios"
+                      class="small mt-2 mb-0 text-warning arrend-contrato-aviso" role="status"
+                      @rrCapturaFade>
+                      Este inmueble no tiene locales disponibles.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="rr-nuevo-inm-panel mt-3" *ngIf="mostrarPanelAltaInmueble" @rrCapturaReveal>
+                  <div class="rr-nuevo-inm-panel__intro">
+                    <mat-icon aria-hidden="true">place</mat-icon>
+                    <span>Nombre, arrendador (ya elegido) y ubicación. Al Guardar se crea primero este inmueble.</span>
+                    <button type="button" class="rr-nuevo-inm-panel__cerrar" (click)="ocultarAltaInmueble()"
+                      aria-label="Cerrar alta de inmueble">
+                      <mat-icon aria-hidden="true">close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-7">
+                      <label class="form-label perm-label" for="rrCapNuevoInm">
+                        Nombre del inmueble <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group input-group-lg perm-ig">
+                        <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">edit</mat-icon></span>
+                        <div class="form-floating flex-grow-1">
+                          <input id="rrCapNuevoInm" type="text" class="form-control"
+                            [(ngModel)]="nuevoInmuebleNombre" [ngModelOptions]="{standalone: true}"
+                            (input)="onNuevoInmuebleNombreInput()"
+                            placeholder="Nombre inmueble" />
+                          <label for="rrCapNuevoInm">Nombre del inmueble</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-5">
+                      <button type="button" mat-flat-button class="bg-secondary w-100 rr-ubicar-inm-btn"
+                        (click)="iniciarAltaInmuebleConMapa()"
+                        [disabled]="guardandoInmuebleNuevo || !nuevoInmuebleNombre.trim()">
+                        <mat-icon aria-hidden="true">map</mat-icon>
+                        <span>Ubicar y crear ahora</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-2 rr-captura-campos">
+                <div class="col-12 col-md-4">
+                  <label class="form-label perm-label" for="rrCapInicio">
+                    Fecha inicio <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">event</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapInicio" type="date" class="form-control" formControlName="fechaInicioContrato"
+                        placeholder="Inicio" />
+                      <label for="rrCapInicio">Fecha inicio</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label perm-label" for="rrCapFin">
+                    Fecha término <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">event_available</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapFin" type="date" class="form-control" formControlName="fechaTerminoContrato"
+                        placeholder="Término" />
+                      <label for="rrCapFin">Fecha término</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label perm-label" for="rrCapMetros">
+                    Metros rentados <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">straighten</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapMetros" type="number" class="form-control" formControlName="metrosRentados"
+                        (input)="onMontosInput()" min="0" step="0.01" placeholder="Metros" />
+                      <label for="rrCapMetros">Metros rentados</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label perm-label" for="rrCapCosto">
+                    Costo por M² <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">attach_money</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapCosto" type="number" class="form-control" formControlName="costoM2"
+                        (input)="onMontosInput()" min="0" step="0.01" placeholder="Costo M²" />
+                      <label for="rrCapCosto">Costo por M²</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label perm-label" for="rrCapIncluyeMtto">Incluye mantenimiento</label>
+                  <div class="contrato-incluye-mtto">
+                    <label class="toggle-switch" [class.is-disabled]="!switchManttoHabilitado"
+                      (click)="onIncluyeManttoClick($event)">
+                      <input type="checkbox" id="rrCapIncluyeMtto"
+                        [checked]="switchManttoVisualSi"
+                        [disabled]="!switchManttoHabilitado"
+                        [attr.aria-disabled]="!switchManttoHabilitado"
+                        tabindex="-1"
+                        (change)="onIncluyeManttoChange($any($event.target).checked)" />
+                      <div class="toggle-switch-background">
+                        <div class="toggle-switch-handle"></div>
+                      </div>
+                    </label>
+                    <span class="contrato-incluye-mtto__estado">{{ switchManttoVisualSi ? 'Sí' : 'No' }}</span>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4" *ngIf="!switchManttoVisualSi" @rrCapturaFade>
+                  <label class="form-label perm-label" for="rrCapPct">
+                    Porcentaje mantenimiento <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">construction</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapPct" type="number" class="form-control" formControlName="pctMantenimiento"
+                        (input)="onMontosInput()" min="0" step="0.01" placeholder="Porcentaje" />
+                      <label for="rrCapPct">Porcentaje mantenimiento</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label perm-label" for="rrCapSubRenta">Subtotal</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">calculate</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapSubRenta" type="text" class="form-control" [value]="montoDisplay(montosPreview.renta.subTotal)"
+                        readonly tabindex="-1" placeholder="Subtotal" />
+                      <label for="rrCapSubRenta">Subtotal</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label perm-label" for="rrCapIvaRenta">IVA renta</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">functions</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapIvaRenta" type="text" class="form-control" [value]="montoDisplay(montosPreview.renta.iva)"
+                        readonly tabindex="-1" placeholder="IVA renta" />
+                      <label for="rrCapIvaRenta">IVA renta</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label perm-label" for="rrCapRentaTotal">Renta total</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">summarize</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapRentaTotal" type="text" class="form-control" [value]="montoDisplay(montosPreview.renta.total)"
+                        readonly tabindex="-1" placeholder="Renta total" />
+                      <label for="rrCapRentaTotal">Renta total</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4" *ngIf="!switchManttoVisualSi" @rrCapturaFade>
+                  <label class="form-label perm-label" for="rrCapSubMant">Subtotal mantenimiento</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">build</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapSubMant" type="text" class="form-control"
+                        [value]="montoDisplay(montosPreview.mantenimiento.subTotal)"
+                        readonly tabindex="-1" placeholder="Subtotal mantenimiento" />
+                      <label for="rrCapSubMant">Subtotal mantenimiento</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4" *ngIf="!switchManttoVisualSi" @rrCapturaFade>
+                  <label class="form-label perm-label" for="rrCapIvaMant">IVA mantenimiento</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">functions</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapIvaMant" type="text" class="form-control"
+                        [value]="montoDisplay(montosPreview.mantenimiento.iva)"
+                        readonly tabindex="-1" placeholder="IVA mantenimiento" />
+                      <label for="rrCapIvaMant">IVA mantenimiento</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4" *ngIf="!switchManttoVisualSi" @rrCapturaFade>
+                  <label class="form-label perm-label" for="rrCapMantTotal">Mantenimiento total</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">summarize</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapMantTotal" type="text" class="form-control"
+                        [value]="montoDisplay(montosPreview.mantenimiento.total)"
+                        readonly tabindex="-1" placeholder="Mantenimiento total" />
+                      <label for="rrCapMantTotal">Mantenimiento total</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="rr-captura-footer d-flex flex-wrap gap-3 justify-content-end">
+        <button type="button" class="button-danger" (click)="cerrarModalCaptura()"
+          [disabled]="guardandoCaptura || guardandoInmuebleNuevo">
+          <i class="fa fa-times" aria-hidden="true"></i>&nbsp;&nbsp;Cancelar
+        </button>
+        <button type="button" class="button-success"
+          (click)="continuarAUbicacionArrendatario()"
+          [disabled]="guardandoCaptura || guardandoInmuebleNuevo">
+          <i class="fa fa-check" aria-hidden="true"></i>&nbsp;&nbsp;Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- ── Modal mapa ─────────────────────────────────────────────────── -->
+<ng-container *ngIf="mostrarModalMapa">
+  <div class="contract-page-dim rr-mapa-dim" [@contractDimAnim]></div>
+  <div class="docs-backdrop contract-docs-backdrop rr-mapa-backdrop" [@contractModalAnim]
+    (click)="cerrarModalMapa()">
+    <div class="docs-modal contract-docs-modal rr-mapa-modal" role="dialog" aria-modal="true"
+      [attr.aria-label]="mapaTitulo" (click)="$event.stopPropagation()">
+      <div class="row docs-modal__header">
+        <div class="col-10">
+          <h3 class="docs-modal__title">{{ mapaTitulo }}</h3>
+          <p class="docs-modal__subtitle">{{ mapaSubtitulo }}</p>
+        </div>
+        <div class="col-2 docs-modal__close-col">
+          <button type="button" class="docs-modal__close" (click)="cerrarModalMapa()" aria-label="Cerrar mapa">
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      </div>
+      <div class="rr-mapa-canvas-wrap">
+        <div id="mapRentRolCaptura" class="rr-mapa-canvas" role="application" aria-label="Mapa de ubicación"></div>
+        <div class="rr-mapa-coords" *ngIf="latSeleccionada != null && lngSeleccionada != null" @rrCapturaFade>
+          {{ latSeleccionada | number:'1.5-5' }}, {{ lngSeleccionada | number:'1.5-5' }}
+        </div>
+      </div>
+      <div class="rr-captura-footer d-flex flex-wrap gap-3 justify-content-end">
+        <button type="button" class="button-danger" (click)="cerrarModalMapa()"
+          [disabled]="guardandoCaptura || guardandoInmuebleNuevo">
+          <i class="fa fa-times" aria-hidden="true"></i>&nbsp;&nbsp;Cancelar
+        </button>
+        <button type="button" class="button-success" (click)="confirmarUbicacionMapa()"
+          [disabled]="latSeleccionada == null || guardandoCaptura || guardandoInmuebleNuevo">
+          <i class="fa fa-check" aria-hidden="true"></i>&nbsp;&nbsp;Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>

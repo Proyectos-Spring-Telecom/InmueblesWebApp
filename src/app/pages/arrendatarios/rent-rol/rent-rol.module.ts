@@ -1,12 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { DxDataGridModule } from 'devextreme-angular';
+import { MaterialModule } from 'src/app/material.module';
 import { RentRolRoutingModule } from './rent-rol-routing.module';
 import { RentRolComponent } from './rent-rol.component';
 
 @NgModule({
   declarations: [RentRolComponent],
-  imports: [CommonModule, RentRolRoutingModule, MatIconModule, DxDataGridModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RentRolRoutingModule,
+    MatIconModule,
+    MaterialModule,
+    DxDataGridModule,
+  ],
 })
 export class RentRolModule {}

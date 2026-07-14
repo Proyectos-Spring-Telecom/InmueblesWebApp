@@ -50,6 +50,10 @@ interface SnapshotLocalEdicion {
   areaM2: string;
   estatus: number | null;
   mensualidad: string;
+  mantenimientoSinIva: string;
+  aplicaIva: number;
+  rentaConIva: string;
+  mantenimientoConIva: string;
   giro: string;
   fachadaUrl: string;
 }
@@ -117,6 +121,8 @@ interface SnapshotEdicionInmueble {
   ],
 })
 export class AgregarInmuebleComponent implements OnInit, OnDestroy {
+  private static readonly IVA_LOCAL = 0.16;
+
   private readonly swalToastOcrExito = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -191,39 +197,9 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private readonly etiquetasCampos: Record<string, string> = {
     nombreInmueble: 'Inmueble',
     idArrendador: 'Arrendador',
-    rentaMxn: 'Renta (MXN)',
-    direccionInmueble: 'Dirección fiscal',
-    estatusInmueble: 'Estatus del inmueble',
-    fechaInicio: 'Inicio de vigencia',
-    fechaFin: 'Fin de vigencia',
-    tiempoRentaAnios: 'Tiempo de renta (años)',
-    nombreRepresentanteLegal: 'Nombre representante legal',
-    telefonoRepresentanteLegal: 'Teléfono representante legal',
-    correoRepresentanteLegal: 'Correo representante legal',
+    lat: 'Latitud',
+    lng: 'Longitud',
   };
-  private readonly controlesExcluidosValidacion = new Set([
-    'lat',
-    'lng',
-    'documentoEscritura',
-    'documentoBoletaPredial',
-    'documentoReciboAguaServicios',
-    'documentoLicenciaFuncionamiento',
-    'documentoUsoSuelo',
-    'documentoFachada',
-    'documentoPlano',
-    'documentoContratoRenta',
-    'documentoConstanciaFiscal',
-    'constanciaSituacionFiscalRepresentanteLegal',
-    'documentoComprobanteDomicilio',
-    'ineRepresentanteLegal',
-    'galeriaImagenes',
-    'servicios',
-    'zonas',
-    'locales',
-    'socios',
-    'estacionamientos',
-    'pagos',
-  ]);
   mostrarModalMapa = false;
   /** Copia al cargar edición; base para enviar solo cambios en PUT. */
   private snapshotEdicion: SnapshotEdicionInmueble | null = null;
@@ -418,15 +394,15 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.inmuebleForm = this.fb.group({
       nombreInmueble: ['', Validators.required],
       rentaMxn: [''],
-      direccionInmueble: ['', Validators.required],
-      fechaInicio: ['', Validators.required],
-      fechaFin: ['', Validators.required],
+      direccionInmueble: [''],
+      fechaInicio: [''],
+      fechaFin: [''],
       idArrendador: [null as number | null, Validators.required],
       tiempoRentaAnios: [''],
-      estatusInmueble: [null as string | null, Validators.required],
-      nombreRepresentanteLegal: ['', Validators.required],
-      telefonoRepresentanteLegal: ['', Validators.required],
-      correoRepresentanteLegal: ['', [Validators.required, Validators.email]],
+      estatusInmueble: [null as string | null],
+      nombreRepresentanteLegal: [''],
+      telefonoRepresentanteLegal: [''],
+      correoRepresentanteLegal: ['', Validators.email],
       documentoEscritura: [null],
       documentoBoletaPredial: [null],
       documentoReciboAguaServicios: [null],
@@ -459,7 +435,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     estatusCtrl.valueChanges.subscribe((value) => this.aplicarValidadoresEstatus(value));
   }
 
-  /** Renta y tiempo de renta solo obligatorios si el estatus es Rentado. */
+  /** Muestra u oculta campos de renta según estatus; ninguno es obligatorio. */
   private aplicarValidadoresEstatus(raw: unknown): void {
     const v = String(raw ?? '').toUpperCase().trim();
     const rentado = v === 'RENTADO';
@@ -470,18 +446,15 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const contratoCtrl = this.inmuebleForm.get('documentoContratoRenta');
     if (!rentaCtrl || !tiempoCtrl) return;
 
-    if (rentado) {
-      rentaCtrl.setValidators([Validators.required]);
-      tiempoCtrl.setValidators([Validators.required]);
-    } else {
-      rentaCtrl.clearValidators();
-      tiempoCtrl.clearValidators();
+    if (!rentado) {
       rentaCtrl.setValue('', { emitEvent: false });
       tiempoCtrl.setValue('', { emitEvent: false });
       contratoCtrl?.setValue(null, { emitEvent: false });
       this.contratoRentaNombre = null;
     }
 
+    rentaCtrl.clearValidators();
+    tiempoCtrl.clearValidators();
     rentaCtrl.updateValueAndValidity({ emitEvent: false });
     tiempoCtrl.updateValueAndValidity({ emitEvent: false });
   }
@@ -509,10 +482,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private crearServicioFormGroup(): FormGroup {
     return this.fb.group({
       idServicio: [null as number | null],
-      idTipoServicio: [null as number | null, Validators.required],
-      servicioNumeroContrato: ['', Validators.required],
-      servicioFechaPago: ['', Validators.required],
-      servicioUltimoDiaPago: ['', Validators.required],
+      idTipoServicio: [null as number | null],
+      servicioNumeroContrato: [''],
+      servicioFechaPago: [''],
+      servicioUltimoDiaPago: [''],
       servicioComprobantePago: [null],
       servicioComprobantePagoNombre: [''],
       servicioComprobantePagoUrl: [''],
@@ -522,9 +495,9 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private crearZonaFormGroup(): FormGroup {
     return this.fb.group({
       idZona: [null as number | null],
-      zonaPrincipal: ['', Validators.required],
-      zonaSuperficieM2: ['', Validators.required],
-      superficieDisponiblePredioM2: ['', Validators.required],
+      zonaPrincipal: [''],
+      zonaSuperficieM2: [''],
+      superficieDisponiblePredioM2: [''],
       numeroZona: [null as number | null],
       locales: this.fb.array([this.crearLocalZonaFormGroup()]),
     });
@@ -534,10 +507,14 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private crearLocalZonaFormGroup(): FormGroup {
     return this.fb.group({
       idLocal: [null as number | null],
-      nombre: ['', Validators.required],
-      areaM2: ['', Validators.required],
-      estatus: [null, Validators.required],
+      nombre: [''],
+      areaM2: [''],
+      estatus: [null],
       mensualidad: [''],
+      mantenimientoSinIva: [''],
+      aplicaIva: [0],
+      rentaConIva: [''],
+      mantenimientoConIva: [''],
       giro: [''],
       fachada: [null],
       fachadaNombre: [''],
@@ -734,6 +711,109 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const match = /^local-(\d+)-(\d+)$/.exec(clave);
     if (!match) return clave;
     return this.tituloLocalAccordion(Number(match[1]), Number(match[2]));
+  }
+
+  localAplicaIva(zonaIndex: number, localIndex: number): boolean {
+    const g = this.localesZonaFormArray(zonaIndex).at(localIndex) as FormGroup | null;
+    return Number(g?.get('aplicaIva')?.value) === 1;
+  }
+
+  localSwitchIvaHabilitado(zonaIndex: number, localIndex: number): boolean {
+    const g = this.localesZonaFormArray(zonaIndex).at(localIndex) as FormGroup | null;
+    if (!g) return false;
+    const renta = Number(g.get('mensualidad')?.value);
+    return Number.isFinite(renta) && renta > 0;
+  }
+
+  onLocalAplicaIvaClick(event: Event, zonaIndex: number, localIndex: number): void {
+    event.stopPropagation();
+    if (this.localSwitchIvaHabilitado(zonaIndex, localIndex)) return;
+    event.preventDefault();
+    this.forzarLocalAplicaIvaOffSiSinRenta(zonaIndex, localIndex);
+  }
+
+  onLocalAplicaIvaChange(zonaIndex: number, localIndex: number, activo: boolean): void {
+    const g = this.localesZonaFormArray(zonaIndex).at(localIndex) as FormGroup;
+    if (!g) return;
+    if (!this.localSwitchIvaHabilitado(zonaIndex, localIndex)) {
+      this.forzarLocalAplicaIvaOffSiSinRenta(zonaIndex, localIndex);
+      return;
+    }
+    g.get('aplicaIva')?.setValue(activo ? 1 : 0, { emitEvent: false });
+    if (!activo) {
+      g.patchValue({ rentaConIva: '', mantenimientoConIva: '' }, { emitEvent: false });
+    } else {
+      this.recalcularMontosConIvaLocal(g);
+    }
+    this.cdr.markForCheck();
+  }
+
+  onLocalMontosSinIvaInput(zonaIndex: number, localIndex: number): void {
+    const g = this.localesZonaFormArray(zonaIndex).at(localIndex) as FormGroup;
+    if (!g) return;
+    this.forzarLocalAplicaIvaOffSiSinRenta(zonaIndex, localIndex);
+    if (Number(g.get('aplicaIva')?.value) === 1) {
+      this.recalcularMontosConIvaLocal(g);
+    }
+  }
+
+  private forzarLocalAplicaIvaOffSiSinRenta(zonaIndex: number, localIndex: number): void {
+    if (this.localSwitchIvaHabilitado(zonaIndex, localIndex)) return;
+    const g = this.localesZonaFormArray(zonaIndex).at(localIndex) as FormGroup;
+    if (!g) return;
+    if (Number(g.get('aplicaIva')?.value) === 0) {
+      g.patchValue({ rentaConIva: '', mantenimientoConIva: '' }, { emitEvent: false });
+      return;
+    }
+    g.patchValue(
+      { aplicaIva: 0, rentaConIva: '', mantenimientoConIva: '' },
+      { emitEvent: false },
+    );
+    this.cdr.markForCheck();
+  }
+
+  private redondearMontoLocal(valor: number): number {
+    return Math.round(valor * 100) / 100;
+  }
+
+  private recalcularMontosConIvaLocal(g: FormGroup): void {
+    const rentaSin = Number(g.get('mensualidad')?.value);
+    const mantSin = Number(g.get('mantenimientoSinIva')?.value);
+    const patch: Record<string, string | number> = {};
+    if (Number.isFinite(rentaSin) && rentaSin >= 0) {
+      patch['rentaConIva'] = this.redondearMontoLocal(
+        rentaSin * (1 + AgregarInmuebleComponent.IVA_LOCAL),
+      );
+    } else {
+      patch['rentaConIva'] = '';
+    }
+    if (Number.isFinite(mantSin) && mantSin >= 0) {
+      patch['mantenimientoConIva'] = this.redondearMontoLocal(
+        mantSin * (1 + AgregarInmuebleComponent.IVA_LOCAL),
+      );
+    } else {
+      patch['mantenimientoConIva'] = '';
+    }
+    g.patchValue(patch, { emitEvent: false });
+  }
+
+  private valorApiLocal(l: Record<string, unknown>, ...keys: string[]): unknown {
+    for (const k of keys) {
+      if (l[k] != null && String(l[k]).trim() !== '') return l[k];
+    }
+    return '';
+  }
+
+  private aplicaIvaDesdeApi(l: Record<string, unknown>): number {
+    const raw = l['aplicaIva'] ?? l['AplicaIva'] ?? l['aplicaIVA'];
+    if (raw === true || raw === 1 || raw === '1') return 1;
+    if (raw === false || raw === 0 || raw === '0') return 0;
+    const rentaCon = Number(this.valorApiLocal(l, 'rentaConIva', 'mensualidadConIva'));
+    const mantCon = Number(this.valorApiLocal(l, 'mantenimientoConIva'));
+    if ((Number.isFinite(rentaCon) && rentaCon > 0) || (Number.isFinite(mantCon) && mantCon > 0)) {
+      return 1;
+    }
+    return 0;
   }
 
   trackServicioPorIndice(index: number): number {
@@ -1280,7 +1360,16 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           nombre: l['nombre'] != null ? String(l['nombre']) : '',
           areaM2: l['areaM2'] ?? l['superficieM2'] ?? '',
           estatus: estatusNum,
-          mensualidad: l['mensualidad'] ?? l['mensualidadMxn'] ?? '',
+          mensualidad: this.valorApiLocal(l, 'mensualidad', 'mensualidadMxn', 'rentaSinIva'),
+          mantenimientoSinIva: this.valorApiLocal(
+            l,
+            'mantenimientoSinIva',
+            'mantenimiento',
+            'mantenimientoMxn',
+          ),
+          aplicaIva: this.aplicaIvaDesdeApi(l),
+          rentaConIva: this.valorApiLocal(l, 'rentaConIva', 'mensualidadConIva'),
+          mantenimientoConIva: this.valorApiLocal(l, 'mantenimientoConIva'),
           giro: l['giro'] != null ? String(l['giro']) : '',
           fachada: null,
           fachadaNombre: fachadaUrl
@@ -1290,6 +1379,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         },
         { emitEvent: false },
       );
+      if (Number(g.get('aplicaIva')?.value) === 1) {
+        const rentaCon = g.get('rentaConIva')?.value;
+        const mantCon = g.get('mantenimientoConIva')?.value;
+        const faltaCalc =
+          (rentaCon === '' || rentaCon == null) && (mantCon === '' || mantCon == null);
+        if (faltaCalc) this.recalcularMontosConIvaLocal(g);
+      }
       arr.push(g);
     });
     if (!arr.length) {
@@ -1502,7 +1598,24 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
                 nombre: l['nombre'] != null ? String(l['nombre']).trim() : '',
                 areaM2: String(l['areaM2'] ?? l['superficieM2'] ?? '').trim(),
                 estatus: estatusNum,
-                mensualidad: String(l['mensualidad'] ?? l['mensualidadMxn'] ?? '').trim(),
+                mensualidad: String(
+                  this.valorApiLocal(l, 'mensualidad', 'mensualidadMxn', 'rentaSinIva') ?? '',
+                ).trim(),
+                mantenimientoSinIva: String(
+                  this.valorApiLocal(
+                    l,
+                    'mantenimientoSinIva',
+                    'mantenimiento',
+                    'mantenimientoMxn',
+                  ) ?? '',
+                ).trim(),
+                aplicaIva: this.aplicaIvaDesdeApi(l),
+                rentaConIva: String(
+                  this.valorApiLocal(l, 'rentaConIva', 'mensualidadConIva') ?? '',
+                ).trim(),
+                mantenimientoConIva: String(
+                  this.valorApiLocal(l, 'mantenimientoConIva') ?? '',
+                ).trim(),
                 giro: l['giro'] != null ? String(l['giro']).trim() : '',
                 fachadaUrl: this.urlFachadaLocalDesdeApi(l),
               });
@@ -1595,14 +1708,37 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   private validarFormularioAntesMapa(): boolean {
     this.aplicarValidadoresEstatus(this.inmuebleForm.get('estatusInmueble')?.value);
+    this.inmuebleForm.get('nombreInmueble')?.markAsTouched();
+    this.inmuebleForm.get('idArrendador')?.markAsTouched();
 
-    this.inmuebleForm.markAllAsTouched();
-    this.serviciosFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
-    this.zonasFormArray.controls.forEach((c) => (c as FormGroup).markAllAsTouched());
+    // Lat/lng se capturan en el mapa al guardar; aquí solo Inmueble y Arrendador.
+    const faltantesKeys = this.recopilarCamposFaltantes();
+    if (faltantesKeys.length === 0) return true;
 
-    const faltantes = this.recopilarCamposFaltantes();
-    if (faltantes.length === 0) return true;
+    void this.mostrarAlertaCamposFaltantes(
+      faltantesKeys.map((key) => this.etiquetasCampos[key] ?? key),
+    );
+    return false;
+  }
 
+  /** Claves de control en orden de aparición en el formulario. */
+  private recopilarCamposFaltantes(): string[] {
+    const faltantes: string[] = [];
+
+    const nombre = String(this.inmuebleForm.get('nombreInmueble')?.value ?? '').trim();
+    if (!nombre) {
+      faltantes.push('nombreInmueble');
+    }
+
+    const idArrendador = this.inmuebleForm.get('idArrendador')?.value;
+    if (idArrendador == null || idArrendador === '') {
+      faltantes.push('idArrendador');
+    }
+
+    return faltantes;
+  }
+
+  private mostrarAlertaCamposFaltantes(faltantes: string[]): void {
     const lista = faltantes
       .map(
         (campo, index) => `
@@ -1619,7 +1755,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       title: '¡Revise el formulario!',
       html: `
         <p style="text-align: center; font-size: 15px; margin-bottom: 16px; color: white">
-          Faltan los siguientes campos obligatorios. Las imágenes y documentos son opcionales.
+          Faltan los siguientes campos obligatorios.
         </p>
         <div style="max-height: 350px; overflow-y: auto;">${lista}</div>
       `,
@@ -1630,77 +1766,6 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       color: '#ffffff',
       customClass: { popup: 'swal2-padding swal2-border' },
     });
-    return false;
-  }
-
-  private recopilarCamposFaltantes(): string[] {
-    const faltantes: string[] = [];
-
-    Object.keys(this.inmuebleForm.controls).forEach((key) => {
-      if (this.controlesExcluidosValidacion.has(key)) return;
-      if (!this.mostrarCamposRenta && (key === 'rentaMxn' || key === 'tiempoRentaAnios')) return;
-
-      const control = this.inmuebleForm.get(key);
-      if (!control || control.disabled) return;
-      if (control.invalid) {
-        faltantes.push(this.etiquetasCampos[key] ?? key);
-      }
-    });
-
-    const etiquetasServicio: Record<string, string> = {
-      idTipoServicio: 'Tipo de servicio',
-      servicioNumeroContrato: 'Número de contrato',
-      servicioFechaPago: 'Fecha de pago',
-      servicioUltimoDiaPago: 'Último día de pago',
-    };
-    this.serviciosFormArray.controls.forEach((ctrl, i) => {
-      const g = ctrl as FormGroup;
-      Object.keys(g.controls).forEach((key) => {
-        if (key === 'servicioComprobantePago' || key === 'servicioComprobantePagoNombre') return;
-        const c = g.get(key);
-        if (c?.invalid) {
-          faltantes.push(`Servicio ${i + 1}: ${etiquetasServicio[key] ?? key}`);
-        }
-      });
-    });
-
-    const etiquetasZona: Record<string, string> = {
-      zonaPrincipal: 'Zona principal',
-      zonaSuperficieM2: 'Superficie de zona (m²)',
-      superficieDisponiblePredioM2: 'Superficie disponible predio (m²)',
-    };
-    const etiquetasLocalZona: Record<string, string> = {
-      nombre: 'Nombre del local',
-      areaM2: 'Área (m²)',
-      estatus: 'Estatus del local',
-      mensualidad: 'Mensualidad',
-      giro: 'Giro',
-    };
-    this.zonasFormArray.controls.forEach((ctrl, i) => {
-      const g = ctrl as FormGroup;
-      Object.keys(g.controls).forEach((key) => {
-        if (key === 'locales') return;
-        const c = g.get(key);
-        if (c?.invalid) {
-          faltantes.push(`Zona ${i + 1}: ${etiquetasZona[key] ?? key}`);
-        }
-      });
-      const localesArr = g.get('locales') as FormArray;
-      localesArr?.controls.forEach((lCtrl, j) => {
-        const lg = lCtrl as FormGroup;
-        Object.keys(lg.controls).forEach((key) => {
-          if (key === 'fachada' || key === 'fachadaNombre' || key === 'fachadaUrl') return;
-          const c = lg.get(key);
-          if (c?.invalid) {
-            faltantes.push(
-              `Zona ${i + 1}, Local ${j + 1}: ${etiquetasLocalZona[key] ?? key}`,
-            );
-          }
-        });
-      });
-    });
-
-    return faltantes;
   }
 
   private ejecutarActualizacionInmueble(): void {
@@ -1851,12 +1916,14 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const area = lg.get('areaM2')?.value;
     const estatus = lg.get('estatus')?.value;
     const mensualidad = lg.get('mensualidad')?.value;
+    const mantSin = lg.get('mantenimientoSinIva')?.value;
     const giro = String(lg.get('giro')?.value ?? '').trim();
     return (
       !nombre &&
       (area === '' || area == null) &&
       (estatus === '' || estatus == null) &&
       (mensualidad === '' || mensualidad == null) &&
+      (mantSin === '' || mantSin == null) &&
       !giro
     );
   }
@@ -1909,6 +1976,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       !this.textoIgual(lg.get('areaM2')?.value, snap.areaM2) ||
       !this.textoIgual(lg.get('estatus')?.value, snap.estatus) ||
       !this.textoIgual(lg.get('mensualidad')?.value, snap.mensualidad) ||
+      !this.textoIgual(lg.get('mantenimientoSinIva')?.value, snap.mantenimientoSinIva) ||
+      !this.textoIgual(lg.get('aplicaIva')?.value, snap.aplicaIva) ||
+      !this.textoIgual(lg.get('rentaConIva')?.value, snap.rentaConIva) ||
+      !this.textoIgual(lg.get('mantenimientoConIva')?.value, snap.mantenimientoConIva) ||
       !this.textoIgual(lg.get('giro')?.value, snap.giro)
     );
   }
@@ -2160,6 +2231,45 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           }
         }
 
+        const mantSin = lg.get('mantenimientoSinIva')?.value;
+        if (!snapLocal || !this.textoIgual(mantSin, snapLocal.mantenimientoSinIva)) {
+          if (mantSin !== '' && mantSin != null && Number.isFinite(Number(mantSin))) {
+            this.appendValorNumerico(
+              fd,
+              `zonas[${zi}].locales[${lj}].mantenimientoSinIva`,
+              mantSin,
+            );
+          }
+        }
+
+        const aplicaIva = Number(lg.get('aplicaIva')?.value) === 1 ? 1 : 0;
+        if (!snapLocal || snapLocal.aplicaIva !== aplicaIva) {
+          this.appendEntero(fd, `zonas[${zi}].locales[${lj}].aplicaIva`, aplicaIva);
+        }
+
+        if (aplicaIva === 1) {
+          const rentaCon = lg.get('rentaConIva')?.value;
+          if (!snapLocal || !this.textoIgual(rentaCon, snapLocal.rentaConIva)) {
+            if (rentaCon !== '' && rentaCon != null && Number.isFinite(Number(rentaCon))) {
+              this.appendValorNumerico(
+                fd,
+                `zonas[${zi}].locales[${lj}].rentaConIva`,
+                rentaCon,
+              );
+            }
+          }
+          const mantCon = lg.get('mantenimientoConIva')?.value;
+          if (!snapLocal || !this.textoIgual(mantCon, snapLocal.mantenimientoConIva)) {
+            if (mantCon !== '' && mantCon != null && Number.isFinite(Number(mantCon))) {
+              this.appendValorNumerico(
+                fd,
+                `zonas[${zi}].locales[${lj}].mantenimientoConIva`,
+                mantCon,
+              );
+            }
+          }
+        }
+
         const giro = String(lg.get('giro')?.value ?? '').trim();
         if (!snapLocal || !this.textoIgual(giro, snapLocal.giro)) {
           if (giro) fd.append(`zonas[${zi}].locales[${lj}].giro`, giro);
@@ -2391,12 +2501,14 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         const area = lg.get('areaM2')?.value;
         const estatus = lg.get('estatus')?.value;
         const mensualidad = lg.get('mensualidad')?.value;
+        const mantSin = lg.get('mantenimientoSinIva')?.value;
         const giro = String(lg.get('giro')?.value ?? '').trim();
         const localVacio =
           !nombre &&
           (area === '' || area == null) &&
           (estatus === '' || estatus == null) &&
           (mensualidad === '' || mensualidad == null) &&
+          (mantSin === '' || mantSin == null) &&
           !giro;
         if (localVacio) return;
 
@@ -2409,6 +2521,29 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         }
         if (mensualidad !== '' && mensualidad != null && Number.isFinite(Number(mensualidad))) {
           this.appendValorNumerico(fd, `zonas[${zi}].locales[${lj}].mensualidad`, mensualidad);
+        }
+        if (mantSin !== '' && mantSin != null && Number.isFinite(Number(mantSin))) {
+          this.appendValorNumerico(
+            fd,
+            `zonas[${zi}].locales[${lj}].mantenimientoSinIva`,
+            mantSin,
+          );
+        }
+        const aplicaIva = Number(lg.get('aplicaIva')?.value) === 1 ? 1 : 0;
+        this.appendEntero(fd, `zonas[${zi}].locales[${lj}].aplicaIva`, aplicaIva);
+        if (aplicaIva === 1) {
+          const rentaCon = lg.get('rentaConIva')?.value;
+          const mantCon = lg.get('mantenimientoConIva')?.value;
+          if (rentaCon !== '' && rentaCon != null && Number.isFinite(Number(rentaCon))) {
+            this.appendValorNumerico(fd, `zonas[${zi}].locales[${lj}].rentaConIva`, rentaCon);
+          }
+          if (mantCon !== '' && mantCon != null && Number.isFinite(Number(mantCon))) {
+            this.appendValorNumerico(
+              fd,
+              `zonas[${zi}].locales[${lj}].mantenimientoConIva`,
+              mantCon,
+            );
+          }
         }
         if (giro) fd.append(`zonas[${zi}].locales[${lj}].giro`, giro);
         const fachada = lg.get('fachada')?.value;
@@ -2529,14 +2664,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   confirmarUbicacionMapa(): void {
     if (this.latSeleccionada == null || this.lngSeleccionada == null) {
-      Swal.fire({
-        background: '#141a21',
-        color: '#ffffff',
-        title: 'Selecciona una ubicación',
-        text: 'Debes hacer clic en el mapa para marcar latitud y longitud antes de guardar.',
-        icon: 'warning',
-        confirmButtonColor: '#3085d6',
-      });
+      this.mostrarAlertaCamposFaltantes([
+        this.etiquetasCampos['lat'],
+        this.etiquetasCampos['lng'],
+      ]);
       return;
     }
     this.inmuebleForm.patchValue({

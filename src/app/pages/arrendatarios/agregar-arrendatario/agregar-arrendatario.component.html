@@ -19,13 +19,19 @@
             </button>
           </div>
 
-          <div class="col-12 col-md-4"><label for="arrendatario" class="form-label perm-label">Arrendatario</label>
+          <div class="col-12 col-md-4">
+            <label for="arrendatario" class="form-label perm-label">Arrendatario</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>person</mat-icon></span>
               <div class="form-floating flex-grow-1"><input id="arrendatario" type="text" class="form-control"
-                  formControlName="arrendatario" placeholder="Nombre del arrendatario" /><label
+                  formControlName="arrendatario" placeholder="Nombre del arrendatario"
+                  [class.is-invalid]="arrendatarioForm.get('arrendatario')?.touched && arrendatarioForm.get('arrendatario')?.invalid" /><label
                   for="arrendatario">Nombre del arrendatario</label></div>
             </div>
+            <p class="perm-field-error" role="alert"
+              *ngIf="arrendatarioForm.get('arrendatario')?.touched && arrendatarioForm.get('arrendatario')?.invalid">
+              El campo Arrendatario es obligatorio.
+            </p>
           </div>
           <div class="col-12 col-md-4">
             <label for="idArrendador" class="form-label perm-label">Arrendador</label>
@@ -52,7 +58,7 @@
                 <mat-icon aria-hidden="true">person</mat-icon>
               </span>
               <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="tipoPersona" formControlName="tipoPersona" required
+                <select class="form-select" id="tipoPersona" formControlName="tipoPersona"
                   (change)="onTipoPersonaChange($event)">
                   <option [ngValue]="null" disabled>Selecciona tipo de persona</option>
                   <option [ngValue]="1">Física</option>
@@ -70,7 +76,7 @@
               </span>
               <div class="form-floating flex-grow-1">
                 <input type="text" formControlName="rfc" class="form-control" id="rfc" maxlength="13"
-                  placeholder="Ej.: ABCD800101XX0" (input)="sanitizeRfcInput($event)" required />
+                  placeholder="Ej.: ABCD800101XX0" (input)="sanitizeRfcInput($event)" />
                 <label for="rfc">Ej.: ABCD800101XX0</label>
               </div>
             </div>
@@ -1220,6 +1226,9 @@
         <div class="docs-modal__viewer docs-modal__viewer--map">
           <div id="mapArrendatario"></div>
         </div>
+        <p class="perm-field-error perm-field-error--mapa" role="alert" *ngIf="mostrarErrorCoordsMapa">
+          Latitud y longitud son obligatorias. Haz clic en el mapa para marcar un punto.
+        </p>
       </div>
     </div>
     <div class="row docs-modal__footer">

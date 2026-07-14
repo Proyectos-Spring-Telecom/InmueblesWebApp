@@ -12,7 +12,29 @@
 }
 
 .inm-row-card--nombre {
+  width: 100%;
   min-width: 0;
+  justify-content: flex-start;
+}
+
+:host ::ng-deep .inm-data-grid {
+  .dx-header-row > td.inm-col-nombre {
+    text-align: center !important;
+  }
+
+  .dx-header-row > td.inm-col-nombre .dx-datagrid-text-content {
+    text-align: center;
+  }
+
+  .dx-data-row > td.inm-col-nombre,
+  .dx-datagrid-filter-row > td.inm-col-nombre {
+    text-align: left !important;
+  }
+
+  .inm-row-card--nombre {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .inm-row-card__icon {
