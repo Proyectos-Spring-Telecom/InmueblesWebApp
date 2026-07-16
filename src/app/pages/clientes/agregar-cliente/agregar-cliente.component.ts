@@ -477,12 +477,12 @@ export class AgregarClienteComponent implements OnInit {
     const ine = this.clienteForm.get('ineRepresentanteLegal');
 
     if (activar) {
-      ne?.setValidators([Validators.required]);
-      te?.setValidators([Validators.required]);
-      ce?.setValidators([Validators.required, Validators.email]);
-      ac?.setValidators([Validators.required]);
-      poder?.setValidators([Validators.required]);
-      ine?.setValidators([Validators.required]);
+      ne?.clearValidators();
+      te?.clearValidators();
+      ce?.setValidators([Validators.email]);
+      ac?.clearValidators();
+      poder?.clearValidators();
+      ine?.clearValidators();
       this.sociosFormArray.controls.forEach((ctrl) =>
         this.setSocioNombreRequerido(ctrl as FormGroup, false),
       );
@@ -580,8 +580,8 @@ export class AgregarClienteComponent implements OnInit {
       tipoPersona: [null, Validators.required],
       estatus: [1],
       logotipo: [null],
-      constanciaSituacionFiscal: [null, Validators.required],
-      comprobanteDomicilio: [null, Validators.required],
+      constanciaSituacionFiscal: [null],
+      comprobanteDomicilio: [null],
       licenciaFuncionamiento: [null],
       constanciaProteccionCivil: [null],
       usoSuelo: [null],
@@ -592,16 +592,16 @@ export class AgregarClienteComponent implements OnInit {
       nombre: [''],
       apellidoPaterno: [null],
       apellidoMaterno: [null],
-      telefono: ['', Validators.required],
-      correo: ['', [Validators.required, Validators.email]],
-      estado: ['', Validators.required],
-      municipio: ['', Validators.required],
-      colonia: ['', Validators.required],
-      calle: ['', Validators.required],
+      telefono: [''],
+      correo: ['', [Validators.email]],
+      estado: [''],
+      municipio: [''],
+      colonia: [''],
+      calle: [''],
       entreCalles: [null],
-      numeroExterior: ['', Validators.required],
+      numeroExterior: [''],
       numeroInterior: [null],
-      cp: ['', Validators.required],
+      cp: [''],
       nombreEncargado: [''],
       telefonoEncargado: [''],
       correoEncargado: [''],
@@ -1016,7 +1016,12 @@ export class AgregarClienteComponent implements OnInit {
       return '';
     }
 
-    const etiqueta = this.etiquetasValidacionCliente[path] || path;
+    const etiqueta =
+      path === 'nombre'
+        ? this.esPersonaMoral()
+          ? 'Razón Social'
+          : 'Nombre'
+        : this.etiquetasValidacionCliente[path] || path;
     if (control.errors?.['required']) return etiqueta;
     if (control.errors?.['email']) return `${etiqueta} (correo inválido)`;
     if (control.errors?.['maxlength']) return `${etiqueta} (máximo 13 caracteres)`;

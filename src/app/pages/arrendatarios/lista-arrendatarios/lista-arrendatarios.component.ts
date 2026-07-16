@@ -228,10 +228,13 @@ export class ListaArrendatariosComponent implements OnInit {
 
   onMasterRowClick(e: any): void {
     if (e?.rowType !== 'data' || e?.key == null) return;
-    const target = (e?.event?.target ?? null) as HTMLElement | null;
+    const raw = e?.event?.target ?? null;
+    const target =
+      raw instanceof Element ? raw : ((raw as Node | null)?.parentElement ?? null);
+    // Clics dentro del detalle (p. ej. Cancelar local) no deben colapsar la fila.
     if (
       target?.closest(
-        'button, a, input, textarea, select, .btnAcciones, .mat-mdc-button-base, .dx-command-expand',
+        'button, a, input, textarea, select, .btnAcciones, .mat-mdc-button-base, .dx-command-expand, .inm-master-detail',
       )
     ) {
       return;

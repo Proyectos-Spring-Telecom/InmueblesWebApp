@@ -314,6 +314,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
   /** Imagen default de locales cuando no llega foto del API. */
   readonly imagenLocalListaDefault = this.imagenesLocales[0];
+  /** Inmuebles cuya URL de fachada falló al cargar. */
+  private readonly imagenesInmuebleRotas = new Set<string>();
   clienteSearchTerm = '';
   cargandoClientes = false;
   errorCargaArrendadores = false;
@@ -554,9 +556,32 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getImagenInmuebleCard(inmueble: any, _index = 0): string {
-    const fachada = String(inmueble?.imagenFachada ?? '').trim();
-    if (fachada) return fachada;
-    return this.imagenListaInmuebleMonitoreo;
+    return this.urlFachadaInmuebleLista(inmueble);
+  }
+
+  /** Sin fachada (o URL rota): mismo icono `storefront` que en locales. */
+  inmuebleMuestraIcono(inmueble: any): boolean {
+    const url = this.urlFachadaInmuebleLista(inmueble);
+    if (!url) return true;
+    return this.imagenesInmuebleRotas.has(this.claveMediaInmueble(inmueble));
+  }
+
+  onErrorImagenInmueble(inmueble: any): void {
+    this.imagenesInmuebleRotas.add(this.claveMediaInmueble(inmueble));
+  }
+
+  private urlFachadaInmuebleLista(inmueble: any): string {
+    return String(inmueble?.imagenFachada ?? '').trim();
+  }
+
+  private claveMediaInmueble(inmueble: any): string {
+    return String(
+      inmueble?.id ??
+        inmueble?.idInmueble ??
+        inmueble?.nombreDepartamento ??
+        inmueble?.nombreInstalacion ??
+        '',
+    );
   }
 
   vigenciaInmuebleCard(inmueble: any): string {

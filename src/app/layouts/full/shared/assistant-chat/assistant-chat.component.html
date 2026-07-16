@@ -128,7 +128,7 @@
         <span class="ac-inputGlow" aria-hidden="true"></span>
       </div>
 
-      <button type="button" class="ac-send" (click)="send()" [disabled]="busy || !input.value?.trim()">
+      <button type="button" class="ac-send" (click)="send()" [disabled]="busy || !input.value.trim()">
         <span class="ac-send__bg" aria-hidden="true"></span>
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path

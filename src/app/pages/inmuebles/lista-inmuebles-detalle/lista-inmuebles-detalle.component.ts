@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
@@ -76,21 +77,41 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDest
   esPdfArchivo = esPdfArchivo;
   urlFachadaLocal = urlFachadaLocal;
 
+  /** Locales cuya URL de fachada falló al cargar. */
+  private readonly fotosLocalesRotas = new Set<string>();
+
   constructor(
     private sanitizer: DomSanitizer,
     private inmueblesService: InmueblesService,
     private toastr: ToastrService,
     private http: HttpClient,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     this.cargarDetalleCompletoPorId();
   }
 
+  fotoLocalRota(loc: InmuebleLocalApi): boolean {
+    return this.fotosLocalesRotas.has(this.claveFotoLocal(loc));
+  }
+
+  onErrorFotoLocal(loc: InmuebleLocalApi): void {
+    this.fotosLocalesRotas.add(this.claveFotoLocal(loc));
+    this.cdr.markForCheck();
+  }
+
+  private claveFotoLocal(loc: InmuebleLocalApi): string {
+    const id = Number(loc.id);
+    if (Number.isFinite(id) && id > 0) return `loc-${Math.trunc(id)}`;
+    return `loc-${String(loc.nombre ?? '')}`;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['row']) {
       this.detallePorId = null;
       this.detalleTab = 0;
+      this.fotosLocalesRotas.clear();
       this.cargarDetalleCompletoPorId();
     }
   }
@@ -256,22 +277,62 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDest
       const s = String(v ?? '').trim();
       if (s) out.push(s);
     };
-
-    push(loc.nombre);
-    push(resolverGiroLocalApi(loc) ?? loc.giro);
-    push(etiquetaEstatusLocal(loc.estatus));
-
-    const mensualidad = loc.mensualidad;
-    if (mensualidad != null && String(mensualidad).trim() !== '') {
-      push(mensualidad);
-      const fmt = formatearMoneda(mensualidad);
+    const pushMonto = (monto: number | null): void => {
+      if (monto == null || !Number.isFinite(monto)) return;
+      push(monto);
+      const fmt = formatearMoneda(monto);
       if (fmt !== '—') {
         out.push(fmt);
         out.push(fmt.replace(/\$/g, '').trim());
       }
-    }
+    };
+
+    push(loc.nombre);
+    push(resolverGiroLocalApi(loc) ?? loc.giro);
+    push(etiquetaEstatusLocal(loc.estatus));
+    pushMonto(this.rentaLocal(loc));
+    pushMonto(this.mantenimientoLocal(loc));
+    pushMonto(this.totalLocal(loc));
 
     return out;
+  }
+
+  /** Si llega `mensualidadIva`, el IVA aplica a renta y mantenimiento. */
+  private aplicaIvaLocal(loc: InmuebleLocalApi): boolean {
+    return loc.mensualidadIva != null && String(loc.mensualidadIva).trim() !== '';
+  }
+
+  private parsearMontoLocal(val: unknown): number | null {
+    if (val == null || String(val).trim() === '') return null;
+    const n = Number(val);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /** Renta: con IVA → mensualidadIva; sin IVA → mensualidad. */
+  rentaLocal(loc: InmuebleLocalApi): number | null {
+    if (this.aplicaIvaLocal(loc)) {
+      return this.parsearMontoLocal(loc.mensualidadIva);
+    }
+    return this.parsearMontoLocal(loc.mensualidad);
+  }
+
+  /**
+   * Mantenimiento: con IVA → mantenimientoIva (o 0);
+   * sin IVA → mantenimiento (o 0 si llega null).
+   */
+  mantenimientoLocal(loc: InmuebleLocalApi): number {
+    if (this.aplicaIvaLocal(loc)) {
+      return this.parsearMontoLocal(loc.mantenimientoIva) ?? 0;
+    }
+    return this.parsearMontoLocal(loc.mantenimiento) ?? 0;
+  }
+
+  totalLocal(loc: InmuebleLocalApi): number {
+    return (this.rentaLocal(loc) ?? 0) + this.mantenimientoLocal(loc);
+  }
+
+  formatearMonedaRentaLocal(loc: InmuebleLocalApi): string {
+    return formatearMoneda(this.rentaLocal(loc));
   }
 
   private normalizarMontoBusqueda(val: string): string {

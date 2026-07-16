@@ -75,6 +75,12 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
     'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
   autoExpandAllGroups = true;
 
+  /**
+   * Fecha del DateBox (cualquier día del mes).
+   * El API sigue recibiendo fechaInicio/fechaFin del mes completo.
+   */
+  mesFechaFiltro: Date = this.fechaMesPorDefecto();
+  private mesFiltro = '';
   fechaInicioFiltro = '';
   fechaFinFiltro = '';
   idArrendatarioFiltro: number | null = null;
@@ -83,6 +89,13 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
   contratosOpciones: SelectOpcion[] = [];
   catalogosFiltroCargando = false;
   private arrendatariosCatalogo: Record<string, unknown>[] = [];
+
+  /** Calendario DevExtreme en vista de meses (sin elegir día). */
+  readonly mesCalendarOptions = {
+    zoomLevel: 'year' as const,
+    maxZoomLevel: 'year' as const,
+    minZoomLevel: 'century' as const,
+  };
 
   mostrarModalDetalle = false;
   detalleModalCargando = false;
@@ -101,9 +114,8 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
 
   ngOnInit(): void {
     this.embebidoEnHub = this.leerEmbebidoEnHub();
-    const rango = this.rangoFechasPorDefecto();
-    this.fechaInicioFiltro = rango.inicio;
-    this.fechaFinFiltro = rango.fin;
+    this.mesFechaFiltro = this.fechaMesPorDefecto();
+    this.sincronizarFechasDesdeMesFecha();
     this.setupDataSource();
     this.cargarCatalogosFiltro();
   }
@@ -175,13 +187,30 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
     return this.contratosOpciones.length ? 'Todos los contratos' : 'Sin contratos';
   }
 
-  private rangoFechasPorDefecto(): { inicio: string; fin: string } {
+  private fechaMesPorDefecto(): Date {
     const hoy = new Date();
-    const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
-    return {
-      inicio: this.toIsoFecha(inicioAnio),
-      fin: this.toIsoFecha(hoy),
-    };
+    return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  }
+
+  /**
+   * Traduce la fecha del DateBox al rango que espera el servicio:
+   * primer y último día del mes → fechaInicio / fechaFin.
+   */
+  private sincronizarFechasDesdeMesFecha(): void {
+    const d = this.mesFechaFiltro;
+    if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
+      this.mesFiltro = '';
+      this.fechaInicioFiltro = '';
+      this.fechaFinFiltro = '';
+      return;
+    }
+    const anio = d.getFullYear();
+    const mesIdx = d.getMonth();
+    const inicio = new Date(anio, mesIdx, 1);
+    const fin = new Date(anio, mesIdx + 1, 0);
+    this.mesFiltro = `${anio}-${String(mesIdx + 1).padStart(2, '0')}`;
+    this.fechaInicioFiltro = this.toIsoFecha(inicio);
+    this.fechaFinFiltro = this.toIsoFecha(fin);
   }
 
   private toIsoFecha(d: Date): string {
@@ -249,30 +278,33 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
-    if (!this.fechaInicioFiltro?.trim() || !this.fechaFinFiltro?.trim()) {
+    this.sincronizarFechasDesdeMesFecha();
+    if (!this.mesFiltro || !this.fechaInicioFiltro || !this.fechaFinFiltro) {
       void Swal.fire({
         background: '#141a21',
         color: '#ffffff',
         icon: 'warning',
-        title: 'Fechas obligatorias',
-        text: 'Indica fecha inicial y fecha final.',
-        confirmButtonText: 'Entendido',
-      });
-      return;
-    }
-    if (this.fechaInicioFiltro > this.fechaFinFiltro) {
-      void Swal.fire({
-        background: '#141a21',
-        color: '#ffffff',
-        icon: 'warning',
-        title: 'Rango inválido',
-        text: 'La fecha inicial no puede ser posterior a la final.',
+        title: 'Mes obligatorio',
+        text: 'Selecciona el mes a consultar.',
         confirmButtonText: 'Entendido',
       });
       return;
     }
     this.dataGrid?.instance?.pageIndex(0);
     this.dataGrid?.instance?.refresh();
+  }
+
+  onMesFechaChange(e: { value?: Date | string | number | null }): void {
+    const v = e?.value;
+    if (v instanceof Date && !Number.isNaN(v.getTime())) {
+      this.mesFechaFiltro = v;
+    } else if (typeof v === 'string' || typeof v === 'number') {
+      const parsed = new Date(v);
+      if (!Number.isNaN(parsed.getTime())) {
+        this.mesFechaFiltro = parsed;
+      }
+    }
+    this.sincronizarFechasDesdeMesFecha();
   }
 
   onPageIndexChanged(e: any): void {
@@ -308,9 +340,8 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
   }
 
   limpiarVista(): void {
-    const rango = this.rangoFechasPorDefecto();
-    this.fechaInicioFiltro = rango.inicio;
-    this.fechaFinFiltro = rango.fin;
+    this.mesFechaFiltro = this.fechaMesPorDefecto();
+    this.sincronizarFechasDesdeMesFecha();
     this.idArrendatarioFiltro = null;
     this.idContratoFiltro = null;
     this.sincronizarContratosFiltro(null);

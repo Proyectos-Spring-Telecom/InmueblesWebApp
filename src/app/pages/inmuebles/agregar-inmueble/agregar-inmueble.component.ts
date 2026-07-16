@@ -808,8 +808,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const raw = l['aplicaIva'] ?? l['AplicaIva'] ?? l['aplicaIVA'];
     if (raw === true || raw === 1 || raw === '1') return 1;
     if (raw === false || raw === 0 || raw === '0') return 0;
-    const rentaCon = Number(this.valorApiLocal(l, 'rentaConIva', 'mensualidadConIva'));
-    const mantCon = Number(this.valorApiLocal(l, 'mantenimientoConIva'));
+    const rentaCon = Number(
+      this.valorApiLocal(l, 'mensualidadIva', 'rentaConIva', 'mensualidadConIva'),
+    );
+    const mantCon = Number(this.valorApiLocal(l, 'mantenimientoIva', 'mantenimientoConIva'));
     if ((Number.isFinite(rentaCon) && rentaCon > 0) || (Number.isFinite(mantCon) && mantCon > 0)) {
       return 1;
     }
@@ -1363,13 +1365,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           mensualidad: this.valorApiLocal(l, 'mensualidad', 'mensualidadMxn', 'rentaSinIva'),
           mantenimientoSinIva: this.valorApiLocal(
             l,
-            'mantenimientoSinIva',
             'mantenimiento',
+            'mantenimientoSinIva',
             'mantenimientoMxn',
           ),
           aplicaIva: this.aplicaIvaDesdeApi(l),
-          rentaConIva: this.valorApiLocal(l, 'rentaConIva', 'mensualidadConIva'),
-          mantenimientoConIva: this.valorApiLocal(l, 'mantenimientoConIva'),
+          rentaConIva: this.valorApiLocal(l, 'mensualidadIva', 'rentaConIva', 'mensualidadConIva'),
+          mantenimientoConIva: this.valorApiLocal(l, 'mantenimientoIva', 'mantenimientoConIva'),
           giro: l['giro'] != null ? String(l['giro']) : '',
           fachada: null,
           fachadaNombre: fachadaUrl
@@ -1604,17 +1606,17 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
                 mantenimientoSinIva: String(
                   this.valorApiLocal(
                     l,
-                    'mantenimientoSinIva',
                     'mantenimiento',
+                    'mantenimientoSinIva',
                     'mantenimientoMxn',
                   ) ?? '',
                 ).trim(),
                 aplicaIva: this.aplicaIvaDesdeApi(l),
                 rentaConIva: String(
-                  this.valorApiLocal(l, 'rentaConIva', 'mensualidadConIva') ?? '',
+                  this.valorApiLocal(l, 'mensualidadIva', 'rentaConIva', 'mensualidadConIva') ?? '',
                 ).trim(),
                 mantenimientoConIva: String(
-                  this.valorApiLocal(l, 'mantenimientoConIva') ?? '',
+                  this.valorApiLocal(l, 'mantenimientoIva', 'mantenimientoConIva') ?? '',
                 ).trim(),
                 giro: l['giro'] != null ? String(l['giro']).trim() : '',
                 fachadaUrl: this.urlFachadaLocalDesdeApi(l),
@@ -1716,7 +1718,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     if (faltantesKeys.length === 0) return true;
 
     void this.mostrarAlertaCamposFaltantes(
-      faltantesKeys.map((key) => this.etiquetasCampos[key] ?? key),
+      faltantesKeys.map((key) => {
+        if (key.startsWith('zonaPrincipal_')) {
+          const idx = Number(key.split('_')[1]);
+          return `Nombre de la Zona ${idx + 1} (tiene locales capturados)`;
+        }
+        return this.etiquetasCampos[key] ?? key;
+      }),
     );
     return false;
   }
@@ -1733,6 +1741,18 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const idArrendador = this.inmuebleForm.get('idArrendador')?.value;
     if (idArrendador == null || idArrendador === '') {
       faltantes.push('idArrendador');
+    }
+
+    for (let zi = 0; zi < this.zonasFormArray.length; zi++) {
+      const zonaGrupo = this.zonasFormArray.at(zi) as FormGroup;
+      const zonaNombre = String(zonaGrupo.get('zonaPrincipal')?.value ?? '').trim();
+      const localesArr = zonaGrupo.get('locales') as FormArray;
+      const tieneLocalConDatos = localesArr.controls.some(
+        (c) => !this.localZonaVacio(c as FormGroup),
+      );
+      if (tieneLocalConDatos && !zonaNombre) {
+        faltantes.push(`zonaPrincipal_${zi}`);
+      }
     }
 
     return faltantes;
@@ -2236,24 +2256,21 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           if (mantSin !== '' && mantSin != null && Number.isFinite(Number(mantSin))) {
             this.appendValorNumerico(
               fd,
-              `zonas[${zi}].locales[${lj}].mantenimientoSinIva`,
+              `zonas[${zi}].locales[${lj}].mantenimiento`,
               mantSin,
             );
           }
         }
 
+        // `aplicaIva` es solo un switch de la UI; el API ya no acepta esa propiedad.
         const aplicaIva = Number(lg.get('aplicaIva')?.value) === 1 ? 1 : 0;
-        if (!snapLocal || snapLocal.aplicaIva !== aplicaIva) {
-          this.appendEntero(fd, `zonas[${zi}].locales[${lj}].aplicaIva`, aplicaIva);
-        }
-
         if (aplicaIva === 1) {
           const rentaCon = lg.get('rentaConIva')?.value;
           if (!snapLocal || !this.textoIgual(rentaCon, snapLocal.rentaConIva)) {
             if (rentaCon !== '' && rentaCon != null && Number.isFinite(Number(rentaCon))) {
               this.appendValorNumerico(
                 fd,
-                `zonas[${zi}].locales[${lj}].rentaConIva`,
+                `zonas[${zi}].locales[${lj}].mensualidadIva`,
                 rentaCon,
               );
             }
@@ -2263,7 +2280,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
             if (mantCon !== '' && mantCon != null && Number.isFinite(Number(mantCon))) {
               this.appendValorNumerico(
                 fd,
-                `zonas[${zi}].locales[${lj}].mantenimientoConIva`,
+                `zonas[${zi}].locales[${lj}].mantenimientoIva`,
                 mantCon,
               );
             }
@@ -2525,22 +2542,22 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
         if (mantSin !== '' && mantSin != null && Number.isFinite(Number(mantSin))) {
           this.appendValorNumerico(
             fd,
-            `zonas[${zi}].locales[${lj}].mantenimientoSinIva`,
+            `zonas[${zi}].locales[${lj}].mantenimiento`,
             mantSin,
           );
         }
+        // `aplicaIva` es solo un switch de la UI; el API ya no acepta esa propiedad.
         const aplicaIva = Number(lg.get('aplicaIva')?.value) === 1 ? 1 : 0;
-        this.appendEntero(fd, `zonas[${zi}].locales[${lj}].aplicaIva`, aplicaIva);
         if (aplicaIva === 1) {
           const rentaCon = lg.get('rentaConIva')?.value;
           const mantCon = lg.get('mantenimientoConIva')?.value;
           if (rentaCon !== '' && rentaCon != null && Number.isFinite(Number(rentaCon))) {
-            this.appendValorNumerico(fd, `zonas[${zi}].locales[${lj}].rentaConIva`, rentaCon);
+            this.appendValorNumerico(fd, `zonas[${zi}].locales[${lj}].mensualidadIva`, rentaCon);
           }
           if (mantCon !== '' && mantCon != null && Number.isFinite(Number(mantCon))) {
             this.appendValorNumerico(
               fd,
-              `zonas[${zi}].locales[${lj}].mantenimientoConIva`,
+              `zonas[${zi}].locales[${lj}].mantenimientoIva`,
               mantCon,
             );
           }

@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { CellPreparedEvent, RowPreparedEvent } from 'devextreme/ui/data_grid';
@@ -19,8 +20,6 @@ import { InmueblesService } from 'src/app/services/moduleService/inmuebles.servi
 import {
   calcularMontosRentRolCaptura,
   construirFormDataArrendatarioCaptura,
-  construirFormDataInmuebleMinimo,
-  extraerIdDesdeRespuestaApi,
   mapClientesAOpciones,
   mapInmueblesAOpciones,
   mapLocalesLibresAOpciones,
@@ -40,8 +39,13 @@ import {
   RentRolGridLine,
   RentRolRow,
 } from './rent-rol-list.mapper';
-
-type RentRolMapaModo = 'arrendatario' | 'inmueble-nuevo';
+import { exportarRentRolExcel, exportarRentRolPdf } from './rent-rol-export';
+import {
+  etiquetaContratoArrendatarioApi,
+  extraerFilasPaginadasApi,
+  nombreArrendatarioDesdeApi,
+  resolverIdArrendatarioApi,
+} from '../arrendatarios-list.mapper';
 
 const rrCapturaRevealAnim = trigger('rrCapturaReveal', [
   transition(':enter', [
@@ -103,9 +107,28 @@ export class RentRolComponent implements OnInit, OnDestroy {
   totalPaginasApi = 1;
   totalRegistrosFiltrados = 0;
 
+  /**
+   * Fecha del DateBox (cualquier día del mes).
+   * El API sigue recibiendo fechaInicio/fechaFin del mes completo.
+   */
+  mesFechaFiltro: Date = this.fechaMesPorDefecto();
+  private mesFiltro = '';
   fechaInicioFiltro = '';
   fechaFinFiltro = '';
+  idArrendatarioFiltro: number | null = null;
+  idContratoFiltro: number | null = null;
+  arrendatariosFiltroOpciones: { id: number; label: string }[] = [];
+  contratosFiltroOpciones: { id: number; label: string }[] = [];
+  catalogosFiltroCargando = false;
+  private arrendatariosCatalogoFiltro: Record<string, unknown>[] = [];
   busquedaTexto = '';
+
+  /** Calendario DevExtreme en vista de meses (sin elegir día). */
+  readonly mesCalendarOptions = {
+    zoomLevel: 'year' as const,
+    maxZoomLevel: 'year' as const,
+    minZoomLevel: 'century' as const,
+  };
 
   registrosVisibles: RentRolRow[] = [];
   /** Conjunto usado por los KPIs: todos del periodo o todos los filtrados en búsqueda. */
@@ -118,9 +141,6 @@ export class RentRolComponent implements OnInit, OnDestroy {
   // ── Captura modal ──────────────────────────────────────────────
   mostrarModalCaptura = false;
   capturaForm!: FormGroup;
-  nuevoInmuebleNombre = '';
-  /** El bloque de alta solo se muestra al pulsar el botón. */
-  mostrarFormularioNuevoInmueble = false;
   catalogosCapturaCargando = false;
   cargandoInmuebles = false;
   cargandoLocales = false;
@@ -128,11 +148,6 @@ export class RentRolComponent implements OnInit, OnDestroy {
   localesConsultados = false;
   localesDropdownAbierto = false;
   guardandoCaptura = false;
-  guardandoInmuebleNuevo = false;
-  /** Tras crear inmueble desde Guardar, abre mapa de arrendatario. */
-  private continuarAArrendatarioTrasInmueble = false;
-  /** Inmueble recién creado en cadena: permite guardar sin locales aún. */
-  private omitirLocalesObligatorios = false;
   arrendadoresOpciones: RentRolSelectOpcion[] = [];
   inmueblesOpciones: RentRolSelectOpcion[] = [];
   localesOpciones: RentRolLocalOpcion[] = [];
@@ -147,11 +162,12 @@ export class RentRolComponent implements OnInit, OnDestroy {
   });
 
   mostrarModalMapa = false;
-  mapaModo: RentRolMapaModo = 'arrendatario';
   latSeleccionada: number | null = null;
   lngSeleccionada: number | null = null;
   private map: unknown = null;
   private marker: unknown = null;
+
+  exportMenuAbierto = false;
 
   @ViewChild('gridRentRol', { static: false })
   gridRentRol?: DxDataGridComponent;
@@ -163,6 +179,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
     private clientesService: ClientesService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
+    private router: Router,
   ) {}
 
   get totalPaginas(): number {
@@ -220,41 +237,11 @@ export class RentRolComponent implements OnInit, OnDestroy {
     return this.redondear(this.totalRentaConIva + this.totalManttoConIva);
   }
 
-  get puedeAgregarInmuebleNuevo(): boolean {
-    const idArr = Number(this.capturaForm?.get('idArrendador')?.value);
-    return (
-      Number.isFinite(idArr) &&
-      idArr > 0 &&
-      !this.cargandoInmuebles &&
-      this.inmueblesConsultados
-    );
-  }
-
-  /** Botón + visible apenas hay arrendador (sin esperar la carga, evita parpadeo). */
-  get mostrarBotonAltaInmueble(): boolean {
-    const idArr = Number(this.capturaForm?.get('idArrendador')?.value);
-    return Number.isFinite(idArr) && idArr > 0 && !this.mostrarFormularioNuevoInmueble;
-  }
-
-  get mostrarPanelAltaInmueble(): boolean {
-    const idArr = Number(this.capturaForm?.get('idArrendador')?.value);
-    return (
-      this.mostrarFormularioNuevoInmueble &&
-      Number.isFinite(idArr) &&
-      idArr > 0
-    );
-  }
-
-  /** Modo nuevo activo (panel abierto): al Guardar primero crea el inmueble. */
-  get altaInmueblePendiente(): boolean {
-    return this.mostrarPanelAltaInmueble && this.nuevoInmuebleNombre.trim().length > 0;
-  }
-
   get placeholderInmueble(): string {
     if (this.mostrarAvisoSeleccionarArrendadorInmueble) return 'Selecciona arrendador primero';
     if (this.cargandoInmuebles) return 'Cargando inmuebles…';
     if (this.inmueblesConsultados && this.inmueblesOpciones.length === 0) {
-      return 'Sin inmuebles, crea uno nuevo';
+      return 'Sin inmuebles registrados';
     }
     return 'Selecciona inmueble';
   }
@@ -306,6 +293,10 @@ export class RentRolComponent implements OnInit, OnDestroy {
     return 'Selecciona local(es)';
   }
 
+  get cerrarCapturaBloqueado(): boolean {
+    return this.guardandoCaptura;
+  }
+
   /** Label / visual del switch (como contratoIncluyeMantenimiento en agregar-arrendatario). */
   get switchManttoVisualSi(): boolean {
     return this.switchManttoSi;
@@ -331,24 +322,82 @@ export class RentRolComponent implements OnInit, OnDestroy {
     }).format(valor || 0);
   }
 
-  get mapaTitulo(): string {
-    return this.mapaModo === 'inmueble-nuevo'
-      ? 'Ubicación del inmueble'
-      : 'Ubicación del arrendatario';
-  }
-
-  get mapaSubtitulo(): string {
-    return this.mapaModo === 'inmueble-nuevo'
-      ? 'Toca el mapa para fijar el pin del inmueble nuevo.'
-      : 'Toca el mapa para registrar la ubicación del arrendatario.';
-  }
+  readonly mapaTitulo = 'Ubicación del arrendatario';
+  readonly mapaSubtitulo = 'Toca el mapa para registrar la ubicación del arrendatario.';
 
   ngOnInit(): void {
-    const rango = this.rangoFechasPorDefecto();
-    this.fechaInicioFiltro = rango.inicio;
-    this.fechaFinFiltro = rango.fin;
+    this.mesFechaFiltro = this.fechaMesPorDefecto();
+    this.sincronizarFechasDesdeMesFecha();
     this.initCapturaForm();
     this.setupDataSource();
+    this.cargarCatalogosFiltro();
+  }
+
+  private cargarCatalogosFiltro(): void {
+    this.catalogosFiltroCargando = true;
+    void lastValueFrom(this.arrendatariosService.obtenerArrendatariosPaginated(1, 300))
+      .then((resp) => {
+        this.arrendatariosCatalogoFiltro = extraerFilasPaginadasApi(resp);
+        this.arrendatariosFiltroOpciones = this.arrendatariosCatalogoFiltro
+          .map((r) => {
+            const id = resolverIdArrendatarioApi(r);
+            if (id == null) return null;
+            const nombre = nombreArrendatarioDesdeApi(r);
+            return { id, label: nombre || `Arrendatario #${id}` };
+          })
+          .filter((x): x is { id: number; label: string } => x != null);
+        this.sincronizarContratosFiltro(this.idArrendatarioFiltro);
+      })
+      .catch((err) => console.error('Error catálogos filtro rent-rol:', err))
+      .finally(() => {
+        this.catalogosFiltroCargando = false;
+        this.cdr.markForCheck();
+      });
+  }
+
+  onArrendatarioFiltroChange(): void {
+    this.sincronizarContratosFiltro(this.idArrendatarioFiltro);
+    this.cdr.markForCheck();
+  }
+
+  private sincronizarContratosFiltro(idArrendatario: number | null): void {
+    const id = Number(idArrendatario);
+    if (!Number.isFinite(id) || id <= 0) {
+      this.contratosFiltroOpciones = [];
+      this.idContratoFiltro = null;
+      return;
+    }
+    const item = this.arrendatariosCatalogoFiltro.find(
+      (r) => resolverIdArrendatarioApi(r) === Math.floor(id),
+    );
+    const contratos = Array.isArray(item?.['contratos'])
+      ? (item['contratos'] as unknown[])
+      : [];
+    this.contratosFiltroOpciones = contratos
+      .map((raw) => {
+        if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return null;
+        const c = raw as Record<string, unknown>;
+        const idContrato = Number(c['id'] ?? c['idContrato']);
+        if (!Number.isFinite(idContrato) || idContrato <= 0) return null;
+        return {
+          id: Math.floor(idContrato),
+          label: etiquetaContratoArrendatarioApi(c),
+        };
+      })
+      .filter((x): x is { id: number; label: string } => x != null);
+
+    const actual = Number(this.idContratoFiltro);
+    if (!this.contratosFiltroOpciones.some((o) => o.id === actual)) {
+      this.idContratoFiltro = null;
+    }
+  }
+
+  textoPlaceholderContratoFiltro(): string {
+    const idArr = Number(this.idArrendatarioFiltro);
+    if (!Number.isFinite(idArr) || idArr <= 0) {
+      return 'Seleccione arrendatario primero';
+    }
+    return this.contratosFiltroOpciones.length ? 'Todos los contratos' : 'Sin contratos';
   }
 
   ngOnDestroy(): void {
@@ -368,6 +417,33 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.registrosParaKpi = [];
     this.gridRentRol?.instance?.pageIndex(0);
     this.gridRentRol?.instance?.refresh();
+  }
+
+  /** Aplica el mes seleccionado (se traduce a fechaInicio/fechaFin del mes completo). */
+  aplicarFiltros(): void {
+    this.sincronizarFechasDesdeMesFecha();
+    if (!this.mesFiltro || !this.fechaInicioFiltro || !this.fechaFinFiltro) {
+      void this.alertaValidacion('Selecciona el mes a consultar.');
+      return;
+    }
+    this.cacheRegistrosKey = '';
+    this.todosRegistrosCache = [];
+    this.registrosParaKpi = [];
+    this.gridRentRol?.instance?.pageIndex(0);
+    this.gridRentRol?.instance?.refresh();
+  }
+
+  onMesFechaChange(e: { value?: Date | string | number | null }): void {
+    const v = e?.value;
+    if (v instanceof Date && !Number.isNaN(v.getTime())) {
+      this.mesFechaFiltro = v;
+    } else if (typeof v === 'string' || typeof v === 'number') {
+      const parsed = new Date(v);
+      if (!Number.isNaN(parsed.getTime())) {
+        this.mesFechaFiltro = parsed;
+      }
+    }
+    this.sincronizarFechasDesdeMesFecha();
   }
 
   onRowPrepared(e: RowPreparedEvent): void {
@@ -415,7 +491,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
   }
 
   cerrarModalCaptura(): void {
-    if (this.guardandoCaptura || this.guardandoInmuebleNuevo) return;
+    if (this.cerrarCapturaBloqueado) return;
     this.mostrarModalCaptura = false;
     this.localesDropdownAbierto = false;
     this.cerrarModalMapa(false);
@@ -424,6 +500,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     this.cerrarLocalesSiClickFuera(event.target);
+    this.cerrarExportSiClickFuera(event.target);
   }
 
   @HostListener('document:focusin', ['$event'])
@@ -452,40 +529,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.localesConsultados = false;
     this.cerrarLocalesDropdown();
     if (Number.isFinite(id) && id > 0) {
-      this.nuevoInmuebleNombre = '';
-      this.mostrarFormularioNuevoInmueble = false;
-      this.continuarAArrendatarioTrasInmueble = false;
       this.cargarLocales(id);
-      return;
     }
-  }
-
-  mostrarAltaInmueble(): void {
-    const idArr = Number(this.capturaForm?.get('idArrendador')?.value);
-    if (!(Number.isFinite(idArr) && idArr > 0) || this.cargandoInmuebles) return;
-    this.mostrarFormularioNuevoInmueble = true;
-    this.capturaForm.patchValue({ idInmueble: null }, { emitEvent: false });
-    this.localesOpciones = [];
-    this.localesSeleccionados.clear();
-    this.localesConsultados = false;
-    this.cerrarLocalesDropdown();
-    this.cdr.markForCheck();
-  }
-
-  ocultarAltaInmueble(): void {
-    this.mostrarFormularioNuevoInmueble = false;
-    this.nuevoInmuebleNombre = '';
-    this.continuarAArrendatarioTrasInmueble = false;
-    this.cdr.markForCheck();
-  }
-
-  onNuevoInmuebleNombreInput(): void {
-    if (!this.nuevoInmuebleNombre.trim()) return;
-    this.capturaForm.patchValue({ idInmueble: null }, { emitEvent: false });
-    this.localesOpciones = [];
-    this.localesSeleccionados.clear();
-    this.localesConsultados = false;
-    this.cerrarLocalesDropdown();
   }
 
   toggleLocalesDropdown(event?: Event): void {
@@ -571,34 +616,13 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  iniciarAltaInmuebleConMapa(): void {
-    const nombre = this.nuevoInmuebleNombre.trim();
-    const idArrendador = Number(this.capturaForm.get('idArrendador')?.value);
-    if (!nombre) {
-      void this.alertaValidacion('Indica el nombre del inmueble.');
-      return;
-    }
-    if (!Number.isFinite(idArrendador) || idArrendador <= 0) {
-      void this.alertaValidacion('Selecciona primero el arrendador.');
-      return;
-    }
-    this.continuarAArrendatarioTrasInmueble = false;
-    this.abrirModalMapa('inmueble-nuevo');
-  }
-
   continuarAUbicacionArrendatario(): void {
     if (!this.validarCapturaAntesMapa()) return;
-    if (this.altaInmueblePendiente) {
-      this.continuarAArrendatarioTrasInmueble = true;
-      this.abrirModalMapa('inmueble-nuevo');
-      return;
-    }
-    this.continuarAArrendatarioTrasInmueble = false;
-    this.abrirModalMapa('arrendatario');
+    this.abrirModalMapa();
   }
 
   cerrarModalMapa(desdeUsuario = true): void {
-    if (desdeUsuario && (this.guardandoCaptura || this.guardandoInmuebleNuevo)) return;
+    if (desdeUsuario && this.cerrarCapturaBloqueado) return;
     this.mostrarModalMapa = false;
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
@@ -611,12 +635,6 @@ export class RentRolComponent implements OnInit, OnDestroy {
       void this.alertaValidacion('Selecciona un punto en el mapa.');
       return;
     }
-
-    if (this.mapaModo === 'inmueble-nuevo') {
-      void this.crearInmuebleMinimoYSeleccionar();
-      return;
-    }
-
     void this.guardarArrendatarioCaptura();
   }
 
@@ -634,15 +652,12 @@ export class RentRolComponent implements OnInit, OnDestroy {
       lat: [null as number | null],
       lng: [null as number | null],
     });
-
     this.capturaForm.get('idArrendador')?.valueChanges.subscribe((raw) => {
       const id = Number(raw);
       this.capturaForm.patchValue({ idInmueble: null }, { emitEvent: false });
       this.inmueblesOpciones = [];
       this.localesOpciones = [];
       this.localesSeleccionados.clear();
-      this.nuevoInmuebleNombre = '';
-      this.mostrarFormularioNuevoInmueble = false;
       this.inmueblesConsultados = false;
       this.localesConsultados = false;
       this.cerrarLocalesDropdown();
@@ -672,10 +687,6 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.capturaForm.get('pctMantenimiento')?.clearValidators();
     this.capturaForm.get('pctMantenimiento')?.updateValueAndValidity({ emitEvent: false });
     this.switchManttoSi = true;
-    this.nuevoInmuebleNombre = '';
-    this.mostrarFormularioNuevoInmueble = false;
-    this.continuarAArrendatarioTrasInmueble = false;
-    this.omitirLocalesObligatorios = false;
     this.inmueblesOpciones = [];
     this.localesOpciones = [];
     this.localesSeleccionados.clear();
@@ -767,11 +778,16 @@ export class RentRolComponent implements OnInit, OnDestroy {
     });
   }
 
-  private validarCapturaAntesMapa(): boolean {
+  /** Todos los campos del modal son obligatorios; si mantenimiento = No, también el %. */
+  private recolectarCamposFaltantesCaptura(): string[] {
     this.capturaForm.markAllAsTouched();
+    this.capturaForm.get('incluyeMantenimiento')?.setValue(this.switchManttoSi ? 0 : 1, {
+      emitEvent: false,
+    });
     this.recalcularMontosPreview();
 
     const faltantes: string[] = [];
+
     if (!String(this.capturaForm.get('arrendatario')?.value ?? '').trim()) {
       faltantes.push('Arrendatario');
     }
@@ -780,35 +796,62 @@ export class RentRolComponent implements OnInit, OnDestroy {
     }
 
     const idInmueble = Number(this.capturaForm.get('idInmueble')?.value);
-    if (this.altaInmueblePendiente) {
-      if (!this.nuevoInmuebleNombre.trim()) {
-        faltantes.push('Nombre del inmueble nuevo');
+    if (!(Number.isFinite(idInmueble) && idInmueble > 0)) {
+      faltantes.push('Inmueble');
+    }
+
+    if (Number.isFinite(idInmueble) && idInmueble > 0) {
+      if (this.localesConsultados && this.localesOpciones.length === 0) {
+        faltantes.push('Local(es) (el inmueble no tiene locales disponibles)');
+      } else if (this.localesSeleccionados.size === 0) {
+        faltantes.push('Local(es)');
       }
-    } else if (this.mostrarPanelAltaInmueble) {
-      faltantes.push('Nombre del inmueble nuevo');
-    } else if (!(Number.isFinite(idInmueble) && idInmueble > 0)) {
-      faltantes.push('Inmueble (elige uno o pulsa el botón +)');
-    } else if (this.localesConsultados && this.localesOpciones.length === 0) {
-      faltantes.push('Locales (este inmueble no tiene disponibles)');
     } else if (this.localesSeleccionados.size === 0) {
       faltantes.push('Local(es)');
     }
 
-    if (!String(this.capturaForm.get('fechaInicioContrato')?.value ?? '').trim()) {
-      faltantes.push('Fecha inicio');
-    }
-    if (!String(this.capturaForm.get('fechaTerminoContrato')?.value ?? '').trim()) {
-      faltantes.push('Fecha término');
-    }
-    if (!this.montosPreview.renta.listo) {
-      faltantes.push('Metros rentados y Costo por M²');
-    }
-    if (this.incluyeMantenimiento && !this.montosPreview.mantenimiento.listo) {
-      faltantes.push('Porcentaje de mantenimiento');
+    const fechaInicio = String(this.capturaForm.get('fechaInicioContrato')?.value ?? '').trim();
+    const fechaTermino = String(this.capturaForm.get('fechaTerminoContrato')?.value ?? '').trim();
+    if (!fechaInicio) faltantes.push('Fecha inicio');
+    if (!fechaTermino) faltantes.push('Fecha término');
+    if (fechaInicio && fechaTermino && fechaInicio > fechaTermino) {
+      faltantes.push('Fecha término (debe ser mayor o igual a la fecha inicio)');
     }
 
+    const metros = Number(this.capturaForm.get('metrosRentados')?.value);
+    const costo = Number(this.capturaForm.get('costoM2')?.value);
+    if (!(Number.isFinite(metros) && metros > 0)) {
+      faltantes.push('Metros rentados');
+    }
+    if (!(Number.isFinite(costo) && costo > 0)) {
+      faltantes.push('Costo por M²');
+    }
+    if (!this.montosPreview.renta.listo) {
+      if (Number.isFinite(metros) && metros > 0 && Number.isFinite(costo) && costo > 0) {
+        faltantes.push('Subtotal / IVA / Renta total');
+      }
+    }
+
+    // Incluye mantenimiento siempre tiene Sí/No; si es No, % y montos de mantto son obligatorios.
+    if (!this.switchManttoSi) {
+      const pct = Number(this.capturaForm.get('pctMantenimiento')?.value);
+      if (!(Number.isFinite(pct) && pct > 0)) {
+        faltantes.push('Porcentaje de mantenimiento');
+      }
+      if (!this.montosPreview.mantenimiento.listo) {
+        if (Number.isFinite(pct) && pct > 0) {
+          faltantes.push('Subtotal / IVA / Total de mantenimiento');
+        }
+      }
+    }
+
+    return faltantes;
+  }
+
+  private validarCapturaAntesMapa(): boolean {
+    const faltantes = this.recolectarCamposFaltantesCaptura();
     if (faltantes.length) {
-      void this.alertaValidacion(`Completa: ${faltantes.join(', ')}.`);
+      void this.alertaValidacionCampos(faltantes);
       return false;
     }
     return true;
@@ -860,8 +903,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
     });
   }
 
-  private abrirModalMapa(modo: RentRolMapaModo): void {
-    this.mapaModo = modo;
+  private abrirModalMapa(): void {
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
     this.mostrarModalMapa = true;
@@ -882,113 +924,24 @@ export class RentRolComponent implements OnInit, OnDestroy {
       });
   }
 
-  private async crearInmuebleMinimoYSeleccionar(): Promise<void> {
-    const nombre = this.nuevoInmuebleNombre.trim();
-    const idArrendador = Number(this.capturaForm.get('idArrendador')?.value);
-    if (
-      !nombre ||
-      !Number.isFinite(idArrendador) ||
-      idArrendador <= 0 ||
-      this.latSeleccionada == null ||
-      this.lngSeleccionada == null
-    ) {
-      return;
-    }
-
-    const encadenarArrendatario = this.continuarAArrendatarioTrasInmueble;
-    this.guardandoInmuebleNuevo = true;
-    this.abrirSwalCargando('Cargando...', 'Guardando inmueble, por favor espera.');
-
-    try {
-      const fd = construirFormDataInmuebleMinimo({
-        nombreInmueble: nombre,
-        idArrendador,
-        lat: this.latSeleccionada,
-        lng: this.lngSeleccionada,
-      });
-      const resp = await lastValueFrom(this.inmueblesService.crearInmueble(fd));
-      let idNuevo = extraerIdDesdeRespuestaApi(resp);
-
-      const listaResp = await lastValueFrom(
-        this.inmueblesService.obtenerInmueblesPorArrendador(idArrendador).pipe(catchError(() => of(null))),
-      );
-      this.inmueblesOpciones = mapInmueblesAOpciones(listaResp);
-      this.inmueblesConsultados = true;
-
-      if (idNuevo == null) {
-        const needle = nombre.toLowerCase();
-        const match = this.inmueblesOpciones.find((i) => i.label.toLowerCase().includes(needle));
-        idNuevo = match?.id ?? null;
-      }
-
-      this.actualizarEstadoSelectInmueble();
-
-      if (idNuevo != null) {
-        this.capturaForm.patchValue({ idInmueble: idNuevo });
-        this.localesOpciones = [];
-        this.localesSeleccionados.clear();
-        this.localesConsultados = false;
-        this.cargarLocales(idNuevo);
-      }
-
-      this.nuevoInmuebleNombre = '';
-      this.mostrarFormularioNuevoInmueble = false;
-      this.continuarAArrendatarioTrasInmueble = false;
-      this.cerrarModalMapa(false);
-
-      await this.esperarMs(500);
-      Swal.close();
-
-      if (encadenarArrendatario) {
-        if (idNuevo == null) {
-          await Swal.fire({
-            color: '#ffffff',
-            background: '#141a21',
-            title: '¡Ops!',
-            text: 'El inmueble se creó pero no se pudo seleccionar. Elige en la lista e intenta Guardar de nuevo.',
-            icon: 'error',
-            confirmButtonColor: '#3085d6',
-            confirmButtonText: 'Confirmar',
-          });
-          return;
-        }
-        this.omitirLocalesObligatorios = true;
-        this.abrirModalMapa('arrendatario');
-        return;
-      }
-
-      await Swal.fire({
-        color: '#ffffff',
-        background: '#141a21',
-        title: 'Inmueble listo',
-        text: 'El inmueble se creó y quedó seleccionado. Continúa con el contrato.',
-        icon: 'success',
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: 'Continuar',
-      });
-    } catch (err: unknown) {
-      this.continuarAArrendatarioTrasInmueble = false;
-      const e = err as { error?: { message?: string }; message?: string };
-      await this.cerrarCargaYMostrarResultado({
-        ok: false,
-        text: String(e?.error?.message ?? e?.message ?? 'No se pudo crear el inmueble.'),
-      });
-    } finally {
-      this.guardandoInmuebleNuevo = false;
-      this.cdr.markForCheck();
-    }
-  }
-
   private async guardarArrendatarioCaptura(): Promise<void> {
     if (this.latSeleccionada == null || this.lngSeleccionada == null) return;
-    // Tras crear inmueble nuevo puede no haber locales aún: no revalidar locales rígidamente.
     if (!this.validarCapturaAntesGuardarArrendatario()) return;
+
+    // Sincroniza switch UI ↔ form (Sí = form 0; No = form 1, igual que agregar-arrendatario).
+    this.capturaForm.get('incluyeMantenimiento')?.setValue(this.switchManttoSi ? 0 : 1, {
+      emitEvent: false,
+    });
+    this.recalcularMontosPreview();
 
     const v = this.capturaForm.getRawValue();
     this.capturaForm.patchValue({
       lat: this.latSeleccionada,
       lng: this.lngSeleccionada,
     });
+
+    const incluyeMantenimiento = !this.switchManttoSi;
+    const pctMantenimiento = Number(v.pctMantenimiento);
 
     this.guardandoCaptura = true;
     this.abrirSwalCargando('Cargando...', 'Guardando arrendatario, por favor espera.');
@@ -1005,13 +958,11 @@ export class RentRolComponent implements OnInit, OnDestroy {
         fechaTerminoContrato: String(v.fechaTerminoContrato ?? ''),
         metrosRentados: Number(v.metrosRentados),
         costoM2: Number(v.costoM2),
-        incluyeMantenimiento: Number(v.incluyeMantenimiento) === 1,
-        pctMantenimiento: Number(v.pctMantenimiento),
-        montos: this.montosPreview,
+        incluyeMantenimiento,
+        pctMantenimiento: Number.isFinite(pctMantenimiento) ? pctMantenimiento : undefined,
       });
 
       await lastValueFrom(this.arrendatariosService.crearArrendatario(fd));
-      this.omitirLocalesObligatorios = false;
       this.cerrarModalMapa(false);
       this.mostrarModalCaptura = false;
       this.cacheRegistrosKey = '';
@@ -1022,6 +973,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
         title: '¡Operación Exitosa!',
         text: 'Se registró el arrendatario con su contrato.',
       });
+      void this.router.navigateByUrl('/arrendatarios');
     } catch (err: unknown) {
       const e = err as { error?: { message?: string }; message?: string };
       await this.cerrarCargaYMostrarResultado({
@@ -1034,39 +986,11 @@ export class RentRolComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Validación al guardar arrendatario (tras mapa); locales solo si hay opciones. */
+  /** Validación al guardar arrendatario (tras confirmar en el mapa). */
   private validarCapturaAntesGuardarArrendatario(): boolean {
-    this.capturaForm.markAllAsTouched();
-    this.recalcularMontosPreview();
-    const faltantes: string[] = [];
-    if (!String(this.capturaForm.get('arrendatario')?.value ?? '').trim()) {
-      faltantes.push('Arrendatario');
-    }
-    if (!Number(this.capturaForm.get('idArrendador')?.value)) {
-      faltantes.push('Arrendador');
-    }
-    if (!Number(this.capturaForm.get('idInmueble')?.value)) {
-      faltantes.push('Inmueble');
-    }
-    if (!this.omitirLocalesObligatorios) {
-      if (this.localesOpciones.length > 0 && this.localesSeleccionados.size === 0) {
-        faltantes.push('Local(es)');
-      }
-    }
-    if (!String(this.capturaForm.get('fechaInicioContrato')?.value ?? '').trim()) {
-      faltantes.push('Fecha inicio');
-    }
-    if (!String(this.capturaForm.get('fechaTerminoContrato')?.value ?? '').trim()) {
-      faltantes.push('Fecha término');
-    }
-    if (!this.montosPreview.renta.listo) {
-      faltantes.push('Metros rentados y Costo por M²');
-    }
-    if (this.incluyeMantenimiento && !this.montosPreview.mantenimiento.listo) {
-      faltantes.push('Porcentaje de mantenimiento');
-    }
+    const faltantes = this.recolectarCamposFaltantesCaptura();
     if (faltantes.length) {
-      void this.alertaValidacion(`Completa: ${faltantes.join(', ')}.`);
+      void this.alertaValidacionCampos(faltantes);
       return false;
     }
     return true;
@@ -1081,6 +1005,35 @@ export class RentRolComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonColor: '#3085d6',
       confirmButtonText: 'Entendido',
+    });
+  }
+
+  private alertaValidacionCampos(faltantes: string[]): Promise<unknown> {
+    const lista = faltantes
+      .map(
+        (campo, index) => `
+      <div style="padding:8px 12px;border-left:4px solid #d9534f;background:#caa8a8;text-align:center;margin-bottom:8px;border-radius:4px;">
+        <strong style="color:#b02a37;">${index + 1}. ${campo}</strong>
+      </div>
+    `,
+      )
+      .join('');
+
+    return Swal.fire({
+      color: '#ffffff',
+      background: '#141a21',
+      title: '¡Faltan campos obligatorios!',
+      html: `
+        <p style="text-align:center;font-size:15px;margin-bottom:16px;color:white">
+          Los siguientes <strong>campos obligatorios</strong> están vacíos.<br>
+          Por favor complétalos antes de continuar:
+        </p>
+        <div style="max-height:350px;overflow-y:auto;">${lista}</div>
+      `,
+      icon: 'error',
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#3085d6',
+      customClass: { popup: 'swal2-padding swal2-border' },
     });
   }
 
@@ -1177,13 +1130,30 @@ export class RentRolComponent implements OnInit, OnDestroy {
     }
   }
 
-  private rangoFechasPorDefecto(): { inicio: string; fin: string } {
+  private fechaMesPorDefecto(): Date {
     const hoy = new Date();
-    const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
-    return {
-      inicio: this.toIsoFecha(inicioAnio),
-      fin: this.toIsoFecha(hoy),
-    };
+    return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  }
+
+  /**
+   * Traduce la fecha del DateBox al rango que espera el servicio:
+   * primer y último día del mes → fechaInicio / fechaFin.
+   */
+  private sincronizarFechasDesdeMesFecha(): void {
+    const d = this.mesFechaFiltro;
+    if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
+      this.mesFiltro = '';
+      this.fechaInicioFiltro = '';
+      this.fechaFinFiltro = '';
+      return;
+    }
+    const anio = d.getFullYear();
+    const mesIdx = d.getMonth();
+    const inicio = new Date(anio, mesIdx, 1);
+    const fin = new Date(anio, mesIdx + 1, 0);
+    this.mesFiltro = `${anio}-${String(mesIdx + 1).padStart(2, '0')}`;
+    this.fechaInicioFiltro = this.toIsoFecha(inicio);
+    this.fechaFinFiltro = this.toIsoFecha(fin);
   }
 
   private toIsoFecha(d: Date): string {
@@ -1216,6 +1186,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
             limit: this.LIMITE_CARGA_BUSQUEDA,
             fechaInicio: this.fechaInicioFiltro,
             fechaFin: this.fechaFinFiltro,
+            idArrendatario: this.idArrendatarioFiltro,
+            idContrato: this.idContratoFiltro,
           }),
         );
 
@@ -1291,6 +1263,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
               limit: apiLimit,
               fechaInicio: this.fechaInicioFiltro,
               fechaFin: this.fechaFinFiltro,
+              idArrendatario: this.idArrendatarioFiltro,
+              idContrato: this.idContratoFiltro,
             }),
           );
 
@@ -1322,6 +1296,56 @@ export class RentRolComponent implements OnInit, OnDestroy {
           return { data: [], totalCount: 0 };
         }
       },
+    });
+  }
+
+  // ── Export menu ─────────────────────────────────────────────────
+  toggleExportMenu(): void {
+    this.exportMenuAbierto = !this.exportMenuAbierto;
+    this.cdr.markForCheck();
+  }
+
+  private cerrarExportSiClickFuera(target: EventTarget | null): void {
+    if (!this.exportMenuAbierto) return;
+    const el = target as HTMLElement | null;
+    if (el?.closest?.('.rr-export-wrap')) return;
+    this.exportMenuAbierto = false;
+    this.cdr.markForCheck();
+  }
+
+  private async obtenerRegistrosParaExport(): Promise<RentRolRow[]> {
+    if (this.modoBusquedaActivo) {
+      return this.registrosParaKpi.length ? this.registrosParaKpi : this.registrosVisibles;
+    }
+    if (this.registrosParaKpi.length) return this.registrosParaKpi;
+    try {
+      return await this.cargarTodosLosRegistros();
+    } catch {
+      return this.registrosVisibles;
+    }
+  }
+
+  async exportarExcel(): Promise<void> {
+    this.exportMenuAbierto = false;
+    const rows = await this.obtenerRegistrosParaExport();
+    if (!rows.length) return;
+    await exportarRentRolExcel({
+      rows,
+      fechaInicio: this.fechaInicioFiltro,
+      fechaFin: this.fechaFinFiltro,
+      titulo: 'Rent Rol',
+    });
+  }
+
+  async exportarPdf(): Promise<void> {
+    this.exportMenuAbierto = false;
+    const rows = await this.obtenerRegistrosParaExport();
+    if (!rows.length) return;
+    await exportarRentRolPdf({
+      rows,
+      fechaInicio: this.fechaInicioFiltro,
+      fechaFin: this.fechaFinFiltro,
+      titulo: 'Rent Rol',
     });
   }
 }

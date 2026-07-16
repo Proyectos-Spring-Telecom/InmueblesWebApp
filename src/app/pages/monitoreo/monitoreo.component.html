@@ -176,9 +176,15 @@
                   (click)="viewMode === 'instalaciones' ? onListaInmuebleRowClick(item, i) : selectInstalacion(item, i)">
                   <div class="inmueble-card-shell">
                     <div class="inmueble-content-grid">
-                      <div class="inmueble-media">
-                        <img [src]="getImagenInmuebleCard(item, i)"
-                          [attr.alt]="'Fachada — ' + (item.nombreDepartamento || item.nombreInstalacion || 'Inmueble')" />
+                      <div class="inmueble-media"
+                        [class.inmueble-media--icon]="inmuebleMuestraIcono(item)">
+                        <span *ngIf="inmuebleMuestraIcono(item)" class="inmueble-media-icon" aria-hidden="true">
+                          <mat-icon>storefront</mat-icon>
+                        </span>
+                        <img *ngIf="!inmuebleMuestraIcono(item)"
+                          [src]="getImagenInmuebleCard(item, i)"
+                          [attr.alt]="'Fachada — ' + (item.nombreDepartamento || item.nombreInstalacion || 'Inmueble')"
+                          (error)="onErrorImagenInmueble(item)" />
                       </div>
 
                       <div class="inmueble-info">

@@ -30,4 +30,9 @@ export class ContratosService {
   cancelarContrato(id: number): Observable<unknown> {
     return this.http.patch(`${this.base}/${id}/cancelar`, {});
   }
+
+  /** Cancela la asignación de un local en contrato (`ContratoLocales`). */
+  cancelarContratoLocal(idContratoLocal: number): Observable<unknown> {
+    return this.http.patch(`${this.base}/locales/${idContratoLocal}/cancelar`, {});
+  }
 }

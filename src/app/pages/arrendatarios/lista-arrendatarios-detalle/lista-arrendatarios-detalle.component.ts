@@ -1,11 +1,21 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { take } from 'rxjs';
 import Swal from 'sweetalert2';
 import { ContratosService } from 'src/app/services/moduleService/contratos.service';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
-import { ArrendatarioGridRow } from '../arrendatarios-list.mapper';
+import { ArrendatarioGridRow, contratoArrendatarioEsActivo } from '../arrendatarios-list.mapper';
 import {
   claseChipEstatusLocal,
   esImagenArchivo,
@@ -33,7 +43,7 @@ export interface GrupoMetricasContrato {
   styleUrl: './lista-arrendatarios-detalle.component.scss',
   standalone: false,
 })
-export class ListaArrendatariosDetalleComponent {
+export class ListaArrendatariosDetalleComponent implements OnChanges {
   @Input({ required: true }) row!: ArrendatarioGridRow;
   @Output() contratoCancelado = new EventEmitter<void>();
 
@@ -60,11 +70,31 @@ export class ListaArrendatariosDetalleComponent {
   etiquetaEstatusLocal = etiquetaEstatusLocal;
   claseChipEstatusLocal = claseChipEstatusLocal;
 
+  /** Ids de locales cuya URL de fachada falló al cargar. */
+  private readonly fotosLocalesRotas = new Set<string>();
+
+  /** Cache estable: `localesDesdeContrato()` no debe recrear el DOM en cada CD. */
+  private readonly localesCache = new Map<number, Record<string, unknown>[]>();
+
   constructor(
     private sanitizer: DomSanitizer,
     private http: HttpClient,
     private contratosService: ContratosService,
+    private cdr: ChangeDetectorRef,
   ) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['row']) {
+      this.localesCache.clear();
+      this.fotosLocalesRotas.clear();
+    }
+  }
+
+  /** Evita que el clic en el detalle colapse la fila del DxDataGrid. */
+  @HostListener('click', ['$event'])
+  onHostClick(event: Event): void {
+    event.stopPropagation();
+  }
 
   get item(): Record<string, unknown> {
     return this.row?.detalle ?? {};
@@ -87,7 +117,10 @@ export class ListaArrendatariosDetalleComponent {
 
   get contratos(): Record<string, unknown>[] {
     const c = this.item['contratos'];
-    return Array.isArray(c) ? (c as Record<string, unknown>[]) : [];
+    if (!Array.isArray(c)) return [];
+    return (c as Record<string, unknown>[]).filter((contrato) =>
+      contratoArrendatarioEsActivo(contrato),
+    );
   }
 
   nombreTipoServicio(s: Record<string, unknown>): string {
@@ -272,6 +305,12 @@ export class ListaArrendatariosDetalleComponent {
   }
 
   localesDesdeContrato(c: Record<string, unknown>): Record<string, unknown>[] {
+    const idContrato = Number(c['id']);
+    if (Number.isFinite(idContrato) && idContrato > 0) {
+      const cached = this.localesCache.get(Math.trunc(idContrato));
+      if (cached) return cached;
+    }
+
     const filas = c['contratoLocales'];
     if (!Array.isArray(filas)) return [];
     const out: Record<string, unknown>[] = [];
@@ -282,16 +321,46 @@ export class ListaArrendatariosDetalleComponent {
       if (loc != null && typeof loc === 'object') {
         out.push({
           ...(loc as Record<string, unknown>),
-          idContratoLocal: fila['id'],
+          idContratoLocal:
+            fila['id'] ?? fila['idContratoLocal'] ?? fila['idContratoLocales'],
           idLocalContrato: fila['idLocal'],
+          estatusContratoLocal: fila['estatus'],
+          fechaBajaContratoLocal: fila['fechaBaja'],
         });
         continue;
       }
-      out.push(fila);
+      out.push({
+        ...fila,
+        idContratoLocal:
+          fila['id'] ?? fila['idContratoLocal'] ?? fila['idContratoLocales'],
+        estatusContratoLocal: fila['estatusContratoLocal'] ?? fila['estatus'],
+      });
     }
-    return out.sort((a, b) =>
+    out.sort((a, b) =>
       String(a['nombre'] ?? '').localeCompare(String(b['nombre'] ?? ''), 'es'),
     );
+
+    if (Number.isFinite(idContrato) && idContrato > 0) {
+      this.localesCache.set(Math.trunc(idContrato), out);
+    }
+    return out;
+  }
+
+  trackContratoLocal(_index: number, loc: Record<string, unknown>): string {
+    const id = Number(loc['idContratoLocal']);
+    if (Number.isFinite(id) && id > 0) return `cl-${Math.trunc(id)}`;
+    return `cl-${String(loc['nombre'] ?? _index)}`;
+  }
+
+  invalidarCacheLocales(c?: Record<string, unknown>): void {
+    if (c) {
+      const id = Number(c['id']);
+      if (Number.isFinite(id) && id > 0) {
+        this.localesCache.delete(Math.trunc(id));
+        return;
+      }
+    }
+    this.localesCache.clear();
   }
 
   cantidadLocalesContrato(c: Record<string, unknown>): number {
@@ -317,13 +386,40 @@ export class ListaArrendatariosDetalleComponent {
     const direct = String(
       loc['fachadaUrl'] ?? loc['urlFachada'] ?? loc['imagenFachada'] ?? '',
     ).trim();
-    if (direct) return direct;
+    if (this.esUrlFotoValida(direct)) return direct;
     const fachada = loc['fachada'];
     if (fachada != null && typeof fachada === 'object' && !Array.isArray(fachada)) {
-      return String((fachada as Record<string, unknown>)['url'] ?? '').trim();
+      const url = String((fachada as Record<string, unknown>)['url'] ?? '').trim();
+      if (this.esUrlFotoValida(url)) return url;
     }
-    if (typeof fachada === 'string' && fachada.trim()) return fachada.trim();
+    if (typeof fachada === 'string' && this.esUrlFotoValida(fachada.trim())) {
+      return fachada.trim();
+    }
     return '';
+  }
+
+  private esUrlFotoValida(url: string): boolean {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    if (lower === 'null' || lower === 'undefined' || lower === '#' || lower === '/') {
+      return false;
+    }
+    return true;
+  }
+
+  fotoLocalRota(loc: Record<string, unknown>): boolean {
+    return this.fotosLocalesRotas.has(this.claveFotoLocal(loc));
+  }
+
+  onErrorFotoLocal(loc: Record<string, unknown>): void {
+    this.fotosLocalesRotas.add(this.claveFotoLocal(loc));
+    this.cdr.markForCheck();
+  }
+
+  private claveFotoLocal(loc: Record<string, unknown>): string {
+    const id =
+      loc['idContratoLocal'] ?? loc['idLocalContrato'] ?? loc['id'] ?? loc['nombre'] ?? '';
+    return String(id);
   }
 
   inmuebleDesdeContrato(c: Record<string, unknown>): Record<string, unknown> | null {
@@ -339,12 +435,36 @@ export class ListaArrendatariosDetalleComponent {
     return !Number.isFinite(estatus) || estatus !== 0;
   }
 
+  contratoLocalEsCancelable(
+    c: Record<string, unknown>,
+    loc: Record<string, unknown>,
+  ): boolean {
+    if (!this.contratoEsCancelable(c)) return false;
+    const idContratoLocal = Number(loc['idContratoLocal']);
+    if (!Number.isFinite(idContratoLocal) || idContratoLocal <= 0) return false;
+    const estatus = Number(loc['estatusContratoLocal']);
+    return !Number.isFinite(estatus) || estatus !== 0;
+  }
+
   confirmarCancelarContrato(c: Record<string, unknown>, event?: Event): void {
     event?.stopPropagation();
     event?.preventDefault();
 
     const idContrato = Number(c['id']);
-    if (!Number.isFinite(idContrato) || idContrato <= 0) return;
+    if (!Number.isFinite(idContrato) || idContrato <= 0) {
+      void this.alertaValidacion(
+        'No se puede cancelar',
+        'El contrato no tiene un identificador válido.',
+      );
+      return;
+    }
+    if (!this.contratoEsCancelable(c)) {
+      void this.alertaValidacion(
+        'Contrato no cancelable',
+        'Este contrato ya está cancelado o dado de baja.',
+      );
+      return;
+    }
 
     const indice = this.contratos.indexOf(c);
     const etiquetaContrato =
@@ -371,6 +491,8 @@ export class ListaArrendatariosDetalleComponent {
         .subscribe({
           next: () => {
             c['estatus'] = 0;
+            this.marcarLocalesContratoComoCancelados(c);
+            this.invalidarCacheLocales(c);
             void Swal.fire({
               background: '#141a21',
               color: '#ffffff',
@@ -387,7 +509,7 @@ export class ListaArrendatariosDetalleComponent {
               background: '#141a21',
               color: '#ffffff',
               title: '¡Ops!',
-              html: this.mensajeErrorHttp(err),
+              html: this.mensajeErrorHttp(err, 'No se pudo cancelar el contrato.'),
               icon: 'error',
               confirmButtonColor: '#3085d6',
               confirmButtonText: 'Confirmar',
@@ -397,9 +519,192 @@ export class ListaArrendatariosDetalleComponent {
     });
   }
 
-  private mensajeErrorHttp(err: unknown): string {
+  async confirmarCancelarContratoLocal(
+    c: Record<string, unknown>,
+    loc: Record<string, unknown>,
+    event?: Event,
+  ): Promise<void> {
+    event?.stopPropagation();
+    event?.preventDefault();
+
+    try {
+      const idContratoLocal = Number(
+        loc['idContratoLocal'] ?? loc['idContratoLocales'],
+      );
+      if (!Number.isFinite(idContratoLocal) || idContratoLocal <= 0) {
+        await this.alertaValidacion(
+          'No se puede cancelar',
+          'La asignación del local no tiene un identificador válido.',
+        );
+        return;
+      }
+      if (!this.contratoEsCancelable(c)) {
+        await this.alertaValidacion(
+          'Contrato no vigente',
+          'No se puede cancelar un local de un contrato ya cancelado.',
+        );
+        return;
+      }
+      const estatusAsignacion = Number(loc['estatusContratoLocal']);
+      if (Number.isFinite(estatusAsignacion) && estatusAsignacion === 0) {
+        await this.alertaValidacion(
+          'Local ya cancelado',
+          'Esta asignación de local ya está dada de baja.',
+        );
+        return;
+      }
+
+      const idContrato = Number(c['id']);
+      const indice = this.contratos.indexOf(c);
+      const etiquetaContrato =
+        indice >= 0 ? `Contrato ${indice + 1}` : `Contrato #${idContrato}`;
+      const nombreLocal =
+        String(loc['nombre'] ?? '').trim() || `Local #${Math.trunc(idContratoLocal)}`;
+      const idOk = Math.trunc(idContratoLocal);
+
+      const result = await Swal.fire({
+        title: '¡Cancelación de local!',
+        html: this.htmlModalCancelarContratoLocal(
+          c,
+          loc,
+          etiquetaContrato,
+          nombreLocal,
+          idOk,
+        ),
+        icon: 'warning',
+        background: '#141a21',
+        color: '#ffffff',
+        width: '36rem',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, cancelar local',
+        cancelButtonText: 'No, volver',
+        heightAuto: false,
+        didOpen: () => {
+          const el = Swal.getContainer();
+          if (el) el.style.zIndex = '200000';
+        },
+      });
+
+      if (!result.isConfirmed) return;
+
+      this.contratosService
+        .cancelarContratoLocal(idOk)
+        .pipe(take(1))
+        .subscribe({
+          next: () => {
+            this.aplicarCancelacionContratoLocal(c, idOk);
+            this.invalidarCacheLocales(c);
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Local cancelado!',
+              html: `La asignación de <strong>${this.escapeHtmlSwal(nombreLocal)}</strong> fue cancelada correctamente.`,
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+              didOpen: () => {
+                const el = Swal.getContainer();
+                if (el) el.style.zIndex = '200000';
+              },
+            });
+            this.contratoCancelado.emit();
+          },
+          error: (err: unknown) => {
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Ops!',
+              html: this.mensajeErrorHttp(
+                err,
+                'No se pudo cancelar la asignación del local.',
+              ),
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+              didOpen: () => {
+                const el = Swal.getContainer();
+                if (el) el.style.zIndex = '200000';
+              },
+            });
+          },
+        });
+    } catch (err: unknown) {
+      console.error('Error al confirmar cancelación de local:', err);
+      void Swal.fire({
+        background: '#141a21',
+        color: '#ffffff',
+        title: '¡Ops!',
+        html: this.mensajeErrorHttp(err, 'No se pudo abrir la confirmación de cancelación.'),
+        icon: 'error',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+        didOpen: () => {
+          const el = Swal.getContainer();
+          if (el) el.style.zIndex = '200000';
+        },
+      });
+    }
+  }
+
+  private alertaValidacion(titulo: string, mensaje: string): Promise<unknown> {
+    return Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      title: titulo,
+      html: mensaje,
+      icon: 'info',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Entendido',
+      didOpen: () => {
+        const el = Swal.getContainer();
+        if (el) el.style.zIndex = '200000';
+      },
+    });
+  }
+
+  private marcarLocalesContratoComoCancelados(c: Record<string, unknown>): void {
+    const filas = c['contratoLocales'];
+    if (!Array.isArray(filas)) return;
+    for (const raw of filas) {
+      if (raw == null || typeof raw !== 'object') continue;
+      const fila = raw as Record<string, unknown>;
+      const estatus = Number(fila['estatus']);
+      if (Number.isFinite(estatus) && estatus === 0) continue;
+      fila['estatus'] = 0;
+      const loc = fila['local'];
+      if (loc != null && typeof loc === 'object') {
+        (loc as Record<string, unknown>)['estatus'] = 1;
+      }
+    }
+  }
+
+  private aplicarCancelacionContratoLocal(
+    c: Record<string, unknown>,
+    idContratoLocal: number,
+  ): void {
+    const filas = c['contratoLocales'];
+    if (!Array.isArray(filas)) return;
+    for (const raw of filas) {
+      if (raw == null || typeof raw !== 'object') continue;
+      const fila = raw as Record<string, unknown>;
+      if (Number(fila['id']) !== idContratoLocal) continue;
+      fila['estatus'] = 0;
+      if (!fila['fechaBaja']) {
+        fila['fechaBaja'] = new Date().toISOString();
+      }
+      const loc = fila['local'];
+      if (loc != null && typeof loc === 'object') {
+        (loc as Record<string, unknown>)['estatus'] = 1;
+      }
+      break;
+    }
+  }
+
+  private mensajeErrorHttp(err: unknown, fallback: string): string {
     const e = err as { error?: { message?: string }; message?: string };
-    return String(e?.error?.message ?? e?.message ?? 'No se pudo cancelar el contrato.');
+    return String(e?.error?.message ?? e?.message ?? fallback);
   }
 
   private htmlModalCancelarContrato(
@@ -488,6 +793,58 @@ export class ListaArrendatariosDetalleComponent {
       '</div>',
       '<p style="margin:0 0 0.75rem;font-size:0.86rem;line-height:1.45;color:#fcd34d;">',
       'Esta acción dará de baja el contrato, cancelará los locales vinculados y los marcará como disponibles.',
+      '</p>',
+      '<p style="margin:0;font-size:0.9rem;line-height:1.45;color:#ecefff;">',
+      '¿Confirma que desea continuar con la cancelación?',
+      '</p>',
+    ].join('');
+  }
+
+  private htmlModalCancelarContratoLocal(
+    c: Record<string, unknown>,
+    loc: Record<string, unknown>,
+    etiquetaContrato: string,
+    nombreLocal: string,
+    idContratoLocal: number,
+  ): string {
+    const inmueble = this.inmuebleDesdeContrato(c);
+    const area =
+      loc['areaM2'] != null && loc['areaM2'] !== '' && Number.isFinite(Number(loc['areaM2']))
+        ? `${Number(loc['areaM2'])} m²`
+        : '';
+    const mensualidad =
+      loc['mensualidad'] != null && loc['mensualidad'] !== ''
+        ? formatearMoneda(loc['mensualidad'])
+        : '';
+
+    const lineasLocal = [
+      this.lineaResumenCancelacion('Local', nombreLocal),
+      this.lineaResumenCancelacion('ID asignación', String(idContratoLocal)),
+      this.lineaResumenCancelacion('Área', area),
+      this.lineaResumenCancelacion('Giro', loc['giro']),
+      this.lineaResumenCancelacion('Mensualidad', mensualidad),
+      this.lineaResumenCancelacion('Contrato', etiquetaContrato),
+      this.lineaResumenCancelacion('Inmueble', inmueble?.['inmueble']),
+      this.lineaResumenCancelacion('Arrendatario', this.item['arrendatario']),
+    ].filter(Boolean);
+
+    const bloque = (titulo: string, lineas: string[]): string => {
+      if (!lineas.length) return '';
+      return [
+        `<p style="margin:0 0 0.45rem;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:#8f9bc4;">${this.escapeHtmlSwal(titulo)}</p>`,
+        `<ul style="margin:0 0 0.85rem;padding-left:1.1rem;font-size:0.86rem;color:#dce3ff;line-height:1.5;list-style:disc;">${lineas.join('')}</ul>`,
+      ].join('');
+    };
+
+    return [
+      '<p style="margin:0 0 0.85rem;font-size:0.92rem;line-height:1.5;color:#ecefff;">',
+      'Está cancelando la <strong>asignación de un local</strong> en el contrato. Revise los datos antes de confirmar:',
+      '</p>',
+      '<div style="text-align:left;margin:0 0 0.85rem;padding:0.85rem;border-radius:10px;border:1px solid rgba(130,160,255,0.28);background:rgba(8,12,20,0.72);">',
+      bloque('Asignación a cancelar', lineasLocal),
+      '</div>',
+      '<p style="margin:0 0 0.75rem;font-size:0.86rem;line-height:1.45;color:#fcd34d;">',
+      'Esta acción dará de baja la asignación del local y lo marcará como disponible. El contrato permanecerá vigente.',
       '</p>',
       '<p style="margin:0;font-size:0.9rem;line-height:1.45;color:#ecefff;">',
       '¿Confirma que desea continuar con la cancelación?',

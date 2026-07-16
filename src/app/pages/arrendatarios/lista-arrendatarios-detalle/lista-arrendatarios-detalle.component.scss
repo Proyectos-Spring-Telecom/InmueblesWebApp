@@ -650,30 +650,82 @@ button.arr-socio-doc__link {
   vertical-align: middle;
 }
 
-.arr-ctr-locales-table__foto img {
-  width: 5.75rem;
-  height: 5.75rem;
-  object-fit: cover;
-  border-radius: 10px;
-  display: block;
-  border: 1px solid rgba(130, 160, 255, 0.25);
-}
-
-.arr-ctr-locales-table__foto-ph {
+.arr-ctr-locales-table__foto-box {
+  position: relative;
   width: 5.75rem;
   height: 5.75rem;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8ea5ff;
-  font-size: 1.5rem;
-  background: rgba(14, 20, 32, 0.9);
-  border: 1px solid rgba(130, 160, 255, 0.25);
+  overflow: hidden;
+  border: 1px solid rgba(130, 160, 255, 0.4);
+  background: #1a2740;
+  box-sizing: border-box;
+}
+
+.arr-ctr-locales-table__foto-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 1;
+  background: #1a2740;
+}
+
+.arr-ctr-locales-table__foto-icon {
+  position: relative;
+  z-index: 0;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  font-size: 2.25rem !important;
+  color: #9eb2ff !important;
+  opacity: 1;
 }
 
 .arr-ctr-locales-table tbody td {
   vertical-align: middle;
+}
+
+.arr-ctr-locales-table__acciones {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.arr-ctr-locales-table__acciones-na {
+  color: #7a869e;
+  font-size: 0.85rem;
+}
+
+.arr-ctr-local-cancel {
+  position: relative;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 30px;
+  padding: 0.35rem 0.85rem;
+  color: #fff;
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: 999px;
+  border: 1px solid rgba(252, 165, 165, 0.55);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.arr-ctr-local-cancel:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 16px rgba(220, 53, 69, 0.45);
+}
+
+.arr-ctr-local-cancel i {
+  font-size: 0.75rem;
 }
 
 .arr-ctr-dl {
@@ -797,10 +849,15 @@ button.arr-socio-doc__link {
     width: 5rem;
   }
 
-  .arr-ctr-locales-table__foto img,
-  .arr-ctr-locales-table__foto-ph {
+  .arr-ctr-locales-table__foto-box {
     width: 4.25rem;
     height: 4.25rem;
+  }
+
+  .arr-ctr-locales-table__foto-icon {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    font-size: 1.75rem !important;
   }
 
   .arr-ctr-inm__channel {

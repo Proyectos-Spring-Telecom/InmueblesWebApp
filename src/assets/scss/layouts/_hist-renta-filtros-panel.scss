@@ -114,7 +114,46 @@ html.dark-theme .hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-
     grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   }
 
+  .hist-renta-filtros-panel__grid--mes {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  }
+
   .hist-renta-filtros-panel__accion {
     grid-column: auto;
   }
+}
+
+.hist-renta-filtros-panel__mes .hist-renta-mes-datebox {
+  display: block;
+  width: 100%;
+}
+
+.hist-renta-filtros-panel__mes .hist-renta-mes-datebox.dx-datebox {
+  width: 100%;
+}
+
+.hist-renta-filtros-panel__mes .hist-renta-mes-datebox .dx-texteditor-input {
+  min-height: calc(1.5em + 0.5rem + 2px);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  color: #f1f5f9;
+  background-color: transparent;
+}
+
+.hist-renta-filtros-panel__mes .hist-renta-mes-datebox.dx-texteditor {
+  background-color: #1c252e;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.35);
+}
+
+.hist-renta-filtros-panel__mes .hist-renta-mes-datebox.dx-state-focused.dx-texteditor {
+  border-color: rgba(129, 140, 248, 0.55);
+  background-color: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.15);
+}
+
+.hist-renta-filtros-panel__mes .hist-renta-mes-datebox .dx-dropdowneditor-icon,
+.hist-renta-filtros-panel__mes .hist-renta-mes-datebox .dx-icon {
+  color: #cbd5e1;
 }

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { DxDataGridModule } from 'devextreme-angular';
+import { DxDataGridModule, DxDateBoxModule } from 'devextreme-angular';
 import { MaterialModule } from 'src/app/material.module';
 import { RentRolRoutingModule } from './rent-rol-routing.module';
 import { RentRolComponent } from './rent-rol.component';
@@ -17,6 +17,7 @@ import { RentRolComponent } from './rent-rol.component';
     MatIconModule,
     MaterialModule,
     DxDataGridModule,
+    DxDateBoxModule,
   ],
 })
 export class RentRolModule {}

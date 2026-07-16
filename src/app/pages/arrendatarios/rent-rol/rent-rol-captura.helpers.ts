@@ -158,61 +158,69 @@ export function mapLocalesLibresAOpciones(resp: unknown): RentRolLocalOpcion[] {
       if (!Number.isFinite(id) || id <= 0) return null;
       const nombre =
         String(row['nombre'] ?? row['nombreLocal'] ?? '').trim() || `Local ${Math.trunc(id)}`;
-      const mensualidadRaw = row['mensualidad'];
-      let etiqueta = `Nombre: ${nombre}`;
-      if (mensualidadRaw != null && String(mensualidadRaw).trim() !== '') {
-        const n = Number(mensualidadRaw);
-        if (Number.isFinite(n)) {
-          const hasCentavos = Math.abs(n - Math.trunc(n)) > 0.001;
-          const mxn = n.toLocaleString('es-MX', {
-            style: 'currency',
-            currency: 'MXN',
-            minimumFractionDigits: hasCentavos ? 2 : 0,
-            maximumFractionDigits: hasCentavos ? 2 : 0,
-          });
-          etiqueta += ` - Mensualidad: ${mxn}`;
-        }
-      }
-      return { id: Math.trunc(id), nombre, etiqueta };
+      return {
+        id: Math.trunc(id),
+        nombre,
+        etiqueta: etiquetaLocalLibreRentRol(nombre, row),
+      };
     })
     .filter((x): x is RentRolLocalOpcion => x != null)
     .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es'));
 }
 
-export function extraerIdDesdeRespuestaApi(resp: unknown): number | null {
-  if (resp == null) return null;
-  if (typeof resp === 'number' && Number.isFinite(resp) && resp > 0) {
-    return Math.trunc(resp);
+/**
+ * Misma regla que lista-inmuebles-detalle:
+ * - Si hay `mensualidadIva` → renta = mensualidadIva, mant = mantenimientoIva (o 0).
+ * - Si no → renta = mensualidad, mant = mantenimiento (o 0).
+ * - Con mantenimiento > 0 → etiqueta «Total»; si no → «Mensualidad».
+ */
+function etiquetaLocalLibreRentRol(nombre: string, row: Record<string, unknown>): string {
+  const partes = [`Nombre: ${nombre}`];
+  const renta = rentaLocalLibreRentRol(row);
+  if (renta == null) return partes.join(' - ');
+
+  const mant = mantenimientoLocalLibreRentRol(row);
+  if (mant > 0) {
+    partes.push(`Total: ${formatearMontoLocalRentRol(renta + mant)}`);
+  } else {
+    partes.push(`Mensualidad: ${formatearMontoLocalRentRol(renta)}`);
   }
-  if (typeof resp !== 'object') return null;
-  const r = resp as Record<string, unknown>;
-  const candidatos = [r['id'], r['idInmueble'], r['data']];
-  for (const c of candidatos) {
-    if (typeof c === 'number' && Number.isFinite(c) && c > 0) return Math.trunc(c);
-    if (c != null && typeof c === 'object' && !Array.isArray(c)) {
-      const nested = c as Record<string, unknown>;
-      const id = Number(nested['id'] ?? nested['idInmueble']);
-      if (Number.isFinite(id) && id > 0) return Math.trunc(id);
-    }
-    if (typeof c === 'string' && Number.isFinite(Number(c)) && Number(c) > 0) {
-      return Math.trunc(Number(c));
-    }
-  }
-  return null;
+  return partes.join(' - ');
 }
 
-export function construirFormDataInmuebleMinimo(input: {
-  nombreInmueble: string;
-  idArrendador: number;
-  lat: number;
-  lng: number;
-}): FormData {
-  const fd = new FormData();
-  fd.append('inmueble', input.nombreInmueble.trim());
-  fd.append('idArrendador', String(Math.trunc(input.idArrendador)));
-  fd.append('lat', String(input.lat));
-  fd.append('lng', String(input.lng));
-  return fd;
+function aplicaIvaLocalLibreRentRol(row: Record<string, unknown>): boolean {
+  const raw = row['mensualidadIva'];
+  return raw != null && String(raw).trim() !== '';
+}
+
+function parsearMontoLocalRentRol(val: unknown): number | null {
+  if (val == null || String(val).trim() === '') return null;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : null;
+}
+
+function rentaLocalLibreRentRol(row: Record<string, unknown>): number | null {
+  if (aplicaIvaLocalLibreRentRol(row)) {
+    return parsearMontoLocalRentRol(row['mensualidadIva']);
+  }
+  return parsearMontoLocalRentRol(row['mensualidad']);
+}
+
+function mantenimientoLocalLibreRentRol(row: Record<string, unknown>): number {
+  if (aplicaIvaLocalLibreRentRol(row)) {
+    return parsearMontoLocalRentRol(row['mantenimientoIva']) ?? 0;
+  }
+  return parsearMontoLocalRentRol(row['mantenimiento']) ?? 0;
+}
+
+function formatearMontoLocalRentRol(val: number): string {
+  const hasCentavos = Math.abs(val - Math.trunc(val)) > 0.001;
+  return val.toLocaleString('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    minimumFractionDigits: hasCentavos ? 2 : 0,
+    maximumFractionDigits: hasCentavos ? 2 : 0,
+  });
 }
 
 export function construirFormDataArrendatarioCaptura(input: {
@@ -231,7 +239,6 @@ export function construirFormDataArrendatarioCaptura(input: {
   costoM2: number;
   incluyeMantenimiento: boolean;
   pctMantenimiento?: number;
-  montos: RentRolMontosPreview;
 }): FormData {
   const fd = new FormData();
   const dto: Record<string, unknown> = {
@@ -246,12 +253,22 @@ export function construirFormDataArrendatarioCaptura(input: {
   };
   fd.append('arrendatario', JSON.stringify(dto));
 
+  // Recalcular siempre al armar el payload (evita montosPreview desfasado).
+  // Misma regla que agregar-arrendatario: si incluye=1, manda % y montos.
+  const montosFinal = calcularMontosRentRolCaptura({
+    metros: input.metrosRentados,
+    costoM2: input.costoM2,
+    incluyeMantenimiento: input.incluyeMantenimiento,
+    pctMantenimiento: input.pctMantenimiento,
+  });
+
+  const incluyeMantenimiento = input.incluyeMantenimiento ? 1 : 0;
   const contrato: Record<string, unknown> = {
     idInmueble: Math.trunc(input.idInmueble),
     idLocales: input.idLocales.filter((id) => Number.isFinite(id) && id > 0).map((id) => Math.trunc(id)),
     metrosRentados: input.metrosRentados,
     costoM2: input.costoM2,
-    incluyeMantenimiento: input.incluyeMantenimiento ? 1 : 0,
+    incluyeMantenimiento,
   };
 
   const fi = String(input.fechaInicioContrato ?? '').trim();
@@ -259,18 +276,20 @@ export function construirFormDataArrendatarioCaptura(input: {
   const ft = String(input.fechaTerminoContrato ?? '').trim();
   if (ft) contrato['fechaTerminoContrato'] = ft;
 
-  if (input.montos.renta.listo) {
-    contrato['subTotalRenta'] = input.montos.renta.subTotal;
-    contrato['ivaRenta'] = input.montos.renta.iva;
-    contrato['rentaTotal'] = input.montos.renta.total;
+  if (montosFinal.renta.listo) {
+    contrato['subTotalRenta'] = montosFinal.renta.subTotal;
+    contrato['ivaRenta'] = montosFinal.renta.iva;
+    contrato['rentaTotal'] = montosFinal.renta.total;
   }
 
-  if (input.incluyeMantenimiento && input.montos.mantenimiento.listo) {
+  if (incluyeMantenimiento === 1) {
     const pct = numJson(input.pctMantenimiento);
     if (pct !== undefined) contrato['porcentajeMantenimiento'] = pct;
-    contrato['subTotalMantenimiento'] = input.montos.mantenimiento.subTotal;
-    contrato['ivaMantenimiento'] = input.montos.mantenimiento.iva;
-    contrato['mantenimientoTotal'] = input.montos.mantenimiento.total;
+    if (montosFinal.mantenimiento.listo) {
+      contrato['subTotalMantenimiento'] = montosFinal.mantenimiento.subTotal;
+      contrato['ivaMantenimiento'] = montosFinal.mantenimiento.iva;
+      contrato['mantenimientoTotal'] = montosFinal.mantenimiento.total;
+    }
   }
 
   fd.append('contratos', JSON.stringify([contrato]));
