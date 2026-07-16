@@ -30,7 +30,7 @@
             </button>
         </div>
         <div class="mt-3">
-            <dx-data-grid #gridContainer id="gridContainer" class="inm-data-grid" [columnHidingEnabled]="true"
+            <dx-data-grid #gridContainer id="gridContainer" class="inm-data-grid inm-data-grid--master-ops" [columnHidingEnabled]="true"
                 [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
                 [rowAlternationEnabled]="true" [dataSource]="listaClientes" [keyExpr]="'id'" [width]="'100%'"
                 [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
@@ -41,7 +41,8 @@
                 infoText: 'Página {0} de {1}',
                 visible: true
                 }" (onPageIndexChanged)=" onPageIndexChanged($event)"
-                (onOptionChanged)="onGridOptionChanged($event)">
+                (onOptionChanged)="onGridOptionChanged($event)"
+                (onRowClick)="onMasterRowClick($event)">
                 <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar arrendador, RFC, socio, documento..."></dxo-search-panel>
                 <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
                 <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
@@ -133,17 +134,17 @@
                 <div *dxTemplate="let row of 'acciones'" class="d-flex gap-3 justify-content-center">
                     <div *appHasPermission="'2'">
                         <button valueExpr="id" id="actualizarButton" class="btnAcciones"
-                            (click)="actualizarCliente(row.data)">
+                            (click)="actualizarCliente(row.data); $event.stopPropagation()">
                             <i class="fa fa-edit"></i>
                         </button>
                     </div>
                     <div *appHasPermission="'4'">
                         @if (row.data.estatus === 0) {
-                        <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
+                        <button id="pinButton" class="btnAcciones" (click)="activar(row.data); $event.stopPropagation()">
                             <i class="fa fa-arrow-up"></i>
                         </button>
                         } @else {
-                        <button id="deleteButton" class="btnAcciones" (click)="desactivar(row.data)">
+                        <button id="deleteButton" class="btnAcciones" (click)="desactivar(row.data); $event.stopPropagation()">
                             <i class="fa fa-arrow-down"></i>
                         </button>
                         }

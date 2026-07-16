@@ -43,7 +43,7 @@
     <div class="inm-zonas-toolbar" *ngIf="zonas.length && totalLocales()">
       <label class="inm-zonas-toolbar__label" for="inm-filtro-local">Buscar local</label>
       <input id="inm-filtro-local" type="search" class="inm-zonas-toolbar__input" [(ngModel)]="filtroLocal"
-        placeholder="Local, estatus, mensualidad o giro…" autocomplete="off" />
+        placeholder="Local, estatus, renta, mantenimiento o giro…" autocomplete="off" />
       <span class="inm-zonas-toolbar__hint" *ngIf="filtroLocal.trim()">
         {{ totalLocalesVisibles() }} de {{ totalLocales() }} visibles
       </span>
@@ -82,9 +82,10 @@
                 <tr>
                   <th scope="col">Local</th>
                   <th scope="col">Fachada</th>
-                  <th scope="col">Área</th>
                   <th scope="col">Estatus</th>
-                  <th scope="col">Mensualidad</th>
+                  <th scope="col">Renta</th>
+                  <th scope="col">Mantenimiento</th>
+                  <th scope="col">Total</th>
                   <th scope="col">Giro</th>
                   <th scope="col" class="inm-locales-table__acciones">Acción</th>
                 </tr>
@@ -95,35 +96,46 @@
                     {{ loc.nombre || 'Sin nombre' }}
                   </td>
                   <td class="inm-locales-table__fachada" [attr.data-label]="'Fachada'">
-                    <button *ngIf="urlFachadaLocal(loc); else sinFachadaLocal" type="button"
+                    <button
+                      *ngIf="urlFachadaLocal(loc) && !fotoLocalRota(loc); else sinFachadaLocal"
+                      type="button"
                       class="inm-local-fachada-btn"
                       (click)="abrirDocumento(urlFachadaLocal(loc), loc.nombre || 'Fachada')"
-                      [title]="'Ver fachada — ' + (loc.nombre || 'Local')">
-                      <img [src]="urlFachadaLocal(loc)" [alt]="'Fachada — ' + (loc.nombre || 'Local')" loading="lazy" />
+                      [title]="'Ver fachada — ' + (loc.nombre || 'Local')"
+                    >
+                      <img
+                        [src]="urlFachadaLocal(loc)"
+                        [alt]="'Fachada — ' + (loc.nombre || 'Local')"
+                        loading="lazy"
+                        (error)="onErrorFotoLocal(loc)"
+                      />
                     </button>
-                    <ng-template #sinFachadaLocal><span>—</span></ng-template>
-                  </td>
-                  <td [attr.data-label]="'Área'">
-                    <span *ngIf="loc.areaM2 != null && loc.areaM2 !== ''; else sinArea">{{ loc.areaM2 }} m²</span>
-                    <ng-template #sinArea>—</ng-template>
+                    <ng-template #sinFachadaLocal>
+                      <span class="inm-local-fachada-ph" aria-hidden="true">
+                        <mat-icon>storefront</mat-icon>
+                      </span>
+                    </ng-template>
                   </td>
                   <td [attr.data-label]="'Estatus'">
                     <span [ngClass]="claseChipEstatusLocal(loc.estatus)">
                       {{ etiquetaEstatusLocal(loc.estatus) }}
                     </span>
                   </td>
-                  <td [attr.data-label]="'Mensualidad'">
-                    <span *ngIf="loc.mensualidad != null && loc.mensualidad !== ''; else sinMens">
-                      {{ formatearMoneda(loc.mensualidad) }}
-                    </span>
-                    <ng-template #sinMens>—</ng-template>
+                  <td [attr.data-label]="'Renta'">
+                    {{ formatearMonedaRentaLocal(loc) }}
+                  </td>
+                  <td [attr.data-label]="'Mantenimiento'">
+                    {{ formatearMoneda(mantenimientoLocal(loc)) }}
+                  </td>
+                  <td [attr.data-label]="'Total'">
+                    {{ formatearMoneda(totalLocal(loc)) }}
                   </td>
                   <td [attr.data-label]="'Giro'">{{ loc.giro || '—' }}</td>
                   <td class="inm-locales-table__acciones" [attr.data-label]="'Acción'">
-                    <button type="button" mat-flat-button class="bg-secondary inm-local-estatus-btn"
+                    <button type="button" class="inm-local-estatus-btn"
                       (click)="cambiarEstatusLocal(loc, $event)"
                       [disabled]="estaGuardandoEstatusLocal(loc)">
-                      <i class="fa fa-exchange"></i>
+                      <i class="fa fa-exchange" aria-hidden="true"></i>
                       {{ estaGuardandoEstatusLocal(loc) ? 'Guardando…' : 'Cambiar Estatus' }}
                     </button>
                   </td>

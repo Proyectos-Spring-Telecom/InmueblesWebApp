@@ -105,7 +105,7 @@ body {
 
 .perm-head .eyebrow,
 .perm-wrapper .perm-head__text .eyebrow {
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -113,7 +113,7 @@ body {
 
 .perm-head h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 500;
   letter-spacing: .2px;
 }
@@ -122,7 +122,7 @@ body {
 .perm-wrapper .perm-head__text > h2,
 .perm-wrapper .perm-head__text > h3 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 500;
   letter-spacing: .2px;
 }
@@ -139,7 +139,7 @@ body {
   }
 
   .crumb {
-    font-size: 12px;
+    font-size: 14px;
     padding: 4px 10px;
     border-radius: 999px;
     color: var(--fg);
@@ -168,6 +168,43 @@ body {
 
 .perm-wrapper .dx-datagrid-headers .dx-row>td {
   background: rgba(255, 255, 255, .03);
+  font-size: 15px;
+}
+
+.pageWrapper .mat-mdc-button-base,
+.mat-mdc-dialog-container .mat-mdc-button-base {
+  --mdc-filled-button-label-text-size: 17px;
+  --mdc-outlined-button-label-text-size: 17px;
+  --mdc-protected-button-label-text-size: 17px;
+  --mdc-text-button-label-text-size: 17px;
+  --mat-button-filled-label-text-size: 17px;
+  --mat-button-outlined-label-text-size: 17px;
+  --mat-button-protected-label-text-size: 17px;
+  --mat-button-text-label-text-size: 17px;
+}
+
+.pageWrapper .mat-mdc-button-base .mdc-button__label,
+.mat-mdc-dialog-container .mat-mdc-button-base .mdc-button__label {
+  font-size: 17px;
+}
+
+.pageWrapper .button-success,
+.pageWrapper .button-danger,
+.mat-mdc-dialog-container .button-success,
+.mat-mdc-dialog-container .button-danger {
+  font-size: 1.125rem;
+}
+
+.pageWrapper .btn,
+.pageWrapper .btn-sm,
+.mat-mdc-dialog-container .btn,
+.mat-mdc-dialog-container .btn-sm {
+  font-size: 1.1rem;
+}
+
+.pageWrapper button.mat-mdc-button-base,
+.mat-mdc-dialog-container button.mat-mdc-button-base {
+  font-size: 17px;
 }
 
 .perm-wrapper .dx-datagrid .dx-row:hover>td {
@@ -392,7 +429,7 @@ body {
   display: flex;
   flex-direction: row;
   flex-shrink: 0;
-  font-size: 100%;
+  font-size: 1.125rem;
   line-height: 1.15;
   margin: 0;
   font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
@@ -430,7 +467,7 @@ body {
   display: flex;
   flex-direction: row;
   flex-shrink: 0;
-  font-size: 100%;
+  font-size: 1.125rem;
   line-height: 1.15;
   margin: 0;
   height: 50px;

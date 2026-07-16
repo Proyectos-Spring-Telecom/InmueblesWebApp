@@ -1733,6 +1733,62 @@ export class ListaRentasActualesComponent implements OnInit {
       });
   }
 
+  // ─── Duplicar al mes siguiente ────────────────────────────────────────────────
+
+  async duplicarRentaAlSiguienteMes(row: RentaActualGridRow): Promise<void> {
+    if (row?.pagada) return;
+    const id = Number(row?.id);
+    if (!Number.isFinite(id) || id <= 0) return;
+
+    const periodoActual =
+      row.mesLabel && row.mesLabel !== '—' ? row.mesLabel : 'el periodo actual';
+    const periodoDestino = this.etiquetaMesSiguiente(row) ?? 'el mes siguiente';
+
+    const result = await Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      icon: 'question',
+      title: '¿Duplicar renta al mes siguiente?',
+      html:
+        `Se creará una copia idéntica de la renta de <strong>${row.arrendatarioLabel}</strong>` +
+        ` (<strong>${row.contratoLabel}</strong>), avanzando el mes de ` +
+        `<strong>${periodoActual}</strong> a <strong>${periodoDestino}</strong>.` +
+        `<br><br>La operación fallará si ya existe una renta para el mismo arrendatario y contrato en ese mes.`,
+      showCancelButton: true,
+      confirmButtonText: 'Duplicar',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!result.isConfirmed) return;
+
+    this.rentaActualService
+      .duplicarAlSiguienteMes(Math.floor(id))
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.dataGrid?.instance?.refresh();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'success',
+            title: '¡Operación Exitosa!',
+            text: `Se duplicó la renta hacia ${periodoDestino}.`,
+            confirmButtonText: 'Listo',
+          });
+        },
+        error: (err) => {
+          console.error('Error al duplicar renta al mes siguiente:', err);
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'error',
+            title: 'No se pudo duplicar la renta',
+            text: this.mensajeErrorDuplicarSiguienteMes(err, row),
+            confirmButtonText: 'Entendido',
+          });
+        },
+      });
+  }
+
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
   private leerEmbebidoEnHub(): boolean {
@@ -1754,6 +1810,51 @@ export class ListaRentasActualesComponent implements OnInit {
     }
     if (e?.message) return String(e.message);
     return 'Ocurrió un error al comunicarse con el servidor.';
+  }
+
+  private mensajeErrorDuplicarSiguienteMes(err: unknown, row: RentaActualGridRow): string {
+    const base = this.mensajeErrorHttp(err);
+    const e = err as { status?: number; error?: { statusCode?: number; message?: string } };
+    const status =
+      e?.status ??
+      (e?.error != null && typeof e.error === 'object' ? e.error.statusCode : undefined);
+
+    const mencionaConflicto =
+      /ya existe/i.test(base) ||
+      /mismo arrendatario/i.test(base) ||
+      /mes destino|mes siguiente/i.test(base);
+
+    if (status === 409 || mencionaConflicto) {
+      const periodoDestino = this.etiquetaMesSiguiente(row) ?? 'el mes siguiente';
+      return (
+        `Ya existe una renta para ${row.arrendatarioLabel} y el contrato ${row.contratoLabel} ` +
+        `en ${periodoDestino}. No se puede duplicar.`
+      );
+    }
+
+    return base;
+  }
+
+  /** Etiqueta del mes destino (+1) a partir del campo `mes` de la fila. */
+  private etiquetaMesSiguiente(row: RentaActualGridRow): string | null {
+    const raw = row?.detalle?.['mes'] ?? row?.detalle?.['mesRenta'] ?? row?.detalle?.['periodo'];
+    if (raw == null || String(raw).trim() === '') return null;
+
+    const texto = String(raw).trim();
+    let fecha = new Date(texto);
+    if (Number.isNaN(fecha.getTime())) {
+      const partes = texto.match(/^(\d{4})-(\d{2})/);
+      if (!partes) return null;
+      fecha = new Date(Number(partes[1]), Number(partes[2]) - 1, 1);
+    }
+
+    const siguiente = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 1);
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    ];
+    const nombre = meses[siguiente.getMonth()];
+    return nombre ? `${nombre} ${siguiente.getFullYear()}` : null;
   }
 
   private mensajeErrorRentaActual(err: unknown): string {

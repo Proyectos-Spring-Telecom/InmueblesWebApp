@@ -27,28 +27,24 @@
 <ng-template #contenidoHistorico>
   <div class="surface">
     <div class="hist-renta-filtros-panel w-100">
-      <div class="hist-renta-filtros-panel__grid">
-        <div>
-          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histFechaInicio"
-            >Fecha inicio <span class="text-danger">*</span></label
+      <div class="hist-renta-filtros-panel__grid hist-renta-filtros-panel__grid--mes">
+        <div class="hist-renta-filtros-panel__mes">
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histMesFiltro"
+            >Mes <span class="text-danger">*</span></label
           >
-          <input
-            id="histFechaInicio"
+          <dx-date-box
+            [inputAttr]="{ id: 'histMesFiltro' }"
+            class="hist-renta-mes-datebox hist-renta-filtro-fechas__input"
+            [(value)]="mesFechaFiltro"
             type="date"
-            class="form-control form-control-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="fechaInicioFiltro"
-          />
-        </div>
-        <div>
-          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histFechaFin"
-            >Fecha fin <span class="text-danger">*</span></label
-          >
-          <input
-            id="histFechaFin"
-            type="date"
-            class="form-control form-control-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="fechaFinFiltro"
-          />
+            displayFormat="monthAndYear"
+            placeholder="Seleccione mes"
+            [openOnFieldClick]="true"
+            [showClearButton]="false"
+            [calendarOptions]="mesCalendarOptions"
+            stylingMode="outlined"
+            (onValueChanged)="onMesFechaChange($event)">
+          </dx-date-box>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histArrendatario"
@@ -153,7 +149,7 @@
           [allowFiltering]="false"
           [allowSorting]="false"
         ></dxi-column>
-        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="130"></dxi-column>
+        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="160"></dxi-column>
         <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90"></dxi-column>
         <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
         <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>

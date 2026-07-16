@@ -120,6 +120,27 @@ function truncarEtiquetaContrato(texto: string, max = 48): string {
   return `${s.slice(0, max - 1).trimEnd()}…`;
 }
 
+/** Contrato vigente (no cancelado / estatus distinto de 0). */
+export function contratoArrendatarioEsActivo(c: Record<string, unknown>): boolean {
+  const estatus = Number(c['estatus']);
+  return !Number.isFinite(estatus) || estatus !== 0;
+}
+
+/** Contratos del arrendatario excluyendo los cancelados (`estatus === 0`). */
+export function contratosActivosArrendatarioApi(
+  item: Record<string, unknown>,
+): Record<string, unknown>[] {
+  const contratos = item['contratos'];
+  if (!Array.isArray(contratos)) return [];
+  return contratos.filter(
+    (x): x is Record<string, unknown> =>
+      x != null &&
+      typeof x === 'object' &&
+      !Array.isArray(x) &&
+      contratoArrendatarioEsActivo(x as Record<string, unknown>),
+  );
+}
+
 function nombresLocalesContratoApi(c: Record<string, unknown>): string[] {
   const filas = c['contratoLocales'];
   if (!Array.isArray(filas)) return [];
@@ -213,13 +234,7 @@ export function rentaTotalArrendatarioApi(item: Record<string, unknown>): unknow
 export function contratoPrincipalArrendatarioApi(
   item: Record<string, unknown>,
 ): Record<string, unknown> | null {
-  const contratos = item['contratos'];
-  if (!Array.isArray(contratos) || contratos.length === 0) return null;
-
-  const validos = contratos.filter(
-    (x): x is Record<string, unknown> =>
-      x != null && typeof x === 'object' && !Array.isArray(x),
-  );
+  const validos = contratosActivosArrendatarioApi(item);
   if (validos.length === 0) return null;
 
   return [...validos].sort((a, b) =>
@@ -320,13 +335,12 @@ export function primerInmuebleContrato(item: Record<string, unknown>): {
   nombre: string;
   direccion: string;
 } {
-  const contratos = item['contratos'];
-  if (!Array.isArray(contratos) || contratos.length === 0) {
+  const contratos = contratosActivosArrendatarioApi(item);
+  if (contratos.length === 0) {
     return { nombre: '—', direccion: '—' };
   }
   const c0 = contratos[0];
-  if (c0 == null || typeof c0 !== 'object') return { nombre: '—', direccion: '—' };
-  const inm = (c0 as Record<string, unknown>)['inmueble'];
+  const inm = c0['inmueble'];
   if (inm == null || typeof inm !== 'object') return { nombre: '—', direccion: '—' };
   const im = inm as Record<string, unknown>;
   return {
@@ -355,11 +369,9 @@ export function construirTextoBusquedaArrendatario(item: Record<string, unknown>
   push(nombre);
   push(direccion);
 
-  const contratos = item['contratos'];
-  if (Array.isArray(contratos)) {
-    for (const c of contratos) {
-      if (c == null || typeof c !== 'object') continue;
-      const contrato = c as Record<string, unknown>;
+  const contratos = contratosActivosArrendatarioApi(item);
+  if (contratos.length) {
+    for (const contrato of contratos) {
       const filas = contrato['contratoLocales'];
       if (!Array.isArray(filas)) continue;
       for (const fila of filas) {
@@ -427,7 +439,7 @@ export function mapArrendatariosApiToGridRows(rows: unknown[]): ArrendatarioGrid
     const servicios = Array.isArray(item['servicios']) ? item['servicios'] : [];
     const archivos = Array.isArray(item['archivos']) ? item['archivos'] : [];
     const socios = Array.isArray(item['socios']) ? item['socios'] : [];
-    const contratos = Array.isArray(item['contratos']) ? item['contratos'] : [];
+    const contratos = contratosActivosArrendatarioApi(item);
 
     const detalle: Record<string, unknown> = { ...item, id };
 

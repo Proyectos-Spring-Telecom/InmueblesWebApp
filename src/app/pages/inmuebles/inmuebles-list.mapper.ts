@@ -1,3 +1,4 @@
+// Se agregan campos de mantenimiento (mantenimiento, mensualidadIva, mantenimientoIva) en locales.
 export interface InmuebleApiItem {
   id?: number;
   inmueble?: string;
@@ -42,6 +43,9 @@ export interface InmuebleLocalApi {
   areaM2?: string | number;
   estatus?: number;
   mensualidad?: string | number;
+  mensualidadIva?: string | number;
+  mantenimiento?: string | number;
+  mantenimientoIva?: string | number;
   giro?: string;
   idZona?: number;
   urlFachada?: string;
@@ -158,6 +162,17 @@ function normalizarLocalApi(raw: unknown): InmuebleLocalApi | null {
     mensualidad:
       valorTextoONumero(l['mensualidad']) ??
       valorTextoONumero(l['mensualidadMxn']),
+    mensualidadIva:
+      valorTextoONumero(l['mensualidadIva']) ??
+      valorTextoONumero(l['rentaConIva']) ??
+      valorTextoONumero(l['mensualidadConIva']),
+    mantenimiento:
+      valorTextoONumero(l['mantenimiento']) ??
+      valorTextoONumero(l['mantenimientoSinIva']) ??
+      valorTextoONumero(l['mantenimientoMxn']),
+    mantenimientoIva:
+      valorTextoONumero(l['mantenimientoIva']) ??
+      valorTextoONumero(l['mantenimientoConIva']),
     giro: resolverGiroLocalApi(l),
     idZona: l['idZona'] != null ? Number(l['idZona']) : undefined,
     fachadaUrl: fachadaUrl || undefined,

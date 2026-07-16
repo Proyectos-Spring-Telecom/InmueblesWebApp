@@ -2,6 +2,19 @@
   display: block;
 }
 
+.perm-field-error {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  color: #f07178;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+.perm-field-error--mapa {
+  margin-top: 0.75rem;
+}
+
 .inmueble-main-grid {
   row-gap: 0.3rem !important;
 }

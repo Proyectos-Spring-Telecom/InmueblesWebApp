@@ -355,7 +355,7 @@
                           <dxi-item *ngFor="let localCtrl of localesZonaFormArray(i).controls; let j = index; trackBy: trackLocalPorIndice"
                             [title]="claveEstableLocalAccordion(i, j)">
                             <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="j">
-                              <div class="row g-3">
+                              <div class="row g-3 locales-local-campos">
                                 <div class="col-12 col-md-4"><label class="form-label perm-label">Nombre del local</label>
                                   <div class="input-group input-group-lg perm-ig"><span
                                       class="input-group-text fw-bold"><mat-icon>storefront</mat-icon></span>
@@ -389,13 +389,65 @@
                                     </div>
                                   </div>
                                 </div>
-                                <div class="col-12 col-md-4"><label class="form-label perm-label">Mensualidad
-                                    (MXN)</label>
+                                <div class="col-12 col-md-4"><label class="form-label perm-label">Renta sin
+                                    IVA</label>
                                   <div class="input-group input-group-lg perm-ig"><span
                                       class="input-group-text fw-bold"><mat-icon>payments</mat-icon></span>
                                     <div class="form-floating flex-grow-1"><input type="number" class="form-control"
-                                        formControlName="mensualidad" placeholder="Renta mensual" /><label>Renta
-                                        mensual</label></div>
+                                        formControlName="mensualidad" placeholder="Renta sin IVA" min="0" step="0.01"
+                                        (input)="onLocalMontosSinIvaInput(i, j)" /><label>Renta sin IVA</label></div>
+                                  </div>
+                                </div>
+                                <div class="col-12 col-md-4"><label class="form-label perm-label">Mantenimiento sin
+                                    IVA</label>
+                                  <div class="input-group input-group-lg perm-ig"><span
+                                      class="input-group-text fw-bold"><mat-icon>build</mat-icon></span>
+                                    <div class="form-floating flex-grow-1"><input type="number" class="form-control"
+                                        formControlName="mantenimientoSinIva" placeholder="Mantenimiento sin IVA"
+                                        min="0" step="0.01"
+                                        (input)="onLocalMontosSinIvaInput(i, j)" /><label>Mantenimiento sin IVA</label>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                  <label class="form-label perm-label" [attr.for]="'aplicaIvaLocal' + i + '_' + j">Aplica
+                                    IVA</label>
+                                  <div class="contrato-incluye-mtto">
+                                    <label class="toggle-switch"
+                                      [class.is-disabled]="!localSwitchIvaHabilitado(i, j)"
+                                      (click)="onLocalAplicaIvaClick($event, i, j)">
+                                      <input type="checkbox"
+                                        [id]="'aplicaIvaLocal' + i + '_' + j"
+                                        [checked]="localAplicaIva(i, j)"
+                                        [disabled]="!localSwitchIvaHabilitado(i, j)"
+                                        [attr.aria-disabled]="!localSwitchIvaHabilitado(i, j)"
+                                        tabindex="-1"
+                                        (change)="onLocalAplicaIvaChange(i, j, $any($event.target).checked)" />
+                                      <div class="toggle-switch-background">
+                                        <div class="toggle-switch-handle"></div>
+                                      </div>
+                                    </label>
+                                    <span class="contrato-incluye-mtto__estado">{{
+                                      localAplicaIva(i, j) ? 'Sí' : 'No'
+                                    }}</span>
+                                  </div>
+                                </div>
+                                <div class="col-12 col-md-4" *ngIf="localAplicaIva(i, j)" @camposRentaReveal>
+                                  <label class="form-label perm-label">Renta con IVA</label>
+                                  <div class="input-group input-group-lg perm-ig"><span
+                                      class="input-group-text fw-bold"><mat-icon>calculate</mat-icon></span>
+                                    <div class="form-floating flex-grow-1"><input type="number" class="form-control"
+                                        formControlName="rentaConIva" placeholder="Renta con IVA" min="0"
+                                        step="0.01" /><label>Renta con IVA</label></div>
+                                  </div>
+                                </div>
+                                <div class="col-12 col-md-4" *ngIf="localAplicaIva(i, j)" @camposRentaReveal>
+                                  <label class="form-label perm-label">Mantenimiento con IVA</label>
+                                  <div class="input-group input-group-lg perm-ig"><span
+                                      class="input-group-text fw-bold"><mat-icon>functions</mat-icon></span>
+                                    <div class="form-floating flex-grow-1"><input type="number" class="form-control"
+                                        formControlName="mantenimientoConIva" placeholder="Mantenimiento con IVA"
+                                        min="0" step="0.01" /><label>Mantenimiento con IVA</label></div>
                                   </div>
                                 </div>
                                 <div class="col-12 col-md-4"><label class="form-label perm-label">Giro</label>

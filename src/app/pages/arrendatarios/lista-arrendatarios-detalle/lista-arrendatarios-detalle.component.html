@@ -367,9 +367,10 @@
             </div>
           </div>
 
-          <section class="arr-ctr-block arr-ctr-block--locales" *ngIf="localesDesdeContrato(c).length">
+          <section class="arr-ctr-block arr-ctr-block--locales" *ngIf="localesDesdeContrato(c) as locales">
+            <ng-container *ngIf="locales.length">
             <h4 class="arr-ctr-block__title">
-              <i class="fa fa-store"></i> Locales ({{ localesDesdeContrato(c).length }})
+              <i class="fa fa-store"></i> Locales ({{ locales.length }})
             </h4>
             <div class="inm-locales-table-wrap arr-ctr-locales-wrap">
               <table class="inm-locales-table arr-ctr-locales-table">
@@ -381,51 +382,71 @@
                     <th scope="col">Giro</th>
                     <th scope="col">Mensualidad</th>
                     <th scope="col">Estatus</th>
+                    <th scope="col">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let loc of localesDesdeContrato(c)">
+                  <tr *ngFor="let loc of locales; trackBy: trackContratoLocal">
                     <td class="arr-ctr-locales-table__foto" data-label="">
-                      <img
-                        *ngIf="urlFachadaLocal(loc) as fachada"
-                        [src]="fachada"
-                        [alt]="loc['nombre'] || 'Local'"
-                        loading="lazy"
-                      />
-                      <span
-                        *ngIf="!urlFachadaLocal(loc)"
-                        class="arr-ctr-locales-table__foto-ph"
-                        aria-hidden="true"
-                        ><i class="fa fa-store"></i
-                      ></span>
+                      <div class="arr-ctr-locales-table__foto-box">
+                        <mat-icon class="arr-ctr-locales-table__foto-icon" aria-hidden="true"
+                          >storefront</mat-icon
+                        >
+                        <img
+                          *ngIf="urlFachadaLocal(loc) && !fotoLocalRota(loc)"
+                          class="arr-ctr-locales-table__foto-img"
+                          [src]="urlFachadaLocal(loc)"
+                          [alt]="loc['nombre'] || 'Local'"
+                          loading="lazy"
+                          (error)="onErrorFotoLocal(loc)"
+                        />
+                      </div>
                     </td>
                     <td class="inm-locales-table__nombre" data-label="Local">
                       {{ loc['nombre'] || '—' }}
                     </td>
                     <td data-label="Área">
-                      <ng-container *ngIf="loc['areaM2'] != null && loc['areaM2'] !== ''; else sinArea">
-                        {{ loc['areaM2'] }} m²
-                      </ng-container>
-                      <ng-template #sinArea>—</ng-template>
+                      {{
+                        loc['areaM2'] != null && loc['areaM2'] !== ''
+                          ? loc['areaM2'] + ' m²'
+                          : '—'
+                      }}
                     </td>
                     <td data-label="Giro">{{ loc['giro'] || '—' }}</td>
                     <td data-label="Mensualidad">
-                      <ng-container
-                        *ngIf="loc['mensualidad'] != null && loc['mensualidad'] !== ''; else sinMens"
-                      >
-                        {{ formatearMoneda(loc['mensualidad']) }}
-                      </ng-container>
-                      <ng-template #sinMens>—</ng-template>
+                      {{
+                        loc['mensualidad'] != null && loc['mensualidad'] !== ''
+                          ? formatearMoneda(loc['mensualidad'])
+                          : '—'
+                      }}
                     </td>
                     <td data-label="Estatus">
                       <span [ngClass]="claseChipEstatusLocal(loc['estatus'])">
                         {{ etiquetaEstatusLocal(loc['estatus']) }}
                       </span>
                     </td>
+                    <td class="arr-ctr-locales-table__acciones" data-label="Acciones">
+                      <button
+                        *ngIf="contratoLocalEsCancelable(c, loc)"
+                        type="button"
+                        class="bg-error arr-ctr-local-cancel"
+                        title="Cancelar asignación del local"
+                        (click)="confirmarCancelarContratoLocal(c, loc, $event)"
+                      >
+                        <i class="fa fa-ban"></i> Cancelar
+                      </button>
+                      <span
+                        *ngIf="!contratoLocalEsCancelable(c, loc)"
+                        class="arr-ctr-locales-table__acciones-na"
+                      >
+                        —
+                      </span>
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            </ng-container>
           </section>
 
           <div class="arr-ctr-fin-grid" *ngIf="gruposMetricasContrato(c).length">

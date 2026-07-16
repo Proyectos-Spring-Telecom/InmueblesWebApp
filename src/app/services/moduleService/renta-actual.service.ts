@@ -52,6 +52,17 @@ export class RentaActualService {
       .pipe(catchError((error) => throwError(() => error)));
   }
 
+  /**
+   * POST `/renta-actual/{id}/siguiente-mes`
+   * Duplica la renta actual al mes siguiente (+1 mes).
+   * Falla si ya existe renta para el mismo arrendatario y contrato en el mes destino.
+   */
+  duplicarAlSiguienteMes(id: number): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${this.url}/${id}/siguiente-mes`, {})
+      .pipe(catchError((error) => throwError(() => error)));
+  }
+
   obtenerRentasPaginadas(page: number, limit: number): Observable<unknown> {
     const params = new HttpParams()
       .set('page', String(page))
