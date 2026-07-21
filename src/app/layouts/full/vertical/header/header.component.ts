@@ -225,7 +225,12 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit(): void {
     this.notificacionesService.obtenerNotificaciones().subscribe({
-      next: (data) => this.aplicarNotificacionesDesdeApi(data),
+      next: (data) => {
+        this.aplicarNotificacionesDesdeApi(data);
+        this.loginSuccessSound.notificacionesCargadas(
+          this.avisosCount + this.inmueblesNotifCount + this.prediosNotifCount > 0,
+        );
+      },
       error: (err) => {
         console.error('[notificaciones]', err);
         this.aplicarNotificacionesDesdeApi({
@@ -233,6 +238,7 @@ export class HeaderComponent implements OnInit {
           pagoServiciosInmuebles: [],
           pagosSeguimiento: [],
         });
+        this.loginSuccessSound.notificacionesCargadas(false);
       },
     });
   }

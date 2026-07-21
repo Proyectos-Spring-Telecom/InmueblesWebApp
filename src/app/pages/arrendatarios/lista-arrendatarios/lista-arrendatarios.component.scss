@@ -164,7 +164,7 @@
   &__eyebrow {
     font-size: 12px;
     letter-spacing: 0.12em;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     color: #c7d2fe;
   }
 
@@ -264,7 +264,7 @@
   &__mes-label {
     font-size: 10px;
     letter-spacing: 0.08em;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     color: rgba(255, 255, 255, 0.62);
   }
 
@@ -281,7 +281,7 @@
     border-radius: 999px;
     font-size: 10px;
     letter-spacing: 0.07em;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     border: 1px solid transparent;
 
     &--pagada {
@@ -310,7 +310,7 @@
   &__monto-label {
     font-size: 10px;
     letter-spacing: 0.08em;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     color: #dbe4ff;
   }
 
@@ -336,7 +336,7 @@
   &__item-label {
     font-size: 10px;
     letter-spacing: 0.06em;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     color: rgba(255, 255, 255, 0.55);
   }
 
@@ -409,7 +409,7 @@
   &__eyebrow {
     font-size: 10px;
     letter-spacing: 0.08em;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     color: rgba(199, 210, 254, 0.75);
   }
 
@@ -435,7 +435,7 @@
     border-radius: 999px;
     font-size: 0.68rem;
     letter-spacing: 0.06em;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     color: #c7d2fe;
     border: 1px solid rgba(129, 140, 248, 0.45);
     background: rgba(49, 46, 129, 0.45);

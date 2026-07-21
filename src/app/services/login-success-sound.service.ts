@@ -17,6 +17,38 @@ export class LoginSuccessSoundService {
   private fadeRafId: number | null = null;
   private peakVolume = DEFAULT_PEAK_VOLUME;
 
+  /** Estado post-login: el sonido solo suena si hay notificaciones pendientes. */
+  private loginSoundArmed = false;
+  private loginSoundDurationMs = 10_000;
+  private hayNotificaciones: boolean | null = null;
+
+  /** Llamar antes de navegar tras un login exitoso (limpia estado previo). */
+  beginLoginSequence(): void {
+    this.loginSoundArmed = false;
+    this.hayNotificaciones = null;
+  }
+
+  /** Arma el sonido post-login; sonará solo cuando se confirme que hay notificaciones. */
+  armLoginSound(durationMs = 10_000): void {
+    this.loginSoundArmed = true;
+    this.loginSoundDurationMs = durationMs;
+    this.tryPlayLoginSound();
+  }
+
+  /** El header reporta si la API trajo notificaciones (alguna lista con elementos). */
+  notificacionesCargadas(hayNotificaciones: boolean): void {
+    this.hayNotificaciones = hayNotificaciones;
+    this.tryPlayLoginSound();
+  }
+
+  private tryPlayLoginSound(): void {
+    if (!this.loginSoundArmed || this.hayNotificaciones === null) return;
+    const hay = this.hayNotificaciones;
+    this.loginSoundArmed = false;
+    this.hayNotificaciones = null;
+    if (hay) this.play(this.loginSoundDurationMs);
+  }
+
   play(
     durationMs = 10_000,
     fadeStartMs = DEFAULT_FADE_START_MS,

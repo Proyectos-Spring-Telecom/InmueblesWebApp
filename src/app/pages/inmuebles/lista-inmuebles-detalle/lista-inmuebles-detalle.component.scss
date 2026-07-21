@@ -148,7 +148,7 @@
   display: block;
   font-size: 0.68rem;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   color: #9aa6d8;
   margin-bottom: 0.35rem;
 }
@@ -215,7 +215,7 @@
 .inm-zonas-toolbar__label {
   font-size: 0.72rem;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   color: #8f9bc4;
 }
 
@@ -336,7 +336,7 @@
 .inm-zona-panel__stat-label {
   font-size: 0.62rem;
   letter-spacing: 0.07em;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   color: #8f9bc4;
 }
 
@@ -376,7 +376,7 @@
   padding: 0.5rem 0.55rem;
   font-size: 0.65rem;
   letter-spacing: 0.07em;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   color: #8f9bc4;
   border-bottom: 1px solid rgba(130, 160, 255, 0.2);
 }
@@ -504,7 +504,7 @@
     content: attr(data-label);
     color: #8f9bc4;
     font-size: 0.68rem;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     letter-spacing: 0.05em;
     text-align: center;
   }

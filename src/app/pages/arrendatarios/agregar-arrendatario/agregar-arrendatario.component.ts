@@ -2983,12 +2983,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private readonly etiquetasCampos: Record<string, string> = {
     arrendatario: 'Arrendatario',
+    idArrendador: 'Arrendador',
     lat: 'Latitud',
     lng: 'Longitud',
   };
 
   private validarFormularioAntesMapa(): boolean {
     this.arrendatarioForm.get('arrendatario')?.markAsTouched();
+    this.arrendatarioForm.get('idArrendador')?.markAsTouched();
 
     const faltantesKeys = this.recopilarCamposFaltantes();
     if (faltantesKeys.length === 0) return true;
@@ -3005,6 +3007,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const nombre = String(this.arrendatarioForm.get('arrendatario')?.value ?? '').trim();
     if (!nombre) {
       faltantes.push('arrendatario');
+    }
+    const idArrendador = Number(this.arrendatarioForm.get('idArrendador')?.value);
+    if (!Number.isFinite(idArrendador) || idArrendador <= 0) {
+      faltantes.push('idArrendador');
     }
     return faltantes;
   }
