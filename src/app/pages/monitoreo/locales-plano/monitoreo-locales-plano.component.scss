@@ -46,7 +46,7 @@
   border-bottom: 1px solid var(--pos-border);
   font-size: 0.85rem;
   font-weight: 600;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   letter-spacing: 0.04em;
   color: var(--pos-text);
 
@@ -155,7 +155,7 @@
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.65);
   color: #fff;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 
   &[data-estado='ocupado'] {
     background: #b45309;
@@ -190,7 +190,7 @@
   background: var(--pos-accent);
   color: #fff;
   font-size: 0.65rem;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 }
 
 .mesa-mesero-line {
@@ -401,7 +401,7 @@
 
 .sin-zona-titulo {
   font-size: 0.7rem;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   letter-spacing: 0.06em;
   color: var(--pos-muted);
   margin-bottom: 6px;

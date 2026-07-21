@@ -121,11 +121,13 @@ export class AppSideLoginComponent implements OnInit {
 
   private completeLoginNavigation(route: string[]): void {
     this.toastr.success('Bienvenido al Sistema.', '¡Credenciales Correctas!');
+    this.loginSuccessSound.beginLoginSequence();
     void this.router.navigate(route).then(() => {
       this.authTransition.startAppReveal();
-      // Sonido + resaltado cuando ya está el header (después del fade de entrada)
+      // Sonido + resaltado cuando ya está el header (después del fade de entrada).
+      // Solo sonará si la API de notificaciones devuelve elementos pendientes.
       window.setTimeout(() => {
-        this.loginSuccessSound.play(LOGIN_SUCCESS_SOUND_MS);
+        this.loginSuccessSound.armLoginSound(LOGIN_SUCCESS_SOUND_MS);
       }, 580);
     });
 
