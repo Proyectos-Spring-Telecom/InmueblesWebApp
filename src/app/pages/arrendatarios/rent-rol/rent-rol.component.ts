@@ -638,10 +638,26 @@ export class RentRolComponent implements OnInit, OnDestroy {
     void this.guardarArrendatarioCaptura();
   }
 
+  onTipoPersonaChange(_event: Event): void {
+    const raw = this.capturaForm.get('tipoPersona')?.value;
+    const value =
+      raw === null || raw === undefined || raw === '' ? null : Number(raw);
+    this.capturaForm.get('tipoPersona')?.setValue(value, { emitEvent: true });
+  }
+
+  sanitizeRfcInput(event: Event): void {
+    const inputElement = event.target as HTMLInputElement;
+    const sanitizedValue = inputElement.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 13);
+    inputElement.value = sanitizedValue;
+    this.capturaForm.get('rfc')?.setValue(sanitizedValue, { emitEvent: false });
+  }
+
   private initCapturaForm(): void {
     this.capturaForm = this.fb.group({
       arrendatario: ['', Validators.required],
       idArrendador: [null as number | null, Validators.required],
+      tipoPersona: [null as number | null],
+      rfc: [''],
       idInmueble: [{ value: null as number | null, disabled: true }, Validators.required],
       metrosRentados: ['', [Validators.required, Validators.min(0.01)]],
       costoM2: ['', [Validators.required, Validators.min(0.01)]],
@@ -673,6 +689,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.capturaForm.reset({
       arrendatario: '',
       idArrendador: null,
+      tipoPersona: null,
+      rfc: '',
       idInmueble: null,
       metrosRentados: '',
       costoM2: '',
@@ -947,8 +965,16 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.abrirSwalCargando('Cargando...', 'Guardando arrendatario, por favor espera.');
 
     try {
+      const tipoPersonaRaw = v.tipoPersona;
+      const tipoPersona =
+        tipoPersonaRaw === null || tipoPersonaRaw === undefined || tipoPersonaRaw === ''
+          ? null
+          : Number(tipoPersonaRaw);
+
       const fd = construirFormDataArrendatarioCaptura({
         arrendatario: String(v.arrendatario ?? ''),
+        rfc: String(v.rfc ?? ''),
+        tipoPersona: Number.isFinite(tipoPersona as number) ? (tipoPersona as number) : null,
         idArrendador: Number(v.idArrendador),
         lat: this.latSeleccionada,
         lng: this.lngSeleccionada,

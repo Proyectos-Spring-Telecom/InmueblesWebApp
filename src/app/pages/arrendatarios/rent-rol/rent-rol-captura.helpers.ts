@@ -225,6 +225,8 @@ function formatearMontoLocalRentRol(val: number): string {
 
 export function construirFormDataArrendatarioCaptura(input: {
   arrendatario: string;
+  rfc?: string;
+  tipoPersona?: number | null;
   representanteLegal?: string;
   telefonoRepresentante?: string;
   correoRepresentante?: string;
@@ -243,7 +245,7 @@ export function construirFormDataArrendatarioCaptura(input: {
   const fd = new FormData();
   const dto: Record<string, unknown> = {
     arrendatario: input.arrendatario.trim(),
-    rfc: '',
+    rfc: String(input.rfc ?? '').trim(),
     correoRepresentante: String(input.correoRepresentante ?? '').trim(),
     telefonoRepresentante: String(input.telefonoRepresentante ?? '').trim(),
     representanteLegal: String(input.representanteLegal ?? '').trim(),
@@ -251,6 +253,8 @@ export function construirFormDataArrendatarioCaptura(input: {
     lat: input.lat,
     lng: input.lng,
   };
+  const tp = Number(input.tipoPersona);
+  if (Number.isFinite(tp)) dto['tipoPersona'] = Math.trunc(tp);
   fd.append('arrendatario', JSON.stringify(dto));
 
   // Recalcular siempre al armar el payload (evita montosPreview desfasado).

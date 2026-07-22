@@ -42,10 +42,10 @@
     </div>
 
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100 mt-3">
-      <div *appHasPermission="'17'">
+      <!-- <div *appHasPermission="'17'">
         <button (click)="agregarIncremento()" mat-flat-button class="bg-secondary">
           <i class="fa fa-plus"></i> Agregar INPC</button>
-      </div>
+      </div> -->
       <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
       <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
         <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
