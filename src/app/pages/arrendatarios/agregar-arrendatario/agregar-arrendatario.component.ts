@@ -3296,8 +3296,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       representanteLegal: String(v['representanteLegal'] ?? '').trim(),
     };
 
-    const df = String(v['direccionFiscal'] ?? '').trim();
-    if (df) dto['direccionFiscal'] = df;
+    // `direccionFiscal` es solo local/UI (OCR, demos); el DTO del API no lo admite (whitelist).
 
     const tp = Number(v['tipoPersona']);
     if (Number.isFinite(tp)) dto['tipoPersona'] = Math.trunc(tp);

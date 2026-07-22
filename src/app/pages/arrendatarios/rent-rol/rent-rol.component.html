@@ -352,6 +352,34 @@
                     </div>
                   </div>
                 </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label perm-label" for="rrCapTipoPersona">Tipo Persona</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">person</mat-icon></span>
+                    <div class="form-floating flex-grow-1 perm-select-floating">
+                      <select id="rrCapTipoPersona" class="form-select" formControlName="tipoPersona"
+                        (change)="onTipoPersonaChange($event)">
+                        <option [ngValue]="null" disabled>Selecciona tipo de persona</option>
+                        <option [ngValue]="1">Física</option>
+                        <option [ngValue]="2">Moral</option>
+                      </select>
+                      <label for="rrCapTipoPersona">Selecciona Tipo De Persona</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label perm-label" for="rrCapRfc">RFC</label>
+                  <div class="input-group input-group-lg perm-ig">
+                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">badge</mat-icon></span>
+                    <div class="form-floating flex-grow-1">
+                      <input id="rrCapRfc" type="text" class="form-control" formControlName="rfc" maxlength="13"
+                        placeholder="Ej.: ABCD800101XX0" (input)="sanitizeRfcInput($event)" autocomplete="off" />
+                      <label for="rrCapRfc">Ej.: ABCD800101XX0</label>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="rr-captura-section rr-captura-section--inmueble" aria-labelledby="rr-sec-inmueble">

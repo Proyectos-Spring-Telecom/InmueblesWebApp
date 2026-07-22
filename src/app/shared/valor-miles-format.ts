@@ -24,7 +24,9 @@ export function countDigitosAntesCursor(value: string, cursor: number): number {
   let n = 0;
   const end = Math.min(cursor, value.length);
   for (let i = 0; i < end; i++) {
-    if (value[i] >= '0' && value[i] <= '9') n++;
+    const ch = value[i];
+    // Incluye el punto para no reubicarlo al formatear (ej. "354.").
+    if ((ch >= '0' && ch <= '9') || ch === '.') n++;
   }
   return n;
 }
@@ -33,7 +35,8 @@ export function cursorPosicionTrasFormatoMiles(formatted: string, digitsBefore: 
   if (digitsBefore <= 0) return 0;
   let digitCount = 0;
   for (let i = 0; i < formatted.length; i++) {
-    if (formatted[i] >= '0' && formatted[i] <= '9') {
+    const ch = formatted[i];
+    if ((ch >= '0' && ch <= '9') || ch === '.') {
       digitCount++;
       if (digitCount >= digitsBefore) return i + 1;
     }
