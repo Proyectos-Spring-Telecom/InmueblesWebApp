@@ -1213,10 +1213,9 @@
   <div class="docs-modal" (click)="$event.stopPropagation()">
     <div class="row docs-modal__header">
       <div class="col-12">
-        <span class="docs-modal__eyebrow">Ubicación obligatoria</span>
-        <h3 class="docs-modal__title">{{ arrendatarioForm.get('arrendatario')?.value || 'Seleccionar ubicación' }}
-        </h3>
-        <p class="docs-modal__subtitle">
+        <span class="docs-modal__eyebrow docs-modal__eyebrow--destacado">Ubicación obligatoria</span>
+        <h3 class="docs-modal__title">Arrendatario: {{ arrendatarioForm.get('arrendatario')?.value || 'Seleccionar ubicación' }}</h3>
+        <p class="docs-modal__subtitle docs-modal__subtitle--destacado">
           Haz clic en el mapa para fijar latitud y longitud. No podrás registrar el arrendatario sin marcar un punto.
         </p>
       </div>
@@ -1226,20 +1225,20 @@
         <div class="docs-modal__viewer docs-modal__viewer--map">
           <div id="mapArrendatario"></div>
         </div>
-        <p class="perm-field-error perm-field-error--mapa" role="alert" *ngIf="mostrarErrorCoordsMapa">
+       <!--  <p class="perm-field-error perm-field-error--mapa" role="alert" *ngIf="mostrarErrorCoordsMapa">
           Latitud y longitud son obligatorias. Haz clic en el mapa para marcar un punto.
-        </p>
+        </p> -->
       </div>
     </div>
     <div class="row docs-modal__footer">
       <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
         <button type="button" class="docs-modal__btn docs-modal__btn--ghost" (click)="cancelarModalMapa()"
           [disabled]="loadingSubmit || cargandoDetalle">
-          Cancelar
+          {{ mapaModalInicial ? 'Cancelar' : 'Cancelar' }}
         </button>
         <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()"
           [disabled]="loadingSubmit || cargandoDetalle">
-          Guardar
+          {{ mapaModalInicial ? 'Confirmar ubicación' : 'Guardar' }}
         </button>
       </div>
     </div>

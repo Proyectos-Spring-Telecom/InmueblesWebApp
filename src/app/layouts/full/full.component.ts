@@ -32,6 +32,7 @@ import { AuthenticationService } from 'src/app/services/auth.service';
 import { NavItem } from './vertical/sidebar/nav-item/nav-item';
 import { AssistantChatComponent } from './shared/assistant-chat/assistant-chat.component';
 import { LayoutScrollService } from 'src/app/services/layout-scroll.service';
+import { ThemeService } from 'src/app/services/theme.service';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -240,6 +241,7 @@ export class FullComponent implements OnInit, AfterViewInit {
     private navService: NavService,
     private authService: AuthenticationService,
     private layoutScroll: LayoutScrollService,
+    private themeService: ThemeService,
   ) {
     this.htmlElement = document.querySelector('html')!;
     // Evaluar viewport de forma síncrona antes del primer render para evitar
@@ -251,7 +253,7 @@ export class FullComponent implements OnInit, AfterViewInit {
         this.applyLayoutBreakpoints(state.breakpoints);
       });
 
-    // Initialize project theme with options
+    // ThemeService ya sincronizó localStorage en CoreService al inyectarse
     this.receiveOptions(this.options);
     
     // Filtrar elementos del menú según permisos
@@ -386,13 +388,9 @@ export class FullComponent implements OnInit, AfterViewInit {
   }
 
   toggleDarkTheme(options: AppSettings) {
-    if (options.theme === 'dark') {
-      this.htmlElement.classList.add('dark-theme');
-      this.htmlElement.classList.remove('light-theme');
-    } else {
-      this.htmlElement.classList.remove('dark-theme');
-      this.htmlElement.classList.add('light-theme');
-    }
+    this.themeService.applyToDocument(
+      options.theme === 'light' ? 'light' : 'dark',
+    );
   }
 
   toggleColorsTheme(options: AppSettings) {

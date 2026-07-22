@@ -153,6 +153,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   public listaCatServicios: CatServicioItem[] = [];
   loadingSubmit = false;
   mostrarModalMapa = false;
+  /** Modal abierto al entrar al formulario: la ubicación se captura antes de llenar campos. */
+  mapaModalInicial = false;
   /** Error de lat/lng visible bajo el mapa cuando confirman sin marcar punto. */
   mostrarErrorCoordsMapa = false;
   /** Índice del slot de galería para animación de entrada (una vez). */
@@ -302,6 +304,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.title = 'Actualizar Arrendatario';
       this.submitButton = 'Actualizar';
       this.cargarDesdeGrid(stateData);
+      this.abrirModalMapaInicial();
       return;
     }
     this.activatedRoute.params.subscribe((params) => {
@@ -313,7 +316,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         this.submitButton = 'Actualizar';
         this.cargarArrendatarioParaEdicionDesdeApi(this.idArrendatario);
       } else {
-        this.mostrarPromptAutocargaContrato();
+        this.abrirModalMapaInicial();
       }
     });
   }
@@ -1842,6 +1845,17 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   private abrirModalMapaParaGuardar(): void {
+    this.mapaModalInicial = false;
+    this.abrirModalMapaInterno();
+  }
+
+  /** Primer paso al entrar al formulario (agregar/editar): capturar o confirmar la ubicación. */
+  private abrirModalMapaInicial(): void {
+    this.mapaModalInicial = true;
+    this.abrirModalMapaInterno();
+  }
+
+  private abrirModalMapaInterno(): void {
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
     this.mostrarErrorCoordsMapa = false;
@@ -1855,6 +1869,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   cancelarModalMapa(): void {
+    if (this.mapaModalInicial) {
+      // La ubicación es el primer paso obligatorio: sin ella no se entra al formulario.
+      void this.router.navigateByUrl('/arrendatarios');
+      return;
+    }
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
     this.mostrarErrorCoordsMapa = false;
@@ -1871,10 +1890,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   confirmarUbicacionMapa(): void {
     if (this.latSeleccionada == null || this.lngSeleccionada == null) {
       this.mostrarErrorCoordsMapa = true;
-      this.mostrarAlertaCamposFaltantes([
-        this.etiquetasCampos['lat'],
-        this.etiquetasCampos['lng'],
-      ]);
+      this.mostrarAlertaCamposFaltantes(['Ubicación del arrendatario']);
       return;
     }
     this.mostrarErrorCoordsMapa = false;
@@ -1883,6 +1899,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       lng: this.lngSeleccionada,
     });
     this.limpiarEstadoMapaModal();
+    if (this.mapaModalInicial) {
+      // Paso inicial: solo fija la ubicación y deja continuar con el formulario.
+      this.mapaModalInicial = false;
+      if (!this.esEdicionArrendatario()) this.mostrarPromptAutocargaContrato();
+      return;
+    }
     this.ejecutarGuardadoArrendatario();
   }
 
@@ -2001,12 +2023,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       },
     });
     (this.map as { panTo?: (p: { lat: number; lng: number }) => void })?.panTo?.(pos);
-  }
-
-  private tieneCoordenadasEnFormulario(): boolean {
-    const lat = Number(this.arrendatarioForm.get('lat')?.value);
-    const lng = Number(this.arrendatarioForm.get('lng')?.value);
-    return Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
   }
 
   agregarServicio(): void {
@@ -2435,6 +2451,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
             return;
           }
           this.poblarFormularioDesdeDetalleApi(item);
+          this.abrirModalMapaInicial();
         },
         error: (err: unknown) => {
           const e = err as { error?: { message?: string }; message?: string };
@@ -2984,8 +3001,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private readonly etiquetasCampos: Record<string, string> = {
     arrendatario: 'Arrendatario',
     idArrendador: 'Arrendador',
-    lat: 'Latitud',
-    lng: 'Longitud',
+    lat: 'Ubicación del arrendatario',
+    lng: 'Ubicación del arrendatario',
   };
 
   private validarFormularioAntesMapa(): boolean {
@@ -3674,11 +3691,19 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   submit(): void {
     if (!this.validarFormularioAntesMapa()) return;
+    // La ubicación se captura como primer paso al entrar; si por alguna razón
+    // no está, se exige en el mapa antes de guardar.
     if (this.tieneCoordenadasEnFormulario()) {
       this.ejecutarGuardadoArrendatario();
     } else {
       this.abrirModalMapaParaGuardar();
     }
+  }
+
+  private tieneCoordenadasEnFormulario(): boolean {
+    const lat = Number(this.arrendatarioForm.get('lat')?.value);
+    const lng = Number(this.arrendatarioForm.get('lng')?.value);
+    return Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
   }
 
   private buscarLocalDemoPorId(idLocal: number): {

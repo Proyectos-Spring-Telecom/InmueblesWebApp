@@ -108,12 +108,10 @@ export class AgregarFormulaComponent implements OnInit {
     });
   }
 
-  private roundValorFactor(valor: number): number {
-    return parseFloat(valor.toFixed(3));
-  }
-
+  /** Conserva decimales del API (p. ej. 145.1315); sin truncar a 3. */
   private formatValorFactor(valor: number): string {
-    return this.roundValorFactor(valor).toFixed(3);
+    if (!Number.isFinite(valor)) return '';
+    return parseFloat(valor.toFixed(10)).toString();
   }
 
   private cargarCatalogoFactoresParaFormula(): void {
@@ -143,7 +141,7 @@ export class AgregarFormulaComponent implements OnInit {
           const desc = String(row['descripcion'] ?? row['Descripcion'] ?? '').trim();
           const rawVal = row['valor'] ?? row['Valor'] ?? null;
           const parsed = parseValorNumerico(rawVal);
-          const valor = Number.isFinite(parsed) ? this.roundValorFactor(parsed) : null;
+          const valor = Number.isFinite(parsed) ? parsed : null;
 
           factores.push({
             variable,

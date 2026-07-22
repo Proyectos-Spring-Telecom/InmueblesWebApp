@@ -1,0 +1,1186 @@
+/* =============================================================================
+ * Tema claro — contenido de la app
+ * Header, sidebar y footer permanecen oscuros (chrome fijo).
+ * Textos: fondo claro + texto oscuro (nunca blanco/gris claro sobre blanco).
+ * ============================================================================= */
+
+html.light-theme {
+  /* ---------- Tokens de superficie/texto para contenido ---------- */
+  --app-surface: #ffffff;
+  --app-surface-2: #f1f5f9;
+  --app-surface-3: #e2e8f0;
+  --app-text: #1e293b;
+  --app-text-muted: #475569;
+  --app-text-soft: #64748b;
+  --app-border: rgba(15, 23, 42, 0.12);
+  --app-border-strong: rgba(15, 23, 42, 0.2);
+  --app-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+
+  /* ---------- HEADER: mismo vino sólido que el footer ---------- */
+  .topbar {
+    background: #681330 !important;
+
+    .mat-mdc-icon-button {
+      color: #ffffff !important;
+    }
+
+    .mdc-button {
+      --mat-button-text-label-text-color: #ffffff !important;
+    }
+
+    .theme-toggle-btn,
+    .theme-toggle-btn i-tabler {
+      color: #ffffff !important;
+    }
+
+    /* Cápsulas de notificación: cristal blanco sobre vino (antes azul marino, desentonaba) */
+    .notify-cap__fill {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.32);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .notify-cap__btn:hover .notify-cap__fill {
+      border-color: rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .notify-cap__badge {
+      border-color: rgba(255, 255, 255, 0.75);
+    }
+  }
+
+  /* ---------- SIDEBAR: zona de menú (gris) en blanco; el perfil vino no cambia ---------- */
+  .mat-drawer.sidebarNav {
+    background-color: #ffffff !important;
+    color: var(--app-text);
+    --mat-card-elevated-container-color: #ffffff;
+
+    .sidebar-list .mdc-list-group__subheader {
+      color: var(--app-text-soft);
+    }
+
+    .menu-list-item {
+      .hide-menu,
+      .mdc-list-item__primary-text,
+      .mdc-list-item__secondary-text,
+      .routeIcon,
+      i-tabler.routeIcon,
+      [matListItemIcon] {
+        color: #2f3b47;
+      }
+
+      .arrow-icon .mat-icon {
+        color: var(--app-text-soft);
+      }
+    }
+    /* Hover/activo conservan el vino con texto blanco (reglas existentes) */
+  }
+
+  .layout-app-footer {
+    background-color: var(--mat-sys-secondary) !important;
+    color: #ffffff !important;
+    border-top-color: rgba(255, 255, 255, 0.14) !important;
+
+    .layout-app-footer__tag,
+    .layout-app-footer__meta,
+    .layout-app-footer__copy,
+    .layout-app-footer__copy-main,
+    a {
+      color: #ffffff !important;
+    }
+  }
+
+  /* Menús del header (perfil / notificaciones) siguen oscuros */
+  .profile-menu-custom .mat-mdc-menu-content {
+    background: #141a21 !important;
+  }
+
+  .mat-mdc-menu-panel.notify-hub-panel {
+    --notify-surface: #141a22;
+    --notify-surface-glass: rgba(18, 24, 32, 0.92);
+    --notify-border: rgba(255, 255, 255, 0.1);
+    --notify-text: rgba(255, 255, 255, 0.94);
+    --notify-muted: rgba(226, 232, 240, 0.62);
+  }
+
+  /* ---------- CONTENIDO: cards Bootstrap ---------- */
+  .card {
+    --bs-card-bg: var(--app-surface);
+    --bs-card-color: var(--app-text);
+    --bs-card-border-color: var(--app-border);
+
+    background-color: var(--bs-card-bg);
+    color: var(--bs-card-color);
+    border-color: var(--bs-card-border-color);
+  }
+
+  .card .card-header,
+  .card .card-footer {
+    background-color: var(--bs-card-bg);
+    color: var(--bs-card-color);
+    border-color: var(--bs-card-border-color);
+  }
+
+  /* ---------- Paneles perm-wrapper ---------- */
+  .perm-wrapper.card--panel {
+    --panel-bg: var(--app-surface);
+    --fg: var(--app-text);
+    --muted: var(--app-text-muted);
+    --bd: var(--app-border);
+    box-shadow: var(--app-shadow);
+  }
+
+  .perm-head {
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.03), transparent 30%),
+      var(--panel-bg);
+
+    &::after {
+      background: linear-gradient(
+        135deg,
+        color-mix(in srgb, #681330, white 25%),
+        color-mix(in srgb, #681330, black 15%)
+      );
+    }
+  }
+
+  .perm-head--left::after {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, #681330, white 25%),
+      color-mix(in srgb, #681330, black 15%)
+    );
+  }
+
+  .perm-head__icon {
+    box-shadow: inset 0 0 0 1px var(--app-border);
+  }
+
+  /* Los crumbs quedan sobre la banda vino: siguen en blanco para no perderse */
+  .perm-head__crumbs .crumb {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+
+    &.active {
+      background:
+        radial-gradient(
+          160px 60px at 0% 50%,
+          color-mix(in srgb, var(--accent) 30%, transparent),
+          transparent 60%
+        ),
+        rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .perm-head__crumbs .sep {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .surface {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.02), transparent 40%);
+    border-top-color: var(--app-border);
+  }
+
+  .perm-wrapper .dx-datagrid-headers .dx-row > td {
+    background: rgba(15, 23, 42, 0.04);
+    color: var(--app-text);
+  }
+
+  .perm-wrapper .dx-datagrid .dx-row:hover > td {
+    background: rgba(15, 23, 42, 0.05);
+  }
+
+  /* ---------- Formularios ---------- */
+  .perm-form-nc {
+    .perm-label {
+      color: var(--app-text) !important;
+    }
+
+    .perm-ig {
+      .input-group-text {
+        color: #fff;
+      }
+
+      .form-control,
+      .form-select {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+        border-color: var(--app-border-strong) !important;
+      }
+
+      .form-floating > label {
+        color: var(--app-text-muted) !important;
+      }
+
+      select.form-select {
+        background-color: var(--app-surface) !important;
+        color: var(--app-text) !important;
+        border-color: var(--app-border-strong) !important;
+      }
+
+      select.form-select option {
+        background: var(--app-surface);
+        color: var(--app-text);
+      }
+
+      select.form-select option:disabled {
+        color: var(--app-text-soft);
+        background: var(--app-surface-2);
+      }
+
+      select.form-select optgroup {
+        color: var(--app-text-muted);
+        background: var(--app-surface-2);
+      }
+
+      select.form-select::-webkit-scrollbar-track {
+        background: var(--app-surface-2);
+      }
+
+      select.form-select::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-color: var(--app-surface-2);
+      }
+    }
+  }
+
+  .perm-ig .form-floating select.form-control {
+    background-color: var(--app-surface) !important;
+    color: var(--app-text) !important;
+  }
+
+  .hero-header__back-btn {
+    background: rgba(15, 23, 42, 0.06);
+    border-color: var(--app-border-strong);
+    color: var(--app-text);
+
+    mat-icon {
+      color: var(--app-text);
+    }
+
+    &:hover {
+      background: rgba(15, 23, 42, 0.1);
+      border-color: rgba(15, 23, 42, 0.28);
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.1);
+    }
+  }
+
+  /* ---------- Botones semánticos: SÓLIDOS en claro ----------
+   * Los fondos rgba al 28% se pierden sobre blanco; aquí pasan a color pleno.
+   * Se conserva el contrato: texto blanco y borde más claro que el fondo. */
+  .bg-primary,
+  .bg-warn {
+    background: #2563eb !important;
+    border: 1px solid #93c5fd !important;
+    color: #ffffff !important;
+  }
+
+  .bg-secondary {
+    background: #681330 !important;
+    border: 1px solid rgba(251, 165, 180, 0.9) !important;
+    color: #ffffff !important;
+  }
+
+  .bg-success {
+    background: #2e8c12 !important;
+    border: 1px solid #bbf7d0 !important;
+    color: #ffffff !important;
+  }
+
+  .bg-warning {
+    background-color: #d97706 !important;
+    border: 1px solid #fde68a !important;
+    color: #ffffff !important;
+  }
+
+  .bg-error {
+    background: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+    color: #ffffff !important;
+  }
+
+  .mat-mdc-unelevated-button.bg-primary,
+  .mat-mdc-raised-button.bg-primary,
+  .mat-mdc-unelevated-button.bg-warn,
+  .mat-mdc-raised-button.bg-warn {
+    --mdc-filled-button-container-color: #2563eb;
+  }
+
+  .mat-mdc-unelevated-button.bg-secondary,
+  .mat-mdc-raised-button.bg-secondary {
+    --mdc-filled-button-container-color: #681330;
+  }
+
+  .mat-mdc-unelevated-button.bg-success,
+  .mat-mdc-raised-button.bg-success {
+    --mdc-filled-button-container-color: #2e8c12;
+  }
+
+  .mat-mdc-unelevated-button.bg-warning,
+  .mat-mdc-raised-button.bg-warning {
+    --mdc-filled-button-container-color: #d97706;
+  }
+
+  .mat-mdc-unelevated-button.bg-error,
+  .mat-mdc-raised-button.bg-error {
+    --mdc-filled-button-container-color: #dc2626;
+  }
+
+  .mat-mdc-fab.bg-primary,
+  .mat-mdc-mini-fab.bg-primary {
+    --mdc-fab-container-color: #2563eb;
+  }
+
+  .mat-mdc-fab.bg-secondary,
+  .mat-mdc-mini-fab.bg-secondary {
+    --mdc-fab-container-color: #681330;
+  }
+
+  .mat-mdc-fab.bg-success,
+  .mat-mdc-mini-fab.bg-success {
+    --mdc-fab-container-color: #2e8c12;
+  }
+
+  .mat-mdc-fab.bg-warning,
+  .mat-mdc-mini-fab.bg-warning {
+    --mdc-fab-container-color: #d97706;
+  }
+
+  .mat-mdc-fab.bg-error,
+  .mat-mdc-mini-fab.bg-error {
+    --mdc-fab-container-color: #dc2626;
+  }
+
+  /* Botones de acciones en filas de grids: sólidos con icono blanco */
+  .btnAcciones {
+    background: #64748b !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #ffffff !important;
+  }
+
+  #actualizarButton {
+    background: #2563eb !important;
+    border: 1px solid #93c5fd !important;
+  }
+
+  #detalleIns {
+    background: #8a1a40 !important;
+    border: 1px solid rgba(251, 165, 180, 0.9) !important;
+  }
+
+  #pinButton {
+    background: #16a34a !important;
+    border: 1px solid #a7f3d0 !important;
+  }
+
+  #ubicacionButton {
+    background: #0d9488 !important;
+    border: 1px solid #5eead4 !important;
+  }
+
+  #deleteButton {
+    background: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+  }
+
+  /* Botones success/danger custom: sólidos en claro */
+  .button-success {
+    background: #16a34a;
+    border-color: #a7f3d0;
+    color: #ffffff;
+  }
+
+  .button-danger {
+    background: #dc2626;
+    border-color: #fecaca;
+    color: #ffffff;
+  }
+
+  .hub-vista-simple__accion {
+    background: #4f46e5;
+    border-color: #a5b4fc;
+    color: #ffffff;
+
+    &:hover {
+      background: #4338ca;
+      border-color: #c7d2fe;
+    }
+  }
+
+  /* ---------- Uploader ---------- */
+  .uploader {
+    background:
+      radial-gradient(1200px 300px at 10% -10%, rgba(15, 23, 42, 0.04), transparent 40%),
+      radial-gradient(900px 300px at 90% 110%, rgba(15, 23, 42, 0.04), transparent 40%),
+      var(--app-surface);
+    border-color: var(--app-border-strong);
+    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+  }
+
+  .uploader__title {
+    color: var(--app-text);
+  }
+
+  .uploader__subtitle,
+  .uploader__filename {
+    color: var(--app-text-muted);
+  }
+
+  .uploader__badge {
+    background: rgba(15, 23, 42, 0.05);
+    border-color: rgba(15, 23, 42, 0.18);
+    color: var(--app-text-muted);
+  }
+
+  .uploader__filename--link {
+    background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+    color: var(--app-text);
+    border-color: rgba(96, 165, 250, 0.55);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+
+    &:hover {
+      background: linear-gradient(135deg, #cbd5e1, #f1f5f9);
+      color: #0f172a;
+      border-color: rgba(59, 130, 246, 0.7);
+    }
+  }
+
+  /* ---------- Estatus / chips (mantienen contraste propio) ---------- */
+  .estatus {
+    border-color: var(--app-border-strong);
+    color: var(--app-text);
+    background: var(--app-surface-2);
+  }
+
+  /* ---------- Auth placeholders ---------- */
+  .ul-root .ul-card .mat-mdc-form-field {
+    --mdc-outlined-text-field-input-text-placeholder-color: rgba(30, 41, 59, 0.4);
+  }
+
+  .ul-root .ul-card input.mat-mdc-input-element::placeholder,
+  .ul-root .ul-card textarea.mat-mdc-input-element::placeholder,
+  .ul-root .ul-card .mdc-text-field__input::placeholder,
+  .ul-root .ul-card input.mat-mdc-input-element::-webkit-input-placeholder,
+  .ul-root .ul-card textarea.mat-mdc-input-element::-webkit-input-placeholder,
+  .ul-root .ul-card .mdc-text-field__input::-webkit-input-placeholder,
+  .ul-root .ul-card input.mat-mdc-input-element::-moz-placeholder,
+  .ul-root .ul-card textarea.mat-mdc-input-element::-moz-placeholder,
+  .ul-root .ul-card .mdc-text-field__input::-moz-placeholder {
+    color: rgba(30, 41, 59, 0.4) !important;
+  }
+
+  /* ---------- Hub operación ---------- */
+  .hub-vista-simple__guia {
+    border-color: rgba(124, 58, 237, 0.28);
+    background: linear-gradient(135deg, rgba(237, 233, 254, 0.95), rgba(248, 250, 252, 0.98));
+  }
+
+  .hub-vista-simple__guia-kicker {
+    color: #6d28d9;
+  }
+
+  .hub-vista-simple__guia-titulo {
+    color: var(--app-text);
+  }
+
+  .hub-vista-simple__guia-desc {
+    color: var(--app-text-muted);
+  }
+
+  .hub-vista-simple__stat {
+    border-color: var(--app-border-strong);
+    background: var(--app-surface-2);
+    color: var(--app-text);
+  }
+
+  .hub-vista-simple__stat--pagado {
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #166534;
+    background: rgba(187, 247, 208, 0.55);
+  }
+
+  .hub-vista-simple__stat--pendiente {
+    border-color: rgba(245, 158, 11, 0.45);
+    color: #92400e;
+    background: rgba(254, 243, 199, 0.7);
+  }
+
+  .hub-vista-simple__busqueda {
+    border-color: var(--app-border-strong);
+    background: var(--app-surface);
+  }
+
+  .hub-vista-simple__busqueda mat-icon {
+    color: var(--app-text-soft);
+  }
+
+  .hub-vista-simple__busqueda input {
+    color: var(--app-text);
+  }
+
+  .hub-vista-simple__busqueda input::placeholder {
+    color: var(--app-text-soft);
+  }
+
+  .hub-vista-simple__mes-chip {
+    border-color: var(--app-border-strong);
+    background: var(--app-surface);
+    color: var(--app-text-muted);
+
+    &:hover {
+      color: var(--app-text);
+    }
+  }
+
+  .hub-vista-simple__mes-chip--activo {
+    color: #ffffff;
+  }
+
+  .hub-vista-simple__cargando,
+  .hub-vista-simple__vacio {
+    color: var(--app-text-soft);
+  }
+
+  .hub-vista-simple__vacio mat-icon {
+    color: var(--app-text-soft);
+  }
+
+  .hub-vista-simple__vacio p {
+    color: var(--app-text);
+  }
+
+  .hub-vista-simple__vacio-detalle {
+    color: var(--app-text-muted);
+  }
+
+  .hub-vista-simple__tarjeta {
+    border-color: var(--app-border-strong);
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+  }
+
+  .hub-vista-simple__tarjeta-arrendatario {
+    color: var(--app-text);
+  }
+
+  .hub-vista-simple__tarjeta-servicio {
+    color: var(--app-text-soft);
+  }
+
+  .hub-vista-simple__tarjeta-datos span {
+    color: var(--app-text-muted);
+  }
+
+  .hub-vista-simple__tarjeta-datos mat-icon {
+    color: var(--app-text-soft);
+  }
+
+  .hub-vista-simple__accion--secundaria {
+    border-color: var(--app-border-strong);
+    background: rgba(15, 23, 42, 0.04);
+    color: var(--app-text);
+
+    &:hover {
+      background: rgba(15, 23, 42, 0.08);
+    }
+  }
+
+  /* ---------- Histórico filtros ---------- */
+  .hist-renta-filtro-fechas__label {
+    color: var(--app-text-muted);
+  }
+
+  .hist-renta-filtros-panel {
+    border-color: var(--app-border-strong);
+    background: var(--app-surface-2);
+  }
+
+  .hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-control,
+  .hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-select {
+    background-color: var(--app-surface);
+    border-color: var(--app-border-strong);
+    color: var(--app-text);
+    color-scheme: light;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+  }
+
+  .hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-control:focus,
+  .hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-select:focus {
+    background-color: var(--app-surface);
+    color: var(--app-text);
+  }
+
+  .hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.7;
+  }
+
+  .hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit,
+  .hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-fields-wrapper,
+  .hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-text,
+  .hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-month-field,
+  .hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-day-field,
+  .hist-renta-filtros-panel input.hist-renta-filtro-fechas__input[type='date']::-webkit-datetime-edit-year-field {
+    color: var(--app-text);
+  }
+
+  .hist-renta-filtros-panel select.hist-renta-filtro-fechas__input option {
+    background-color: var(--app-surface);
+    color: var(--app-text);
+  }
+
+  .hist-renta-filtros-panel__mes .hist-renta-mes-datebox .dx-texteditor-input {
+    color: var(--app-text);
+  }
+
+  .hist-renta-filtros-panel__mes .hist-renta-mes-datebox.dx-texteditor {
+    background-color: var(--app-surface);
+    border-color: var(--app-border-strong);
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+  }
+
+  .hist-renta-filtros-panel__mes .hist-renta-mes-datebox.dx-state-focused.dx-texteditor {
+    background-color: var(--app-surface);
+  }
+
+  .hist-renta-filtros-panel__mes .hist-renta-mes-datebox .dx-dropdowneditor-icon,
+  .hist-renta-filtros-panel__mes .hist-renta-mes-datebox .dx-icon {
+    color: var(--app-text-muted);
+  }
+
+  /* ---------- DevExtreme DataGrid (global) ----------
+   * El bundle dx.fluent.saas.dark.compact.css se carga siempre; aquí se
+   * neutraliza en claro: filas blancas, alternadas gris muy suave y texto oscuro. */
+  .dx-widget {
+    color: var(--app-text);
+  }
+
+  .dx-datagrid {
+    background-color: transparent !important;
+    color: var(--app-text) !important;
+  }
+
+  .dx-datagrid-headers {
+    background-color: var(--app-surface-2) !important;
+    color: var(--app-text) !important;
+    border-bottom: 1px solid var(--app-border-strong) !important;
+  }
+
+  .dx-datagrid-headers .dx-header-row > td,
+  .dx-datagrid-headers .dx-datagrid-text-content,
+  .dx-datagrid-headers .dx-row > td {
+    background-color: var(--app-surface-2) !important;
+    color: var(--app-text) !important;
+    border-color: var(--app-border) !important;
+  }
+
+  .dx-datagrid-rowsview {
+    background-color: var(--app-surface) !important;
+    color: var(--app-text) !important;
+  }
+
+  .dx-datagrid-rowsview .dx-row {
+    border-color: var(--app-border) !important;
+  }
+
+  .dx-datagrid-rowsview .dx-data-row > td,
+  .dx-datagrid-rowsview .dx-row > td {
+    background-color: var(--app-surface) !important;
+    color: var(--app-text) !important;
+    border-color: var(--app-border) !important;
+  }
+
+  /* Filas alternadas: gris muy claro (antes heredaban el negro del tema DX oscuro) */
+  .dx-datagrid-rowsview .dx-row-alt > td,
+  .dx-datagrid-rowsview .dx-row-alt > .dx-command-expand {
+    background-color: #f4f7fa !important;
+    color: var(--app-text) !important;
+  }
+
+  .dx-datagrid-rowsview .dx-data-row.dx-state-hover > td,
+  .dx-datagrid-rowsview .dx-data-row.dx-row-hover > td {
+    background-color: rgba(15, 23, 42, 0.05) !important;
+    color: var(--app-text) !important;
+  }
+
+  .dx-datagrid-rowsview .dx-selection > td,
+  .dx-datagrid-rowsview .dx-selection.dx-row-alt > td {
+    background-color: rgba(96, 165, 250, 0.16) !important;
+    color: var(--app-text) !important;
+  }
+
+  .dx-master-detail-row > .dx-master-detail-cell,
+  .dx-master-detail-row.dx-state-hover > td,
+  .dx-master-detail-row:hover > td {
+    background-color: var(--app-surface-2) !important;
+    border-top: 1px solid var(--app-border-strong) !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Fila de filtros y buscador */
+  .dx-datagrid-filter-row > td,
+  .dx-datagrid-filter-row .dx-editor-cell .dx-texteditor {
+    background-color: var(--app-surface) !important;
+  }
+
+  .dx-datagrid .dx-texteditor,
+  .dx-datagrid-search-panel.dx-texteditor,
+  .dx-toolbar .dx-texteditor {
+    background-color: var(--app-surface) !important;
+    border-color: var(--app-border-strong) !important;
+  }
+
+  .dx-texteditor-input {
+    color: var(--app-text) !important;
+    background-color: transparent !important;
+  }
+
+  .dx-placeholder,
+  .dx-placeholder::before {
+    color: var(--app-text-soft) !important;
+  }
+
+  .dx-datagrid .dx-toolbar,
+  .dx-toolbar {
+    background-color: transparent !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Iconos, expandir/contraer, ordenamiento */
+  .dx-datagrid .dx-icon,
+  .dx-datagrid .dx-datagrid-group-closed,
+  .dx-datagrid .dx-datagrid-group-opened,
+  .dx-datagrid .dx-sort,
+  .dx-datagrid .dx-header-filter {
+    color: var(--app-text-muted) !important;
+  }
+
+  /* Pager */
+  .dx-pager {
+    background-color: transparent !important;
+    color: var(--app-text) !important;
+
+    .dx-page,
+    .dx-page-size,
+    .dx-pages-count,
+    .dx-info {
+      color: var(--app-text) !important;
+    }
+
+    .dx-page.dx-selection,
+    .dx-page-size.dx-selection {
+      background-color: var(--mat-sys-secondary) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  /* Estado vacío / carga */
+  .dx-datagrid-nodata,
+  .dx-datagrid .dx-datagrid-nodata {
+    color: var(--app-text-soft) !important;
+  }
+
+  /* Checkboxes de selección */
+  .dx-checkbox-icon {
+    border-color: var(--app-border-strong) !important;
+    background-color: var(--app-surface) !important;
+  }
+
+  .dx-checkbox-checked .dx-checkbox-icon {
+    background-color: var(--mat-sys-secondary) !important;
+    color: #ffffff !important;
+    border-color: var(--mat-sys-secondary) !important;
+  }
+
+  /* Overlays de DX (dropdowns de filtro, calendarios) */
+  .dx-overlay-content.dx-popup-normal,
+  .dx-dropdowneditor-overlay .dx-overlay-content,
+  .dx-datebox-wrapper .dx-overlay-content {
+    background-color: var(--app-surface) !important;
+    color: var(--app-text) !important;
+    border-color: var(--app-border-strong) !important;
+  }
+
+  .dx-list,
+  .dx-list-item,
+  .dx-calendar,
+  .dx-calendar-cell {
+    background-color: var(--app-surface) !important;
+    color: var(--app-text) !important;
+  }
+
+  .dx-list-item.dx-state-hover,
+  .dx-list-item.dx-state-focused,
+  .dx-calendar-cell.dx-state-hover {
+    background-color: var(--app-surface-2) !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Material cards / surfaces en contenido */
+  .mat-mdc-card {
+    --mdc-elevated-card-container-color: var(--app-surface);
+    color: var(--app-text);
+  }
+
+  /* Área de contenido: tipografía legible sobre fondo claro */
+  .pageWrapper,
+  .layout-content-scroll {
+    color: var(--app-text);
+  }
+
+  .pageWrapper .text-white:not(.bg-primary):not(.bg-secondary):not(.bg-success):not(.bg-warning):not(.bg-error):not(.bg-warn):not(button):not(.mat-mdc-button-base) {
+    color: var(--app-text) !important;
+  }
+
+  /* ---------- Modales de contrato / documentos / mono-pago ---------- */
+  .docs-modal,
+  .contract-docs-modal,
+  .mono-pago-modal {
+    color: var(--app-text);
+  }
+
+  .docs-modal__header,
+  .contract-docs-modal.mono-pago-modal .docs-modal__header,
+  .mono-pago-modal.contract-docs-modal .docs-modal__header {
+    border-bottom-color: var(--app-border) !important;
+  }
+
+  .docs-modal__title,
+  .contract-docs-modal.mono-pago-modal .docs-modal__title,
+  .mono-pago-modal.contract-docs-modal .docs-modal__title {
+    color: var(--app-text) !important;
+  }
+
+  .docs-modal__eyebrow,
+  .docs-modal__subtitle,
+  .contract-docs-modal.mono-pago-modal .docs-modal__eyebrow,
+  .contract-docs-modal.mono-pago-modal .docs-modal__subtitle,
+  .mono-pago-modal.contract-docs-modal .docs-modal__eyebrow,
+  .mono-pago-modal.contract-docs-modal .docs-modal__subtitle {
+    color: #6d28d9 !important;
+  }
+
+  .mono-pago-servicio-loading {
+    color: var(--app-text-muted) !important;
+  }
+
+  .mat-mdc-dialog-container,
+  .cdk-overlay-pane .mat-mdc-dialog-surface {
+    --mdc-dialog-container-color: var(--app-surface);
+    --mat-dialog-container-color: var(--app-surface);
+    color: var(--app-text);
+  }
+
+  /* SweetAlert / overlays de negocio comunes */
+  .swal2-popup {
+    background: var(--app-surface) !important;
+    color: var(--app-text) !important;
+  }
+
+  .swal2-title,
+  .swal2-html-container {
+    color: var(--app-text) !important;
+  }
+
+  /* =========================================================================
+   * ENCABEZADO DE FORMULARIOS (perm-head--left: banda vino a la IZQUIERDA)
+   * El título queda sobre la banda vino → texto blanco.
+   * Los crumbs quedan sobre la zona blanca → chips oscuros.
+   * ========================================================================= */
+  .perm-head--left .perm-head__text .eyebrow,
+  .perm-head--left .eyebrow {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  .perm-head--left h2,
+  .perm-head--left h3,
+  .perm-head--left .perm-head__text > h2,
+  .perm-head--left .perm-head__text > h3 {
+    color: #ffffff !important;
+  }
+
+  .perm-head--left .perm-head__icon mat-icon,
+  .perm-head--left .perm-head__icon svg {
+    color: #ffffff !important;
+  }
+
+  .perm-head--left .perm-head__crumbs .crumb {
+    color: var(--app-text) !important;
+    background: rgba(15, 23, 42, 0.06) !important;
+    box-shadow: inset 0 0 0 1px var(--app-border-strong) !important;
+  }
+
+  .perm-head--left .perm-head__crumbs .sep {
+    color: var(--app-text-soft) !important;
+  }
+
+  /* =========================================================================
+   * MODALES docs-modal (ubicación con mapa, previews de documentos)
+   * ========================================================================= */
+  .docs-modal {
+    background: #ffffff !important;
+    border-color: var(--app-border-strong) !important;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25) !important;
+  }
+
+  .docs-modal__header {
+    border-bottom-color: var(--app-border) !important;
+  }
+
+  .docs-modal__footer {
+    border-top-color: var(--app-border) !important;
+  }
+
+  .docs-modal__eyebrow {
+    color: #5b21b6 !important;
+  }
+
+  .docs-modal__eyebrow--destacado {
+    color: #b45309 !important;
+  }
+
+  .docs-modal__subtitle--destacado {
+    color: #92400e !important;
+    background: #fef3c7 !important;
+    border-left-color: #d97706 !important;
+  }
+
+  .docs-modal__close {
+    color: var(--app-text-muted) !important;
+
+    &:hover {
+      background: rgba(15, 23, 42, 0.06) !important;
+      color: var(--app-text) !important;
+    }
+  }
+
+  .docs-modal__viewer {
+    border-color: var(--app-border-strong) !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16) !important;
+  }
+
+  /* Botones del modal: sólidos (nada opaco en claro) */
+  .docs-modal__btn,
+  .contract-docs-modal .docs-modal__btn {
+    background: #4f46e5 !important;
+    border: 2px solid #a5b4fc !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .docs-modal__btn--ghost,
+  .contract-docs-modal .docs-modal__btn--ghost {
+    background: #64748b !important;
+    border: 2px solid #cbd5e1 !important;
+    color: #ffffff !important;
+  }
+
+  /* =========================================================================
+   * FORMULARIOS AGREGAR (inmueble / arrendatario): secciones y arreglos
+   * ========================================================================= */
+  .section-toolbar {
+    border-bottom-color: var(--app-border-strong) !important;
+  }
+
+  .form-section-head,
+  .docs-gallery-title,
+  .docs-img-title {
+    color: var(--app-text) !important;
+  }
+
+  /* Hero de sección (Servicios, Zonas, Pagos, Socios): azul sólido, texto blanco */
+  .arrend-fa-hero {
+    background: #1e3a8a !important;
+    border-color: #93c5fd !important;
+    box-shadow: 0 10px 24px rgba(30, 58, 138, 0.28) !important;
+  }
+
+  .arrend-fa-hero__icon {
+    background: #2563eb !important;
+    border-color: #bfdbfe !important;
+    color: #ffffff !important;
+  }
+
+  .arrend-fa-section-title {
+    color: #ffffff !important;
+    text-shadow: none !important;
+  }
+
+  /* Botón "Agregar ..." y en general mat-flat primary: sólido en claro */
+  .mat-mdc-unelevated-button.mat-primary,
+  .arrend-fa-add-btn.mat-mdc-unelevated-button {
+    --mdc-filled-button-container-color: #2563eb;
+    --mdc-filled-button-label-text-color: #ffffff;
+    --mdc-filled-button-icon-color: #ffffff;
+    border: 1px solid #93c5fd !important;
+  }
+
+  /* Acordeones (Servicio 1, Zona 1, Contrato 1, Socio 1...): título claro con texto oscuro */
+  [class*='arrend-accordion-'] .dx-accordion-item-title {
+    background: #eef2f9 !important;
+    border-color: rgba(37, 99, 235, 0.3) !important;
+    border-left-color: #2563eb !important;
+  }
+
+  [class*='arrend-accordion-'] .dx-state-hover .dx-accordion-item-title,
+  [class*='arrend-accordion-'] .dx-accordion-item-opened .dx-accordion-item-title {
+    background: #e2eaf7 !important;
+    border-color: rgba(37, 99, 235, 0.42) !important;
+    border-left-color: #1d4ed8 !important;
+  }
+
+  [class*='arrend-accordion-'] .dx-accordion-item-title-caption,
+  .arrend-accordion-title-bar__label {
+    color: var(--app-text) !important;
+  }
+
+  [class*='arrend-accordion-'] .dx-accordion-item-body {
+    background: transparent !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Botón de ubicación (mapa): verde sólido */
+  .inmueble-geo-trigger {
+    background: #16a34a !important;
+    border-color: #86efac !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 18px rgba(22, 101, 52, 0.25) !important;
+  }
+
+  /* Chips e indicadores de los arreglos */
+  .arrend-fa-idx {
+    background: #e11d48 !important;
+    border-color: #fda4af !important;
+    color: #ffffff !important;
+  }
+
+  .socios-live-name {
+    background: #0284c7 !important;
+    border-color: #7dd3fc !important;
+    color: #ffffff !important;
+  }
+
+  .socios-subhead,
+  .socios-subhead--docs {
+    color: var(--app-text-muted) !important;
+  }
+
+  .socios-subhead__icon {
+    color: #2563eb !important;
+  }
+
+  .socios-section .socios-input-group-icon {
+    background: #681330 !important;
+    border-color: rgba(251, 165, 180, 0.9) !important;
+    color: #ffffff !important;
+  }
+
+  .srv-tipo-reset {
+    background: #64748b !important;
+    border-color: #cbd5e1 !important;
+    color: #ffffff !important;
+  }
+
+  /* Constructor de locales */
+  .locales-builder {
+    background: #f8fafc !important;
+    border-color: var(--app-border-strong) !important;
+  }
+
+  .locales-builder__eyebrow {
+    color: #2563eb !important;
+  }
+
+  .locales-builder__heading {
+    color: var(--app-text) !important;
+  }
+
+  .locales-builder__head p {
+    color: var(--app-text-muted) !important;
+  }
+
+  /* Chip de archivo cargado */
+  .uploader-wrap .uploader__badge.uploader__badge--file,
+  .srv-pago-uploader .uploader__badge.uploader__badge--file {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    color: #1e40af !important;
+    box-shadow: none !important;
+  }
+
+  /* Selector de locales del contrato (arrendatario) */
+  .arrend-locales-picker__field {
+    background: #ffffff !important;
+    color: var(--app-text) !important;
+    border-color: var(--app-border-strong) !important;
+  }
+
+  /* Avisos, hints y errores de formulario */
+  .perm-field-error {
+    color: #dc2626 !important;
+  }
+
+  .arrend-contrato-aviso--info {
+    color: var(--app-text-soft) !important;
+  }
+
+  .autocarga-contrato-hint {
+    color: #0369a1 !important;
+    text-shadow: none !important;
+  }
+
+  .renta-calc-hint {
+    color: var(--app-text-muted) !important;
+  }
+
+  .renta-calc-hint--destacado {
+    color: #075985 !important;
+    background: #e0f2fe !important;
+    border-color: #38bdf8 !important;
+    box-shadow: none !important;
+  }
+
+  .renta-calc-hint__clave,
+  .renta-calc-label-total {
+    color: #0369a1 !important;
+  }
+
+  .renta-calc-field .renta-calc-input {
+    background-color: #f1f5f9 !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Tarjetas de locales (arrendatario) */
+  .local-item-card {
+    background: #f8fafc !important;
+    border-color: rgba(104, 19, 48, 0.35) !important;
+  }
+
+  .local-item-card strong,
+  .local-item-card__head h6 {
+    color: var(--app-text) !important;
+  }
+
+  .button-agrega {
+    background: #16a34a !important;
+    border: 2px solid #a7f3d0 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  /* Toggle "incluye mantenimiento" */
+  .contrato-incluye-mtto__estado {
+    color: var(--app-text) !important;
+  }
+
+  .contrato-incluye-mtto .toggle-switch-background {
+    background-color: #cbd5e1;
+    box-shadow: inset 0 0 0 2px #94a3b8;
+  }
+
+  .contrato-incluye-mtto .toggle-switch input[type='checkbox']:checked + .toggle-switch-background {
+    background-color: #681330;
+    box-shadow: inset 0 0 0 2px #8b1a42;
+  }
+}

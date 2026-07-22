@@ -160,9 +160,10 @@ export const navItems: NavItem[] = [
   {
     navCap: 'Operación',
   },
+  // preguntar
   {
-    displayName: 'Arrendadores',
-    iconName: 'building',
+    displayName: 'Propiedades',
+    iconName: 'map-pin',
     route: '/monitoreo',
     permission: [
       Permiso.CONSULTAR_ARRENDADORES_MAPA,
@@ -170,56 +171,47 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    displayName: 'Gestión',
+    displayName: 'Lista Arrendadores',
     iconName: 'address-book',
+    route: '/clientes',
+    permission: permisosArrendadores,
+  },
+  {
+    displayName: 'Lista Inmuebles',
+    iconName: 'building',
+    route: '/inmuebles',
+    permission: permisosInmuebles,
+  },
+  {
+    displayName: 'Arrendatarios',
+    iconName: 'users',
     route: '/menu-level',
-    permission: [
-      ...permisosArrendadores,
-      ...permisosInmuebles,
-      ...permisosArrendatarios,
-      Permiso.PERMISO_RESERVADO_RENT_ROL,
-    ],
+    permission: permisosArrendatarios,
     children: [
       {
-        displayName: 'Lista Arrendadores',
-        route: '/clientes',
-        permission: permisosArrendadores,
+        displayName: 'Lista de Arrendatarios',
+        route: '/arrendatarios',
+        permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
       {
-        displayName: 'Lista Inmuebles',
-        route: '/inmuebles',
-        permission: permisosInmuebles,
+        displayName: 'Pagos del mes',
+        route: '/arrendatarios/pagos-mes',
+        permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
       {
-        displayName: 'Arrendatarios',
-        route: '/menu-level',
-        permission: permisosArrendatarios,
-        children: [
-          {
-            displayName: 'Lista de Arrendatarios',
-            route: '/arrendatarios',
-            permission: Permiso.CONSULTAR_ARRENDATARIOS,
-          },
-          {
-            displayName: 'Pagos del mes',
-            route: '/arrendatarios/pagos-mes',
-            permission: Permiso.CONSULTAR_ARRENDATARIOS,
-          },
-          {
-            displayName: 'Histórico de pagos',
-            route: '/arrendatarios/pagos-historico',
-            permission: Permiso.CONSULTAR_ARRENDATARIOS,
-          },
-        ],
+        displayName: 'Histórico de pagos',
+        route: '/arrendatarios/pagos-historico',
+        permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
-      {
-        displayName: 'Rent Rol',
-        route: '/arrendatarios/rent-rol',
-        permission: [
-          Permiso.PERMISO_RESERVADO_RENT_ROL,
-          Permiso.CONSULTAR_ARRENDATARIOS,
-        ],
-      },
+    ],
+  },
+  {
+    displayName: 'Rent Rol',
+    iconName: 'user',
+    route: '/arrendatarios/rent-rol',
+    permission: [
+      Permiso.PERMISO_RESERVADO_RENT_ROL,
+      Permiso.CONSULTAR_ARRENDATARIOS,
     ],
   },
   {

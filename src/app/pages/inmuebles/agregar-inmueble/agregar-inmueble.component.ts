@@ -197,10 +197,12 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private readonly etiquetasCampos: Record<string, string> = {
     nombreInmueble: 'Inmueble',
     idArrendador: 'Arrendador',
-    lat: 'Latitud',
-    lng: 'Longitud',
+    lat: 'Ubicación del inmueble',
+    lng: 'Ubicación del inmueble',
   };
   mostrarModalMapa = false;
+  /** Modal abierto al entrar al formulario: la ubicación se captura antes de llenar campos. */
+  mapaModalInicial = false;
   /** Copia al cargar edición; base para enviar solo cambios en PUT. */
   private snapshotEdicion: SnapshotEdicionInmueble | null = null;
   /** Índice del slot de galería que debe reproducir la animación de entrada (una sola vez). */
@@ -312,13 +314,14 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           if (detalle != null) {
             this.poblarFormularioDesdeApi(extraerInmuebleDetalleApi(detalle));
           }
+          this.abrirModalMapaInicial();
           return;
         }
 
         this.title = 'Agregar Inmueble';
         this.submitButton = 'Guardar';
         this.snapshotEdicion = null;
-        this.mostrarPromptAutocargaContrato();
+        this.abrirModalMapaInicial();
       });
   }
 
@@ -1689,17 +1692,18 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   submit(): void {
     if (!this.validarFormularioAntesMapa()) return;
-
-    if (this.idInmueble != null) {
-      if (this.tieneCoordenadasEnFormulario()) {
-        this.ejecutarActualizacionInmueble();
-      } else {
-        this.abrirModalMapaParaGuardar();
-      }
+    // La ubicación se captura como primer paso al entrar; si por alguna razón
+    // no está, se exige en el mapa antes de guardar.
+    if (!this.tieneCoordenadasEnFormulario()) {
+      this.abrirModalMapaParaGuardar();
       return;
     }
-
-    this.abrirModalMapaParaGuardar();
+    this.mostrarSwalGuardandoInmueble();
+    if (this.idInmueble != null) {
+      this.ejecutarActualizacionInmueble();
+    } else {
+      this.ejecutarCreacionInmueble();
+    }
   }
 
   private tieneCoordenadasEnFormulario(): boolean {
@@ -2655,6 +2659,17 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   /** Tras validar el formulario: mapa obligatorio antes de POST. */
   private abrirModalMapaParaGuardar(): void {
+    this.mapaModalInicial = false;
+    this.abrirModalMapaInterno();
+  }
+
+  /** Primer paso al entrar al formulario (agregar/editar): capturar o confirmar la ubicación. */
+  private abrirModalMapaInicial(): void {
+    this.mapaModalInicial = true;
+    this.abrirModalMapaInterno();
+  }
+
+  private abrirModalMapaInterno(): void {
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
     this.mostrarModalMapa = true;
@@ -2668,6 +2683,11 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   /** Solo vía botón Cancelar: cierra y reinicia el mapa sin guardar. */
   cancelarModalMapa(): void {
+    if (this.mapaModalInicial) {
+      // La ubicación es el primer paso obligatorio: sin ella no se entra al formulario.
+      void this.router.navigateByUrl('/inmuebles');
+      return;
+    }
     this.latSeleccionada = null;
     this.lngSeleccionada = null;
     this.limpiarEstadoMapaModal();
@@ -2681,10 +2701,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
 
   confirmarUbicacionMapa(): void {
     if (this.latSeleccionada == null || this.lngSeleccionada == null) {
-      this.mostrarAlertaCamposFaltantes([
-        this.etiquetasCampos['lat'],
-        this.etiquetasCampos['lng'],
-      ]);
+      this.mostrarAlertaCamposFaltantes(['Ubicación del inmueble']);
       return;
     }
     this.inmuebleForm.patchValue({
@@ -2692,6 +2709,12 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       lng: this.lngSeleccionada,
     });
     this.limpiarEstadoMapaModal();
+    if (this.mapaModalInicial) {
+      // Paso inicial: solo fija la ubicación y deja continuar con el formulario.
+      this.mapaModalInicial = false;
+      if (this.idInmueble == null) this.mostrarPromptAutocargaContrato();
+      return;
+    }
     this.mostrarSwalGuardandoInmueble();
     if (this.idInmueble != null) {
       this.ejecutarActualizacionInmueble();

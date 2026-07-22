@@ -188,7 +188,7 @@ export class AgregarFactorComponent implements OnInit {
   }
 
   etiquetaOpcionInpc(row: InpcPaginatedGridRow): string {
-    return row.fecha;
+    return `${row.fecha} — ${row.origenLabel}`;
   }
 
   private aplicarFactorPendienteEdicion(): void {

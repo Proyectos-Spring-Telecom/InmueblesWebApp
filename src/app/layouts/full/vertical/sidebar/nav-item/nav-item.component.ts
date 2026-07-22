@@ -243,8 +243,41 @@ export class AppNavItemComponent implements OnInit, OnChanges, OnDestroy {
 
     if (this.matchesEditarAlias(route, url)) return true;
 
-    const depth = route.split('/').filter(Boolean).length;
-    return depth >= 2 && url.startsWith(route + '/');
+    // Activo por prefijo (p. ej. /arrendatarios cubre /arrendatarios/agregar-arrendatario),
+    // salvo que otro item del menu tenga una ruta mas especifica para la URL actual.
+    return (
+      url.startsWith(route + '/') && !this.hayRutaMasEspecifica(route, url)
+    );
+  }
+
+  /** Rutas de todo el menu (incluye hijos aun colapsados, via los items raiz). */
+  private static rutasConocidas(): Set<string> {
+    const rutas = new Set<string>();
+    const visitar = (item: any) => {
+      if (!item) return;
+      if (item.route && item.route !== '/menu-level') {
+        rutas.add((item.route as string).split('?')[0].replace(/\/+$/, '') || '/');
+      }
+      (item.children || []).forEach(visitar);
+    };
+    for (const inst of AppNavItemComponent.instances) visitar(inst.item);
+    return rutas;
+  }
+
+  /** True si otra ruta del menu (o su alias editar-) cubre la URL con mayor especificidad. */
+  private hayRutaMasEspecifica(route: string, url: string): boolean {
+    for (const otra of AppNavItemComponent.rutasConocidas()) {
+      if (otra.length <= route.length) continue;
+
+      const candidatas = [otra];
+      const alias = otra.match(/^(.*)\/agregar-([^/]+)$/);
+      if (alias) candidatas.push(`${alias[1]}/editar-${alias[2]}`);
+
+      if (candidatas.some((r) => url === r || url.startsWith(r + '/'))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** /modulo/agregar-x también resalta en /modulo/editar-x/:id */

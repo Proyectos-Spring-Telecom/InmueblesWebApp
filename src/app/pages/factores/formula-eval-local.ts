@@ -175,7 +175,7 @@ export function factoresActivosDesdeListadoApi(rows: unknown[]): FactorFormulaEv
     const parsed = parseValorNumerico(row['valor'] ?? row['Valor'] ?? null);
     if (!Number.isFinite(parsed)) continue;
     vistos.add(variable);
-    out.push({ variable, valor: redondearFactor(parsed) });
+    out.push({ variable, valor: parsed });
   }
 
   return out;
@@ -212,12 +212,10 @@ export function tokensDesconocidosEnExpresionFormula(
   return [...new Set(limpia.split(/\s+/).filter(Boolean))];
 }
 
-function redondearFactor(valor: number): number {
-  return parseFloat(valor.toFixed(3));
-}
-
+/** Conserva decimales del API (p. ej. INPC con 4); sin forzar 3 ni ceros finales. */
 function formatValorFactorSubstituto(valor: number): string {
-  return redondearFactor(valor).toFixed(3);
+  if (!Number.isFinite(valor)) return '0';
+  return parseFloat(valor.toFixed(10)).toString();
 }
 
 export function evaluarExpresionSegura(expresion: string): number {
@@ -318,7 +316,7 @@ export function evaluarExpresionFormulaEditor(
   }
 
   try {
-    const resultado = redondearFactor(evaluarExpresionSegura(sustituida));
+    const resultado = evaluarExpresionSegura(sustituida);
     return {
       ok: true,
       expresionSustituida: sustituida.trim(),

@@ -7,18 +7,21 @@ html.light-theme {
   --mat-sys-surface-container: #fff;
   --mat-sys-surface-container-low: #fff;
   --mat-sys-surface-container-lowest: #768b9e;
-  --mat-sys-on-background: #3a4752;
-  --mat-sys-outline: #ebf1f6;
-  --mat-sys-outline-variant: #ebf1f6;
-  --mat-form-field-outlined-hover-outline-color: #ebf1f6;
-  --mat-checkbox-unselected-hover-state-layer-color: #ebf1f6;
-  --mat-menu-item-hover-state-layer-color: #f6f9fc;
-  --mat-button-toggle-state-layer-color: #f6f9fc;
-  --mat-option-focus-state-layer-color: #f6f9fc;
-  --mat-option-hover-state-layer-color: #f6f9fc;
-  --mat-slide-toggle-unselected-track-color: #f6f9fc;
-  --mat-stepper-header-focus-state-layer-color: #f6f9fc;
-  --mat-stepper-header-hover-state-layer-color: #f6f9fc;
+  --mat-sys-on-background: #1e293b;
+  --mat-sys-outline: #dbe4ee;
+  --mat-sys-outline-variant: #dbe4ee;
+  --mat-form-field-outlined-hover-outline-color: #cbd5e1;
+  --mat-checkbox-unselected-hover-state-layer-color: #f1f5f9;
+  --mat-menu-item-hover-state-layer-color: #f1f5f9;
+  --mat-button-toggle-state-layer-color: #f1f5f9;
+  --mat-option-focus-state-layer-color: #f1f5f9;
+  --mat-option-hover-state-layer-color: #f1f5f9;
+  --mat-slide-toggle-unselected-track-color: #e2e8f0;
+  --mat-stepper-header-focus-state-layer-color: #f1f5f9;
+  --mat-stepper-header-hover-state-layer-color: #f1f5f9;
   --mat-dialog-supporting-text-color: var(--mat-sys-on-background);
-  --mat-expansion-header-hover-state-layer-color: #f6f9fc;
+  --mat-expansion-header-hover-state-layer-color: #f1f5f9;
+  /* Texto secundario legible (no gris claro perdido en fondo claro) */
+  --mat-sys-on-surface-variant: #475569;
+  --mat-sys-on-surface: #1e293b;
 }

@@ -28,6 +28,7 @@ import {
   VencimientoRenovacionContratoDto,
 } from 'src/app/services/moduleService/notificaciones.service';
 import { LoginSuccessSoundService } from 'src/app/services/login-success-sound.service';
+import { AppThemeMode, ThemeService } from 'src/app/services/theme.service';
 
 /** Rutas mostradas en Panel de accesos para ítems que en sidebar usan `/menu-level`. */
 const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
@@ -210,7 +211,9 @@ export class HeaderComponent implements OnInit {
     private router: Router,
     private notificacionesService: NotificacionesService,
     public loginSuccessSound: LoginSuccessSoundService,
+    private themeService: ThemeService,
   ) {
+    this.options = this.settings.getOptions();
     const user = this.users.getUser();
     this.showNombre = user?.nombre;
     this.showApellidoPaterno = user?.apellidoPaterno || '';
@@ -363,8 +366,13 @@ export class HeaderComponent implements OnInit {
     this.selectedLanguage = lang;
   }
 
+  /** Muestra u oculta el botón sol/luna del header (true = visible). */
+  mostrarToggleTema = false;
+
   setlightDark(theme: string) {
-    this.options.theme = theme;
+    const mode: AppThemeMode = theme === 'light' ? 'light' : 'dark';
+    this.themeService.setTheme(mode);
+    this.options = this.settings.getOptions();
     this.emitOptions();
   }
 
