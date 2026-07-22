@@ -11,32 +11,36 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { MaterialModule } from 'src/app/material.module';
 import { FormsModule } from '@angular/forms';
 import { NgScrollbarModule } from 'ngx-scrollbar';
+import { AppThemeMode, ThemeService } from 'src/app/services/theme.service';
 
 @Component({
-    selector: 'app-customizer',
-    imports: [
-        TablerIconsModule,
-        MaterialModule,
-        FormsModule,
-        NgScrollbarModule,
-    ],
-    templateUrl: './customizer.component.html',
-    encapsulation: ViewEncapsulation.None
+  selector: 'app-customizer',
+  imports: [
+    TablerIconsModule,
+    MaterialModule,
+    FormsModule,
+    NgScrollbarModule,
+  ],
+  templateUrl: './customizer.component.html',
+  encapsulation: ViewEncapsulation.None,
 })
 export class CustomizerComponent {
-
   get options(): AppSettings {
     return this.settings.getOptions();
   }
 
-
-
   @Output() optionsChange = new EventEmitter<AppSettings>();
   hideSingleSelectionIndicator = signal(true);
 
-  constructor(private settings: CoreService) { }
+  constructor(
+    private settings: CoreService,
+    private themeService: ThemeService,
+  ) {}
+
   setDark() {
-    this.settings.setOptions({ theme: 'dark' });
+    const mode: AppThemeMode =
+      this.options.theme === 'light' ? 'light' : 'dark';
+    this.themeService.setTheme(mode);
     this.emitOptions();
   }
 
@@ -59,4 +63,3 @@ export class CustomizerComponent {
     this.optionsChange.emit(this.settings.getOptions());
   }
 }
-

@@ -1702,3 +1702,22 @@ dx-tag-container {
 .button-danger:hover {
   filter: brightness(1.08);
 }
+
+/* Textos del modal de ubicación: más presencia (sin font-weight). */
+.docs-modal__eyebrow--destacado {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ffb84d;
+}
+
+.docs-modal__subtitle--destacado {
+  font-size: 0.98rem;
+  letter-spacing: 0.02em;
+  color: #ffd9a0;
+  background: rgba(255, 184, 77, 0.12);
+  border-left: 3px solid #ffb84d;
+  border-radius: 0 6px 6px 0;
+  padding: 0.45rem 0.65rem;
+  margin: 0.35rem 0 0.45rem;
+}

@@ -1085,10 +1085,10 @@
   <div class="docs-modal" (click)="$event.stopPropagation()">
     <div class="row docs-modal__header">
       <div class="col-12">
-        <span class="docs-modal__eyebrow">Ubicación obligatoria</span>
-        <h3 class="docs-modal__title">{{ inmuebleForm.get('nombreInmueble')?.value || 'Seleccionar ubicación' }}</h3>
-        <p class="docs-modal__subtitle">
-          Haz clic en el mapa para fijar latitud y longitud. No podrás registrar el inmueble sin marcar un punto.
+        <span class="docs-modal__eyebrow docs-modal__eyebrow--destacado">Ubicación obligatoria</span>
+        <h3 class="docs-modal__title">Inmueble: {{ inmuebleForm.get('nombreInmueble')?.value || 'Seleccionar ubicación' }}</h3>
+        <p class="docs-modal__subtitle docs-modal__subtitle--destacado">
+          Toca el mapa en la ubicación exacta de tu inmueble. Es obligatorio y debe ser correcta.
         </p>
       </div>
     </div>
@@ -1103,11 +1103,11 @@
       <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
         <button type="button" class="docs-modal__btn docs-modal__btn--ghost" (click)="cancelarModalMapa()"
           [disabled]="loadingSubmit">
-          Cancelar
+          {{ mapaModalInicial ? 'Cancelar' : 'Cancelar' }}
         </button>
         <button type="button" class="docs-modal__btn" (click)="confirmarUbicacionMapa()"
           [disabled]="loadingSubmit">
-          Guardar
+          {{ mapaModalInicial ? 'Confirmar ubicación' : 'Guardar' }}
         </button>
       </div>
     </div>

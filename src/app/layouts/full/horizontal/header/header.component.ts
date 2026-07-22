@@ -10,6 +10,7 @@ import { BrandingComponent } from '../../vertical/sidebar/branding.component';
 import { FormsModule } from '@angular/forms';
 import { AppSettings } from 'src/app/config';
 import { AuthenticationService } from 'src/app/services/auth.service';
+import { AppThemeMode, ThemeService } from 'src/app/services/theme.service';
 
 interface notifications {
   id: number;
@@ -113,8 +114,10 @@ export class AppHorizontalHeaderComponent {
       public dialog: MatDialog,
       private translate: TranslateService,
       private router: Router,
-      private authService: AuthenticationService
+      private authService: AuthenticationService,
+      private themeService: ThemeService,
     ) {
+      this.options = this.settings.getOptions();
       translate.setDefaultLang('en');
     }
   
@@ -131,8 +134,13 @@ export class AppHorizontalHeaderComponent {
       this.selectedLanguage = lang;
     }
   
+    /** Muestra u oculta el botón sol/luna del header (true = visible). */
+    mostrarToggleTema = false;
+
     setlightDark(theme: string) {
-      this.options.theme = theme;
+      const mode: AppThemeMode = theme === 'light' ? 'light' : 'dark';
+      this.themeService.setTheme(mode);
+      this.options = this.settings.getOptions();
       this.emitOptions();
     }
   

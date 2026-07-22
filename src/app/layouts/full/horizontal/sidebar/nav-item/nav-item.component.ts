@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NavService } from '../../../../../services/nav.service';
+import { navItems } from '../sidebar-data';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -42,8 +43,35 @@ export class AppHorizontalNavItemComponent implements OnInit {
 
     if (this.matchesEditarAlias(route, url)) return true;
 
-    const depth = route.split('/').filter(Boolean).length;
-    return depth >= 2 && url.startsWith(route + '/');
+    // Activo por prefijo, salvo que otro item del menu sea mas especifico para la URL.
+    return (
+      url.startsWith(route + '/') && !this.hayRutaMasEspecifica(route, url)
+    );
+  }
+
+  private hayRutaMasEspecifica(route: string, url: string): boolean {
+    const rutas = new Set<string>();
+    const visitar = (item: any) => {
+      if (!item) return;
+      if (item.route && item.route !== '/menu-level') {
+        rutas.add((item.route as string).split('?')[0].replace(/\/+$/, '') || '/');
+      }
+      (item.children || []).forEach(visitar);
+    };
+    navItems.forEach(visitar);
+
+    for (const otra of rutas) {
+      if (otra.length <= route.length) continue;
+
+      const candidatas = [otra];
+      const alias = otra.match(/^(.*)\/agregar-([^/]+)$/);
+      if (alias) candidatas.push(`${alias[1]}/editar-${alias[2]}`);
+
+      if (candidatas.some((r) => url === r || url.startsWith(r + '/'))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private matchesEditarAlias(route: string, url: string): boolean {

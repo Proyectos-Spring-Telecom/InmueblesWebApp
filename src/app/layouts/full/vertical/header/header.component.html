@@ -212,26 +212,37 @@
     </button>
     }
   </mat-menu>
-<!-- 
-  @if(options.theme=='light'){
+<!-- Toggle de tema claro/oscuro. Visibilidad controlada por
+  `mostrarToggleTema` en header.component.ts (true = visible). -->
+@if (mostrarToggleTema) {
+  @if (options.theme === 'light') {
   <button
     mat-icon-button
-    aria-label="lightdark"
-    class="d-flex justify-content-center"
+    type="button"
+    aria-label="Cambiar a tema oscuro"
+    title="Tema oscuro"
+    class="d-flex justify-content-center theme-toggle-btn theme-toggle-btn--moon"
     (click)="setlightDark('dark')"
   >
-    <i-tabler class="d-flex icon-22" [name]="'moon'"></i-tabler>
+    <span class="theme-toggle-btn__fill" aria-hidden="true"></span>
+    <span class="theme-toggle-btn__shine" aria-hidden="true"></span>
+    <i-tabler class="d-flex icon-22 theme-toggle-btn__ico" [name]="'moon'"></i-tabler>
   </button>
-  }@else{
+} @else {
   <button
     mat-icon-button
-    aria-label="lightdark"
-    class="d-flex justify-content-center"
+    type="button"
+    aria-label="Cambiar a tema claro"
+    title="Tema claro"
+    class="d-flex justify-content-center theme-toggle-btn theme-toggle-btn--sun"
     (click)="setlightDark('light')"
   >
-    <i-tabler class="d-flex icon-22" [name]="'sun'"></i-tabler>
+    <span class="theme-toggle-btn__fill" aria-hidden="true"></span>
+    <span class="theme-toggle-btn__shine" aria-hidden="true"></span>
+    <i-tabler class="d-flex icon-22 theme-toggle-btn__ico" [name]="'sun'"></i-tabler>
   </button>
-  } -->
+  }
+}
 
   <!-- --------------------------------------------------------------- -->
   <!-- Mobile Profile Trigger -->
