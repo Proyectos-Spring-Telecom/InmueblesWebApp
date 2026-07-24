@@ -864,3 +864,109 @@ button.arr-socio-doc__link {
     white-space: normal;
   }
 }
+
+/* Tema claro — master-detail contratos / socios (refuerzo vs estilos oscuros encapsulados) */
+:host-context(html.light-theme) {
+  .arr-ctr-block {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .arr-ctr-block__title {
+    margin: 0 !important;
+    padding: 0.7rem 0.9rem !important;
+    background: #001c6a !important;
+    color: #ffffff !important;
+
+    i {
+      color: #ffffff !important;
+    }
+  }
+
+  .arr-ctr-block .arr-ctr-dl,
+  .arr-ctr-block .inm-locales-table-wrap,
+  .arr-ctr-block .arr-ctr-locales-wrap {
+    padding: 0.85rem !important;
+  }
+
+  .arr-ctr-panel,
+  .arr-ctr-tile,
+  .arr-ctr-tile--inm,
+  .arr-ctr-obs,
+  .arr-socio-card {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .arr-ctr-tile--renta {
+    background: #eff6ff !important;
+    border-color: #93c5fd !important;
+  }
+
+  .arr-ctr-tile--mant {
+    background: #ecfdf5 !important;
+    border-color: #86efac !important;
+  }
+
+  .arr-ctr-panel__head {
+    background: #f8fafc !important;
+  }
+
+  .arr-ctr-panel__name,
+  .arr-ctr-tile__value,
+  .arr-ctr-inm__nombre,
+  .arr-ctr-dl dd,
+  .arr-socio-card__nombre {
+    color: #1e293b !important;
+  }
+
+  .arr-ctr-panel__dates,
+  .arr-ctr-tile__label,
+  .arr-ctr-tile__hint,
+  .arr-ctr-dl dt,
+  .arr-ctr-inm__eyebrow,
+  .arr-ctr-inm__channel,
+  .arr-socio-card__hint,
+  .arr-socio-doc__label {
+    color: #475569 !important;
+  }
+
+  .arr-ctr-panel__renta {
+    color: #001c6a !important;
+  }
+
+  .arr-ctr-inm__addr {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+  }
+
+  .arr-socio-card__docs li {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  .arr-ctr-locales-table__foto-box {
+    background: #e0f2fe !important;
+    border-color: #7dd3fc !important;
+  }
+
+  .arr-ctr-locales-table__foto-icon {
+    color: #0284c7 !important;
+  }
+
+  .inm-locales-table thead {
+    background: #f1f5f9 !important;
+  }
+
+  .inm-locales-table th {
+    color: #475569 !important;
+  }
+
+  .inm-locales-table td,
+  .inm-locales-table__nombre {
+    color: #1e293b !important;
+  }
+}

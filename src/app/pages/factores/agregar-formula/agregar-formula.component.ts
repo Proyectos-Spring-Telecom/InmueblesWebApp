@@ -171,6 +171,17 @@ export class AgregarFormulaComponent implements OnInit {
     return variable !== '' && expr.includes(variable);
   }
 
+  /** Dígitos, 00, decimal (`.` / `,`) o atajo `100`. */
+  private esTokenNumerico(token: string): boolean {
+    return token === '00' || token === '100' || /^(?:\d|[.,])$/.test(token);
+  }
+
+  /** Fragmento numérico al final de la expresión (sin espacio previo). */
+  private numeroAlFinal(expr: string): string {
+    const m = expr.match(/[0-9.,]+$/);
+    return m ? m[0] : '';
+  }
+
   agregarToken(token: string): void {
     const ctrl = this.formulaForm.get('formula');
     if (!ctrl) return;
@@ -179,7 +190,26 @@ export class AgregarFormulaComponent implements OnInit {
     const base = String(ctrl.value ?? '').trimEnd();
     let nuevo: string;
 
-    if (!base) {
+    if (this.esTokenNumerico(token)) {
+      // La coma se normaliza a punto para el motor (decimal).
+      const insert = token === ',' ? '.' : token;
+      const ultimo = base[base.length - 1] ?? '';
+      const numActual = this.numeroAlFinal(base);
+
+      if (insert === '.' && numActual.includes('.')) {
+        return;
+      }
+
+      if (!base) {
+        nuevo = insert === '.' ? '0.' : insert;
+      } else if (/[0-9.]/.test(ultimo)) {
+        nuevo = `${base}${insert}`;
+      } else if (ultimo === '(') {
+        nuevo = insert === '.' ? `${base}0.` : `${base}${insert}`;
+      } else {
+        nuevo = insert === '.' ? `${base} 0.` : `${base} ${insert}`;
+      }
+    } else if (!base) {
       nuevo = esOp ? `${token} ` : token;
     } else if (esOp) {
       nuevo = `${base} ${token} `;
@@ -214,7 +244,14 @@ export class AgregarFormulaComponent implements OnInit {
       }
     }
 
-    const match = current.match(/^(.*?)(\s*[+\-*/()]|\s*[0-9.]+)\s*$/);
+    // Dígitos / decimal: borrar un carácter (el 00 se borra en dos pasos).
+    if (/[0-9.]$/.test(current)) {
+      ctrl.setValue(current.slice(0, -1).trimEnd());
+      ctrl.markAsDirty();
+      return;
+    }
+
+    const match = current.match(/^(.*?)(\s*[+\-*/()])\s*$/);
     if (match) {
       ctrl.setValue(match[1].trimEnd());
     } else {

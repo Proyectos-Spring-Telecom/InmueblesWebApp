@@ -363,6 +363,9 @@
 
 .oc-local {
   --oc-local-accent: rgba(130, 160, 255, 0.8);
+  --oc-text: rgba(255, 255, 255, 0.92);
+  --oc-text-muted: rgba(255, 255, 255, 0.42);
+  --oc-text-soft: rgba(255, 255, 255, 0.78);
   display: grid;
   grid-template-columns: 10px minmax(0, 1.2fr) auto minmax(0, 1fr);
   align-items: center;
@@ -409,7 +412,7 @@
 
   &__nombre {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.92);
+    color: var(--oc-text);
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -418,7 +421,7 @@
 
   &__zona {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.42);
+    color: var(--oc-text-muted);
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -431,7 +434,7 @@
     align-items: flex-end;
     gap: 1px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--oc-text-soft);
     line-height: 1.15;
     white-space: nowrap;
   }
@@ -449,13 +452,13 @@
     font-size: 10px;
     letter-spacing: 0.04em;
     /* text-transform: uppercase; */
-    color: rgba(255, 255, 255, 0.38);
+    color: var(--oc-text-muted);
     line-height: 1.1;
   }
 
   &__ocupante-nombre {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.88);
+    color: var(--oc-text);
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -648,7 +651,7 @@
   ::ng-deep .dxc-title text,
   ::ng-deep .dxc-legend text,
   ::ng-deep .dxc-labels text {
-    fill: rgba(230, 241, 255, 0.88) !important;
+    fill: rgba(230, 241, 255, 0.88);
     font-size: 13px !important;
   }
 }
@@ -941,7 +944,7 @@
   ::ng-deep .dxc-labels text,
   ::ng-deep .dxc-arg-elements text,
   ::ng-deep .dxc-val-elements text {
-    fill: rgba(230, 241, 255, 0.88) !important;
+    fill: rgba(230, 241, 255, 0.88);
     font-size: 12px !important;
   }
 }
@@ -1590,5 +1593,213 @@
   .inm-dash-filtros__input {
     width: 9.75rem;
     min-width: 0;
+  }
+}
+
+/* Tema claro — dashboards + ocupación */
+:host-context(html.light-theme) {
+  .dash-stat__label,
+  .oc-stat__label {
+    color: #334155 !important;
+  }
+
+  .dash-stat__value,
+  .oc-stat__value,
+  .oc-stat__meta-value {
+    color: #0f172a !important;
+  }
+
+  .dash-stat--total,
+  .oc-stat--total {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+
+    .dash-stat__label,
+    .oc-stat__label { color: #1e40af !important; }
+    .dash-stat__value,
+    .oc-stat__value,
+    .oc-stat__meta-value { color: #1e3a8a !important; }
+  }
+
+  .dash-stat--ocupado,
+  .oc-stat--ocupado {
+    background: #fef3c7 !important;
+    border-color: #fcd34d !important;
+
+    .dash-stat__label,
+    .oc-stat__label { color: #92400e !important; }
+    .dash-stat__value,
+    .oc-stat__value,
+    .oc-stat__meta-value { color: #78350f !important; }
+  }
+
+  .dash-stat--libre,
+  .oc-stat--disponible {
+    background: #dcfce7 !important;
+    border-color: #86efac !important;
+
+    .dash-stat__label,
+    .oc-stat__label { color: #166534 !important; }
+    .dash-stat__value,
+    .oc-stat__value,
+    .oc-stat__meta-value { color: #14532d !important; }
+  }
+
+  .dash-stat--ingreso {
+    background: #e0e7ff !important;
+    border-color: #a5b4fc !important;
+
+    .dash-stat__label { color: #3730a3 !important; }
+    .dash-stat__value { color: #312e81 !important; }
+  }
+
+  .dash-panel,
+  .dash-panel--info,
+  .oc-grid-panel {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .dash-panel--info {
+    background: #eff6ff !important;
+  }
+
+  .dash-panel__title {
+    margin: -0.65rem -0.8rem 0.55rem !important;
+    padding: 0.65rem 0.85rem !important;
+    background: #001c6a !important;
+    color: #ffffff !important;
+    border-radius: 11px 11px 0 0;
+  }
+
+  .dash-panel__head {
+    margin: -0.65rem -0.8rem 0.55rem !important;
+    padding: 0.55rem 0.85rem 0.65rem !important;
+    background: #001c6a !important;
+    border-bottom-color: #3b82f6 !important;
+    border-radius: 11px 11px 0 0;
+  }
+
+  .dash-panel__head .dash-panel__title {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border-radius: 0;
+    color: #ffffff !important;
+  }
+
+  .dash-panel__meta {
+    color: rgba(255, 255, 255, 0.82) !important;
+  }
+
+  .dash-info__nombre,
+  .dash-local__nombre,
+  .dash-zona__nombre,
+  .dash-chart-center__value {
+    color: #0f172a !important;
+  }
+
+  .dash-info__line,
+  .dash-local__giro,
+  .dash-zona__meta,
+  .dash-chart-center__label,
+  .inm-dash-filtros__label {
+    color: #475569 !important;
+  }
+
+  .dash-local {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .dash-local__meta {
+    color: #1e293b !important;
+  }
+
+  .inm-dash-filtros__input {
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    color: #1e293b !important;
+    color-scheme: light !important;
+
+    &::-webkit-calendar-picker-indicator {
+      filter: none !important;
+    }
+  }
+
+  .oc-stat__label,
+  .oc-stat__meta-label,
+  .oc-zona__nombre,
+  .oc-zona__meta,
+  .oc-grid-label {
+    color: #475569 !important;
+  }
+
+  .oc-locales__title {
+    margin: 0 0 0.35rem !important;
+    padding: 0.45rem 0.65rem !important;
+    background: #001c6a !important;
+    color: #ffffff !important;
+    border-radius: 8px;
+  }
+
+  .oc-local {
+    --oc-text: #0f172a !important;
+    --oc-text-muted: #64748b !important;
+    --oc-text-soft: #334155 !important;
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  .oc-local__nombre,
+  .oc-local__medidas,
+  .oc-local__ocupante-nombre {
+    color: #0f172a !important;
+  }
+
+  .oc-local__zona,
+  .oc-local__ocupante-label {
+    color: #64748b !important;
+  }
+
+  .oc-local__ocupante-nombre--libre {
+    color: #15803d !important;
+  }
+
+  .oc-zona__nombre {
+    color: #1e293b !important;
+  }
+
+  .oc-zona__meta {
+    color: #64748b !important;
+  }
+
+  .oc-empty {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #475569 !important;
+  }
+
+  .oc-dona-wrap ::ng-deep .dxc-title text,
+  .oc-dona-wrap ::ng-deep .dxc-legend text,
+  .oc-dona-wrap ::ng-deep .dxc-legend text tspan,
+  .oc-dona-wrap ::ng-deep .dxc-labels text,
+  .oc-dona-wrap ::ng-deep .dxc-legend-item text,
+  .oc-dona-wrap ::ng-deep svg text,
+  .oc-dona-wrap ::ng-deep svg tspan,
+  #pieOcupacionInmueble ::ng-deep text,
+  #pieOcupacionInmueble ::ng-deep tspan,
+  .dash-chart-wrap ::ng-deep .dxc-title text,
+  .dash-chart-wrap ::ng-deep .dxc-legend text,
+  .dash-chart-wrap ::ng-deep .dxc-legend text tspan,
+  .dash-chart-wrap ::ng-deep .dxc-labels text,
+  .dash-chart-wrap ::ng-deep .dxc-arg-elements text,
+  .dash-chart-wrap ::ng-deep .dxc-val-elements text,
+  .dash-chart-wrap ::ng-deep svg text,
+  .dash-chart-wrap ::ng-deep svg tspan {
+    fill: #1e293b !important;
+    color: #1e293b !important;
   }
 }

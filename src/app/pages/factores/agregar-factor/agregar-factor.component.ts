@@ -14,6 +14,9 @@ import {
 } from 'src/app/shared/valor-miles-format';
 import Swal from 'sweetalert2';
 
+/** Origen del número que se envía en `valor` (solo UI; no va en el body). */
+type FactorValorOrigen = 'inpc' | 'porcentajeAnual';
+
 @Component({
   selector: 'app-agregar-factor',
   templateUrl: './agregar-factor.component.html',
@@ -63,7 +66,8 @@ export class AgregarFactorComponent implements OnInit {
     this.factorForm = this.fb.group({
       variable: ['', [Validators.required, Validators.maxLength(100)]],
       inpcId: [null as string | null, [Validators.required]],
-      valor: [{ value: '', disabled: true }],
+      /** `inpc` | `porcentajeAnual` — elige qué número del periodo va en `valor` del body. */
+      valor: [{ value: null as FactorValorOrigen | null, disabled: true }, [Validators.required]],
       descripcion: ['', [Validators.maxLength(2000)]],
     });
 
@@ -158,7 +162,8 @@ export class AgregarFactorComponent implements OnInit {
     this.cargandoInpc = false;
 
     if (idPrevio != null && !this.inpcPorId(idPrevio)) {
-      this.factorForm.patchValue({ inpcId: null, valor: '' }, { emitEvent: false });
+      this.factorForm.patchValue({ inpcId: null, valor: null }, { emitEvent: false });
+      this.factorForm.get('valor')?.disable({ emitEvent: false });
       this.inpcSeleccionado = null;
     }
 
@@ -173,22 +178,48 @@ export class AgregarFactorComponent implements OnInit {
   onInpcSeleccionadoChange(id: string | null): void {
     const row = this.inpcPorId(id);
     this.inpcSeleccionado = row;
-    this.factorForm
-      .get('valor')
-      ?.setValue(row ? this.formatValorInpcVista(row) : '', { emitEvent: false });
-  }
-
-  /** Solo presentación en el input; el payload usa `inpc.inpc` del periodo seleccionado. */
-  private formatValorInpcVista(row: InpcPaginatedGridRow): string {
-    const inpc = formatValorMilesParaLista(row.inpc);
-    const pctRaw = String(row.porcentajeAnualFmt ?? '').trim();
-    if (!pctRaw || pctRaw === '-') return inpc;
-    const pct = pctRaw.endsWith('%') ? pctRaw : `${pctRaw}%`;
-    return `${inpc} - ${pct}`;
+    const valorCtrl = this.factorForm.get('valor');
+    if (!row) {
+      valorCtrl?.setValue(null, { emitEvent: false });
+      valorCtrl?.disable({ emitEvent: false });
+      return;
+    }
+    valorCtrl?.enable({ emitEvent: false });
+    // Al cambiar periodo, default a INPC.
+    valorCtrl?.setValue('inpc', { emitEvent: false });
   }
 
   etiquetaOpcionInpc(row: InpcPaginatedGridRow): string {
     return `${row.fecha} — ${row.origenLabel}`;
+  }
+
+  etiquetaOpcionValorInpc(row: InpcPaginatedGridRow | null): string {
+    if (!row) return 'INPC';
+    return `INPC — ${formatValorMilesParaLista(row.inpc)}`;
+  }
+
+  etiquetaOpcionValorPorcentaje(row: InpcPaginatedGridRow | null): string {
+    if (!row || row.porcentajeAnual == null) return 'Porcentaje anual';
+    return `Porcentaje anual — ${formatValorMilesParaLista(row.porcentajeAnual)}`;
+  }
+
+  get porcentajeAnualDisponible(): boolean {
+    return this.inpcSeleccionado?.porcentajeAnual != null;
+  }
+
+  private resolverValorOrigenDesdeData(
+    data: Record<string, unknown>,
+    match: InpcPaginatedGridRow | null,
+  ): FactorValorOrigen | null {
+    if (!match) return null;
+    const raw = String(data['valor'] ?? '').replace(/,/g, '').trim();
+    const valor = Number(raw);
+    if (!Number.isFinite(valor)) return 'inpc';
+
+    if (match.porcentajeAnual != null && Math.abs(match.porcentajeAnual - valor) < 1e-9) {
+      return 'porcentajeAnual';
+    }
+    return 'inpc';
   }
 
   private aplicarFactorPendienteEdicion(): void {
@@ -202,16 +233,25 @@ export class AgregarFactorComponent implements OnInit {
         ? this.inpcOpciones.find((o) => o.anio === anioInpc && o.mes === mesInpc)
         : null) ?? this.buscarInpcPorValor(data);
 
+    const valorOrigen = this.resolverValorOrigenDesdeData(data, match ?? null);
+
+    const valorCtrl = this.factorForm.get('valor');
+    if (match) {
+      valorCtrl?.enable({ emitEvent: false });
+    } else {
+      valorCtrl?.disable({ emitEvent: false });
+    }
+
     this.factorForm.patchValue(
       {
         variable: data['variable'] ?? data['nombre'] ?? '',
         inpcId: match?.id ?? null,
-        valor: match ? this.formatValorInpcVista(match) : formatValorMilesParaLista(data['valor'] ?? ''),
+        valor: valorOrigen,
         descripcion: data['descripcion'] ?? '',
       },
       { emitEvent: false },
     );
-    this.inpcSeleccionado = match;
+    this.inpcSeleccionado = match ?? null;
     this.factorForm.markAsPristine();
     this.factorPendienteEdicion = null;
   }
@@ -220,8 +260,12 @@ export class AgregarFactorComponent implements OnInit {
     const raw = String(data['valor'] ?? '').replace(/,/g, '').trim();
     const valor = Number(raw);
     if (!Number.isFinite(valor)) return null;
-    const candidatos = this.inpcOpciones.filter((o) => o.inpc === valor);
-    return candidatos.length === 1 ? candidatos[0] : null;
+    const porInpc = this.inpcOpciones.filter((o) => o.inpc === valor);
+    if (porInpc.length === 1) return porInpc[0];
+    const porPct = this.inpcOpciones.filter(
+      (o) => o.porcentajeAnual != null && o.porcentajeAnual === valor,
+    );
+    return porPct.length === 1 ? porPct[0] : null;
   }
 
   obtenerFactor(): void {
@@ -275,6 +319,7 @@ export class AgregarFactorComponent implements OnInit {
   private etiquetas: Record<string, string> = {
     variable: 'Variable',
     inpcId: 'Periodo INPC',
+    valor: 'Valor',
     descripcion: 'Descripción',
   };
 
@@ -318,7 +363,15 @@ export class AgregarFactorComponent implements OnInit {
     const v = this.factorForm.getRawValue();
     const inpc = this.inpcPorId(v.inpcId);
     const desc = (v.descripcion ?? '').toString().trim();
-    const valorFuente = inpc != null ? String(inpc.inpc) : String(v.valor ?? '');
+    const origen = (v.valor ?? 'inpc') as FactorValorOrigen;
+    let valorFuente = '';
+    if (inpc != null) {
+      if (origen === 'porcentajeAnual' && inpc.porcentajeAnual != null) {
+        valorFuente = String(inpc.porcentajeAnual);
+      } else {
+        valorFuente = String(inpc.inpc);
+      }
+    }
     return {
       variable: (v.variable ?? '').toString().trim(),
       valor: valorSinComasParaApi(valorFuente),
@@ -423,4 +476,3 @@ export class AgregarFactorComponent implements OnInit {
     this.route.navigateByUrl('/factores');
   }
 }
-

@@ -6,6 +6,7 @@ import { lastValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
+import { ThemeService } from 'src/app/services/theme.service';
 import { InmuebleGridRow, mapInmueblesApiToGridRows } from '../inmuebles-list.mapper';
 import {
   construirGraficaMensualidadLocales,
@@ -133,7 +134,15 @@ export class ListaInmueblesComponent implements OnInit {
     private router: Router,
     private inmueblesService: InmueblesService,
     private cdr: ChangeDetectorRef,
+    private themeService: ThemeService,
   ) {}
+
+  /** Texto de leyenda/labels de la dona: oscuro en tema claro. */
+  get colorTextoGraficaOcupacion(): string {
+    return this.themeService.getTheme() === 'light'
+      ? '#1e293b'
+      : 'rgba(230, 241, 255, 0.92)';
+  }
 
   ngOnInit(): void {
     this.setupDataSource();

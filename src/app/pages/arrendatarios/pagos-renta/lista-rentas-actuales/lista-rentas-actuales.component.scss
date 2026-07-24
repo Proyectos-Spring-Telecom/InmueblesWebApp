@@ -220,3 +220,58 @@
   border-color: rgba(148, 163, 184, 0.28);
   color: #cbd5e1;
 }
+
+:host-context(html.light-theme) {
+  .renta-grid-desglose__item--renta {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+  }
+
+  .renta-grid-desglose__item--renta .renta-grid-desglose__label {
+    color: #1e40af !important;
+  }
+
+  .renta-grid-desglose__item--renta .renta-grid-desglose__valor {
+    color: #1e3a8a !important;
+  }
+
+  .renta-grid-desglose__item--mtto {
+    background: #fef3c7 !important;
+    border-color: #fcd34d !important;
+  }
+
+  .renta-grid-desglose__item--mtto .renta-grid-desglose__label {
+    color: #92400e !important;
+  }
+
+  .renta-grid-desglose__item--mtto .renta-grid-desglose__valor {
+    color: #78350f !important;
+  }
+
+  .renta-grid-desglose__item--total {
+    background: #dcfce7 !important;
+    border-color: #86efac !important;
+  }
+
+  .renta-grid-desglose__item--total .renta-grid-desglose__label {
+    color: #166534 !important;
+  }
+
+  .renta-grid-desglose__item--total .renta-grid-desglose__valor {
+    color: #14532d !important;
+  }
+
+  .renta-grid-desglose__vacio,
+  .renta-acciones-vacio {
+    color: #64748b !important;
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .renta-modal-monto-bloqueado .form-control[readonly] {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+    opacity: 1 !important;
+  }
+}

@@ -796,3 +796,113 @@ body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal 
     text-align: center;
   }
 }
+
+/* Comprobante de pago — selector alineado al formulario (paridad monitoreo detalle) */
+.mono-pago-file {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 3.6rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.55);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mono-pago-file:hover,
+.mono-pago-file:focus-visible {
+  border-color: rgba(125, 211, 252, 0.55);
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.18);
+  outline: none;
+}
+
+.mono-pago-file--filled {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(6, 78, 59, 0.22);
+}
+
+.mono-pago-file--filled:hover,
+.mono-pago-file--filled:focus-visible {
+  border-color: rgba(110, 231, 183, 0.65);
+  background: rgba(6, 78, 59, 0.3);
+}
+
+.mono-pago-file__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 10px;
+  background: rgba(104, 19, 48, 0.85);
+  border: 1px solid rgba(253, 164, 175, 0.35);
+
+  mat-icon {
+    width: 1.35rem;
+    height: 1.35rem;
+    font-size: 1.35rem;
+    color: #fff;
+  }
+}
+
+.mono-pago-file--filled .mono-pago-file__icon {
+  background: rgba(5, 150, 105, 0.9);
+  border-color: rgba(110, 231, 183, 0.45);
+}
+
+.mono-pago-file__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.mono-pago-file__title {
+  color: #f1f5f9;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mono-pago-file__hint {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.mono-pago-file__action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+}
+
+.mono-pago-file--filled .mono-pago-file__action {
+  border-color: rgba(110, 231, 183, 0.5);
+  background: #059669;
+}
+
+.mono-pago-file__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}

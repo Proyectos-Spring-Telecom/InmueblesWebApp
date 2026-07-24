@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { MonitoreoRoutingModule } from './monitoreo-routing.module';
 import { MatIconModule } from '@angular/material/icon';
-import { DxButtonModule, DxChartModule, DxDataGridModule, DxDateBoxModule, DxPieChartModule } from 'devextreme-angular';
+import { DxAccordionModule, DxButtonModule, DxChartModule, DxDataGridModule, DxDateBoxModule, DxPieChartModule } from 'devextreme-angular';
 import { MaterialModule } from 'src/app/material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MonitoreoComponent } from './monitoreo.component';
@@ -22,6 +22,7 @@ import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documen
     DocumentoPreviewModule,
     MatIconModule,
     DxDataGridModule,
+    DxAccordionModule,
     DxButtonModule,
     MaterialModule,
     ReactiveFormsModule,

@@ -119,7 +119,7 @@
             </p>
           </div>
 
-          <!-- Valor (desde INPC) -->
+          <!-- Valor: INPC o porcentaje anual del periodo seleccionado -->
           <div class="col-12 col-md-6 col-xl-3">
             <label for="facValor" class="form-label perm-label">Valor</label>
             <div class="input-group input-group-lg perm-ig factor-form__ig">
@@ -127,20 +127,26 @@
                 <mat-icon aria-hidden="true">pin</mat-icon>
               </span>
               <div
-                class="form-floating flex-grow-1"
-                [class.factor-form__floating--filled]="!!factorForm.get('valor')?.value"
+                class="form-floating flex-grow-1 perm-select-floating factor-inpc-select"
+                [class.factor-inpc-select--filled]="!!factorForm.get('valor')?.value"
               >
-                <input
-                  type="text"
-                  formControlName="valor"
-                  class="form-control"
+                <select
+                  class="form-select"
                   id="facValor"
-                  placeholder=" "
-                  readonly
-                  tabindex="-1"
-                  aria-readonly="true"
-                />
-                <label for="facValor">Índice del INPC</label>
+                  formControlName="valor"
+                  aria-label="Seleccionar valor del periodo INPC"
+                >
+                  <option [ngValue]="null" disabled>
+                    {{ inpcSeleccionado ? 'Selecciona el valor' : 'Primero elige el periodo' }}
+                  </option>
+                  <option [ngValue]="'inpc'">
+                    {{ etiquetaOpcionValorInpc(inpcSeleccionado) }}
+                  </option>
+                  <option [ngValue]="'porcentajeAnual'" [disabled]="!porcentajeAnualDisponible">
+                    {{ etiquetaOpcionValorPorcentaje(inpcSeleccionado) }}
+                  </option>
+                </select>
+                <label for="facValor">INPC o % anual</label>
               </div>
             </div>
           </div>
