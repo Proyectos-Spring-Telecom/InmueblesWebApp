@@ -8,6 +8,17 @@ html.light-theme {
   --mat-sys-surface-container-low: #fff;
   --mat-sys-surface-container-lowest: #768b9e;
   --mat-sys-on-background: #1e293b;
+  /* Botones filled: texto/icono blanco (evitar primary-container claro + texto oscuro de M3) */
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-on-secondary: #ffffff;
+  --mat-sys-on-error: #ffffff;
+  --mat-sys-on-tertiary: #ffffff;
+  --mat-sys-primary-container: #2563eb;
+  --mat-sys-on-primary-container: #ffffff;
+  --mat-sys-secondary-container: #681330;
+  --mat-sys-on-secondary-container: #ffffff;
+  --mat-sys-error-container: #dc2626;
+  --mat-sys-on-error-container: #ffffff;
   --mat-sys-outline: #dbe4ee;
   --mat-sys-outline-variant: #dbe4ee;
   --mat-form-field-outlined-hover-outline-color: #cbd5e1;

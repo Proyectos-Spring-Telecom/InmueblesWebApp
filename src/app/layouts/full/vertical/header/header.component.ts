@@ -367,7 +367,7 @@ export class HeaderComponent implements OnInit {
   }
 
   /** Muestra u oculta el botón sol/luna del header (true = visible). */
-  mostrarToggleTema = false;
+  mostrarToggleTema = true;
 
   setlightDark(theme: string) {
     const mode: AppThemeMode = theme === 'light' ? 'light' : 'dark';

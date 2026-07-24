@@ -14,48 +14,77 @@
   min-height: calc(3.5rem + 2px);
 }
 
+.formula-form {
+  &__acciones {
+    width: 100%;
+  }
+}
+
 // ─── Constructor de fórmula ───────────────────────────────────────────────────
 
 .formula-builder {
   background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
+  width: 100%;
+  min-width: 0;
+
+  &__top {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  &__bottom {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem;
+    align-items: start;
+    min-width: 0;
+  }
 
   &__display {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: rgba(0,0,0,0.25);
-    border: 1px solid rgba(255,255,255,0.1);
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    padding: 0.75rem 1rem;
-    min-height: 52px;
+    padding: 0.7rem 1rem;
+    min-height: 3.25rem;
+    min-width: 0;
 
     &--empty .formula-builder__display-text {
-      opacity: 0.3;
+      opacity: 0.35;
       font-style: italic;
       font-size: 0.85rem;
     }
   }
 
   &__display-icon {
-    opacity: 0.4;
-    font-size: 20px;
-    height: 20px;
-    width: 20px;
+    opacity: 0.45;
+    font-size: 22px;
+    height: 22px;
+    width: 22px;
     flex-shrink: 0;
   }
 
   &__display-text {
     flex: 1;
+    min-width: 0;
     font-size: 0.95rem;
-    color: rgba(255,255,255,0.9);
-    word-break: break-all;
-    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.95);
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
   }
 
   &__clear {
@@ -70,32 +99,81 @@
     transition: opacity 0.15s;
     flex-shrink: 0;
 
-    &:hover { opacity: 0.9; }
+    &:hover {
+      opacity: 0.9;
+    }
 
-    mat-icon { font-size: 18px; height: 18px; width: 18px; }
+    mat-icon {
+      font-size: 18px;
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  &__preview-slot {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+  }
+
+  &__preview-slot > .formula-builder__preview {
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  &__calc {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
   }
 
   &__operators {
-    display: flex;
-    flex-wrap: nowrap;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0.5rem;
     width: 100%;
+    min-width: 0;
 
     .formula-btn {
-      flex: 1 1 0;
-      min-width: 0;
+      min-height: 2.5rem;
+      width: 100%;
     }
+  }
+
+  &__keypad {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+
+    .formula-btn {
+      min-height: 2.5rem;
+      width: 100%;
+    }
+  }
+
+  &__keypad-zero {
+    grid-column: span 3;
   }
 
   &__vars {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0;
+    min-height: 100%;
+    background: rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 0.75rem;
   }
 
   &__vars-scroll {
-    min-height: 4.75rem;
-    max-height: 5.5rem;
+    flex: 1;
+    max-height: 14rem;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 0.25rem;
@@ -112,117 +190,190 @@
     }
   }
 
-  &__vars-row {
-    --bs-gutter-x: 0.5rem;
-    --bs-gutter-y: 0.5rem;
-    margin: 0;
+  &__vars-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
   &__vars-label {
-    flex-basis: 100%;
     font-size: 0.75rem;
     opacity: 0.45;
-    /* text-transform: uppercase; */
     letter-spacing: 0.05em;
-    flex-shrink: 0;
   }
 
-  &__divider {
-    height: 1px;
-    background: rgba(255,255,255,0.07);
-    margin: 0.25rem 0;
+  &__vars-empty {
+    margin: 0;
+    font-size: 0.82rem;
+    opacity: 0.45;
   }
 
   &__preview {
     border-radius: 8px;
-    padding: 0.75rem 1rem;
+    padding: 0.7rem 1rem;
+    min-width: 0;
+    min-height: 3.25rem;
+    display: flex;
+    align-items: center;
 
     &--ok {
-      background: rgba(16, 185, 129, 0.07);
-      border: 1px solid rgba(16, 185, 129, 0.2);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
 
       .formula-builder__preview-header {
-        color: #10b981;
-        mat-icon { color: #10b981; }
+        color: #34d399;
+
+        mat-icon {
+          color: #34d399;
+        }
       }
-      strong { color: #10b981; font-size: 1.2rem; }
+
+      strong {
+        color: #6ee7b7;
+        font-size: 1.15rem;
+        letter-spacing: 0.02em;
+        line-height: 1.1;
+      }
     }
 
     &--error {
-      background: rgba(239, 68, 68, 0.07);
-      border: 1px solid rgba(239, 68, 68, 0.2);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.35);
 
       .formula-builder__preview-header {
-        color: #ef4444;
-        mat-icon { color: #ef4444; }
+        color: #f87171;
+
+        mat-icon {
+          color: #f87171;
+        }
       }
+    }
+
+    &--empty {
+      background: rgba(0, 0, 0, 0.18);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+
+      .formula-builder__preview-header {
+        color: rgba(255, 255, 255, 0.5);
+
+        mat-icon {
+          color: rgba(255, 255, 255, 0.5);
+        }
+      }
+    }
+  }
+
+  &__preview-row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  &__preview-col {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    min-width: 0;
+
+    &--title {
+      flex: 0 0 auto;
+      padding-right: 0.75rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    &--expr {
+      flex: 1 1 0;
+      justify-content: center;
+      text-align: center;
+      flex-wrap: wrap;
+    }
+
+    &--result {
+      flex: 0 1 auto;
+      justify-content: flex-end;
+      margin-left: auto;
+      padding-left: 0.75rem;
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    &--msg {
+      flex: 1 1 auto;
     }
   }
 
   &__preview-header {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    /* text-transform: uppercase; */
-    letter-spacing: 0.06em;
-    margin-bottom: 0.5rem;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    margin: 0;
+    white-space: nowrap;
 
-    mat-icon { font-size: 16px; height: 16px; width: 16px; }
+    mat-icon {
+      font-size: 16px;
+      height: 16px;
+      width: 16px;
+    }
   }
 
   &__preview-expr {
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.4);
-    margin: 0 0 0.35rem;
-  }
-
-  &__preview-result {
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.75);
     margin: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
+    word-break: break-word;
   }
 
   &__preview-label {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.35);
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+  }
+
+  &__preview-placeholder {
+    margin: 0;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.4);
   }
 
   &__preview-error-msg {
-    font-size: 0.82rem;
-    color: rgba(239, 68, 68, 0.85);
+    font-size: 0.95rem;
+    color: rgba(248, 113, 113, 0.95);
     margin: 0;
+    word-break: break-word;
   }
 }
 
 // ─── Botones del constructor ──────────────────────────────────────────────────
 
 .formula-btn {
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.85);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
   padding: 0.35rem 0.75rem;
   transition: background 0.15s, border-color 0.15s, transform 0.1s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  min-width: 0;
 
   &:hover {
-    background: rgba(255,255,255,0.12);
-    border-color: rgba(255,255,255,0.25);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
   }
 
-  &:active { transform: scale(0.95); }
+  &:active {
+    transform: scale(0.95);
+  }
 
   &--op {
-    min-width: 42px;
     font-size: 1.05rem;
     background: rgba(148, 163, 184, 0.14);
     border-color: rgba(203, 213, 225, 0.38);
@@ -276,6 +427,68 @@
     &:hover {
       background: rgba(239, 68, 68, 0.18);
       border-color: rgba(239, 68, 68, 0.4);
+    }
+  }
+}
+
+@media (max-width: 991.98px) {
+  .formula-builder {
+    padding: 0.875rem 1rem;
+
+    &__top,
+    &__bottom {
+      grid-template-columns: 1fr;
+    }
+
+    &__vars-scroll {
+      max-height: 10rem;
+    }
+
+    &__preview-row {
+      flex-wrap: wrap;
+    }
+
+    &__preview-col--title,
+    &__preview-col--result {
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    &__preview-col--expr {
+      flex: 1 1 100%;
+      justify-content: flex-start;
+      text-align: left;
+      order: 3;
+    }
+  }
+}
+
+@media (max-width: 575.98px) {
+  .formula-builder {
+    padding: 0.75rem;
+
+    &__operators,
+    &__keypad {
+      gap: 0.4rem;
+    }
+
+    &__operators .formula-btn,
+    &__keypad .formula-btn {
+      min-height: 2.35rem;
+      padding: 0.3rem 0.4rem;
+      font-size: 0.85rem;
+    }
+
+    &__operators .formula-btn--op {
+      font-size: 0.95rem;
+    }
+  }
+
+  .formula-form__acciones {
+    .button-success,
+    .button-danger {
+      flex: 1 1 100%;
     }
   }
 }

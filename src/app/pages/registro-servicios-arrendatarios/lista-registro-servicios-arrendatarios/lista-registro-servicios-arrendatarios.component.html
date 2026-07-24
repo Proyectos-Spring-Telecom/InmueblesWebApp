@@ -459,44 +459,51 @@
                   </div>
                 </div>
 
-                <div class="col-12 col-lg-4">
+                <div class="col-12 col-lg-6">
                   <label class="form-label perm-label d-block mb-2">
                     Comprobante de pago <span class="text-danger">*</span>
                   </label>
-                  <div class="uploader-hero srv-pago-uploader">
-                    <div class="uploader srv-pago-uploader__card">
-                      <div class="uploader__glow"></div>
-                      <div class="uploader__body">
-                        <div class="srv-pago-uploader__row">
-                          <div class="srv-pago-uploader__left">
-                            <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
-                              <mat-icon>receipt</mat-icon>
-                            </div>
-                            <button
-                              mat-flat-button
-                              color="primary"
-                              type="button"
-                              (click)="pagoComprobanteInput.click()"
-                            >
-                              Selecciona un archivo
-                            </button>
-                          </div>
-                          <span
-                            class="uploader__badge srv-pago-uploader__formats"
-                            [class.uploader__badge--file]="pagoForm.get('comprobantePagoNombre')?.value"
-                          >
-                            {{ pagoForm.get('comprobantePagoNombre')?.value || etiquetaComprobanteFormatos }}
-                          </span>
-                        </div>
-                        <input
-                          #pagoComprobanteInput
-                          type="file"
-                          accept="application/pdf,image/png,image/jpeg,image/jpg"
-                          class="uploader__input"
-                          (change)="onPagoComprobanteFileSelected($event)"
-                        />
-                      </div>
+                  <div
+                    class="mono-pago-file"
+                    [class.mono-pago-file--filled]="!!pagoForm.get('comprobantePagoNombre')?.value"
+                    role="button"
+                    tabindex="0"
+                    (click)="pagoComprobanteInput.click()"
+                    (keydown.enter)="pagoComprobanteInput.click()"
+                    (keydown.space)="$event.preventDefault(); pagoComprobanteInput.click()"
+                  >
+                    <div class="mono-pago-file__icon" aria-hidden="true">
+                      <mat-icon>{{
+                        pagoForm.get('comprobantePagoNombre')?.value ? 'description' : 'upload_file'
+                      }}</mat-icon>
                     </div>
+                    <div class="mono-pago-file__text">
+                      <span class="mono-pago-file__title">
+                        {{
+                          pagoForm.get('comprobantePagoNombre')?.value
+                            ? pagoForm.get('comprobantePagoNombre')?.value
+                            : 'Adjunta el comprobante de pago'
+                        }}
+                      </span>
+                      <span class="mono-pago-file__hint">
+                        {{
+                          pagoForm.get('comprobantePagoNombre')?.value
+                            ? 'Haz clic para reemplazar el archivo'
+                            : 'PDF, PNG o JPG · un solo archivo'
+                        }}
+                      </span>
+                    </div>
+                    <span class="mono-pago-file__action">
+                      {{ pagoForm.get('comprobantePagoNombre')?.value ? 'Cambiar' : 'Seleccionar' }}
+                    </span>
+                    <input
+                      #pagoComprobanteInput
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg"
+                      class="mono-pago-file__input"
+                      (change)="onPagoComprobanteFileSelected($event)"
+                      (click)="$event.stopPropagation()"
+                    />
                   </div>
                 </div>
 

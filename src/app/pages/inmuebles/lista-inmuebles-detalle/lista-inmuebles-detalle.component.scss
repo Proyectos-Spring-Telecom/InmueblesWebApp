@@ -752,3 +752,73 @@
   width: 100%;
   grid-column: 1 / -1;
 }
+
+/* Tema claro — zonas / servicios / documentos del master-detail */
+:host-context(html.light-theme) {
+  .inm-zona-panel,
+  .inm-servicio-card,
+  .inm-doc-card,
+  .inm-card {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .inm-zona-panel__summary {
+    background: #001c6a !important;
+  }
+
+  .inm-zona-panel__summary::before,
+  .inm-zona-panel__num,
+  .inm-zona-panel__stat-value {
+    color: #ffffff !important;
+  }
+
+  .inm-zona-panel__stat-label {
+    color: rgba(255, 255, 255, 0.75) !important;
+  }
+
+  .inm-zona-panel__body {
+    background: #ffffff !important;
+    border-top-color: #e2e8f0 !important;
+  }
+
+  .inm-locales-table thead {
+    background: #f1f5f9 !important;
+  }
+
+  .inm-locales-table th {
+    color: #475569 !important;
+  }
+
+  .inm-locales-table td,
+  .inm-locales-table__nombre,
+  .inm-servicio-card__title,
+  .inm-doc-card__name,
+  .inm-card__value {
+    color: #1e293b !important;
+  }
+
+  .inm-servicio-card__meta p,
+  .inm-card__label,
+  .inm-card__meta,
+  .inm-empty {
+    color: #475569 !important;
+  }
+
+  .inm-servicio-card__icon,
+  .inm-doc-card__icon {
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+  }
+
+  .inm-servicio-card__thumb,
+  .inm-doc-card__thumb {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .inm-empty {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+}

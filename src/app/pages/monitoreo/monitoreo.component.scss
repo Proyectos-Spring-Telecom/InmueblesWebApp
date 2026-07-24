@@ -585,25 +585,28 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  right: 10px;
+  /* Deja hueco a los botones +/- (52px) + margen */
+  right: 72px;
   z-index: 9;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 10px;
+  gap: 6px;
+  max-width: min(420px, calc(100% - 82px));
+  width: auto;
+  padding: 6px 10px;
+  border-radius: 8px;
   border: 1px solid rgba(46, 204, 113, 0.35);
   background: rgba(20, 83, 45, 0.35);
   color: #d1fae5;
-  font-size: 0.78rem;
-  line-height: 1.4;
+  font-size: 0.72rem;
+  line-height: 1.35;
   pointer-events: none;
 }
 
 .surface .locales-board-hint mat-icon {
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
   flex-shrink: 0;
   margin-top: 1px;
   color: rgba(134, 239, 172, 0.95);
@@ -614,7 +617,8 @@
 }
 
 .surface .locales-board-hint strong {
-  color: #ecfdf5;
+  color: #86efac;
+  letter-spacing: 0.02em;
 }
 
 .surface .locales-stage {
@@ -3196,5 +3200,391 @@
   .surface .monitor-list-pane--locales .inmueble-footer .btn.btn-sm.monitor-list-btn {
     flex: 0 1 calc(50% - 4px);
     max-width: calc(50% - 4px);
+  }
+}
+
+/* =============================================================================
+ * Tema claro — :host-context gana a la encapsulación (overrides globales no alcanzan)
+ * ============================================================================= */
+:host-context(html.light-theme) {
+  .surface {
+    --mat-sys-surface: #ffffff;
+    --mat-sys-on-surface: #1e293b;
+    --mat-sys-on-surface-variant: #475569;
+    --mat-sys-outline-variant: #cbd5e1;
+    --mat-sys-surface-container-high: #f1f5f9;
+    color: #1e293b;
+  }
+
+  .surface .card,
+  .surface .insta-card,
+  .surface .locales-card,
+  .surface .inmueble-card-shell,
+  .surface .insta-item.central,
+  .surface .insta-item.instalacion,
+  .surface .cliente-grid-card.cliente-card-v2,
+  .surface .cliente-card-v2 {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+    color: #1e293b !important;
+    backdrop-filter: none !important;
+  }
+
+  .surface .insta-card:hover,
+  .surface .insta-item:hover,
+  .surface .insta-item.central:hover,
+  .surface .insta-item.instalacion:hover {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1) !important;
+    transform: none;
+  }
+
+  .surface .insta-item.active,
+  .surface .insta-item.central.active,
+  .surface .insta-item.instalacion.active,
+  .surface .insta-item.instalacion.local-zona-row--selected,
+  .surface .insta-item.instalacion.inmueble-lista-row--selected {
+    background: #eff6ff !important;
+    border-color: #93c5fd !important;
+  }
+
+  .surface .insta-card .card-header,
+  .surface .monitor-card-header {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-bottom-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  .perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn--amber,
+  .perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn--amber:hover {
+    background: #d97706 !important;
+    border-color: #fcd34d !important;
+    color: #ffffff !important;
+  }
+
+  .perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn--violet,
+  .perm-wrapper .surface .monitor-card-header .btn.btn-sm.monitor-head-btn--violet:hover {
+    background: #7c3aed !important;
+    border-color: #c4b5fd !important;
+    color: #ffffff !important;
+  }
+
+  .surface .monitor-head-icon {
+    background: #e2e8f0 !important;
+    border-color: #94a3b8 !important;
+    color: #1e293b !important;
+  }
+
+  .surface .monitor-head-title {
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+  }
+
+  .surface .monitor-head-text {
+    color: #1e293b !important;
+  }
+
+  .surface .monitor-head-title,
+  .surface .monitor-head-client,
+  .surface .monitor-head-text,
+  .surface .insta-title,
+  .surface .inmueble-name,
+  .surface .cliente-meta-value,
+  .surface .locales-card__head h5,
+  .surface .locales-board-empty__title {
+    color: #1e293b !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+  }
+
+  .surface .monitor-head-label,
+  .surface .insta-address,
+  .surface .inmueble-line,
+  .surface .local-zona,
+  .surface .cliente-card-role-label,
+  .surface .cliente-meta-section-title,
+  .surface .cliente-meta-label,
+  .surface .locales-board-empty__lead,
+  .surface .locales-error {
+    color: #475569 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+  }
+
+  .surface .cliente-card-head {
+    border-bottom-color: #e2e8f0 !important;
+  }
+
+  .surface .cliente-card-media,
+  .surface .local-zona-list-card .inmueble-media--icon {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .surface .local-zona-list-card .local-zona-media-icon {
+    color: #2563eb !important;
+  }
+
+  .surface .inmueble-line mat-icon {
+    color: #2563eb !important;
+  }
+
+  .surface .inmueble-estatus-pill {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+  }
+
+  .surface .btn,
+  .surface .btn-sm,
+  .surface .btn-outline-primary {
+    background: #334155 !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .surface .inmueble-footer .btn.btn-sm.monitor-list-btn--estacionamiento {
+    background: #ea580c !important;
+    border-color: #fdba74 !important;
+    color: #ffffff !important;
+  }
+
+  .surface .inmueble-footer .btn.btn-sm.monitor-list-btn--efectivo {
+    background: #16a34a !important;
+    border-color: #86efac !important;
+    color: #ffffff !important;
+  }
+
+  .surface .inmueble-footer .btn.btn-sm.monitor-list-btn--credito {
+    background: #2563eb !important;
+    border-color: #93c5fd !important;
+    color: #ffffff !important;
+  }
+
+  .perm-wrapper .surface .insta-card .btn.btn-sm,
+  .perm-wrapper .surface .insta-card .btn-outline-primary.btn-sm,
+  .perm-wrapper .surface .insta-card .btn-primary.btn-sm {
+    background: #681330 !important;
+    border-color: #fda4af !important;
+    color: #ffffff !important;
+  }
+
+  .surface .map-wrapper {
+    background: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1) !important;
+  }
+
+  .surface .locales-card__head,
+  .surface .locales-card__body {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+  }
+
+  /* Cuadriculado del diagrama (no usar `background:` o se borra la malla) */
+  .surface .locales-board {
+    background-color: #eef2f7 !important;
+    background-image:
+      linear-gradient(to right, rgba(15, 23, 42, 0.12) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15, 23, 42, 0.12) 1px, transparent 1px) !important;
+    background-size: 20px 20px !important;
+    background-position: 0 0 !important;
+    border-color: #94a3b8 !important;
+    color: #1e293b !important;
+  }
+
+  /* Scroll de la lista de locales / inmuebles — visible en claro */
+  .surface .insta-body,
+  .surface .monitor-list-body {
+    scrollbar-width: thin;
+    scrollbar-color: #681330 #e2e8f0;
+  }
+
+  .surface .insta-body::-webkit-scrollbar,
+  .surface .monitor-list-body::-webkit-scrollbar {
+    width: 12px !important;
+  }
+
+  .surface .insta-body::-webkit-scrollbar-track,
+  .surface .monitor-list-body::-webkit-scrollbar-track {
+    background: #e2e8f0 !important;
+    border-radius: 10px !important;
+  }
+
+  .surface .insta-body::-webkit-scrollbar-thumb,
+  .surface .monitor-list-body::-webkit-scrollbar-thumb {
+    background: #681330 !important;
+    border-radius: 10px !important;
+    border: 2px solid #e2e8f0 !important;
+    box-shadow: none !important;
+  }
+
+  .surface .insta-body::-webkit-scrollbar-thumb:hover,
+  .surface .monitor-list-body::-webkit-scrollbar-thumb:hover {
+    background: #8a1a40 !important;
+  }
+
+  .surface .locales-board-hint {
+    background: #ecfdf5 !important;
+    border-color: #6ee7b7 !important;
+    color: #065f46 !important;
+  }
+
+  .surface .locales-board-hint p,
+  .surface .locales-board-hint strong {
+    color: #065f46 !important;
+  }
+
+  .surface .locales-board-hint strong {
+    color: #047857 !important;
+  }
+
+  .surface .locales-board-hint mat-icon {
+    color: #059669 !important;
+  }
+
+  .surface .locales-inline-editor {
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .surface .locales-inline-editor .form-control {
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    color: #1e293b !important;
+  }
+
+  .surface .locales-inline-editor .form-control::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  .surface .locales-floating-controls .btn.btn-sm,
+  .surface .locales-zoom-btn {
+    background: #334155 !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+  }
+
+  .surface .zona-item {
+    background: #e2e8f0 !important;
+    border-color: #64748b !important;
+  }
+
+  .surface .zona-item.selected {
+    background: #cbd5e1 !important;
+    border-color: #1e293b !important;
+  }
+
+  .surface .zona-label {
+    background: #1e293b !important;
+    color: #ffffff !important;
+  }
+
+  .surface .local-item {
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .surface .local-name {
+    color: #1e293b !important;
+    text-shadow: none !important;
+  }
+
+  .surface .local-zona {
+    color: #475569 !important;
+  }
+
+  .surface .local-icon-wrap {
+    background: #e2e8f0 !important;
+    box-shadow: none !important;
+  }
+
+  /* --- Vista Arrendadores (cards + buscador) --- */
+  .surface .clientes-flow-head {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  .surface .clientes-flow-head h5 {
+    color: #1e293b !important;
+  }
+
+  .surface .cliente-card-title,
+  .surface .cliente-card-renta,
+  .surface .cliente-card-renta strong,
+  .surface .cliente-meta-value,
+  .surface .cliente-meta-value--lead,
+  .surface .cliente-meta-value--direccion {
+    color: #1e293b !important;
+  }
+
+  .surface .cliente-card-role-label,
+  .surface .cliente-meta-label,
+  .surface .cliente-ubicacion-label,
+  .surface .cliente-card-renta span {
+    color: #475569 !important;
+  }
+
+  .surface .cliente-action-btn,
+  .surface .cliente-action-btn:hover,
+  .surface .cliente-inmuebles-btn.btn {
+    background: #681330 !important;
+    border-color: #fda4af !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .surface .clientes-search-label {
+    color: #475569 !important;
+  }
+
+  .surface .clientes-search-field {
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: none !important;
+  }
+
+  .surface .clientes-search-field:focus-within {
+    background: #ffffff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
+  }
+
+  .surface .clientes-search-icon {
+    color: #2563eb !important;
+  }
+
+  .surface .clientes-search-input {
+    color: #1e293b !important;
+    background: transparent !important;
+  }
+
+  .surface .clientes-search-input::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  .surface .clientes-search-clear {
+    color: #475569 !important;
+  }
+
+  .surface .clientes-search-clear:hover {
+    color: #1e293b !important;
+  }
+
+  .surface .insta-empty-text h6,
+  .surface .insta-empty-text p {
+    color: #1e293b !important;
+  }
+
+  .surface .insta-empty-text p {
+    color: #475569 !important;
   }
 }

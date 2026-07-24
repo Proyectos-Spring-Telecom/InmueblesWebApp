@@ -5,7 +5,7 @@
   [class.mono-shell--local]="vistaEntidad === 'local'"
 >
   <section class="container-fluid mt-1 p-5 responsive-section">
-    <div class="hero-header mb-3">
+    <div class="hero-header">
       <div class="hero-header__background"></div>
       <div class="hero-header__content">
         <div class="hero-header__left">
@@ -69,7 +69,7 @@
 
     <section
       *ngIf="vistaEntidad === 'local'"
-      class="mono-local-contratos mt-2 mt-lg-3"
+      class="mono-local-contratos"
       aria-labelledby="mono-local-contratos-title"
     >
       <header class="mono-local-contratos__header">
@@ -93,7 +93,7 @@
         </span>
       </header>
 
-      <div class="text-center py-4 text-muted" *ngIf="cargandoArrendatarioDetalle">
+      <div class="text-center py-3 text-muted" *ngIf="cargandoArrendatarioDetalle">
         Cargando contratos…
       </div>
 
@@ -107,81 +107,75 @@
       </div>
 
       <div
-        class="mono-local-contratos__grid"
+        class="mono-local-contratos__list"
         *ngIf="!cargandoArrendatarioDetalle && contratosLocalResumen.length > 0"
         role="list"
       >
         <article
-          class="mono-local-contrato-card"
+          class="mono-local-contrato-row"
           role="listitem"
           *ngFor="let ctr of contratosLocalResumen; trackBy: trackByContratoLocal"
-          [class.mono-local-contrato-card--active]="ctr.id === contratoActivoId"
+          [class.mono-local-contrato-row--active]="ctr.id === contratoActivoId"
           [attr.aria-current]="ctr.id === contratoActivoId ? 'true' : null"
         >
-          <div class="mono-local-contrato-card__head">
-            <div class="mono-local-contrato-card__titles">
-              <h3 class="mono-local-contrato-card__name m-0">{{ ctr.titulo }}</h3>
-              <span class="mono-local-contrato-card__vinculo">{{ etiquetaVinculoContrato(ctr) }}</span>
+          <div class="mono-local-contrato-row__top">
+            <div class="mono-local-contrato-row__titles">
+              <h3 class="mono-local-contrato-row__name m-0">{{ ctr.titulo }}</h3>
+              <span class="mono-local-contrato-row__vinculo">{{ etiquetaVinculoContrato(ctr) }}</span>
             </div>
-            <span class="mono-local-contrato-card__badge" *ngIf="ctr.esVigente">Más reciente</span>
+            <div class="mono-local-contrato-row__top-right">
+              <span class="mono-local-contrato-row__badge" *ngIf="ctr.esVigente">Más reciente</span>
+              <button
+                type="button"
+                class="btn btn-sm mono-local-contrato-card__btn mono-local-contrato-card__btn--primary"
+                (click)="abrirModalContratoLocal(ctr.id)"
+              >
+                <mat-icon aria-hidden="true">visibility</mat-icon>
+                <span>Ver detalle</span>
+              </button>
+            </div>
           </div>
 
-          <dl class="mono-local-contrato-card__meta">
-            <div class="mono-local-contrato-card__meta-row">
-              <dt>Registro</dt>
-              <dd>{{ ctr.fechaRegistroTexto }}</dd>
+          <div class="mono-local-contrato-row__metrics">
+            <div class="mono-local-contrato-row__metric">
+              <span class="mono-local-contrato-row__metric-label">Registro</span>
+              <span class="mono-local-contrato-row__metric-value">{{ ctr.fechaRegistroTexto }}</span>
             </div>
-            <div class="mono-local-contrato-card__meta-row">
-              <dt>Vigencia</dt>
-              <dd>{{ ctr.vigenciaTexto }}</dd>
+            <div class="mono-local-contrato-row__metric">
+              <span class="mono-local-contrato-row__metric-label">Vigencia</span>
+              <span class="mono-local-contrato-row__metric-value">{{ ctr.vigenciaTexto }}</span>
             </div>
-            <div class="mono-local-contrato-card__meta-row" *ngIf="ctr.rentaContratoFmt">
-              <dt>Renta</dt>
-              <dd class="mono-local-contrato-card__money">
+            <div class="mono-local-contrato-row__metric" *ngIf="ctr.rentaContratoFmt">
+              <span class="mono-local-contrato-row__metric-label">Renta</span>
+              <span class="mono-local-contrato-row__metric-value mono-local-contrato-row__metric-value--money">
                 {{ ctr.rentaContratoFmt }} <span>{{ ctr.moneda }}</span>
-              </dd>
+              </span>
             </div>
-            <div class="mono-local-contrato-card__meta-row" *ngIf="ctr.mantenimientoContratoFmt">
-              <dt>Mantenimiento</dt>
-              <dd class="mono-local-contrato-card__money mono-local-contrato-card__money--mant">
+            <div class="mono-local-contrato-row__metric" *ngIf="ctr.mantenimientoContratoFmt">
+              <span class="mono-local-contrato-row__metric-label">Mantenimiento</span>
+              <span class="mono-local-contrato-row__metric-value mono-local-contrato-row__metric-value--money">
                 {{ ctr.mantenimientoContratoFmt }} <span>{{ ctr.moneda }}</span>
-              </dd>
+              </span>
             </div>
-            <div class="mono-local-contrato-card__meta-row">
-              <dt>Superficie rentada</dt>
-              <dd>{{ ctr.metrosRentadosTexto }}</dd>
+            <div class="mono-local-contrato-row__metric">
+              <span class="mono-local-contrato-row__metric-label">Superficie rentada</span>
+              <span class="mono-local-contrato-row__metric-value">{{ ctr.metrosRentadosTexto }}</span>
             </div>
-          </dl>
+          </div>
 
-          <p class="mono-local-contrato-card__obs m-0" *ngIf="ctr.observacionesCorta">
+          <p class="mono-local-contrato-row__obs m-0" *ngIf="ctr.observacionesCorta">
             {{ ctr.observacionesCorta }}
           </p>
-
-          <div class="mono-local-contrato-card__actions">
-            <!-- <button
-              type="button"
-              class="btn btn-sm mono-local-contrato-card__btn mono-local-contrato-card__btn--ghost"
-              [class.is-selected]="ctr.id === contratoActivoId"
-              (click)="seleccionarContratoLocal(ctr.id)"
-            >
-              {{ ctr.id === contratoActivoId ? 'Seleccionado' : 'Seleccionar' }}
-            </button> -->
-            <button
-              type="button"
-              class="btn btn-sm mono-local-contrato-card__btn mono-local-contrato-card__btn--primary"
-              (click)="abrirModalContratoLocal(ctr.id)"
-            >
-              <mat-icon aria-hidden="true">visibility</mat-icon>
-              <span>Ver detalle</span>
-            </button>
-          </div>
+          <p class="mono-local-contrato-row__obs mono-local-contrato-row__obs--empty m-0" *ngIf="!ctr.observacionesCorta">
+            Sin observaciones
+          </p>
         </article>
       </div>
     </section>
 
     <section
       *ngIf="vistaEntidad !== 'local'"
-      class="mono-docs mt-1 mt-lg-2"
+      class="mono-docs"
       aria-label="Documentos e imágenes del inmueble"
     >
       <header class="mono-docs__header mono-docs__header--expediente">
@@ -199,7 +193,10 @@
       </header>
 
       <div class="mono-docs__content">
-        <article class="mono-docs__panel mono-docs__panel--expediente">
+        <article
+          class="mono-docs__panel mono-docs__panel--expediente"
+          *ngIf="expedienteDocumentosInmueble.length; else sinExpedienteInmueble"
+        >
           <ul class="mono-docs__list mono-docs__list--stacked">
             <li class="mono-docs__row mono-docs__row--expediente" *ngFor="let fila of expedienteDocumentosInmueble">
               <div class="mono-docs__row-main mono-docs__row-main--expediente">
@@ -226,12 +223,23 @@
             </li>
           </ul>
         </article>
+        <ng-template #sinExpedienteInmueble>
+          <div class="mono-empty-state mono-empty-state--docs mono-empty-state--card" role="status">
+            <div class="mono-empty-state__icon" aria-hidden="true">
+              <mat-icon>folder_off</mat-icon>
+            </div>
+            <h6 class="mono-empty-state__title m-0">Sin documentos cargados</h6>
+            <p class="mono-empty-state__lede m-0">
+              Aún no hay escritura, licencias ni archivos del expediente para este inmueble.
+            </p>
+          </div>
+        </ng-template>
       </div>
     </section>
 
     <section
       *ngIf="vistaEntidad === 'local'"
-      class="mono-docs mt-1 mt-lg-2"
+      class="mono-docs"
       aria-label="Documentos del local"
     >
       <header class="mono-docs__header mono-docs__header--expediente">
@@ -249,7 +257,10 @@
       </header>
 
       <div class="mono-docs__content">
-        <article class="mono-docs__panel mono-docs__panel--expediente">
+        <article
+          class="mono-docs__panel mono-docs__panel--expediente"
+          *ngIf="expedienteDocumentosLocal.length; else sinExpedienteLocal"
+        >
           <ul class="mono-docs__list mono-docs__list--stacked">
             <li class="mono-docs__row mono-docs__row--expediente" *ngFor="let fila of expedienteDocumentosLocal">
               <div class="mono-docs__row-main mono-docs__row-main--expediente">
@@ -282,11 +293,22 @@
             </li>
           </ul>
         </article>
+        <ng-template #sinExpedienteLocal>
+          <div class="mono-empty-state mono-empty-state--docs mono-empty-state--card" role="status">
+            <div class="mono-empty-state__icon" aria-hidden="true">
+              <mat-icon>folder_off</mat-icon>
+            </div>
+            <h6 class="mono-empty-state__title m-0">Sin documentos del local</h6>
+            <p class="mono-empty-state__lede m-0">
+              No hay contrato, identificación ni permisos cargados en el expediente de este local.
+            </p>
+          </div>
+        </ng-template>
       </div>
     </section>
 
-    <section class="mono-block mt-3 mt-lg-4" aria-label="Servicios y zonas">
-      <article class="mono-block__card mb-3">
+    <section class="mono-block" aria-label="Servicios y zonas">
+      <article class="mono-block__card">
         <header class="mono-block__head d-flex align-items-center justify-content-between">
           <h5 class="m-0">Servicios</h5>
         </header>
@@ -327,7 +349,7 @@
       </article>
     </section>
 
-    <section class="row g-3 g-lg-4 mt-1">
+    <section class="row g-3" aria-label="Pagos">
       <div class="col-12">
         <article class="mono-grid-card h-100">
           <header class="mono-grid-card__head mono-grid-card__head--actions">
@@ -445,67 +467,98 @@
       </div>
     </section>
 
-    <section class="mono-block mt-3 mt-lg-4" aria-label="Zonas">
-      <article class="mono-block__card" *ngIf="vistaEntidad !== 'local'">
-        <header class="mono-block__head d-flex align-items-center justify-content-between flex-wrap gap-2">
-          <h5 class="m-0">Zonas</h5>
-          <div class="mono-zonas-total">Superficie disponible del predio: <strong>{{ superficieDisponiblePredioTexto }}</strong></div>
+    <section class="mono-block" *ngIf="vistaEntidad !== 'local'" aria-label="Zonas">
+      <article class="mono-block__card">
+        <header class="mono-block__head mono-block__head--zonas">
+          <div class="mono-zonas-head">
+            <h5 class="mono-zonas-head__title m-0">Zonas</h5>
+            <p class="mono-zonas-total m-0">
+              Superficie disponible del predio:
+              <strong>{{ superficieDisponiblePredioTexto }}</strong>
+            </p>
+          </div>
         </header>
         <div class="mono-block__body">
           <div class="mono-block__panel mono-block__panel--zonas" *ngIf="zonas.length; else sinZonasMonitoreo">
-            <div class="mono-zonas-list">
-              <article
-                class="mono-zona-block"
-                *ngFor="let zona of zonas; trackBy: trackZonaMonitoreo"
+            <dx-accordion
+              class="mono-accordion mono-accordion--zonas"
+              width="100%"
+              [collapsible]="true"
+              [multiple]="true"
+              [animationDuration]="260"
+              [focusStateEnabled]="false"
+              itemTitleTemplate="monoZonaAccordionTitle"
+            >
+              <div *dxTemplate="let data of 'monoZonaAccordionTitle'" class="mono-accordion-title">
+                <span class="mono-accordion-title__label">{{ tituloZonaAccordionDesdeClave(data) }}</span>
+                <span class="mono-accordion-title__meta">{{ metaZonaAccordionDesdeClave(data) }}</span>
+              </div>
+              <dxi-item
+                *ngFor="let zona of zonas; let zi = index; trackBy: trackZonaMonitoreo"
+                [title]="claveZonaAccordion(zi)"
               >
-                <header class="mono-zona-block__head">
-                  <h6 class="mono-zona-block__title m-0">{{ zona.zonaPrincipal }}</h6>
-                  <div class="mono-zona-block__meta">
-                    <span class="mono-zona-block__stat">
-                      <span class="mono-zona-block__stat-label">Superficie zona</span>
-                      <span class="mono-zona-block__stat-value">{{ zona.superficieZonaM2 }}</span>
-                    </span>
-                    <span class="mono-zona-block__stat">
-                      <span class="mono-zona-block__stat-label">Superficie disponible</span>
-                      <span class="mono-zona-block__stat-value">{{ zona.superficieDisponibleM2 }}</span>
-                    </span>
-                    <span class="mono-zona-block__stat">
-                      <span class="mono-zona-block__stat-label">Locales</span>
-                      <span class="mono-zona-block__stat-value">{{ zona.locales.length }}</span>
-                    </span>
+                <div class="mono-zona-block mono-zona-block--accordion">
+                  <div class="mono-zona-metrics" aria-label="Resumen de la zona">
+                    <div class="mono-zona-metric">
+                      <span class="mono-zona-metric__icon" aria-hidden="true">
+                        <mat-icon>square_foot</mat-icon>
+                      </span>
+                      <div class="mono-zona-metric__text">
+                        <span class="mono-zona-metric__label">Superficie zona</span>
+                        <span class="mono-zona-metric__value">{{ zona.superficieZonaM2 }}</span>
+                      </div>
+                    </div>
+                    <div class="mono-zona-metric">
+                      <span class="mono-zona-metric__icon" aria-hidden="true">
+                        <mat-icon>crop_free</mat-icon>
+                      </span>
+                      <div class="mono-zona-metric__text">
+                        <span class="mono-zona-metric__label">Superficie disponible</span>
+                        <span class="mono-zona-metric__value">{{ zona.superficieDisponibleM2 }}</span>
+                      </div>
+                    </div>
+                    <div class="mono-zona-metric mono-zona-metric--accent">
+                      <span class="mono-zona-metric__icon" aria-hidden="true">
+                        <mat-icon>storefront</mat-icon>
+                      </span>
+                      <div class="mono-zona-metric__text">
+                        <span class="mono-zona-metric__label">Locales</span>
+                        <span class="mono-zona-metric__value">{{ zona.locales.length }}</span>
+                      </div>
+                    </div>
                   </div>
-                </header>
-                <div class="mono-zona-block__body" *ngIf="zona.locales.length; else sinLocalesZonaMonitoreo">
-                  <div class="mono-locales-table-wrap">
-                    <table class="table table-borderless mono-table mono-table--locales m-0">
-                      <thead>
-                        <tr>
-                          <th scope="col">Local</th>
-                          <th scope="col">Área</th>
-                          <th scope="col">Estatus</th>
-                          <th scope="col">Mensualidad</th>
-                          <th scope="col">Giro</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr *ngFor="let loc of zona.locales; trackBy: trackLocalMonitoreo">
-                          <td>{{ loc.nombre }}</td>
-                          <td>{{ loc.areaM2 }}</td>
-                          <td>
-                            <span [ngClass]="loc.estatusClass">{{ loc.estatusLabel }}</span>
-                          </td>
-                          <td>{{ loc.mensualidad }}</td>
-                          <td>{{ loc.giro }}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div class="mono-zona-block__body" *ngIf="zona.locales.length">
+                    <div class="mono-locales-table-wrap">
+                      <table class="table table-borderless mono-table mono-table--locales m-0">
+                        <thead>
+                          <tr>
+                            <th scope="col">Local</th>
+                            <th scope="col">Área</th>
+                            <th scope="col">Estatus</th>
+                            <th scope="col">Mensualidad</th>
+                            <th scope="col">Giro</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let loc of zona.locales; trackBy: trackLocalMonitoreo">
+                            <td>{{ loc.nombre }}</td>
+                            <td>{{ loc.areaM2 }}</td>
+                            <td>
+                              <span [ngClass]="loc.estatusClass">{{ loc.estatusLabel }}</span>
+                            </td>
+                            <td>{{ loc.mensualidad }}</td>
+                            <td>{{ loc.giro }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
+                  <p class="mono-zona-block__empty m-0" *ngIf="!zona.locales.length">
+                    Sin locales en esta zona.
+                  </p>
                 </div>
-                <ng-template #sinLocalesZonaMonitoreo>
-                  <p class="mono-zona-block__empty m-0">Sin locales en esta zona.</p>
-                </ng-template>
-              </article>
-            </div>
+              </dxi-item>
+            </dx-accordion>
           </div>
           <ng-template #sinZonasMonitoreo>
             <p class="mono-zona-block__empty m-0 px-2 py-3">Sin zonas registradas.</p>
@@ -514,33 +567,46 @@
       </article>
     </section>
 
-    <section class="mt-3 mt-lg-4" aria-label="Multimedia">
-      <div class="row g-3 g-lg-4">
+    <section aria-label="Multimedia">
+      <div class="row g-3">
         <div class="col-12 col-lg-6">
           <article class="mono-card h-100">
             <header class="mono-card__head">
               <h5 class="m-0">{{ vistaEntidad === 'local' ? 'Documentación' : 'Plano' }}</h5>
             </header>
-            <div class="mono-card__body">
+            <div class="mono-card__body mono-card__body--fill">
               <ng-container *ngIf="vistaEntidad === 'local'; else monoPlanoInmuebleCardTpl">
-                <div
-                  class="mono-map-shell"
-                  *ngIf="documentacionLocalUsaIframe && documentacionLocalEmbedUrl; else monoDocLocalImgTpl"
-                >
-                  <iframe
-                    class="mono-iframe"
-                    loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    [src]="documentacionLocalEmbedUrl"
-                    [title]="documentacionLocalTitulo"
-                  ></iframe>
-                </div>
-                <ng-template #monoDocLocalImgTpl>
-                  <div class="mono-doc-image" *ngIf="imagenDocumentacionLocal">
-                    <img
-                      [src]="imagenDocumentacionLocal"
-                      [alt]="documentacionLocalTitulo"
-                    />
+                <ng-container *ngIf="tieneDocumentacionLocal; else sinDocumentacionLocalTpl">
+                  <div
+                    class="mono-map-shell"
+                    *ngIf="documentacionLocalUsaIframe && documentacionLocalEmbedUrl; else monoDocLocalImgTpl"
+                  >
+                    <iframe
+                      class="mono-iframe"
+                      loading="lazy"
+                      referrerpolicy="no-referrer-when-downgrade"
+                      [src]="documentacionLocalEmbedUrl"
+                      [title]="documentacionLocalTitulo"
+                    ></iframe>
+                  </div>
+                  <ng-template #monoDocLocalImgTpl>
+                    <div class="mono-doc-image" *ngIf="imagenDocumentacionLocal">
+                      <img
+                        [src]="imagenDocumentacionLocal"
+                        [alt]="documentacionLocalTitulo"
+                      />
+                    </div>
+                  </ng-template>
+                </ng-container>
+                <ng-template #sinDocumentacionLocalTpl>
+                  <div class="mono-empty-state mono-empty-state--docs mono-empty-state--card" role="status">
+                    <div class="mono-empty-state__icon" aria-hidden="true">
+                      <mat-icon>description</mat-icon>
+                    </div>
+                    <h6 class="mono-empty-state__title m-0">Sin documentación</h6>
+                    <p class="mono-empty-state__lede m-0">
+                      No hay contrato ni archivo de documentación vinculado a este local.
+                    </p>
                   </div>
                 </ng-template>
               </ng-container>
@@ -615,8 +681,8 @@
             <header class="mono-card__head">
               <h5 class="m-0">Galería</h5>
             </header>
-            <div class="mono-card__body">
-              <div class="mono-gallery" *ngIf="galleryImages.length; else sinGaleriaMonitoreo">
+            <div class="mono-card__body mono-card__body--fill">
+              <div class="mono-gallery" *ngIf="galleryImages.length">
                 <img
                   [src]="galleryImages[galleryIndex]"
                   [@gallerySwap]="galleryIndex"
@@ -641,9 +707,19 @@
                   <mat-icon>chevron_right</mat-icon>
                 </button>
               </div>
-              <ng-template #sinGaleriaMonitoreo>
-                <p class="mono-gallery__empty m-0">Sin imágenes en la galería.</p>
-              </ng-template>
+              <div
+                class="mono-empty-state mono-empty-state--gallery mono-empty-state--card"
+                *ngIf="!galleryImages.length"
+                role="status"
+              >
+                <div class="mono-empty-state__icon" aria-hidden="true">
+                  <mat-icon>photo_library</mat-icon>
+                </div>
+                <h6 class="mono-empty-state__title m-0">Galería vacía</h6>
+                <p class="mono-empty-state__lede m-0">
+                  Todavía no hay fotos de fachada, interiores ni exteriores asociadas a esta unidad.
+                </p>
+              </div>
               <div class="mono-gallery__dots" *ngIf="galleryImages.length > 1">
                 <button
                   type="button"
@@ -1072,34 +1148,51 @@
                   </div>
                 </div>
 
-                <div class="col-12 col-lg-4">
-                  <label class="form-label perm-label d-block mb-2">Comprobante de pago <span class="text-danger">*</span></label>
-                  <div class="uploader-hero srv-pago-uploader">
-                    <div class="uploader srv-pago-uploader__card">
-                      <div class="uploader__glow"></div>
-                      <div class="uploader__body mono-pago-comprobante-uploader__body">
-                        <button
-                          mat-flat-button
-                          color="primary"
-                          type="button"
-                          class="mono-pago-comprobante-btn"
-                          (click)="pagoComprobanteInput.click()"
-                        >
-                          {{
-                            pagoForm.get('comprobantePagoNombre')?.value
-                              ? pagoForm.get('comprobantePagoNombre')?.value
-                              : 'Selecciona un archivo · PDF · PNG · JPG'
-                          }}
-                        </button>
-                        <input
-                          #pagoComprobanteInput
-                          type="file"
-                          accept="application/pdf,image/png,image/jpeg,image/jpg"
-                          class="uploader__input"
-                          (change)="onPagoComprobanteFileSelected($event)"
-                        />
-                      </div>
+                <div class="col-12">
+                  <label class="form-label perm-label d-block mb-2">
+                    Comprobante de pago <span class="text-danger">*</span>
+                  </label>
+                  <div
+                    class="mono-pago-file"
+                    [class.mono-pago-file--filled]="!!pagoForm.get('comprobantePagoNombre')?.value"
+                    role="button"
+                    tabindex="0"
+                    (click)="pagoComprobanteInput.click()"
+                    (keydown.enter)="pagoComprobanteInput.click()"
+                    (keydown.space)="$event.preventDefault(); pagoComprobanteInput.click()"
+                  >
+                    <div class="mono-pago-file__icon" aria-hidden="true">
+                      <mat-icon>{{
+                        pagoForm.get('comprobantePagoNombre')?.value ? 'description' : 'upload_file'
+                      }}</mat-icon>
                     </div>
+                    <div class="mono-pago-file__text">
+                      <span class="mono-pago-file__title">
+                        {{
+                          pagoForm.get('comprobantePagoNombre')?.value
+                            ? pagoForm.get('comprobantePagoNombre')?.value
+                            : 'Adjunta el comprobante de pago'
+                        }}
+                      </span>
+                      <span class="mono-pago-file__hint">
+                        {{
+                          pagoForm.get('comprobantePagoNombre')?.value
+                            ? 'Haz clic para reemplazar el archivo'
+                            : 'PDF, PNG o JPG · un solo archivo'
+                        }}
+                      </span>
+                    </div>
+                    <span class="mono-pago-file__action">
+                      {{ pagoForm.get('comprobantePagoNombre')?.value ? 'Cambiar' : 'Seleccionar' }}
+                    </span>
+                    <input
+                      #pagoComprobanteInput
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg"
+                      class="mono-pago-file__input"
+                      (change)="onPagoComprobanteFileSelected($event)"
+                      (click)="$event.stopPropagation()"
+                    />
                   </div>
                 </div>
 

@@ -439,14 +439,18 @@ $incremento-row-alt: rgba(250, 128, 114, 0.16);
   gap: 10px;
   min-height: 42px;
   padding: 0.7rem 1.25rem;
-  background: rgba(37, 99, 235, 0.55);
-  color: #fff;
-  border: 2.5px solid rgba(147, 197, 253, 0.45);
+  background: #2563eb !important;
+  border: 1px solid #93c5fd !important;
+  color: #ffffff !important;
   border-radius: 40px;
   font-size: 14px;
   cursor: pointer;
   animation: pulse 1.6s ease-out infinite;
   letter-spacing: 0.03em;
+  --mdc-filled-button-container-color: #2563eb !important;
+  --mat-button-filled-container-color: #2563eb !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
 
   &::before {
     content: '';
@@ -459,7 +463,17 @@ $incremento-row-alt: rgba(250, 128, 114, 0.16);
     animation: shine 2.4s ease-in-out infinite;
   }
 
-  &:hover  { background: rgba(37, 99, 235, 0.75); animation: none; }
+  i, .mat-icon, mat-icon {
+    color: #ffffff !important;
+  }
+
+  &:hover {
+    background: #1d4ed8 !important;
+    --mdc-filled-button-container-color: #1d4ed8 !important;
+    --mat-button-filled-container-color: #1d4ed8 !important;
+    animation: none;
+  }
+
   &:active { transform: scale(0.97); }
 }
 
@@ -2189,5 +2203,364 @@ tfoot {
   .rr-inmueble-row {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* Tema claro: solo contraste/superficies — KPIs, Filtrar, leyenda y acentos intactos */
+:host-context(html.light-theme) {
+  .rr-body {
+    color: #1e293b;
+  }
+
+  .rr-pag-info,
+  .rr-empty {
+    color: #64748b;
+  }
+
+  .rr-pag-btn {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #475569 !important;
+
+    &:hover:not(:disabled):not(.dots) {
+      background: #f1f5f9 !important;
+      border-color: #94a3b8 !important;
+      color: #0f172a !important;
+    }
+
+    &.active {
+      background: #681330 !important;
+      border-color: #8a1a3e !important;
+      color: #ffffff !important;
+    }
+
+    &.dots {
+      color: #94a3b8 !important;
+    }
+  }
+
+  .rr-controls__filtros {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .hist-renta-filtro-fechas__label,
+  .rr-controls .form-label {
+    color: #475569 !important;
+  }
+
+  .rr-controls .hist-renta-filtro-fechas__input.form-control,
+  .rr-controls .hist-renta-filtro-fechas__input.form-select,
+  .rr-controls select.hist-renta-filtro-fechas__input {
+    background-color: #ffffff !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+    color-scheme: light !important;
+    box-shadow: none !important;
+  }
+
+  .rr-controls .hist-renta-filtro-fechas__input.form-control:focus,
+  .rr-controls .hist-renta-filtro-fechas__input.form-select:focus {
+    background-color: #ffffff !important;
+    border-color: #64748b !important;
+    color: #0f172a !important;
+    box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.15) !important;
+  }
+
+  .rr-controls select.hist-renta-filtro-fechas__input option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  .rr-controls input.hist-renta-filtro-fechas__input[type='date']::-webkit-calendar-picker-indicator,
+  .rr-controls input.hist-renta-filtro-fechas__input[type='month']::-webkit-calendar-picker-indicator {
+    filter: none !important;
+  }
+
+  .rr-controls__campo--mes {
+    ::ng-deep .rr-mes-datebox .dx-texteditor-input {
+      color: #0f172a !important;
+      background-color: transparent !important;
+    }
+
+    ::ng-deep .rr-mes-datebox.dx-texteditor {
+      background-color: #ffffff !important;
+      border-color: #94a3b8 !important;
+      box-shadow: none !important;
+    }
+
+    ::ng-deep .rr-mes-datebox.dx-state-focused.dx-texteditor {
+      border-color: #64748b !important;
+      background-color: #ffffff !important;
+      box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.15) !important;
+    }
+
+    ::ng-deep .rr-mes-datebox .dx-dropdowneditor-icon,
+    ::ng-deep .rr-mes-datebox .dx-icon {
+      color: #475569 !important;
+    }
+  }
+
+  .rr-controls__filtrar button {
+    color: #ffffff !important;
+  }
+
+  /* Exportar: misma familia azul suave; texto legible sobre fondo claro */
+  .rr-export-btn {
+    background: rgba(96, 165, 250, 0.22) !important;
+    border-color: rgba(37, 99, 235, 0.45) !important;
+    color: #1e3a8a !important;
+  }
+
+  .rr-export-menu {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14) !important;
+  }
+
+  .rr-export-option {
+    color: #1e293b !important;
+  }
+
+  .rr-export-option--excel:hover {
+    background: rgba(22, 163, 74, 0.12) !important;
+    border-color: rgba(74, 222, 128, 0.45) !important;
+    color: #14532d !important;
+  }
+
+  .rr-export-option--pdf:hover {
+    background: rgba(220, 38, 38, 0.1) !important;
+    border-color: rgba(248, 113, 113, 0.45) !important;
+    color: #7f1d1d !important;
+  }
+
+  .surface .clientes-search-label {
+    color: #64748b !important;
+  }
+
+  .surface .clientes-search-field {
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+  }
+
+  .surface .clientes-search-field:focus-within {
+    background: #ffffff !important;
+    border-color: #681330 !important;
+    box-shadow: 0 0 0 3px rgba(104, 19, 48, 0.12) !important;
+  }
+
+  .surface .clientes-search-icon {
+    color: #681330 !important;
+  }
+
+  .surface .clientes-search-input {
+    color: #0f172a !important;
+  }
+
+  .surface .clientes-search-input::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  .surface .clientes-search-clear {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+  }
+
+  .empresa-nombre {
+    color: #0f172a !important;
+  }
+
+  .empresa-nota {
+    color: #334155 !important;
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .rr-tag--pendiente {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+  }
+
+  .rr-totales-panel {
+    background: #f8fafc !important;
+    border-top-color: #e2e8f0 !important;
+  }
+
+  .rr-total-card--renta,
+  .rr-total-card--mtto,
+  .rr-total-card--general {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  :host ::ng-deep .rr-data-grid,
+  ::ng-deep .rr-data-grid {
+    .dx-datagrid-headers {
+      background: #f1f5f9 !important;
+      border-bottom-color: #cbd5e1 !important;
+    }
+
+    .dx-header-row > td {
+      color: #475569 !important;
+      border-right-color: #e2e8f0 !important;
+      background: #f1f5f9 !important;
+    }
+
+    /* Solo texto/bordes: no pisar fondos Pagada / Incremento */
+    .dx-data-rows .dx-row > td {
+      color: #1e293b !important;
+      border-bottom-color: #e2e8f0 !important;
+      border-right-color: #e2e8f0 !important;
+    }
+
+    .dx-data-rows .dx-row.row-estatus--neutral > td {
+      background: #ffffff !important;
+    }
+
+    .dx-data-rows .dx-row.row-estatus--neutral:hover > td {
+      background: #f8fafc !important;
+    }
+
+    .cell-total {
+      color: #0f172a !important;
+    }
+
+    .dx-datagrid-nodata {
+      color: #64748b !important;
+    }
+
+    .dx-datagrid-pager,
+    .dx-pager,
+    .dx-info,
+    .dx-pager .dx-page {
+      color: #475569 !important;
+    }
+
+    .dx-pager .dx-page.dx-selection {
+      color: #ffffff !important;
+    }
+  }
+
+  /* Modal captura/mapa: superficie clara; acento vino intacto */
+  .rr-captura-modal {
+    background: #ffffff !important;
+    border-color: rgba(104, 19, 48, 0.35) !important;
+    color: #1e293b !important;
+  }
+
+  .rr-captura-section {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  .rr-captura-section__head h4 {
+    color: #0f172a !important;
+  }
+
+  .rr-captura-section__head p,
+  .rr-captura-loading,
+  .rr-preview-note {
+    color: #64748b !important;
+  }
+
+  .rr-captura-section__head > mat-icon {
+    color: #681330 !important;
+  }
+
+  .rr-captura-footer {
+    border-top-color: #e2e8f0 !important;
+  }
+
+  .rr-preview {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  .rr-preview__head {
+    color: #475569 !important;
+  }
+
+  .rr-preview-card {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+
+    dt {
+      color: #64748b !important;
+    }
+
+    dd {
+      color: #0f172a !important;
+    }
+
+    &__total {
+      border-top-color: #e2e8f0 !important;
+
+      dt,
+      dd {
+        color: #0f172a !important;
+      }
+    }
+  }
+
+  /* Gran total preview: se conserva el degradado vino */
+
+  .arrend-contrato-aviso--info {
+    color: #64748b !important;
+  }
+
+  .arrend-locales-picker__field {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+  }
+
+  .arrend-locales-picker__field.is-disabled {
+    color: #94a3b8 !important;
+  }
+
+  .arrend-locales-picker__placeholder {
+    color: #64748b !important;
+  }
+
+  .arrend-locales-picker__resumen {
+    color: #0f172a !important;
+  }
+
+  .arrend-locales-picker__selected {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .arrend-locales-picker__menu {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14) !important;
+  }
+
+  .arrend-locales-picker__option {
+    color: #1e293b !important;
+  }
+
+  .arrend-locales-picker__option:hover,
+  .arrend-locales-picker__option.is-selected {
+    background: rgba(104, 19, 48, 0.1) !important;
+  }
+
+  .contrato-incluye-mtto__estado {
+    color: #0f172a !important;
+  }
+
+  .rr-mapa-modal {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .rr-mapa-canvas-wrap {
+    border-color: #cbd5e1 !important;
+  }
+
+  .rr-mapa-coords {
+    color: #475569 !important;
   }
 }

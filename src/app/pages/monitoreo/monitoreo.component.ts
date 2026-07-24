@@ -3978,6 +3978,48 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         border-color: rgba(52, 152, 219, 0.7);
         background: rgba(52, 152, 219, 0.32);
       }
+
+      /* Tema claro: tipografía y fondos legibles (html.light-theme) */
+      html.light-theme .gm-style-iw,
+      html.light-theme .gm-style-iw.gm-style-iw-c {
+        background: #ffffff !important;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18) !important;
+      }
+      html.light-theme .gm-style .gm-style-iw-tc::after {
+        background: #ffffff !important;
+      }
+      html.light-theme .iw-card {
+        background: #ffffff !important;
+        color: #1e293b !important;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18) !important;
+      }
+      html.light-theme .iw-card__title,
+      html.light-theme .iw-card--local .iw-card__title,
+      html.light-theme .iw-card__hero-name,
+      html.light-theme .iw-line__value,
+      html.light-theme .iw-address {
+        color: #1e293b !important;
+      }
+      html.light-theme .iw-card__eyebrow,
+      html.light-theme .iw-card__hero-label,
+      html.light-theme .iw-line__label {
+        color: #475569 !important;
+      }
+      html.light-theme .iw-card__head,
+      html.light-theme .iw-card__footer,
+      html.light-theme .iw-address {
+        border-color: #e2e8f0 !important;
+      }
+      html.light-theme .iw-card__hero {
+        background: #f1f5f9 !important;
+      }
+      html.light-theme .iw-action,
+      html.light-theme .iw-detail-action,
+      html.light-theme .iw-action--credito {
+        background: #2563eb !important;
+        border-color: #93c5fd !important;
+        color: #ffffff !important;
+      }
     `;
     let style = document.querySelector(
       'style[data-iw-skin="monitoreo"]',

@@ -90,6 +90,55 @@
   box-shadow: none;
 }
 
+:host-context(html.light-theme) {
+  .operacion-pagos-hub__segmentos {
+    background: #f1f5f9 !important;
+    border-bottom-color: #cbd5e1 !important;
+  }
+
+  .operacion-pagos-hub__segmento {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+  }
+
+  .operacion-pagos-hub__segmento--activo {
+    background: #001c6a !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+  }
+
+  .operacion-pagos-hub__segmento-titulo {
+    color: inherit !important;
+  }
+
+  .operacion-pagos-hub__segmento-desc {
+    color: #64748b !important;
+  }
+
+  .operacion-pagos-hub__segmento--activo .operacion-pagos-hub__segmento-desc {
+    color: rgba(255, 255, 255, 0.78) !important;
+  }
+
+  .operacion-pagos-hub__segmento-icono {
+    background: #e0f2fe !important;
+    border-color: #7dd3fc !important;
+
+    mat-icon {
+      color: #0369a1 !important;
+    }
+  }
+
+  .operacion-pagos-hub__segmento--activo .operacion-pagos-hub__segmento-icono {
+    background: rgba(255, 255, 255, 0.14) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+
+    mat-icon {
+      color: #ffffff !important;
+    }
+  }
+}
+
 @media (max-width: 720px) {
   .operacion-pagos-hub__segmentos {
     grid-template-columns: 1fr;

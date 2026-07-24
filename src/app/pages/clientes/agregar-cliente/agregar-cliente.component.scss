@@ -649,3 +649,95 @@ line-height: 1.35;
 .arrend-accordion-inner {
 width: 100%;
 }
+
+/* Tema claro: headers #001c6a + accordion legible (Arrendadores / clientes) */
+:host-context(html.light-theme) {
+  .arrend-fa-hero,
+  .docs-hero,
+  .socios-hero {
+    background: #001c6a !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 10px 24px rgba(0, 28, 106, 0.28) !important;
+  }
+
+  .arrend-fa-hero__icon,
+  .docs-hero__icon,
+  .socios-hero__icon {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    color: #ffffff !important;
+  }
+
+  .arrend-fa-hero__icon mat-icon,
+  .docs-hero__icon mat-icon,
+  .socios-hero__icon mat-icon {
+    color: #ffffff !important;
+  }
+
+  .arrend-fa-section-title,
+  .docs-hero__title,
+  .socios-section-title {
+    color: #ffffff !important;
+    text-shadow: none !important;
+  }
+
+  .arrend-fa-add-btn.mat-mdc-unelevated-button,
+  .socios-add-btn.mat-mdc-unelevated-button,
+  button.mat-mdc-unelevated-button.mat-primary,
+  button.mat-mdc-raised-button.mat-primary {
+    --mdc-filled-button-container-color: #2563eb !important;
+    --mat-button-filled-container-color: #2563eb !important;
+    --mdc-filled-button-label-text-color: #ffffff !important;
+    --mdc-filled-button-icon-color: #ffffff !important;
+    color: #ffffff !important;
+
+    .mdc-button__label,
+    mat-icon {
+      color: #ffffff !important;
+    }
+  }
+
+  .hero-header__back-btn {
+    background: #2563eb !important;
+    border: 1px solid #93c5fd !important;
+    color: #ffffff !important;
+
+    mat-icon,
+    span {
+      color: #ffffff !important;
+    }
+  }
+
+  .button-success,
+  .button-danger {
+    color: #ffffff !important;
+
+    i,
+    mat-icon {
+      color: #ffffff !important;
+    }
+  }
+
+  ::ng-deep .arrend-accordion-socios .dx-accordion-item-title {
+    background: #eef2f9 !important;
+    border-color: rgba(37, 99, 235, 0.3) !important;
+    border-left-color: #2563eb !important;
+  }
+
+  ::ng-deep .arrend-accordion-socios .dx-state-hover .dx-accordion-item-title,
+  ::ng-deep .arrend-accordion-socios .dx-accordion-item-opened .dx-accordion-item-title {
+    background: #e2eaf7 !important;
+    border-color: rgba(37, 99, 235, 0.42) !important;
+    border-left-color: #1d4ed8 !important;
+  }
+
+  ::ng-deep .arrend-accordion-socios .dx-accordion-item-title-caption,
+  .arrend-accordion-title-bar__label {
+    color: #1e293b !important;
+  }
+
+  ::ng-deep .arrend-accordion-socios .dx-accordion-item-body {
+    background: transparent !important;
+    color: #1e293b !important;
+  }
+}

@@ -302,6 +302,13 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   documentacionLocalUsaIframe = false;
   documentacionLocalEmbedUrl: SafeResourceUrl | null = null;
   documentacionLocalTitulo = 'Contrato de renta';
+
+  get tieneDocumentacionLocal(): boolean {
+    return !!(
+      (this.documentacionLocalUsaIframe && this.documentacionLocalEmbedUrl) ||
+      String(this.imagenDocumentacionLocal ?? '').trim()
+    );
+  }
   /** Nombre mostrado en vista Local (contrato); independiente del expediente del inmueble. */
   readonly nombreArchivoContratoLocalDemo = 'Contrato local vigente (texto informativo)';
 
@@ -767,12 +774,44 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.docPreview?.abrir(previewUrl, fila.etiqueta, this.detalleTitulo);
   }
 
-  trackZonaMonitoreo(_: number, z: { zonaPrincipal: string }): string {
-    return z.zonaPrincipal;
+  trackZonaMonitoreo(index: number, z: { zonaPrincipal: string }): string {
+    return `${index}-${z.zonaPrincipal}`;
   }
 
   trackLocalMonitoreo(_: number, loc: { nombre: string }): string {
     return loc.nombre;
+  }
+
+  /** DevExtreme a veces pasa el ítem completo; extrae el `title` string. */
+  private tituloAccordionCaption(data: unknown): string {
+    if (typeof data === 'string') return data;
+    if (data != null && typeof data === 'object' && 'title' in data) {
+      return String((data as { title: unknown }).title ?? '');
+    }
+    return '';
+  }
+
+  claveZonaAccordion(index: number): string {
+    return `zona-${index}`;
+  }
+
+  tituloZonaAccordionDesdeClave(data: unknown): string {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^zona-(\d+)$/.exec(clave);
+    if (!match) return clave || 'Zona';
+    const idx = Number(match[1]);
+    const nombre = String(this.zonas[idx]?.zonaPrincipal ?? '').trim();
+    return nombre || `Zona ${idx + 1}`;
+  }
+
+  metaZonaAccordionDesdeClave(data: unknown): string {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^zona-(\d+)$/.exec(clave);
+    if (!match) return '';
+    const zona = this.zonas[Number(match[1])];
+    if (!zona) return '';
+    const n = zona.locales?.length ?? 0;
+    return n === 1 ? '1 local' : `${n} locales`;
   }
 
   descargarExpedienteDoc(fila: MonitoreoExpedienteDoc): void {
