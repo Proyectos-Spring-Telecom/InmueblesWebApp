@@ -15,6 +15,8 @@ html.light-theme {
   --app-border: rgba(15, 23, 42, 0.12);
   --app-border-strong: rgba(15, 23, 42, 0.2);
   --app-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+  /* Cabeceras de sección: azul marca aún más claro */
+  --app-header-navy: linear-gradient(105deg, #2f5db8 0%, #3d6fd0 48%, #5b8aee 100%);
 
   /* ---------- HEADER: mismo vino sólido que el footer ---------- */
   .topbar {
@@ -996,6 +998,53 @@ html.light-theme {
     color: var(--app-text-muted);
   }
 
+  /* ---------- Registrar renta: DevExtreme INPC / % Anual ---------- */
+  .renta-modo-filtros__mes-datebox.dx-texteditor,
+  .renta-modo-filtros__mes-datebox .dx-texteditor,
+  .renta-inpc-directo__dx-select.dx-texteditor,
+  .renta-inpc-directo__dx-select .dx-texteditor {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #94a3b8 !important;
+    box-shadow: none !important;
+  }
+
+  .renta-modo-filtros__mes-datebox.dx-texteditor.dx-state-hover,
+  .renta-modo-filtros__mes-datebox .dx-texteditor.dx-state-hover,
+  .renta-inpc-directo__dx-select.dx-texteditor.dx-state-hover,
+  .renta-inpc-directo__dx-select .dx-texteditor.dx-state-hover {
+    border-color: #64748b !important;
+  }
+
+  .renta-modo-filtros__mes-datebox.dx-texteditor.dx-state-focused,
+  .renta-modo-filtros__mes-datebox .dx-texteditor.dx-state-focused,
+  .renta-inpc-directo__dx-select.dx-texteditor.dx-state-focused,
+  .renta-inpc-directo__dx-select .dx-texteditor.dx-state-focused {
+    border-color: #0ea5e9 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+  }
+
+  .renta-modo-filtros__mes-datebox .dx-texteditor-input,
+  .renta-inpc-directo__dx-select .dx-texteditor-input {
+    color: #0f172a !important;
+    background: transparent !important;
+  }
+
+  .renta-modo-filtros__mes-datebox .dx-placeholder,
+  .renta-inpc-directo__dx-select .dx-placeholder,
+  .renta-modo-filtros__mes-datebox .dx-placeholder::before,
+  .renta-inpc-directo__dx-select .dx-placeholder::before {
+    color: #94a3b8 !important;
+  }
+
+  .renta-modo-filtros__mes-datebox .dx-dropdowneditor-icon,
+  .renta-modo-filtros__mes-datebox .dx-icon,
+  .renta-inpc-directo__dx-select .dx-dropdowneditor-icon,
+  .renta-inpc-directo__dx-select .dx-icon {
+    color: #475569 !important;
+  }
+
   /* ---------- INPC filtros de fecha ---------- */
   .inpc-filtro-fechas__label {
     color: var(--app-text-muted) !important;
@@ -1051,21 +1100,52 @@ html.light-theme {
     /* Tokens Fluent (dark bundle) → texto legible en claro */
     --dx-color-text: #1e293b;
     --dx-color-primary: #2563eb;
-    --dx-color-border: #cbd5e1;
+    --dx-color-border: #aeb4bb;
     --dx-color-icon: #475569;
     --dx-datagrid-base-color: #1e293b;
     --dx-datagrid-base-background-color: #ffffff;
-    --dx-datagrid-border-color: #e2e8f0;
+    --dx-datagrid-border-color: #aeb4bb;
     --dx-datagrid-headers-color: #1e293b;
     --dx-datagrid-headers-background-color: #f1f5f9;
     --dx-datagrid-rows-color: #1e293b;
     --dx-datagrid-row-alternation-color: #f4f7fa;
   }
 
+  /* Contorno del grid (laterales + arriba/abajo): ya no negro del tema DX oscuro */
+  .dx-datagrid.dx-datagrid-borders,
+  .dx-datagrid-borders > .dx-datagrid-headers,
+  .dx-datagrid-borders > .dx-datagrid-rowsview,
+  .dx-datagrid-borders > .dx-datagrid-total-footer,
+  .dx-datagrid-borders > .dx-datagrid-headers + .dx-datagrid-rowsview,
+  .dx-datagrid-borders > .dx-datagrid-filter-panel,
+  .dx-datagrid-borders > .dx-datagrid-pager {
+    border-color: #aeb4bb !important;
+  }
+
+  .dx-datagrid.dx-datagrid-borders > .dx-datagrid-headers {
+    border-top-color: #aeb4bb !important;
+    border-left-color: #aeb4bb !important;
+    border-right-color: #aeb4bb !important;
+    border-bottom-color: #aeb4bb !important;
+  }
+
+  .dx-datagrid.dx-datagrid-borders > .dx-datagrid-rowsview {
+    border-left-color: #aeb4bb !important;
+    border-right-color: #aeb4bb !important;
+    border-bottom-color: #aeb4bb !important;
+  }
+
+  .dx-datagrid.dx-datagrid-borders > .dx-datagrid-total-footer,
+  .dx-datagrid.dx-datagrid-borders > .dx-datagrid-pager {
+    border-left-color: #aeb4bb !important;
+    border-right-color: #aeb4bb !important;
+    border-bottom-color: #aeb4bb !important;
+  }
+
   .dx-datagrid-headers {
     background-color: var(--app-surface-2) !important;
     color: var(--app-text) !important;
-    border-bottom: 1px solid var(--app-border-strong) !important;
+    border-bottom: 1px solid #aeb4bb !important;
   }
 
   .dx-datagrid-headers .dx-header-row > td,
@@ -1073,7 +1153,7 @@ html.light-theme {
   .dx-datagrid-headers .dx-row > td {
     background-color: var(--app-surface-2) !important;
     color: var(--app-text) !important;
-    border-color: var(--app-border) !important;
+    border-color: #aeb4bb !important;
   }
 
   .dx-datagrid-rowsview {
@@ -1082,14 +1162,14 @@ html.light-theme {
   }
 
   .dx-datagrid-rowsview .dx-row {
-    border-color: var(--app-border) !important;
+    border-color: #aeb4bb !important;
   }
 
   .dx-datagrid-rowsview .dx-data-row > td,
   .dx-datagrid-rowsview .dx-row > td {
     background-color: var(--app-surface) !important;
     color: var(--app-text) !important;
-    border-color: var(--app-border) !important;
+    border-color: #aeb4bb !important;
   }
 
   /* Filas alternadas: gris muy claro (antes heredaban el negro del tema DX oscuro) */
@@ -1118,7 +1198,7 @@ html.light-theme {
   .inm-data-grid .dx-master-detail-row.dx-state-hover > td,
   .inm-data-grid .dx-master-detail-row:hover > td {
     background-color: #f8fafc !important;
-    border-top: 1px solid var(--app-border-strong) !important;
+    border-top: 1px solid #aeb4bb !important;
     color: var(--app-text) !important;
   }
 
@@ -1132,7 +1212,7 @@ html.light-theme {
   .dx-datagrid-search-panel.dx-texteditor,
   .dx-toolbar .dx-texteditor {
     background-color: var(--app-surface) !important;
-    border-color: var(--app-border-strong) !important;
+    border-color: #aeb4bb !important;
   }
 
   .dx-texteditor-input {
@@ -1429,7 +1509,7 @@ html.light-theme {
 
   /* Resumen del modal de renta */
   .mono-pago-modal .renta-pago-resumen__hero {
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     border-color: #3b82f6 !important;
   }
 
@@ -1468,7 +1548,7 @@ html.light-theme {
   .mono-pago-modal .renta-pago-resumen__card-title {
     margin: -0.82rem -0.9rem 0.65rem !important;
     padding: 0.65rem 0.9rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     color: #ffffff !important;
     border-radius: 13px 13px 0 0;
   }
@@ -1726,9 +1806,9 @@ html.light-theme {
   .arrend-fa-hero,
   .docs-hero,
   .socios-hero {
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     border-color: #3b82f6 !important;
-    box-shadow: 0 10px 24px rgba(0, 28, 106, 0.28) !important;
+    box-shadow: 0 8px 20px rgba(0, 28, 106, 0.18) !important;
   }
 
   .arrend-fa-hero__icon,
@@ -2041,7 +2121,7 @@ html.light-theme {
 
   /* Cabecera de zona / acordeón de detalle */
   .inm-zona-panel__summary {
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     border-bottom: 1px solid #3b82f6 !important;
   }
 
@@ -2214,7 +2294,7 @@ html.light-theme {
   .arr-ctr-block__title {
     margin: 0 !important;
     padding: 0.7rem 0.9rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     color: #ffffff !important;
     border-bottom: 1px solid #3b82f6 !important;
 
@@ -2447,7 +2527,7 @@ html.light-theme {
     display: block;
     margin: -0.65rem -0.8rem 0.55rem !important;
     padding: 0.65rem 0.85rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     border-radius: 11px 11px 0 0;
     letter-spacing: 0.08em;
   }
@@ -2455,7 +2535,7 @@ html.light-theme {
   .dash-panel__head {
     margin: -0.65rem -0.8rem 0.55rem !important;
     padding: 0.55rem 0.85rem 0.65rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     border-bottom: 1px solid #3b82f6 !important;
     border-radius: 11px 11px 0 0;
     gap: 0.15rem !important;
@@ -2476,7 +2556,7 @@ html.light-theme {
     display: block;
     margin: 0 0 0.35rem !important;
     padding: 0.45rem 0.65rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     color: #ffffff !important;
     border-radius: 8px;
     letter-spacing: 0.08em;
@@ -2485,7 +2565,7 @@ html.light-theme {
   .dash-rentas__header {
     margin: -0.85rem -0.95rem 0.65rem !important;
     padding: 0.75rem 0.95rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy) !important;
     border-bottom: 1px solid #3b82f6 !important;
     border-radius: 13px 13px 0 0;
   }
@@ -2862,11 +2942,33 @@ html.light-theme {
     }
   }
 
+  .formula-btn__var-meta {
+    color: #a16207 !important;
+    opacity: 1 !important;
+
+    &--inpc {
+      color: #0369a1 !important;
+    }
+
+    &--pct {
+      color: #15803d !important;
+    }
+  }
+
   .formula-btn--var-used {
     background: #d97706 !important;
     border-color: #fcd34d !important;
     color: #ffffff !important;
     box-shadow: none !important;
+
+    .formula-btn__var-meta {
+      color: #fef3c7 !important;
+
+      &--inpc,
+      &--pct {
+        color: #fef3c7 !important;
+      }
+    }
   }
 
   .formula-btn--del {

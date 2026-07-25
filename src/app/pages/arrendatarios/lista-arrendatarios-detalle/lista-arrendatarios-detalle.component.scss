@@ -877,7 +877,7 @@ button.arr-socio-doc__link {
   .arr-ctr-block__title {
     margin: 0 !important;
     padding: 0.7rem 0.9rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy, linear-gradient(105deg, #2f5db8 0%, #3d6fd0 48%, #5b8aee 100%)) !important;
     color: #ffffff !important;
 
     i {

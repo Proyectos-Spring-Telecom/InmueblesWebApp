@@ -1668,7 +1668,7 @@
   .dash-panel__title {
     margin: -0.65rem -0.8rem 0.55rem !important;
     padding: 0.65rem 0.85rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy, linear-gradient(105deg, #2f5db8 0%, #3d6fd0 48%, #5b8aee 100%)) !important;
     color: #ffffff !important;
     border-radius: 11px 11px 0 0;
   }
@@ -1676,7 +1676,7 @@
   .dash-panel__head {
     margin: -0.65rem -0.8rem 0.55rem !important;
     padding: 0.55rem 0.85rem 0.65rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy, linear-gradient(105deg, #2f5db8 0%, #3d6fd0 48%, #5b8aee 100%)) !important;
     border-bottom-color: #3b82f6 !important;
     border-radius: 11px 11px 0 0;
   }
@@ -1739,7 +1739,7 @@
   .oc-locales__title {
     margin: 0 0 0.35rem !important;
     padding: 0.45rem 0.65rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy, linear-gradient(105deg, #2f5db8 0%, #3d6fd0 48%, #5b8aee 100%)) !important;
     color: #ffffff !important;
     border-radius: 8px;
   }

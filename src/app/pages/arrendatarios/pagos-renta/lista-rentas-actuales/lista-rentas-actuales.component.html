@@ -134,7 +134,7 @@
 <ng-container *ngIf="mostrarModalRenta">
   <div class="contract-page-dim" [@contractDimAnim]></div>
   <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim]>
-    <div class="docs-modal contract-docs-modal mono-pago-modal" role="dialog" aria-modal="true"
+    <div class="docs-modal contract-docs-modal mono-pago-modal renta-alta-modal" role="dialog" aria-modal="true"
       aria-labelledby="renta-modal-title">
       <div class="row docs-modal__header">
         <div class="col-10 col-md-11">
@@ -158,12 +158,12 @@
           <div class="perm-form-nc">
             <form [formGroup]="rentaForm" class="perm-form-body mono-pago-form">
 
-              <!-- ── Fila 1: Arrendatario · Contrato · Fórmula (solo alta) ── -->
+              <!-- ── Alta: Arrendatario · Contrato (6+6) ── -->
               <ng-container *ngIf="rentaModalModo === 'alta'">
                 <div class="row g-3 mb-3">
 
                   <!-- Arrendatario -->
-                  <div class="col-12 col-lg-4 renta-modal-campo">
+                  <div class="col-12 col-md-6 renta-modal-campo">
                     <label for="rentaArrendatario" class="form-label perm-label">
                       Arrendatario <span class="text-danger">*</span>
                     </label>
@@ -189,7 +189,7 @@
 
                   <!-- Contrato -->
                   <div
-                    class="col-12 col-lg-4 renta-modal-campo"
+                    class="col-12 col-md-6 renta-modal-campo"
                     [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'contrato'"
                   >
                     <label for="rentaContrato" class="form-label perm-label">
@@ -213,38 +213,209 @@
                     </div>
                   </div>
 
-                  <!-- Fórmula -->
-                  <div
-                    class="col-12 col-lg-4 renta-modal-campo"
-                    [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'formula'"
-                  >
-                    <label for="rentaFormulaAlta" class="form-label perm-label">
-                      Fórmula <span class="text-danger">*</span>
-                    </label>
-                    <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
-                      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                      <span>Cargando fórmulas…</span>
-                    </div>
-                    <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
-                      <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true">functions</mat-icon>
-                      </span>
-                      <div class="form-floating flex-grow-1">
-                        <select id="rentaFormulaAlta" class="form-select" formControlName="idFormula">
-                          <option [ngValue]="null" disabled hidden>
-                            {{ formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas' }}
-                          </option>
-                          <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
-                        </select>
-                        <label for="rentaFormulaAlta">Seleccione fórmula</label>
+                </div>
+
+                <!-- ── Alta: Cálculo del pago (fila completa) ── -->
+                <div class="row g-3 mb-3"
+                  *ngIf="rentaForm.get('idContrato')?.value">
+                  <div class="col-12 renta-modal-campo"
+                    [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'formula'">
+
+                    <div class="renta-modo-panel renta-modo-panel--wide"
+                      [attr.data-modo]="rentaModoCalculo">
+                      <div class="renta-modo-panel__main">
+                        <div class="renta-modo-panel__head">
+                          <span class="renta-modo-panel__eyebrow">Cálculo del pago</span>
+                          <label class="form-label perm-label renta-modo-panel__title mb-0">
+                            Forma de cálculo <span class="text-danger">*</span>
+                          </label>
+                        </div>
+
+                        <div class="renta-modo-calculo" role="group" aria-label="Forma de cálculo">
+                          <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--formula"
+                            [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'formula'"
+                            (click)="cambiarModoCalculoRenta('formula')">
+                            <mat-icon aria-hidden="true">functions</mat-icon>
+                            <span class="renta-modo-calculo__texto">
+                              <span class="renta-modo-calculo__nombre">Fórmula</span>
+                              <span class="renta-modo-calculo__desc">Guardada</span>
+                            </span>
+                          </button>
+                          <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--inpc"
+                            [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'inpc'"
+                            (click)="cambiarModoCalculoRenta('inpc')">
+                            <mat-icon aria-hidden="true">trending_up</mat-icon>
+                            <span class="renta-modo-calculo__texto">
+                              <span class="renta-modo-calculo__nombre">INPC</span>
+                              <span class="renta-modo-calculo__desc">Directo</span>
+                            </span>
+                          </button>
+                          <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--pct"
+                            [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'porcentaje'"
+                            (click)="cambiarModoCalculoRenta('porcentaje')">
+                            <mat-icon aria-hidden="true">percent</mat-icon>
+                            <span class="renta-modo-calculo__texto">
+                              <span class="renta-modo-calculo__nombre">% Anual</span>
+                              <span class="renta-modo-calculo__desc">Directo</span>
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Modo Fórmula -->
+                      <div class="renta-modo-panel__body" *ngIf="rentaModoCalculo === 'formula'">
+                        <div *ngIf="catalogosModalCargando" class="mono-pago-servicio-loading mb-0">
+                          <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                          <span>Cargando fórmulas…</span>
+                        </div>
+                        <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosModalCargando">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">functions</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <select id="rentaFormulaAlta" class="form-select" formControlName="idFormula">
+                              <option [ngValue]="null" disabled hidden>
+                                {{ formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas' }}
+                              </option>
+                              <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
+                            </select>
+                            <label for="rentaFormulaAlta">Seleccione fórmula</label>
+                          </div>
+                        </div>
+                        <p class="renta-modo-panel__status" *ngIf="evaluandoFormula">
+                          <mat-progress-spinner mode="indeterminate" diameter="14"></mat-progress-spinner>
+                          Calculando…
+                        </p>
+                      </div>
+
+                      <!-- Modo INPC / % Anual directo -->
+                      <div class="renta-modo-panel__body renta-inpc-directo"
+                        *ngIf="rentaModoCalculo !== 'formula'"
+                        [class.renta-inpc-directo--pct]="rentaModoCalculo === 'porcentaje'">
+                        <!-- Rango de meses (INPC y % Anual) -->
+                        <div class="renta-modo-filtros">
+                          <div class="renta-modo-filtros__filtro">
+                            <label class="renta-modo-filtros__label" for="rentaInpcMesDesde">Mes desde</label>
+                            <dx-date-box
+                              [inputAttr]="{ id: 'rentaInpcMesDesde' }"
+                              class="renta-modo-filtros__mes-datebox"
+                              [(value)]="mesDesdeInpcRenta"
+                              type="date"
+                              displayFormat="monthAndYear"
+                              placeholder="Seleccione mes"
+                              [openOnFieldClick]="true"
+                              [showClearButton]="false"
+                              [calendarOptions]="mesCalendarOptionsInpcRenta"
+                              [disabled]="cargandoInpcRenta"
+                              stylingMode="outlined"
+                              (onValueChanged)="onMesRangoInpcRentaChange()">
+                            </dx-date-box>
+                          </div>
+                          <div class="renta-modo-filtros__filtro">
+                            <label class="renta-modo-filtros__label" for="rentaInpcMesHasta">Mes hasta</label>
+                            <dx-date-box
+                              [inputAttr]="{ id: 'rentaInpcMesHasta' }"
+                              class="renta-modo-filtros__mes-datebox"
+                              [(value)]="mesHastaInpcRenta"
+                              type="date"
+                              displayFormat="monthAndYear"
+                              placeholder="Seleccione mes"
+                              [openOnFieldClick]="true"
+                              [showClearButton]="false"
+                              [calendarOptions]="mesCalendarOptionsInpcRenta"
+                              [disabled]="cargandoInpcRenta"
+                              stylingMode="outlined"
+                              (onValueChanged)="onMesRangoInpcRentaChange()">
+                            </dx-date-box>
+                          </div>
+                          <button type="button" class="btn bg-primary renta-modo-filtros__consultar"
+                            [disabled]="cargandoInpcRenta"
+                            (click)="aplicarFiltrosInpcRenta()">
+                            <mat-icon aria-hidden="true">filter_alt</mat-icon>
+                            Consultar
+                          </button>
+                        </div>
+
+                        <div *ngIf="cargandoInpcRenta" class="mono-pago-servicio-loading mb-0">
+                          <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
+                          <span>Cargando catálogo INPC…</span>
+                        </div>
+
+                        <!-- INPC: dos periodos → factor = INPC₁ / INPC₂ -->
+                        <div class="renta-inpc-directo__division" *ngIf="!cargandoInpcRenta && rentaModoCalculo === 'inpc'">
+                          <div class="renta-inpc-directo__field">
+                            <label class="renta-inpc-directo__label" for="rentaInpcNumerador">INPC numerador</label>
+                            <dx-select-box
+                              [inputAttr]="{ id: 'rentaInpcNumerador' }"
+                              class="renta-inpc-directo__dx-select"
+                              [items]="opcionesInpcDx"
+                              displayExpr="texto"
+                              valueExpr="idx"
+                              [(value)]="periodoInpcNumeradorRenta"
+                              placeholder="Seleccione periodo"
+                              [searchEnabled]="true"
+                              [showClearButton]="false"
+                              [disabled]="!opcionesInpcDx.length"
+                              stylingMode="outlined"
+                              noDataText="Sin datos INPC">
+                            </dx-select-box>
+                          </div>
+                          <span class="renta-inpc-directo__op" aria-hidden="true">÷</span>
+                          <div class="renta-inpc-directo__field">
+                            <label class="renta-inpc-directo__label" for="rentaInpcDenominador">INPC denominador</label>
+                            <dx-select-box
+                              [inputAttr]="{ id: 'rentaInpcDenominador' }"
+                              class="renta-inpc-directo__dx-select"
+                              [items]="opcionesInpcDx"
+                              displayExpr="texto"
+                              valueExpr="idx"
+                              [(value)]="periodoInpcDenominadorRenta"
+                              placeholder="Seleccione periodo"
+                              [searchEnabled]="true"
+                              [showClearButton]="false"
+                              [disabled]="!opcionesInpcDx.length"
+                              stylingMode="outlined"
+                              noDataText="Sin datos INPC">
+                            </dx-select-box>
+                          </div>
+                          <button type="button" class="btn bg-success renta-inpc-directo__aplicar"
+                            [disabled]="periodoInpcNumeradorRenta == null || periodoInpcDenominadorRenta == null"
+                            (click)="aplicarValorInpcDirectoARenta()">
+                            <mat-icon aria-hidden="true">check</mat-icon>
+                            Aplicar
+                          </button>
+                        </div>
+
+                        <!-- % Anual: un solo periodo → factor = 1 + (% / 100) -->
+                        <div class="renta-inpc-directo__row" *ngIf="!cargandoInpcRenta && rentaModoCalculo === 'porcentaje'">
+                          <div class="renta-inpc-directo__field renta-inpc-directo__field--grow">
+                            <label class="renta-inpc-directo__label" for="rentaPeriodoPct">% Anual</label>
+                            <dx-select-box
+                              [inputAttr]="{ id: 'rentaPeriodoPct' }"
+                              class="renta-inpc-directo__dx-select"
+                              [items]="opcionesPorcentajeAnualDx"
+                              displayExpr="texto"
+                              valueExpr="idx"
+                              [(value)]="periodoInpcSeleccionadoRenta"
+                              placeholder="Seleccione periodo"
+                              [searchEnabled]="true"
+                              [showClearButton]="false"
+                              [disabled]="!opcionesPorcentajeAnualDx.length"
+                              stylingMode="outlined"
+                              noDataText="Sin datos INPC">
+                            </dx-select-box>
+                          </div>
+                          <button type="button" class="btn bg-success renta-inpc-directo__aplicar"
+                            [disabled]="periodoInpcSeleccionadoRenta == null"
+                            (click)="aplicarValorInpcDirectoARenta()">
+                            <mat-icon aria-hidden="true">check</mat-icon>
+                            Aplicar
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <p class="small opacity-75 mt-2 mb-0 d-flex align-items-center gap-1" *ngIf="evaluandoFormula">
-                      <mat-progress-spinner mode="indeterminate" diameter="14"></mat-progress-spinner>
-                      Calculando…
-                    </p>
-                  </div>
 
+                  </div>
                 </div>
               </ng-container>
 
@@ -253,7 +424,7 @@
                 <div class="row g-3 mb-3">
 
                   <!-- Total -->
-                  <div class="col-12 col-md-6 col-lg-4">
+                  <div class="col-12 col-md-6 col-lg-3">
                     <label for="rentaTotal" class="form-label perm-label">
                       Total <span class="text-danger">*</span>
                     </label>
@@ -276,7 +447,7 @@
                   </div>
 
                   <!-- Monto final -->
-                  <div class="col-12 col-md-6 col-lg-4">
+                  <div class="col-12 col-md-6 col-lg-3">
                     <label for="rentaMontoFinal" class="form-label perm-label">
                       Monto final <span class="text-danger">*</span>
                     </label>
@@ -303,8 +474,8 @@
                     </p>
                   </div>
 
-                  <!-- Total mantenimientosss -->
-                  <div class="col-12 col-md-6 col-lg-4" *ngIf="rentaMostrarMantenimiento">
+                  <!-- Total mantenimiento -->
+                  <div class="col-12 col-md-6 col-lg-3" *ngIf="rentaMostrarMantenimiento">
                     <label for="rentaTotalMantenimiento" class="form-label perm-label">
                       Total mantenimiento <span class="text-danger">*</span>
                     </label>
@@ -327,7 +498,7 @@
                   </div>
 
                   <!-- Monto final mantenimiento -->
-                  <div class="col-12 col-md-6 col-lg-4" *ngIf="rentaMostrarMantenimiento">
+                  <div class="col-12 col-md-6 col-lg-3" *ngIf="rentaMostrarMantenimiento">
                     <label for="rentaMontoFinalMantenimiento" class="form-label perm-label">
                       Monto final mantenimiento <span class="text-danger">*</span>
                     </label>
@@ -354,7 +525,7 @@
                     </p>
                   </div>
 
-                  <div class="col-12 col-md-6 col-lg-4">
+                  <div class="col-12 col-md-6 col-lg-3">
                     <label for="rentaFactor" class="form-label perm-label">
                       Factor fórmula <span class="text-danger">*</span>
                     </label>
@@ -375,8 +546,25 @@
                     </p>
                   </div>
 
+                  <!-- Usó fórmula -->
+                  <div class="col-12 col-md-6 col-lg-3">
+                    <label for="rentaOcupoFormula" class="form-label perm-label">Usó fórmula</label>
+                    <div class="input-group input-group-lg perm-ig">
+                      <span class="input-group-text fw-bold">
+                        <mat-icon aria-hidden="true">flag</mat-icon>
+                      </span>
+                      <div class="form-floating flex-grow-1">
+                        <select id="rentaOcupoFormula" class="form-select" formControlName="ocupoFormula">
+                          <option [ngValue]="0">No</option>
+                          <option [ngValue]="1">Sí</option>
+                        </select>
+                        <label for="rentaOcupoFormula">Usó fórmula</label>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- Fórmula (solo edición) -->
-                  <div class="col-12 col-md-6 col-lg-4" *ngIf="rentaModalModo === 'edicion'">
+                  <div class="col-12 col-md-6 col-lg-3" *ngIf="rentaModalModo === 'edicion'">
                     <label for="rentaFormula" class="form-label perm-label">
                       Fórmula <span class="text-danger">*</span>
                     </label>
@@ -390,23 +578,6 @@
                           <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
                         </select>
                         <label for="rentaFormula">Seleccione fórmula</label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Usó fórmula -->
-                  <div class="col-12 col-md-6 col-lg-4">
-                    <label for="rentaOcupoFormula" class="form-label perm-label">Usó fórmula</label>
-                    <div class="input-group input-group-lg perm-ig">
-                      <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true">flag</mat-icon>
-                      </span>
-                      <div class="form-floating flex-grow-1">
-                        <select id="rentaOcupoFormula" class="form-select" formControlName="ocupoFormula">
-                          <option [ngValue]="0">No</option>
-                          <option [ngValue]="1">Sí</option>
-                        </select>
-                        <label for="rentaOcupoFormula">Usó fórmula</label>
                       </div>
                     </div>
                   </div>

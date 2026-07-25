@@ -735,7 +735,7 @@
   .dash-rentas__header {
     margin: -0.85rem -0.95rem 0.65rem !important;
     padding: 0.75rem 0.95rem !important;
-    background: #001c6a !important;
+    background: var(--app-header-navy, linear-gradient(105deg, #2f5db8 0%, #3d6fd0 48%, #5b8aee 100%)) !important;
     border-bottom: 1px solid #3b82f6 !important;
     border-radius: 13px 13px 0 0;
   }

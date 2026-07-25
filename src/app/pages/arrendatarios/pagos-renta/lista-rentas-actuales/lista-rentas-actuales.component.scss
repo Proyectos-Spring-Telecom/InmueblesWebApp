@@ -5,6 +5,26 @@
   min-width: 0;
 }
 
+/* Modal de renta un poco más ancho; en móvil sigue al 100% del viewport. */
+.renta-alta-modal.docs-modal.contract-docs-modal {
+  width: min(100%, 1180px);
+  max-width: 1180px;
+}
+
+@media (max-width: 991.98px) {
+  .renta-alta-modal.docs-modal.contract-docs-modal {
+    width: min(100%, 960px);
+    max-width: 960px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .renta-alta-modal.docs-modal.contract-docs-modal {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 .operacion-hub-vista .surface {
   padding-top: 1rem;
 }
@@ -221,6 +241,432 @@
   color: #cbd5e1;
 }
 
+.renta-modo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.85rem 0.9rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background:
+    linear-gradient(165deg, rgba(30, 41, 59, 0.72) 0%, rgba(15, 23, 42, 0.55) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &--wide {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+
+    .renta-modo-panel__main {
+      flex: 1 1 18rem;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .renta-modo-panel__body {
+      flex: 1 1 20rem;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-self: flex-end;
+    }
+
+    .renta-modo-calculo {
+      max-width: 28rem;
+    }
+
+    .renta-modo-calculo__btn {
+      flex-direction: row;
+      justify-content: flex-start;
+      min-height: 3rem;
+      padding: 0.5rem 0.7rem;
+      gap: 0.55rem;
+    }
+
+    .renta-modo-calculo__texto {
+      align-items: flex-start;
+    }
+
+    .renta-modo-calculo__nombre {
+      font-size: 0.8rem;
+    }
+  }
+
+  // INPC / % Anual: centrar en alto el bloque izquierdo (título + botones)
+  &--wide[data-modo='inpc'],
+  &--wide[data-modo='porcentaje'] {
+    align-items: stretch;
+
+    .renta-modo-panel__main {
+      justify-content: center;
+      align-self: stretch;
+    }
+
+    .renta-modo-panel__body {
+      align-self: stretch;
+    }
+  }
+
+  &[data-modo='formula'] {
+    border-color: rgba(251, 191, 36, 0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 0 0 1px rgba(251, 191, 36, 0.08);
+  }
+
+  &[data-modo='inpc'] {
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 0 0 1px rgba(56, 189, 248, 0.1);
+  }
+
+  &[data-modo='porcentaje'] {
+    border-color: rgba(74, 222, 128, 0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 0 0 1px rgba(74, 222, 128, 0.1);
+  }
+
+  &__head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  &__eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.9);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 0.92rem;
+    color: #f1f5f9;
+  }
+
+  &__body {
+    min-width: 0;
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.55rem 0 0;
+    font-size: 0.78rem;
+    color: rgba(203, 213, 225, 0.85);
+  }
+}
+
+.renta-modo-calculo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  width: 100%;
+
+  &__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.28rem;
+    min-width: 0;
+    min-height: 4.35rem;
+    margin: 0;
+    padding: 0.45rem 0.35rem;
+    border: 1px solid rgba(148, 163, 184, 0.32);
+    border-radius: 11px;
+    background: rgba(15, 23, 42, 0.55);
+    color: rgba(226, 232, 240, 0.88);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      opacity: 0.75;
+    }
+
+    &:hover {
+      background: rgba(51, 65, 85, 0.72);
+      border-color: rgba(203, 213, 225, 0.45);
+      color: #fff;
+      transform: translateY(-1px);
+
+      mat-icon {
+        opacity: 1;
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &--activo {
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+
+      mat-icon {
+        opacity: 1;
+      }
+    }
+
+    &--formula.renta-modo-calculo__btn--activo {
+      background: linear-gradient(160deg, #a16207 0%, #78350f 100%);
+      border-color: rgba(252, 211, 77, 0.55);
+    }
+
+    &--inpc.renta-modo-calculo__btn--activo {
+      background: linear-gradient(160deg, #0284c7 0%, #075985 100%);
+      border-color: rgba(125, 211, 252, 0.55);
+    }
+
+    &--pct.renta-modo-calculo__btn--activo {
+      background: linear-gradient(160deg, #16a34a 0%, #166534 100%);
+      border-color: rgba(134, 239, 172, 0.55);
+    }
+  }
+
+  &__texto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.05rem;
+    min-width: 0;
+    line-height: 1.15;
+  }
+
+  &__nombre {
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  &__desc {
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+}
+
+.renta-modo-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.45rem 0.55rem;
+  min-width: 0;
+
+  &__filtro {
+    flex: 1 1 8.5rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  &__label {
+    margin: 0;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.9);
+  }
+
+  &__mes-datebox {
+    width: 100%;
+    min-width: 0;
+
+    ::ng-deep .dx-texteditor-input {
+      min-height: 2.35rem;
+      font-size: 0.85rem;
+    }
+
+    // Host = .dx-texteditor (no hay hijo con esa clase)
+    &.dx-texteditor.dx-editor-outlined,
+    ::ng-deep &.dx-texteditor.dx-editor-outlined {
+      background: rgba(15, 23, 42, 0.55);
+      border-color: rgba(148, 163, 184, 0.35);
+    }
+  }
+
+  &__consultar {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    min-height: 2.35rem;
+    padding: 0.35rem 0.75rem;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+.renta-inpc-directo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border-radius: 11px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(8, 47, 73, 0.35);
+
+  &--pct {
+    border-color: rgba(74, 222, 128, 0.28);
+    background: rgba(20, 83, 45, 0.28);
+  }
+
+  &__label {
+    margin: 0;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.9);
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.45rem 0.55rem;
+    min-width: 0;
+  }
+
+  &__division {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.45rem 0.55rem;
+    min-width: 0;
+  }
+
+  &__field {
+    flex: 1 1 8.5rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    &--grow {
+      flex: 1 1 auto;
+    }
+  }
+
+  &__op {
+    flex: 0 0 auto;
+    align-self: flex-end;
+    min-height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.15rem;
+    font-size: 1.15rem;
+    color: rgba(125, 211, 252, 0.9);
+    line-height: 1;
+  }
+
+  &--pct &__op {
+    color: rgba(134, 239, 172, 0.9);
+  }
+
+  &__select {
+    min-width: 0;
+    width: 100%;
+    min-height: 2.35rem;
+  }
+
+  &__dx-select {
+    width: 100%;
+    min-width: 0;
+
+    ::ng-deep .dx-texteditor-input {
+      min-height: 2.35rem;
+      font-size: 0.85rem;
+    }
+
+    &.dx-texteditor.dx-editor-outlined,
+    ::ng-deep &.dx-texteditor.dx-editor-outlined {
+      background: rgba(15, 23, 42, 0.55);
+      border-color: rgba(148, 163, 184, 0.35);
+    }
+  }
+
+  &__aplicar {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    min-height: 2.35rem;
+    padding: 0.35rem 0.75rem;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+@media (max-width: 575.98px) {
+  .renta-modo-calculo {
+    grid-template-columns: 1fr;
+
+    &__btn {
+      flex-direction: row;
+      justify-content: flex-start;
+      min-height: 2.85rem;
+      padding: 0.45rem 0.7rem;
+      gap: 0.55rem;
+    }
+
+    &__texto {
+      align-items: flex-start;
+    }
+  }
+
+  .renta-inpc-directo__row,
+  .renta-inpc-directo__division {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .renta-inpc-directo__op {
+    align-self: center;
+    min-height: auto;
+    padding: 0.1rem 0;
+  }
+
+  .renta-inpc-directo__aplicar,
+  .renta-modo-filtros__consultar {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .renta-modo-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 :host-context(html.light-theme) {
   .renta-grid-desglose__item--renta {
     background: #dbeafe !important;
@@ -273,5 +719,132 @@
     border-color: #cbd5e1 !important;
     color: #334155 !important;
     opacity: 1 !important;
+  }
+
+  .renta-modo-panel {
+    background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+
+    &[data-modo='formula'] {
+      border-color: #f59e0b !important;
+      box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.12), 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+    }
+
+    &[data-modo='inpc'] {
+      border-color: #0ea5e9 !important;
+      box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.12), 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+    }
+
+    &[data-modo='porcentaje'] {
+      border-color: #22c55e !important;
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.12), 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+    }
+  }
+
+  .renta-modo-panel__eyebrow {
+    color: #64748b !important;
+  }
+
+  .renta-modo-panel__title {
+    color: #0f172a !important;
+  }
+
+  .renta-modo-panel__status {
+    color: #475569 !important;
+  }
+
+  .renta-modo-calculo__btn {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #334155 !important;
+    box-shadow: none !important;
+
+    &:hover {
+      background: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+
+    &--formula.renta-modo-calculo__btn--activo {
+      background: linear-gradient(160deg, #f59e0b 0%, #b45309 100%) !important;
+      border-color: #fcd34d !important;
+      color: #ffffff !important;
+    }
+
+    &--inpc.renta-modo-calculo__btn--activo {
+      background: linear-gradient(160deg, #0ea5e9 0%, #0369a1 100%) !important;
+      border-color: #7dd3fc !important;
+      color: #ffffff !important;
+    }
+
+    &--pct.renta-modo-calculo__btn--activo {
+      background: linear-gradient(160deg, #22c55e 0%, #15803d 100%) !important;
+      border-color: #86efac !important;
+      color: #ffffff !important;
+    }
+  }
+
+  .renta-modo-calculo__desc {
+    opacity: 0.8 !important;
+  }
+
+  .renta-inpc-directo {
+    background: #f0f9ff !important;
+    border-color: #7dd3fc !important;
+    color-scheme: light !important;
+  }
+
+  .renta-inpc-directo--pct {
+    background: #f0fdf4 !important;
+    border-color: #86efac !important;
+    color-scheme: light !important;
+  }
+
+  .renta-inpc-directo__label {
+    color: #64748b !important;
+  }
+
+  .renta-inpc-directo__op {
+    color: #0369a1 !important;
+  }
+
+  .renta-inpc-directo--pct .renta-inpc-directo__op {
+    color: #166534 !important;
+  }
+
+  .renta-modo-filtros__label {
+    color: #64748b !important;
+  }
+}
+
+/* DevExtreme: la clase del host es el mismo nodo que .dx-texteditor. */
+:host-context(html.light-theme) ::ng-deep {
+  .renta-modo-filtros__mes-datebox.dx-texteditor,
+  .renta-modo-filtros__mes-datebox.dx-texteditor.dx-editor-outlined,
+  .renta-inpc-directo__dx-select.dx-texteditor,
+  .renta-inpc-directo__dx-select.dx-texteditor.dx-editor-outlined {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #94a3b8 !important;
+  }
+
+  .renta-modo-filtros__mes-datebox .dx-texteditor-input,
+  .renta-inpc-directo__dx-select .dx-texteditor-input {
+    color: #0f172a !important;
+    background: transparent !important;
+  }
+
+  .renta-modo-filtros__mes-datebox .dx-placeholder,
+  .renta-modo-filtros__mes-datebox .dx-placeholder::before,
+  .renta-inpc-directo__dx-select .dx-placeholder,
+  .renta-inpc-directo__dx-select .dx-placeholder::before {
+    color: #94a3b8 !important;
+  }
+
+  .renta-modo-filtros__mes-datebox .dx-dropdowneditor-icon,
+  .renta-modo-filtros__mes-datebox .dx-icon,
+  .renta-inpc-directo__dx-select .dx-dropdowneditor-icon,
+  .renta-inpc-directo__dx-select .dx-icon {
+    color: #475569 !important;
   }
 }

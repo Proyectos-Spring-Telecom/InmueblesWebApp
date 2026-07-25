@@ -1,11 +1,13 @@
 import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
 import { finalize, take } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { environment } from 'src/environments/environment';
 import {
   contractDimAnim,
   contractModalAnim,
@@ -16,7 +18,11 @@ import {
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { HistoricoPagosRentaService } from 'src/app/services/moduleService/historico-pagos-renta.service';
 import { FormulasService } from 'src/app/services/moduleService/formulas.service';
-import { RentaFormulaPreviewService } from '../renta-formula-preview.service';
+import {
+  evaluarFormulaLocalConFactores,
+  factoresActivosDesdeListadoApi,
+  extraerFilasFormulasListadoApi,
+} from 'src/app/pages/factores/formula-eval-local';
 import {
   formatearFecha,
   formatearMoneda,
@@ -81,6 +87,18 @@ type CampoMonedaRentaModal =
 
 type RentaModalPasoCatalogo = 'arrendatario' | 'contrato' | 'formula';
 
+/** Forma de calcular el pago: fórmula guardada, o INPC/%Anual directo de Banxico (sin Factor ni Fórmula). */
+type RentaModoCalculo = 'formula' | 'inpc' | 'porcentaje';
+
+/** Periodo del catálogo INPC de Banxico, para el modo de cálculo directo. */
+interface PeriodoInpcRenta {
+  anio: number;
+  mes: number;
+  inpc: number;
+  porcentajeAnual: number;
+  label: string;
+}
+
 interface RentaModalResumenVm {
   listo: boolean;
   mensajeVacio: string;
@@ -124,6 +142,10 @@ export class ListaRentasActualesComponent implements OnInit {
   contratosOpciones: SelectOpcion[] = [];
   formulasOpciones: SelectOpcion[] = [];
   private arrendatariosCatalogo: Record<string, unknown>[] = [];
+  /** Filas crudas de fórmulas (expresión + tipoResultado) para evaluar en front. */
+  private formulasCatalogoRaw: Record<string, unknown>[] = [];
+  /** Factores activos para sustituir variables (incluye nombres con espacios). */
+  private factoresCatalogoEval: { variable: string; valor: number }[] = [];
   catalogosModalCargando = false;
   resumenRentaModal: RentaModalResumenVm = this.resumenRentaModalVacio();
   rentaTotalDisplay = '';
@@ -148,6 +170,25 @@ export class ListaRentasActualesComponent implements OnInit {
   /** Invalida respuestas de preview obsoletas al cambiar fórmula o catálogo. */
   private previewFormulaSeq = 0;
 
+  // ── Forma de cálculo: Fórmula guardada / INPC directo / % Anual directo ──
+  // Nunca son formControlName: no viajan a rentaForm.getRawValue() ni al body.
+  rentaModoCalculo: RentaModoCalculo = 'formula';
+  catalogoInpcRenta: PeriodoInpcRenta[] = [];
+  cargandoInpcRenta = false;
+  /** % Anual: un solo periodo. INPC: no se usa (van numerador/denominador). */
+  periodoInpcSeleccionadoRenta: number | null = null;
+  /** INPC directo: dividendo / divisor → factor. */
+  periodoInpcNumeradorRenta: number | null = null;
+  periodoInpcDenominadorRenta: number | null = null;
+  /** Rango mes→mes del catálogo INPC (mismo DateBox que histórico de pagos). */
+  mesDesdeInpcRenta: Date = new Date(new Date().getFullYear(), 0, 1);
+  mesHastaInpcRenta: Date = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  readonly mesCalendarOptionsInpcRenta = {
+    zoomLevel: 'year' as const,
+    maxZoomLevel: 'year' as const,
+    minZoomLevel: 'century' as const,
+  };
+
   private readonly rentaCamposRecalculoFormula = new Set<CampoMonedaRentaModal>([]);
   private readonly rentaCamposRecalculoFactor = new Set<CampoMonedaRentaModal>([
     'montoFinal',
@@ -164,11 +205,11 @@ export class ListaRentasActualesComponent implements OnInit {
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
+    private http: HttpClient,
     private rentaActualService: RentaActualService,
     private arrendatariosService: ArrendatariosService,
     private historicoPagosRentaService: HistoricoPagosRentaService,
     private formulasService: FormulasService,
-    private rentaFormulaPreview: RentaFormulaPreviewService,
   ) { }
 
   ngOnInit(): void {
@@ -237,7 +278,10 @@ export class ListaRentasActualesComponent implements OnInit {
       this.rentaTotalDisplay = '';
       this.rentaTotalMantenimientoDisplay = '';
       this.rentaMostrarMantenimiento = false;
+      this.rentaModoCalculo = 'formula';
+      this.limpiarSeleccionPeriodosInpcRenta();
       this.limpiarEvaluacionFormulaCache();
+      this.sincronizarValidadorIdFormulaRenta();
       this.autocompletarMontosDesdeUltimoPago(idContrato);
       this.actualizarResumenRentaModal();
       this.cdr.markForCheck();
@@ -263,6 +307,274 @@ export class ListaRentasActualesComponent implements OnInit {
     });
 
     this.rentaForm.valueChanges.subscribe(() => this.actualizarResumenRentaModal());
+  }
+
+  // ─── Forma de cálculo: Fórmula / INPC directo / % Anual directo ────────────
+
+  /** Cambia el modo de cálculo del monto (solo UI: no afecta el body). */
+  cambiarModoCalculoRenta(modo: RentaModoCalculo): void {
+    if (this.rentaModoCalculo === modo) return;
+    this.rentaModoCalculo = modo;
+
+    // Al salir de Fórmula / INPC / % Anual se reinicia monto + info de abajo.
+    this.reiniciarResultadosCalculoRentaModal();
+
+    if (modo !== 'formula') {
+      // No hay fórmula guardada de por medio: se manda idFormula null,
+      // igual que si el usuario nunca hubiera elegido una.
+      this.rentaForm.get('idFormula')?.setValue(null, { emitEvent: false });
+    }
+
+    this.sincronizarValidadorIdFormulaRenta();
+    this.actualizarResumenRentaModal();
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Reinicia montos derivados, selects INPC/%, preview y resumen inferior.
+   * No toca total / totalMantenimiento (vienen del contrato).
+   */
+  private reiniciarResultadosCalculoRentaModal(): void {
+    this.cancelarRecalculoRentaProgramado();
+    this.previewFormulaSeq++;
+    this.evaluandoFormula = false;
+    this.limpiarEvaluacionFormulaCache();
+    this.limpiarSeleccionPeriodosInpcRenta();
+    this.limpiarMontosDerivadosFormulaModal();
+  }
+
+  private limpiarSeleccionPeriodosInpcRenta(): void {
+    this.periodoInpcSeleccionadoRenta = null;
+    this.periodoInpcNumeradorRenta = null;
+    this.periodoInpcDenominadorRenta = null;
+  }
+
+  /**
+   * Opciones para dx-select-box. Deben ser arreglos estables (no getters):
+   * si la referencia cambia en cada ciclo de CD, DevExtreme re-vincula el
+   * data source y la selección nunca se aplica.
+   */
+  opcionesInpcDx: { idx: number; texto: string }[] = [];
+  opcionesPorcentajeAnualDx: { idx: number; texto: string }[] = [];
+
+  private reconstruirOpcionesInpcDx(): void {
+    this.opcionesInpcDx = this.catalogoInpcRenta.map((p, idx) => ({
+      idx,
+      texto: `${this.mesCortoInpcRenta(p)} - ${p.inpc}`,
+    }));
+    this.opcionesPorcentajeAnualDx = this.catalogoInpcRenta.map((p, idx) => ({
+      idx,
+      texto: `${this.mesCortoInpcRenta(p)} - ${p.porcentajeAnual}%`,
+    }));
+  }
+
+  /** "Junio 2026 — Banxico" → "Junio 2026". */
+  private mesCortoInpcRenta(p: PeriodoInpcRenta): string {
+    return (p.label || '').split('—')[0].trim();
+  }
+
+  /**
+   * `idFormula` solo es obligatorio en modo Fórmula.
+   * En INPC/% directo no va al flujo de evaluar; el body puede llevar null.
+   */
+  private sincronizarValidadorIdFormulaRenta(): void {
+    const ctrl = this.rentaForm?.get('idFormula');
+    if (!ctrl) return;
+    if (this.rentaModoCalculo === 'formula') {
+      ctrl.setValidators([Validators.required]);
+    } else {
+      ctrl.clearValidators();
+    }
+    ctrl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  /**
+   * INPC: factor = INPC numerador ÷ INPC denominador.
+   * % Anual: factor = 1 + (% / 100).
+   * Luego se usa el mismo recálculo local: montoFinal = factor × total.
+   */
+  aplicarValorInpcDirectoARenta(): void {
+    let factor: number | null = null;
+
+    if (this.rentaModoCalculo === 'inpc') {
+      if (this.periodoInpcNumeradorRenta == null || this.periodoInpcDenominadorRenta == null) {
+        return;
+      }
+      const num = this.catalogoInpcRenta[this.periodoInpcNumeradorRenta]?.inpc;
+      const den = this.catalogoInpcRenta[this.periodoInpcDenominadorRenta]?.inpc;
+      if (!Number.isFinite(num) || !Number.isFinite(den)) return;
+      if (den === 0) {
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'warning',
+          title: 'División inválida',
+          text: 'El INPC denominador no puede ser 0.',
+          confirmButtonText: 'Entendido',
+        });
+        return;
+      }
+      factor = parseFloat((num / den).toFixed(6));
+    } else {
+      if (this.periodoInpcSeleccionadoRenta == null) return;
+      const periodo = this.catalogoInpcRenta[this.periodoInpcSeleccionadoRenta];
+      const pct = periodo?.porcentajeAnual;
+      if (pct == null || !Number.isFinite(pct)) return;
+      factor = parseFloat((1 + pct / 100).toFixed(6));
+    }
+
+    if (factor == null || !Number.isFinite(factor) || factor <= 0) return;
+
+    this.conRecalcSuspendido(() => {
+      this.rentaForm.get('factorVariable')?.setValue(factor, { emitEvent: false });
+    });
+
+    this.recalcularMontosDesdeFactor();
+    // Directo Banxico: no pasó por fórmula guardada.
+    this.conRecalcSuspendido(() => {
+      this.rentaForm.get('ocupoFormula')?.setValue(0, { emitEvent: false });
+    });
+    this.actualizarResumenRentaModal();
+    this.cdr.markForCheck();
+  }
+
+  /** Normaliza el DateBox a día 1 del mes (solo mes/año importan). */
+  onMesRangoInpcRentaChange(): void {
+    if (this.mesDesdeInpcRenta instanceof Date && !Number.isNaN(this.mesDesdeInpcRenta.getTime())) {
+      this.mesDesdeInpcRenta = new Date(
+        this.mesDesdeInpcRenta.getFullYear(),
+        this.mesDesdeInpcRenta.getMonth(),
+        1,
+      );
+    }
+    if (this.mesHastaInpcRenta instanceof Date && !Number.isNaN(this.mesHastaInpcRenta.getTime())) {
+      this.mesHastaInpcRenta = new Date(
+        this.mesHastaInpcRenta.getFullYear(),
+        this.mesHastaInpcRenta.getMonth(),
+        1,
+      );
+    }
+  }
+
+  /** Reconsulta el catálogo INPC con el rango mes→mes (UI; no toca el body). */
+  aplicarFiltrosInpcRenta(): void {
+    this.onMesRangoInpcRentaChange();
+    if (!this.validarRangoMesInpcRenta(true)) return;
+    this.limpiarSeleccionPeriodosInpcRenta();
+    void this.cargarCatalogoInpcRenta().then((rows) => {
+      this.catalogoInpcRenta = rows;
+      this.reconstruirOpcionesInpcDx();
+      this.cdr.markForCheck();
+    });
+  }
+
+  private fechaMesInpcRentaPorDefecto(inicioAnio: boolean): Date {
+    const hoy = new Date();
+    return inicioAnio
+      ? new Date(hoy.getFullYear(), 0, 1)
+      : new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  }
+
+  private toIsoFechaInpcRenta(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  /** Primer día del mes desde → último día del mes hasta. */
+  private rangoIsoDesdeMesInpcRenta(): { inicio: string; fin: string } | null {
+    const desde = this.mesDesdeInpcRenta;
+    const hasta = this.mesHastaInpcRenta;
+    if (!(desde instanceof Date) || Number.isNaN(desde.getTime())) return null;
+    if (!(hasta instanceof Date) || Number.isNaN(hasta.getTime())) return null;
+    const inicio = new Date(desde.getFullYear(), desde.getMonth(), 1);
+    const fin = new Date(hasta.getFullYear(), hasta.getMonth() + 1, 0);
+    return {
+      inicio: this.toIsoFechaInpcRenta(inicio),
+      fin: this.toIsoFechaInpcRenta(fin),
+    };
+  }
+
+  private validarRangoMesInpcRenta(mostrarAlerta: boolean): boolean {
+    const rango = this.rangoIsoDesdeMesInpcRenta();
+    if (!rango) {
+      if (mostrarAlerta) {
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'warning',
+          title: 'Rango incompleto',
+          text: 'Selecciona mes desde y mes hasta.',
+          confirmButtonText: 'Entendido',
+        });
+      }
+      return false;
+    }
+    if (rango.inicio > rango.fin) {
+      if (mostrarAlerta) {
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'warning',
+          title: 'Rango inválido',
+          text: 'El mes desde no puede ser posterior al mes hasta.',
+          confirmButtonText: 'Entendido',
+        });
+      }
+      return false;
+    }
+    return true;
+  }
+
+  /** Mismo endpoint de solo lectura que ya usa "Agregar Factor" / "Agregar Fórmula". */
+  private cargarCatalogoInpcRenta(): Promise<PeriodoInpcRenta[]> {
+    if (!this.validarRangoMesInpcRenta(false)) {
+      const defDesde = this.fechaMesInpcRentaPorDefecto(true);
+      const defHasta = this.fechaMesInpcRentaPorDefecto(false);
+      this.mesDesdeInpcRenta = defDesde;
+      this.mesHastaInpcRenta = defHasta;
+    }
+
+    const rango = this.rangoIsoDesdeMesInpcRenta();
+    if (!rango) {
+      this.cargandoInpcRenta = false;
+      return Promise.resolve([]);
+    }
+
+    this.cargandoInpcRenta = true;
+    const url =
+      `${environment.API_SECURITY}/inpc/listado?fechaInicio=${rango.inicio}&fechaFin=${rango.fin}`;
+
+    return lastValueFrom(this.http.get<{ data?: unknown[] }>(url))
+      .then((resp) => {
+        const meses = [
+          'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+        ];
+        const rows = Array.isArray(resp?.data) ? resp.data : [];
+        return rows
+          .map((r) => r as Record<string, unknown>)
+          .map((r): PeriodoInpcRenta | null => {
+            const anio = Number(r['anio']);
+            const mes  = Number(r['mes']);
+            if (!Number.isFinite(anio) || !Number.isFinite(mes)) return null;
+            const inpc = this.parseNumeroFormulario(r['inpc']);
+            const pa   = this.parseNumeroFormulario(r['porcentajeAnual']);
+            const nombreMes = meses[mes - 1] ?? `Mes ${mes}`;
+            return {
+              anio, mes,
+              inpc: Number.isFinite(inpc) ? inpc : 0,
+              porcentajeAnual: Number.isFinite(pa) ? pa : 0,
+              label: `${nombreMes} ${anio} — Banxico`,
+            };
+          })
+          .filter((x): x is PeriodoInpcRenta => x != null)
+          .sort((a, b) => (b.anio - a.anio) || (b.mes - a.mes));
+      })
+      .finally(() => {
+        this.cargandoInpcRenta = false;
+      });
   }
 
   // ─── Continuidad Arrendatario → Contrato → Fórmula ───────────────────────────
@@ -629,18 +941,15 @@ export class ListaRentasActualesComponent implements OnInit {
 
   /** Reacción inmediata al elegir otra fórmula en el modal (solo UI local). */
   private onCambioFormulaRentaModal(idFormula: unknown): void {
-    this.previewFormulaSeq++;
-    this.limpiarEvaluacionFormulaCache();
-    this.cancelarRecalculoRentaProgramado();
+    // Nueva fórmula: limpia montos/resumen previos antes de recalcular.
+    this.reiniciarResultadosCalculoRentaModal();
 
     if (idFormula == null || idFormula === '') {
-      this.limpiarMontosDerivadosFormulaModal();
       this.actualizarResumenRentaModal();
       this.cdr.markForCheck();
       return;
     }
 
-    this.limpiarMontosDerivadosFormulaModal();
     this.actualizarResumenRentaModal();
     this.programarRecalculoRentaModal('formula');
     this.cdr.markForCheck();
@@ -654,8 +963,7 @@ export class ListaRentasActualesComponent implements OnInit {
       this.rentaForm.get('factorVariable')?.setValue(null, { emitEvent: false });
       this.rentaForm.get('ocupoFormula')?.setValue(0, { emitEvent: false });
     });
-    this.rentaMontoFinalDisplay = '';
-    this.rentaMontoFinalMantenimientoDisplay = '';
+    this.actualizarDisplayMonedaRenta();
   }
 
   private ejecutarRecalculoRentaModal(
@@ -892,26 +1200,86 @@ export class ListaRentasActualesComponent implements OnInit {
     this.evaluandoFormula = true;
     this.cdr.markForCheck();
 
-    this.rentaFormulaPreview.preview(ids)
-      .pipe(
-        take(1),
-        finalize(() => {
-          if (seq !== this.previewFormulaSeq) return;
-          this.evaluandoFormula = false;
-          this.scrollRentaModalSiCorresponde();
-          this.cdr.markForCheck();
-        }),
-      )
-      .subscribe({
-        next: (res: any) => {
-          if (seq !== this.previewFormulaSeq) return;
-          const evalNorm = this.normalizarRespuestaFormula(res);
-          this.ultimaEvaluacionFormula = evalNorm;
-          if (!this.aplicarFormulaEvaluadaAMontos(evalNorm)) return;
-          this.scrollRentaModalSiCorresponde();
-          this.cdr.markForCheck();
-        },
+    // Cálculo en front: el motor del API parte variables por espacios
+    // ("Factor junio" → FACTOR + JUNIO). Aquí se respetan los nombres completos.
+    void this.asegurarCatalogosEvalFormula()
+      .then(() => {
+        if (seq !== this.previewFormulaSeq) return;
+
+        const local = evaluarFormulaLocalConFactores(
+          this.formulasCatalogoRaw,
+          this.factoresCatalogoEval,
+          ids.idFormula,
+        );
+        const evalNorm = {
+          resultado: local.resultado,
+          tipoResultado: local.tipoResultado,
+        };
+        this.ultimaEvaluacionFormula = evalNorm;
+        if (!this.aplicarFormulaEvaluadaAMontos(evalNorm)) {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            icon: 'warning',
+            title: 'Sin total base',
+            text: 'El contrato aún no tiene total cargado para aplicar la fórmula.',
+            confirmButtonText: 'Entendido',
+          });
+        }
+        this.scrollRentaModalSiCorresponde();
+      })
+      .catch((err: unknown) => {
+        if (seq !== this.previewFormulaSeq) return;
+        this.limpiarEvaluacionFormulaCache();
+        this.limpiarMontosDerivadosFormulaModal();
+        this.actualizarResumenRentaModal();
+        console.error('Error al calcular la fórmula de la renta:', err);
+        const msg =
+          err instanceof Error && err.message.trim()
+            ? err.message.trim()
+            : this.mensajeErrorHttp(err) || 'No se pudo calcular la fórmula en el navegador.';
+        void Swal.fire({
+          background: '#141a21',
+          color: '#ffffff',
+          icon: 'error',
+          title: 'No se pudo calcular la fórmula',
+          text: msg,
+          confirmButtonText: 'Entendido',
+        });
+      })
+      .finally(() => {
+        if (seq !== this.previewFormulaSeq) return;
+        this.evaluandoFormula = false;
+        this.cdr.markForCheck();
       });
+  }
+
+  /** Carga factores (+ fórmulas crudas) necesarios para el eval local. */
+  private asegurarCatalogosEvalFormula(): Promise<void> {
+    const tareas: Promise<unknown>[] = [];
+
+    if (!this.formulasCatalogoRaw.length) {
+      tareas.push(
+        lastValueFrom(this.formulasService.obtenerFormulasData(1, 300)).then((resp) => {
+          this.formulasCatalogoRaw = extraerFilasFormulasListadoApi(resp);
+          this.formulasOpciones = this.mapFormulasOpciones(resp);
+        }),
+      );
+    }
+
+    if (!this.factoresCatalogoEval.length) {
+      tareas.push(
+        lastValueFrom(
+          this.http.get<{ data?: unknown[] }>(`${environment.API_SECURITY}/factores/listado`),
+        ).then((resp) => {
+          const rows = Array.isArray(resp?.data) ? resp.data : [];
+          this.factoresCatalogoEval = factoresActivosDesdeListadoApi(rows);
+        }),
+      );
+    }
+
+    if (!tareas.length) return Promise.resolve();
+    return Promise.all(tareas).then(() => undefined);
   }
 
   private cancelarScrollRentaModalProgramado(): void {
@@ -1132,8 +1500,11 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaTotalMantenimientoDisplay = '';
     this.rentaMontoFinalMantenimientoDisplay = '';
     this.rentaMostrarMantenimiento = false;
+    this.rentaModoCalculo = 'formula';
+    this.limpiarSeleccionPeriodosInpcRenta();
     this.limpiarEvaluacionFormulaCache();
     this.actualizarValidadoresMantenimientoModal();
+    this.sincronizarValidadorIdFormulaRenta();
     this.rentaModalPermitirAutoScroll = true;
     this.previewFormulaSeq = 0;
     this.mostrarModalRenta    = true;
@@ -1161,7 +1532,10 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaTotalMantenimientoDisplay = '';
     this.rentaMontoFinalMantenimientoDisplay = '';
     this.rentaMostrarMantenimiento = false;
+    this.rentaModoCalculo = 'formula';
+    this.limpiarSeleccionPeriodosInpcRenta();
     this.limpiarEvaluacionFormulaCache();
+    this.sincronizarValidadorIdFormulaRenta();
     this.aplicarDetalleRentaEnFormulario(row.detalle);
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
@@ -1250,8 +1624,21 @@ export class ListaRentasActualesComponent implements OnInit {
       return { listo: false, mensajeVacio: 'Selecciona un contrato para continuar.', pagoAFavorDe: '', arrendatario: '', campos: [], filaMontos: null };
     }
   
-    if (!Number.isFinite(idFor) || idFor <= 0) {
+    if (this.rentaModoCalculo === 'formula' && (!Number.isFinite(idFor) || idFor <= 0)) {
       return { listo: false, mensajeVacio: 'Selecciona una fórmula para ver el resumen del pago.', pagoAFavorDe: '', arrendatario: '', campos: [], filaMontos: null };
+    }
+
+    if (this.rentaModoCalculo !== 'formula') {
+      const factorActual = this.parseNumeroFormulario(raw['factorVariable']);
+      if (!Number.isFinite(factorActual) || factorActual <= 0) {
+        return {
+          listo: false,
+          mensajeVacio: this.rentaModoCalculo === 'inpc'
+            ? 'Selecciona dos periodos INPC (numerador ÷ denominador) y aplícalos para ver el resumen del pago.'
+            : 'Selecciona un periodo de % Anual y aplícalo para ver el resumen del pago.',
+          pagoAFavorDe: '', arrendatario: '', campos: [], filaMontos: null,
+        };
+      }
     }
   
     const item = this.arrendatariosCatalogo.find(
@@ -1294,8 +1681,15 @@ export class ListaRentasActualesComponent implements OnInit {
       campos.push({ etiqueta: 'Vigencia', valor: `${fi} – ${ff}` });
     }
   
-    const formula = this.etiquetaOpcion(this.formulasOpciones, idFor);
-    if (formula) campos.push({ etiqueta: 'Fórmula', valor: formula });
+    if (this.rentaModoCalculo === 'formula') {
+      const formula = this.etiquetaOpcion(this.formulasOpciones, idFor);
+      if (formula) campos.push({ etiqueta: 'Fórmula', valor: formula });
+    } else {
+      campos.push({
+        etiqueta: 'Forma de cálculo',
+        valor: this.rentaModoCalculo === 'inpc' ? 'INPC directo (Banxico)' : '% Anual directo (Banxico)',
+      });
+    }
   
     const montoFinalMtto = String(raw['montoFinalMantenimiento'] ?? '').trim();
     const factorVariable = String(raw['factorVariable'] ?? '').trim();
@@ -1435,9 +1829,13 @@ export class ListaRentasActualesComponent implements OnInit {
     void Promise.allSettled([
       lastValueFrom(this.arrendatariosService.obtenerArrendatariosListado()),
       lastValueFrom(this.formulasService.obtenerFormulasData(1, 300)),
+      this.cargarCatalogoInpcRenta(),
+      lastValueFrom(
+        this.http.get<{ data?: unknown[] }>(`${environment.API_SECURITY}/factores/listado`),
+      ),
     ])
       .then((results) => {
-        const [arrResult, formResult] = results;
+        const [arrResult, formResult, inpcResult, factoresResult] = results;
         if (arrResult.status === 'fulfilled') {
           this.arrendatariosCatalogo  = extraerFilasPaginadasApi(arrResult.value);
           this.arrendatariosOpciones  = this.mapArrendatariosOpciones(this.arrendatariosCatalogo);
@@ -1449,10 +1847,28 @@ export class ListaRentasActualesComponent implements OnInit {
           this.contratosOpciones     = [];
         }
         if (formResult.status === 'fulfilled') {
+          this.formulasCatalogoRaw = extraerFilasFormulasListadoApi(formResult.value);
           this.formulasOpciones = this.mapFormulasOpciones(formResult.value);
         } else {
           console.error('Error fórmulas modal renta:', formResult.reason);
+          this.formulasCatalogoRaw = [];
           this.formulasOpciones = [];
+        }
+        if (inpcResult.status === 'fulfilled') {
+          this.catalogoInpcRenta = inpcResult.value;
+        } else {
+          console.error('Error catálogo INPC modal renta:', inpcResult.reason);
+          this.catalogoInpcRenta = [];
+        }
+        this.reconstruirOpcionesInpcDx();
+        if (factoresResult.status === 'fulfilled') {
+          const rows = Array.isArray(factoresResult.value?.data)
+            ? factoresResult.value.data
+            : [];
+          this.factoresCatalogoEval = factoresActivosDesdeListadoApi(rows);
+        } else {
+          console.error('Error factores modal renta:', factoresResult.reason);
+          this.factoresCatalogoEval = [];
         }
       })
       .finally(() => {
@@ -1560,7 +1976,15 @@ export class ListaRentasActualesComponent implements OnInit {
     const idContrato     = Number(raw.idContrato);
     const idArrendatario = Number(raw.idArrendatario);
     const ocupoFormula   = Number(raw.ocupoFormula) === 1 ? 1 : 0;
-  
+
+    // En modo INPC/% Anual directo no hay fórmula guardada: se salta el
+    // paso de evaluar/auditar (que requiere idFormula) y se va directo a
+    // registrar/actualizar con lo que ya está resuelto en el formulario.
+    if (this.rentaModoCalculo !== 'formula') {
+      this.guardarRentaSinFormula(raw, total, idContrato, idArrendatario, ocupoFormula);
+      return;
+    }
+
     if (!Number.isFinite(total) || !Number.isFinite(idFormula)) {
       void Swal.fire({
         background: '#141a21', color: '#ffffff',
@@ -1570,10 +1994,31 @@ export class ListaRentasActualesComponent implements OnInit {
       });
       return;
     }
-  
+
+    const montoFinal = this.parseNumeroFormulario(raw.montoFinal);
+    const factorVariable = this.parseNumeroFormulario(raw.factorVariable);
+
+    if (
+      !Number.isFinite(montoFinal) ||
+      montoFinal <= 0 ||
+      !Number.isFinite(factorVariable) ||
+      factorVariable <= 0
+    ) {
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff',
+        icon: 'error', title: 'Montos inválidos',
+        text: 'Selecciona la fórmula y espera el cálculo (monto final y factor) antes de guardar.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
     this.rentaGuardando = true;
     this.cdr.markForCheck();
-  
+
+    // El cálculo ya se hizo en front. No se llama a /formulas/evaluar porque
+    // el motor del API parte nombres con espacios ("Factor junio" → FACTOR+JUNIO).
+    // Intento de auditoría en segundo plano (si falla, no bloquea el guardado).
     const evaluarBody: { idFormula: number; idContrato?: number; idArrendatario?: number } = {
       idFormula: Math.floor(idFormula),
     };
@@ -1583,93 +2028,141 @@ export class ListaRentasActualesComponent implements OnInit {
     if (Number.isFinite(idArrendatario) && idArrendatario > 0) {
       evaluarBody['idArrendatario'] = Math.floor(idArrendatario);
     }
-  
-    // Paso 1: evaluar con auditoría (guarda en FormulaEvaluaciones)
-    this.formulasService.evaluar(evaluarBody)
-      .pipe(take(1))
+    this.formulasService.evaluar(evaluarBody).pipe(take(1)).subscribe({
+      error: (err) => console.warn('Auditoría de fórmula omitida:', err),
+    });
+
+    const montosMtto = this.montosMantenimientoDesdeFormulario(raw);
+    const putBody: RentaActualPutPayload = {
+      total,
+      idFormula: Math.floor(idFormula),
+      montoFinal,
+      totalMantenimiento: montosMtto.totalMantenimiento,
+      montoFinalMantenimiento: montosMtto.montoFinalMantenimiento,
+      factorVariable,
+      ocupoFormula,
+    };
+
+    if (this.rentaModalModo === 'edicion' && this.rentaEditId != null) {
+      this.rentaActualService.actualizarRenta(this.rentaEditId, putBody)
+        .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => this.onRentaGuardadaOk('La renta se actualizó correctamente.'),
+          error: (err) => this.onRentaGuardadaError(err),
+        });
+      return;
+    }
+
+    if (!Number.isFinite(idArrendatario) || idArrendatario <= 0 ||
+        !Number.isFinite(idContrato)     || idContrato     <= 0) {
+      this.rentaGuardando = false;
+      this.cdr.markForCheck();
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff',
+        icon: 'warning', title: 'Arrendatario y contrato',
+        text: 'Selecciona arrendatario y contrato para registrar la renta.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    const postBody: RentaActualPostPayload = {
+      idArrendatario: Math.floor(idArrendatario),
+      idContrato:     Math.floor(idContrato),
+      ...putBody,
+    };
+
+    this.rentaActualService.registrarRenta(postBody)
+      .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: (resEvaluar: unknown) => {
-          this.normalizarRespuestaFormula(resEvaluar);
+        next: () => this.onRentaGuardadaOk('La renta del mes se registró correctamente.'),
+        error: (err) => this.onRentaGuardadaError(err),
+      });
+  }
 
-          const montoFinal = this.parseNumeroFormulario(raw.montoFinal);
-          const factorVariable = this.parseNumeroFormulario(raw.factorVariable);
+  /**
+   * Guarda la renta cuando el modo de cálculo es INPC directo o % Anual
+   * directo. Usa el MISMO servicio y la MISMA forma de payload
+   * (RentaActualPostPayload / RentaActualPutPayload) que el modo Fórmula;
+   * la única diferencia es que no se llama a FormulasService.evaluar()
+   * porque no hay idFormula que auditar.
+   */
+  private guardarRentaSinFormula(
+    raw: Record<string, unknown>,
+    total: number,
+    idContrato: number,
+    idArrendatario: number,
+    ocupoFormula: number,
+  ): void {
+    const montoFinal = this.parseNumeroFormulario(raw['montoFinal']);
+    const factorVariable = this.parseNumeroFormulario(raw['factorVariable']);
+    const idFormula = Number(raw['idFormula']);
 
-          if (
-            !Number.isFinite(montoFinal) ||
-            montoFinal <= 0 ||
-            !Number.isFinite(factorVariable) ||
-            factorVariable <= 0
-          ) {
-            this.rentaGuardando = false;
-            this.cdr.markForCheck();
-            void Swal.fire({
-              background: '#141a21', color: '#ffffff',
-              icon: 'error', title: 'Montos inválidos',
-              text: 'Revisa el total, monto final y factor fórmula.',
-              confirmButtonText: 'Entendido',
-            });
-            return;
-          }
+    if (
+      !Number.isFinite(total) ||
+      !Number.isFinite(montoFinal) || montoFinal <= 0 ||
+      !Number.isFinite(factorVariable) || factorVariable <= 0
+    ) {
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff',
+        icon: 'warning', title: 'Valores inválidos',
+        text: this.rentaModoCalculo === 'inpc'
+          ? 'Selecciona dos periodos INPC (numerador ÷ denominador) y aplícalos antes de guardar.'
+          : 'Selecciona un periodo de % Anual y aplícalo antes de guardar.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
 
-          const montosMtto = this.montosMantenimientoDesdeFormulario(raw);
+    this.rentaGuardando = true;
+    this.cdr.markForCheck();
 
-          const putBody: RentaActualPutPayload = {
-            total,
-            idFormula:      Math.floor(idFormula),
-            montoFinal,
-            totalMantenimiento: montosMtto.totalMantenimiento,
-            montoFinalMantenimiento: montosMtto.montoFinalMantenimiento,
-            factorVariable,
-            ocupoFormula,
-          };
-  
-          // Paso 2: registrar o actualizar la renta
-          if (this.rentaModalModo === 'edicion' && this.rentaEditId != null) {
-            this.rentaActualService.actualizarRenta(this.rentaEditId, putBody)
-              .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
-              .subscribe({
-                next: () => this.onRentaGuardadaOk('La renta se actualizó correctamente.'),
-                error: (err) => this.onRentaGuardadaError(err),
-              });
-            return;
-          }
-  
-          if (!Number.isFinite(idArrendatario) || idArrendatario <= 0 ||
-              !Number.isFinite(idContrato)     || idContrato     <= 0) {
-            this.rentaGuardando = false;
-            this.cdr.markForCheck();
-            void Swal.fire({
-              background: '#141a21', color: '#ffffff',
-              icon: 'warning', title: 'Arrendatario y contrato',
-              text: 'Selecciona arrendatario y contrato para registrar la renta.',
-              confirmButtonText: 'Entendido',
-            });
-            return;
-          }
-  
-          const postBody: RentaActualPostPayload = {
-            idArrendatario: Math.floor(idArrendatario),
-            idContrato:     Math.floor(idContrato),
-            ...putBody,
-          };
-  
-          this.rentaActualService.registrarRenta(postBody)
-            .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
-            .subscribe({
-              next: () => this.onRentaGuardadaOk('La renta del mes se registró correctamente.'),
-              error: (err) => this.onRentaGuardadaError(err),
-            });
-        },
-        error: (err) => {
-          this.rentaGuardando = false;
-          this.cdr.markForCheck();
-          void Swal.fire({
-            background: '#141a21', color: '#ffffff',
-            icon: 'error', title: 'Error al evaluar la fórmula',
-            text: this.mensajeErrorHttp(err),
-            confirmButtonText: 'Entendido',
-          });
-        },
+    const montosMtto = this.montosMantenimientoDesdeFormulario(raw);
+
+    const putBody: RentaActualPutPayload = {
+      total,
+      idFormula: Number.isFinite(idFormula) && idFormula > 0 ? Math.floor(idFormula) : (null as unknown as number),
+      montoFinal,
+      totalMantenimiento: montosMtto.totalMantenimiento,
+      montoFinalMantenimiento: montosMtto.montoFinalMantenimiento,
+      factorVariable,
+      ocupoFormula,
+    };
+
+    if (this.rentaModalModo === 'edicion' && this.rentaEditId != null) {
+      this.rentaActualService.actualizarRenta(this.rentaEditId, putBody)
+        .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => this.onRentaGuardadaOk('La renta se actualizó correctamente.'),
+          error: (err) => this.onRentaGuardadaError(err),
+        });
+      return;
+    }
+
+    if (!Number.isFinite(idArrendatario) || idArrendatario <= 0 ||
+        !Number.isFinite(idContrato)     || idContrato     <= 0) {
+      this.rentaGuardando = false;
+      this.cdr.markForCheck();
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff',
+        icon: 'warning', title: 'Arrendatario y contrato',
+        text: 'Selecciona arrendatario y contrato para registrar la renta.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    const postBody: RentaActualPostPayload = {
+      idArrendatario: Math.floor(idArrendatario),
+      idContrato:     Math.floor(idContrato),
+      ...putBody,
+    };
+
+    this.rentaActualService.registrarRenta(postBody)
+      .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: () => this.onRentaGuardadaOk('La renta del mes se registró correctamente.'),
+        error: (err) => this.onRentaGuardadaError(err),
       });
   }
 
