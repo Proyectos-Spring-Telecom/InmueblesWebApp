@@ -183,16 +183,34 @@
                 </div>
 
                 <div class="formula-builder__vars">
-                  <span class="formula-builder__vars-label">Variables</span>
+                  <div class="formula-builder__vars-head">
+                    <span class="formula-builder__vars-label">Variables</span>
+                    <label class="hub-vista-simple__busqueda formula-builder__vars-busqueda">
+                      <mat-icon aria-hidden="true">search</mat-icon>
+                      <input
+                        type="search"
+                        [(ngModel)]="busquedaVariablesFormula"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Buscar variable, INPC o % anual…"
+                        aria-label="Buscar variables"
+                      />
+                    </label>
+                  </div>
 
                   <div class="formula-builder__vars-scroll"
-                    *ngIf="!cargandoVariablesFactores && factoresParaSelectFormula.length">
+                    *ngIf="!cargandoVariablesFactores && factoresVariablesFiltrados.length">
                     <div class="formula-builder__vars-list">
                       <button type="button" class="formula-btn formula-btn--var"
-                        *ngFor="let f of factoresParaSelectFormula"
+                        *ngFor="let f of factoresVariablesFiltrados"
                         [class.formula-btn--var-used]="variableUsadaEnFormula(f.variable)"
-                        (click)="insertarVariable(f.variable)" [title]="f.etiqueta">
-                        {{ f.variable }}
+                        (click)="insertarVariable(f.variable)"
+                        [title]="f.etiqueta + ' · ' + etiquetaTipoValorVariable(f) + ': ' + textoValorVariable(f)">
+                        <span class="formula-btn__var-name">{{ f.variable }}</span>
+                        <span class="formula-btn__var-meta"
+                          [class.formula-btn__var-meta--inpc]="f.tipoValor === 'INPC'"
+                          [class.formula-btn__var-meta--pct]="f.tipoValor === 'PORCENTAJE_ANUAL'">
+                          {{ etiquetaTipoValorVariable(f) }} · {{ textoValorVariable(f) }}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -203,6 +221,10 @@
                   <p class="formula-builder__vars-empty"
                     *ngIf="!cargandoVariablesFactores && !factoresParaSelectFormula.length">
                     No hay variables registradas.
+                  </p>
+                  <p class="formula-builder__vars-empty"
+                    *ngIf="!cargandoVariablesFactores && factoresParaSelectFormula.length && !factoresVariablesFiltrados.length">
+                    Sin coincidencias para «{{ busquedaVariablesFormula.trim() }}».
                   </p>
                 </div>
               </div>

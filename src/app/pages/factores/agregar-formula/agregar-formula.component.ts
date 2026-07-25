@@ -18,6 +18,10 @@ interface FactorOpcionFormula {
   variable: string;
   etiqueta: string;
   valor: number | null;
+  /** Origen del número guardado en el factor (UI; no va al body de fórmulas). */
+  tipoValor: 'INPC' | 'PORCENTAJE_ANUAL' | null;
+  anioInpc: number | null;
+  mesInpc: number | null;
 }
 
 interface PreviewResultado {
@@ -66,6 +70,14 @@ export class AgregarFormulaComponent implements OnInit {
   public factoresParaSelectFormula: FactorOpcionFormula[] = [];
   public cargandoVariablesFactores = false;
   public previewState: PreviewState = null;
+  /** Filtro local de variables (nombre, tipo INPC/%, valor). No va al body. */
+  public busquedaVariablesFormula = '';
+  private catalogoInpcParaTipoValor: Array<{
+    anio: number;
+    mes: number;
+    inpc: number;
+    porcentajeAnual: number | null;
+  }> = [];
 
   constructor(
     private fb: FormBuilder,
@@ -116,7 +128,49 @@ export class AgregarFormulaComponent implements OnInit {
 
   private cargarCatalogoFactoresParaFormula(): void {
     this.cargandoVariablesFactores = true;
-    this.http.get<{ data?: unknown[] }>(`${environment.API_SECURITY}/factores/listado`).subscribe({
+    const hoy = new Date();
+    const inicio = `${hoy.getFullYear() - 5}-01-01`;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const fin = `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+
+    const factores$ = this.http.get<{ data?: unknown[] }>(
+      `${environment.API_SECURITY}/factores/listado`,
+    );
+    const inpc$ = this.http.get<{ data?: unknown[] }>(
+      `${environment.API_SECURITY}/inpc/listado?fechaInicio=${inicio}&fechaFin=${fin}`,
+    );
+
+    // INPC en paralelo solo para etiquetar si el valor del factor es índice o % anual.
+    inpc$.subscribe({
+      next: (resp) => {
+        const rows = Array.isArray(resp?.data) ? resp.data : [];
+        this.catalogoInpcParaTipoValor = rows
+          .map((item) => item as Record<string, unknown>)
+          .map((r) => {
+            const anio = Number(r['anio']);
+            const mes = Number(r['mes']);
+            if (!Number.isFinite(anio) || !Number.isFinite(mes)) return null;
+            const inpc = parseValorNumerico(r['inpc']);
+            const pa = parseValorNumerico(r['porcentajeAnual']);
+            return {
+              anio,
+              mes,
+              inpc: Number.isFinite(inpc) ? inpc : NaN,
+              porcentajeAnual: Number.isFinite(pa) ? pa : null,
+            };
+          })
+          .filter(
+            (x): x is { anio: number; mes: number; inpc: number; porcentajeAnual: number | null } =>
+              x != null,
+          );
+        this.recalcularTiposValorFactores();
+      },
+      error: () => {
+        this.catalogoInpcParaTipoValor = [];
+      },
+    });
+
+    factores$.subscribe({
       next: (resp) => {
         this.cargandoVariablesFactores = false;
         const rows = (Array.isArray(resp?.data) ? resp.data : [])
@@ -142,15 +196,21 @@ export class AgregarFormulaComponent implements OnInit {
           const rawVal = row['valor'] ?? row['Valor'] ?? null;
           const parsed = parseValorNumerico(rawVal);
           const valor = Number.isFinite(parsed) ? parsed : null;
+          const anioInpc = Number(row['anioInpc'] ?? row['anioINPC'] ?? row['AnioInpc']);
+          const mesInpc = Number(row['mesInpc'] ?? row['mesINPC'] ?? row['MesInpc']);
 
           factores.push({
             variable,
             etiqueta: desc ? `${variable} — ${desc}` : variable,
             valor,
+            tipoValor: null,
+            anioInpc: Number.isFinite(anioInpc) && anioInpc > 0 ? anioInpc : null,
+            mesInpc: Number.isFinite(mesInpc) && mesInpc >= 1 && mesInpc <= 12 ? mesInpc : null,
           });
         }
 
         this.factoresParaSelectFormula = factores;
+        this.recalcularTiposValorFactores();
         this.calcularPreview();
       },
       error: () => {
@@ -158,6 +218,69 @@ export class AgregarFormulaComponent implements OnInit {
         this.factoresParaSelectFormula = [];
       },
     });
+  }
+
+  /** Compara valor del factor con el periodo INPC para saber si es índice o % anual. */
+  private resolverTipoValorFactor(f: FactorOpcionFormula): 'INPC' | 'PORCENTAJE_ANUAL' | null {
+    if (f.valor == null || !Number.isFinite(f.valor)) return null;
+    if (f.anioInpc == null || f.mesInpc == null) return null;
+    const periodo = this.catalogoInpcParaTipoValor.find(
+      (p) => p.anio === f.anioInpc && p.mes === f.mesInpc,
+    );
+    if (!periodo) return null;
+    if (
+      periodo.porcentajeAnual != null &&
+      Math.abs(periodo.porcentajeAnual - f.valor) < 1e-9
+    ) {
+      return 'PORCENTAJE_ANUAL';
+    }
+    if (Number.isFinite(periodo.inpc) && Math.abs(periodo.inpc - f.valor) < 1e-9) {
+      return 'INPC';
+    }
+    // Si no empató exacto, heurística: % anuales suelen ser < 50; índices INPC >> 50.
+    if (f.valor > 0 && f.valor < 50) return 'PORCENTAJE_ANUAL';
+    if (f.valor >= 50) return 'INPC';
+    return null;
+  }
+
+  private recalcularTiposValorFactores(): void {
+    if (!this.factoresParaSelectFormula.length) return;
+    this.factoresParaSelectFormula = this.factoresParaSelectFormula.map((f) => ({
+      ...f,
+      tipoValor: this.resolverTipoValorFactor(f),
+    }));
+  }
+
+  get factoresVariablesFiltrados(): FactorOpcionFormula[] {
+    const q = this.busquedaVariablesFormula.trim().toLowerCase();
+    if (!q) return this.factoresParaSelectFormula;
+
+    return this.factoresParaSelectFormula.filter((f) => {
+      const tipoLabel = this.etiquetaTipoValorVariable(f).toLowerCase();
+      const valorTxt =
+        f.valor != null && Number.isFinite(f.valor)
+          ? String(f.valor).toLowerCase()
+          : '';
+      return (
+        f.variable.toLowerCase().includes(q) ||
+        tipoLabel.includes(q) ||
+        valorTxt.includes(q) ||
+        (q.includes('inpc') && f.tipoValor === 'INPC') ||
+        ((q.includes('porcentaje') || q.includes('%') || q.includes('anual')) &&
+          f.tipoValor === 'PORCENTAJE_ANUAL')
+      );
+    });
+  }
+
+  etiquetaTipoValorVariable(f: FactorOpcionFormula): string {
+    if (f.tipoValor === 'INPC') return 'INPC';
+    if (f.tipoValor === 'PORCENTAJE_ANUAL') return '% Anual';
+    return 'Valor';
+  }
+
+  textoValorVariable(f: FactorOpcionFormula): string {
+    if (f.valor == null || !Number.isFinite(f.valor)) return '—';
+    return this.formatValorFactor(f.valor);
   }
 
   // ─── Constructor de expresión por botones ─────────────────────────────────
