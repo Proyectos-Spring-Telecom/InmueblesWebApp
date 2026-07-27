@@ -44,8 +44,13 @@ const PANEL_SUBTEXT_BY_DISPLAY_NAME: Record<string, string> = {
   Administración: 'Configuración general del sistema y gestión de módulos.',
   Usuarios: 'Alta, edición y control de usuarios del sistema.',
   Roles: 'Definición de permisos y niveles de acceso.',
-  Arrendadores: 'Monitoreo y gestión de inmuebles y arrendatarios.',
-  Catálogos: 'Arrendadores, inmuebles, arrendatarios y rentas.',
+  Propiedades: 'Monitoreo geográfico de arrendadores e inmuebles.',
+  'Lista Arrendadores': 'Consulta y administración de arrendadores registrados.',
+  'Lista Inmuebles': 'Consulta y administración del catálogo de inmuebles.',
+  Arrendatarios: 'Gestión de arrendatarios, pagos del mes e histórico.',
+  'Rent Rol': 'Consulta del rent roll de arrendatarios.',
+  'Servicios Inmuebles': 'Registro y seguimiento de servicios por inmueble.',
+  'Servicios Arrendatarios': 'Registro y seguimiento de servicios por arrendatario.',
   'Perfil Usuario': 'Configuración y actualización de tu información personal.',
 };
 

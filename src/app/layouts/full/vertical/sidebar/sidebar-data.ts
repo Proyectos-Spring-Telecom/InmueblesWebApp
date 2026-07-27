@@ -218,7 +218,7 @@ export const navItems: NavItem[] = [
     navCap: 'Reportes',
   },
   {
-    displayName: 'Servicios Inmueble',
+    displayName: 'Servicios Inmuebles',
     iconName: 'building',
     route: '/registro-servicios-inmuebles',
     permission: Permiso.CONSULTAR_SERVICIOS_INMUEBLES,
