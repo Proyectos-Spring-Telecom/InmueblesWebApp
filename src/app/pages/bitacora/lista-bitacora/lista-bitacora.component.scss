@@ -1,0 +1,104 @@
+.inpc-filtro-fechas__label {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.inpc-filtro-fechas__input {
+  min-width: 11rem;
+  background: #1c252e;
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #f1f5f9;
+}
+
+.inpc-filtro-fechas__input:focus {
+  border-color: rgba(129, 140, 248, 0.55);
+  box-shadow: none;
+}
+
+.inpc-filtros-panel {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.inpc-filtros-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.inpc-filtros-panel__accion {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .inpc-filtros-panel__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inpc-filtros-panel__accion {
+    justify-content: stretch;
+  }
+}
+
+/* Etiquetas de acción estilo Swagger */
+.bitacora-accion {
+  display: inline-block;
+  min-width: 5.5rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #fff;
+}
+
+.bitacora-accion--post {
+  background: rgba(73, 204, 144, 0.22);
+  border-color: #49cc90;
+  color: #ffffff;
+}
+
+.bitacora-accion--get {
+  background: rgba(97, 175, 254, 0.22);
+  border-color: #61affe;
+  color: #ffffff;
+}
+
+.bitacora-accion--put {
+  background: rgba(252, 161, 48, 0.22);
+  border-color: #fca130;
+  color: #ffffff;
+}
+
+.bitacora-accion--patch {
+  background: rgba(144, 18, 254, 0.22);
+  border-color: #9012fe;
+  color: #ffffff;
+}
+
+.bitacora-accion--delete {
+  background: rgba(249, 62, 62, 0.22);
+  border-color: #f93e3e;
+  color: #ffffff;
+}
+
+.bitacora-accion--evaluate {
+  background: rgba(19, 194, 194, 0.22);
+  border-color: #13c2c2;
+  color: #ffffff;
+}
+
+.bitacora-accion--default {
+  background: rgba(148, 163, 184, 0.18);
+  border-color: #94a3b8;
+  color: #ffffff;
+}

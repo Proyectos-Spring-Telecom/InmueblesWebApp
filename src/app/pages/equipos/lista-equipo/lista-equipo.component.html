@@ -27,6 +27,9 @@
         <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
         {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
       </button>
+      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
+        <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
+      </button>
     </div>
     <div class="mt-3">
       <dx-data-grid #gridContainer id="gridContainer" class="inm-data-grid" [columnHidingEnabled]="true"

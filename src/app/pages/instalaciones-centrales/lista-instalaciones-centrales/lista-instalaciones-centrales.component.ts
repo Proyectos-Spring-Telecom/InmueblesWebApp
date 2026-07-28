@@ -9,6 +9,12 @@ import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { InstalacionCentralSede } from 'src/app/services/moduleService/instalacion-central.service';
 import Swal from 'sweetalert2';
+import {
+  exportarDxDataGridExcel,
+  gridTieneDatosParaExportar,
+  hojasDetalleInstalacionCentral,
+  obtenerItemsGridCompletos,
+} from 'src/app/shared/grid-excel-export';
 
 @Component({
   selector: 'app-lista-instalaciones-centrales',
@@ -311,6 +317,25 @@ export class ListaInstalacionesCentralesComponent implements OnInit {
     } else {
       this.autoExpandAllGroups = !this.autoExpandAllGroups;
       this.dataGrid.instance.refresh();
+    }
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      const masters = await obtenerItemsGridCompletos(inst);
+      await exportarDxDataGridExcel({
+        component: inst,
+        fileName: 'InstalacionesCentrales',
+        detailSheets: hojasDetalleInstalacionCentral(masters),
+      });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
     }
   }
 

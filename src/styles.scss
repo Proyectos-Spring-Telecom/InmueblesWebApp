@@ -889,10 +889,6 @@ body {
   border-radius: 14px;
 }
 
-.bg-secondary{
-  border-radius: 10px !important;
-}
-
 .bg-success{
   border-radius: 10px !important;
 }
@@ -902,6 +898,22 @@ body {
 }
 
 .bg-primary{
+  border-radius: 10px !important;
+}
+
+.bg-warning{
+  border-radius: 10px !important;
+}
+
+.bg-info{
+  border-radius: 10px !important;
+}
+
+.bg-error{
+  border-radius: 10px !important;
+}
+
+.bg-secondary{
   border-radius: 10px !important;
 }
 

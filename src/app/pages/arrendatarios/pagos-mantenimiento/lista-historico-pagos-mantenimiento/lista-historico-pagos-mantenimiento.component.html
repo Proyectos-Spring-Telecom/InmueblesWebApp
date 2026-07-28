@@ -96,6 +96,9 @@
           <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
           {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
         </button>
+        <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
+          <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
+        </button>
       </div>
     </div>
 

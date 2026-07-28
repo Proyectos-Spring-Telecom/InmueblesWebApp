@@ -10,13 +10,14 @@ import {
   contractModalAnim,
   routeAnimation,
 } from 'src/app/pipe/module-open.animation';
+import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 import {
   CatMetodoPagoItem,
   CatMetodosPagoService,
 } from 'src/app/services/moduleService/cat-metodos-pago.service';
 import { PagoArrendatarioService } from 'src/app/services/moduleService/pago-arrendatario.service';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
-import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import {
   contarMontoSimbolosAntesCursor,
   cursorMontoTrasFormato,
@@ -304,6 +305,17 @@ export class ListaRegistroServiciosArrendatariosComponent implements OnInit {
     }
     this.autoExpandAllGroups = !this.autoExpandAllGroups;
     inst.refresh();
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    await exportarDxDataGridExcel({
+      component: this.dataGrid?.instance,
+      fileName: 'RegServiciosArrendatarios',
+    });
   }
 
   onPageIndexChanged(e: any): void {

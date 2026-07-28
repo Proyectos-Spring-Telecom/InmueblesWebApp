@@ -39,6 +39,7 @@ export const navItems: NavItem[] = [
       Permiso.AGREGAR_PERMISO,
       Permiso.ACTUALIZAR_PERMISO,
       Permiso.ELIMINAR_PERMISO,
+      Permiso.CONSULTAR_BITACORA,
       Permiso.CONSULTAR_INPC,
       Permiso.AGREGAR_INPC,
       Permiso.ACTUALIZAR_INPC,
@@ -73,6 +74,11 @@ export const navItems: NavItem[] = [
           Permiso.ACTUALIZAR_PERMISO,
           Permiso.ELIMINAR_PERMISO,
         ],
+      },
+      {
+        displayName: 'Bitácora',
+        route: '/bitacora',
+        permission: Permiso.CONSULTAR_BITACORA,
       },
       {
         displayName: 'INPC',

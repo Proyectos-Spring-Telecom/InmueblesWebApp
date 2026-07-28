@@ -9,6 +9,7 @@ import { FormulasService } from 'src/app/services/moduleService/formulas.service
 import { formatearFechaHora } from 'src/app/pages/inmuebles/inmuebles-list.mapper';
 import { mesNumeroANombre } from 'src/app/pages/incrementos/inpc-historico.data';
 import { formatValorMilesParaLista } from 'src/app/shared/valor-miles-format';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 import Swal from 'sweetalert2';
 
 function mapFactorGridRow(item: any) {
@@ -528,6 +529,34 @@ export class ListaFactoresComponent implements OnInit {
       this.autoExpandAllGroupsFormulas = next;
       inst.option('grouping.autoExpandAll', next);
       inst.refresh();
+    }
+  }
+
+  puedeExportarExcelFactores(): boolean {
+    return gridTieneDatosParaExportar(this.dataGridFactores?.instance);
+  }
+
+  puedeExportarExcelFormulas(): boolean {
+    return gridTieneDatosParaExportar(this.dataGridFormulas?.instance);
+  }
+
+  async exportarExcelFactores(): Promise<void> {
+    const inst = this.dataGridFactores?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Factores' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
+  }
+
+  async exportarExcelFormulas(): Promise<void> {
+    const inst = this.dataGridFormulas?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Formulas' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
     }
   }
 }

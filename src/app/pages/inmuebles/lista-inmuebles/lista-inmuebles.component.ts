@@ -7,6 +7,12 @@ import { take } from 'rxjs/operators';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { ThemeService } from 'src/app/services/theme.service';
+import {
+  exportarDxDataGridExcel,
+  gridTieneDatosParaExportar,
+  hojasDetalleInmueble,
+  obtenerItemsGridCompletos,
+} from 'src/app/shared/grid-excel-export';
 import { InmuebleGridRow, mapInmueblesApiToGridRows } from '../inmuebles-list.mapper';
 import {
   construirGraficaMensualidadLocales,
@@ -276,6 +282,25 @@ export class ListaInmueblesComponent implements OnInit {
     this.filtroActivo = '';
     inst.option('dataSource', this.listaInmuebles);
     inst.refresh();
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      const masters = await obtenerItemsGridCompletos(inst);
+      await exportarDxDataGridExcel({
+        component: inst,
+        fileName: 'Inmuebles',
+        detailSheets: hojasDetalleInmueble(masters),
+      });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
   }
 
   verMapaDesdeDetalle(row: InmuebleGridRow): void {

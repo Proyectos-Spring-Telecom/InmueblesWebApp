@@ -10,13 +10,14 @@ import {
   contractModalAnim,
   routeAnimation,
 } from 'src/app/pipe/module-open.animation';
+import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 import {
   CatMetodoPagoItem,
   CatMetodosPagoService,
 } from 'src/app/services/moduleService/cat-metodos-pago.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { PagoInmuebleService } from 'src/app/services/moduleService/pago-inmueble.service';
-import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import {
   contarMontoSimbolosAntesCursor,
   cursorMontoTrasFormato,
@@ -302,6 +303,17 @@ export class ListaRegistroServiciosInmueblesComponent implements OnInit {
     }
     this.autoExpandAllGroups = !this.autoExpandAllGroups;
     inst.refresh();
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    await exportarDxDataGridExcel({
+      component: this.dataGrid?.instance,
+      fileName: 'RegServiciosInmuebles',
+    });
   }
 
   onPageIndexChanged(e: any): void {

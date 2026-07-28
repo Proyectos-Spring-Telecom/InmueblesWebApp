@@ -45,6 +45,11 @@ export const routes: Routes = [
           import('./pages/permisos/permisos.module').then((m) => m.PermisosModule),
       },
       {
+        path: 'bitacora',
+        loadChildren: () =>
+          import('./pages/bitacora/bitacora.module').then((m) => m.BitacoraModule),
+      },
+      {
         path: 'modulos',
         loadChildren: () =>
           import('./pages/modulos/modulos.module').then((m) => m.ModulosModule),

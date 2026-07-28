@@ -562,6 +562,12 @@ html.light-theme {
     color: #ffffff !important;
   }
 
+  .bg-info {
+    background: #0d9488 !important;
+    border: 1px solid #5eead4 !important;
+    color: #ffffff !important;
+  }
+
   .bg-warning {
     background-color: #d97706 !important;
     border: 1px solid #fde68a !important;
@@ -596,6 +602,14 @@ html.light-theme {
   .mat-mdc-raised-button.bg-success {
     --mdc-filled-button-container-color: #2e8c12 !important;
     --mat-button-filled-container-color: #2e8c12 !important;
+    --mdc-filled-button-label-text-color: #ffffff !important;
+    --mdc-filled-button-icon-color: #ffffff !important;
+  }
+
+  .mat-mdc-unelevated-button.bg-info,
+  .mat-mdc-raised-button.bg-info {
+    --mdc-filled-button-container-color: #0d9488 !important;
+    --mat-button-filled-container-color: #0d9488 !important;
     --mdc-filled-button-label-text-color: #ffffff !important;
     --mdc-filled-button-icon-color: #ffffff !important;
   }
@@ -1352,7 +1366,7 @@ html.light-theme {
     color: var(--app-text);
   }
 
-  .pageWrapper .text-white:not(.bg-primary):not(.bg-secondary):not(.bg-success):not(.bg-warning):not(.bg-error):not(.bg-warn):not(button):not(.mat-mdc-button-base) {
+  .pageWrapper .text-white:not(.bg-primary):not(.bg-secondary):not(.bg-success):not(.bg-info):not(.bg-warning):not(.bg-error):not(.bg-warn):not(button):not(.mat-mdc-button-base) {
     color: var(--app-text) !important;
   }
 

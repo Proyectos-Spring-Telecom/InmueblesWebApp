@@ -1,28 +1,27 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { IncrementosService } from 'src/app/services/moduleService/incrementos.service';
+import { BitacoraService } from 'src/app/services/moduleService/bitacora.service';
 import {
-  InpcPaginatedGridRow,
-  mapInpcPaginatedItemToRow,
-} from '../inpc-historico.data';
+  BitacoraGridRow,
+  mapBitacoraPaginatedItemToRow,
+} from '../bitacora-list.mapper';
 import Swal from 'sweetalert2';
 import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 
 @Component({
-  selector: 'app-lista-incrementos',
-  templateUrl: './lista-incrementos.component.html',
-  styleUrl: './lista-incrementos.component.scss',
+  selector: 'app-lista-bitacora',
+  templateUrl: './lista-bitacora.component.html',
+  styleUrl: './lista-bitacora.component.scss',
   standalone: false,
   animations: [routeAnimation],
 })
-export class ListaIncrementosComponent implements OnInit {
+export class ListaBitacoraComponent implements OnInit {
   public mensajeAgrupar: string =
     'Arrastre una columna aquí para agrupar por dicha columna';
-  public listaIncrementos: any;
+  public listaBitacora: any;
   public showFilterRow: boolean;
   public showHeaderFilter: boolean;
   public loading: boolean;
@@ -35,16 +34,13 @@ export class ListaIncrementosComponent implements OnInit {
   dataGrid: DxDataGridComponent;
   public autoExpandAllGroups: boolean = true;
   isGrouped: boolean = false;
-  public paginaActualData: InpcPaginatedGridRow[] = [];
+  public paginaActualData: BitacoraGridRow[] = [];
   public filtroActivo: string = '';
 
   fechaInicioFiltro = '';
   fechaFinFiltro = '';
 
-  constructor(
-    private router: Router,
-    private incrementosService: IncrementosService,
-  ) {
+  constructor(private bitacoraService: BitacoraService) {
     this.showFilterRow = true;
     this.showHeaderFilter = true;
   }
@@ -56,20 +52,18 @@ export class ListaIncrementosComponent implements OnInit {
     this.setupDataSource();
   }
 
-  agregarIncremento() {
-    this.router.navigateByUrl('/incrementos/agregar-incremento');
-  }
-
   onPageIndexChanged(e: any) {
     const pageIndex = e.component.pageIndex();
     this.paginaActual = pageIndex + 1;
     e.component.refresh();
   }
 
+  /** Mes vigente: del día 1 al día presente. */
   private rangoFechasPorDefecto(): { inicio: string; fin: string } {
     const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     return {
-      inicio: '2026-01-01',
+      inicio: this.toIsoFecha(inicioMes),
       fin: this.toIsoFecha(hoy),
     };
   }
@@ -112,7 +106,7 @@ export class ListaIncrementosComponent implements OnInit {
     this.loading = true;
     const defaultPageSize = this.pageSize || 10;
 
-    this.listaIncrementos = new CustomStore({
+    this.listaBitacora = new CustomStore({
       key: 'id',
       load: async (loadOptions: any) => {
         const skipValue = Number(loadOptions?.skip) || 0;
@@ -121,7 +115,7 @@ export class ListaIncrementosComponent implements OnInit {
 
         try {
           const resp = await lastValueFrom(
-            this.incrementosService.obtenerIncrementosData(
+            this.bitacoraService.obtenerBitacoraPaginada(
               page,
               takeValue,
               this.fechaInicioFiltro,
@@ -141,8 +135,8 @@ export class ListaIncrementosComponent implements OnInit {
             Math.max(1, Math.ceil(totalRegistros / takeValue));
 
           const dataTransformada = rowsRaw
-            .map((item) => mapInpcPaginatedItemToRow(item))
-            .filter((row): row is InpcPaginatedGridRow => row != null);
+            .map((item) => mapBitacoraPaginatedItemToRow(item))
+            .filter((row): row is BitacoraGridRow => row != null);
 
           this.totalRegistros = totalRegistros;
           this.paginaActual = paginaActual;
@@ -173,7 +167,7 @@ export class ListaIncrementosComponent implements OnInit {
     const texto = (e.value ?? '').toString().trim().toLowerCase();
     if (!texto) {
       this.filtroActivo = '';
-      grid?.option('dataSource', this.listaIncrementos);
+      grid?.option('dataSource', this.listaBitacora);
       return;
     }
     this.filtroActivo = texto;
@@ -192,28 +186,11 @@ export class ListaIncrementosComponent implements OnInit {
       .filter((df: any) => typeof df === 'string' && df.trim().length > 0);
     const normalizar = (val: any): string => {
       if (val === null || val === undefined) return '';
-      if (val instanceof Date) {
-        const dd = String(val.getDate()).padStart(2, '0');
-        const mm = String(val.getMonth() + 1).padStart(2, '0');
-        const yyyy = val.getFullYear();
-        return `${dd}/${mm}/${yyyy}`.toLowerCase();
-      }
       return String(val).toLowerCase();
     };
-    const dataFiltrada = (this.paginaActualData || []).filter((row: any) => {
-      const hitEnColumnas = dataFields.some((df) =>
-        normalizar(row?.[df]).includes(texto),
-      );
-      const extras = [
-        normalizar(row?.id),
-        normalizar(row?.origenLabel),
-        normalizar(row?.porcentajeAnualFmt),
-        normalizar(row?.porcAcumAnualFmt),
-        normalizar(String(row?.inpcFmt ?? '').replace(/,/g, '')),
-      ];
-
-      return hitEnColumnas || extras.some((s) => s.includes(texto));
-    });
+    const dataFiltrada = (this.paginaActualData || []).filter((row: any) =>
+      dataFields.some((df) => normalizar(row?.[df]).includes(texto)),
+    );
     grid?.option('dataSource', dataFiltrada);
   }
 
@@ -257,7 +234,7 @@ export class ListaIncrementosComponent implements OnInit {
     const inst = this.dataGrid?.instance;
     if (!inst) return;
     try {
-      await exportarDxDataGridExcel({ component: inst, fileName: 'INPC' });
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Bitacora' });
     } catch (err) {
       console.error('Error al exportar grid:', err);
     }

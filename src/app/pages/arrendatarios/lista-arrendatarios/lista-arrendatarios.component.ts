@@ -7,6 +7,12 @@ import { take } from 'rxjs/operators';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import {
+  exportarDxDataGridExcel,
+  gridTieneDatosParaExportar,
+  hojasDetalleArrendatario,
+  obtenerItemsGridCompletos,
+} from 'src/app/shared/grid-excel-export';
+import {
   ArrendatarioGridRow,
   mapArrendatariosApiToGridRows,
 } from '../arrendatarios-list.mapper';
@@ -224,6 +230,25 @@ export class ListaArrendatariosComponent implements OnInit {
     this.filtroActivo = '';
     inst.option('dataSource', this.listaArrendatarios);
     inst.refresh();
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      const masters = await obtenerItemsGridCompletos(inst);
+      await exportarDxDataGridExcel({
+        component: inst,
+        fileName: 'Arrendatarios',
+        detailSheets: hojasDetalleArrendatario(masters),
+      });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
   }
 
   onMasterRowClick(e: any): void {

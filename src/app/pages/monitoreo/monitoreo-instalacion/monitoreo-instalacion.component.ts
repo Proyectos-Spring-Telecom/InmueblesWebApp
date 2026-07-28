@@ -38,6 +38,7 @@ import {
   formatearMonedaDesdeLimpia,
   parseMonedaNumerico,
 } from 'src/app/shared/valor-miles-format';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import {
@@ -399,7 +400,8 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   hitsPorHora = [{ hora: '00:00', hombres: 0, mujeres: 0 }];
 
   registros: any[] = [];
-  @ViewChild('gridRef', { static: false }) gridRef: DxDataGridComponent;
+  @ViewChild('gridServicios', { static: false }) gridServicios?: DxDataGridComponent;
+  @ViewChild('gridPagos', { static: false }) gridPagos?: DxDataGridComponent;
   @ViewChild('pagoComprobanteInput', { static: false })
   pagoComprobanteInput?: ElementRef<HTMLInputElement>;
   @ViewChild('pagoMontoInput', { static: false })
@@ -915,6 +917,34 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     this.fechaFinFiltroPagos = rango.fin;
     this.estatusFiltroPagos = null;
     this.cargarPagosGrid();
+  }
+
+  puedeExportarExcelServicios(): boolean {
+    return gridTieneDatosParaExportar(this.gridServicios?.instance);
+  }
+
+  puedeExportarExcelPagos(): boolean {
+    return gridTieneDatosParaExportar(this.gridPagos?.instance);
+  }
+
+  async exportarExcelServicios(): Promise<void> {
+    const inst = this.gridServicios?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Servicios' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
+  }
+
+  async exportarExcelPagos(): Promise<void> {
+    const inst = this.gridPagos?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Pagos' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
   }
 
   private rangoFechasPagosPorDefecto(): { inicio: string; fin: string } {

@@ -7,6 +7,7 @@ import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ModulosService } from 'src/app/services/moduleService/modulos.service';
 import { Permiso } from 'src/app/entities/permiso.enum';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -301,5 +302,19 @@ export class ListaModulosComponent implements OnInit {
     this.dataGrid.instance.pageIndex(0);
     this.dataGrid.instance.refresh();
     this.isGrouped = false;
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Modulos' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
   }
 }

@@ -5,6 +5,7 @@ import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ProductoService } from 'src/app/services/moduleService/productos.service';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -288,6 +289,20 @@ export class ListaProductosComponent implements OnInit {
     } else {
       this.autoExpandAllGroups = !this.autoExpandAllGroups;
       this.dataGrid.instance.refresh();
+    }
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Productos' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
     }
   }
 }
