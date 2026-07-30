@@ -102,3 +102,45 @@
   border-color: #94a3b8;
   color: #ffffff;
 }
+
+/* Tema claro: texto oscuro (el fondo claro deja el blanco ilegible) */
+:host-context(html.light-theme) {
+  .bitacora-accion,
+  .bitacora-accion--post,
+  .bitacora-accion--get,
+  .bitacora-accion--put,
+  .bitacora-accion--patch,
+  .bitacora-accion--delete,
+  .bitacora-accion--evaluate,
+  .bitacora-accion--default {
+    color: #0f172a !important;
+  }
+
+  .bitacora-accion--post {
+    background: rgba(73, 204, 144, 0.2) !important;
+  }
+
+  .bitacora-accion--get {
+    background: rgba(97, 175, 254, 0.2) !important;
+  }
+
+  .bitacora-accion--put {
+    background: rgba(252, 161, 48, 0.2) !important;
+  }
+
+  .bitacora-accion--patch {
+    background: rgba(144, 18, 254, 0.16) !important;
+  }
+
+  .bitacora-accion--delete {
+    background: rgba(249, 62, 62, 0.16) !important;
+  }
+
+  .bitacora-accion--evaluate {
+    background: rgba(19, 194, 194, 0.18) !important;
+  }
+
+  .bitacora-accion--default {
+    background: rgba(148, 163, 184, 0.22) !important;
+  }
+}

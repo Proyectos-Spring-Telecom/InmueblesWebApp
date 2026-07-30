@@ -3,6 +3,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
+import { ClientesInmueblesService } from 'src/app/services/moduleService/clientes-inmuebles.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { ModulosService } from 'src/app/services/moduleService/modulos.service';
 import { RolesService } from 'src/app/services/moduleService/roles.service';
@@ -137,7 +138,7 @@ export class AgregarUsuarioComponent implements OnInit {
     private activatedRouted: ActivatedRoute,
     private moduService: ModulosService,
     private rolService: RolesService,
-    private clienService: ClientesService
+    private clienService: ClientesInmueblesService
   ) {}
 
   ngOnInit(): void {
@@ -153,6 +154,9 @@ export class AgregarUsuarioComponent implements OnInit {
       this.obtenerUsuarioID();
       this.showInputsId = false;
       this.inputContrasena = false; // <- clave para que NO sea requerida al actualizar
+      const userNameCtrl = this.usuarioForm.get('userName');
+      userNameCtrl?.clearValidators();
+      userNameCtrl?.updateValueAndValidity({ emitEvent: false });
     }
   });
 }
@@ -557,7 +561,6 @@ const permisosAsignadosIds: number[] = Array.from(
     const v = this.usuarioForm.value;
     const formData = new FormData();
 
-    formData.append('userName', v.userName);
     formData.append(
       'emailConfirmado',
       String(v.emailConfirmado ?? 0)
@@ -734,6 +737,9 @@ const permisosAsignadosIds: number[] = Array.from(
         !this.inputContrasena &&
         (key === 'passwordHash' || key === 'confirmPassword')
       ) {
+        return;
+      }
+      if (key === 'userName') {
         return;
       }
       const control = this.usuarioForm.get(key);

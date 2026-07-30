@@ -70,6 +70,13 @@ export const routes: Routes = [
           import('./pages/clientes/clientes.module').then((m) => m.ClientesModule),
       },
       {
+        path: 'clientes-inmuebles',
+        loadChildren: () =>
+          import('./pages/clientes-inmuebles/clientes-inmuebles.module').then(
+            (m) => m.ClientesInmueblesModule
+          ),
+      },
+      {
         path: 'sample-page',
         loadChildren: () =>
           import('./pages/pages.routes').then((m) => m.PagesRoutes),

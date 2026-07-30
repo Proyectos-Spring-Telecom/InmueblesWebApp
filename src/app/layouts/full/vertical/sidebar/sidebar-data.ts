@@ -141,6 +141,29 @@ export const navItems: NavItem[] = [
     ],
   },
   {
+    displayName: 'Clientes',
+    iconName: 'briefcase',
+    route: '/menu-level',
+    permission: [
+      Permiso.CONSULTAR_CLIENTES_INMUEBLES,
+      Permiso.AGREGAR_CLIENTE_INMUEBLE,
+      Permiso.ACTUALIZAR_CLIENTE_INMUEBLE,
+      Permiso.ELIMINAR_CLIENTE_INMUEBLE,
+    ],
+    children: [
+      {
+        displayName: 'Agregar Cliente',
+        route: '/clientes-inmuebles/agregar-cliente-inmueble',
+        permission: Permiso.AGREGAR_CLIENTE_INMUEBLE,
+      },
+      {
+        displayName: 'Lista Clientes',
+        route: '/clientes-inmuebles',
+        permission: Permiso.CONSULTAR_CLIENTES_INMUEBLES,
+      },
+    ],
+  },
+  {
     displayName: 'Roles',
     iconName: 'user-cog',
     route: '/menu-level',

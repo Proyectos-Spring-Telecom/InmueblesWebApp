@@ -6,35 +6,36 @@ import { environment } from '../../../environments/environment';
 @Injectable({
   providedIn: 'root'
 })
-export class ClientesService {
+export class ClientesInmueblesService {
 
   constructor(private http: HttpClient) { }
 
+  private readonly apiUrl = `${environment.API_SECURITY}/clientes`;
+
   obtenerClientesData(page: number, pageSize: number): Observable<any> {
-		return this.http.get(`${environment.API_SECURITY}/arrendadores/${page}/${pageSize}`);
-	}
+    return this.http.get(`${this.apiUrl}/${page}/${pageSize}`);
+  }
 
   obtenerClientes(): Observable<any> {
-		return this.http.get(`${environment.API_SECURITY}/arrendadores/list`);
-	}
+    return this.http.get(`${this.apiUrl}/list`);
+  }
 
   agregarCliente(data: any) {
-    return this.http.post(environment.API_SECURITY + '/arrendadores', data);
+    return this.http.post(this.apiUrl, data);
   }
 
-  eliminarCliente(idCliente: Number) {
-        return this.http.delete(environment.API_SECURITY + '/arrendadores/' + idCliente);
-    }
+  eliminarCliente(idCliente: number) {
+    return this.http.delete(`${this.apiUrl}/${idCliente}`);
+  }
 
   obtenerCliente(idCliente: number): Observable<any> {
-        return this.http.get<any>(environment.API_SECURITY + '/arrendadores/' + idCliente);
-    }
-
-  actualizarCliente(idCliente: number, saveForm: any): Observable<any> {
-    return this.http.put(`${environment.API_SECURITY}/arrendadores/` + idCliente, saveForm);
+    return this.http.get<any>(`${this.apiUrl}/${idCliente}`);
   }
 
-  private apiUrl = `${environment.API_SECURITY}/arrendadores`;
+  actualizarCliente(idCliente: number, saveForm: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${idCliente}`, saveForm);
+  }
+
   updateEstatus(id: number, estatus: number): Observable<string> {
     const url = `${this.apiUrl}/estatus/${id}`;
     const body = { estatus };
@@ -42,5 +43,5 @@ export class ClientesService {
       catchError(error => throwError(() => error))
     );
   }
-  
+
 }

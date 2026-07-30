@@ -18,6 +18,7 @@ import {
   urlOCadenaDeArchivoApi,
 } from '../clientes-list.mapper';
 import Swal from 'sweetalert2';
+import { ClientesInmueblesService } from 'src/app/services/moduleService/clientes-inmuebles.service';
 
 /** Línea base de socios al abrir edición (detectar cambios y no enviar `socios` si no hubo toques). */
 type SocioEdicionSnapshot = {
@@ -78,6 +79,7 @@ export class AgregarClienteComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private clieService: ClientesService,
+    private clientesInmueblesService: ClientesInmueblesService,
     private activatedRouted: ActivatedRoute,
     private route: Router,
     private usuaService: UsuariosService,
@@ -173,7 +175,7 @@ export class AgregarClienteComponent implements OnInit {
   private poblarFormularioDesdeDetalleApi(d: Record<string, unknown>): void {
     this.clienteForm.patchValue(
       {
-        idPadre: d['idPadre'] != null ? Number(d['idPadre']) : null,
+        idCliente: d['idCliente'] != null ? Number(d['idCliente']) : null,
         rfc: this.strApi(d['rfc']),
         tipoPersona:
           d['tipoPersona'] != null && String(d['tipoPersona']).trim() !== ''
@@ -374,7 +376,7 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   obtenerClientes() {
-    this.clieService.obtenerClientes().subscribe((response) => {
+    this.clientesInmueblesService.obtenerClientes().subscribe((response) => {
       this.listaClientes = (response.data || []).map((c: any) => ({
         ...c,
         id: Number(c.id),
@@ -575,7 +577,7 @@ export class AgregarClienteComponent implements OnInit {
   initForm() {
     this.sociosEdicionSnapshots = null;
     this.clienteForm = this.fb.group({
-      idPadre: [null as number | null],
+      idCliente: [null as number | null, Validators.required],
       rfc: ['', [Validators.required, Validators.maxLength(13)]],
       tipoPersona: [null, Validators.required],
       estatus: [1],
@@ -847,10 +849,10 @@ export class AgregarClienteComponent implements OnInit {
 
     const fd = new FormData();
 
-    const idPadre = v['idPadre'];
-    if (idPadre !== undefined && idPadre !== null && String(idPadre).trim() !== '') {
-      const n = Number(idPadre);
-      if (Number.isFinite(n)) fd.append('idPadre', String(Math.trunc(n)));
+    const idCliente = v['idCliente'];
+    if (idCliente !== undefined && idCliente !== null && String(idCliente).trim() !== '') {
+      const n = Number(idCliente);
+      if (Number.isFinite(n)) fd.append('idCliente', String(Math.trunc(n)));
     }
 
     if (v['rfc'] != null) fd.append('rfc', String(v['rfc']).trim());
@@ -937,7 +939,7 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   private readonly etiquetasValidacionCliente: Record<string, string> = {
-    idPadre: 'Arrendador vinculado',
+    idCliente: 'Cliente',
     rfc: 'RFC',
     tipoPersona: 'Tipo de Persona',
     estatus: 'Estatus',

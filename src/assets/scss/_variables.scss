@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700");
+@use "sass:color";
 
 $font-family: "Poppins", sans-serif;
 
@@ -20,7 +20,7 @@ $white:     #ffffff;
 $light: var(--mat-sys-surface-bright);
 
 @function contrast-color($color, $dark:#0f172a, $light:#ffffff) {
-  @if (lightness($color) > 55%) { @return $dark; }
+  @if (color.channel($color, "lightness", $space: hsl) > 55%) { @return $dark; }
   @return $light;
 }
 
