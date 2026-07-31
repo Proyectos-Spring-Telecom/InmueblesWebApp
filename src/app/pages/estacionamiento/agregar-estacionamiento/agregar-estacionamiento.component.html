@@ -90,6 +90,10 @@
                     <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
                     {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
                   </button>
+                  <button type="button" (click)="exportarExcelEstacionamiento()" mat-flat-button
+                    class="bg-info est-grid-toolbar__btn" [disabled]="!puedeExportarExcelEstacionamiento()">
+                    <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
+                  </button>
                 </div>
               </div>
               <div class="mt-3">
@@ -394,6 +398,10 @@
                     ? ' Contraer Grupos'
                     : ' Expandir Grupos'
                     }}
+                  </button>
+                  <button type="button" (click)="exportarExcelEntradasSalidas()" mat-flat-button
+                    class="bg-info est-grid-toolbar__btn" [disabled]="!puedeExportarExcelEntradasSalidas()">
+                    <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
                   </button>
                 </div>
               </div>

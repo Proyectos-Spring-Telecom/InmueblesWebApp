@@ -54,6 +54,7 @@ import {
   parseMonedaNumerico,
   parseValorNumerico,
 } from 'src/app/shared/valor-miles-format';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 
 interface EvaluacionFormulaRentas {
   montoFinal: number;
@@ -1472,6 +1473,17 @@ export class ListaRentasActualesComponent implements OnInit {
     }
     this.autoExpandAllGroups = !this.autoExpandAllGroups;
     this.dataGrid.instance.refresh();
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    await exportarDxDataGridExcel({
+      component: this.dataGrid?.instance,
+      fileName: 'RentasActuales',
+    });
   }
 
   // ─── Modal alta ──────────────────────────────────────────────────────────────

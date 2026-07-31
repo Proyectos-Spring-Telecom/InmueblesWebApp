@@ -25,6 +25,7 @@ import {
   HistoricoPagoRentaGridRow,
   mapHistoricoPagoRentaApiToGridRow,
 } from './historico-pagos-renta-list.mapper';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 
 interface SelectOpcion {
   id: number;
@@ -373,6 +374,17 @@ export class ListaHistoricoPagosRentaComponent implements OnInit {
     }
     this.autoExpandAllGroups = !this.autoExpandAllGroups;
     this.dataGrid.instance.refresh();
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    await exportarDxDataGridExcel({
+      component: this.dataGrid?.instance,
+      fileName: 'HistoricoRentas',
+    });
   }
 
   verDetalleHistorico(row: HistoricoPagoRentaGridRow): void {

@@ -38,10 +38,10 @@ export class CustomizerComponent {
   ) {}
 
   setDark() {
-    const mode: AppThemeMode =
-      this.options.theme === 'light' ? 'light' : 'dark';
-    this.themeService.setTheme(mode);
-    this.emitOptions();
+    const next: AppThemeMode = this.options.theme === 'light' ? 'dark' : 'light';
+    void this.themeService.setTheme(next).then(() => {
+      this.emitOptions();
+    });
   }
 
   setColor(color: string) {

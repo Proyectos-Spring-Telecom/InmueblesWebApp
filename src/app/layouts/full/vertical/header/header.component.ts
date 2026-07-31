@@ -44,6 +44,7 @@ const PANEL_SUBTEXT_BY_DISPLAY_NAME: Record<string, string> = {
   Administración: 'Configuración general del sistema y gestión de módulos.',
   Usuarios: 'Alta, edición y control de usuarios del sistema.',
   Roles: 'Definición de permisos y niveles de acceso.',
+  Bitácora: 'Consulta del historial de movimientos del sistema.',
   Propiedades: 'Monitoreo geográfico de arrendadores e inmuebles.',
   'Lista Arrendadores': 'Consulta y administración de arrendadores registrados.',
   'Lista Inmuebles': 'Consulta y administración del catálogo de inmuebles.',
@@ -376,9 +377,10 @@ export class HeaderComponent implements OnInit {
 
   setlightDark(theme: string) {
     const mode: AppThemeMode = theme === 'light' ? 'light' : 'dark';
-    this.themeService.setTheme(mode);
-    this.options = this.settings.getOptions();
-    this.emitOptions();
+    void this.themeService.setTheme(mode).then(() => {
+      this.options = this.settings.getOptions();
+      this.emitOptions();
+    });
   }
 
   private emitOptions() {

@@ -1,6 +1,6 @@
-@import '../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
-@import '../../arrendatarios/pagos-renta/lista-historico-pagos-renta/lista-historico-pagos-renta.component.scss';
-@import '../../inmuebles/lista-inmuebles-detalle/swal-estatus-local.scss';
+@use '../../inmuebles/lista-inmuebles/lista-inmuebles.component.scss';
+@use '../../arrendatarios/pagos-renta/lista-historico-pagos-renta/lista-historico-pagos-renta.component.scss';
+@use '../../inmuebles/lista-inmuebles-detalle/swal-estatus-local.scss';
 
 .reg-srv-pago-estatus {
   display: inline-flex;

@@ -932,18 +932,24 @@
   width: 100%;
 }
 
+/*
+ * fill-mode `both` dejaba `transform: translateX(0)` permanente en el panel.
+ * Google Maps falla (tiles en blanco) con un ancestro con transform;
+ * al refrescar a veces “parece” arreglarse por timing. Solo `backwards`
+ * anima la entrada y al terminar el panel vuelve sin transform.
+ */
 .monitor-flow-panel.monitor-anim-fwd,
 .monitor-list-pane.monitor-anim-fwd,
 .monitor-right-viewport .map-wrapper.monitor-anim-fwd,
 .monitor-right-viewport .locales-wrapper.monitor-anim-fwd {
-  animation: monitorSlideInFwd 300ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
+  animation: monitorSlideInFwd 300ms cubic-bezier(0.22, 0.82, 0.22, 1) backwards;
 }
 
 .monitor-flow-panel.monitor-anim-back,
 .monitor-list-pane.monitor-anim-back,
 .monitor-right-viewport .map-wrapper.monitor-anim-back,
 .monitor-right-viewport .locales-wrapper.monitor-anim-back {
-  animation: monitorSlideInBack 300ms cubic-bezier(0.22, 0.82, 0.22, 1) both;
+  animation: monitorSlideInBack 300ms cubic-bezier(0.22, 0.82, 0.22, 1) backwards;
 }
 
 .monitor-list-viewport,

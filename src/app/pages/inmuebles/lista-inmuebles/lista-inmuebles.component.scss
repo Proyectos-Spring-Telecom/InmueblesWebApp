@@ -1,8 +1,8 @@
+@use '../../../shared/documento-preview/documento-preview.component.scss';
+
 :host {
   display: block;
 }
-
-@import '../../../shared/documento-preview/documento-preview.component.scss';
 
 .inm-row-card {
   display: flex;

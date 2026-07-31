@@ -21,8 +21,8 @@ body {
   // sidebar
 
   .user-profile .profile-img {
-    margin-left: 0;
-    margin-right: 30px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .sidebar-list {
@@ -96,15 +96,16 @@ body {
 
         .user-profile {
           .profile-img {
-            margin-left: 0;
-            margin-right: 9px;
+            margin-left: auto;
+            margin-right: auto;
           }
         }
       }
       &:hover {
         .user-profile {
           .profile-img {
-            margin-right: 30px;
+            margin-left: auto;
+            margin-right: auto;
           }
         }
 

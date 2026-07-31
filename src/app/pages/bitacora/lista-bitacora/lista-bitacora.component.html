@@ -1,0 +1,88 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+  <header class="perm-head" role="region" aria-label="Sección: Bitácora">
+    <div class="perm-head__icon" aria-hidden="true">
+      <mat-icon>history</mat-icon>
+    </div>
+
+    <div class="perm-head__text">
+      <span class="eyebrow">Sección</span>
+      <h2>Bitácora</h2>
+    </div>
+
+    <nav class="perm-head__crumbs" aria-label="Ruta">
+      <span class="crumb">Administración</span>
+      <span class="sep">/</span>
+      <span class="crumb active">Bitácora</span>
+    </nav>
+  </header>
+
+  <div class="surface">
+    <div class="inpc-filtros-panel w-100">
+      <div class="inpc-filtros-panel__grid">
+        <div>
+          <label class="form-label mb-1 inpc-filtro-fechas__label" for="bitacoraFechaInicio">Fecha inicio <span
+              class="text-danger">*</span></label>
+          <input id="bitacoraFechaInicio" type="date" class="form-control form-control-sm inpc-filtro-fechas__input"
+            [(ngModel)]="fechaInicioFiltro" />
+        </div>
+        <div>
+          <label class="form-label mb-1 inpc-filtro-fechas__label" for="bitacoraFechaFin">Fecha fin <span
+              class="text-danger">*</span></label>
+          <input id="bitacoraFechaFin" type="date" class="form-control form-control-sm inpc-filtro-fechas__input"
+            [(ngModel)]="fechaFinFiltro" />
+        </div>
+        <div class="inpc-filtros-panel__accion">
+          <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
+            <i class="fa fa-filter"></i> Consultar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 mt-3">
+      <button (click)="limpiarCampos()" mat-flat-button class="bg-success"><i class="fa fa-eraser"></i> Limpiar</button>
+      <button (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+        {{ autoExpandAllGroups ? ' Contraer Grupos' : ' Expandir Grupos' }}
+      </button>
+      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
+        <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
+      </button>
+    </div>
+    <div class="mt-3">
+      <dx-data-grid #gridContainer id="gridBitacora" class="inm-data-grid" [columnHidingEnabled]="false"
+        [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
+        [rowAlternationEnabled]="true" [dataSource]="listaBitacora" [keyExpr]="'id'" [width]="'100%'"
+        [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+        [noDataText]="'Sin registros para mostrar'" [pager]="{
+          showPageSizeSelector: true,
+          allowedPageSizes: [20],
+          showInfo: true,
+          showNavigationButtons: true,
+          visible: true
+        }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)">
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar..."></dxo-search-panel>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+        <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+        <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
+        <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
+        <dxi-column dataField="fecha" caption="Fecha" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="usuario" caption="Usuario" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="modulo" caption="Módulo" alignment="center" dataType="string"></dxi-column>
+        <dxi-column dataField="accion" caption="Acción" alignment="center" dataType="string"
+          cellTemplate="accionBitacoraTpl"></dxi-column>
+        <dxi-column dataField="descripcion" caption="Descripción" alignment="center" dataType="string"></dxi-column>
+
+        <div *dxTemplate="let cell of 'accionBitacoraTpl'">
+          <span class="bitacora-accion" [ngClass]="cell.data.accionClass">{{ cell.data.accion }}</span>
+        </div>
+
+        <dxo-export [enabled]="false" [allowExportSelectedData]="true" [texts]="{
+            exportAll: 'Exportar todos los datos',
+            exportSelectedRows: 'Exportar filas seleccionadas'
+          }">
+        </dxo-export>
+      </dx-data-grid>
+    </div>
+  </div>
+</div>

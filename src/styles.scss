@@ -1,12 +1,12 @@
 /* You can add global styles to this file, and also import other style files */
 
-@import './dx-data-grid-app-theme';
-@import './app/pages/inmuebles/lista-inmuebles-detalle/swal-estatus-local.scss';
-@import './assets/scss/layouts/mono-pago-contract-modal';
-@import './assets/scss/layouts/contract-docs';
-@import './assets/scss/layouts/docs-modal';
-@import './assets/scss/layouts/operacion-hub-vista';
-@import './assets/scss/layouts/hist-renta-filtros-panel';
+@use './dx-data-grid-app-theme';
+@use './app/pages/inmuebles/lista-inmuebles-detalle/swal-estatus-local.scss';
+@use './assets/scss/layouts/mono-pago-contract-modal';
+@use './assets/scss/layouts/contract-docs';
+@use './assets/scss/layouts/docs-modal';
+@use './assets/scss/layouts/operacion-hub-vista';
+@use './assets/scss/layouts/hist-renta-filtros-panel';
 
 html,
 body {
@@ -889,10 +889,6 @@ body {
   border-radius: 14px;
 }
 
-.bg-secondary{
-  border-radius: 10px !important;
-}
-
 .bg-success{
   border-radius: 10px !important;
 }
@@ -902,6 +898,22 @@ body {
 }
 
 .bg-primary{
+  border-radius: 10px !important;
+}
+
+.bg-warning{
+  border-radius: 10px !important;
+}
+
+.bg-info{
+  border-radius: 10px !important;
+}
+
+.bg-error{
+  border-radius: 10px !important;
+}
+
+.bg-secondary{
   border-radius: 10px !important;
 }
 

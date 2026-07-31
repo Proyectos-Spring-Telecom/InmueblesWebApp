@@ -8,6 +8,7 @@ import { ClientesService } from 'src/app/services/moduleService/clientes.service
 import { ContratosService } from 'src/app/services/moduleService/contratos.service';
 import { InstalacionService } from 'src/app/services/moduleService/instalaciones.service';
 import Swal from 'sweetalert2';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 
 @Component({
   selector: 'app-lista-contratos',
@@ -227,6 +228,20 @@ export class ListaContratosComponent implements OnInit {
     } else {
       this.autoExpandAllGroups = !this.autoExpandAllGroups;
       this.dataGrid.instance.refresh();
+    }
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Contratos' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
     }
   }
 }

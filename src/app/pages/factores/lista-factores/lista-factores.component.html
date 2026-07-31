@@ -37,6 +37,9 @@
               <i [class]="autoExpandAllGroupsFactores ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
               {{ autoExpandAllGroupsFactores ? ' Contraer Grupos' : ' Expandir Grupos' }}
             </button>
+            <button type="button" (click)="exportarExcelFactores()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcelFactores()">
+              <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
+            </button>
           </div>
         </div>
         <div class="flex-grow-1 min-h-0 w-100 d-flex flex-column">
@@ -135,6 +138,9 @@
             <button (click)="toggleExpandFormulas()" mat-flat-button class="bg-warn">
               <i [class]="autoExpandAllGroupsFormulas ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
               {{ autoExpandAllGroupsFormulas ? ' Contraer Grupos' : ' Expandir Grupos' }}
+            </button>
+            <button type="button" (click)="exportarExcelFormulas()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcelFormulas()">
+              <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
             </button>
           </div>
         </div>

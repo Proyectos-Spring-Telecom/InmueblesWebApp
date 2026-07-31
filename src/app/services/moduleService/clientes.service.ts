@@ -11,30 +11,30 @@ export class ClientesService {
   constructor(private http: HttpClient) { }
 
   obtenerClientesData(page: number, pageSize: number): Observable<any> {
-		return this.http.get(`${environment.API_SECURITY}/clientes/${page}/${pageSize}`);
+		return this.http.get(`${environment.API_SECURITY}/arrendadores/${page}/${pageSize}`);
 	}
 
   obtenerClientes(): Observable<any> {
-		return this.http.get(`${environment.API_SECURITY}/clientes/list`);
+		return this.http.get(`${environment.API_SECURITY}/arrendadores/list`);
 	}
 
   agregarCliente(data: any) {
-    return this.http.post(environment.API_SECURITY + '/clientes', data);
+    return this.http.post(environment.API_SECURITY + '/arrendadores', data);
   }
 
   eliminarCliente(idCliente: Number) {
-        return this.http.delete(environment.API_SECURITY + '/clientes/' + idCliente);
+        return this.http.delete(environment.API_SECURITY + '/arrendadores/' + idCliente);
     }
 
   obtenerCliente(idCliente: number): Observable<any> {
-        return this.http.get<any>(environment.API_SECURITY + '/clientes/' + idCliente);
+        return this.http.get<any>(environment.API_SECURITY + '/arrendadores/' + idCliente);
     }
 
   actualizarCliente(idCliente: number, saveForm: any): Observable<any> {
-    return this.http.put(`${environment.API_SECURITY}/clientes/` + idCliente, saveForm);
+    return this.http.put(`${environment.API_SECURITY}/arrendadores/` + idCliente, saveForm);
   }
 
-  private apiUrl = `${environment.API_SECURITY}/clientes`;
+  private apiUrl = `${environment.API_SECURITY}/arrendadores`;
   updateEstatus(id: number, estatus: number): Observable<string> {
     const url = `${this.apiUrl}/estatus/${id}`;
     const body = { estatus };

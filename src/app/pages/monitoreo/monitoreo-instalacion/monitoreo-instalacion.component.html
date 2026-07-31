@@ -311,10 +311,20 @@
       <article class="mono-block__card">
         <header class="mono-block__head d-flex align-items-center justify-content-between">
           <h5 class="m-0">Servicios</h5>
+          <button
+            type="button"
+            class="mono-grid-action-btn bg-info"
+            (click)="exportarExcelServicios()"
+            [disabled]="!puedeExportarExcelServicios()"
+          >
+            <i class="fa fa-file-excel-o" aria-hidden="true"></i>
+            <span>Exportar</span>
+          </button>
         </header>
         <div class="mono-block__body">
           <div class="mono-block__panel mono-block__panel--servicios-dx">
             <dx-data-grid
+              #gridServicios
               [dataSource]="serviciosDataSource"
               [columnAutoWidth]="true"
               [showBorders]="false"
@@ -403,10 +413,20 @@
                 <mat-icon aria-hidden="true">add</mat-icon>
                 <span>Agregar Pago</span>
               </button>
+              <button
+                type="button"
+                class="mono-grid-action-btn bg-info"
+                (click)="exportarExcelPagos()"
+                [disabled]="!puedeExportarExcelPagos()"
+              >
+                <i class="fa fa-file-excel-o" aria-hidden="true"></i>
+                <span>Exportar</span>
+              </button>
             </div>
           </header>
           <div class="mono-grid-card__body">
             <dx-data-grid
+              #gridPagos
               [dataSource]="pagosData"
               [columnAutoWidth]="true"
               [showBorders]="false"

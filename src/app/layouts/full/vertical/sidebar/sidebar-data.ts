@@ -39,6 +39,7 @@ export const navItems: NavItem[] = [
       Permiso.AGREGAR_PERMISO,
       Permiso.ACTUALIZAR_PERMISO,
       Permiso.ELIMINAR_PERMISO,
+      Permiso.CONSULTAR_BITACORA,
       Permiso.CONSULTAR_INPC,
       Permiso.AGREGAR_INPC,
       Permiso.ACTUALIZAR_INPC,
@@ -73,6 +74,11 @@ export const navItems: NavItem[] = [
           Permiso.ACTUALIZAR_PERMISO,
           Permiso.ELIMINAR_PERMISO,
         ],
+      },
+      {
+        displayName: 'Bitácora',
+        route: '/bitacora',
+        permission: Permiso.CONSULTAR_BITACORA,
       },
       {
         displayName: 'INPC',
@@ -131,6 +137,29 @@ export const navItems: NavItem[] = [
         displayName: 'Lista Usuarios',
         route: '/usuarios',
         permission: Permiso.CONSULTAR_USUARIO,
+      },
+    ],
+  },
+  {
+    displayName: 'Clientes',
+    iconName: 'briefcase',
+    route: '/menu-level',
+    permission: [
+      Permiso.CONSULTAR_CLIENTES_INMUEBLES,
+      Permiso.AGREGAR_CLIENTE_INMUEBLE,
+      Permiso.ACTUALIZAR_CLIENTE_INMUEBLE,
+      Permiso.ELIMINAR_CLIENTE_INMUEBLE,
+    ],
+    children: [
+      {
+        displayName: 'Agregar Cliente',
+        route: '/clientes-inmuebles/agregar-cliente-inmueble',
+        permission: Permiso.AGREGAR_CLIENTE_INMUEBLE,
+      },
+      {
+        displayName: 'Lista Clientes',
+        route: '/clientes-inmuebles',
+        permission: Permiso.CONSULTAR_CLIENTES_INMUEBLES,
       },
     ],
   },

@@ -26,6 +26,9 @@
       <button (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
       </button>
+      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
+        <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
+      </button>
     </div>
 
     <div class="mt-3">

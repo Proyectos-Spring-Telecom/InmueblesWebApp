@@ -24,6 +24,7 @@ import {
   extraerFilasEntradasSalidasApi,
   extraerTotalEntradasSalidasPaginated,
 } from '../entradas-salidas.mapper';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 export interface OpcionArrendatarioSelect {
   value: number;
   label: string;
@@ -1290,5 +1291,33 @@ export class AgregarEstacionamientoComponent implements OnInit, OnDestroy {
     }
     this.autoExpandAllGroups = !this.autoExpandAllGroups;
     g.refresh();
+  }
+
+  puedeExportarExcelEstacionamiento(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  puedeExportarExcelEntradasSalidas(): boolean {
+    return gridTieneDatosParaExportar(this.gridEntradasSalidas?.instance);
+  }
+
+  async exportarExcelEstacionamiento(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Estacionamiento' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
+  }
+
+  async exportarExcelEntradasSalidas(): Promise<void> {
+    const inst = this.gridEntradasSalidas?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'EntradasSalidas' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
   }
 }

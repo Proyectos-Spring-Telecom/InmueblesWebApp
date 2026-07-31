@@ -393,6 +393,9 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   private infoWindow?: any;
   private resizeObserver?: ResizeObserver;
   private static mapsLoading?: Promise<void>;
+  /** Evita dos `initMap` en paralelo (AfterViewInit + ensureMapReady). */
+  private mapInitPromise?: Promise<void>;
+  private mapRefreshTimers: ReturnType<typeof setTimeout>[] = [];
 
   private currentInfoMarker?: any;
   private pinnedMarker?: any;
@@ -846,16 +849,21 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.initMap();
+    // `#map` solo existe con flowMode === 'inmuebles'; no forzar init aquí.
+    if (this.flowMode === 'inmuebles' && this.rightPanelMode === 'mapa') {
+      this.ensureMapReadyAndRender();
+    }
   }
 
   ngOnDestroy(): void {
+    this.clearMapRefreshTimers();
     this.resizeObserver?.disconnect();
     this.cancelHoverClose();
     if (this.mapClickUnpinListener) {
       google.maps.event.removeListener(this.mapClickUnpinListener);
       this.mapClickUnpinListener = null;
     }
+    this.teardownGoogleMap();
   }
 
   private pinIcon(url: string, width: number, height: number) {
@@ -1119,15 +1127,31 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.ensureMapReadyAndRender();
   }
 
-  private async initMap() {
+  private async initMap(): Promise<void> {
+    if (this.mapInitPromise) return this.mapInitPromise;
+
+    this.mapInitPromise = this.doInitMap().finally(() => {
+      this.mapInitPromise = undefined;
+    });
+    return this.mapInitPromise;
+  }
+
+  private async doInitMap(): Promise<void> {
     await this.loadGoogleMaps();
     this.installInfoWindowSkin();
 
-    const el = document.getElementById('map');
+    const el = await this.waitForMapElement();
     if (!el) return;
 
-    this.resizeObserver?.disconnect();
-    this.resizeObserver = undefined;
+    // Contenedor con tamaño 0 → mapa gris permanente hasta resize.
+    await this.waitForMapElementSized(el);
+
+    if (this.map && !this.mapInstanceIsStale()) {
+      this.refreshMapAfterPanelSwitch();
+      return;
+    }
+
+    this.teardownGoogleMap();
 
     const center = { lat: 19.432608, lng: -99.133209 };
 
@@ -1138,6 +1162,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       MapCtor = google.maps.Map;
     }
+
+    // Releer por si *ngIf recreó el nodo durante el await.
+    const liveEl = document.getElementById('map');
+    if (!liveEl) return;
 
     const mapOptions: any = {
       center,
@@ -1155,29 +1183,77 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     if (this.MAP_ID) mapOptions.mapId = this.MAP_ID;
 
-    this.map = new MapCtor(el, mapOptions);
+    this.map = new MapCtor(liveEl, mapOptions);
     this.infoWindow = new google.maps.InfoWindow({
       disableAutoPan: false,
       maxWidth: 300,
     });
 
-    if (this.listaInstalaciones.length && this.flowMode === 'inmuebles') {
-      this.renderAccordingMode();
-    }
-
-    setTimeout(() => {
-      google.maps.event?.trigger(this.map, 'resize');
-      this.map?.setCenter(center);
-    }, 0);
-
-    if ('ResizeObserver' in window && el) {
+    if ('ResizeObserver' in window && liveEl) {
       const observeTarget =
-        (el.closest('.map-wrapper') as HTMLElement | null) ?? el;
+        (liveEl.closest('.map-wrapper') as HTMLElement | null) ?? liveEl;
       this.resizeObserver = new ResizeObserver(() => {
         google.maps.event?.trigger(this.map, 'resize');
       });
       this.resizeObserver.observe(observeTarget);
     }
+
+    this.refreshMapAfterPanelSwitch(center);
+  }
+
+  /** Espera a que `#map` exista (tras *ngIf / detectChanges). */
+  private waitForMapElement(
+    maxAttempts = 30,
+    intervalMs = 40,
+  ): Promise<HTMLElement | null> {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const tick = () => {
+        const el = document.getElementById('map');
+        if (el) {
+          resolve(el);
+          return;
+        }
+        attempts++;
+        if (attempts >= maxAttempts) {
+          resolve(null);
+          return;
+        }
+        setTimeout(tick, intervalMs);
+      };
+      tick();
+    });
+  }
+
+  /** Evita crear el mapa con ancho/alto 0 (tiles en blanco hasta F5). */
+  private waitForMapElementSized(
+    el: HTMLElement,
+    maxAttempts = 25,
+    intervalMs = 40,
+  ): Promise<void> {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const tick = () => {
+        const w = el.clientWidth;
+        const h = el.clientHeight;
+        if (w > 0 && h > 0) {
+          resolve();
+          return;
+        }
+        attempts++;
+        if (attempts >= maxAttempts) {
+          resolve();
+          return;
+        }
+        setTimeout(tick, intervalMs);
+      };
+      tick();
+    });
+  }
+
+  private clearMapRefreshTimers(): void {
+    for (const t of this.mapRefreshTimers) clearTimeout(t);
+    this.mapRefreshTimers = [];
   }
 
   /** El #map se destruye con *ngIf al pasar al diagrama; la instancia vieja queda huérfana. */
@@ -4222,60 +4298,113 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadGoogleMaps(): Promise<void> {
-    if ((window as any).google?.maps) return Promise.resolve();
+    if ((window as any).google?.maps?.Map) return Promise.resolve();
     if (MonitoreoComponent.mapsLoading) return MonitoreoComponent.mapsLoading;
 
     MonitoreoComponent.mapsLoading = new Promise<void>((resolve, reject) => {
+      const existing = document.querySelector(
+        'script[src*="maps.googleapis.com/maps/api/js"]',
+      ) as HTMLScriptElement | null;
+
+      const onReady = () => {
+        if ((window as any).google?.maps?.Map) {
+          resolve();
+          return;
+        }
+        // Script en DOM pero API aún no lista (otra pantalla lo inyectó).
+        let n = 0;
+        const poll = () => {
+          if ((window as any).google?.maps?.Map) {
+            resolve();
+            return;
+          }
+          n++;
+          if (n > 50) {
+            reject(new Error('Google Maps JS API no quedó lista a tiempo'));
+            return;
+          }
+          setTimeout(poll, 100);
+        };
+        poll();
+      };
+
+      if (existing) {
+        if ((window as any).google?.maps?.Map) {
+          resolve();
+          return;
+        }
+        existing.addEventListener('load', onReady, { once: true });
+        existing.addEventListener(
+          'error',
+          () => reject(new Error('No se pudo cargar Google Maps JS API')),
+          { once: true },
+        );
+        onReady();
+        return;
+      }
+
       const s = document.createElement('script');
       s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-        this.apiKey
+        this.apiKey,
       )}&v=weekly&libraries=marker,places`;
       s.async = true;
       s.defer = true;
-      s.onload = () => resolve();
-      s.onerror = () =>
+      s.onload = () => onReady();
+      s.onerror = () => {
+        MonitoreoComponent.mapsLoading = undefined;
         reject(new Error('No se pudo cargar Google Maps JS API'));
+      };
       document.head.appendChild(s);
+    }).catch((err) => {
+      MonitoreoComponent.mapsLoading = undefined;
+      throw err;
     });
 
     return MonitoreoComponent.mapsLoading;
   }
 
-  /** Solo `resize`: el caller ya llamó `renderAccordingMode`; volver a render borraba marcadores y rompía tiles. */
-  private refreshMapAfterPanelSwitch(): void {
+  /**
+   * Solo `resize` (+ recentrado opcional). Varios ticks: el panel anima ~300ms
+   * y un solo resize temprano deja el mapa en gris.
+   */
+  private refreshMapAfterPanelSwitch(center?: { lat: number; lng: number }): void {
     if (!this.map) return;
-    setTimeout(() => {
+    this.clearMapRefreshTimers();
+    const bump = () => {
+      if (!this.map || this.mapInstanceIsStale()) return;
       google.maps.event?.trigger(this.map, 'resize');
-    }, 0);
-    setTimeout(() => {
-      google.maps.event?.trigger(this.map, 'resize');
-    }, 120);
+      if (center) this.map.setCenter(center);
+    };
+    for (const ms of [0, 50, 150, 320, 500]) {
+      this.mapRefreshTimers.push(setTimeout(bump, ms));
+    }
   }
 
   private ensureMapReadyAndRender(): void {
     this.cdr.detectChanges();
-    let attempts = 0;
-    const run = () => {
-      attempts++;
-      const el = document.getElementById('map');
-      if (!el) {
-        if (attempts < 24) setTimeout(run, 32);
-        return;
-      }
+    const run = async () => {
+      try {
+        if (this.mapInstanceIsStale()) {
+          this.teardownGoogleMap();
+          await this.initMap();
+        } else if (!this.map) {
+          await this.initMap();
+        }
 
-      if (this.mapInstanceIsStale()) {
-        this.teardownGoogleMap();
-        this.initMap().then(() => {
-          this.renderAccordingMode();
-          this.refreshMapAfterPanelSwitch();
-        });
-        return;
+        if (!this.map) return;
+        this.renderAccordingMode();
+        this.refreshMapAfterPanelSwitch();
+      } catch (err) {
+        console.error('No se pudo inicializar el mapa de monitoreo:', err);
+        this.toastr.error(
+          'No se pudo cargar el mapa. Intenta refrescar la página.',
+          'Monitoreo',
+        );
       }
-
-      this.renderAccordingMode();
-      this.refreshMapAfterPanelSwitch();
     };
 
-    setTimeout(run, 0);
+    setTimeout(() => {
+      void run();
+    }, 0);
   }
 }

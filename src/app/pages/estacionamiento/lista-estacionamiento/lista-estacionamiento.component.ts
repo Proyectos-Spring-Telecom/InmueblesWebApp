@@ -4,6 +4,7 @@ import { DxDataGridComponent } from 'devextreme-angular';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { EstacionamientoService } from 'src/app/services/moduleService/estacionamiento.service';
 import Swal from 'sweetalert2';
+import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 
 /** Fila del grid en lista de estacionamientos (alineada con el API). */
 interface EstacionamientoListaFila {
@@ -201,5 +202,19 @@ export class ListaEstacionamientoComponent implements OnInit {
   toggleExpandGroups(): void {
     this.autoExpandAllGroups = !this.autoExpandAllGroups;
     this.dataGrid?.instance?.refresh();
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      await exportarDxDataGridExcel({ component: inst, fileName: 'Estacionamientos' });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
+    }
   }
 }

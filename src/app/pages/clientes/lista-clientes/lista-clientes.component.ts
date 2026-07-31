@@ -12,6 +12,12 @@ import {
   mapClientesApiToGridRows,
 } from '../clientes-list.mapper';
 import { esImagenArchivo } from '../../inmuebles/inmuebles-list.mapper';
+import {
+  exportarDxDataGridExcel,
+  gridTieneDatosParaExportar,
+  hojasDetalleCliente,
+  obtenerItemsGridCompletos,
+} from 'src/app/shared/grid-excel-export';
 
 @Component({
   selector: 'app-lista-clientes',
@@ -381,6 +387,25 @@ export class ListaClientesComponent implements OnInit {
       void grid.collapseRow(e.key);
     } else {
       void grid.expandRow(e.key);
+    }
+  }
+
+  puedeExportarExcel(): boolean {
+    return gridTieneDatosParaExportar(this.dataGrid?.instance);
+  }
+
+  async exportarExcel(): Promise<void> {
+    const inst = this.dataGrid?.instance;
+    if (!inst) return;
+    try {
+      const masters = await obtenerItemsGridCompletos(inst);
+      await exportarDxDataGridExcel({
+        component: inst,
+        fileName: 'Arrendadores',
+        detailSheets: hojasDetalleCliente(masters),
+      });
+    } catch (err) {
+      console.error('Error al exportar grid:', err);
     }
   }
 

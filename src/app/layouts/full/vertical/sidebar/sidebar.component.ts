@@ -12,12 +12,14 @@ export class SidebarComponent implements OnInit {
   public showNombre: any;
   public showApellidoPaterno: any;
   public showApellidoMaterno: any;
+  public showEmail: any;
   public showImage: any;
   constructor(private users: AuthenticationService,) {
     const user = this.users.getUser();
     this.showNombre = user?.nombre;
     this.showApellidoPaterno = user?.apellidoPaterno || '';
     this.showApellidoMaterno = user?.apellidoMaterno || '';
+    this.showEmail = user?.userName || user?.email || '';
     if(user?.fotoPerfil == 'null' || user?.fotoPerfil == null){
       this.showImage = 'https://analitica-video.s3.us-east-1.amazonaws.com/Usuarios/user.png'
     } else{

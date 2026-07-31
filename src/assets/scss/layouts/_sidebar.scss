@@ -40,11 +40,31 @@
 .user-profile {
   position: relative;
   background-size: cover !important;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 70% at 20% 15%, rgba(255, 255, 255, 0.12) 0%, transparent 55%),
+      linear-gradient(180deg, rgba(20, 8, 12, 0.15) 0%, rgba(10, 4, 8, 0.55) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .profile-card {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+  }
 
   .profile-img {
-    width: 50px;
-    margin-left: 30px;
-    padding: 32px 0;
+    position: relative;
+    width: 56px;
+    margin: 0 auto;
+    padding: 22px 0 14px;
     border-radius: 100%;
 
     &::before {
@@ -52,34 +72,101 @@
       animation: 2.5s blow 0s linear infinite;
       position: absolute;
       content: "";
-      width: 50px;
-      height: 50px;
-      top: 31px;
+      width: 56px;
+      height: 56px;
+      top: 22px;
+      left: 0;
       margin: 0 auto;
       border-radius: 50%;
       z-index: 0;
     }
 
     img {
+      position: relative;
+      z-index: 1;
       width: 100%;
       border-radius: 100%;
+      border: 2px solid rgba(255, 255, 255, 0.55);
+      box-shadow:
+        0 0 0 4px rgba(96, 13, 40, 0.35),
+        0 8px 18px rgba(0, 0, 0, 0.35);
     }
   }
 
   .profile-text {
     position: relative;
-    cursor: pointer;
+    padding: 0 12px 14px;
 
-    >a {
-      padding: 6px 8px;
-      background: rgba(0, 0, 0, 0.5);
+    .profile-text__panel {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 12px 14px 13px;
+      border-radius: 12px;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.14) 0%,
+          rgba(255, 255, 255, 0.05) 45%,
+          rgba(0, 0, 0, 0.28) 100%
+        );
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 10px 22px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      line-height: 1.25;
+    }
+
+    .profile-text__eyebrow {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255, 214, 224, 0.78);
+    }
+
+    .profile-text__name {
+      display: block;
+      margin-top: 1px;
+      font-size: 17px;
+      letter-spacing: 0.05em;
+      text-transform: capitalize;
+      color: #fff;
+      text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-      &:after {
-        position: absolute;
-        right: 20px;
-        top: 20px;
-      }
+    .profile-text__email {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      margin-top: 6px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(255, 255, 255, 0.14);
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      color: rgba(255, 255, 255, 0.78);
+      min-width: 0;
+    }
+
+    .profile-text__email-icon {
+      flex: 0 0 auto;
+      width: 14px;
+      height: 14px;
+      stroke-width: 1.6;
+      color: rgba(255, 214, 224, 0.9);
+    }
+
+    .profile-text__email-text {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }
@@ -119,7 +206,15 @@
 
     .user-profile {
       .profile-img {
-        margin-left: 9px;
+        margin: 0 auto;
+        padding: 18px 0;
+        width: 42px;
+
+        &::before {
+          width: 42px;
+          height: 42px;
+          top: 18px;
+        }
       }
     }
 
@@ -172,7 +267,15 @@
 
       .user-profile {
         .profile-img {
-          margin-left: 30px;
+          margin: 0 auto;
+          padding: 22px 0 14px;
+          width: 56px;
+
+          &::before {
+            width: 56px;
+            height: 56px;
+            top: 22px;
+          }
         }
       }
 

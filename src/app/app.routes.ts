@@ -45,6 +45,11 @@ export const routes: Routes = [
           import('./pages/permisos/permisos.module').then((m) => m.PermisosModule),
       },
       {
+        path: 'bitacora',
+        loadChildren: () =>
+          import('./pages/bitacora/bitacora.module').then((m) => m.BitacoraModule),
+      },
+      {
         path: 'modulos',
         loadChildren: () =>
           import('./pages/modulos/modulos.module').then((m) => m.ModulosModule),
@@ -63,6 +68,13 @@ export const routes: Routes = [
         path: 'clientes',
         loadChildren: () =>
           import('./pages/clientes/clientes.module').then((m) => m.ClientesModule),
+      },
+      {
+        path: 'clientes-inmuebles',
+        loadChildren: () =>
+          import('./pages/clientes-inmuebles/clientes-inmuebles.module').then(
+            (m) => m.ClientesInmueblesModule
+          ),
       },
       {
         path: 'sample-page',

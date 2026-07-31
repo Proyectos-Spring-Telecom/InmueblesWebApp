@@ -20,7 +20,18 @@
             "allowedCommonJsDependencies": [
               "apexcharts",
               "bezier-easing",
-              "sweetalert2"
+              "sweetalert2",
+              "canvg",
+              "core-js",
+              "raf",
+              "rgbcolor",
+              "html2canvas",
+              "exceljs",
+              "file-saver",
+              "devexpress-diagram",
+              "jszip",
+              "devexpress-gantt",
+              "devextreme-quill"
             ],
             "outputPath": "dist/Materialpro",
             "index": "src/index.html",
