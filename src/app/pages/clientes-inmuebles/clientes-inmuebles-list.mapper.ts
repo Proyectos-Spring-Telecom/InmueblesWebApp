@@ -12,6 +12,9 @@ export type ClienteInmuebleGridRow = {
   estatus: number;
   estatusCliente: number;
   logotipo: string;
+  actaConstitutiva: string;
+  comprobanteDomicilio: string;
+  constanciaSituacionFiscal: string;
 };
 
 function str(v: unknown): string {
@@ -90,6 +93,9 @@ export function mapClientesInmueblesApiToGridRows(raw: unknown): ClienteInmueble
       estatus,
       estatusCliente: estatus,
       logotipo: urlArchivo(item['logotipo']),
+      actaConstitutiva: urlArchivo(item['actaConstitutiva']),
+      comprobanteDomicilio: urlArchivo(item['comprobanteDomicilio']),
+      constanciaSituacionFiscal: urlArchivo(item['constanciaSituacionFiscal']),
     };
   });
 }

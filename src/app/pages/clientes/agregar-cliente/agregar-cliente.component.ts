@@ -1068,6 +1068,31 @@ export class AgregarClienteComponent implements OnInit {
     });
   }
 
+  private mostrarSwalCargandoGuardado(esActualizacion: boolean): void {
+    void Swal.fire({
+      title: 'Cargando...',
+      text: esActualizacion
+        ? 'Actualizando arrendador, por favor espera.'
+        : 'Guardando arrendador, por favor espera.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      background: '#141a21',
+      color: '#ffffff',
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+  }
+
+  /** Tras respuesta OK: mantiene el loading 1 s (igual que inmuebles/arrendatarios), lo cierra y continúa. */
+  private cerrarSwalCargandoTrasExito(continuar: () => void): void {
+    window.setTimeout(() => {
+      Swal.close();
+      continuar();
+    }, 1000);
+  }
+
   agregar() {
     this.submitButton = 'Cargando...';
     this.loading = true;
@@ -1084,26 +1109,31 @@ export class AgregarClienteComponent implements OnInit {
     if (this.clienteForm.contains('id')) this.clienteForm.removeControl('id');
 
     const formData = this.construirFormDataCliente(false);
+    this.mostrarSwalCargandoGuardado(false);
 
     this.clieService.agregarCliente(formData).subscribe(
       () => {
-        this.submitButton = 'Guardar';
-        this.loading = false;
-        Swal.fire({
-          color: '#ffffff',
-          background: '#141a21',
-          title: '¡Operación Exitosa!',
-          text: 'Se agregó un nuevo arrendador de manera exitosa.',
-          icon: 'success',
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'Confirmar',
+        this.cerrarSwalCargandoTrasExito(() => {
+          this.submitButton = 'Guardar';
+          this.loading = false;
+          void Swal.fire({
+            color: '#ffffff',
+            background: '#141a21',
+            title: '¡Operación Exitosa!',
+            text: 'Se agregó un nuevo arrendador de manera exitosa.',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          }).then(() => {
+            this.regresar();
+          });
         });
-        this.regresar();
       },
       (error) => {
+        Swal.close();
         this.submitButton = 'Guardar';
         this.loading = false;
-        Swal.fire({
+        void Swal.fire({
           color: '#ffffff',
           background: '#141a21',
           title: '¡Ops!',
@@ -1130,26 +1160,31 @@ export class AgregarClienteComponent implements OnInit {
     }
 
     const formData = this.construirFormDataCliente(true);
+    this.mostrarSwalCargandoGuardado(true);
 
     this.clieService.actualizarCliente(Number(this.idCliente), formData).subscribe(
       () => {
-        this.submitButton = 'Actualizar';
-        this.loading = false;
-        Swal.fire({
-          color: '#ffffff',
-          background: '#141a21',
-          title: '¡Operación Exitosa!',
-          text: 'Los datos del arrendador se actualizaron correctamente.',
-          icon: 'success',
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'Confirmar',
+        this.cerrarSwalCargandoTrasExito(() => {
+          this.submitButton = 'Actualizar';
+          this.loading = false;
+          void Swal.fire({
+            color: '#ffffff',
+            background: '#141a21',
+            title: '¡Operación Exitosa!',
+            text: 'Los datos del arrendador se actualizaron correctamente.',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          }).then(() => {
+            this.regresar();
+          });
         });
-        this.regresar();
       },
       () => {
+        Swal.close();
         this.submitButton = 'Actualizar';
         this.loading = false;
-        Swal.fire({
+        void Swal.fire({
           color: '#ffffff',
           background: '#141a21',
           title: '¡Ops!',

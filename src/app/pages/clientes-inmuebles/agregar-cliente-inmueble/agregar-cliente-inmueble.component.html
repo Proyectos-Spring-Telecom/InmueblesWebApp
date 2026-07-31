@@ -15,7 +15,7 @@
     </header>
     <div class="surface">
         <section class="perm-form-nc container-fluid py-4">
-            <form [formGroup]="clienteForm" class="perm-form-body">
+            <form [formGroup]="clienteForm" class="perm-form-body" #inicioFormularioCliente>
                 <div class="row g-4">
 
                     <div class="col-12 col-md-4">
@@ -46,6 +46,7 @@
                             </span>
                             <div class="form-floating flex-grow-1">
                                 <input type="text" formControlName="rfc" class="form-control" id="rfc"
+                                    maxlength="13" (input)="sanitizeInput($event)"
                                     placeholder="Ej.: ABCD800101XX0" required>
                                 <label for="rfc">Ej.: ABCD800101XX0</label>
                             </div>
@@ -321,7 +322,9 @@
                         </div>
                     </div>
                     <div class="col-12">
-                    <div class="row g-3 g-xl-4 mt-1 uploader-wrap docs-uploader-docs-row align-items-stretch ci-docs-row">
+                    <div class="row g-3 g-xl-4 mt-1 uploader-wrap docs-uploader-docs-row align-items-stretch ci-docs-row"
+                        #docsSectionCliente
+                        [class.autocarga-docs-highlight]="resaltarAutocargaDocs">
                         <div class="col-12 col-md-6 col-lg-3 d-flex flex-column docs-upload-card ci-docs-card">
                             <label class="form-label perm-label d-block mb-2">Logotipo</label>
                             <div class="uploader-hero">
@@ -362,7 +365,9 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-6 col-lg-3 d-flex flex-column docs-upload-card ci-docs-card">
+                        <div class="col-12 col-md-6 col-lg-3 d-flex flex-column docs-upload-card ci-docs-card"
+                            #autocargaCsfCardCliente
+                            [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
                             <label class="form-label perm-label d-block mb-2">Constancia de Situación Fiscal</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="csfDragging" (dragover)="onCsfDragOver($event)"
@@ -372,6 +377,9 @@
                                         <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                                         <h6 class="uploader__title">Sube tu PDF</h6>
                                         <p class="uploader__subtitle">Arrastra y suelta o</p>
+                                        <p class="autocarga-contrato-hint" *ngIf="resaltarAutocargaContrato">
+                                            Sube Aquí El PDF De La Constancia Para Intentar Completar El Formulario.
+                                        </p>
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openCsfFilePicker()">Seleccionar</button>

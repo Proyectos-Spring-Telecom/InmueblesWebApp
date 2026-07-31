@@ -1698,7 +1698,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       this.abrirModalMapaParaGuardar();
       return;
     }
-    this.mostrarSwalGuardandoInmueble();
+    this.mostrarSwalGuardandoInmueble(this.idInmueble != null);
     if (this.idInmueble != null) {
       this.ejecutarActualizacionInmueble();
     } else {
@@ -1854,11 +1854,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   }
 
   /** Muestra carga al confirmar ubicación en el mapa (antes del POST/PUT). */
-  private mostrarSwalGuardandoInmueble(): void {
+  private mostrarSwalGuardandoInmueble(esActualizacion: boolean): void {
     this.swalGuardadoInmuebleActivo = true;
     void Swal.fire({
-      title: 'Guardando inmueble…',
-      text: 'Registrando la ubicación y los datos, por favor espera.',
+      title: 'Cargando...',
+      text: esActualizacion
+        ? 'Actualizando inmueble, por favor espera.'
+        : 'Guardando inmueble, por favor espera.',
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
@@ -2715,7 +2717,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       if (this.idInmueble == null) this.mostrarPromptAutocargaContrato();
       return;
     }
-    this.mostrarSwalGuardandoInmueble();
+    this.mostrarSwalGuardandoInmueble(this.idInmueble != null);
     if (this.idInmueble != null) {
       this.ejecutarActualizacionInmueble();
     } else {

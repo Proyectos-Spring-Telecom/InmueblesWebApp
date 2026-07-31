@@ -70,7 +70,8 @@
                     [allowFiltering]="false" cellTemplate="actConts">
                 </dxi-column>
                 <div *dxTemplate="let f of 'actConts'">
-                    <button type="button" class="btn btn-primary btn-sm" style="border-radius: 5px;"
+                    <button type="button" class="btn btn-sm bg-primary cli-doc-btn"
+                        [disabled]="!f?.data?.actaConstitutiva"
                         (click)="previsualizar(f?.data?.actaConstitutiva, 'Acta Constitutiva', f?.data)">
                         <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
                     </button>
@@ -79,7 +80,8 @@
                     [allowFiltering]="false" cellTemplate="poliz">
                 </dxi-column>
                 <div *dxTemplate="let f of 'poliz'">
-                    <button type="button" class="btn btn-success btn-sm" style="border-radius: 5px;"
+                    <button type="button" class="btn btn-sm bg-success cli-doc-btn"
+                        [disabled]="!f?.data?.comprobanteDomicilio"
                         (click)="previsualizar(f?.data?.comprobanteDomicilio, 'Comprobante de Domicilio', f?.data)">
                         <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
                     </button>
@@ -88,7 +90,8 @@
                     [allowSorting]="false" [allowFiltering]="false" cellTemplate="concesip">
                 </dxi-column>
                 <div *dxTemplate="let f of 'concesip'">
-                    <button type="button" class="btn btn-warning btn-sm" style="border-radius: 5px;"
+                    <button type="button" class="btn btn-sm bg-warning cli-doc-btn"
+                        [disabled]="!f?.data?.constanciaSituacionFiscal"
                         (click)="previsualizar(f?.data?.constanciaSituacionFiscal, 'Constancia Situación Fiscal', f?.data)">
                         <i class="fa fa-file-pdf-o"></i>&nbsp;&nbsp;Observar
                     </button>

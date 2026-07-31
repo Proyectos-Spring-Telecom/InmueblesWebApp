@@ -2811,6 +2811,19 @@ html.light-theme {
     background: #f1f5f9 !important;
   }
 
+  .formula-tipo-ayuda {
+    background: #e0f2fe !important;
+    border-color: #38bdf8 !important;
+    color: #0369a1 !important;
+
+    &:hover,
+    &:focus-visible {
+      background: #bae6fd !important;
+      border-color: #0ea5e9 !important;
+      color: #0c4a6e !important;
+    }
+  }
+
   .formula-builder {
     background: #f1f5f9 !important;
     border-color: #cbd5e1 !important;

@@ -1,3 +1,15 @@
+.cli-doc-btn {
+  border-radius: 5px;
+  color: #ffffff;
+
+  &:disabled,
+  &[disabled] {
+    opacity: 0.50;
+    cursor: not-allowed;
+    filter: saturate(0.55);
+  }
+}
+
 .docs-backdrop {
   position: fixed;
   inset: 0;

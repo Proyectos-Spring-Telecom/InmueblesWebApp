@@ -126,6 +126,47 @@ export class AgregarFormulaComponent implements OnInit {
     return parseFloat(valor.toFixed(10)).toString();
   }
 
+  /**
+   * Explica cómo `tipoResultado` afecta el pago de renta:
+   * PORCENTAJE → resultado es factor; montoFinal = factor × total.
+   * MONTO → resultado ya es el importe; factor = montoFinal / total.
+   */
+  mostrarAyudaTipoResultado(): void {
+    void Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      icon: 'info',
+      title: 'Tipo de resultado',
+      width: 560,
+      html: `
+        <div style="text-align:left;font-size:0.92rem;line-height:1.45;">
+          <p style="margin:0 0 0.85rem;opacity:0.9;">
+            Define cómo se interpreta el número que produce la expresión al usarla en
+            <strong>pagos de renta</strong>.
+          </p>
+          <div style="margin:0 0 0.75rem;padding:0.7rem 0.85rem;border-radius:10px;border:1px solid rgba(74,222,128,0.35);background:rgba(20,83,45,0.35);">
+            <p style="margin:0 0 0.35rem;letter-spacing:0.04em;text-transform:uppercase;font-size:0.72rem;opacity:0.85;">Porcentaje (%)</p>
+            <p style="margin:0;">
+              La expresión entrega un <strong>factor</strong> (ej. INPC actual ÷ INPC base ≈ 1.05).
+              En renta: <strong>Monto final = Factor × Total</strong> del contrato.
+              Ideal para actualizaciones por índice.
+            </p>
+          </div>
+          <div style="margin:0;padding:0.7rem 0.85rem;border-radius:10px;border:1px solid rgba(56,189,248,0.35);background:rgba(8,47,73,0.4);">
+            <p style="margin:0 0 0.35rem;letter-spacing:0.04em;text-transform:uppercase;font-size:0.72rem;opacity:0.85;">Monto ($)</p>
+            <p style="margin:0;">
+              La expresión entrega ya el <strong>importe en pesos</strong> a cobrar.
+              En renta: <strong>Monto final = resultado</strong> y el factor se calcula solo
+              (Monto final ÷ Total). Ideal cuando la fórmula ya da la cantidad.
+            </p>
+          </div>
+        </div>
+      `,
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#0ea5e9',
+    });
+  }
+
   private cargarCatalogoFactoresParaFormula(): void {
     this.cargandoVariablesFactores = true;
     const hoy = new Date();

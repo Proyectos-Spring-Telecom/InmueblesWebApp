@@ -36,7 +36,16 @@
 
           <!-- Tipo de resultado -->
           <div class="col-12 col-lg-4">
-            <label for="forTipoResultado" class="form-label perm-label">Tipo de resultado</label>
+            <div class="formula-tipo-label-row">
+              <label for="forTipoResultado" class="form-label perm-label mb-0">Tipo de resultado</label>
+              <button type="button"
+                class="formula-tipo-ayuda"
+                (click)="mostrarAyudaTipoResultado()"
+                title="Cómo afecta el tipo de resultado"
+                aria-label="Explicación de tipo de resultado">
+                <mat-icon aria-hidden="true">info_outline</mat-icon>
+              </button>
+            </div>
             <div class="input-group input-group-lg perm-ig">
               <span class="input-group-text">
                 <mat-icon aria-hidden="true">category</mat-icon>
