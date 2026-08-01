@@ -1,4 +1,4 @@
-// src/app/core/haspermission.directive.ts
+// src/app/core/haspermission.directive.tssss
 import { Directive, Input, TemplateRef, ViewContainerRef } from '@angular/core';
 import { AuthenticationService } from '../services/auth.service';
 
@@ -11,7 +11,7 @@ export class HasPermissionDirective {
   ) {}
 
   @Input() set appHasPermission(permission: string | number | Array<string | number>) {
-    // Leer SIEMPRE permisos actualizados y normalizarlos
+    // Leer SIEMPRE permisos actualizados y normalizarlosss
     const currentUserPermissions = (this.authService.getPermissions() || [])
       .map(p => String(p).trim());
 
