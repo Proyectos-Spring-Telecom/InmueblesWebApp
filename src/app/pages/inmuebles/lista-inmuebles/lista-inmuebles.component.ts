@@ -4,6 +4,7 @@ import { DxDataGridComponent, DxPieChartComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { ThemeService } from 'src/app/services/theme.service';
@@ -160,6 +161,91 @@ export class ListaInmueblesComponent implements OnInit {
 
   editarInmueble(row: InmuebleGridRow): void {
     void this.router.navigate(['/inmuebles/editar-inmueble', row.id]);
+  }
+
+  eliminarInmueble(row: InmuebleGridRow): void {
+    const nombre = String(row?.inmueble ?? '').trim() || `Inmueble ${row?.id ?? ''}`;
+    void Swal.fire({
+      title: '¡Eliminar Inmueble!',
+      html: `¿Está seguro que requiere eliminar el inmueble: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.inmueblesService.eliminarInmueble(row.id).subscribe({
+        next: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El inmueble ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+          this.recargarInmueblesPaginated();
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el inmueble.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  activarInmueble(row: InmuebleGridRow): void {
+    const nombre = String(row?.inmueble ?? '').trim() || `Inmueble ${row?.id ?? ''}`;
+    void Swal.fire({
+      title: '¡Activar!',
+      html: `¿Está seguro que requiere activar el inmueble: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.inmueblesService.updateEstatus(row.id, 1).subscribe({
+        next: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Confirmación Realizada!',
+            html: 'El inmueble ha sido activado.',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+          this.recargarInmueblesPaginated();
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar activar el inmueble.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
   }
 
   recargarInmueblesPaginated(): void {

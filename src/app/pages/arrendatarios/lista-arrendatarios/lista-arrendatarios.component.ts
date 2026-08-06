@@ -4,6 +4,7 @@ import { DxDataGridComponent, DxPieChartComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import {
@@ -105,6 +106,50 @@ export class ListaArrendatariosComponent implements OnInit {
 
   editarArrendatario(row: ArrendatarioGridRow): void {
     void this.router.navigate(['/arrendatarios/editar-arrendatario', row.id]);
+  }
+
+  eliminarArrendatario(row: ArrendatarioGridRow): void {
+    const nombre =
+      String(row?.arrendatario ?? '').trim() || `Arrendatario ${row?.id ?? ''}`;
+    void Swal.fire({
+      title: '¡Eliminar Arrendatario!',
+      html: `¿Está seguro que requiere eliminar el arrendatario: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.arrendatariosService.eliminarArrendatario(row.id).subscribe({
+        next: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El arrendatario ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+          this.refrescarListaArrendatarios();
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el arrendatario.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
   }
 
   onPageIndexChanged(e: any): void {

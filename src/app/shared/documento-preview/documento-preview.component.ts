@@ -1,6 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
+export type DocumentoPreviewAbrirOpciones = {
+  /** Forzar vista de imagen (p. ej. blob sin extensión en la URL). */
+  esImagen?: boolean;
+};
+
 @Component({
   selector: 'app-documento-preview',
   templateUrl: './documento-preview.component.html',
@@ -17,14 +22,21 @@ export class DocumentoPreviewComponent {
   @Output() closed = new EventEmitter<void>();
 
   safeUrl: SafeResourceUrl | null = null;
+  private forzarImagen = false;
 
   constructor(private sanitizer: DomSanitizer) {}
 
-  abrir(url: string, titulo: string, subtitulo = ''): void {
+  abrir(
+    url: string,
+    titulo: string,
+    subtitulo = '',
+    opciones?: DocumentoPreviewAbrirOpciones,
+  ): void {
     if (!url?.trim()) return;
     this.url = url.trim();
     this.titulo = titulo;
     this.subtitulo = subtitulo;
+    this.forzarImagen = !!opciones?.esImagen;
     this.safeUrl = this.esImagen(this.url)
       ? null
       : this.sanitizer.bypassSecurityTrustResourceUrl(this.url);
@@ -35,10 +47,12 @@ export class DocumentoPreviewComponent {
     this.visible = false;
     this.safeUrl = null;
     this.url = '';
+    this.forzarImagen = false;
     this.closed.emit();
   }
 
   esImagen(url: string): boolean {
+    if (this.forzarImagen) return true;
     return /\.(png|jpe?g|gif|webp|jfif)(\?|$|#)/i.test(url ?? '');
   }
 

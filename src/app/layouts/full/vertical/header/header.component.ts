@@ -26,6 +26,7 @@ import {
   PagoSeguimientoDto,
   PagoServicioInmuebleDto,
   VencimientoRenovacionContratoDto,
+  tonePorDiasFaltantesNotificacion as tonePorDiasFaltantes,
 } from 'src/app/services/moduleService/notificaciones.service';
 import { LoginSuccessSoundService } from 'src/app/services/login-success-sound.service';
 import { AppThemeMode, ThemeService } from 'src/app/services/theme.service';
@@ -43,6 +44,7 @@ const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
 const PANEL_SUBTEXT_BY_DISPLAY_NAME: Record<string, string> = {
   Administración: 'Configuración general del sistema y gestión de módulos.',
   Usuarios: 'Alta, edición y control de usuarios del sistema.',
+  Clientes: 'Alta, edición y consulta de clientes.',
   Roles: 'Definición de permisos y niveles de acceso.',
   Bitácora: 'Consulta del historial de movimientos del sistema.',
   Propiedades: 'Monitoreo geográfico de arrendadores e inmuebles.',
@@ -54,6 +56,18 @@ const PANEL_SUBTEXT_BY_DISPLAY_NAME: Record<string, string> = {
   'Servicios Arrendatarios': 'Registro y seguimiento de servicios por arrendatario.',
   'Perfil Usuario': 'Configuración y actualización de tu información personal.',
 };
+
+const PANEL_SUBTEXT_FALLBACK = 'Acceso rápido a este módulo del sistema.';
+
+function panelSubtextFor(item: NavItem): string {
+  const byName = item.displayName
+    ? PANEL_SUBTEXT_BY_DISPLAY_NAME[item.displayName]
+    : undefined;
+  const custom = typeof item.subtext === 'string' ? item.subtext.trim() : '';
+  if (byName) return byName;
+  if (custom && !custom.startsWith('/')) return custom;
+  return PANEL_SUBTEXT_FALLBACK;
+}
 
 function isPanelLogoutItem(item: NavItem): boolean {
   return (
@@ -80,7 +94,7 @@ function buildPanelAccessItems(items: NavItem[]): NavItem[] {
     if (isPanelLogoutItem(item)) continue;
     const route = resolvePanelAccessRoute(item);
     if (!route) continue;
-    const subtext = PANEL_SUBTEXT_BY_DISPLAY_NAME[item.displayName] ?? item.subtext;
+    const subtext = panelSubtextFor(item);
     out.push({ ...item, route, subtext });
   }
   return out;
@@ -325,12 +339,7 @@ export class HeaderComponent implements OnInit {
   private tonePorDiasFaltantesNotificacion(
     dias: number | undefined | null,
   ): 'success' | 'warning' | 'amber' | 'danger' {
-    const d = Number(dias);
-    if (!Number.isFinite(d)) return 'success';
-    if (d <= 2) return 'danger';
-    if (d <= 6) return 'amber';
-    if (d <= 15) return 'warning';
-    return 'success';
+    return tonePorDiasFaltantes(dias);
   }
 
   private formatNotifyDate(iso: string | undefined | null): string {

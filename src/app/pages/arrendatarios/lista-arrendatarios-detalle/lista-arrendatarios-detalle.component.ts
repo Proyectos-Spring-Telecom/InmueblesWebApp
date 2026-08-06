@@ -14,8 +14,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { take } from 'rxjs';
 import Swal from 'sweetalert2';
 import { ContratosService } from 'src/app/services/moduleService/contratos.service';
+import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
-import { ArrendatarioGridRow, contratoArrendatarioEsActivo } from '../arrendatarios-list.mapper';
+import {
+  ArrendatarioGridRow,
+  contratoArrendatarioEsActivo,
+  registroArrendatarioHijoActivo,
+} from '../arrendatarios-list.mapper';
 import {
   claseChipEstatusLocal,
   esImagenArchivo,
@@ -46,6 +51,7 @@ export interface GrupoMetricasContrato {
 export class ListaArrendatariosDetalleComponent implements OnChanges {
   @Input({ required: true }) row!: ArrendatarioGridRow;
   @Output() contratoCancelado = new EventEmitter<void>();
+  @Output() detalleModificado = new EventEmitter<void>();
 
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
 
@@ -61,6 +67,9 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
   });
 
   detalleTab = 0;
+  eliminandoSocioId: number | null = null;
+  eliminandoArchivoId: number | null = null;
+  eliminandoServicioId: number | null = null;
 
   esImagenArchivo = esImagenArchivo;
   esPdfArchivo = esPdfArchivo;
@@ -80,6 +89,7 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
     private sanitizer: DomSanitizer,
     private http: HttpClient,
     private contratosService: ContratosService,
+    private arrendatariosService: ArrendatariosService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -102,17 +112,20 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
 
   get servicios(): Record<string, unknown>[] {
     const s = this.item['servicios'];
-    return Array.isArray(s) ? (s as Record<string, unknown>[]) : [];
+    if (!Array.isArray(s)) return [];
+    return (s as Record<string, unknown>[]).filter(registroArrendatarioHijoActivo);
   }
 
   get archivos(): Record<string, unknown>[] {
     const a = this.item['archivos'];
-    return Array.isArray(a) ? (a as Record<string, unknown>[]) : [];
+    if (!Array.isArray(a)) return [];
+    return (a as Record<string, unknown>[]).filter(registroArrendatarioHijoActivo);
   }
 
   get socios(): Record<string, unknown>[] {
     const so = this.item['socios'];
-    return Array.isArray(so) ? (so as Record<string, unknown>[]) : [];
+    if (!Array.isArray(so)) return [];
+    return (so as Record<string, unknown>[]).filter(registroArrendatarioHijoActivo);
   }
 
   get contratos(): Record<string, unknown>[] {
@@ -131,6 +144,88 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
       if (nom) return nom;
     }
     return 'Servicio';
+  }
+
+  idServicioDetalle(s: Record<string, unknown>): number | null {
+    const idVal = s['id'] ?? s['idServicio'] ?? s['idServicioArrendatario'];
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  /** Renta y Mantenimiento son fijos; el resto se puede eliminar. */
+  puedeEliminarServicioDetalle(s: Record<string, unknown>): boolean {
+    if (this.idServicioDetalle(s) == null) return false;
+    const nombre = this.nombreTipoServicio(s);
+    if (/renta/i.test(nombre) || /mantenimiento/i.test(nombre)) return false;
+    const idTipo = Number(s['idTipoServicio']);
+    if (idTipo === 3 || idTipo === 4) return false;
+    return true;
+  }
+
+  eliminarServicioDetalle(s: Record<string, unknown>, ev?: Event): void {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    if (!this.puedeEliminarServicioDetalle(s)) return;
+    const idServicio = this.idServicioDetalle(s);
+    if (idServicio == null || this.eliminandoServicioId != null) return;
+    const nombre = this.nombreTipoServicio(s);
+
+    void Swal.fire({
+      title: '¡Eliminar Servicio!',
+      html: `¿Está seguro que requiere eliminar el servicio: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.eliminandoServicioId = idServicio;
+      this.cdr.markForCheck();
+      this.arrendatariosService.eliminarServicioArrendatario(idServicio).subscribe({
+        next: () => {
+          this.quitarServicioDelDetalle(idServicio);
+          this.eliminandoServicioId = null;
+          this.cdr.detectChanges();
+          this.detalleModificado.emit();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El servicio ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          this.eliminandoServicioId = null;
+          this.cdr.markForCheck();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el servicio.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarServicioDelDetalle(idServicio: number): void {
+    const servicios = this.item['servicios'];
+    if (!Array.isArray(servicios)) return;
+    this.item['servicios'] = servicios.filter((x) => {
+      if (x == null || typeof x !== 'object') return true;
+      const id = this.idServicioDetalle(x as Record<string, unknown>);
+      return id !== idServicio;
+    });
   }
 
   urlComprobanteServicio(s: Record<string, unknown>): string {
@@ -156,6 +251,148 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
 
   textoSocioDoc(url: unknown): boolean {
     return typeof url === 'string' && url.trim().length > 0;
+  }
+
+  idArchivoDetalle(a: Record<string, unknown>): number | null {
+    const idVal = a['id'] ?? a['idArchivo'] ?? a['idRegistro'];
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  idSocioDetalle(so: Record<string, unknown>): number | null {
+    const idVal = so['id'] ?? so['idSocio'] ?? so['idSocioArrendatario'];
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  eliminarArchivoDetalle(a: Record<string, unknown>, ev?: Event): void {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    const idArchivo = this.idArchivoDetalle(a);
+    if (idArchivo == null || this.eliminandoArchivoId != null) return;
+    const nombre = String(a['nombre'] ?? '').trim() || `Archivo ${idArchivo}`;
+
+    void Swal.fire({
+      title: '¡Eliminar Archivo!',
+      html: `¿Está seguro que requiere eliminar el archivo: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.eliminandoArchivoId = idArchivo;
+      this.cdr.markForCheck();
+      this.arrendatariosService.eliminarArchivoArrendatario(idArchivo).subscribe({
+        next: () => {
+          this.quitarArchivoDelDetalle(idArchivo);
+          this.eliminandoArchivoId = null;
+          this.cdr.detectChanges();
+          this.detalleModificado.emit();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El archivo ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          this.eliminandoArchivoId = null;
+          this.cdr.markForCheck();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el archivo.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarArchivoDelDetalle(idArchivo: number): void {
+    const archivos = this.item['archivos'];
+    if (!Array.isArray(archivos)) return;
+    this.item['archivos'] = archivos.filter((x) => {
+      if (x == null || typeof x !== 'object') return true;
+      const id = this.idArchivoDetalle(x as Record<string, unknown>);
+      return id !== idArchivo;
+    });
+  }
+
+  eliminarSocioDetalle(so: Record<string, unknown>, ev?: Event): void {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    const idSocio = this.idSocioDetalle(so);
+    if (idSocio == null || this.eliminandoSocioId != null) return;
+    const nombre = String(so['nombre'] ?? '').trim() || `Socio ${idSocio}`;
+
+    void Swal.fire({
+      title: '¡Eliminar Socio!',
+      html: `¿Está seguro que requiere eliminar el socio: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.eliminandoSocioId = idSocio;
+      this.cdr.markForCheck();
+      this.arrendatariosService.eliminarSocioArrendatario(idSocio).subscribe({
+        next: () => {
+          this.quitarSocioDelDetalle(idSocio);
+          this.eliminandoSocioId = null;
+          this.cdr.detectChanges();
+          this.detalleModificado.emit();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El socio ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          this.eliminandoSocioId = null;
+          this.cdr.markForCheck();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el socio.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarSocioDelDetalle(idSocio: number): void {
+    const socios = this.item['socios'];
+    if (!Array.isArray(socios)) return;
+    this.item['socios'] = socios.filter((x) => {
+      if (x == null || typeof x !== 'object') return true;
+      const id = this.idSocioDetalle(x as Record<string, unknown>);
+      return id !== idSocio;
+    });
   }
 
   descargarDocumento(
@@ -435,17 +672,6 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
     return !Number.isFinite(estatus) || estatus !== 0;
   }
 
-  contratoLocalEsCancelable(
-    c: Record<string, unknown>,
-    loc: Record<string, unknown>,
-  ): boolean {
-    if (!this.contratoEsCancelable(c)) return false;
-    const idContratoLocal = Number(loc['idContratoLocal']);
-    if (!Number.isFinite(idContratoLocal) || idContratoLocal <= 0) return false;
-    const estatus = Number(loc['estatusContratoLocal']);
-    return !Number.isFinite(estatus) || estatus !== 0;
-  }
-
   confirmarCancelarContrato(c: Record<string, unknown>, event?: Event): void {
     event?.stopPropagation();
     event?.preventDefault();
@@ -519,135 +745,6 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
     });
   }
 
-  async confirmarCancelarContratoLocal(
-    c: Record<string, unknown>,
-    loc: Record<string, unknown>,
-    event?: Event,
-  ): Promise<void> {
-    event?.stopPropagation();
-    event?.preventDefault();
-
-    try {
-      const idContratoLocal = Number(
-        loc['idContratoLocal'] ?? loc['idContratoLocales'],
-      );
-      if (!Number.isFinite(idContratoLocal) || idContratoLocal <= 0) {
-        await this.alertaValidacion(
-          'No se puede cancelar',
-          'La asignación del local no tiene un identificador válido.',
-        );
-        return;
-      }
-      if (!this.contratoEsCancelable(c)) {
-        await this.alertaValidacion(
-          'Contrato no vigente',
-          'No se puede cancelar un local de un contrato ya cancelado.',
-        );
-        return;
-      }
-      const estatusAsignacion = Number(loc['estatusContratoLocal']);
-      if (Number.isFinite(estatusAsignacion) && estatusAsignacion === 0) {
-        await this.alertaValidacion(
-          'Local ya cancelado',
-          'Esta asignación de local ya está dada de baja.',
-        );
-        return;
-      }
-
-      const idContrato = Number(c['id']);
-      const indice = this.contratos.indexOf(c);
-      const etiquetaContrato =
-        indice >= 0 ? `Contrato ${indice + 1}` : `Contrato #${idContrato}`;
-      const nombreLocal =
-        String(loc['nombre'] ?? '').trim() || `Local #${Math.trunc(idContratoLocal)}`;
-      const idOk = Math.trunc(idContratoLocal);
-
-      const result = await Swal.fire({
-        title: '¡Cancelación de local!',
-        html: this.htmlModalCancelarContratoLocal(
-          c,
-          loc,
-          etiquetaContrato,
-          nombreLocal,
-          idOk,
-        ),
-        icon: 'warning',
-        background: '#141a21',
-        color: '#ffffff',
-        width: '36rem',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, cancelar local',
-        cancelButtonText: 'No, volver',
-        heightAuto: false,
-        didOpen: () => {
-          const el = Swal.getContainer();
-          if (el) el.style.zIndex = '200000';
-        },
-      });
-
-      if (!result.isConfirmed) return;
-
-      this.contratosService
-        .cancelarContratoLocal(idOk)
-        .pipe(take(1))
-        .subscribe({
-          next: () => {
-            this.aplicarCancelacionContratoLocal(c, idOk);
-            this.invalidarCacheLocales(c);
-            void Swal.fire({
-              background: '#141a21',
-              color: '#ffffff',
-              title: '¡Local cancelado!',
-              html: `La asignación de <strong>${this.escapeHtmlSwal(nombreLocal)}</strong> fue cancelada correctamente.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-              didOpen: () => {
-                const el = Swal.getContainer();
-                if (el) el.style.zIndex = '200000';
-              },
-            });
-            this.contratoCancelado.emit();
-          },
-          error: (err: unknown) => {
-            void Swal.fire({
-              background: '#141a21',
-              color: '#ffffff',
-              title: '¡Ops!',
-              html: this.mensajeErrorHttp(
-                err,
-                'No se pudo cancelar la asignación del local.',
-              ),
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-              didOpen: () => {
-                const el = Swal.getContainer();
-                if (el) el.style.zIndex = '200000';
-              },
-            });
-          },
-        });
-    } catch (err: unknown) {
-      console.error('Error al confirmar cancelación de local:', err);
-      void Swal.fire({
-        background: '#141a21',
-        color: '#ffffff',
-        title: '¡Ops!',
-        html: this.mensajeErrorHttp(err, 'No se pudo abrir la confirmación de cancelación.'),
-        icon: 'error',
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: 'Entendido',
-        didOpen: () => {
-          const el = Swal.getContainer();
-          if (el) el.style.zIndex = '200000';
-        },
-      });
-    }
-  }
-
   private alertaValidacion(titulo: string, mensaje: string): Promise<unknown> {
     return Swal.fire({
       background: '#141a21',
@@ -677,28 +774,6 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
       if (loc != null && typeof loc === 'object') {
         (loc as Record<string, unknown>)['estatus'] = 1;
       }
-    }
-  }
-
-  private aplicarCancelacionContratoLocal(
-    c: Record<string, unknown>,
-    idContratoLocal: number,
-  ): void {
-    const filas = c['contratoLocales'];
-    if (!Array.isArray(filas)) return;
-    for (const raw of filas) {
-      if (raw == null || typeof raw !== 'object') continue;
-      const fila = raw as Record<string, unknown>;
-      if (Number(fila['id']) !== idContratoLocal) continue;
-      fila['estatus'] = 0;
-      if (!fila['fechaBaja']) {
-        fila['fechaBaja'] = new Date().toISOString();
-      }
-      const loc = fila['local'];
-      if (loc != null && typeof loc === 'object') {
-        (loc as Record<string, unknown>)['estatus'] = 1;
-      }
-      break;
     }
   }
 
@@ -793,58 +868,6 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
       '</div>',
       '<p style="margin:0 0 0.75rem;font-size:0.86rem;line-height:1.45;color:#fcd34d;">',
       'Esta acción dará de baja el contrato, cancelará los locales vinculados y los marcará como disponibles.',
-      '</p>',
-      '<p style="margin:0;font-size:0.9rem;line-height:1.45;color:#ecefff;">',
-      '¿Confirma que desea continuar con la cancelación?',
-      '</p>',
-    ].join('');
-  }
-
-  private htmlModalCancelarContratoLocal(
-    c: Record<string, unknown>,
-    loc: Record<string, unknown>,
-    etiquetaContrato: string,
-    nombreLocal: string,
-    idContratoLocal: number,
-  ): string {
-    const inmueble = this.inmuebleDesdeContrato(c);
-    const area =
-      loc['areaM2'] != null && loc['areaM2'] !== '' && Number.isFinite(Number(loc['areaM2']))
-        ? `${Number(loc['areaM2'])} m²`
-        : '';
-    const mensualidad =
-      loc['mensualidad'] != null && loc['mensualidad'] !== ''
-        ? formatearMoneda(loc['mensualidad'])
-        : '';
-
-    const lineasLocal = [
-      this.lineaResumenCancelacion('Local', nombreLocal),
-      this.lineaResumenCancelacion('ID asignación', String(idContratoLocal)),
-      this.lineaResumenCancelacion('Área', area),
-      this.lineaResumenCancelacion('Giro', loc['giro']),
-      this.lineaResumenCancelacion('Mensualidad', mensualidad),
-      this.lineaResumenCancelacion('Contrato', etiquetaContrato),
-      this.lineaResumenCancelacion('Inmueble', inmueble?.['inmueble']),
-      this.lineaResumenCancelacion('Arrendatario', this.item['arrendatario']),
-    ].filter(Boolean);
-
-    const bloque = (titulo: string, lineas: string[]): string => {
-      if (!lineas.length) return '';
-      return [
-        `<p style="margin:0 0 0.45rem;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:#8f9bc4;">${this.escapeHtmlSwal(titulo)}</p>`,
-        `<ul style="margin:0 0 0.85rem;padding-left:1.1rem;font-size:0.86rem;color:#dce3ff;line-height:1.5;list-style:disc;">${lineas.join('')}</ul>`,
-      ].join('');
-    };
-
-    return [
-      '<p style="margin:0 0 0.85rem;font-size:0.92rem;line-height:1.5;color:#ecefff;">',
-      'Está cancelando la <strong>asignación de un local</strong> en el contrato. Revise los datos antes de confirmar:',
-      '</p>',
-      '<div style="text-align:left;margin:0 0 0.85rem;padding:0.85rem;border-radius:10px;border:1px solid rgba(130,160,255,0.28);background:rgba(8,12,20,0.72);">',
-      bloque('Asignación a cancelar', lineasLocal),
-      '</div>',
-      '<p style="margin:0 0 0.75rem;font-size:0.86rem;line-height:1.45;color:#fcd34d;">',
-      'Esta acción dará de baja la asignación del local y lo marcará como disponible. El contrato permanecerá vigente.',
       '</p>',
       '<p style="margin:0;font-size:0.9rem;line-height:1.45;color:#ecefff;">',
       '¿Confirma que desea continuar con la cancelación?',

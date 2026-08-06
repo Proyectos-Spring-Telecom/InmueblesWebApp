@@ -42,7 +42,7 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label for="rfc" class="form-label perm-label">RFC</label>
+                        <label for="rfc" class="form-label perm-label">RFC <span class="text-danger">*</span></label>
                         <div class="input-group input-group-lg perm-ig">
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">badge</mat-icon>
@@ -57,7 +57,7 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label for="tipoPersona" class="form-label perm-label">Tipo Persona</label>
+                        <label for="tipoPersona" class="form-label perm-label">Tipo Persona <span class="text-danger">*</span></label>
                         <div class="input-group input-group-lg perm-ig">
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">person</mat-icon>
@@ -332,6 +332,7 @@
                         </div>
                     </div>
 
+                    <div class="col-12">
                     <div class="docs-hero mt-5"
                         #docsSectionCliente
                         [class.autocarga-docs-highlight]="resaltarAutocargaDocs">
@@ -346,21 +347,8 @@
                         </div>
                     </div>
 
-                    <ng-template #btnVerClienteDoc let-url="url" let-titulo="titulo">
-                        <button
-                            *ngIf="layoutArchivoRemoto(url)"
-                            type="button"
-                            mat-flat-button
-                            class="bg-warn docs-uploader-ver-btn"
-                            (click)="verArchivoRemoto(url, titulo)"
-                        >
-                            <mat-icon>visibility</mat-icon>
-                            <span>Ver</span>
-                        </button>
-                    </ng-template>
-
                     <div class="row g-3 g-lg-4 mt-0 uploader-wrap docs-uploader-docs-row align-items-stretch">
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                        <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
                             <label class="form-label perm-label d-block mb-2">Logotipo</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="logoDragging"
@@ -374,17 +362,10 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openLogoFilePicker()">Seleccionar</button>
-                                            <ng-container
-                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlLogotipoRemoto, titulo: 'Logotipo' }"></ng-container>
-                                            <a *ngIf="urlLogotipoRemoto"
-                                                class="uploader__badge uploader__badge--file"
-                                                [href]="urlLogotipoRemoto"
-                                                target="_blank" rel="noopener noreferrer"
-                                                (click)="$event.stopPropagation()">
-                                                {{ etiquetaLogotipoUploader() }}
-                                            </a>
-                                            <span *ngIf="!urlLogotipoRemoto" class="uploader__badge"
-                                                [class.uploader__badge--file]="clienteForm.get('logotipo')?.value?.name || clienteForm.get('logotipo')?.value">
+                                            <span class="uploader__badge"
+                                                [class.uploader__badge--file]="tieneArchivoControl('logotipo')"
+                                                [class.uploader__badge--clickable]="tieneArchivoControl('logotipo')"
+                                                (click)="tieneArchivoControl('logotipo') && onBadgeArchivoClick($event, 'logotipo', 'Logotipo', { esImagen: true })">
                                                 {{ etiquetaLogotipoUploader() }}
                                             </span>
                                         </div>
@@ -396,10 +377,10 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card"
+                        <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card"
                             #autocargaCsfCardCliente
                             [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
-                            <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal</label>
+                            <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal <span class="text-danger">*</span></label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="csfDragging" (dragover)="onCsfDragOver($event)"
                                     (dragleave)="onCsfDragLeave($event)" (drop)="onCsfDrop($event)">
@@ -414,43 +395,24 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openCsfFilePicker()">Seleccionar</button>
-                                            <ng-container
-                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('constanciaSituacionFiscal'), titulo: 'Constancia De Situación Fiscal' }"></ng-container>
                                             <span class="uploader__badge"
-                                                [class.uploader__badge--file]="csfFileName || clienteForm.get('constanciaSituacionFiscal')?.value?.name || clienteForm.get('constanciaSituacionFiscal')?.value">
-                                                {{ csfFileName ||
-                                                clienteForm.get('constanciaSituacionFiscal')?.value?.name ||
-                                                clienteForm.get('constanciaSituacionFiscal')?.value ||
-                                                (autocargaCsfPendiente ? 'PDF' : 'PDF · Máx. 3 MB')
-                                                }}
+                                                [class.uploader__badge--file]="tieneArchivoControl('constanciaSituacionFiscal')"
+                                                [class.uploader__badge--clickable]="tieneArchivoControl('constanciaSituacionFiscal')"
+                                                (click)="tieneArchivoControl('constanciaSituacionFiscal') && onBadgeArchivoClick($event, 'constanciaSituacionFiscal', 'Constancia De Situación Fiscal')">
+                                                {{ etiquetaArchivoControl('constanciaSituacionFiscal', csfFileName, 'PDF') }}
                                             </span>
                                         </div>
 
-                                        <div class="uploader__status"
-                                            *ngIf="clienteForm.get('constanciaSituacionFiscal')?.value && !csfFileName && !clienteForm.get('constanciaSituacionFiscal')?.value?.name">
-                                            <div class="uploader__filename"
-                                                *ngIf="csfFileName || clienteForm.get('constanciaSituacionFiscal')?.value?.name">
-                                                {{ csfFileName
-                                                || clienteForm.get('constanciaSituacionFiscal')?.value?.name }}
-                                            </div>
-                                            <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!csfFileName && !clienteForm.get('constanciaSituacionFiscal')?.value?.name"
-                                                [href]="clienteForm.get('constanciaSituacionFiscal')?.value"
-                                                target="_blank" rel="noopener noreferrer">
-                                                {{ clienteForm.get('constanciaSituacionFiscal')?.value }}
-                                            </a>
-                                        </div>
-
                                         <input #csfFileInput type="file"
-                                            [accept]="autocargaCsfPendiente ? 'application/pdf' : 'application/pdf'"
+                                            accept="application/pdf"
                                             (change)="onCsfFileSelected($event)" class="uploader__input" />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
-                            <label class="form-label perm-label d-block mb-2">Comprobante De Domicilio Fiscal</label>
+                        <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
+                            <label class="form-label perm-label d-block mb-2">Comprobante De Domicilio Fiscal <span class="text-danger">*</span></label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="compDomDragging"
                                     (dragover)="onCompDomDragOver($event)" (dragleave)="onCompDomDragLeave($event)"
@@ -463,31 +425,12 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openCompDomFilePicker()">Seleccionar</button>
-                                            <ng-container
-                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('comprobanteDomicilio'), titulo: 'Comprobante De Domicilio Fiscal' }"></ng-container>
                                             <span class="uploader__badge"
-                                                [class.uploader__badge--file]="compDomFileName || clienteForm.get('comprobanteDomicilio')?.value?.name || clienteForm.get('comprobanteDomicilio')?.value">
-                                                {{ compDomFileName ||
-                                                clienteForm.get('comprobanteDomicilio')?.value?.name ||
-                                                clienteForm.get('comprobanteDomicilio')?.value ||
-                                                'PDF · Máx. 3 MB'
-                                                }}
+                                                [class.uploader__badge--file]="tieneArchivoControl('comprobanteDomicilio')"
+                                                [class.uploader__badge--clickable]="tieneArchivoControl('comprobanteDomicilio')"
+                                                (click)="tieneArchivoControl('comprobanteDomicilio') && onBadgeArchivoClick($event, 'comprobanteDomicilio', 'Comprobante De Domicilio Fiscal')">
+                                                {{ etiquetaArchivoControl('comprobanteDomicilio', compDomFileName, 'PDF') }}
                                             </span>
-                                        </div>
-
-                                        <div class="uploader__status"
-                                            *ngIf="clienteForm.get('comprobanteDomicilio')?.value && !compDomFileName && !clienteForm.get('comprobanteDomicilio')?.value?.name">
-                                            <div class="uploader__filename"
-                                                *ngIf="compDomFileName || clienteForm.get('comprobanteDomicilio')?.value?.name">
-                                                {{ compDomFileName
-                                                || clienteForm.get('comprobanteDomicilio')?.value?.name }}
-                                            </div>
-                                            <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!compDomFileName && !clienteForm.get('comprobanteDomicilio')?.value?.name"
-                                                [href]="clienteForm.get('comprobanteDomicilio')?.value" target="_blank"
-                                                rel="noopener noreferrer">
-                                                {{ clienteForm.get('comprobanteDomicilio')?.value }}
-                                            </a>
                                         </div>
                                         <input #compDomFileInput type="file" accept="application/pdf"
                                             (change)="onCompDomFileSelected($event)" class="uploader__input" />
@@ -496,7 +439,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                        <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
                             <label class="form-label perm-label d-block mb-2">Licencia De Funcionamiento</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="licenciaDragging"
@@ -510,30 +453,12 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openLicenciaFilePicker()">Seleccionar</button>
-                                            <ng-container
-                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('licenciaFuncionamiento'), titulo: 'Licencia De Funcionamiento' }"></ng-container>
                                             <span class="uploader__badge"
-                                                [class.uploader__badge--file]="licenciaFileName || clienteForm.get('licenciaFuncionamiento')?.value?.name || clienteForm.get('licenciaFuncionamiento')?.value">
-                                                {{ licenciaFileName ||
-                                                clienteForm.get('licenciaFuncionamiento')?.value?.name ||
-                                                clienteForm.get('licenciaFuncionamiento')?.value ||
-                                                'PDF · PNG · JPG · Máx. 3 MB'
-                                                }}
+                                                [class.uploader__badge--file]="tieneArchivoControl('licenciaFuncionamiento')"
+                                                [class.uploader__badge--clickable]="tieneArchivoControl('licenciaFuncionamiento')"
+                                                (click)="tieneArchivoControl('licenciaFuncionamiento') && onBadgeArchivoClick($event, 'licenciaFuncionamiento', 'Licencia De Funcionamiento')">
+                                                {{ etiquetaArchivoControl('licenciaFuncionamiento', licenciaFileName, 'PDF · PNG · JPG') }}
                                             </span>
-                                        </div>
-                                        <div class="uploader__status"
-                                            *ngIf="clienteForm.get('licenciaFuncionamiento')?.value && !licenciaFileName && !clienteForm.get('licenciaFuncionamiento')?.value?.name">
-                                            <div class="uploader__filename"
-                                                *ngIf="licenciaFileName || clienteForm.get('licenciaFuncionamiento')?.value?.name">
-                                                {{ licenciaFileName
-                                                || clienteForm.get('licenciaFuncionamiento')?.value?.name }}
-                                            </div>
-                                            <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!licenciaFileName && !clienteForm.get('licenciaFuncionamiento')?.value?.name"
-                                                [href]="clienteForm.get('licenciaFuncionamiento')?.value"
-                                                target="_blank" rel="noopener noreferrer">
-                                                {{ clienteForm.get('licenciaFuncionamiento')?.value }}
-                                            </a>
                                         </div>
                                         <input #licenciaFileInput type="file"
                                             accept="application/pdf,image/png,image/jpeg,image/jpg"
@@ -543,7 +468,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                        <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
                             <label class="form-label perm-label d-block mb-2">Constancia De Protección Civil</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="proteccionCivilDragging"
@@ -558,30 +483,12 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openProteccionCivilFilePicker()">Seleccionar</button>
-                                            <ng-container
-                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('constanciaProteccionCivil'), titulo: 'Constancia De Protección Civil' }"></ng-container>
                                             <span class="uploader__badge"
-                                                [class.uploader__badge--file]="proteccionCivilFileName || clienteForm.get('constanciaProteccionCivil')?.value?.name || clienteForm.get('constanciaProteccionCivil')?.value">
-                                                {{ proteccionCivilFileName ||
-                                                clienteForm.get('constanciaProteccionCivil')?.value?.name ||
-                                                clienteForm.get('constanciaProteccionCivil')?.value ||
-                                                'PDF · PNG · JPG · Máx. 3 MB'
-                                                }}
+                                                [class.uploader__badge--file]="tieneArchivoControl('constanciaProteccionCivil')"
+                                                [class.uploader__badge--clickable]="tieneArchivoControl('constanciaProteccionCivil')"
+                                                (click)="tieneArchivoControl('constanciaProteccionCivil') && onBadgeArchivoClick($event, 'constanciaProteccionCivil', 'Constancia De Protección Civil')">
+                                                {{ etiquetaArchivoControl('constanciaProteccionCivil', proteccionCivilFileName, 'PDF · PNG · JPG') }}
                                             </span>
-                                        </div>
-                                        <div class="uploader__status"
-                                            *ngIf="clienteForm.get('constanciaProteccionCivil')?.value && !proteccionCivilFileName && !clienteForm.get('constanciaProteccionCivil')?.value?.name">
-                                            <div class="uploader__filename"
-                                                *ngIf="proteccionCivilFileName || clienteForm.get('constanciaProteccionCivil')?.value?.name">
-                                                {{ proteccionCivilFileName
-                                                || clienteForm.get('constanciaProteccionCivil')?.value?.name }}
-                                            </div>
-                                            <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!proteccionCivilFileName && !clienteForm.get('constanciaProteccionCivil')?.value?.name"
-                                                [href]="clienteForm.get('constanciaProteccionCivil')?.value"
-                                                target="_blank" rel="noopener noreferrer">
-                                                {{ clienteForm.get('constanciaProteccionCivil')?.value }}
-                                            </a>
                                         </div>
                                         <input #proteccionCivilFileInput type="file"
                                             accept="application/pdf,image/png,image/jpeg,image/jpg"
@@ -591,7 +498,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                        <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
                             <label class="form-label perm-label d-block mb-2">Uso De Suelo</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="usoSueloDragging"
@@ -605,31 +512,12 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openUsoSueloFilePicker()">Seleccionar</button>
-                                            <ng-container
-                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('usoSuelo'), titulo: 'Uso De Suelo' }"></ng-container>
                                             <span class="uploader__badge"
-                                                [class.uploader__badge--file]="usoSueloFileName || clienteForm.get('usoSuelo')?.value?.name || clienteForm.get('usoSuelo')?.value">
-                                                {{
-                                                usoSueloFileName ||
-                                                clienteForm.get('usoSuelo')?.value?.name ||
-                                                clienteForm.get('usoSuelo')?.value ||
-                                                'PDF · PNG · JPG · Máx. 3 MB'
-                                                }}
+                                                [class.uploader__badge--file]="tieneArchivoControl('usoSuelo')"
+                                                [class.uploader__badge--clickable]="tieneArchivoControl('usoSuelo')"
+                                                (click)="tieneArchivoControl('usoSuelo') && onBadgeArchivoClick($event, 'usoSuelo', 'Uso De Suelo')">
+                                                {{ etiquetaArchivoControl('usoSuelo', usoSueloFileName, 'PDF · PNG · JPG') }}
                                             </span>
-                                        </div>
-                                        <div class="uploader__status"
-                                            *ngIf="clienteForm.get('usoSuelo')?.value && !usoSueloFileName && !clienteForm.get('usoSuelo')?.value?.name">
-                                            <div class="uploader__filename"
-                                                *ngIf="usoSueloFileName || clienteForm.get('usoSuelo')?.value?.name">
-                                                {{ usoSueloFileName
-                                                || clienteForm.get('usoSuelo')?.value?.name }}
-                                            </div>
-                                            <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!usoSueloFileName && !clienteForm.get('usoSuelo')?.value?.name"
-                                                [href]="clienteForm.get('usoSuelo')?.value" target="_blank"
-                                                rel="noopener noreferrer">
-                                                {{ clienteForm.get('usoSuelo')?.value }}
-                                            </a>
                                         </div>
                                         <input #usoSueloFileInput type="file"
                                             accept="application/pdf,image/png,image/jpeg,image/jpg"
@@ -639,7 +527,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                        <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
                             <label class="form-label perm-label d-block mb-2">Plano Catastral</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="planoCatastralDragging"
@@ -654,30 +542,12 @@
                                         <div class="uploader__cta">
                                             <button mat-flat-button color="primary" type="button"
                                                 (click)="openPlanoCatastralFilePicker()">Seleccionar</button>
-                                            <ng-container
-                                                *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('planoCatastral'), titulo: 'Plano Catastral' }"></ng-container>
                                             <span class="uploader__badge"
-                                                [class.uploader__badge--file]="planoCatastralFileName || clienteForm.get('planoCatastral')?.value?.name || clienteForm.get('planoCatastral')?.value">
-                                                {{ planoCatastralFileName ||
-                                                clienteForm.get('planoCatastral')?.value?.name ||
-                                                clienteForm.get('planoCatastral')?.value ||
-                                                'PDF · PNG · JPG · Máx. 3 MB'
-                                                }}
+                                                [class.uploader__badge--file]="tieneArchivoControl('planoCatastral')"
+                                                [class.uploader__badge--clickable]="tieneArchivoControl('planoCatastral')"
+                                                (click)="tieneArchivoControl('planoCatastral') && onBadgeArchivoClick($event, 'planoCatastral', 'Plano Catastral')">
+                                                {{ etiquetaArchivoControl('planoCatastral', planoCatastralFileName, 'PDF · PNG · JPG') }}
                                             </span>
-                                        </div>
-                                        <div class="uploader__status"
-                                            *ngIf="clienteForm.get('planoCatastral')?.value && !planoCatastralFileName && !clienteForm.get('planoCatastral')?.value?.name">
-                                            <div class="uploader__filename"
-                                                *ngIf="planoCatastralFileName || clienteForm.get('planoCatastral')?.value?.name">
-                                                {{ planoCatastralFileName
-                                                || clienteForm.get('planoCatastral')?.value?.name }}
-                                            </div>
-                                            <a class="uploader__filename uploader__filename--link"
-                                                *ngIf="!planoCatastralFileName && !clienteForm.get('planoCatastral')?.value?.name"
-                                                [href]="clienteForm.get('planoCatastral')?.value" target="_blank"
-                                                rel="noopener noreferrer">
-                                                {{ clienteForm.get('planoCatastral')?.value }}
-                                            </a>
                                         </div>
                                         <input #planoCatastralFileInput type="file"
                                             accept="application/pdf,image/png,image/jpeg,image/jpg"
@@ -688,8 +558,8 @@
                         </div>
 
                         <ng-container *ngIf="esPersonaMoral()">
-                            <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
-                                <label class="form-label perm-label d-block mb-2">Acta Constitutiva</label>
+                            <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
+                                <label class="form-label perm-label d-block mb-2">Acta Constitutiva <span class="text-danger">*</span></label>
                                 <div class="uploader-hero">
                                     <div class="uploader" [class.dragging]="actaDragging"
                                         (dragover)="onActaDragOver($event)" (dragleave)="onActaDragLeave($event)"
@@ -702,31 +572,12 @@
                                             <div class="uploader__cta">
                                                 <button mat-flat-button color="primary" type="button"
                                                     (click)="openActaFilePicker()">Seleccionar</button>
-                                                <ng-container
-                                                    *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('actaConstitutiva'), titulo: 'Acta Constitutiva' }"></ng-container>
                                                 <span class="uploader__badge"
-                                                    [class.uploader__badge--file]="actaFileName || clienteForm.get('actaConstitutiva')?.value?.name || clienteForm.get('actaConstitutiva')?.value">
-                                                    {{ actaFileName ||
-                                                    clienteForm.get('actaConstitutiva')?.value?.name ||
-                                                    clienteForm.get('actaConstitutiva')?.value ||
-                                                    'PDF · Máx. 3 MB'
-                                                    }}
+                                                    [class.uploader__badge--file]="tieneArchivoControl('actaConstitutiva')"
+                                                    [class.uploader__badge--clickable]="tieneArchivoControl('actaConstitutiva')"
+                                                    (click)="tieneArchivoControl('actaConstitutiva') && onBadgeArchivoClick($event, 'actaConstitutiva', 'Acta Constitutiva')">
+                                                    {{ etiquetaArchivoControl('actaConstitutiva', actaFileName, 'PDF') }}
                                                 </span>
-                                            </div>
-
-                                            <div class="uploader__status"
-                                                *ngIf="clienteForm.get('actaConstitutiva')?.value && !actaFileName && !clienteForm.get('actaConstitutiva')?.value?.name">
-                                                <div class="uploader__filename"
-                                                    *ngIf="actaFileName || clienteForm.get('actaConstitutiva')?.value?.name">
-                                                    {{ actaFileName
-                                                    || clienteForm.get('actaConstitutiva')?.value?.name }}
-                                                </div>
-                                                <a class="uploader__filename uploader__filename--link"
-                                                    *ngIf="!actaFileName && !clienteForm.get('actaConstitutiva')?.value?.name"
-                                                    [href]="clienteForm.get('actaConstitutiva')?.value" target="_blank"
-                                                    rel="noopener noreferrer">
-                                                    {{ clienteForm.get('actaConstitutiva')?.value }}
-                                                </a>
                                             </div>
 
                                             <input #actaFileInput type="file" accept="application/pdf"
@@ -736,7 +587,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                            <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
                                 <label class="form-label perm-label d-block mb-2">Poder Del Rep. Legal</label>
                                 <div class="uploader-hero">
                                     <div class="uploader" [class.dragging]="poderDragging"
@@ -750,31 +601,12 @@
                                             <div class="uploader__cta">
                                                 <button mat-flat-button color="primary" type="button"
                                                     (click)="openPoderFilePicker()">Seleccionar</button>
-                                                <ng-container
-                                                    *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('poderRepresentanteLegal'), titulo: 'Poder Del Rep. Legal' }"></ng-container>
                                                 <span class="uploader__badge"
-                                                    [class.uploader__badge--file]="poderFileName || clienteForm.get('poderRepresentanteLegal')?.value?.name || clienteForm.get('poderRepresentanteLegal')?.value">
-                                                    {{ poderFileName ||
-                                                    clienteForm.get('poderRepresentanteLegal')?.value?.name ||
-                                                    clienteForm.get('poderRepresentanteLegal')?.value ||
-                                                    'PDF · Máx. 3 MB'
-                                                    }}
+                                                    [class.uploader__badge--file]="tieneArchivoControl('poderRepresentanteLegal')"
+                                                    [class.uploader__badge--clickable]="tieneArchivoControl('poderRepresentanteLegal')"
+                                                    (click)="tieneArchivoControl('poderRepresentanteLegal') && onBadgeArchivoClick($event, 'poderRepresentanteLegal', 'Poder Del Rep. Legal')">
+                                                    {{ etiquetaArchivoControl('poderRepresentanteLegal', poderFileName, 'PDF') }}
                                                 </span>
-                                            </div>
-
-                                            <div class="uploader__status"
-                                                *ngIf="clienteForm.get('poderRepresentanteLegal')?.value && !poderFileName && !clienteForm.get('poderRepresentanteLegal')?.value?.name">
-                                                <div class="uploader__filename"
-                                                    *ngIf="poderFileName || clienteForm.get('poderRepresentanteLegal')?.value?.name">
-                                                    {{ poderFileName
-                                                    || clienteForm.get('poderRepresentanteLegal')?.value?.name }}
-                                                </div>
-                                                <a class="uploader__filename uploader__filename--link"
-                                                    *ngIf="!poderFileName && !clienteForm.get('poderRepresentanteLegal')?.value?.name"
-                                                    [href]="clienteForm.get('poderRepresentanteLegal')?.value"
-                                                    target="_blank" rel="noopener noreferrer">
-                                                    {{ clienteForm.get('poderRepresentanteLegal')?.value }}
-                                                </a>
                                             </div>
 
                                             <input #poderFileInput type="file" accept="application/pdf"
@@ -784,7 +616,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
+                            <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
                                 <label class="form-label perm-label d-block mb-2">Identificación Oficial Del Rep.
                                     Legal</label>
                                 <div class="uploader-hero">
@@ -799,32 +631,12 @@
                                             <div class="uploader__cta">
                                                 <button mat-flat-button color="primary" type="button"
                                                     (click)="openIneFilePicker()">Seleccionar</button>
-                                                <ng-container
-                                                    *ngTemplateOutlet="btnVerClienteDoc; context: { url: urlRemotoControl('ineRepresentanteLegal'), titulo: 'Identificación Oficial Del Rep. Legal' }"></ng-container>
                                                 <span class="uploader__badge"
-                                                    [class.uploader__badge--file]="ineFileName || clienteForm.get('ineRepresentanteLegal')?.value?.name || clienteForm.get('ineRepresentanteLegal')?.value">
-                                                    {{
-                                                    ineFileName ||
-                                                    clienteForm.get('ineRepresentanteLegal')?.value?.name ||
-                                                    clienteForm.get('ineRepresentanteLegal')?.value ||
-                                                    'PDF · PNG · JPG · Máx. 3 MB'
-                                                    }}
+                                                    [class.uploader__badge--file]="tieneArchivoControl('ineRepresentanteLegal')"
+                                                    [class.uploader__badge--clickable]="tieneArchivoControl('ineRepresentanteLegal')"
+                                                    (click)="tieneArchivoControl('ineRepresentanteLegal') && onBadgeArchivoClick($event, 'ineRepresentanteLegal', 'Identificación Oficial Del Rep. Legal')">
+                                                    {{ etiquetaArchivoControl('ineRepresentanteLegal', ineFileName, 'PDF · PNG · JPG') }}
                                                 </span>
-                                            </div>
-
-                                            <div class="uploader__status"
-                                                *ngIf="clienteForm.get('ineRepresentanteLegal')?.value && !ineFileName && !clienteForm.get('ineRepresentanteLegal')?.value?.name">
-                                                <div class="uploader__filename"
-                                                    *ngIf="ineFileName || clienteForm.get('ineRepresentanteLegal')?.value?.name">
-                                                    {{ ineFileName ||
-                                                    clienteForm.get('ineRepresentanteLegal')?.value?.name }}
-                                                </div>
-                                                <a class="uploader__filename uploader__filename--link"
-                                                    *ngIf="!ineFileName && !clienteForm.get('ineRepresentanteLegal')?.value?.name"
-                                                    [href]="clienteForm.get('ineRepresentanteLegal')?.value"
-                                                    target="_blank" rel="noopener noreferrer">
-                                                    {{ clienteForm.get('ineRepresentanteLegal')?.value }}
-                                                </a>
                                             </div>
 
                                             <input #ineFileInput type="file"
@@ -858,7 +670,7 @@
                             </div>
 
                             <div class="arrend-fa-section__body" formArrayName="socios">
-                                <dx-accordion class="arrend-accordion-socios" width="100%" [collapsible]="true"
+                                <dx-accordion *ngIf="mostrarAccordionSocios" class="arrend-accordion-socios" width="100%" [collapsible]="true"
                                     [multiple]="true" [animationDuration]="260"
                                     [selectedIndex]="$any(socioAccordionIndicesAbiertos)" [focusStateEnabled]="false"
                                     (selectedIndexChange)="onSocioAccordionIndicesChange($event)"
@@ -867,8 +679,19 @@
                                         class="arrend-accordion-title-bar">
                                         <span class="arrend-accordion-title-bar__label">{{
                                             tituloSocioAccordionDesdeClave(data) }}</span>
+                                        <button
+                                            *ngIf="puedeEliminarSocioEnEdicion(indiceSocioDesdeClaveAccordion(data))"
+                                            type="button"
+                                            mat-flat-button
+                                            class="bg-secondary arrend-socio-eliminar-btn"
+                                            aria-label="Eliminar socio"
+                                            (mousedown)="$event.stopPropagation()"
+                                            (click)="eliminarSocioDesdeTituloAccordion($event, data)"
+                                        >
+                                            <mat-icon>delete</mat-icon> Eliminar Socio
+                                        </button>
                                     </div>
-                                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index; trackBy: trackSocioPorIndice"
+                                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index; trackBy: trackSocioPorUid"
                                         [title]="claveEstableSocioAccordion(i)">
                                         <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                                             <div class="row g-3 socios-identidad">
@@ -921,16 +744,14 @@
                                                                     <button mat-flat-button color="primary"
                                                                         type="button"
                                                                         (click)="openSocioFilePicker(socioCsfInput)">Seleccionar</button>
-                                                                    <button *ngIf="socioCtrl.get('constanciaFiscalUrl')?.value"
-                                                                        mat-flat-button type="button"
-                                                                        class="bg-warn docs-uploader-ver-btn"
-                                                                        (click)="verArchivoRemoto(socioCtrl.get('constanciaFiscalUrl')?.value, socioCtrl.get('constanciaFiscalNombre')?.value || 'Constancia fiscal del socio')">
-                                                                        <mat-icon>visibility</mat-icon><span>Ver</span>
-                                                                    </button>
                                                                     <span class="uploader__badge"
-                                                                        [class.uploader__badge--file]="socioCtrl.get('constanciaFiscalNombre')?.value || socioCtrl.get('constanciaFiscalUrl')?.value">
+                                                                        [class.uploader__badge--file]="socioCtrl.get('constanciaFiscalNombre')?.value || socioCtrl.get('constanciaFiscalUrl')?.value || socioCtrl.get('constanciaFiscalArchivo')?.value?.name"
+                                                                        [class.uploader__badge--clickable]="socioCtrl.get('constanciaFiscalNombre')?.value || socioCtrl.get('constanciaFiscalUrl')?.value || socioCtrl.get('constanciaFiscalArchivo')?.value?.name"
+                                                                        (click)="onBadgeSocioClick($event, socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl', socioCtrl.get('constanciaFiscalNombre')?.value || 'Constancia fiscal del socio')">
                                                                         {{
                                                                         socioCtrl.get('constanciaFiscalNombre')?.value
+                                                                        ||
+                                                                        socioCtrl.get('constanciaFiscalArchivo')?.value?.name
                                                                         ||
                                                                         socioCtrl.get('constanciaFiscalUrl')?.value
                                                                         || 'PDF · PNG · JPG' }}
@@ -960,16 +781,14 @@
                                                                     <button mat-flat-button color="primary"
                                                                         type="button"
                                                                         (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
-                                                                    <button *ngIf="socioCtrl.get('comprobanteDomicilioUrl')?.value"
-                                                                        mat-flat-button type="button"
-                                                                        class="bg-warn docs-uploader-ver-btn"
-                                                                        (click)="verArchivoRemoto(socioCtrl.get('comprobanteDomicilioUrl')?.value, socioCtrl.get('comprobanteDomicilioNombre')?.value || 'Comprobante del socio')">
-                                                                        <mat-icon>visibility</mat-icon><span>Ver</span>
-                                                                    </button>
                                                                     <span class="uploader__badge"
-                                                                        [class.uploader__badge--file]="socioCtrl.get('comprobanteDomicilioNombre')?.value || socioCtrl.get('comprobanteDomicilioUrl')?.value">
+                                                                        [class.uploader__badge--file]="socioCtrl.get('comprobanteDomicilioNombre')?.value || socioCtrl.get('comprobanteDomicilioUrl')?.value || socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name"
+                                                                        [class.uploader__badge--clickable]="socioCtrl.get('comprobanteDomicilioNombre')?.value || socioCtrl.get('comprobanteDomicilioUrl')?.value || socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name"
+                                                                        (click)="onBadgeSocioClick($event, socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl', socioCtrl.get('comprobanteDomicilioNombre')?.value || 'Comprobante del socio')">
                                                                         {{
                                                                         socioCtrl.get('comprobanteDomicilioNombre')?.value
+                                                                        ||
+                                                                        socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name
                                                                         ||
                                                                         socioCtrl.get('comprobanteDomicilioUrl')?.value
                                                                         || 'PDF · PNG · JPG' }}
@@ -999,16 +818,14 @@
                                                                     <button mat-flat-button color="primary"
                                                                         type="button"
                                                                         (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
-                                                                    <button *ngIf="socioCtrl.get('identificacionOficialUrl')?.value"
-                                                                        mat-flat-button type="button"
-                                                                        class="bg-warn docs-uploader-ver-btn"
-                                                                        (click)="verArchivoRemoto(socioCtrl.get('identificacionOficialUrl')?.value, socioCtrl.get('identificacionOficialNombre')?.value || 'Identificación del socio')">
-                                                                        <mat-icon>visibility</mat-icon><span>Ver</span>
-                                                                    </button>
                                                                     <span class="uploader__badge"
-                                                                        [class.uploader__badge--file]="socioCtrl.get('identificacionOficialNombre')?.value || socioCtrl.get('identificacionOficialUrl')?.value">
+                                                                        [class.uploader__badge--file]="socioCtrl.get('identificacionOficialNombre')?.value || socioCtrl.get('identificacionOficialUrl')?.value || socioCtrl.get('identificacionOficialArchivo')?.value?.name"
+                                                                        [class.uploader__badge--clickable]="socioCtrl.get('identificacionOficialNombre')?.value || socioCtrl.get('identificacionOficialUrl')?.value || socioCtrl.get('identificacionOficialArchivo')?.value?.name"
+                                                                        (click)="onBadgeSocioClick($event, socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl', socioCtrl.get('identificacionOficialNombre')?.value || 'Identificación del socio')">
                                                                         {{
                                                                         socioCtrl.get('identificacionOficialNombre')?.value
+                                                                        ||
+                                                                        socioCtrl.get('identificacionOficialArchivo')?.value?.name
                                                                         ||
                                                                         socioCtrl.get('identificacionOficialUrl')?.value ||
                                                                         'PDF · PNG · JPG' }}
@@ -1030,6 +847,7 @@
                         </div>
 
                     </div>
+                    </div>
                 </div>
                 <div class="d-flex flex-wrap gap-3 justify-content-start mt-4">
                     <button class="button-success" role="button" (click)="submit()"><i
@@ -1042,4 +860,4 @@
     </div>
 </div>
 
-<app-documento-preview #docPreview eyebrow="Documento del cliente"></app-documento-preview>
+<app-documento-preview #docPreview eyebrow="Documento del cliente" (closed)="onDocPreviewClosed()"></app-documento-preview>

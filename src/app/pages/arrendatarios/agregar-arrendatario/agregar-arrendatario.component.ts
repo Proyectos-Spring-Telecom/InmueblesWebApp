@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, debounceTime, finalize, forkJoin, of, Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -21,7 +21,7 @@ import {
   ARRENDATARIOS_FORM_DEMO,
   INMUEBLES_ARRENDATARIOS_DEMO,
 } from '../arrendatarios-demo.data';
-import { extraerArrendatarioDetalleApi } from '../arrendatarios-list.mapper';
+import { extraerArrendatarioDetalleApi, registroArrendatarioHijoActivo } from '../arrendatarios-list.mapper';
 import {
   fechaParaInputDate,
   separarArchivosInmueble,
@@ -129,6 +129,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   cargandoInmueblesArrendador = false;
   /** GET `/inmuebles/arrendador/{id}` ya respondió (p. ej. `[]` = sin inmuebles). */
   inmueblesArrendadorConsultados = false;
+  /** Último arrendador para el que ya se cargó `/inmuebles/arrendador/{id}` (evita limpiar contratos al re-emitir el select). */
+  private ultimoIdArrendadorInmuebles: number | null = null;
   /** Opciones del tag-box por contrato (GET `/inmuebles/locales-libres/{idInmueble}`). */
   localesLibresPorContrato: { id: number; nombre: string; etiqueta: string }[][] = [[]];
   cargandoLocalesPorContrato: boolean[] = [false];
@@ -268,7 +270,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.initTipoPersonaLogic();
     this.inicializarContratosArrendatarioLogic();
     this.enlazarInmueblesArrendador();
-    this.actualizarEstadoInmuebleContratos();
     this.formValueLogSub = this.arrendatarioForm.valueChanges
       .pipe(debounceTime(this.debounceLogMs))
       .subscribe(() => {
@@ -296,6 +297,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       if (!this.esEdicionArrendatario()) {
         this.syncServiciosIdsDesdeCatalogo();
       }
+      this.asegurarServiciosDefaultRentaMantenimiento();
+      if (this.esEdicionArrendatario() && this.serviciosFormArray.length > 0) {
+        this.refrescarAccordionServicios();
+      }
+      this.cdr.markForCheck();
     });
 
     const stateData = history.state?.arrendatario;
@@ -609,7 +615,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.enlazarInmuebleLocalContrato(index);
       this.enlazarCalculoMontosContrato(index);
     });
-    this.actualizarEstadoInmuebleContratos();
   }
 
   onContratoMetrosFocus(index: number): void {
@@ -1102,15 +1107,19 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   private onArrendadorContratoChanged(raw: unknown): void {
-    this.limpiarInmueblesContratosTrasCambioArrendador();
     const id =
       raw != null && String(raw).trim() !== '' ? Number(raw) : Number.NaN;
-    if (Number.isFinite(id) && id > 0) {
-      this.cargarInmueblesPorArrendador(Math.trunc(id));
+    const idNorm = Number.isFinite(id) && id > 0 ? Math.trunc(id) : null;
+    if (idNorm != null && idNorm === this.ultimoIdArrendadorInmuebles) {
+      return;
+    }
+    this.limpiarInmueblesContratosTrasCambioArrendador();
+    if (idNorm != null) {
+      this.cargarInmueblesPorArrendador(idNorm);
     } else {
       this.listaInmuebles = [];
       this.inmueblesArrendadorConsultados = false;
-      this.actualizarEstadoInmuebleContratos();
+      this.ultimoIdArrendadorInmuebles = null;
       this.cdr.markForCheck();
     }
   }
@@ -1118,6 +1127,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private limpiarInmueblesContratosTrasCambioArrendador(): void {
     this.listaInmuebles = [];
     this.inmueblesArrendadorConsultados = false;
+    this.ultimoIdArrendadorInmuebles = null;
     this.contratosFormArray.controls.forEach((_, index) => {
       const grupo = this.contratosFormArray.at(index) as FormGroup;
       grupo.get('idInmueble')?.setValue(null, { emitEvent: false });
@@ -1127,13 +1137,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.localesLibresConsultadosPorContrato[index] = false;
     });
     this.cerrarLocalesDropdown();
-    this.actualizarEstadoInmuebleContratos();
   }
 
   private cargarInmueblesPorArrendador(idArrendador: number, onListo?: () => void): void {
     this.cargandoInmueblesArrendador = true;
     this.inmueblesArrendadorConsultados = false;
-    this.actualizarEstadoInmuebleContratos();
     this.inmueblesService
       .obtenerInmueblesPorArrendador(idArrendador)
       .pipe(
@@ -1141,7 +1149,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         finalize(() => {
           this.cargandoInmueblesArrendador = false;
           this.inmueblesArrendadorConsultados = true;
-          this.actualizarEstadoInmuebleContratos();
+          this.ultimoIdArrendadorInmuebles = idArrendador;
           onListo?.();
           this.cdr.markForCheck();
         }),
@@ -1152,28 +1160,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       });
   }
 
-  private actualizarEstadoInmuebleContratos(): void {
-    const deshabilitado = this.inmuebleContratoDeshabilitado();
-    this.contratosFormArray.controls.forEach((ctrl) => {
-      const c = (ctrl as FormGroup).get('idInmueble');
-      if (!c) return;
-      if (deshabilitado) {
-        c.disable({ emitEvent: false });
-      } else {
-        c.enable({ emitEvent: false });
-      }
-    });
-  }
-
   arrendadorContratoSeleccionado(): boolean {
     const id = Number(this.arrendatarioForm.get('idArrendador')?.value);
     return Number.isFinite(id) && id > 0;
-  }
-
-  inmuebleContratoDeshabilitado(): boolean {
-    if (!this.arrendadorContratoSeleccionado()) return true;
-    if (this.cargandoInmueblesArrendador) return true;
-    return this.listaInmuebles.length === 0;
   }
 
   placeholderInmuebleContrato(): string {
@@ -1292,7 +1281,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     };
 
     for (const l of catalogo) agregarSiPreservado(l);
-    for (const l of extra) agregarSiPreservado(l);
+    // Locales embebidos del contrato siempre visibles (aunque ya no estén "libres").
+    for (const l of extra) {
+      if (!map.has(l.id)) map.set(l.id, l);
+    }
 
     return [...map.values()].sort((a, b) =>
       a.etiqueta.localeCompare(b.etiqueta, 'es'),
@@ -1539,6 +1531,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (!this.arrendadorContratoSeleccionado()) return true;
     if (!this.inmuebleContratoSeleccionado(index)) return true;
     if (this.cargandoLocalesPorContrato[index]) return true;
+    // En edición con locales ya elegidos, no bloquear aunque el catálogo aún no pinte opciones.
+    if (this.idLocalesContrato(index).length > 0) return false;
     return (this.localesLibresPorContrato[index]?.length ?? 0) === 0;
   }
 
@@ -1646,6 +1640,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   contratoAccordionIndicesAbiertos: number[] = [0];
   servicioAccordionIndicesAbiertos: number[] = [0];
   socioAccordionIndicesAbiertos: number[] = [0];
+  /** Remount DxAccordion tras poblar (si no, inputs/selects quedan desfasados del FormGroup). */
+  mostrarAccordionContratos = true;
+  mostrarAccordionServicios = true;
+  mostrarAccordionSocios = true;
 
   onContratoAccordionIndicesChange(raw: number | number[]): void {
     if (Array.isArray(raw)) {
@@ -1672,13 +1670,83 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   tituloServicioAccordion(index: number): string {
+    const idTipo = Number(
+      (this.serviciosFormArray.at(index) as FormGroup)?.get('idTipoServicio')?.value,
+    );
+    if (Number.isFinite(idTipo) && idTipo > 0) {
+      const hit = this.listaCatServicios.find((s) => s.id === idTipo);
+      const nombre = hit ? this.etiquetaCatServicio(hit) : '';
+      if (nombre) return `Servicio ${index + 1} | ${nombre}`;
+    }
     return `Servicio ${index + 1}`;
+  }
+
+  /** Clave estable: evita recrear el ítem Dx al escribir en campos del servicio. */
+  claveEstableServicioAccordion(index: number): string {
+    return `servicio-${index}`;
+  }
+
+  tituloServicioAccordionDesdeClave(data: unknown): string {
+    const idx = this.indiceServicioDesdeClaveAccordion(data);
+    return idx >= 0 ? this.tituloServicioAccordion(idx) : this.tituloAccordionCaption(data);
+  }
+
+  indiceServicioDesdeClaveAccordion(data: unknown): number {
+    const match = /^servicio-(\d+)$/.exec(this.tituloAccordionCaption(data));
+    if (!match) return -1;
+    const idx = Number(match[1]);
+    return idx >= 0 && idx < this.serviciosFormArray.length ? idx : -1;
+  }
+
+  trackServicioPorIndice(index: number): number {
+    return index;
   }
 
   tituloSocioAccordion(index: number): string {
     const nombre = this.nombreSocioEnIndice(index);
     if (nombre) return `Socio ${index + 1} | ${nombre}`;
     return `Socio ${index + 1}`;
+  }
+
+  /** Clave estable: evita perder el foco al escribir nombre/RFC del socio. */
+  claveEstableSocioAccordion(index: number): string {
+    return `socio-${index}`;
+  }
+
+  tituloSocioAccordionDesdeClave(data: unknown): string {
+    const idx = this.indiceSocioDesdeClaveAccordion(data);
+    return idx >= 0 ? this.tituloSocioAccordion(idx) : this.tituloAccordionCaption(data);
+  }
+
+  indiceSocioDesdeClaveAccordion(data: unknown): number {
+    const match = /^socio-(\d+)$/.exec(this.tituloAccordionCaption(data));
+    if (!match) return -1;
+    const idx = Number(match[1]);
+    return idx >= 0 && idx < this.sociosFormArray.length ? idx : -1;
+  }
+
+  trackSocioPorIndice(index: number): number {
+    return index;
+  }
+
+  claveEstableContratoAccordion(index: number): string {
+    return `contrato-${index}`;
+  }
+
+  tituloContratoAccordionDesdeClave(data: unknown): string {
+    const idx = this.indiceContratoDesdeClaveAccordion(data);
+    return idx >= 0 ? this.tituloContratoAccordion(idx) : this.tituloAccordionCaption(data);
+  }
+
+  indiceContratoDesdeClaveAccordion(data: unknown): number {
+    const match = /^contrato-(\d+)$/.exec(this.tituloAccordionCaption(data));
+    if (!match) return -1;
+    const idx = Number(match[1]);
+    return idx >= 0 && idx < this.contratosFormArray.length ? idx : -1;
+  }
+
+  trackContratoPorIndice(index: number): number {
+    return index;
   }
 
   agregarContratoArrendatario(): void {
@@ -1696,11 +1764,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratosCalcBlurTimers.push(undefined);
     this.enlazarInmuebleLocalContrato(nuevoIndex);
     this.enlazarCalculoMontosContrato(nuevoIndex);
-    this.actualizarEstadoInmuebleContratos();
     const abiertos = new Set(this.contratoAccordionIndicesAbiertos);
     abiertos.add(nuevoIndex);
     this.contratoAccordionIndicesAbiertos = [...abiertos].sort((a, b) => a - b);
-    this.cdr.detectChanges();
+    this.refrescarAccordionContratos();
     setTimeout(() => this.scrollAlContratoArrendatario(nuevoIndex), 300);
   }
 
@@ -1714,13 +1781,81 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Solo en alta: quitar filas del FormArray antes de enviar (mínimo 1 contrato). */
-  puedeEliminarContratoEnFormulario(): boolean {
-    return !this.esEdicionArrendatario() && this.contratosFormArray.length >= 2;
+  /** Alta: 2+ filas. Edición: persistido siempre, o fila nueva si hay 2+. */
+  puedeEliminarContratoEnFormulario(index?: number): boolean {
+    if (index == null || index < 0) {
+      return !this.esEdicionArrendatario() && this.contratosFormArray.length >= 2;
+    }
+    if (!this.esEdicionArrendatario()) {
+      return this.contratosFormArray.length >= 2;
+    }
+    if (this.idContratoPersistidoEnIndice(index) != null) return true;
+    return this.contratosFormArray.length >= 2;
+  }
+
+  private idContratoPersistidoEnIndice(index: number): number | null {
+    const idVal = this.contratosFormArray.at(index)?.get('idContrato')?.value;
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
   }
 
   eliminarContratoArrendatario(index: number): void {
-    if (this.esEdicionArrendatario() || this.contratosFormArray.length < 2) return;
+    if (!this.puedeEliminarContratoEnFormulario(index)) return;
+    const idContrato = this.idContratoPersistidoEnIndice(index);
+    const nombre = this.tituloContratoAccordion(index);
+
+    if (idContrato == null) {
+      this.quitarContratoDelFormularioLocal(index);
+      return;
+    }
+
+    void Swal.fire({
+      title: '¡Eliminar Contrato!',
+      html: `¿Está seguro que requiere eliminar el contrato: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.arrendatariosService.eliminarContratoArrendatario(idContrato).subscribe({
+        next: () => {
+          // Solo reinicia la sección de contratos; no tocar Renta/Mantenimiento ni el resto.
+          this.quitarContratoDelFormularioLocal(index);
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El contrato ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el contrato.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarContratoDelFormularioLocal(index: number): void {
+    if (index < 0 || index >= this.contratosFormArray.length) return;
+    if (this.contratosFormArray.length <= 1 && this.idContratoPersistidoEnIndice(index) == null) {
+      // Mantener al menos una fila vacía en alta.
+    }
     this.contratosInmuebleSubs[index]?.unsubscribe();
     this.contratoCalcHighlightTimers[index]?.forEach((t) => clearTimeout(t));
     this.contratosFormArray.removeAt(index);
@@ -1743,9 +1878,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.contratoAccordionIndicesAbiertos = this.contratoAccordionIndicesAbiertos
       .filter((i) => i !== index)
       .map((i) => (i > index ? i - 1 : i));
+    if (this.contratosFormArray.length === 0) {
+      this.agregarContratoArrendatario();
+    }
     if (this.contratoAccordionIndicesAbiertos.length === 0 && this.contratosFormArray.length > 0) {
       this.contratoAccordionIndicesAbiertos = [0];
     }
+    this.refrescarAccordionContratos();
   }
 
   tituloAccordionCaption(data: unknown): string {
@@ -1759,24 +1898,357 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   eliminarContratoDesdeTituloAccordion(event: Event, data: unknown): void {
     event.preventDefault();
     event.stopPropagation();
-    const titulo = this.tituloAccordionCaption(data);
-    const idx = this.indiceContratoDesdeTituloAccordion(titulo);
+    const idx = this.indiceContratoDesdeClaveAccordion(data);
     if (idx >= 0) this.eliminarContratoArrendatario(idx);
   }
 
-  private indiceContratoDesdeTituloAccordion(titulo: string): number {
+  indiceContratoDesdeTituloAccordion(titulo: string): number {
     const m = /^Contrato\s+(\d+)/i.exec(String(titulo ?? '').trim());
     if (!m) return -1;
     const idx = Number(m[1]) - 1;
     return idx >= 0 && idx < this.contratosFormArray.length ? idx : -1;
   }
 
+  indiceServicioDesdeTituloAccordion(titulo: string): number {
+    const m = /^Servicio\s+(\d+)/i.exec(String(titulo ?? '').trim());
+    if (!m) return -1;
+    const idx = Number(m[1]) - 1;
+    return idx >= 0 && idx < this.serviciosFormArray.length ? idx : -1;
+  }
+
+  indiceSocioDesdeTituloAccordion(titulo: string): number {
+    const m = /^Socio\s+(\d+)/i.exec(String(titulo ?? '').trim());
+    if (!m) return -1;
+    const idx = Number(m[1]) - 1;
+    return idx >= 0 && idx < this.sociosFormArray.length ? idx : -1;
+  }
+
+  private idServicioPersistidoEnIndice(index: number): number | null {
+    const idVal = this.serviciosFormArray.at(index)?.get('id')?.value;
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  /** Renta y Mantenimiento son fijos: siempre existen y no se eliminan. */
+  esServicioDefaultObligatorio(index: number): boolean {
+    if (index < 0 || index >= this.serviciosFormArray.length) return false;
+    const idTipo = Number(
+      (this.serviciosFormArray.at(index) as FormGroup).get('idTipoServicio')?.value,
+    );
+    if (Number.isFinite(idTipo) && idTipo > 0) {
+      return this.esIdTipoServicioRentaOMantenimiento(idTipo);
+    }
+    // Alta aún sin catálogo: las dos primeras filas son Renta / Mantenimiento.
+    return !this.esEdicionArrendatario() && (index === 0 || index === 1);
+  }
+
+  private esIdTipoServicioRentaOMantenimiento(idTipo: number): boolean {
+    const rentaId = this.buscarIdServicioPorNombre(/renta/i);
+    const mttoId = this.buscarIdServicioPorNombre(/mantenimiento/i);
+    if ((rentaId != null && idTipo === rentaId) || (mttoId != null && idTipo === mttoId)) {
+      return true;
+    }
+    const item = this.listaCatServicios.find((s) => s.id === idTipo);
+    if (!item) return false;
+    const t = `${item.nombre ?? ''} ${item.servicio ?? ''} ${item.descripcion ?? ''}`;
+    return /renta/i.test(t) || /mantenimiento/i.test(t);
+  }
+
+  puedeEliminarServicioEnEdicion(index: number): boolean {
+    if (index < 0) return false;
+    if (this.esServicioDefaultObligatorio(index)) return false;
+    if (!this.esEdicionArrendatario()) return this.serviciosFormArray.length >= 3;
+    if (this.idServicioPersistidoEnIndice(index) != null) return true;
+    return this.serviciosFormArray.length >= 3;
+  }
+
+  eliminarServicioDesdeTituloAccordion(event: Event, data: unknown): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const idx = this.indiceServicioDesdeClaveAccordion(data);
+    if (idx >= 0) this.eliminarServicioEnEdicion(idx);
+  }
+
+  eliminarServicioEnEdicion(index: number): void {
+    if (!this.puedeEliminarServicioEnEdicion(index)) return;
+    const idServicio = this.idServicioPersistidoEnIndice(index);
+    const nombre = this.tituloServicioAccordion(index);
+
+    if (idServicio == null) {
+      this.quitarServicioDelFormulario(index);
+      return;
+    }
+
+    void Swal.fire({
+      title: '¡Eliminar Servicio!',
+      html: `¿Está seguro que requiere eliminar el servicio: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.arrendatariosService.eliminarServicioArrendatario(idServicio).subscribe({
+        next: () => {
+          this.recargarFormularioTrasEliminacion(
+            () => this.quitarServicioDelFormulario(index),
+            () => {
+              void Swal.fire({
+                background: '#141a21',
+                color: '#ffffff',
+                title: '¡Eliminado!',
+                html: 'El servicio ha sido eliminado de forma exitosa.',
+                icon: 'success',
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Confirmar',
+              });
+            },
+          );
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el servicio.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarServicioDelFormulario(index: number): void {
+    if (index < 0 || index >= this.serviciosFormArray.length) return;
+    if (this.esServicioDefaultObligatorio(index)) return;
+    this.serviciosFormArray.removeAt(index);
+    this.asegurarServiciosDefaultRentaMantenimiento();
+    this.servicioAccordionIndicesAbiertos = this.serviciosFormArray.length > 0
+      ? Array.from({ length: this.serviciosFormArray.length }, (_, i) => i)
+      : [];
+    this.refrescarAccordionServicios();
+  }
+
+  private idSocioPersistidoEnIndice(index: number): number | null {
+    const idVal = this.sociosFormArray.at(index)?.get('id')?.value;
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  puedeEliminarSocioEnEdicion(index: number): boolean {
+    if (index < 0) return false;
+    if (!this.esEdicionArrendatario()) return this.sociosFormArray.length >= 2;
+    if (this.idSocioPersistidoEnIndice(index) != null) return true;
+    return this.sociosFormArray.length >= 2;
+  }
+
+  eliminarSocioDesdeTituloAccordion(event: Event, data: unknown): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const idx = this.indiceSocioDesdeClaveAccordion(data);
+    if (idx >= 0) this.eliminarSocioEnEdicion(idx);
+  }
+
+  eliminarSocioEnEdicion(index: number): void {
+    if (!this.puedeEliminarSocioEnEdicion(index)) return;
+    const idSocio = this.idSocioPersistidoEnIndice(index);
+    const nombre =
+      String(this.sociosFormArray.at(index)?.get('nombre')?.value ?? '').trim() ||
+      this.tituloSocioAccordion(index);
+
+    if (idSocio == null) {
+      this.quitarSocioDelFormulario(index);
+      return;
+    }
+
+    void Swal.fire({
+      title: '¡Eliminar Socio!',
+      html: `¿Está seguro que requiere eliminar el socio: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.arrendatariosService.eliminarSocioArrendatario(idSocio).subscribe({
+        next: () => {
+          this.recargarFormularioTrasEliminacion(
+            () => this.quitarSocioDelFormulario(index),
+            () => {
+              void Swal.fire({
+                background: '#141a21',
+                color: '#ffffff',
+                title: '¡Eliminado!',
+                html: 'El socio ha sido eliminado de forma exitosa.',
+                icon: 'success',
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Confirmar',
+              });
+            },
+          );
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el socio.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarSocioDelFormulario(index: number): void {
+    if (index < 0 || index >= this.sociosFormArray.length) return;
+    this.sociosFormArray.removeAt(index);
+    if (this.sociosFormArray.length === 0) {
+      this.sociosFormArray.push(this.crearSocioFormGroup());
+    }
+    this.socioAccordionIndicesAbiertos = this.sociosFormArray.length > 0
+      ? Array.from({ length: this.sociosFormArray.length }, (_, i) => i)
+      : [];
+    this.refrescarAccordionSocios();
+  }
+
+  private idArchivoGaleriaEnIndice(index: number): number | null {
+    const idVal = this.galeriaImagenesFormArray.at(index)?.get('idRegistro')?.value;
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  puedeEliminarGaleriaEnEdicion(index: number): boolean {
+    if (!this.esEdicionArrendatario() || index < 0) return this.galeriaImagenesFormArray.length >= 2;
+    if (this.idArchivoGaleriaEnIndice(index) != null) return true;
+    return this.galeriaImagenesFormArray.length >= 2;
+  }
+
+  eliminarGaleriaEnEdicion(index: number): void {
+    if (!this.puedeEliminarGaleriaEnEdicion(index)) return;
+    const idArchivo = this.idArchivoGaleriaEnIndice(index);
+    const nombre =
+      String(this.galeriaImagenesFormArray.at(index)?.get('nombre')?.value ?? '').trim() ||
+      `Imagen ${index + 1}`;
+
+    if (idArchivo == null) {
+      this.quitarGaleriaDelFormulario(index);
+      return;
+    }
+
+    void Swal.fire({
+      title: '¡Eliminar Archivo!',
+      html: `¿Está seguro que requiere eliminar la imagen: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.arrendatariosService.eliminarArchivoArrendatario(idArchivo).subscribe({
+        next: () => {
+          this.recargarFormularioTrasEliminacion(
+            () => this.quitarGaleriaDelFormulario(index),
+            () => {
+              void Swal.fire({
+                background: '#141a21',
+                color: '#ffffff',
+                title: '¡Eliminado!',
+                html: 'El archivo ha sido eliminado de forma exitosa.',
+                icon: 'success',
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Confirmar',
+              });
+            },
+          );
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el archivo.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarGaleriaDelFormulario(index: number): void {
+    if (index < 0 || index >= this.galeriaImagenesFormArray.length) return;
+    this.galeriaImagenesFormArray.removeAt(index);
+    if (this.galeriaImagenesFormArray.length === 0) {
+      this.galeriaImagenesFormArray.push(this.crearGaleriaImagenFormGroup());
+    }
+    this.cdr.detectChanges();
+  }
+
+  /** Tras DELETE OK: vuelve a pedir el arrendatario y re-aplica el formulario. */
+  private recargarFormularioTrasEliminacion(
+    fallbackLocal: () => void,
+    onDone?: () => void,
+  ): void {
+    const id = this.idArrendatario;
+    if (id == null || !Number.isFinite(Number(id)) || Number(id) <= 0) {
+      fallbackLocal();
+      onDone?.();
+      return;
+    }
+    this.cargandoDetalle = true;
+    this.arrendatariosService
+      .obtenerArrendatario(Number(id))
+      .pipe(
+        finalize(() => {
+          this.cargandoDetalle = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (resp) => {
+          const item = extraerArrendatarioDetalleApi(resp);
+          if (item && Object.keys(item).length > 0) {
+            this.poblarFormularioDesdeDetalleApi(item);
+          } else {
+            fallbackLocal();
+          }
+          onDone?.();
+        },
+        error: () => {
+          fallbackLocal();
+          onDone?.();
+        },
+      });
+  }
+
   tituloContratoAccordion(index: number): string {
     const grupo = this.contratosFormArray.at(index) as FormGroup;
     const partes = [`Contrato ${index + 1}`];
     const idInm = Number(grupo.get('idInmueble')?.value);
-    const inm = this.listaInmuebles.find((x) => x.id === idInm);
-    if (inm?.etiqueta) partes.push(`Inmueble: ${inm.etiqueta}`);
+    const inm = Number.isFinite(idInm) && idInm > 0
+      ? this.listaInmuebles.find((x) => x.id === idInm)
+      : undefined;
+    if (inm?.etiqueta) {
+      partes.push(`Inmueble: ${inm.etiqueta}`);
+    }
 
     const idLocales = this.idLocalesContrato(index);
     const lista = this.localesLibresPorContrato[index] ?? [];
@@ -1824,6 +2296,72 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   openSocioFilePicker(input: HTMLInputElement): void {
     input.click();
+  }
+
+  /** DxAccordion: remount para que inputs/selects reflejen el FormGroup poblado. */
+  private refrescarAccordionContratos(): void {
+    this.mostrarAccordionContratos = false;
+    this.cdr.detectChanges();
+    this.mostrarAccordionContratos = true;
+    this.cdr.detectChanges();
+  }
+
+  private refrescarAccordionServicios(): void {
+    this.mostrarAccordionServicios = false;
+    this.cdr.detectChanges();
+    this.mostrarAccordionServicios = true;
+    this.cdr.detectChanges();
+  }
+
+  private refrescarAccordionSocios(): void {
+    this.mostrarAccordionSocios = false;
+    this.cdr.detectChanges();
+    this.mostrarAccordionSocios = true;
+    this.cdr.detectChanges();
+  }
+
+  etiquetaArchivoSocio(
+    socioCtrl: AbstractControl,
+    fileKey: 'constanciaFiscalArchivo' | 'comprobanteDomicilioArchivo' | 'identificacionOficialArchivo',
+    urlKey: 'constanciaFiscalUrl' | 'comprobanteDomicilioUrl' | 'identificacionOficialUrl',
+  ): string {
+    const file = socioCtrl.get(fileKey)?.value;
+    if (file instanceof File && file.name) return file.name;
+    const url = String(socioCtrl.get(urlKey)?.value ?? '').trim();
+    if (!url) return 'PDF · PNG · JPG';
+    const nom = url.split('/').pop()?.split('?')[0]?.trim();
+    return nom || url;
+  }
+
+  tieneArchivoSocio(
+    socioCtrl: AbstractControl,
+    fileKey: string,
+    urlKey: string,
+  ): boolean {
+    const file = socioCtrl.get(fileKey)?.value;
+    if (file instanceof File) return true;
+    return !!String(socioCtrl.get(urlKey)?.value ?? '').trim();
+  }
+
+  onBadgeSocioClick(
+    event: Event,
+    socioCtrl: AbstractControl,
+    fileKey: string,
+    urlKey: string,
+    titulo: string,
+  ): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const file = socioCtrl.get(fileKey)?.value;
+    if (file instanceof File) {
+      const objectUrl = URL.createObjectURL(file);
+      this.docPreview?.abrir(objectUrl, titulo, String(socioCtrl.get('nombre')?.value ?? '').trim());
+      return;
+    }
+    const url = String(socioCtrl.get(urlKey)?.value ?? '').trim();
+    if (url) {
+      this.verArchivoRemoto(url, titulo);
+    }
   }
 
   onSocioFileSelected(
@@ -2031,12 +2569,30 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const abiertos = new Set(this.servicioAccordionIndicesAbiertos);
     abiertos.add(nuevoIndex);
     this.servicioAccordionIndicesAbiertos = [...abiertos].sort((a, b) => a - b);
+    this.refrescarAccordionServicios();
   }
 
   etiquetaCatServicio(item: CatServicioItem): string {
     const nombre = item.nombre ?? item.servicio ?? item.descripcion;
     if (nombre != null && String(nombre).trim() !== '') return String(nombre).trim();
     return `Servicio ${item.id}`;
+  }
+
+  /**
+   * Opciones del select de tipo: Renta/Mantenimiento no se eligen (van fijos).
+   * En filas fijas solo se muestra el tipo actual para que el valor se pinte.
+   */
+  opcionesTipoServicioSelect(index: number): CatServicioItem[] {
+    if (this.esServicioDefaultObligatorio(index)) {
+      const idTipo = Number(
+        (this.serviciosFormArray.at(index) as FormGroup)?.get('idTipoServicio')?.value,
+      );
+      if (!Number.isFinite(idTipo) || idTipo <= 0) return [];
+      return this.listaCatServicios.filter((s) => s.id === idTipo);
+    }
+    return this.listaCatServicios.filter(
+      (s) => !this.esIdTipoServicioRentaOMantenimiento(s.id),
+    );
   }
 
   agregarPago(): void {
@@ -2508,14 +3064,16 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     };
 
     if (idArr != null && idArr > 0) {
+      // Evita que el select de arrendador (al llegar listaClientes) dispare un clear de contratos.
+      this.ultimoIdArrendadorInmuebles = Math.trunc(idArr);
       this.cargarInmueblesPorArrendador(idArr, () => {
         this.poblarContratosDesdeDetalleApi(item);
         continuarDespuesContratos();
       });
     } else {
       this.listaInmuebles = [];
+      this.ultimoIdArrendadorInmuebles = null;
       this.poblarContratosDesdeDetalleApi(item);
-      this.actualizarEstadoInmuebleContratos();
       continuarDespuesContratos();
     }
   }
@@ -2523,9 +3081,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private poblarRestoFormularioDesdeDetalleApi(item: Record<string, unknown>): void {
     const serviciosRaw = item['servicios'];
     this.serviciosFormArray.clear();
-    if (Array.isArray(serviciosRaw) && serviciosRaw.length > 0) {
-      for (const raw of serviciosRaw) {
-        const s = raw as Record<string, unknown>;
+    const serviciosLista = (Array.isArray(serviciosRaw) ? serviciosRaw : [])
+      .map((x) => (x != null && typeof x === 'object' ? (x as Record<string, unknown>) : null))
+      .filter((x): x is Record<string, unknown> => x != null)
+      .filter(registroArrendatarioHijoActivo);
+    if (serviciosLista.length > 0) {
+      for (const s of serviciosLista) {
         const g = this.crearServicioFormGroup();
         const idSrv =
           s['id'] != null && String(s['id']).trim() !== '' && Number.isFinite(Number(s['id']))
@@ -2543,6 +3104,14 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         } else if (Number.isFinite(idTipoDesdeAnidado) && idTipoDesdeAnidado > 0) {
           idTipo = Math.trunc(idTipoDesdeAnidado);
         }
+        const urlComp = this.strApi(s['urlComprobante'] ?? s['url']);
+        const nombreTipo =
+          tipoObj != null && typeof tipoObj === 'object'
+            ? this.strApi((tipoObj as Record<string, unknown>)['nombre'])
+            : '';
+        if (Number.isFinite(idTipo) && idTipo > 0) {
+          this.asegurarTipoServicioEnCatalogo(Math.trunc(idTipo), nombreTipo);
+        }
         g.patchValue(
           {
             id: idSrv,
@@ -2551,29 +3120,40 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
             servicioFechaPago: fechaParaInputDate(String(s['fechaPago'] ?? '')),
             servicioUltimoDiaPago: fechaParaInputDate(String(s['ultimoDiaPago'] ?? '')),
             servicioComprobantePago: null,
-            servicioComprobantePagoNombre: '',
-            servicioComprobantePagoUrl: this.strApi(s['urlComprobante'] ?? s['url']),
+            servicioComprobantePagoNombre: urlComp
+              ? urlComp.split('/').pop()?.split('?')[0] ?? ''
+              : '',
+            servicioComprobantePagoUrl: urlComp,
           },
           { emitEvent: false },
         );
         this.serviciosFormArray.push(g);
       }
+      this.asegurarServiciosDefaultRentaMantenimiento();
     } else {
       this.serviciosFormArray.push(this.crearServicioFormGroup());
       this.serviciosFormArray.push(this.crearServicioFormGroup());
       this.syncServiciosIdsDesdeCatalogo();
     }
+    this.servicioAccordionIndicesAbiertos = this.serviciosFormArray.length > 0 ? [0] : [];
+    this.refrescarAccordionServicios();
 
     this.sociosFormArray.clear();
     const sociosRaw = item['socios'];
-    if (Array.isArray(sociosRaw) && sociosRaw.length > 0) {
-      for (const raw of sociosRaw) {
-        const s = raw as Record<string, unknown>;
+    const sociosLista = (Array.isArray(sociosRaw) ? sociosRaw : [])
+      .map((x) => (x != null && typeof x === 'object' ? (x as Record<string, unknown>) : null))
+      .filter((x): x is Record<string, unknown> => x != null)
+      .filter(registroArrendatarioHijoActivo);
+    if (sociosLista.length > 0) {
+      for (const s of sociosLista) {
         const g = this.crearSocioFormGroup();
         const idSoc =
           s['id'] != null && String(s['id']).trim() !== '' && Number.isFinite(Number(s['id']))
             ? Math.trunc(Number(s['id']))
             : null;
+        const csfUrl = this.strApi(s['constanciaSituacionFiscal'] ?? s['constanciaFiscalArchivo']);
+        const compUrl = this.strApi(s['comprobanteDomicilio'] ?? s['comprobanteDomicilioArchivo']);
+        const ineUrl = this.strApi(s['identificacionOficial'] ?? s['identificacionOficialArchivo']);
         g.patchValue(
           {
             id: idSoc,
@@ -2582,9 +3162,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
             constanciaFiscalArchivo: null,
             comprobanteDomicilioArchivo: null,
             identificacionOficialArchivo: null,
-            constanciaFiscalUrl: this.strApi(s['constanciaSituacionFiscal'] ?? s['constanciaFiscalArchivo']),
-            comprobanteDomicilioUrl: this.strApi(s['comprobanteDomicilio'] ?? s['comprobanteDomicilioArchivo']),
-            identificacionOficialUrl: this.strApi(s['identificacionOficial'] ?? s['identificacionOficialArchivo']),
+            constanciaFiscalUrl: csfUrl,
+            comprobanteDomicilioUrl: compUrl,
+            identificacionOficialUrl: ineUrl,
           },
           { emitEvent: false },
         );
@@ -2593,6 +3173,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     } else {
       this.sociosFormArray.push(this.crearSocioFormGroup());
     }
+    this.socioAccordionIndicesAbiertos = this.sociosFormArray.length > 0 ? [0] : [];
+    this.refrescarAccordionSocios();
 
     this.localesFormArray.clear();
     this.localesFormArray.push(this.crearLocalFormGroup());
@@ -2605,8 +3187,20 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   private aplicarArchivosEImagenesDesdeDetalle(item: Record<string, unknown>): void {
-    const archivos = (Array.isArray(item['archivos']) ? item['archivos'] : []) as InmuebleArchivoApi[];
-    const imagenes = (Array.isArray(item['imagenes']) ? item['imagenes'] : []) as InmuebleArchivoApi[];
+    const archivosRaw = Array.isArray(item['archivos']) ? item['archivos'] : [];
+    const imagenesRaw = Array.isArray(item['imagenes']) ? item['imagenes'] : [];
+    const archivos = archivosRaw.filter(
+      (x): x is InmuebleArchivoApi =>
+        x != null &&
+        typeof x === 'object' &&
+        registroArrendatarioHijoActivo(x as Record<string, unknown>),
+    ) as InmuebleArchivoApi[];
+    const imagenes = imagenesRaw.filter(
+      (x): x is InmuebleArchivoApi =>
+        x != null &&
+        typeof x === 'object' &&
+        registroArrendatarioHijoActivo(x as Record<string, unknown>),
+    ) as InmuebleArchivoApi[];
     const { documentos, galeria } = separarArchivosInmueble(archivos, imagenes);
     this.documentosApiUltimaCarga = { ...documentos };
     this.resetVistasDocumentosEnlaces();
@@ -2719,11 +3313,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.contratosCalcBlurTimers.push(undefined);
       this.enlazarInmuebleLocalContrato(0);
       this.enlazarCalculoMontosContrato(0);
-      this.actualizarEstadoInmuebleContratos();
+      this.refrescarAccordionContratos();
       return;
     }
 
     contratos.forEach((c, index) => {
+      this.asegurarInmuebleEnListaDesdeContrato(c);
       const g = this.crearContratoFormGroup();
       this.patchContratoGrupoDesdeApi(g, c);
       this.contratosFormArray.push(g);
@@ -2743,6 +3338,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       const idsLoc = this.idLocalesDesdeContrato(c);
       const localesExtra = this.localesOpcionesDesdeContratoLocales(c);
       if (idIm != null) {
+        // Sembrar opciones de locales del contrato de inmediato (p. ej. Local 01) mientras llega el API.
+        if (localesExtra.length > 0) {
+          this.localesLibresPorContrato[index] = [...localesExtra];
+        }
         this.cargarLocalesLibresContrato(
           index,
           idIm,
@@ -2751,7 +3350,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
         );
       }
     });
-    this.actualizarEstadoInmuebleContratos();
+    this.refrescarAccordionContratos();
   }
 
   private incluyeMantenimientoDesdeContratoApi(c: Record<string, unknown>): number {
@@ -2822,7 +3421,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (!Array.isArray(contratos) || contratos.length === 0) return [];
     const rows = contratos
       .map((x) => (x != null && typeof x === 'object' ? (x as Record<string, unknown>) : null))
-      .filter((x): x is Record<string, unknown> => x != null);
+      .filter((x): x is Record<string, unknown> => x != null)
+      .filter(registroArrendatarioHijoActivo);
     rows.sort((a, b) => {
       const ta = new Date(String(a['fhRegistro'] ?? '')).getTime();
       const tb = new Date(String(b['fhRegistro'] ?? '')).getTime();
@@ -2838,11 +3438,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private idInmuebleDesdeContrato(c: Record<string, unknown>): number | null {
     const direct = Number(c['idInmueble']);
     if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
-    const inm = c['inmueble'];
-    if (inm != null && typeof inm === 'object') {
-      const id = Number((inm as Record<string, unknown>)['id']);
+
+    const inm = this.inmuebleObjetoDesdeContrato(c);
+    if (inm) {
+      const id = Number(inm['id'] ?? inm['idInmueble']);
       if (Number.isFinite(id) && id > 0) return Math.trunc(id);
     }
+
     return null;
   }
 
@@ -2941,18 +3543,102 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   private asignarListaInmuebles(res: unknown): void {
+    const seleccionados = this.capturarInmueblesSeleccionadosContratos();
     const items = this.extraerFilasLocalesApi(res)
       .map((row) => {
-        const id = Number(row['id']);
+        const id = Number(row['id'] ?? row['idInmueble']);
         if (!Number.isFinite(id) || id <= 0) return null;
-        const nombre = String(row['inmueble'] ?? '').trim() || 'Inmueble';
-        const dir = String(row['direccionFiscal'] ?? '').trim();
+        const nombre =
+          String(row['inmueble'] ?? row['nombreInmueble'] ?? row['nombre'] ?? '').trim() ||
+          'Inmueble';
+        const dir = String(row['direccionFiscal'] ?? row['direccion'] ?? '').trim();
         const etiqueta = dir ? `${nombre} — ${dir}` : nombre;
         return { id: Math.trunc(id), etiqueta };
       })
       .filter((x): x is { id: number; etiqueta: string } => x != null);
+
+    for (const sel of seleccionados) {
+      if (!items.some((x) => x.id === sel.id)) {
+        items.push(sel);
+      }
+    }
+
     items.sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es'));
     this.listaInmuebles = items;
+  }
+
+  /** Conserva opciones de inmuebles ya elegidos en contratos al refrescar el catálogo. */
+  private capturarInmueblesSeleccionadosContratos(): { id: number; etiqueta: string }[] {
+    const out: { id: number; etiqueta: string }[] = [];
+    const seen = new Set<number>();
+    this.contratosFormArray.controls.forEach((ctrl) => {
+      const raw = (ctrl as FormGroup).get('idInmueble')?.value;
+      const id = raw != null && String(raw).trim() !== '' ? Number(raw) : Number.NaN;
+      if (!Number.isFinite(id) || id <= 0) return;
+      const idNorm = Math.trunc(id);
+      if (seen.has(idNorm)) return;
+      seen.add(idNorm);
+      const prev = this.listaInmuebles.find((x) => x.id === idNorm);
+      out.push({
+        id: idNorm,
+        etiqueta: prev?.etiqueta ?? `Inmueble ${idNorm}`,
+      });
+    });
+    return out;
+  }
+
+  /** Garantiza que el inmueble embebido del contrato exista como opción del select. */
+  private asegurarInmuebleEnListaDesdeContrato(c: Record<string, unknown>): void {
+    const id = this.idInmuebleDesdeContrato(c);
+    if (id == null) return;
+    if (this.listaInmuebles.some((x) => x.id === id)) return;
+    const etiqueta = this.etiquetaInmuebleDesdeContrato(c) ?? `Inmueble ${id}`;
+    this.listaInmuebles = [...this.listaInmuebles, { id, etiqueta }].sort((a, b) =>
+      a.etiqueta.localeCompare(b.etiqueta, 'es'),
+    );
+  }
+
+  private etiquetaInmuebleDesdeContrato(c: Record<string, unknown>): string | null {
+    const row = this.inmuebleObjetoDesdeContrato(c);
+    if (!row) return null;
+    const nombre =
+      String(row['inmueble'] ?? row['nombreInmueble'] ?? row['nombre'] ?? '').trim();
+    if (!nombre) return null;
+    const dir = String(row['direccionFiscal'] ?? row['direccion'] ?? '').trim();
+    return dir ? `${nombre} — ${dir}` : nombre;
+  }
+
+  private inmuebleObjetoDesdeContrato(c: Record<string, unknown>): Record<string, unknown> | null {
+    const directo = c['inmueble'];
+    if (directo != null && typeof directo === 'object' && !Array.isArray(directo)) {
+      return directo as Record<string, unknown>;
+    }
+
+    const loc = c['local'];
+    if (loc != null && typeof loc === 'object' && !Array.isArray(loc)) {
+      const inmLoc = (loc as Record<string, unknown>)['inmueble'];
+      if (inmLoc != null && typeof inmLoc === 'object' && !Array.isArray(inmLoc)) {
+        return inmLoc as Record<string, unknown>;
+      }
+    }
+
+    const filas = c['contratoLocales'];
+    if (Array.isArray(filas)) {
+      for (const raw of filas) {
+        if (raw == null || typeof raw !== 'object') continue;
+        const fila = raw as Record<string, unknown>;
+        const localFila =
+          fila['local'] != null && typeof fila['local'] === 'object' && !Array.isArray(fila['local'])
+            ? (fila['local'] as Record<string, unknown>)
+            : null;
+        const inmFila = localFila?.['inmueble'] ?? fila['inmueble'];
+        if (inmFila != null && typeof inmFila === 'object' && !Array.isArray(inmFila)) {
+          return inmFila as Record<string, unknown>;
+        }
+      }
+    }
+
+    return null;
   }
 
   private extraerFilasCatServicios(res: unknown): CatServicioItem[] {
@@ -2987,6 +3673,48 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     }
     if (this.serviciosFormArray.length >= 2 && mttoId != null) {
       (this.serviciosFormArray.at(1) as FormGroup).patchValue({ idTipoServicio: mttoId }, { emitEvent: false });
+    }
+  }
+
+  /** Si el GET trae un tipo que aún no está en el catálogo paginado, lo agrega para el select. */
+  private asegurarTipoServicioEnCatalogo(id: number, nombre: string): void {
+    if (this.listaCatServicios.some((s) => s.id === id)) return;
+    this.listaCatServicios = [
+      ...this.listaCatServicios,
+      { id, nombre: nombre || `Servicio ${id}` },
+    ].sort((a, b) =>
+      String(a.nombre ?? '').localeCompare(String(b.nombre ?? ''), 'es'),
+    );
+  }
+
+  /** Garantiza que existan las filas fijas Renta y Mantenimiento. */
+  private asegurarServiciosDefaultRentaMantenimiento(): void {
+    const rentaId = this.buscarIdServicioPorNombre(/renta/i);
+    const mttoId = this.buscarIdServicioPorNombre(/mantenimiento/i);
+    const tieneTipo = (id: number | null): boolean =>
+      id != null &&
+      this.serviciosFormArray.controls.some(
+        (c) => Number((c as FormGroup).get('idTipoServicio')?.value) === id,
+      );
+
+    if (rentaId != null && !tieneTipo(rentaId)) {
+      const g = this.crearServicioFormGroup();
+      g.patchValue({ idTipoServicio: rentaId }, { emitEvent: false });
+      this.serviciosFormArray.insert(0, g);
+    }
+    if (mttoId != null && !tieneTipo(mttoId)) {
+      const g = this.crearServicioFormGroup();
+      g.patchValue({ idTipoServicio: mttoId }, { emitEvent: false });
+      const idxRenta = this.serviciosFormArray.controls.findIndex(
+        (c) => Number((c as FormGroup).get('idTipoServicio')?.value) === rentaId,
+      );
+      this.serviciosFormArray.insert(idxRenta >= 0 ? idxRenta + 1 : 0, g);
+    }
+
+    if (this.serviciosFormArray.length === 0) {
+      this.serviciosFormArray.push(this.crearServicioFormGroup());
+      this.serviciosFormArray.push(this.crearServicioFormGroup());
+      this.syncServiciosIdsDesdeCatalogo();
     }
   }
 

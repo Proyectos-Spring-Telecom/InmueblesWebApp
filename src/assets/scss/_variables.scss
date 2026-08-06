@@ -182,6 +182,7 @@ $dark-body-bg: #141a21;
 .mat-mdc-unelevated-button.bg-error,
 .mat-mdc-raised-button.bg-error {
   --mdc-filled-button-container-color: rgba(220, 38, 38, 0.28);
+  --mat-button-filled-container-color: rgba(220, 38, 38, 0.28);
   --mdc-filled-button-label-text-color: #ffffff;
   --mdc-filled-button-icon-color: #ffffff;
   border: 1px solid rgba(254, 202, 202, 0.74) !important;

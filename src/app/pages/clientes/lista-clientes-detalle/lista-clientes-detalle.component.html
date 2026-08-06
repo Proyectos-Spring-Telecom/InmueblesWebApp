@@ -1,19 +1,11 @@
 <div class="inm-detalle" *ngIf="row">
   <nav class="inm-detalle__tabs" aria-label="Documentación del arrendador">
-    <button
-      type="button"
-      class="inm-detalle__tab"
-      [class.inm-detalle__tab--active]="detalleTab === 0"
-      (click)="detalleTab = 0"
-    >
+    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
+      (click)="detalleTab = 0">
       Documentos ({{ archivos.length }})
     </button>
-    <button
-      type="button"
-      class="inm-detalle__tab"
-      [class.inm-detalle__tab--active]="detalleTab === 1"
-      (click)="detalleTab = 1"
-    >
+    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 1"
+      (click)="detalleTab = 1">
       Socios Arrendadores ({{ socios.length }})
     </button>
   </nav>
@@ -21,58 +13,33 @@
   <div class="inm-detalle__panel" *ngIf="detalleTab === 0">
     <div class="inm-docs-grid" *ngIf="archivos.length; else sinDocs">
       <article class="inm-doc-card" *ngFor="let a of archivos">
-        <div
-          class="inm-doc-card__thumb"
-          *ngIf="a.url && esImagenArchivo(a.url, a.nombre)"
-        >
+        <div class="inm-doc-card__thumb" *ngIf="a.url && esImagenArchivo(a.url, a.nombre)">
           <img [src]="a.url" [attr.alt]="a.nombre" loading="lazy" />
         </div>
-        <div
-          class="inm-doc-card__thumb inm-doc-card__thumb--pdf"
-          *ngIf="
+        <div class="inm-doc-card__thumb inm-doc-card__thumb--pdf" *ngIf="
             a.url &&
             esPdfArchivo(a.url, a.nombre) &&
             urlVistaPreviaPdf(a.url)
-          "
-        >
-          <iframe
-            [src]="urlVistaPreviaPdf(a.url)!"
-            [title]="a.nombre || 'Documento PDF'"
-            loading="lazy"
-          ></iframe>
+          ">
+          <iframe [src]="urlVistaPreviaPdf(a.url)!" [title]="a.nombre || 'Documento PDF'" loading="lazy"></iframe>
         </div>
-        <div
-          class="inm-doc-card__icon"
-          *ngIf="
+        <div class="inm-doc-card__icon" *ngIf="
             !a.url ||
             (!esImagenArchivo(a.url, a.nombre) &&
               !esPdfArchivo(a.url, a.nombre))
-          "
-        >
+          ">
           <i class="fa" [ngClass]="iconoArchivo(a.url || '', a.nombre || '')"></i>
         </div>
         <div class="inm-doc-card__info">
           <span class="inm-doc-card__name">{{ a.nombre || 'Documento' }}</span>
         </div>
         <div class="inm-doc-card__actions">
-          <button
-            type="button"
-            mat-flat-button
-            class="bg-warn inm-doc-pill"
-            [title]="a.nombre || 'Documento'"
-            (click)="abrirDocumento(a.url, a.nombre || 'Documento')"
-            [disabled]="!a.url"
-          >
+          <button type="button" mat-flat-button class="bg-warn inm-doc-pill" [title]="a.nombre || 'Documento'"
+            (click)="abrirDocumento(a.url, a.nombre || 'Documento')" [disabled]="!a.url">
             <i class="fa fa-eye"></i> Ver
           </button>
-          <button
-            type="button"
-            mat-flat-button
-            class="bg-success inm-doc-pill"
-            [title]="a.nombre || 'Documento'"
-            [disabled]="!a.url"
-            (click)="descargarDocumento(a.url, a.nombre || 'Documento', $event)"
-          >
+          <button type="button" mat-flat-button class="bg-success inm-doc-pill" [title]="a.nombre || 'Documento'"
+            [disabled]="!a.url" (click)="descargarDocumento(a.url, a.nombre || 'Documento', $event)">
             <i class="fa fa-download"></i> Descarga
           </button>
         </div>
@@ -84,114 +51,103 @@
   </div>
 
   <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
-    <div class="row g-3 arr-socios-grid" *ngIf="socios.length; else sinSocios">
-      <div class="col-12 col-md-6 col-xl-4" *ngFor="let so of socios; let si = index">
-        <article class="arr-socio-card">
-          <header class="arr-socio-card__head">
-            <div class="arr-socio-card__avatar" aria-hidden="true">
-              <i class="fa fa-users"></i>
+    <div class="arr-socios-list" *ngIf="socios.length; else sinSocios">
+      <article class="arr-socio-card arr-socio-card--panel" *ngFor="let so of socios; let si = index">
+        <header class="arr-socio-card__head">
+          <div class="arr-socio-card__avatar" aria-hidden="true">
+            <i class="fa fa-users"></i>
+          </div>
+          <div class="arr-socio-card__identity">
+            <h4 class="arr-socio-card__nombre">{{ so['nombre'] || 'Socio ' + (si + 1) }}</h4>
+            <span class="arr-socio-card__rfc" *ngIf="so['rfc']">
+              <span class="arr-socio-card__rfc-label">RFC</span>
+              {{ so['rfc'] }}
+            </span>
+          </div>
+          <button *ngIf="idSocioArrendador(so) != null" type="button" mat-flat-button
+            class="bg-secondary arr-socio-eliminar-btn" aria-label="Eliminar socio"
+            [disabled]="eliminandoSocioId === idSocioArrendador(so)" (click)="eliminarSocio(so, $event)">
+            <i class="fa fa-trash"></i> Eliminar
+          </button>
+        </header>
+        <ul class="arr-socio-card__docs" aria-label="Documentos del socio">
+          <li>
+            <span class="arr-socio-doc__label">
+              <i class="fa fa-file-text-o"></i> Constancia fiscal
+            </span>
+            <div class="arr-socio-doc__actions"
+              *ngIf="textoSocioDoc(so['constanciaSituacionFiscal']); else sinConstancia">
+              <button type="button" class="bg-warn arr-socio-doc__link" (click)="
+                  abrirDocumento(
+                    $any(so['constanciaSituacionFiscal']),
+                    'Constancia situación fiscal'
+                  )
+                ">
+                <i class="fa fa-eye"></i> Ver
+              </button>
+              <button type="button" class="bg-success arr-socio-doc__link" (click)="
+                  descargarDocumento(
+                    $any(so['constanciaSituacionFiscal']),
+                    'Constancia situación fiscal',
+                    $event
+                  )
+                ">
+                <i class="fa fa-download"></i> Descarga
+              </button>
             </div>
-            <div class="arr-socio-card__identity">
-              <h4 class="arr-socio-card__nombre">{{ so['nombre'] || 'Socio ' + (si + 1) }}</h4>
-              <span class="arr-socio-card__rfc" *ngIf="so['rfc']">
-                <span class="arr-socio-card__rfc-label">RFC</span>
-                {{ so['rfc'] }}
-              </span>
+            <ng-template #sinConstancia>
+              <span class="arr-socio-doc__empty">Sin archivo</span>
+            </ng-template>
+          </li>
+          <li>
+            <span class="arr-socio-doc__label">
+              <i class="fa fa-home"></i> Comprobante domicilio
+            </span>
+            <div class="arr-socio-doc__actions" *ngIf="textoSocioDoc(so['comprobanteDomicilio']); else sinComprobante">
+              <button type="button" class="bg-warn arr-socio-doc__link"
+                (click)="abrirDocumento($any(so['comprobanteDomicilio']), 'Comprobante de domicilio')">
+                <i class="fa fa-eye"></i> Ver
+              </button>
+              <button type="button" class="bg-success arr-socio-doc__link" (click)="
+                  descargarDocumento(
+                    $any(so['comprobanteDomicilio']),
+                    'Comprobante de domicilio',
+                    $event
+                  )
+                ">
+                <i class="fa fa-download"></i> Descarga
+              </button>
             </div>
-          </header>
-          <ul class="arr-socio-card__docs" aria-label="Documentos del socio">
-            <li *ngIf="textoSocioDoc(so['constanciaSituacionFiscal'])">
-              <span class="arr-socio-doc__label">
-                <i class="fa fa-file-text-o"></i> Constancia fiscal
-              </span>
-              <div class="arr-socio-doc__actions">
-                <button
-                  type="button"
-                  mat-flat-button
-                  class="bg-warn arr-socio-doc__btn"
-                  (click)="
-                    abrirDocumento(
-                      $any(so['constanciaSituacionFiscal']),
-                      'Constancia situación fiscal'
-                    )
-                  "
-                >
-                  <i class="fa fa-eye"></i> Ver
-                </button>
-                <button
-                  type="button"
-                  class="bg-success arr-socio-doc__link"
-                  (click)="
-                    descargarDocumento(
-                      $any(so['constanciaSituacionFiscal']),
-                      'Constancia situación fiscal',
-                      $event
-                    )
-                  "
-                >
-                  <i class="fa fa-download"></i> Descarga
-                </button>
-              </div>
-            </li>
-            <li *ngIf="textoSocioDoc(so['comprobanteDomicilio'])">
-              <span class="arr-socio-doc__label">
-                <i class="fa fa-home"></i> Comprobante domicilio
-              </span>
-              <div class="arr-socio-doc__actions">
-                <button
-                  type="button"
-                  mat-flat-button
-                  class="bg-warn arr-socio-doc__btn"
-                  (click)="abrirDocumento($any(so['comprobanteDomicilio']), 'Comprobante de domicilio')"
-                >
-                  <i class="fa fa-eye"></i> Ver
-                </button>
-                <button
-                  type="button"
-                  class="bg-success arr-socio-doc__link"
-                  (click)="
-                    descargarDocumento(
-                      $any(so['comprobanteDomicilio']),
-                      'Comprobante de domicilio',
-                      $event
-                    )
-                  "
-                >
-                  <i class="fa fa-download"></i> Descarga
-                </button>
-              </div>
-            </li>
-            <li *ngIf="textoSocioDoc(so['identificacionOficial'])">
-              <span class="arr-socio-doc__label">
-                <i class="fa fa-id-card-o"></i> Identificación oficial
-              </span>
-              <div class="arr-socio-doc__actions">
-                <button
-                  type="button"
-                  mat-flat-button
-                  class="bg-warn arr-socio-doc__btn"
-                  (click)="abrirDocumento($any(so['identificacionOficial']), 'Identificación oficial')"
-                >
-                  <i class="fa fa-eye"></i> Ver
-                </button>
-                <button
-                  type="button"
-                  class="bg-success arr-socio-doc__link"
-                  (click)="
-                    descargarDocumento(
-                      $any(so['identificacionOficial']),
-                      'Identificación oficial',
-                      $event
-                    )
-                  "
-                >
-                  <i class="fa fa-download"></i> Descarga
-                </button>
-              </div>
-            </li>
-          </ul>
-        </article>
-      </div>
+            <ng-template #sinComprobante>
+              <span class="arr-socio-doc__empty">Sin archivo</span>
+            </ng-template>
+          </li>
+          <li>
+            <span class="arr-socio-doc__label">
+              <i class="fa fa-credit-card"></i> Identificación oficial
+            </span>
+            <div class="arr-socio-doc__actions"
+              *ngIf="textoSocioDoc(so['identificacionOficial']); else sinIdentificacion">
+              <button type="button" class="bg-warn arr-socio-doc__link"
+                (click)="abrirDocumento($any(so['identificacionOficial']), 'Identificación oficial')">
+                <i class="fa fa-eye"></i> Ver
+              </button>
+              <button type="button" class="bg-success arr-socio-doc__link" (click)="
+                  descargarDocumento(
+                    $any(so['identificacionOficial']),
+                    'Identificación oficial',
+                    $event
+                  )
+                ">
+                <i class="fa fa-download"></i> Descarga
+              </button>
+            </div>
+            <ng-template #sinIdentificacion>
+              <span class="arr-socio-doc__empty">Sin archivo</span>
+            </ng-template>
+          </li>
+        </ul>
+      </article>
     </div>
     <ng-template #sinSocios>
       <p class="inm-empty">Sin socios arrendadores registrados.</p>

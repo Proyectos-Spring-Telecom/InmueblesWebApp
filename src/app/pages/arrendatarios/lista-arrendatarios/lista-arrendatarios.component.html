@@ -51,8 +51,8 @@
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-sorting mode="multiple"></dxo-sorting>
 
-        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="190" alignment="center"
-          *appHasPermission="['46', '49']"
+        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="220" alignment="center"
+          *appHasPermission="['46', '48', '49']"
           [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
           [allowFiltering]="false" [visible]="false"></dxi-column>
@@ -150,6 +150,12 @@
               <i class="fa fa-edit"></i>
             </button>
           </div>
+          <div *appHasPermission="'48'">
+            <button type="button" id="deleteButton" class="btnAcciones" title="Eliminar arrendatario"
+              (click)="eliminarArrendatario(row.data); $event.stopPropagation()">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
           <div *appHasPermission="'49'">
             <div *ngIf="row.data.tieneMapa">
               <button type="button" id="pinButton" class="btnAcciones" title="Ubicación"
@@ -170,6 +176,7 @@
           <app-lista-arrendatarios-detalle
             [row]="row.data"
             (contratoCancelado)="refrescarListaArrendatarios()"
+            (detalleModificado)="refrescarListaArrendatarios()"
           ></app-lista-arrendatarios-detalle>
         </div>
         <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>

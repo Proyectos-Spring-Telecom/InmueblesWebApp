@@ -38,24 +38,38 @@
   <div class="inm-detalle__panel" *ngIf="detalleTab === 1">
     <div class="inm-servicios-grid" *ngIf="servicios.length; else sinServicios">
       <article class="inm-servicio-card" *ngFor="let s of servicios">
-        <div class="inm-servicio-card__icon"><i class="fa fa-bolt"></i></div>
-        <div class="inm-servicio-card__body">
-          <h4>{{ nombreTipoServicio(s) }}</h4>
+        <div class="inm-servicio-card__head">
+          <div class="inm-servicio-card__icon" aria-hidden="true"><i class="fa fa-bolt"></i></div>
+          <h4 class="inm-servicio-card__title">{{ nombreTipoServicio(s) }}</h4>
+          <button
+            *ngIf="puedeEliminarServicioDetalle(s)"
+            type="button"
+            mat-flat-button
+            class="bg-secondary arr-socio-eliminar-btn inm-detalle-eliminar-btn"
+            aria-label="Eliminar servicio"
+            [disabled]="eliminandoServicioId === idServicioDetalle(s)"
+            (click)="eliminarServicioDetalle(s, $event)"
+          >
+            <i class="fa fa-trash"></i> Eliminar
+          </button>
+        </div>
+        <div class="inm-servicio-card__meta">
           <p *ngIf="s['numeroContrato']">Contrato: {{ s['numeroContrato'] }}</p>
           <p *ngIf="s['fechaPago']">Pago: {{ formatearFecha($any(s['fechaPago'])) }}</p>
           <p *ngIf="s['ultimoDiaPago']">
             Último día: {{ formatearFecha($any(s['ultimoDiaPago'])) }}
           </p>
         </div>
-        <button
-          *ngIf="urlComprobanteServicio(s)"
-          type="button"
-          mat-flat-button
-          class="bg-warn inm-servicio-card__btn"
-          (click)="abrirDocumento(urlComprobanteServicio(s), 'Comprobante de pago')"
-        >
-          <i class="fa fa-eye"></i> Ver
-        </button>
+        <div class="inm-servicio-card__actions" *ngIf="urlComprobanteServicio(s)">
+          <button
+            type="button"
+            mat-flat-button
+            class="bg-warn inm-servicio-card__btn"
+            (click)="abrirDocumento(urlComprobanteServicio(s), 'Comprobante de pago')"
+          >
+            <i class="fa fa-eye"></i> Ver
+          </button>
+        </div>
       </article>
     </div>
     <ng-template #sinServicios>
@@ -121,6 +135,17 @@
           >
             <i class="fa fa-download"></i> Descarga
           </button>
+          <button
+            *ngIf="idArchivoDetalle(a) != null"
+            type="button"
+            mat-flat-button
+            class="bg-error inm-doc-pill"
+            title="Eliminar archivo"
+            [disabled]="eliminandoArchivoId === idArchivoDetalle(a)"
+            (click)="eliminarArchivoDetalle(a, $event)"
+          >
+            <i class="fa fa-trash"></i> Eliminar
+          </button>
         </div>
       </article>
     </div>
@@ -144,6 +169,17 @@
               {{ so['rfc'] }}
             </span>
           </div>
+          <button
+            *ngIf="idSocioDetalle(so) != null"
+            type="button"
+            mat-flat-button
+            class="bg-error arr-socio-eliminar-btn"
+            aria-label="Eliminar socio"
+            [disabled]="eliminandoSocioId === idSocioDetalle(so)"
+            (click)="eliminarSocioDetalle(so, $event)"
+          >
+            <i class="fa fa-trash"></i> Eliminar
+          </button>
         </header>
         <p class="arr-socio-card__hint">
           Documentación del socio (constancia fiscal, domicilio e identificación).
@@ -380,9 +416,8 @@
                     <th scope="col">Local</th>
                     <th scope="col">Área</th>
                     <th scope="col">Giro</th>
-                    <th scope="col">Mensualidad</th>
+                    <th scope="col">Mensualidad <br> del Local</th>
                     <th scope="col">Estatus</th>
-                    <th scope="col">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -423,23 +458,6 @@
                     <td data-label="Estatus">
                       <span [ngClass]="claseChipEstatusLocal(loc['estatus'])">
                         {{ etiquetaEstatusLocal(loc['estatus']) }}
-                      </span>
-                    </td>
-                    <td class="arr-ctr-locales-table__acciones" data-label="Acciones">
-                      <button
-                        *ngIf="contratoLocalEsCancelable(c, loc)"
-                        type="button"
-                        class="bg-error arr-ctr-local-cancel"
-                        title="Cancelar asignación del local"
-                        (click)="confirmarCancelarContratoLocal(c, loc, $event)"
-                      >
-                        <i class="fa fa-ban"></i> Cancelar
-                      </button>
-                      <span
-                        *ngIf="!contratoLocalEsCancelable(c, loc)"
-                        class="arr-ctr-locales-table__acciones-na"
-                      >
-                        —
                       </span>
                     </td>
                   </tr>
