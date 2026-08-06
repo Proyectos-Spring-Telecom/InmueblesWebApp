@@ -34,6 +34,13 @@ export class ClientesService {
     return this.http.put(`${environment.API_SECURITY}/arrendadores/` + idCliente, saveForm);
   }
 
+  /** Soft-delete: pone Estatus = 0 en SociosArrendadores. */
+  eliminarSocioArrendador(idSocioArrendador: number): Observable<unknown> {
+    return this.http.delete(
+      `${environment.API_SECURITY}/arrendadores/socios/${idSocioArrendador}`,
+    );
+  }
+
   private apiUrl = `${environment.API_SECURITY}/arrendadores`;
   updateEstatus(id: number, estatus: number): Observable<string> {
     const url = `${this.apiUrl}/estatus/${id}`;

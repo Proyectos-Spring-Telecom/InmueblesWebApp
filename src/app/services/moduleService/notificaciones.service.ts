@@ -41,6 +41,25 @@ export interface PagoSeguimientoDto {
   color?: string;
 }
 
+/** Semáforo compartido: ≤2 rojo, ≤6 amarillo, ≤15 naranja, resto verde. */
+export type ToneDiasFaltantes = 'success' | 'warning' | 'amber' | 'danger';
+
+/**
+ * Semáforo de días faltantes (vencimientos, pagos, seguimiento e UI de vigencia).
+ * ≤2 días → danger, ≤6 → amber, ≤15 → warning, resto → success.
+ * Días negativos (vencido) entran en danger.
+ */
+export function tonePorDiasFaltantesNotificacion(
+  dias: number | undefined | null,
+): ToneDiasFaltantes {
+  const d = Number(dias);
+  if (!Number.isFinite(d)) return 'success';
+  if (d <= 2) return 'danger';
+  if (d <= 6) return 'amber';
+  if (d <= 15) return 'warning';
+  return 'success';
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificacionesService {
   private readonly url = `${environment.API_SECURITY}/notificaciones`;

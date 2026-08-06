@@ -203,53 +203,63 @@ export class ListaClientesComponent implements OnInit {
   }
 
   eliminarCliente(cliente: any) {
-    Swal.fire({
+    const nombre =
+      String(cliente?.NombreCompleto ?? cliente?.nombre ?? '').trim() ||
+      `Arrendador ${cliente?.id ?? ''}`;
+
+    void Swal.fire({
       title: '¡Eliminar Arrendador!',
-      html: `Está seguro que requiere eliminar el arrendador: <br> ${cliente.NombreCompleto}?`,
+      html: `¿Está seguro que requiere eliminar el arrendador: <strong>${nombre}</strong>?`,
       icon: 'warning',
       background: '#141a21',
-        color: '#ffffff',
+      color: '#ffffff',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
-      if (result.value) {
-        this.cliService.eliminarCliente(cliente.id).subscribe(
-          (response) => {
-            Swal.fire({
-              background: '#141a21',
-        color: '#ffffff',
-              title: '¡Eliminado!',
-              html: `El arrendador ha sido eliminado de forma exitosa.`,
-              icon: 'success',
-              showCancelButton: false,
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
-            this.setupDataSource();
-          },
-          (error) => {
-            Swal.fire({
-              background: '#141a21',
-              title: '¡Ops!',
-              html: `Error al intentar eliminar el arrendador.`,
-              icon: 'error',
-              showCancelButton: false,
-            });
-          }
-        );
-      }
+      if (!result.isConfirmed && !result.value) return;
+
+      this.cliService.eliminarCliente(cliente.id).subscribe({
+        next: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El arrendador ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+          this.setupDataSource();
+          this.dataGrid?.instance?.refresh();
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el arrendador.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
     });
   }
 
   activar(rowData: any) {
-    Swal.fire({
+    const nombre =
+      String(rowData?.NombreCompleto ?? rowData?.nombre ?? '').trim() ||
+      `Arrendador ${rowData?.id ?? ''}`;
+
+    void Swal.fire({
       title: '¡Activar!',
       background: '#141a21',
       color: '#ffffff',
-      html: `¿Está seguro que requiere activar el arrendador: <strong>${rowData.nombre}</strong>?`,
+      html: `¿Está seguro que requiere activar el arrendador: <strong>${nombre}</strong>?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -257,36 +267,34 @@ export class ListaClientesComponent implements OnInit {
       confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
-      if (result.value) {
-        this.cliService.updateEstatus(rowData.id, 1).subscribe(
-          (response) => {
-            Swal.fire({
-              background: '#141a21',
-        color: '#ffffff',
-              title: '¡Confirmación Realizada!',
-              html: `El arrendador ha sido activado.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
+      if (!result.isConfirmed && !result.value) return;
 
-            this.setupDataSource();
-            this.dataGrid.instance.refresh();
-            // this.obtenerListaModulos();
-          },
-          (error) => {
-            Swal.fire({
-              title: '¡Ops!',
-              background: '#141a21',
-        color: '#ffffff',
-              html: `${error}`,
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Confirmar',
-            });
-          }
-        );
-      }
+      this.cliService.updateEstatus(rowData.id, 1).subscribe({
+        next: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Confirmación Realizada!',
+            html: 'El arrendador ha sido activado.',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+          this.setupDataSource();
+          this.dataGrid?.instance?.refresh();
+        },
+        error: (error) => {
+          void Swal.fire({
+            title: '¡Ops!',
+            background: '#141a21',
+            color: '#ffffff',
+            html: `${error}`,
+            icon: 'error',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+      });
     });
   }
 

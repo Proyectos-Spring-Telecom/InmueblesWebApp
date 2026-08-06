@@ -242,8 +242,20 @@ export class AgregarUsuarioComponent implements OnInit {
     const checked = input.checked;
 
     permiso.asignado = checked;
-    const id = Number(permiso.id);
+    this.sincronizarPermisoId(permiso, checked);
+    this.usuarioForm.patchValue({ permisosIds: this.permisosSeleccionadosIds });
+  }
 
+  /** Activa/desactiva al hacer clic en toda la fila del permiso. */
+  togglePermiso(_modulo: any, permiso: any): void {
+    const checked = !permiso.asignado;
+    permiso.asignado = checked;
+    this.sincronizarPermisoId(permiso, checked);
+    this.usuarioForm.patchValue({ permisosIds: this.permisosSeleccionadosIds });
+  }
+
+  private sincronizarPermisoId(permiso: any, checked: boolean): void {
+    const id = Number(permiso.id);
     if (checked) {
       if (!this.permisosSeleccionadosIds.includes(id)) {
         this.permisosSeleccionadosIds = [...this.permisosSeleccionadosIds, id];
@@ -253,8 +265,14 @@ export class AgregarUsuarioComponent implements OnInit {
         (x) => x !== id
       );
     }
+  }
 
-    this.usuarioForm.patchValue({ permisosIds: this.permisosSeleccionadosIds });
+  trackByModuloId(index: number, modulo: any): number | string {
+    return modulo?.id ?? index;
+  }
+
+  trackByPermisoId(index: number, permiso: any): number | string {
+    return permiso?.id ?? index;
   }
 
   onModuleToggle(modulo: any, event: Event): void {

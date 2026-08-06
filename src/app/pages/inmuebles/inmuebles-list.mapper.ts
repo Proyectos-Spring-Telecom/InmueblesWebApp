@@ -1,4 +1,9 @@
 // Se agregan campos de mantenimiento (mantenimiento, mensualidadIva, mantenimientoIva) en locales.
+import {
+  tonePorDiasFaltantesNotificacion,
+  type ToneDiasFaltantes,
+} from 'src/app/services/moduleService/notificaciones.service';
+
 export interface InmuebleApiItem {
   id?: number;
   inmueble?: string;
@@ -34,6 +39,8 @@ export interface InmuebleServicioApi {
   fechaPago?: string;
   ultimoDiaPago?: string;
   urlComprobante?: string;
+  /** 1 activo, 0 baja (soft-delete). */
+  estatus?: number;
   tipoServicio?: { nombre?: string; servicio?: string };
 }
 
@@ -61,6 +68,8 @@ export interface InmuebleZonaApi {
   superficieZonaM2?: string | number;
   superficieDisponibleM2?: string | number;
   numeroZona?: number;
+  /** 1 activo, 0 baja (soft-delete). */
+  estatus?: number;
   locales?: InmuebleLocalApi[];
 }
 
@@ -68,6 +77,8 @@ export interface InmuebleArchivoApi {
   id?: number;
   url?: string;
   nombre?: string;
+  /** 1 activo, 0 baja (soft-delete). */
+  estatus?: number;
 }
 
 export interface InmuebleGridRow {
@@ -77,6 +88,13 @@ export interface InmuebleGridRow {
   arrendadorNombre: string;
   representanteNombre: string;
   vigenciaTexto: string;
+  /** Días totales del rango de vigencia (inclusivo), o null si no hay fechas. */
+  vigenciaDiasTotal: number | null;
+  vigenciaDiasTotalTexto: string;
+  /** Días restantes hasta fechaFin desde hoy; 0 = vence hoy o vencida. */
+  vigenciaDiasRestantes: number | null;
+  vigenciaDiasRestantesTexto: string;
+  vigenciaRestantesClase: string;
   estatusInmueble: number | null;
   estatusLabel: string;
   estatusClass: string;
@@ -85,6 +103,8 @@ export interface InmuebleGridRow {
   telefonoRepresentante: string;
   correoRepresentante: string;
   fhRegistroFmt: string;
+  /** 1 activo, 0 inactivo (soft-delete / registro). */
+  estatusRegistro: number;
   estatusRegistroLabel: string;
   estatusRegistroClass: string;
   numZonas: number;
@@ -185,6 +205,11 @@ function normalizarZonaApi(raw: unknown): InmuebleZonaApi | null {
   if (!esObjetoRecordo(raw)) return null;
   const z = raw;
   const localesRaw = leerArreglo(z['locales'] ?? z['Locales']);
+  const estatusRaw = z['estatus'];
+  const estatus =
+    estatusRaw != null && String(estatusRaw).trim() !== '' && Number.isFinite(Number(estatusRaw))
+      ? Number(estatusRaw)
+      : undefined;
   return {
     id: z['id'] != null ? Number(z['id']) : undefined,
     idInmueble: z['idInmueble'] != null ? Number(z['idInmueble']) : undefined,
@@ -196,10 +221,35 @@ function normalizarZonaApi(raw: unknown): InmuebleZonaApi | null {
       valorTextoONumero(z['superficieDisponibleM2']) ??
       valorTextoONumero(z['superficieDisponiblePredioM2']),
     numeroZona: z['numeroZona'] != null ? Number(z['numeroZona']) : undefined,
+    estatus,
     locales: localesRaw
       .map(normalizarLocalApi)
       .filter((x): x is InmuebleLocalApi => x != null),
   };
+}
+
+/** Zona activa para UI (oculta soft-delete estatus = 0). */
+export function zonaInmuebleActiva(z: InmuebleZonaApi | null | undefined): boolean {
+  if (z == null) return false;
+  const est = z.estatus;
+  if (est == null || String(est).trim() === '') return true;
+  return Number(est) !== 0;
+}
+
+/** Archivo/imagen activo para UI (oculta soft-delete estatus = 0). */
+export function archivoInmuebleActivo(a: InmuebleArchivoApi | null | undefined): boolean {
+  if (a == null) return false;
+  const est = a.estatus;
+  if (est == null || String(est).trim() === '') return true;
+  return Number(est) !== 0;
+}
+
+/** Servicio activo para UI (oculta soft-delete estatus = 0). */
+export function servicioInmuebleActivo(s: InmuebleServicioApi | null | undefined): boolean {
+  if (s == null) return false;
+  const est = s.estatus;
+  if (est == null || String(est).trim() === '') return true;
+  return Number(est) !== 0;
 }
 
 function normalizarServicioApi(raw: unknown): InmuebleServicioApi | null {
@@ -208,6 +258,11 @@ function normalizarServicioApi(raw: unknown): InmuebleServicioApi | null {
   const urlComprobante = String(
     s['urlComprobante'] ?? s['comprobanteUrl'] ?? s['urlComprobantePago'] ?? '',
   ).trim();
+  const estatusRaw = s['estatus'];
+  const estatus =
+    estatusRaw != null && String(estatusRaw).trim() !== '' && Number.isFinite(Number(estatusRaw))
+      ? Number(estatusRaw)
+      : undefined;
   return {
     id: s['id'] != null ? Number(s['id']) : undefined,
     idServicioInmueble:
@@ -220,6 +275,7 @@ function normalizarServicioApi(raw: unknown): InmuebleServicioApi | null {
     ultimoDiaPago:
       s['ultimoDiaPago'] != null ? String(s['ultimoDiaPago']) : undefined,
     urlComprobante: urlComprobante || undefined,
+    estatus,
     tipoServicio: esObjetoRecordo(s['tipoServicio'])
       ? (s['tipoServicio'] as InmuebleServicioApi['tipoServicio'])
       : undefined,
@@ -232,10 +288,16 @@ function normalizarArchivoApi(raw: unknown): InmuebleArchivoApi | null {
   const url = urlArchivoNavegador(String(a['url'] ?? a['archivoUrl'] ?? '').trim());
   const nombre = a['nombre'] != null ? String(a['nombre']).trim() : '';
   if (!url && !nombre) return null;
+  const estatusRaw = a['estatus'];
+  const estatus =
+    estatusRaw != null && String(estatusRaw).trim() !== '' && Number.isFinite(Number(estatusRaw))
+      ? Number(estatusRaw)
+      : undefined;
   return {
     id: a['id'] != null ? Number(a['id']) : undefined,
     url: url || undefined,
     nombre: nombre || undefined,
+    estatus,
   };
 }
 
@@ -249,7 +311,7 @@ export function fusionarArchivosInmuebleApi(
   for (const fuente of fuentes) {
     for (const raw of leerArreglo(fuente)) {
       const archivo = normalizarArchivoApi(raw);
-      if (!archivo) continue;
+      if (!archivo || !archivoInmuebleActivo(archivo)) continue;
       const clave =
         archivo.id != null && Number.isFinite(archivo.id)
           ? `id:${archivo.id}`
@@ -280,10 +342,12 @@ export function normalizarInmuebleDetalleApi(raw: unknown): InmuebleApiItem {
   const r = raw;
   const servicios = leerArreglo(r['servicios'] ?? r['Servicios'])
     .map(normalizarServicioApi)
-    .filter((x): x is InmuebleServicioApi => x != null);
+    .filter((x): x is InmuebleServicioApi => x != null)
+    .filter(servicioInmuebleActivo);
   const zonas = leerArreglo(r['zonas'] ?? r['Zonas'])
     .map(normalizarZonaApi)
-    .filter((x): x is InmuebleZonaApi => x != null);
+    .filter((x): x is InmuebleZonaApi => x != null)
+    .filter(zonaInmuebleActiva);
   const archivos = archivosDesdeRecordoApi(r);
   const imagenes = fusionarArchivosInmuebleApi(r['imagenes'], r['Imagenes']).filter(
     (a) => !archivos.some((x) => x.id === a.id && a.id != null) &&
@@ -417,9 +481,22 @@ export function clasificarDocumentoInmueble(
   if (n.includes('comprobante') && n.includes('domicilio')) return 'comprobanteDomicilio';
   if (n.includes('escritura') || (n.includes('titulo') && n.includes('propiedad'))) return 'escritura';
   if (n.includes('boleta') && n.includes('predial')) return 'boletaPredial';
+  if (n.includes('predial')) return 'boletaPredial';
   if (n.includes('constancia') && n.includes('fiscal')) return 'constanciaFiscal';
+  if (n.includes('recibo') && (n.includes('agua') || n.includes('servicio'))) return 'otro';
   if (esImagenArchivo(url, nombre)) return 'galeria';
   return 'otro';
+}
+
+/** Solo galería (Imagen N): se puede soft-delete. Documentos con slot fijo, no. */
+export function esArchivoGaleriaInmuebleEliminable(
+  archivo: { nombre?: string | null; url?: string | null } | null | undefined,
+): boolean {
+  if (archivo == null) return false;
+  const nombre = String(archivo.nombre ?? '').trim();
+  const url = String(archivo.url ?? '').trim();
+  if (!nombre && !url) return false;
+  return clasificarDocumentoInmueble(nombre, url) === 'galeria';
 }
 
 /** Separa `archivos` (y opcional `imagenes`) en documentos fijos y galería adicional. */
@@ -469,7 +546,9 @@ export function mapInmueblesApiToGridRows(items: unknown[]): InmuebleGridRow[] {
     const archivos = [
       ...(Array.isArray(item.archivos) ? item.archivos : []),
       ...(Array.isArray(item.imagenes) ? item.imagenes : []),
-    ];
+    ].filter((a) => archivoInmuebleActivo(a as InmuebleArchivoApi));
+
+    const vigenciaDias = resumenDiasVigenciaInmueble(item.fechaInicio, item.fechaFin);
 
     return {
       id: idFinal,
@@ -478,6 +557,11 @@ export function mapInmueblesApiToGridRows(items: unknown[]): InmuebleGridRow[] {
       arrendadorNombre: nombreArrendador(item.arrendador),
       representanteNombre: String(item.nombreRepresentante ?? '—').trim(),
       vigenciaTexto: textoVigencia(item),
+      vigenciaDiasTotal: vigenciaDias.total,
+      vigenciaDiasTotalTexto: vigenciaDias.totalTexto,
+      vigenciaDiasRestantes: vigenciaDias.restantes,
+      vigenciaDiasRestantesTexto: vigenciaDias.restantesTexto,
+      vigenciaRestantesClase: vigenciaDias.restantesClase,
       estatusInmueble: Number.isFinite(estatus as number) ? (estatus as number) : null,
       estatusLabel: etiquetaEstatusInmueble(estatus),
       estatusClass: claseEstatusInmueble(estatus),
@@ -486,11 +570,16 @@ export function mapInmueblesApiToGridRows(items: unknown[]): InmuebleGridRow[] {
       telefonoRepresentante: String(item.telefonoRepresentante ?? '—').trim(),
       correoRepresentante: String(item.correoRepresentante ?? '—').trim(),
       fhRegistroFmt: formatearFechaHora(item.fhRegistro) || '—',
+      estatusRegistro: Number.isFinite(Number(item.estatus)) ? Number(item.estatus) : 1,
       estatusRegistroLabel: etiquetaEstatusRegistro(item.estatus),
       estatusRegistroClass: claseEstatusRegistro(item.estatus),
-      numZonas: Array.isArray(item.zonas) ? item.zonas.length : 0,
+      numZonas: Array.isArray(item.zonas)
+        ? item.zonas.filter((z) => zonaInmuebleActiva(z as InmuebleZonaApi)).length
+        : 0,
       numLocales: contarLocalesInmueble(item),
-      numServicios: Array.isArray(item.servicios) ? item.servicios.length : 0,
+      numServicios: Array.isArray(item.servicios)
+        ? item.servicios.filter((s) => servicioInmuebleActivo(s as InmuebleServicioApi)).length
+        : 0,
       numArchivos: archivos.length,
       tieneMapa: item.lat != null && item.lng != null && Number.isFinite(Number(item.lat)),
       lat: item.lat != null ? Number(item.lat) : null,
@@ -520,7 +609,9 @@ export function localesDeZona(zona: InmuebleZonaApi): InmuebleLocalApi[] {
 
 export function contarLocalesInmueble(item: InmuebleApiItem): number {
   if (!Array.isArray(item.zonas)) return 0;
-  return item.zonas.reduce((sum, z) => sum + localesDeZona(z).length, 0);
+  return item.zonas
+    .filter(zonaInmuebleActiva)
+    .reduce((sum, z) => sum + localesDeZona(z).length, 0);
 }
 
 export const OPCIONES_ESTATUS_LOCAL: ReadonlyArray<{
@@ -565,6 +656,100 @@ export function textoVigencia(item: InmuebleApiItem): string {
   const ff = formatearFecha(item.fechaFin);
   if (fi && ff) return `${fi} → ${ff}`;
   return '—';
+}
+
+function parseFechaDiaLocal(raw?: string): Date | null {
+  if (raw == null || String(raw).trim() === '') return null;
+  const s = String(raw).trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (m) {
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function diasCalendarioEntre(inicio: Date, fin: Date): number {
+  const a = Date.UTC(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+  const b = Date.UTC(fin.getFullYear(), fin.getMonth(), fin.getDate());
+  return Math.round((b - a) / 86400000);
+}
+
+function claseChipVigenciaPorTone(tone: ToneDiasFaltantes): string {
+  switch (tone) {
+    case 'danger':
+      return 'inm-vigencia-chip--danger';
+    case 'amber':
+      return 'inm-vigencia-chip--amber';
+    case 'warning':
+      return 'inm-vigencia-chip--warning';
+    case 'success':
+    default:
+      return 'inm-vigencia-chip--ok';
+  }
+}
+
+/** Total inclusivo y días restantes de la vigencia del inmueble. */
+export function resumenDiasVigenciaInmueble(
+  fechaInicio?: string,
+  fechaFin?: string,
+): {
+  total: number | null;
+  totalTexto: string;
+  restantes: number | null;
+  restantesTexto: string;
+  restantesClase: string;
+} {
+  const vacio = {
+    total: null as number | null,
+    totalTexto: '—',
+    restantes: null as number | null,
+    restantesTexto: '—',
+    restantesClase: 'inm-vigencia-chip--muted',
+  };
+  const inicio = parseFechaDiaLocal(fechaInicio);
+  const fin = parseFechaDiaLocal(fechaFin);
+  if (!inicio || !fin || fin < inicio) return vacio;
+
+  const span = diasCalendarioEntre(inicio, fin);
+  const total = Math.max(1, span + 1);
+  const totalTexto = total === 1 ? '1 día en total' : `${total} días en total`;
+
+  const hoy = new Date();
+  const hoyDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  const restantesRaw = diasCalendarioEntre(hoyDia, fin);
+  const restantesClase = claseChipVigenciaPorTone(
+    tonePorDiasFaltantesNotificacion(restantesRaw),
+  );
+
+  if (restantesRaw < 0) {
+    return {
+      total,
+      totalTexto,
+      restantes: 0,
+      restantesTexto: 'Vencida',
+      restantesClase,
+    };
+  }
+  if (restantesRaw === 0) {
+    return {
+      total,
+      totalTexto,
+      restantes: 0,
+      restantesTexto: 'Vence hoy',
+      restantesClase,
+    };
+  }
+
+  return {
+    total,
+    totalTexto,
+    restantes: restantesRaw,
+    restantesTexto:
+      restantesRaw === 1 ? '1 día restante' : `${restantesRaw} días restantes`,
+    restantesClase,
+  };
 }
 
 export function formatearFecha(raw?: string): string {
@@ -613,6 +798,21 @@ export function nombreServicio(s: InmuebleServicioApi): string {
     s.tipoServicio?.servicio ??
     (s.idTipoServicio != null ? `Servicio #${s.idTipoServicio}` : 'Servicio')
   );
+}
+
+/** Renta / Mantenimiento son fijos: no se eliminan desde el detalle ni el formulario. */
+export function esServicioRentaOMantenimiento(s: InmuebleServicioApi | null | undefined): boolean {
+  if (s == null) return false;
+  const texto = [
+    s.tipoServicio?.nombre,
+    s.tipoServicio?.servicio,
+    nombreServicio(s),
+  ]
+    .filter((x) => x != null && String(x).trim() !== '')
+    .join(' ');
+  if (/renta/i.test(texto) || /mantenimiento/i.test(texto)) return true;
+  const id = Number(s.idTipoServicio);
+  return id === 3 || id === 4;
 }
 
 export function esImagenUrl(url: string): boolean {

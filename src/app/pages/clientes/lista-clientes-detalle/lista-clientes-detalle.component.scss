@@ -1,1 +1,170 @@
 @use '../../arrendatarios/lista-arrendatarios-detalle/lista-arrendatarios-detalle.component.scss';
+
+.arr-socios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.arr-socio-card--panel {
+  width: 100%;
+  max-width: none;
+  padding: 0.85rem 1rem;
+}
+
+.arr-socio-card__head {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.65rem 0.85rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(130, 160, 255, 0.16);
+}
+
+.arr-socio-card__identity {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.arr-socio-eliminar-btn {
+  flex-shrink: 0;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem;
+  min-height: 2rem !important;
+  height: 2rem !important;
+  padding: 0 0.85rem !important;
+  border-radius: 999px !important;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  box-shadow: none !important;
+  margin-left: auto;
+}
+
+:host ::ng-deep .arr-socio-eliminar-btn.mat-mdc-unelevated-button {
+  --mdc-filled-button-container-height: 2rem;
+  --mdc-filled-button-container-shape: 999px;
+  --mdc-filled-button-container-color: rgba(104, 19, 48, 0.28) !important;
+  --mat-button-filled-container-color: rgba(104, 19, 48, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  background: rgba(104, 19, 48, 0.28) !important;
+  border: 1px solid rgba(251, 165, 180, 0.74) !important;
+  border-radius: 999px !important;
+  color: #ffffff !important;
+
+  .mdc-button__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    line-height: 1;
+  }
+}
+
+/* Desktop/tablet: los 3 documentos en un solo row a ancho completo. */
+.arr-socio-card--panel .arr-socio-card__docs {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.arr-socio-card--panel .arr-socio-card__docs li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0.75rem 0.85rem;
+  box-sizing: border-box;
+}
+
+.arr-socio-card--panel .arr-socio-doc__label {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: none;
+  justify-content: center;
+  text-align: center;
+}
+
+.arr-socio-card--panel .arr-socio-doc__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0;
+}
+
+.arr-socio-card--panel .arr-socio-doc__link {
+  --arr-socio-doc-action-h: 34px;
+  height: var(--arr-socio-doc-action-h);
+  min-height: var(--arr-socio-doc-action-h);
+  font-size: 0.8rem !important;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  padding: 0 0.75rem;
+}
+
+.arr-socio-doc__empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: #9aa6c7;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:host ::ng-deep .arr-socio-eliminar-btn.mat-mdc-unelevated-button[disabled],
+button.arr-socio-doc__link[disabled] {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(0.45);
+}
+
+/* Móvil: se apilan. */
+@media (max-width: 767.98px) {
+  .arr-socio-eliminar-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .arr-socio-card--panel .arr-socio-card__docs {
+    grid-template-columns: 1fr;
+  }
+
+  .arr-socio-card--panel .arr-socio-card__docs li {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .arr-socio-card--panel .arr-socio-doc__label {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .arr-socio-card--panel .arr-socio-doc__actions {
+    width: 100%;
+    justify-content: center;
+  }
+}

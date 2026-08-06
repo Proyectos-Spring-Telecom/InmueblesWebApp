@@ -21,6 +21,8 @@ import {
   urlArchivoNavegador,
   SlotDocumentoInmueble,
   urlFachadaLocal,
+  zonaInmuebleActiva,
+  servicioInmuebleActivo,
 } from '../inmuebles-list.mapper';
 import {
   CatServicioItem,
@@ -615,6 +617,9 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   servicioAccordionIndicesAbiertos: number[] = [0];
   zonaAccordionIndicesAbiertos: number[] = [0];
   localAccordionIndicesAbiertos: Record<number, number[]> = { 0: [0] };
+  /** Remount DxAccordion tras borrar/recargar (si no, deja valores viejos en el ítem). */
+  mostrarAccordionServicios = true;
+  mostrarAccordionZonas = true;
 
   onServicioAccordionIndicesChange(raw: number | number[]): void {
     if (Array.isArray(raw)) {
@@ -911,6 +916,113 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     );
   }
 
+  private esEdicionInmueble(): boolean {
+    return this.idInmueble != null && Number(this.idInmueble) > 0;
+  }
+
+  indiceServicioDesdeClaveAccordion(data: unknown): number {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^servicio-(\d+)$/.exec(clave);
+    return match ? Number(match[1]) : -1;
+  }
+
+  private idServicioPersistidoEnIndice(index: number): number | null {
+    const idVal = this.serviciosFormArray.at(index)?.get('idServicio')?.value;
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  /** Solo en actualizar: persistidos siempre (salvo Renta/Mantenimiento); filas nuevas solo si hay 2+. */
+  puedeEliminarServicioEnEdicion(index: number): boolean {
+    if (!this.esEdicionInmueble() || index < 0) return false;
+    if (this.esServicioRentaOMantenimientoEnIndice(index)) return false;
+    if (this.idServicioPersistidoEnIndice(index) != null) return true;
+    return this.serviciosFormArray.length >= 2;
+  }
+
+  private esServicioRentaOMantenimientoEnIndice(index: number): boolean {
+    if (index < 0 || index >= this.serviciosFormArray.length) return false;
+    const idTipo = Number(
+      (this.serviciosFormArray.at(index) as FormGroup).get('idTipoServicio')?.value,
+    );
+    if (!Number.isFinite(idTipo) || idTipo <= 0) return false;
+    if (idTipo === 3 || idTipo === 4) return true;
+    const item = this.listaCatServicios.find((s) => s.id === idTipo);
+    if (!item) return false;
+    const t = `${item.nombre ?? ''} ${item.servicio ?? ''} ${item.descripcion ?? ''}`;
+    return /renta/i.test(t) || /mantenimiento/i.test(t);
+  }
+
+  eliminarServicioDesdeTituloAccordion(event: Event, data: unknown): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const idx = this.indiceServicioDesdeClaveAccordion(data);
+    if (idx >= 0) this.eliminarServicioEnEdicion(idx);
+  }
+
+  eliminarServicioEnEdicion(index: number): void {
+    if (!this.puedeEliminarServicioEnEdicion(index)) return;
+    const idServicio = this.idServicioPersistidoEnIndice(index);
+    const nombre = this.tituloServicioAccordion(index);
+
+    if (idServicio == null) {
+      this.quitarServicioDelFormulario(index);
+      return;
+    }
+
+    void Swal.fire({
+      title: '¡Eliminar Servicio!',
+      html: `¿Está seguro que requiere eliminar el servicio: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.inmueblesService.eliminarServicioInmueble(idServicio).subscribe({
+        next: () => {
+          this.recargarFormularioTrasEliminacion(() => this.quitarServicioDelFormulario(index), () => {
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Eliminado!',
+              html: 'El servicio ha sido eliminado de forma exitosa.',
+              icon: 'success',
+              showCancelButton: false,
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+          });
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el servicio.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarServicioDelFormulario(index: number): void {
+    if (index < 0 || index >= this.serviciosFormArray.length) return;
+    this.serviciosFormArray.removeAt(index);
+    if (this.serviciosFormArray.length === 0) {
+      this.serviciosFormArray.push(this.crearServicioFormGroup());
+    }
+    this.reiniciarIndicesAccordionServicios();
+    this.remountAccordionServicios();
+    this.cdr.detectChanges();
+  }
+
   etiquetaCatServicio(item: CatServicioItem): string {
     const nombre = item.nombre ?? item.servicio ?? item.descripcion;
     if (nombre != null && String(nombre).trim() !== '') return String(nombre).trim();
@@ -962,6 +1074,142 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.localAccordionIndicesAbiertos[nuevoIndex] = [0];
   }
 
+  indiceZonaDesdeClaveAccordion(data: unknown): number {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^zona-(\d+)$/.exec(clave);
+    return match ? Number(match[1]) : -1;
+  }
+
+  private idZonaPersistidaEnIndice(index: number): number | null {
+    const idVal = this.zonasFormArray.at(index)?.get('idZona')?.value;
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  puedeEliminarZonaEnEdicion(index: number): boolean {
+    if (!this.esEdicionInmueble() || index < 0) return false;
+    if (this.idZonaPersistidaEnIndice(index) != null) return true;
+    return this.zonasFormArray.length >= 2;
+  }
+
+  eliminarZonaDesdeTituloAccordion(event: Event, data: unknown): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const idx = this.indiceZonaDesdeClaveAccordion(data);
+    if (idx >= 0) this.eliminarZonaEnEdicion(idx);
+  }
+
+  eliminarZonaEnEdicion(index: number): void {
+    if (!this.puedeEliminarZonaEnEdicion(index)) return;
+    const idZona = this.idZonaPersistidaEnIndice(index);
+    const nombre = this.tituloZonaAccordion(index);
+
+    if (idZona == null) {
+      this.quitarZonaDelFormulario(index);
+      return;
+    }
+
+    void Swal.fire({
+      title: '¡Eliminar Zona!',
+      html: `¿Está seguro que requiere eliminar la zona: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.inmueblesService.eliminarZonaInmueble(idZona).subscribe({
+        next: () => {
+          this.recargarFormularioTrasEliminacion(() => this.quitarZonaDelFormulario(index), () => {
+            void Swal.fire({
+              background: '#141a21',
+              color: '#ffffff',
+              title: '¡Eliminado!',
+              html: 'La zona ha sido eliminada de forma exitosa.',
+              icon: 'success',
+              showCancelButton: false,
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Confirmar',
+            });
+          });
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar la zona.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarZonaDelFormulario(index: number): void {
+    if (index < 0 || index >= this.zonasFormArray.length) return;
+    this.zonasFormArray.removeAt(index);
+    if (this.zonasFormArray.length === 0) {
+      this.zonasFormArray.push(this.crearZonaFormGroup());
+    }
+    this.reiniciarIndicesAccordionZonas();
+    this.remountAccordionZonas();
+    this.cdr.detectChanges();
+  }
+
+  /** Tras DELETE OK: vuelve a pedir el inmueble y re-aplica patchValue (limpia zona/servicio). */
+  private recargarFormularioTrasEliminacion(
+    fallbackLocal: () => void,
+    onDone?: () => void,
+  ): void {
+    const id = this.idInmueble;
+    if (id == null || !Number.isFinite(Number(id)) || Number(id) <= 0) {
+      fallbackLocal();
+      onDone?.();
+      return;
+    }
+    this.cargandoDetalle = true;
+    this.inmueblesService
+      .obtenerInmueble(Number(id))
+      .pipe(
+        finalize(() => {
+          this.cargandoDetalle = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (detalle) => {
+          this.poblarFormularioDesdeApi(extraerInmuebleDetalleApi(detalle));
+          this.remountAccordionServicios();
+          this.remountAccordionZonas();
+          onDone?.();
+        },
+        error: () => {
+          fallbackLocal();
+          onDone?.();
+        },
+      });
+  }
+
+  private remountAccordionServicios(): void {
+    this.mostrarAccordionServicios = false;
+    this.cdr.detectChanges();
+    this.mostrarAccordionServicios = true;
+    this.cdr.detectChanges();
+  }
+
+  private remountAccordionZonas(): void {
+    this.mostrarAccordionZonas = false;
+    this.cdr.detectChanges();
+    this.mostrarAccordionZonas = true;
+    this.cdr.detectChanges();
+  }
+
   agregarEstacionamiento(): void {
     this.estacionamientosFormArray.push(this.crearEstacionamientoFormGroup());
   }
@@ -1004,6 +1252,80 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     this.galeriaImagenesFormArray.push(this.crearGaleriaImagenFormGroup());
     this.indiceGaleriaAnimando = nuevoIndice;
     setTimeout(() => this.finalizarAnimacionGaleria(nuevoIndice), 450);
+  }
+
+  private idArchivoGaleriaEnIndice(index: number): number | null {
+    const idVal = this.galeriaImagenesFormArray.at(index)?.get('idArchivo')?.value;
+    if (idVal == null || !Number.isFinite(Number(idVal)) || Number(idVal) <= 0) return null;
+    return Math.trunc(Number(idVal));
+  }
+
+  puedeEliminarGaleriaEnEdicion(index: number): boolean {
+    if (!this.esEdicionInmueble() || index < 0) return false;
+    if (this.idArchivoGaleriaEnIndice(index) != null) return true;
+    return this.galeriaImagenesFormArray.length >= 2;
+  }
+
+  eliminarGaleriaEnEdicion(index: number): void {
+    if (!this.puedeEliminarGaleriaEnEdicion(index)) return;
+    const idArchivo = this.idArchivoGaleriaEnIndice(index);
+    const nombre =
+      String(this.galeriaImagenesFormArray.at(index)?.get('nombre')?.value ?? '').trim() ||
+      `Imagen ${index + 1}`;
+
+    if (idArchivo == null) {
+      this.quitarGaleriaDelFormulario(index);
+      return;
+    }
+
+    void Swal.fire({
+      title: '¡Eliminar Archivo!',
+      html: `¿Está seguro que requiere eliminar la imagen: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.inmueblesService.eliminarArchivoInmueble(idArchivo).subscribe({
+        next: () => {
+          this.quitarGaleriaDelFormulario(index);
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El archivo ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el archivo.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarGaleriaDelFormulario(index: number): void {
+    if (index < 0 || index >= this.galeriaImagenesFormArray.length) return;
+    this.galeriaImagenesFormArray.removeAt(index);
+    if (this.galeriaImagenesFormArray.length === 0) {
+      this.galeriaImagenesFormArray.push(this.crearGaleriaImagenFormGroup());
+    }
+    this.cdr.detectChanges();
   }
 
   finalizarAnimacionGaleria(indice: number): void {
@@ -1312,7 +1634,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private rellenarServiciosDesdeApi(servicios?: InmuebleServicioApi[]): void {
     const arr = this.serviciosFormArray;
     arr.clear();
-    const lista = Array.isArray(servicios) ? servicios : [];
+    const lista = (Array.isArray(servicios) ? servicios : []).filter(servicioInmuebleActivo);
     if (!lista.length) {
       arr.push(this.crearServicioFormGroup());
       this.reiniciarIndicesAccordionServicios();
@@ -1401,7 +1723,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   private rellenarZonasDesdeApi(zonas?: InmuebleZonaApi[]): void {
     const arr = this.zonasFormArray;
     arr.clear();
-    const lista = Array.isArray(zonas) ? zonas : [];
+    const lista = (Array.isArray(zonas) ? zonas : []).filter(zonaInmuebleActiva);
     if (!lista.length) {
       arr.push(this.crearZonaFormGroup());
       this.reiniciarIndicesAccordionZonas();

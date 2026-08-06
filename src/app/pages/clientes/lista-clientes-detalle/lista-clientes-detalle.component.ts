@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { take } from 'rxjs';
 import Swal from 'sweetalert2';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
+import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import {
   ClienteArchivoItem,
   ClienteGridRow,
@@ -38,6 +39,7 @@ export class ListaClientesDetalleComponent {
   });
 
   detalleTab = 0;
+  eliminandoSocioId: number | null = null;
 
   esImagenArchivo = esImagenArchivo;
   esPdfArchivo = esPdfArchivo;
@@ -45,6 +47,8 @@ export class ListaClientesDetalleComponent {
   constructor(
     private sanitizer: DomSanitizer,
     private http: HttpClient,
+    private clieService: ClientesService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   get item(): Record<string, unknown> {
@@ -58,7 +62,12 @@ export class ListaClientesDetalleComponent {
 
   get socios(): Record<string, unknown>[] {
     const so = this.item['sociosArrendadores'];
-    return Array.isArray(so) ? (so as Record<string, unknown>[]) : [];
+    if (!Array.isArray(so)) return [];
+    return (so as Record<string, unknown>[]).filter((s) => {
+      const est = s['estatus'];
+      if (est == null || String(est).trim() === '') return true;
+      return Number(est) !== 0;
+    });
   }
 
   urlVistaPreviaPdf(url?: string): SafeResourceUrl | null {
@@ -80,6 +89,93 @@ export class ListaClientesDetalleComponent {
 
   textoSocioDoc(url: unknown): boolean {
     return typeof url === 'string' && url.trim().length > 0;
+  }
+
+  idSocioArrendador(so: Record<string, unknown>): number | null {
+    const raw = so['idSocioArrendador'] ?? so['id'];
+    if (raw == null || String(raw).trim() === '' || !Number.isFinite(Number(raw))) {
+      return null;
+    }
+    return Math.trunc(Number(raw));
+  }
+
+  eliminarSocio(so: Record<string, unknown>, ev?: Event): void {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    const idSocio = this.idSocioArrendador(so);
+    if (idSocio == null || this.eliminandoSocioId != null) return;
+
+    const nombre = String(so['nombre'] ?? '').trim() || `Socio ${idSocio}`;
+
+    void Swal.fire({
+      title: '¡Eliminar Socio!',
+      html: `¿Está seguro que requiere eliminar el socio: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+
+      this.eliminandoSocioId = idSocio;
+      this.cdr.markForCheck();
+
+      this.clieService.eliminarSocioArrendador(idSocio).subscribe({
+        next: () => {
+          this.quitarSocioDelDetalle(idSocio);
+          this.eliminandoSocioId = null;
+          this.cdr.detectChanges();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El socio ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          this.eliminandoSocioId = null;
+          this.cdr.markForCheck();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el socio.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarSocioDelDetalle(idSocio: number): void {
+    const detalle = this.row?.detalle;
+    if (!detalle) return;
+
+    const lista = detalle['sociosArrendadores'];
+    if (!Array.isArray(lista)) return;
+
+    detalle['sociosArrendadores'] = lista.filter((raw) => {
+      if (raw == null || typeof raw !== 'object') return true;
+      const o = raw as Record<string, unknown>;
+      const id = o['idSocioArrendador'] ?? o['id'];
+      return !(
+        id != null &&
+        Number.isFinite(Number(id)) &&
+        Math.trunc(Number(id)) === idSocio
+      );
+    });
+
+    const restantes = detalle['sociosArrendadores'] as unknown[];
+    this.row.numSocios = restantes.length;
   }
 
   descargarDocumento(

@@ -27,16 +27,22 @@ import {
   InmuebleApiItem,
   InmuebleGridRow,
   InmuebleLocalApi,
+  InmuebleServicioApi,
   InmuebleZonaApi,
   contarLocalesInmueble,
   etiquetaEstatusLocal,
   localesDeZona,
   nombreArrendador,
   nombreServicio,
+  esServicioRentaOMantenimiento,
   OPCIONES_ESTATUS_LOCAL,
   resolverGiroLocalApi,
   urlFachadaLocal,
   urlPdfMiniatura,
+  zonaInmuebleActiva,
+  archivoInmuebleActivo,
+  servicioInmuebleActivo,
+  esArchivoGaleriaInmuebleEliminable,
 } from '../inmuebles-list.mapper';
 
 @Component({
@@ -48,8 +54,9 @@ import {
 export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) row!: InmuebleGridRow;
 
-  /** Tras PATCH de estatus: el padre debe refrescar GET /inmuebles/paginated. */
+  /** Tras PATCH de estatus o DELETE de hijos: el padre debe refrescar el listado. */
   @Output() estatusLocalActualizado = new EventEmitter<void>();
+  @Output() detalleModificado = new EventEmitter<void>();
 
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
 
@@ -67,6 +74,7 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDest
   detalleTab = 0;
   filtroLocal = '';
   guardandoEstatusLocalId: number | null = null;
+  eliminandoId: number | null = null;
   cargandoDetalleAnidado = false;
   cargandoTabPanel = false;
   private detallePorId: InmuebleApiItem | null = null;
@@ -109,9 +117,19 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDest
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['row']) {
-      this.detallePorId = null;
-      this.detalleTab = 0;
-      this.fotosLocalesRotas.clear();
+      const prev = changes['row'].previousValue as InmuebleGridRow | undefined;
+      const curr = changes['row'].currentValue as InmuebleGridRow | undefined;
+      const mismoId =
+        prev != null &&
+        curr != null &&
+        Number(prev.id) === Number(curr.id) &&
+        Number.isFinite(Number(curr.id));
+      // Misma fila tras refresh: no vaciar detalle (evita que reaparezcan soft-deletes).
+      if (!mismoId) {
+        this.detallePorId = null;
+        this.detalleTab = 0;
+        this.fotosLocalesRotas.clear();
+      }
       this.cargarDetalleCompletoPorId();
     }
   }
@@ -182,11 +200,13 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDest
         next: (resp) => {
           this.detallePorId = extraerInmuebleDetalleApi(resp);
           this.cargandoDetalleAnidado = false;
+          this.cdr.markForCheck();
         },
         error: (err) => {
           console.error('Error al cargar detalle del inmueble:', err);
           this.detallePorId = this.row?.detalle ?? {};
           this.cargandoDetalleAnidado = false;
+          this.cdr.markForCheck();
         },
       });
   }
@@ -196,30 +216,34 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDest
   }
 
   get zonas() {
-    return Array.isArray(this.item.zonas) ? this.item.zonas : [];
+    const so = Array.isArray(this.item.zonas) ? this.item.zonas : [];
+    return so.filter(zonaInmuebleActiva);
   }
 
   get zonasOrdenadas(): InmuebleZonaApi[] {
     return [...this.zonas].sort((a, b) => {
+      const ida = Number(a.id ?? 0);
+      const idb = Number(b.id ?? 0);
+      if (Number.isFinite(ida) && Number.isFinite(idb) && ida !== idb) {
+        return idb - ida;
+      }
       const na = Number(a.numeroZona);
       const nb = Number(b.numeroZona);
       if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) {
-        return na - nb;
+        return nb - na;
       }
-      const za = String(a.zonaPrincipal ?? '');
-      const zb = String(b.zonaPrincipal ?? '');
-      const cmp = za.localeCompare(zb, 'es');
-      if (cmp !== 0) return cmp;
-      return Number(a.id ?? 0) - Number(b.id ?? 0);
+      return String(b.zonaPrincipal ?? '').localeCompare(String(a.zonaPrincipal ?? ''), 'es');
     });
   }
 
   get servicios() {
-    return Array.isArray(this.item.servicios) ? this.item.servicios : [];
+    const lista = Array.isArray(this.item.servicios) ? this.item.servicios : [];
+    return lista.filter(servicioInmuebleActivo);
   }
 
   get archivos() {
-    return Array.isArray(this.item.archivos) ? this.item.archivos : [];
+    const lista = Array.isArray(this.item.archivos) ? this.item.archivos : [];
+    return lista.filter(archivoInmuebleActivo);
   }
 
   nombreArrendador = nombreArrendador;
@@ -441,6 +465,198 @@ export class ListaInmueblesDetalleComponent implements OnInit, OnChanges, OnDest
           'Inmuebles',
         );
       },
+    });
+  }
+
+  idEntidad(raw: unknown): number | null {
+    if (raw == null || typeof raw !== 'object') return null;
+    const id = Number((raw as { id?: unknown }).id);
+    return Number.isFinite(id) && id > 0 ? Math.trunc(id) : null;
+  }
+
+  puedeEliminarArchivo(a: { id?: number; nombre?: string; url?: string }): boolean {
+    return this.idEntidad(a) != null && esArchivoGaleriaInmuebleEliminable(a);
+  }
+
+  puedeEliminarServicioDetalle(s: InmuebleServicioApi | { id?: number }): boolean {
+    if (this.idEntidad(s) == null) return false;
+    return !esServicioRentaOMantenimiento(s as InmuebleServicioApi);
+  }
+
+  eliminarServicioDetalle(s: { id?: number; numeroContrato?: string }, ev?: Event): void {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    if (!this.puedeEliminarServicioDetalle(s)) return;
+    const id = this.idEntidad(s);
+    if (id == null || this.eliminandoId != null) return;
+    const nombre = this.nombreServicio(s as never);
+    void Swal.fire({
+      title: '¡Eliminar Servicio!',
+      html: `¿Está seguro que requiere eliminar el servicio: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.eliminandoId = id;
+      this.inmueblesService.eliminarServicioInmueble(id).subscribe({
+        next: () => {
+          this.eliminandoId = null;
+          this.quitarServicioDeDetalleLocal(id);
+          this.cargarDetalleCompletoPorId();
+          this.detalleModificado.emit();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El servicio ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          this.eliminandoId = null;
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el servicio.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  eliminarZonaDetalle(z: InmuebleZonaApi, ev?: Event): void {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    const id = this.idEntidad(z);
+    if (id == null || this.eliminandoId != null) return;
+    const nombre = String(z.zonaPrincipal ?? '').trim() || `Zona ${z.numeroZona ?? id}`;
+    void Swal.fire({
+      title: '¡Eliminar Zona!',
+      html: `¿Está seguro que requiere eliminar la zona: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.eliminandoId = id;
+      this.inmueblesService.eliminarZonaInmueble(id).subscribe({
+        next: () => {
+          this.eliminandoId = null;
+          this.quitarZonaDeDetalleLocal(id);
+          this.cargarDetalleCompletoPorId();
+          this.detalleModificado.emit();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'La zona ha sido eliminada de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          this.eliminandoId = null;
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar la zona.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private quitarServicioDeDetalleLocal(id: number): void {
+    const base = { ...(this.detallePorId ?? this.row?.detalle ?? {}) } as InmuebleApiItem;
+    const servicios = (Array.isArray(base.servicios) ? base.servicios : []).filter((s) => {
+      const sid = Number(s.id ?? s.idServicioInmueble);
+      return !(Number.isFinite(sid) && sid === id);
+    });
+    this.detallePorId = { ...base, servicios };
+    this.cdr.markForCheck();
+  }
+
+  private quitarZonaDeDetalleLocal(id: number): void {
+    const base = { ...(this.detallePorId ?? this.row?.detalle ?? {}) } as InmuebleApiItem;
+    const zonas = (Array.isArray(base.zonas) ? base.zonas : []).filter((z) => {
+      const zid = Number(z.id);
+      return !(Number.isFinite(zid) && zid === id);
+    });
+    this.detallePorId = { ...base, zonas };
+    this.cdr.markForCheck();
+  }
+
+  eliminarArchivoDetalle(a: { id?: number; nombre?: string; url?: string }, ev?: Event): void {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    if (!this.puedeEliminarArchivo(a)) return;
+    const id = this.idEntidad(a);
+    if (id == null || this.eliminandoId != null) return;
+    const nombre = String(a.nombre ?? '').trim() || 'Documento';
+    void Swal.fire({
+      title: '¡Eliminar Archivo!',
+      html: `¿Está seguro que requiere eliminar el archivo: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.eliminandoId = id;
+      this.inmueblesService.eliminarArchivoInmueble(id).subscribe({
+        next: () => {
+          this.eliminandoId = null;
+          this.cargarDetalleCompletoPorId();
+          this.detalleModificado.emit();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El archivo ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          this.eliminandoId = null;
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el archivo.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
     });
   }
 

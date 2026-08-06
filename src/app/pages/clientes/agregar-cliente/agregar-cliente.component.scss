@@ -338,6 +338,7 @@ align-items: center;
 justify-content: center;
 gap: 0.55rem;
 flex-wrap: wrap;
+flex-direction: row;
 }
 
 .uploader-wrap .uploader__cta button[mat-flat-button],
@@ -356,6 +357,8 @@ flex: 0 0 auto;
 white-space: normal;
 overflow-wrap: anywhere;
 line-height: 1.25;
+height: auto;
+padding: 0.35rem 0.7rem;
 }
 
 .uploader-wrap .uploader__badge.uploader__badge--file,
@@ -369,10 +372,16 @@ background: linear-gradient(180deg, rgba(59, 130, 246, 0.22), rgba(30, 64, 175, 
 box-shadow:
   0 0 0 1px rgba(147, 197, 253, 0.22),
   0 8px 20px rgba(0, 0, 0, 0.32);
-padding-inline: clamp(0.55rem, 0.48rem + 0.28vw, 0.82rem);
+padding: 0.4rem clamp(0.55rem, 0.48rem + 0.28vw, 0.82rem);
+height: auto;
 }
 
-@media (max-width: 767.98px) {
+.uploader-wrap .uploader__badge.uploader__badge--clickable,
+.socios-docs .uploader__badge.uploader__badge--clickable {
+cursor: pointer;
+}
+
+@media (max-width: 575.98px) {
 .docs-hero {
   padding: 0.85rem 0.85rem;
 }
@@ -394,6 +403,12 @@ padding-inline: clamp(0.55rem, 0.48rem + 0.28vw, 0.82rem);
   width: fit-content;
   max-width: 100%;
   text-align: center;
+}
+}
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+.docs-hero {
+  padding: 0.85rem 0.85rem;
 }
 }
 
@@ -644,6 +659,61 @@ color: #eef2ff;
 font-size: 14px;
 letter-spacing: 0.05em;
 line-height: 1.35;
+}
+
+.arrend-socio-eliminar-btn {
+  flex-shrink: 0;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem;
+  min-height: 2rem !important;
+  height: 2rem !important;
+  padding: 0 0.85rem !important;
+  border-radius: 999px !important;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  box-shadow: none !important;
+
+  mat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    line-height: 1;
+    margin: 0;
+  }
+}
+
+:host ::ng-deep .arrend-accordion-title-bar .arrend-socio-eliminar-btn.mat-mdc-unelevated-button {
+  --mdc-filled-button-container-height: 2rem;
+  --mdc-filled-button-container-shape: 999px;
+  --mdc-filled-button-container-color: rgba(104, 19, 48, 0.28) !important;
+  --mat-button-filled-container-color: rgba(104, 19, 48, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  background: rgba(104, 19, 48, 0.28) !important;
+  border: 1px solid rgba(251, 165, 180, 0.74) !important;
+  border-radius: 999px !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+
+  .mdc-button__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    line-height: 1;
+  }
+
+  mat-icon {
+    color: #ffffff !important;
+  }
 }
 
 .arrend-accordion-inner {

@@ -143,12 +143,22 @@
                     </div>
                     <div *appHasPermission="'4'">
                         @if (row.data.estatus === 0) {
-                        <button id="pinButton" class="btnAcciones" (click)="activar(row.data); $event.stopPropagation()">
-                            <i class="fa fa-arrow-up"></i>
+                        <button
+                            id="pinButton"
+                            class="btnAcciones"
+                            title="Activar arrendador"
+                            (click)="activar(row.data); $event.stopPropagation()"
+                        >
+                            <i class="fa fa-check-circle"></i>
                         </button>
                         } @else {
-                        <button id="deleteButton" class="btnAcciones" (click)="desactivar(row.data); $event.stopPropagation()">
-                            <i class="fa fa-arrow-down"></i>
+                        <button
+                            id="deleteButton"
+                            class="btnAcciones"
+                            title="Eliminar arrendador"
+                            (click)="eliminarCliente(row.data); $event.stopPropagation()"
+                        >
+                            <i class="fa fa-trash"></i>
                         </button>
                         }
                     </div>

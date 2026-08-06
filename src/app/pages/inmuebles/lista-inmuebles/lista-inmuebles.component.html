@@ -50,7 +50,7 @@
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-sorting mode="multiple"></dxo-sorting>
 
-        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="270" alignment="center"
+        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="320" alignment="center"
           *appHasPermission="['41', '42']"
           [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
@@ -62,7 +62,7 @@
         <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="left" cssClass="inm-col-nombre" [width]="250" [allowFiltering]="true"></dxi-column>
         <dxi-column dataField="arrendadorNombre" caption="Arrendador" [width]="250" alignment="center" cssClass="inm-col-arrendador"></dxi-column>
         <dxi-column dataField="direccionFiscal" caption="Dirección fiscal" [width]="250" alignment="center"></dxi-column>
-        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="200" alignment="center"></dxi-column>
+        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="220" alignment="center"></dxi-column>
         <dxi-column caption="Representante Legal" cellTemplate="representanteTpl" [width]="200" alignment="center" [allowSorting]="false" [allowFiltering]="false"></dxi-column>
         <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" [width]="150" alignment="center"></dxi-column>
         <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false" alignment="center"></dxi-column>
@@ -77,11 +77,28 @@
           </div>
         </div>
         <div *dxTemplate="let cell of 'vigenciaTpl'">
-          <div class="inm-cell-stack inm-cell-stack--center">
-            <span class="inm-cell-line inm-cell-line--muted">
-              {{ cell.data.fechaInicioFmt }} – {{ cell.data.fechaFinFmt }}
-            </span>
+          <div
+            class="inm-vigencia-cell"
+            *ngIf="cell.data.fechaInicioFmt !== '—' && cell.data.fechaFinFmt !== '—'; else vigenciaVacia"
+          >
+            <div class="inm-vigencia-cell__rango">
+              <i class="fa fa-calendar" aria-hidden="true"></i>
+              <span>{{ cell.data.fechaInicioFmt }} – {{ cell.data.fechaFinFmt }}</span>
+            </div>
+            <div class="inm-vigencia-cell__chips">
+              <span class="inm-vigencia-chip inm-vigencia-chip--total">
+                <i class="fa fa-hourglass-half" aria-hidden="true"></i>
+                {{ cell.data.vigenciaDiasTotalTexto }}
+              </span>
+              <span class="inm-vigencia-chip" [ngClass]="cell.data.vigenciaRestantesClase">
+                <i class="fa fa-clock-o" aria-hidden="true"></i>
+                {{ cell.data.vigenciaDiasRestantesTexto }}
+              </span>
+            </div>
           </div>
+          <ng-template #vigenciaVacia>
+            <span class="inm-cell-line inm-cell-line--muted">—</span>
+          </ng-template>
         </div>
         <div *dxTemplate="let cell of 'estatusTpl'">
           <span [ngClass]="cell.data.estatusClass">{{ cell.data.estatusLabel }}</span>
@@ -131,8 +148,31 @@
             </button>
           </div>
           <div *appHasPermission="'41'">
+            @if (row.data.estatusRegistro === 0) {
+            <button
+              type="button"
+              id="activarRegistroButton"
+              class="btnAcciones"
+              title="Activar inmueble"
+              (click)="activarInmueble(row.data); $event.stopPropagation()"
+            >
+              <i class="fa fa-check-circle"></i>
+            </button>
+            } @else {
+            <button
+              type="button"
+              id="deleteButton"
+              class="btnAcciones"
+              title="Eliminar inmueble"
+              (click)="eliminarInmueble(row.data); $event.stopPropagation()"
+            >
+              <i class="fa fa-trash"></i>
+            </button>
+            }
+          </div>
+          <div *appHasPermission="'41'">
             <div *ngIf="row.data.tieneMapa">
-              <button type="button" id="pinButton" class="btnAcciones" title="Ubicación"
+              <button type="button" id="ubicacionMapaButton" class="btnAcciones" title="Ubicación"
               (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
               <i class="fa fa-map-marker"></i>
             </button>
@@ -154,7 +194,8 @@
 
         <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
           <app-lista-inmuebles-detalle [row]="row.data"
-            (estatusLocalActualizado)="recargarInmueblesPaginated()"></app-lista-inmuebles-detalle>
+            (estatusLocalActualizado)="recargarInmueblesPaginated()"
+            (detalleModificado)="recargarInmueblesPaginated()"></app-lista-inmuebles-detalle>
         </div>
         <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
       </dx-data-grid>

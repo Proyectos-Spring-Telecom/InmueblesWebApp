@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, finalize, forkJoin, map, of } from 'rxjs';
@@ -37,7 +37,7 @@ type SocioEdicionSnapshot = {
   standalone: false,
   animations: [routeAnimation],
 })
-export class AgregarClienteComponent implements OnInit {
+export class AgregarClienteComponent implements OnInit, OnDestroy {
   private readonly swalToastOcrExito = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -69,12 +69,16 @@ export class AgregarClienteComponent implements OnInit {
   private promptAutocargaMostrado = false;
   /** Tras cargar cliente por id: copia para saber qué filas de socios cambiaron al actualizar. */
   private sociosEdicionSnapshots: SocioEdicionSnapshot[] | null = null;
+  /** Fuerza remount del acordeón al eliminar (DxAccordion suele dejar el ítem visible). */
+  mostrarAccordionSocios = true;
+  private socioUidSeq = 0;
 
   @ViewChild('autocargaCsfCardCliente') autocargaCsfCardCliente?: ElementRef<HTMLElement>;
   @ViewChild('topFormularioCliente') topFormularioCliente?: ElementRef<HTMLElement>;
   @ViewChild('inicioFormularioCliente') inicioFormularioCliente?: ElementRef<HTMLElement>;
   @ViewChild('docsSectionCliente') docsSectionCliente?: ElementRef<HTMLElement>;
   @ViewChild('docPreview') docPreview?: DocumentoPreviewComponent;
+  private previewObjectUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -120,6 +124,21 @@ export class AgregarClienteComponent implements OnInit {
     this.title = 'Agregar Arrendador';
     this.submitButton = 'Guardar';
     this.mostrarPromptAutocargaContrato();
+  }
+
+  ngOnDestroy(): void {
+    this.revokePreviewObjectUrl();
+  }
+
+  private revokePreviewObjectUrl(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+      this.previewObjectUrl = null;
+    }
+  }
+
+  onDocPreviewClosed(): void {
+    this.revokePreviewObjectUrl();
   }
 
   private strApi(v: unknown): string {
@@ -269,9 +288,10 @@ export class AgregarClienteComponent implements OnInit {
           'identificacionOficialArchivo',
         );
         const g = this.crearSocioFormGroup();
+        const idRaw = s['idSocioArrendador'] ?? s['id'];
         const idSocio =
-          s['id'] != null && String(s['id']).trim() !== '' && Number.isFinite(Number(s['id']))
-            ? Math.trunc(Number(s['id']))
+          idRaw != null && String(idRaw).trim() !== '' && Number.isFinite(Number(idRaw))
+            ? Math.trunc(Number(idRaw))
             : null;
         g.patchValue(
           {
@@ -310,16 +330,107 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   verArchivoRemoto(url: string | null | undefined, titulo: string): void {
-    if (!url?.trim()) return;
+    this.abrirPreviewArchivo(url, titulo);
+  }
+
+  /** Abre preview desde File local o URL remota; revoca object URLs al cerrar/destroy. */
+  abrirPreviewArchivo(
+    fuente: File | string | null | undefined,
+    titulo: string,
+    opciones?: { esImagen?: boolean },
+  ): void {
+    this.revokePreviewObjectUrl();
+    if (fuente == null) return;
+
+    let url = '';
+    let esImagen = !!opciones?.esImagen;
+
+    if (fuente instanceof File) {
+      url = URL.createObjectURL(fuente);
+      this.previewObjectUrl = url;
+      if (!esImagen) {
+        esImagen =
+          /^image\//i.test(fuente.type || '') ||
+          /\.(png|jpe?g|webp|gif)$/i.test(fuente.name || '');
+      }
+    } else {
+      url = String(fuente).trim();
+      if (!url || this.esUrlPlaceholder(url)) return;
+      if (!esImagen) {
+        esImagen = this.isImageUrl(url);
+      }
+    }
+
     const subtitulo = String(this.clienteForm.get('nombre')?.value ?? '').trim();
-    this.docPreview?.abrir(url, titulo, subtitulo);
+    this.docPreview?.abrir(url, titulo, subtitulo, { esImagen });
+  }
+
+  /** Clic en etiqueta uploader con archivo (File o URL). */
+  onBadgeArchivoClick(
+    event: Event,
+    controlName: string,
+    titulo: string,
+    opciones?: { esImagen?: boolean },
+  ): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const v = this.clienteForm.get(controlName)?.value;
+    if (v instanceof File) {
+      this.abrirPreviewArchivo(v, titulo, opciones);
+      return;
+    }
+    if (typeof v === 'string' && v.trim() && !this.esUrlPlaceholder(v)) {
+      this.abrirPreviewArchivo(v.trim(), titulo, opciones);
+    }
+  }
+
+  onBadgeSocioClick(
+    event: Event,
+    socioCtrl: AbstractControl,
+    fileKey: string,
+    urlKey: string,
+    titulo: string,
+  ): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const file = socioCtrl.get(fileKey)?.value;
+    if (file instanceof File) {
+      this.abrirPreviewArchivo(file, titulo);
+      return;
+    }
+    const url = String(socioCtrl.get(urlKey)?.value ?? '').trim();
+    if (url) this.abrirPreviewArchivo(url, titulo);
+  }
+
+  private esUrlPlaceholder(url: string): boolean {
+    return url === this.DEFAULT_AVATAR_URL;
   }
 
   /** URL remota en control del formulario (edición por id). */
   urlRemotoControl(controlName: string): string | null {
     const v = this.clienteForm.get(controlName)?.value;
-    if (typeof v === 'string' && v.trim()) return v.trim();
+    if (typeof v === 'string' && v.trim() && !this.esUrlPlaceholder(v)) return v.trim();
     return null;
+  }
+
+  tieneArchivoControl(controlName: string): boolean {
+    const v = this.clienteForm.get(controlName)?.value;
+    if (v instanceof File) return true;
+    return typeof v === 'string' && !!v.trim() && !this.esUrlPlaceholder(v);
+  }
+
+  etiquetaArchivoControl(
+    controlName: string,
+    nombreLocal: string | null | undefined,
+    placeholder: string,
+  ): string {
+    if (nombreLocal?.trim()) return nombreLocal.trim();
+    const v = this.clienteForm.get(controlName)?.value;
+    if (v instanceof File) return v.name;
+    if (typeof v === 'string' && v.trim() && !this.esUrlPlaceholder(v)) {
+      return this.nombreArchivoDesdeUrlRemota(v) || v;
+    }
+    return placeholder;
   }
 
   private urlDocSocioApi(
@@ -614,6 +725,7 @@ export class AgregarClienteComponent implements OnInit {
 
   private crearSocioFormGroup(): FormGroup {
     return this.fb.group({
+      uid: [++this.socioUidSeq],
       id: [null as number | null],
       nombre: [''],
       rfc: ['', [Validators.maxLength(13)]],
@@ -658,21 +770,32 @@ export class AgregarClienteComponent implements OnInit {
     return `Socio ${index + 1}`;
   }
 
-  /** Clave estable para el acordeón; evita recrear el ítem al escribir el nombre. */
+  /** Clave estable por uid; no depende del nombre ni del índice. */
   claveEstableSocioAccordion(index: number): string {
-    return `socio-${index}`;
+    const uid = this.sociosFormArray.at(index)?.get('uid')?.value;
+    return `socio-uid-${uid != null ? uid : index}`;
   }
 
   tituloSocioAccordionDesdeClave(data: unknown): string {
-    const clave = this.tituloAccordionCaption(data);
-    const match = /^socio-(\d+)$/.exec(clave);
-    if (!match) return clave;
-    return this.tituloSocioAccordion(Number(match[1]));
+    const idx = this.indiceSocioDesdeClaveAccordion(data);
+    if (idx < 0) return this.tituloAccordionCaption(data);
+    return this.tituloSocioAccordion(idx);
   }
 
-  trackSocioPorIndice(index: number): number {
-    return index;
+  indiceSocioDesdeClaveAccordion(data: unknown): number {
+    const clave = this.tituloAccordionCaption(data);
+    const match = /^socio-uid-(\d+)$/.exec(clave);
+    if (!match) return -1;
+    const uid = Number(match[1]);
+    return this.sociosFormArray.controls.findIndex(
+      (ctrl) => Number(ctrl.get('uid')?.value) === uid,
+    );
   }
+
+  trackSocioPorUid = (_index: number, ctrl: AbstractControl): number => {
+    const uid = ctrl.get('uid')?.value;
+    return uid != null && Number.isFinite(Number(uid)) ? Number(uid) : _index;
+  };
 
   nombreSocioEnIndice(index: number): string {
     const raw = this.sociosFormArray?.at(index)?.get('nombre')?.value;
@@ -747,6 +870,123 @@ export class AgregarClienteComponent implements OnInit {
     const abiertos = new Set(this.socioAccordionIndicesAbiertos);
     abiertos.add(nuevoIndex);
     this.socioAccordionIndicesAbiertos = [...abiertos].sort((a, b) => a - b);
+  }
+
+  /** Solo en actualizar: socios persistidos siempre; filas nuevas solo si hay 2+. */
+  puedeEliminarSocioEnEdicion(index: number): boolean {
+    if (!this.esEdicionCliente()) return false;
+    if (this.idSocioPersistidoEnIndice(index) != null) return true;
+    return this.sociosFormArray.length >= 2;
+  }
+
+  eliminarSocioDesdeTituloAccordion(event: Event, data: unknown): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const idx = this.indiceSocioDesdeClaveAccordion(data);
+    if (idx >= 0 && idx < this.sociosFormArray.length) {
+      this.eliminarSocioEnEdicion(idx);
+    }
+  }
+
+  eliminarSocioEnEdicion(index: number): void {
+    if (!this.puedeEliminarSocioEnEdicion(index)) return;
+
+    const idSocio = this.idSocioPersistidoEnIndice(index);
+    const nombre =
+      this.nombreSocioEnIndice(index) || `Socio ${index + 1}`;
+
+    if (idSocio == null) {
+      this.quitarSocioDelFormulario(index);
+      return;
+    }
+
+    void Swal.fire({
+      title: '¡Eliminar Socio!',
+      html: `¿Está seguro que requiere eliminar el socio: <strong>${nombre}</strong>?`,
+      icon: 'warning',
+      background: '#141a21',
+      color: '#ffffff',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+
+      this.clieService.eliminarSocioArrendador(idSocio).subscribe({
+        next: () => {
+          // Quitar por id (no por índice): el índice puede quedar desfasado tras el async.
+          this.quitarSocioDelFormularioPorId(idSocio);
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El socio ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
+        },
+        error: () => {
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Ops!',
+            html: 'Error al intentar eliminar el socio.',
+            icon: 'error',
+            showCancelButton: false,
+          });
+        },
+      });
+    });
+  }
+
+  private idSocioPersistidoEnIndice(index: number): number | null {
+    const idVal = this.sociosFormArray.at(index)?.get('id')?.value;
+    if (idVal == null || String(idVal).trim() === '' || !Number.isFinite(Number(idVal))) {
+      return null;
+    }
+    return Math.trunc(Number(idVal));
+  }
+
+  private quitarSocioDelFormularioPorId(idSocio: number): void {
+    const index = this.sociosFormArray.controls.findIndex((ctrl) => {
+      const idVal = ctrl.get('id')?.value;
+      return (
+        idVal != null &&
+        String(idVal).trim() !== '' &&
+        Number.isFinite(Number(idVal)) &&
+        Math.trunc(Number(idVal)) === idSocio
+      );
+    });
+    if (index >= 0) {
+      this.quitarSocioDelFormulario(index);
+    }
+  }
+
+  private quitarSocioDelFormulario(index: number): void {
+    if (index < 0 || index >= this.sociosFormArray.length) return;
+    this.sociosFormArray.removeAt(index);
+    if (this.sociosEdicionSnapshots != null) {
+      this.sociosEdicionSnapshots.splice(index, 1);
+    }
+    if (this.sociosFormArray.length === 0) {
+      this.sociosFormArray.push(this.crearSocioFormGroup());
+      this.syncSociosEdicionSnapshotsDesdeFormulario();
+    }
+    this.socioAccordionIndicesAbiertos =
+      this.sociosFormArray.length > 0 ? [Math.min(index, this.sociosFormArray.length - 1)] : [];
+    this.refrescarAccordionSocios();
+  }
+
+  /** DxAccordion no siempre refleja removeAt; remount + detectChanges deja el UI alineado. */
+  private refrescarAccordionSocios(): void {
+    this.mostrarAccordionSocios = false;
+    this.cdr.detectChanges();
+    this.mostrarAccordionSocios = true;
+    this.cdr.detectChanges();
   }
 
   openSocioFilePicker(input: HTMLInputElement): void {
@@ -1262,8 +1502,6 @@ export class AgregarClienteComponent implements OnInit {
   usoSueloPreviewUrl: string | ArrayBuffer | null = null;
   planoCatastralPreviewUrl: string | ArrayBuffer | null = null;
 
-  private readonly MAX_MB = 10;
-
   private isImage(file: File): boolean {
     if (!file?.type) return /\.(png|jpe?g|webp)$/i.test(file.name);
     return /^image\/(png|jpe?g|webp)$/i.test(file.type);
@@ -1271,16 +1509,6 @@ export class AgregarClienteComponent implements OnInit {
   private isPdf(file: File): boolean {
     if (!file?.type) return /\.pdf$/i.test(file.name);
     return file.type === 'application/pdf';
-  }
-  private isOffice(file: File): boolean {
-    const t = file?.type;
-    if (!t) return /\.(docx?|xlsx?)$/i.test(file.name);
-    return [
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ].includes(t);
   }
   private isImageUrl(u: string): boolean {
     return /\.(png|jpe?g|webp|gif|bmp|svg|avif)(\?.*)?$/i.test(u);
@@ -1292,14 +1520,10 @@ export class AgregarClienteComponent implements OnInit {
   }
 
   private isAllowedLogo(file: File): boolean {
-    const okType = this.isLogoImage(file) || this.isPdf(file);
-    const okSize = file.size <= this.MAX_MB * 1024 * 1024;
-    return okType && okSize;
+    return this.isLogoImage(file) || this.isPdf(file);
   }
   private isAllowedDoc(file: File): boolean {
-    const okType = this.isImage(file) || this.isPdf(file);
-    const okSize = file.size <= this.MAX_MB * 1024 * 1024;
-    return okType && okSize;
+    return this.isImage(file) || this.isPdf(file);
   }
 
   private loadPreview(
@@ -1329,7 +1553,7 @@ export class AgregarClienteComponent implements OnInit {
   etiquetaLogotipoUploader(): string {
     const v = this.clienteForm.get('logotipo')?.value;
     if (v instanceof File) return v.name;
-    if (typeof v === 'string' && v.trim()) {
+    if (typeof v === 'string' && v.trim() && !this.esUrlPlaceholder(v)) {
       return this.nombreArchivoDesdeUrlRemota(v) || v;
     }
     return 'PNG · JPG · JPEG';
@@ -1379,7 +1603,7 @@ export class AgregarClienteComponent implements OnInit {
           background: '#141a21',
           icon: 'warning',
           title: 'Formato no permitido',
-          text: 'El logotipo acepta PNG, JPG, JPEG o PDF (máx. 10 MB).',
+          text: 'El logotipo acepta PNG, JPG, JPEG o PDF.',
         });
       }
       return;

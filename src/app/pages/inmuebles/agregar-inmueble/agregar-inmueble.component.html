@@ -174,12 +174,23 @@
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="servicios">
-              <dx-accordion class="arrend-accordion-servicios" width="100%" [collapsible]="true" [multiple]="true"
+              <dx-accordion *ngIf="mostrarAccordionServicios" class="arrend-accordion-servicios" width="100%" [collapsible]="true" [multiple]="true"
                 [animationDuration]="260" [selectedIndex]="$any(servicioAccordionIndicesAbiertos)"
                 [focusStateEnabled]="false" (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
                 itemTitleTemplate="servicioAccordionTitle">
                 <div *dxTemplate="let data of 'servicioAccordionTitle'" class="arrend-accordion-title-bar">
                   <span class="arrend-accordion-title-bar__label">{{ tituloServicioAccordionDesdeClave(data) }}</span>
+                  <button
+                    *ngIf="puedeEliminarServicioEnEdicion(indiceServicioDesdeClaveAccordion(data))"
+                    type="button"
+                    mat-flat-button
+                    class="bg-secondary arrend-item-eliminar-btn"
+                    aria-label="Eliminar servicio"
+                    (mousedown)="$event.stopPropagation()"
+                    (click)="eliminarServicioDesdeTituloAccordion($event, data)"
+                  >
+                    <mat-icon>delete</mat-icon> Eliminar Servicio
+                  </button>
                 </div>
                 <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice"
                   [title]="claveEstableServicioAccordion(i)">
@@ -295,12 +306,23 @@
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="zonas">
-              <dx-accordion class="arrend-accordion-zonas" width="100%" [collapsible]="true" [multiple]="true"
+              <dx-accordion *ngIf="mostrarAccordionZonas" class="arrend-accordion-zonas" width="100%" [collapsible]="true" [multiple]="true"
                 [animationDuration]="260" [selectedIndex]="$any(zonaAccordionIndicesAbiertos)"
                 [focusStateEnabled]="false" (selectedIndexChange)="onZonaAccordionIndicesChange($event)"
                 itemTitleTemplate="zonaAccordionTitle">
                 <div *dxTemplate="let data of 'zonaAccordionTitle'" class="arrend-accordion-title-bar">
                   <span class="arrend-accordion-title-bar__label">{{ tituloZonaAccordionDesdeClave(data) }}</span>
+                  <button
+                    *ngIf="puedeEliminarZonaEnEdicion(indiceZonaDesdeClaveAccordion(data))"
+                    type="button"
+                    mat-flat-button
+                    class="bg-secondary arrend-item-eliminar-btn"
+                    aria-label="Eliminar zona"
+                    (mousedown)="$event.stopPropagation()"
+                    (click)="eliminarZonaDesdeTituloAccordion($event, data)"
+                  >
+                    <mat-icon>delete</mat-icon> Eliminar Zona
+                  </button>
                 </div>
                 <dxi-item *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index; trackBy: trackZonaPorIndice"
                   [title]="claveEstableZonaAccordion(i)">
@@ -571,12 +593,13 @@
               let-placeholder="placeholder" let-tituloVer="tituloVer" let-selector="selector">
               <ng-container *ngIf="layoutArchivoRemoto(url); else docsUploaderCtaDefault">
                 <div class="uploader__cta uploader__cta--archivo-remoto">
-                  <div class="uploader__cta-actions">
-                    <button mat-flat-button color="primary" type="button"
-                      (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
-                    <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
-                  </div>
-                  <span class="uploader__badge uploader__badge--file">{{ nombreRemoto }}</span>
+                  <button mat-flat-button color="primary" type="button"
+                    (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
+                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
+                  <span
+                    class="uploader__badge uploader__badge--file"
+                    [attr.title]="nombreRemoto"
+                  >{{ nombreRemoto }}</span>
                 </div>
               </ng-container>
               <ng-template #docsUploaderCtaDefault>
@@ -593,24 +616,22 @@
             </ng-template>
             <ng-template #docsUploaderCtaGaleria let-url="url" let-nombre="nombre" let-placeholder="placeholder"
               let-titulo="titulo" let-fileInput="fileInput">
-              <ng-container *ngIf="layoutArchivoRemoto(url); else docsUploaderCtaGaleriaDefault">
+              <ng-container *ngIf="nombre || url; else docsUploaderCtaGaleriaVacia">
                 <div class="uploader__cta uploader__cta--archivo-remoto">
-                  <div class="uploader__cta-actions">
-                    <button mat-flat-button color="primary" type="button"
-                      (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
-                    <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
-                  </div>
-                  <span class="uploader__badge uploader__badge--file">{{ nombre }}</span>
+                  <button mat-flat-button color="primary" type="button"
+                    (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
+                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
+                  <span
+                    class="uploader__badge uploader__badge--file"
+                    [attr.title]="nombre || placeholder"
+                  >{{ nombre || placeholder }}</span>
                 </div>
               </ng-container>
-              <ng-template #docsUploaderCtaGaleriaDefault>
+              <ng-template #docsUploaderCtaGaleriaVacia>
                 <div class="uploader__cta">
                   <button mat-flat-button color="primary" type="button"
                     (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
-                  <span class="uploader__badge" [class.uploader__badge--file]="nombre || url">
-                    {{ nombre || placeholder }}
-                  </span>
-                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
+                  <span class="uploader__badge">{{ placeholder }}</span>
                 </div>
               </ng-template>
             </ng-template>
@@ -774,7 +795,16 @@
                 (animationend)="finalizarAnimacionGaleria(i)">
                 <div class="docs-uploader-label-row">
                   <label class="form-label perm-label docs-uploader-label mb-0">Imagen {{ i + 1 }}</label>
-                  <div class="d-flex flex-wrap gap-1 justify-content-end">
+                  <div class="docs-uploader-label-row__actions">
+                    <button
+                      *ngIf="puedeEliminarGaleriaEnEdicion(i)"
+                      type="button"
+                      mat-flat-button
+                      class="bg-secondary arrend-item-eliminar-btn arrend-item-eliminar-btn--compact"
+                      (click)="eliminarGaleriaEnEdicion(i)"
+                    >
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
                     <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
                       (click)="agregarFotoGaleria()" *ngIf="i === galeriaImagenesFormArray.length - 1">
                       <mat-icon>add</mat-icon> Agregar

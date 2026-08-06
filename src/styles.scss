@@ -747,6 +747,24 @@ body {
   filter: brightness(1.08);
 }
 
+#activarRegistroButton {
+  background: rgba(31, 158, 90, 0.2);
+  border: 1px solid rgba(167, 243, 199, 0.55);
+  color: #ffffff;
+}
+#activarRegistroButton:hover {
+  filter: brightness(1.08);
+}
+
+#ubicacionMapaButton {
+  background: rgba(31, 158, 90, 0.2);
+  border: 1px solid rgba(167, 243, 199, 0.55);
+  color: #ffffff;
+}
+#ubicacionMapaButton:hover {
+  filter: brightness(1.08);
+}
+
 #ubicacionButton {
   background: rgba(20, 184, 166, 0.22);
   border: 1px solid rgba(94, 234, 212, 0.55);

@@ -125,17 +125,18 @@
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="contratos">
-              <dx-accordion class="arrend-accordion-contratos" width="100%" [collapsible]="true" [multiple]="true"
-                [animationDuration]="260" [selectedIndex]="$any(contratoAccordionIndicesAbiertos)"
-                [focusStateEnabled]="false" (selectedIndexChange)="onContratoAccordionIndicesChange($event)"
+              <dx-accordion *ngIf="mostrarAccordionContratos" class="arrend-accordion-contratos" width="100%"
+                [collapsible]="true" [multiple]="true" [animationDuration]="260"
+                [selectedIndex]="$any(contratoAccordionIndicesAbiertos)" [focusStateEnabled]="false"
+                (selectedIndexChange)="onContratoAccordionIndicesChange($event)"
                 itemTitleTemplate="contratoAccordionTitle">
                 <div *dxTemplate="let data of 'contratoAccordionTitle'" class="arrend-accordion-title-bar">
-                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                  <span class="arrend-accordion-title-bar__label">{{ tituloContratoAccordionDesdeClave(data) }}</span>
                   <button
-                    *ngIf="puedeEliminarContratoEnFormulario()"
+                    *ngIf="puedeEliminarContratoEnFormulario(indiceContratoDesdeClaveAccordion(data))"
                     type="button"
                     mat-flat-button
-                    class="bg-error arrend-contrato-eliminar-btn"
+                    class="bg-secondary arrend-item-eliminar-btn"
                     aria-label="Eliminar contrato"
                     (mousedown)="$event.stopPropagation()"
                     (click)="eliminarContratoDesdeTituloAccordion($event, data)"
@@ -143,9 +144,9 @@
                     <mat-icon>delete</mat-icon> Eliminar Contrato
                   </button>
                 </div>
-                <dxi-item *ngFor="let contratoCtrl of contratosFormArray.controls; let i = index"
-                  [title]="tituloContratoAccordion(i)">
-                  <div class="arrend-accordion-item-body arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
+                <dxi-item *ngFor="let contratoCtrl of contratosFormArray.controls; let i = index; trackBy: trackContratoPorIndice"
+                  [title]="claveEstableContratoAccordion(i)">
+                  <div class="arrend-accordion-item-body arrend-accordion-inner pt-3 pb-2" [formGroup]="$any(contratoCtrl)">
                     <div class="row g-4 arrend-contrato-fila-campos">
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label" [attr.for]="'idInmuebleContrato' + i">Inmueble</label>
@@ -153,8 +154,8 @@
                             class="input-group-text fw-bold"><mat-icon>home</mat-icon></span>
                           <div class="form-floating flex-grow-1 perm-select-floating">
                             <select [id]="'idInmuebleContrato' + i" class="form-select" formControlName="idInmueble"
-                              [attr.title]="placeholderInmuebleContrato()" aria-label="Inmueble">
-                              <option [ngValue]="null" disabled>{{ placeholderInmuebleContrato() }}</option>
+                              aria-label="Inmueble">
+                              <option [ngValue]="null">{{ placeholderInmuebleContrato() }}</option>
                               <option *ngFor="let inm of listaInmuebles" [ngValue]="inm.id">
                                 {{ inm.etiqueta }}
                               </option>
@@ -581,25 +582,38 @@
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="servicios">
-              <dx-accordion class="arrend-accordion-servicios" width="100%" [collapsible]="true" [multiple]="true"
-                [animationDuration]="260" [selectedIndex]="$any(servicioAccordionIndicesAbiertos)"
-                [focusStateEnabled]="false" (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
+              <dx-accordion *ngIf="mostrarAccordionServicios" class="arrend-accordion-servicios" width="100%"
+                [collapsible]="true" [multiple]="true" [animationDuration]="260"
+                [selectedIndex]="$any(servicioAccordionIndicesAbiertos)" [focusStateEnabled]="false"
+                (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
                 itemTitleTemplate="servicioAccordionTitle">
                 <div *dxTemplate="let data of 'servicioAccordionTitle'" class="arrend-accordion-title-bar">
-                  <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                  <span class="arrend-accordion-title-bar__label">{{ tituloServicioAccordionDesdeClave(data) }}</span>
+                  <button
+                    *ngIf="puedeEliminarServicioEnEdicion(indiceServicioDesdeClaveAccordion(data))"
+                    type="button"
+                    mat-flat-button
+                    class="bg-secondary arrend-item-eliminar-btn"
+                    aria-label="Eliminar servicio"
+                    (mousedown)="$event.stopPropagation()"
+                    (click)="eliminarServicioDesdeTituloAccordion($event, data)"
+                  >
+                    <mat-icon>delete</mat-icon> Eliminar Servicio
+                  </button>
                 </div>
-                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index"
-                  [title]="tituloServicioAccordion(i)">
-                  <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
+                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice"
+                  [title]="claveEstableServicioAccordion(i)">
+                  <div class="arrend-accordion-inner pt-3 pb-2" [formGroup]="$any(srvCtrl)">
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label">Tipo de servicio</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>fact_check</mat-icon></span>
                           <div class="form-floating flex-grow-1 perm-select-floating">
-                            <select class="form-select" formControlName="idTipoServicio" aria-label="Tipo de servicio">
-                              <option [ngValue]="null"></option>
-                              <option *ngFor="let srv of listaCatServicios" [ngValue]="srv.id">
+                            <select class="form-select" formControlName="idTipoServicio" aria-label="Tipo de servicio"
+                              [attr.title]="esServicioDefaultObligatorio(i) ? 'Servicio fijo del arrendatario' : null">
+                              <option [ngValue]="null" *ngIf="!esServicioDefaultObligatorio(i)"></option>
+                              <option *ngFor="let srv of opcionesTipoServicioSelect(i)" [ngValue]="srv.id">
                                 {{ etiquetaCatServicio(srv) }}
                               </option>
                             </select>
@@ -954,10 +968,20 @@
                   (animationend)="finalizarAnimacionGaleria(i)">
                   <div class="docs-uploader-label-row">
                     <label class="form-label perm-label docs-uploader-label mb-0">Imagen {{ i + 1 }}</label>
-                    <div class="d-flex flex-wrap gap-1 justify-content-end">
+                    <div class="docs-uploader-label-row__actions">
+                      <button
+                        *ngIf="puedeEliminarGaleriaEnEdicion(i)"
+                        type="button"
+                        mat-flat-button
+                        class="bg-secondary arrend-item-eliminar-btn arrend-item-eliminar-btn--compact"
+                        (click)="eliminarGaleriaEnEdicion(i)"
+                        aria-label="Eliminar imagen"
+                      >
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
                       <button type="button" class="docs-uploader-inline-btn" mat-flat-button color="primary"
                         (click)="agregarFotoGaleria()" *ngIf="i === galeriaImagenesFormArray.length - 1">
-                        <mat-icon>add</mat-icon> Agregar Socio
+                        <mat-icon>add</mat-icon> Agregar
                       </button>
                     </div>
                   </div>
@@ -1078,16 +1102,28 @@
                   </div>
                 </div>
                 <div class="arrend-fa-section__body" formArrayName="socios">
-                  <dx-accordion class="arrend-accordion-socios" width="100%" [collapsible]="true" [multiple]="true"
-                    [animationDuration]="260" [selectedIndex]="$any(socioAccordionIndicesAbiertos)"
-                    [focusStateEnabled]="false" (selectedIndexChange)="onSocioAccordionIndicesChange($event)"
+                  <dx-accordion *ngIf="mostrarAccordionSocios" class="arrend-accordion-socios" width="100%"
+                    [collapsible]="true" [multiple]="true" [animationDuration]="260"
+                    [selectedIndex]="$any(socioAccordionIndicesAbiertos)" [focusStateEnabled]="false"
+                    (selectedIndexChange)="onSocioAccordionIndicesChange($event)"
                     itemTitleTemplate="socioAccordionTitle">
                     <div *dxTemplate="let data of 'socioAccordionTitle'" class="arrend-accordion-title-bar">
-                      <span class="arrend-accordion-title-bar__label">{{ tituloAccordionCaption(data) }}</span>
+                      <span class="arrend-accordion-title-bar__label">{{ tituloSocioAccordionDesdeClave(data) }}</span>
+                      <button
+                        *ngIf="puedeEliminarSocioEnEdicion(indiceSocioDesdeClaveAccordion(data))"
+                        type="button"
+                        mat-flat-button
+                        class="bg-secondary arrend-item-eliminar-btn"
+                        aria-label="Eliminar socio"
+                        (mousedown)="$event.stopPropagation()"
+                        (click)="eliminarSocioDesdeTituloAccordion($event, data)"
+                      >
+                        <mat-icon>delete</mat-icon> Eliminar Socio
+                      </button>
                     </div>
-                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index"
-                      [title]="tituloSocioAccordion(i)">
-                      <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
+                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index; trackBy: trackSocioPorIndice"
+                      [title]="claveEstableSocioAccordion(i)">
+                      <div class="arrend-accordion-inner pt-3 pb-2" [formGroup]="$any(socioCtrl)">
                         <div class="row g-3 socios-identidad">
                           <div class="col-12 col-md-6">
                             <label class="form-label perm-label">Nombre</label>
@@ -1114,8 +1150,6 @@
                             </div>
                           </div>
                         </div>
-                        <!-- <p class="socios-subhead socios-subhead--docs"><mat-icon class="socios-subhead__icon"
-                            aria-hidden="true">folder_special</mat-icon> Documentación</p> -->
                         <div class="row g-3 mt-1 socios-docs align-items-stretch">
                           <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
                             <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal</label>
@@ -1130,8 +1164,10 @@
                                     <button mat-flat-button color="primary" type="button"
                                       (click)="openSocioFilePicker(socioCsfInput)">Seleccionar</button>
                                     <span class="uploader__badge"
-                                      [class.uploader__badge--file]="socioCtrl.get('constanciaFiscalArchivo')?.value?.name">
-                                      {{ socioCtrl.get('constanciaFiscalArchivo')?.value?.name || 'PDF · PNG · JPG' }}
+                                      [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl')"
+                                      [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl')"
+                                      (click)="onBadgeSocioClick($event, socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl', 'Constancia fiscal del socio')">
+                                      {{ etiquetaArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl') }}
                                     </span>
                                   </div>
                                   <input #socioCsfInput type="file"
@@ -1154,8 +1190,10 @@
                                     <button mat-flat-button color="primary" type="button"
                                       (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
                                     <span class="uploader__badge"
-                                      [class.uploader__badge--file]="socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name">
-                                      {{ socioCtrl.get('comprobanteDomicilioArchivo')?.value?.name || 'PDF · PNG · JPG' }}
+                                      [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl')"
+                                      [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl')"
+                                      (click)="onBadgeSocioClick($event, socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl', 'Comprobante del socio')">
+                                      {{ etiquetaArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl') }}
                                     </span>
                                   </div>
                                   <input #socioCompInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
@@ -1175,8 +1213,11 @@
                                   <p class="uploader__subtitle">Arrastra y suelta o</p>
                                   <div class="uploader__cta">
                                     <button mat-flat-button color="primary" type="button" (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
-                                    <span class="uploader__badge" [class.uploader__badge--file]="socioCtrl.get('identificacionOficialArchivo')?.value?.name">
-                                      {{ socioCtrl.get('identificacionOficialArchivo')?.value?.name || 'PDF · PNG · JPG' }}
+                                    <span class="uploader__badge"
+                                      [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl')"
+                                      [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl')"
+                                      (click)="onBadgeSocioClick($event, socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl', 'Identificación del socio')">
+                                      {{ etiquetaArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl') }}
                                     </span>
                                   </div>
                                   <input #socioIneInput type="file"

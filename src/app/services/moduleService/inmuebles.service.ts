@@ -54,6 +54,29 @@ export class InmueblesService {
     return this.http.put(`${this.base}/${id}`, data);
   }
 
+  /** Soft-delete del inmueble. */
+  eliminarInmueble(id: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/${id}`);
+  }
+
+  updateEstatus(id: number, estatus: number): Observable<string> {
+    return this.http.patch(`${this.base}/estatus/${id}`, { estatus }, {
+      responseType: 'text',
+    });
+  }
+
+  eliminarServicioInmueble(idServicio: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/servicios/${idServicio}`);
+  }
+
+  eliminarZonaInmueble(idZona: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/zonas/${idZona}`);
+  }
+
+  eliminarArchivoInmueble(idArchivo: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/archivos/${idArchivo}`);
+  }
+
   obtenerMetrosInmueble(idInmueble: number): Observable<unknown> {
     return this.http.get(`${this.base}/area-ocupada/${idInmueble}`);
   }

@@ -40,6 +40,31 @@ export class ArrendatariosService {
     return this.http.put(`${this.base}/${id}`, data);
   }
 
+  /** Soft-delete del arrendatario. */
+  eliminarArrendatario(id: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/${id}`);
+  }
+
+  /** Soft-delete: contrato de arrendatario. */
+  eliminarContratoArrendatario(idContrato: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/contratos/${idContrato}`);
+  }
+
+  /** Soft-delete: servicio de arrendatario. */
+  eliminarServicioArrendatario(idServicio: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/servicios/${idServicio}`);
+  }
+
+  /** Soft-delete: socio de arrendatario. */
+  eliminarSocioArrendatario(idSocio: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/socios/${idSocio}`);
+  }
+
+  /** Soft-delete: archivo de arrendatario. */
+  eliminarArchivoArrendatario(idArchivo: number): Observable<unknown> {
+    return this.http.delete(`${this.base}/archivos/${idArchivo}`);
+  }
+
   obtenerDashboardArrendatario(
     idArrendatario: number,
     fechaInicio: string,

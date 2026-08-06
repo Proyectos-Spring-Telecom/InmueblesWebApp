@@ -254,8 +254,8 @@
                         </div>
 
                         <div class="perm-modules-scroll">
-                            <div class="row g-4">
-                                <div class="col-12 col-lg-4" *ngFor="let modulo of listaModulos">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6 col-lg-4" *ngFor="let modulo of listaModulos; trackBy: trackByModuloId">
                                     <section class="perm-module-card h-100">
                                         <header class="perm-module-card__head">
                                             <div class="perm-module-card__icon">
@@ -282,8 +282,13 @@
                                         </header>
 
                                         <div class="perm-module-card__body">
-                                            <div class="perm-pill" *ngFor="let permiso of modulo.permisos"
-                                                [class.perm-pill--active]="permiso.asignado">
+                                            <div class="perm-pill" *ngFor="let permiso of modulo.permisos; trackBy: trackByPermisoId"
+                                                [class.perm-pill--active]="permiso.asignado"
+                                                (click)="togglePermiso(modulo, permiso)"
+                                                role="button"
+                                                tabindex="0"
+                                                (keydown.enter)="togglePermiso(modulo, permiso)"
+                                                (keydown.space)="$event.preventDefault(); togglePermiso(modulo, permiso)">
                                                 <div class="perm-pill__icon">
                                                     <mat-icon aria-hidden="true">verified_user</mat-icon>
                                                 </div>
@@ -297,7 +302,7 @@
                                                     </span>
                                                 </div>
 
-                                                <label class="perm-pill__toggle">
+                                                <label class="perm-pill__toggle" (click)="$event.stopPropagation()">
                                                     <input type="checkbox" [checked]="permiso.asignado"
                                                         (change)="onPermChange(modulo, permiso, $event)" />
                                                     <span class="perm-switch"></span>

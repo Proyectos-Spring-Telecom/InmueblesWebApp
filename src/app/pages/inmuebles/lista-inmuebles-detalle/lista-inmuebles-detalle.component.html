@@ -72,6 +72,16 @@
               <span class="inm-zona-panel__stat-label">Locales</span>
               <span class="inm-zona-panel__stat-value">{{ localesDeZona(z).length }}</span>
             </span>
+            <button
+              *ngIf="idEntidad(z) != null"
+              type="button"
+              mat-flat-button
+              class="bg-secondary arr-socio-eliminar-btn inm-detalle-eliminar-btn"
+              [disabled]="eliminandoId === idEntidad(z)"
+              (click)="eliminarZonaDetalle(z, $event)"
+            >
+              <i class="fa fa-trash"></i> Eliminar
+            </button>
           </span>
         </summary>
 
@@ -163,8 +173,18 @@
     <div class="inm-servicios-grid" *ngIf="servicios.length; else sinServicios">
       <article class="inm-servicio-card" *ngFor="let s of servicios">
         <div class="inm-servicio-card__head">
-          <div class="inm-servicio-card__icon"><i class="fa fa-tint"></i></div>
+          <div class="inm-servicio-card__icon" aria-hidden="true"><i class="fa fa-cog"></i></div>
           <h4 class="inm-servicio-card__title">{{ nombreServicio(s) }}</h4>
+          <button
+            *ngIf="puedeEliminarServicioDetalle(s)"
+            type="button"
+            mat-flat-button
+            class="bg-secondary arr-socio-eliminar-btn inm-detalle-eliminar-btn"
+            [disabled]="eliminandoId === idEntidad(s)"
+            (click)="eliminarServicioDetalle(s, $event)"
+          >
+            <i class="fa fa-trash"></i> Eliminar
+          </button>
         </div>
         <div class="inm-servicio-card__meta">
           <p *ngIf="s.numeroContrato">Contrato: {{ s.numeroContrato }}</p>
@@ -195,40 +215,65 @@
   </div>
 
   <div class="inm-detalle__panel" *ngIf="detalleTab === 2 && !mostrarCargaPanel">
-    <div class="inm-docs-grid" *ngIf="archivos.length; else sinDocs">
-      <article class="inm-doc-card" *ngFor="let a of archivos">
-        <div class="inm-doc-card__thumb" *ngIf="a.url && esImagenArchivo(a.url, a.nombre)">
-          <img [src]="a.url" [alt]="a.nombre" loading="lazy" />
-        </div>
-        <div class="inm-doc-card__thumb inm-doc-card__thumb--pdf"
-          *ngIf="a.url && esPdfArchivo(a.url, a.nombre) && urlVistaPreviaPdf(a.url)">
-          <iframe [src]="urlVistaPreviaPdf(a.url)!" [title]="a.nombre || 'Documento PDF'" loading="lazy"></iframe>
-        </div>
-        <div class="inm-doc-card__icon"
-          *ngIf="!a.url || (!esImagenArchivo(a.url, a.nombre) && !esPdfArchivo(a.url, a.nombre))">
-          <i class="fa" [ngClass]="iconoArchivo(a.url || '', a.nombre || '')"></i>
-        </div>
-        <div class="inm-doc-card__info">
-          <span class="inm-doc-card__name">{{ a.nombre || 'Documento' }}</span>
-        </div>
-        <div class="inm-doc-card__actions">
-          <button type="button" mat-flat-button class="bg-warn inm-doc-pill"
-            [title]="a.nombre || 'Documento'"
-            (click)="abrirDocumento(a.url, a.nombre || 'Documento')" [disabled]="!a.url">
-            <i class="fa fa-eye"></i> Ver
-          </button>
-          <button
-            type="button"
-            mat-flat-button
-            class="bg-success inm-doc-pill"
-            [title]="a.nombre || 'Documento'"
-            [disabled]="!a.url"
-            (click)="descargarDocumento(a.url, a.nombre || 'Documento', $event)"
-          >
-            <i class="fa fa-download"></i> Descarga
-          </button>
-        </div>
-      </article>
+    <div class="row g-3 inm-docs-row" *ngIf="archivos.length; else sinDocs">
+      <div class="col-12 col-sm-6 col-lg-4 col-xl-3" *ngFor="let a of archivos">
+        <article class="inm-doc-card h-100">
+          <div class="inm-doc-card__thumb" *ngIf="a.url && esImagenArchivo(a.url, a.nombre)">
+            <img [src]="a.url" [alt]="a.nombre" loading="lazy" />
+          </div>
+          <div class="inm-doc-card__thumb inm-doc-card__thumb--pdf"
+            *ngIf="a.url && esPdfArchivo(a.url, a.nombre) && urlVistaPreviaPdf(a.url)">
+            <iframe [src]="urlVistaPreviaPdf(a.url)!" [title]="a.nombre || 'Documento PDF'" loading="lazy"></iframe>
+          </div>
+          <div class="inm-doc-card__icon"
+            *ngIf="!a.url || (!esImagenArchivo(a.url, a.nombre) && !esPdfArchivo(a.url, a.nombre))">
+            <i class="fa" [ngClass]="iconoArchivo(a.url || '', a.nombre || '')"></i>
+          </div>
+          <div class="inm-doc-card__info">
+            <span class="inm-doc-card__name">{{ a.nombre || 'Documento' }}</span>
+          </div>
+          <div class="row g-1 g-md-2 inm-doc-card__actions mx-0 w-100">
+            <div
+              class="col-12 px-1"
+              [class.col-sm-4]="puedeEliminarArchivo(a)"
+              [class.col-sm-6]="!puedeEliminarArchivo(a)"
+            >
+              <button type="button" mat-flat-button class="bg-warn inm-doc-pill w-100"
+                [title]="a.nombre || 'Documento'"
+                (click)="abrirDocumento(a.url, a.nombre || 'Documento')" [disabled]="!a.url">
+                <i class="fa fa-eye"></i> <span class="inm-doc-pill__txt">Ver</span>
+              </button>
+            </div>
+            <div
+              class="col-12 px-1"
+              [class.col-sm-4]="puedeEliminarArchivo(a)"
+              [class.col-sm-6]="!puedeEliminarArchivo(a)"
+            >
+              <button
+                type="button"
+                mat-flat-button
+                class="bg-success inm-doc-pill w-100"
+                [title]="a.nombre || 'Documento'"
+                [disabled]="!a.url"
+                (click)="descargarDocumento(a.url, a.nombre || 'Documento', $event)"
+              >
+                <i class="fa fa-download"></i> <span class="inm-doc-pill__txt">Descarga</span>
+              </button>
+            </div>
+            <div class="col-12 col-sm-4 px-1" *ngIf="puedeEliminarArchivo(a)">
+              <button
+                type="button"
+                mat-flat-button
+                class="bg-secondary inm-doc-pill w-100"
+                [disabled]="eliminandoId === idEntidad(a)"
+                (click)="eliminarArchivoDetalle(a, $event)"
+              >
+                <i class="fa fa-trash"></i> <span class="inm-doc-pill__txt">Eliminar</span>
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
     </div>
     <ng-template #sinDocs>
       <p class="inm-empty">Sin documentos adjuntos.</p>
