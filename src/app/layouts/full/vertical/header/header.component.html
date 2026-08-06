@@ -289,12 +289,18 @@
           [class.notify-hub-aviso--tone-warning]="a.tone === 'warning'"
           [class.notify-hub-aviso--tone-amber]="a.tone === 'amber'"
           [class.notify-hub-aviso--tone-danger]="a.tone === 'danger'"
+          [class.notify-hub-aviso--tone-expired]="a.tone === 'expired'"
           (click)="$event.stopPropagation()"
         >
           <div class="notify-hub-aviso__strip">
             <span class="notify-hub-aviso__glyph" aria-hidden="true"></span>
             <div class="notify-hub-aviso__body">
-              <span class="notify-hub-aviso__title">{{ titleCase(a.title) }}</span>
+              <div class="notify-hub-aviso__title-row">
+                <span class="notify-hub-aviso__title">{{ titleCase(a.title) }}</span>
+                @if (a.tone === 'expired') {
+                  <span class="notify-hub-aviso__badge">Vencido</span>
+                }
+              </div>
               <span class="notify-hub-aviso__sub">{{ a.subtitle }}</span>
             </div>
           </div>

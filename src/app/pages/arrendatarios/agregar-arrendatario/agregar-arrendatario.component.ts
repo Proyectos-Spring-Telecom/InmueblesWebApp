@@ -10,6 +10,7 @@ import {
   CatServicioItem,
   CatServiciosService,
 } from 'src/app/services/moduleService/cat-servicios.service';
+import { NotificacionesService } from 'src/app/services/moduleService/notificaciones.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { PdfOcrService } from 'src/app/services/moduleService/pdf-ocr.service';
@@ -262,6 +263,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     private inmueblesService: InmueblesService,
     private arrendatariosService: ArrendatariosService,
     private pdfOcrService: PdfOcrService,
+    private notificacionesService: NotificacionesService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -4390,6 +4392,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     req.subscribe({
       next: () => {
+        this.notificacionesService.refrescar();
         window.setTimeout(() => {
           Swal.close();
           this.mostrarExitoArrendatarioYRedirigir(esActualizacion);

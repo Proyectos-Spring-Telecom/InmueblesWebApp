@@ -3,6 +3,7 @@ import {
   formatearFechaHora,
   formatearMoneda,
   nombreArrendador,
+  resumenDiasVigenciaInmueble,
 } from '../inmuebles/inmuebles-list.mapper';
 
 /** Fila principal del grid + objeto API para master-detail. */
@@ -15,6 +16,13 @@ export interface ArrendatarioGridRow {
   fechaInicioFmt: string;
   fechaFinFmt: string;
   tiempoRentaTexto: string;
+  vigenciaTexto: string;
+  vigenciaDiasTotal: number | null;
+  vigenciaDiasTotalTexto: string;
+  vigenciaDiasRestantes: number | null;
+  vigenciaDiasRestantesTexto: string;
+  vigenciaRestantesClase: string;
+  vigenciaVencida: boolean;
   representanteNombre: string;
   telefonoRepresentante: string;
   correoRepresentante: string;
@@ -487,6 +495,9 @@ export function mapArrendatariosApiToGridRows(rows: unknown[]): ArrendatarioGrid
 
     const inv = primerInmuebleContrato(item);
     const vigencia = fechasVigenciaArrendatarioApi(item);
+    const vigenciaDias = resumenDiasVigenciaInmueble(vigencia.inicio, vigencia.fin);
+    const fechaInicioFmt = formatearFecha(vigencia.inicio) || '—';
+    const fechaFinFmt = formatearFecha(vigencia.fin) || '—';
     const estatusRaw = item['estatus'];
     const servicios = (Array.isArray(item['servicios']) ? item['servicios'] : []).filter(
       (x): x is Record<string, unknown> =>
@@ -510,12 +521,22 @@ export function mapArrendatariosApiToGridRows(rows: unknown[]): ArrendatarioGrid
       tipoPersonaLabel: etiquetaTipoPersonaArrendatario(item['tipoPersona']),
       rfc: String(item['rfc'] ?? '').trim() || '—',
       rentaFmt: formatearMoneda(rentaTotalArrendatarioApi(item)),
-      fechaInicioFmt: formatearFecha(vigencia.inicio) || '—',
-      fechaFinFmt: formatearFecha(vigencia.fin) || '—',
+      fechaInicioFmt,
+      fechaFinFmt,
       tiempoRentaTexto:
         vigencia.inicio && vigencia.fin
           ? textoDuracionContratoApi(vigencia.inicio, vigencia.fin)
           : textoTiempoRentaLegacy(item),
+      vigenciaTexto:
+        fechaInicioFmt !== '—' && fechaFinFmt !== '—'
+          ? `${fechaInicioFmt} → ${fechaFinFmt}`
+          : '—',
+      vigenciaDiasTotal: vigenciaDias.total,
+      vigenciaDiasTotalTexto: vigenciaDias.totalTexto,
+      vigenciaDiasRestantes: vigenciaDias.restantes,
+      vigenciaDiasRestantesTexto: vigenciaDias.restantesTexto,
+      vigenciaRestantesClase: vigenciaDias.restantesClase,
+      vigenciaVencida: vigenciaDias.vencida,
       representanteNombre: String(item['representanteLegal'] ?? '—').trim() || '—',
       telefonoRepresentante: String(item['telefonoRepresentante'] ?? '—').trim() || '—',
       correoRepresentante: String(item['correoRepresentante'] ?? '—').trim() || '—',

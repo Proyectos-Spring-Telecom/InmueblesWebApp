@@ -30,6 +30,7 @@ import {
 } from 'src/app/services/moduleService/cat-servicios.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
+import { NotificacionesService } from 'src/app/services/moduleService/notificaciones.service';
 import { PdfOcrService } from 'src/app/services/moduleService/pdf-ocr.service';
 import {
   extraerConstanciaDeRespuestaOcr,
@@ -246,6 +247,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     private inmueblesService: InmueblesService,
     private catServiciosService: CatServiciosService,
     private pdfOcrService: PdfOcrService,
+    private notificacionesService: NotificacionesService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -2120,6 +2122,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const fd = this.construirFormDataInmueble();
     this.inmueblesService.actualizarInmueble(this.idInmueble, fd).subscribe({
       next: () => {
+        this.notificacionesService.refrescar();
         this.cerrarSwalGuardandoInmuebleTrasExito(() =>
           this.mostrarExitoInmuebleYRedirigir(true),
         );
@@ -2150,6 +2153,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const fd = this.construirFormDataInmueble();
     this.inmueblesService.crearInmueble(fd).subscribe({
       next: () => {
+        this.notificacionesService.refrescar();
         this.cerrarSwalGuardandoInmuebleTrasExito(() =>
           this.mostrarExitoInmuebleYRedirigir(false),
         );

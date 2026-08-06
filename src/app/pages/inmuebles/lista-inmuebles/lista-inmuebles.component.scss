@@ -31,6 +31,16 @@
     text-align: left !important;
   }
 
+  .dx-data-row > td.inm-col-vigencia,
+  .dx-datagrid-filter-row > td.inm-col-vigencia {
+    text-align: left !important;
+  }
+
+  .dx-adaptive-detail-row .inm-vigencia-cell {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
   .dx-data-row > td.inm-col-arrendador {
     white-space: normal !important;
     word-break: break-word;
@@ -40,6 +50,11 @@
   .inm-row-card--nombre {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .inm-vigencia-cell {
+    margin-left: 0;
+    margin-right: auto;
   }
 }
 
@@ -91,11 +106,11 @@
 .inm-vigencia-cell {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.4rem;
   width: 100%;
   max-width: 15.5rem;
-  margin: 0 auto;
+  margin: 0;
   padding: 0.45rem 0.55rem;
   border-radius: 12px;
   border: 1px solid rgba(125, 160, 255, 0.28);
@@ -105,17 +120,19 @@
     rgba(18, 28, 48, 0.72) 100%
   );
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  box-sizing: border-box;
 }
 
 .inm-vigencia-cell__rango {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.35rem;
   font-size: 0.78rem;
   letter-spacing: 0.02em;
   color: #eef2ff;
   line-height: 1.3;
+  text-align: left;
 
   .fa {
     color: #9eb6ff;
@@ -127,7 +144,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.3rem;
   width: 100%;
 }
@@ -179,11 +196,81 @@
   background: rgba(245, 158, 11, 0.22);
 }
 
-/* ≤2 días / vencida — rojo (danger) */
+/* ≤2 días — rojo (danger) */
 .inm-vigencia-chip--danger {
   color: #fecdd3;
   border-color: rgba(251, 113, 133, 0.55);
   background: rgba(244, 63, 94, 0.22);
+}
+
+/* Ya vencida — resalte fuerte */
+.inm-vigencia-chip--expired {
+  color: #fff5f5;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-color: rgba(255, 80, 80, 0.95);
+  background: linear-gradient(
+    135deg,
+    rgba(220, 38, 38, 0.92) 0%,
+    rgba(153, 27, 27, 0.95) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 120, 120, 0.45),
+    0 0 18px rgba(239, 68, 68, 0.55);
+  animation: inm-vigencia-expired-pulse 1.4s ease-in-out infinite;
+}
+
+.inm-vigencia-cell--expired {
+  border-color: rgba(248, 113, 113, 0.85);
+  background: linear-gradient(
+    165deg,
+    rgba(127, 29, 29, 0.72) 0%,
+    rgba(69, 10, 10, 0.88) 100%
+  );
+  box-shadow:
+    0 0 0 2px rgba(239, 68, 68, 0.45),
+    0 10px 28px rgba(185, 28, 28, 0.45);
+  animation: inm-vigencia-cell-expired-glow 1.8s ease-in-out infinite;
+}
+
+.inm-vigencia-cell--expired .inm-vigencia-cell__rango {
+  color: #fee2e2;
+
+  .fa {
+    color: #fca5a5;
+  }
+}
+
+.inm-vigencia-cell--expired .inm-vigencia-chip--total {
+  color: #fecaca;
+  border-color: rgba(252, 165, 165, 0.55);
+  background: rgba(127, 29, 29, 0.55);
+}
+
+@keyframes inm-vigencia-expired-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.04);
+    filter: brightness(1.15);
+  }
+}
+
+@keyframes inm-vigencia-cell-expired-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(239, 68, 68, 0.4),
+      0 10px 28px rgba(185, 28, 28, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(248, 113, 113, 0.75),
+      0 12px 32px rgba(220, 38, 38, 0.65);
+  }
 }
 
 .inm-vigencia-chip--muted {

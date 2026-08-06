@@ -305,8 +305,9 @@
             <span class="arr-ctr-panel__renta" *ngIf="c['rentaTotal'] != null">
               {{ formatearMoneda(c['rentaTotal']) }}
             </span>
+            <!-- Botón Cancelar Contrato: oculto temporalmente -->
             <button
-              *ngIf="contratoEsCancelable(c)"
+              *ngIf="false && contratoEsCancelable(c)"
               type="button"
               mat-flat-button
               class="bg-error arr-ctr-head-cancel"
