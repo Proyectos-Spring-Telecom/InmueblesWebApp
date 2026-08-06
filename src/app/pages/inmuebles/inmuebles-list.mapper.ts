@@ -95,6 +95,8 @@ export interface InmuebleGridRow {
   vigenciaDiasRestantes: number | null;
   vigenciaDiasRestantesTexto: string;
   vigenciaRestantesClase: string;
+  /** true cuando la fecha fin ya pasó. */
+  vigenciaVencida: boolean;
   estatusInmueble: number | null;
   estatusLabel: string;
   estatusClass: string;
@@ -562,6 +564,7 @@ export function mapInmueblesApiToGridRows(items: unknown[]): InmuebleGridRow[] {
       vigenciaDiasRestantes: vigenciaDias.restantes,
       vigenciaDiasRestantesTexto: vigenciaDias.restantesTexto,
       vigenciaRestantesClase: vigenciaDias.restantesClase,
+      vigenciaVencida: vigenciaDias.vencida,
       estatusInmueble: Number.isFinite(estatus as number) ? (estatus as number) : null,
       estatusLabel: etiquetaEstatusInmueble(estatus),
       estatusClass: claseEstatusInmueble(estatus),
@@ -658,16 +661,30 @@ export function textoVigencia(item: InmuebleApiItem): string {
   return '—';
 }
 
-function parseFechaDiaLocal(raw?: string): Date | null {
+/**
+ * Día de calendario del API (`YYYY-MM-DD` del ISO), sin corrimiento por zona.
+ * `2026-08-08T00:00:00.000Z` → 8 ago 2026 (no 7 en UTC−6).
+ */
+function partesFechaCalendarioApi(
+  raw?: string | null,
+): { y: number; m: number; d: number } | null {
   if (raw == null || String(raw).trim() === '') return null;
-  const s = String(raw).trim();
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
-  if (m) {
-    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  }
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return null;
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(raw).trim());
+  if (!match) return null;
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+  return { y, m, d };
+}
+
+function parseFechaDiaLocal(raw?: string): Date | null {
+  const partes = partesFechaCalendarioApi(raw);
+  if (partes) return new Date(partes.y, partes.m - 1, partes.d);
+  if (raw == null || String(raw).trim() === '') return null;
+  const parsed = new Date(String(raw).trim());
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 }
 
 function diasCalendarioEntre(inicio: Date, fin: Date): number {
@@ -676,8 +693,22 @@ function diasCalendarioEntre(inicio: Date, fin: Date): number {
   return Math.round((b - a) / 86400000);
 }
 
+/**
+ * Días de calendario desde hoy hasta la fecha del API.
+ * 0 = vence hoy, negativo = ya venció, positivo = faltan N días (1 = mañana).
+ */
+export function diasRestantesCalendarioApi(fechaFin?: string | null): number | null {
+  const fin = parseFechaDiaLocal(fechaFin ?? undefined);
+  if (!fin) return null;
+  const hoy = new Date();
+  const hoyDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  return diasCalendarioEntre(hoyDia, fin);
+}
+
 function claseChipVigenciaPorTone(tone: ToneDiasFaltantes): string {
   switch (tone) {
+    case 'expired':
+      return 'inm-vigencia-chip--expired';
     case 'danger':
       return 'inm-vigencia-chip--danger';
     case 'amber':
@@ -700,6 +731,7 @@ export function resumenDiasVigenciaInmueble(
   restantes: number | null;
   restantesTexto: string;
   restantesClase: string;
+  vencida: boolean;
 } {
   const vacio = {
     total: null as number | null,
@@ -707,6 +739,7 @@ export function resumenDiasVigenciaInmueble(
     restantes: null as number | null,
     restantesTexto: '—',
     restantesClase: 'inm-vigencia-chip--muted',
+    vencida: false,
   };
   const inicio = parseFechaDiaLocal(fechaInicio);
   const fin = parseFechaDiaLocal(fechaFin);
@@ -719,17 +752,21 @@ export function resumenDiasVigenciaInmueble(
   const hoy = new Date();
   const hoyDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   const restantesRaw = diasCalendarioEntre(hoyDia, fin);
+  // 0 = mismo día → «Vence hoy» (no «1 día restante»).
   const restantesClase = claseChipVigenciaPorTone(
     tonePorDiasFaltantesNotificacion(restantesRaw),
   );
 
   if (restantesRaw < 0) {
+    const atrasados = Math.abs(restantesRaw);
     return {
       total,
       totalTexto,
-      restantes: 0,
-      restantesTexto: 'Vencida',
+      restantes: restantesRaw,
+      restantesTexto:
+        atrasados === 1 ? 'Vencida hace 1 día' : `Vencida hace ${atrasados} días`,
       restantesClase,
+      vencida: true,
     };
   }
   if (restantesRaw === 0) {
@@ -739,6 +776,7 @@ export function resumenDiasVigenciaInmueble(
       restantes: 0,
       restantesTexto: 'Vence hoy',
       restantesClase,
+      vencida: false,
     };
   }
 
@@ -749,11 +787,18 @@ export function resumenDiasVigenciaInmueble(
     restantesTexto:
       restantesRaw === 1 ? '1 día restante' : `${restantesRaw} días restantes`,
     restantesClase,
+    vencida: false,
   };
 }
 
 export function formatearFecha(raw?: string): string {
   if (!raw) return '';
+  const partes = partesFechaCalendarioApi(raw);
+  if (partes) {
+    const dd = String(partes.d).padStart(2, '0');
+    const mm = String(partes.m).padStart(2, '0');
+    return `${dd}/${mm}/${partes.y}`;
+  }
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return String(raw).slice(0, 10);
   const dd = String(d.getDate()).padStart(2, '0');

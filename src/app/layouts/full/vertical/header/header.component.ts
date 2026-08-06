@@ -1,11 +1,14 @@
 import {
   Component,
+  DestroyRef,
   Output,
   EventEmitter,
   Input,
   OnInit,
   ViewEncapsulation,
+  inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CoreService } from 'src/app/services/core.service';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { navItems } from '../sidebar/sidebar-data';
@@ -28,6 +31,7 @@ import {
   VencimientoRenovacionContratoDto,
   tonePorDiasFaltantesNotificacion as tonePorDiasFaltantes,
 } from 'src/app/services/moduleService/notificaciones.service';
+import { formatearFecha, diasRestantesCalendarioApi } from 'src/app/pages/inmuebles/inmuebles-list.mapper';
 import { LoginSuccessSoundService } from 'src/app/services/login-success-sound.service';
 import { AppThemeMode, ThemeService } from 'src/app/services/theme.service';
 
@@ -105,16 +109,16 @@ interface AvisoNotificacion {
   id: number;
   title: string;
   subtitle: string;
-  /** Semáforo: success = bien (verde), warning = próximo (amarillo), danger = crítico (rojo). */
-  tone?: 'success' | 'warning' | 'amber' | 'danger';
-  /** Días restantes para vencer (si aplica). */
+  /** Semáforo: success / warning / amber / danger / expired (ya vencido). */
+  tone?: 'success' | 'warning' | 'amber' | 'danger' | 'expired';
+  /** Días restantes para vencer (negativo = vencido). */
   daysLeft?: number;
 }
 
 /** Categorías de estado de recibos (inmuebles / predios) */
 interface ReciboEstadoItem {
   id: string;
-  tone: 'danger' | 'warning' | 'amber' | 'success' | 'info';
+  tone: 'danger' | 'warning' | 'amber' | 'success' | 'info' | 'expired';
   icon: string;
   label: string;
   detail?: string;
@@ -222,9 +226,10 @@ export class HeaderComponent implements OnInit {
 
   options = this.settings.getOptions();
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor(
     private settings: CoreService,
-    private vsidenav: CoreService,
     public dialog: MatDialog,
     private translate: TranslateService,
     private users: AuthenticationService,
@@ -247,12 +252,21 @@ export class HeaderComponent implements OnInit {
   readonly notifLoginSpotlight = this.loginSuccessSound.highlightNotificaciones;
 
   ngOnInit(): void {
+    this.cargarNotificaciones(true);
+    this.notificacionesService.refrescar$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cargarNotificaciones(false));
+  }
+
+  private cargarNotificaciones(avisarLoginSound: boolean): void {
     this.notificacionesService.obtenerNotificaciones().subscribe({
       next: (data) => {
         this.aplicarNotificacionesDesdeApi(data);
-        this.loginSuccessSound.notificacionesCargadas(
-          this.avisosCount + this.inmueblesNotifCount + this.prediosNotifCount > 0,
-        );
+        if (avisarLoginSound) {
+          this.loginSuccessSound.notificacionesCargadas(
+            this.avisosCount + this.inmueblesNotifCount + this.prediosNotifCount > 0,
+          );
+        }
       },
       error: (err) => {
         console.error('[notificaciones]', err);
@@ -261,7 +275,9 @@ export class HeaderComponent implements OnInit {
           pagoServiciosInmuebles: [],
           pagosSeguimiento: [],
         });
-        this.loginSuccessSound.notificacionesCargadas(false);
+        if (avisarLoginSound) {
+          this.loginSuccessSound.notificacionesCargadas(false);
+        }
       },
     });
   }
@@ -283,16 +299,22 @@ export class HeaderComponent implements OnInit {
   private mapVencimientoAviso(v: VencimientoRenovacionContratoDto): AvisoNotificacion {
     const inmueble = String(v.inmueble ?? '').trim() || 'Inmueble';
     const arrendatario = String(v.arrendatario ?? '').trim() || '—';
-    const dias = Number(v.diasFaltantes);
-    const diasTxt = Number.isFinite(dias) ? `${dias}` : '—';
+    const dias = this.diasFaltantesEfectivos(v.diasFaltantes, v.fechaTerminoContrato);
     const termino = this.formatNotifyDate(v.fechaTerminoContrato);
     const tone = this.tonePorDiasFaltantesNotificacion(dias);
+    const diasTxt = this.textoDiasFaltantesNotificacion(dias);
+    const vencido = dias != null && dias < 0;
+    const venceHoy = dias === 0;
 
     return {
       id: v.id,
-      title: 'Vencimiento de contrato',
-      subtitle: `Inmueble: ${inmueble} — Arrendatario: ${arrendatario} — Término: ${termino} — Días: ${diasTxt}`,
-      daysLeft: Number.isFinite(dias) ? dias : undefined,
+      title: vencido
+        ? 'Contrato vencido'
+        : venceHoy
+          ? 'Contrato vence hoy'
+          : 'Vencimiento de contrato',
+      subtitle: `Inmueble: ${inmueble} — Arrendatario: ${arrendatario} — Término: ${termino} — ${diasTxt}`,
+      daysLeft: dias ?? undefined,
       tone,
     };
   }
@@ -301,60 +323,79 @@ export class HeaderComponent implements OnInit {
     const inm = String(p.inmueble ?? '').trim() || '—';
     const tipo = String(p.tipoServicio ?? '').trim() || 'Servicio';
     const contrato = String(p.numeroContrato ?? '').trim() || '—';
-    const dias = Number(p.diasFaltantes);
-    const diasTxt = Number.isFinite(dias) ? `${dias}` : '—';
+    const dias = this.diasFaltantesEfectivos(p.diasFaltantes, p.fechaPago);
     const fechaPago = this.formatNotifyDate(p.fechaPago);
     const tone = this.tonePorDiasFaltantesNotificacion(dias);
+    const diasTxt = this.textoDiasFaltantesNotificacion(dias);
 
     return {
       id: String(p.id),
       tone,
       icon: this.iconForReciboTone(tone),
       label: `${tipo} — ${inm}`,
-      detail: `Contrato: ${contrato} — Fecha de pago: ${fechaPago} — Días: ${diasTxt}`,
+      detail: `Contrato: ${contrato} — Fecha de pago: ${fechaPago} — ${diasTxt}`,
     };
   }
 
   private mapSeguimientoRecibo(s: PagoSeguimientoDto): ReciboEstadoItem {
     const nombre = String(s.arrendatario ?? '').trim() || 'Arrendatario';
-    const dias = Number(s.diasFaltantes);
-    const diasTxt = Number.isFinite(dias) ? `${dias}` : '—';
+    const dias = this.diasFaltantesEfectivos(s.diasFaltantes, s.fechaFin);
     const fin = this.formatNotifyDate(s.fechaFin);
     const tone = this.tonePorDiasFaltantesNotificacion(dias);
+    const diasTxt = this.textoDiasFaltantesNotificacion(dias);
 
     return {
       id: String(s.id),
       tone,
       icon: this.iconForReciboTone(tone),
       label: nombre,
-      detail: `Fin: ${fin} — Días restantes: ${diasTxt}`,
+      detail: `Fin: ${fin} — ${diasTxt}`,
     };
   }
 
   /**
+   * Prioriza el día de calendario de la fecha del API (0 = vence hoy).
+   * Evita que un `diasFaltantes: 1` inclusivo del backend diga «Días: 1» el día del término.
+   */
+  private diasFaltantesEfectivos(
+    diasApi: unknown,
+    fechaIso?: string | null,
+  ): number | null {
+    const calc = diasRestantesCalendarioApi(fechaIso);
+    if (calc != null) return calc;
+    const d = Number(diasApi);
+    return Number.isFinite(d) ? d : null;
+  }
+
+  private textoDiasFaltantesNotificacion(dias: number | null): string {
+    if (dias == null || !Number.isFinite(dias)) return 'Días: —';
+    if (dias < 0) {
+      const n = Math.abs(dias);
+      return n === 1 ? 'VENCIDO hace 1 día' : `VENCIDO hace ${n} días`;
+    }
+    if (dias === 0) return 'Vence hoy';
+    return dias === 1 ? 'Días: 1' : `Días: ${dias}`;
+  }
+
+  /**
    * Semáforo para las tres bandejas (vencimientos, pagos servicio, seguimiento).
-   * ≤2 días → rojo, ≤6 → amarillo, ≤15 → naranja, resto → verde.
-   * Días negativos (vencido) entran en rojo.
+   * <0 → expired, ≤2 → rojo, ≤6 → amarillo, ≤15 → naranja, resto → verde.
    */
   private tonePorDiasFaltantesNotificacion(
     dias: number | undefined | null,
-  ): 'success' | 'warning' | 'amber' | 'danger' {
+  ): 'success' | 'warning' | 'amber' | 'danger' | 'expired' {
     return tonePorDiasFaltantes(dias);
   }
 
   private formatNotifyDate(iso: string | undefined | null): string {
-    if (iso == null || String(iso).trim() === '') return '—';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return String(iso);
-    return d.toLocaleDateString('es-MX', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    const fmt = formatearFecha(iso ?? undefined);
+    return fmt || '—';
   }
 
   private iconForReciboTone(tone: ReciboEstadoItem['tone']): string {
     switch (tone) {
+      case 'expired':
+        return 'alert-triangle';
       case 'danger':
         return 'x';
       case 'warning':

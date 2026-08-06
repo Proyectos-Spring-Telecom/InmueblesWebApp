@@ -62,7 +62,7 @@
         <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="left" cssClass="inm-col-nombre" [width]="250" [allowFiltering]="true"></dxi-column>
         <dxi-column dataField="arrendadorNombre" caption="Arrendador" [width]="250" alignment="center" cssClass="inm-col-arrendador"></dxi-column>
         <dxi-column dataField="direccionFiscal" caption="Dirección fiscal" [width]="250" alignment="center"></dxi-column>
-        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="220" alignment="center"></dxi-column>
+        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="220" alignment="left" cssClass="inm-col-vigencia"></dxi-column>
         <dxi-column caption="Representante Legal" cellTemplate="representanteTpl" [width]="200" alignment="center" [allowSorting]="false" [allowFiltering]="false"></dxi-column>
         <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" [width]="150" alignment="center"></dxi-column>
         <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false" alignment="center"></dxi-column>
@@ -79,6 +79,7 @@
         <div *dxTemplate="let cell of 'vigenciaTpl'">
           <div
             class="inm-vigencia-cell"
+            [class.inm-vigencia-cell--expired]="cell.data.vigenciaVencida"
             *ngIf="cell.data.fechaInicioFmt !== '—' && cell.data.fechaFinFmt !== '—'; else vigenciaVacia"
           >
             <div class="inm-vigencia-cell__rango">
@@ -91,7 +92,7 @@
                 {{ cell.data.vigenciaDiasTotalTexto }}
               </span>
               <span class="inm-vigencia-chip" [ngClass]="cell.data.vigenciaRestantesClase">
-                <i class="fa fa-clock-o" aria-hidden="true"></i>
+                <i class="fa" [ngClass]="cell.data.vigenciaVencida ? 'fa-exclamation-triangle' : 'fa-clock-o'" aria-hidden="true"></i>
                 {{ cell.data.vigenciaDiasRestantesTexto }}
               </span>
             </div>
