@@ -35,8 +35,12 @@ export interface PagoServicioInmuebleDto {
 
 export interface PagoSeguimientoDto {
   id: number;
+  idArrendatario?: number;
+  idTipoServicio?: number;
+  numeroContrato?: string;
+  fechaPago?: string;
   arrendatario?: string;
-  fechaFin?: string;
+  tipoServicio?: string;
   diasFaltantes?: number;
   color?: string;
 }

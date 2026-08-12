@@ -301,7 +301,7 @@ export class HeaderComponent implements OnInit {
     const arrendatario = String(v.arrendatario ?? '').trim() || '—';
     const dias = this.diasFaltantesEfectivos(v.diasFaltantes, v.fechaTerminoContrato);
     const termino = this.formatNotifyDate(v.fechaTerminoContrato);
-    const tone = this.tonePorDiasFaltantesNotificacion(dias);
+    const tone = this.toneDesdeColorApi(v.color, dias);
     const diasTxt = this.textoDiasFaltantesNotificacion(dias);
     const vencido = dias != null && dias < 0;
     const venceHoy = dias === 0;
@@ -325,7 +325,7 @@ export class HeaderComponent implements OnInit {
     const contrato = String(p.numeroContrato ?? '').trim() || '—';
     const dias = this.diasFaltantesEfectivos(p.diasFaltantes, p.fechaPago);
     const fechaPago = this.formatNotifyDate(p.fechaPago);
-    const tone = this.tonePorDiasFaltantesNotificacion(dias);
+    const tone = this.toneDesdeColorApi(p.color, dias);
     const diasTxt = this.textoDiasFaltantesNotificacion(dias);
 
     return {
@@ -339,17 +339,19 @@ export class HeaderComponent implements OnInit {
 
   private mapSeguimientoRecibo(s: PagoSeguimientoDto): ReciboEstadoItem {
     const nombre = String(s.arrendatario ?? '').trim() || 'Arrendatario';
-    const dias = this.diasFaltantesEfectivos(s.diasFaltantes, s.fechaFin);
-    const fin = this.formatNotifyDate(s.fechaFin);
-    const tone = this.tonePorDiasFaltantesNotificacion(dias);
+    const tipo = String(s.tipoServicio ?? '').trim() || 'Servicio';
+    const contrato = String(s.numeroContrato ?? '').trim() || '—';
+    const dias = this.diasFaltantesEfectivos(s.diasFaltantes, s.fechaPago);
+    const fechaPago = this.formatNotifyDate(s.fechaPago);
+    const tone = this.toneDesdeColorApi(s.color, dias);
     const diasTxt = this.textoDiasFaltantesNotificacion(dias);
 
     return {
       id: String(s.id),
       tone,
       icon: this.iconForReciboTone(tone),
-      label: nombre,
-      detail: `Fin: ${fin} — ${diasTxt}`,
+      label: `${tipo} — ${nombre}`,
+      detail: `Contrato: ${contrato} — Fecha de pago: ${fechaPago} — ${diasTxt}`,
     };
   }
 
@@ -385,6 +387,38 @@ export class HeaderComponent implements OnInit {
     dias: number | undefined | null,
   ): 'success' | 'warning' | 'amber' | 'danger' | 'expired' {
     return tonePorDiasFaltantes(dias);
+  }
+
+  /**
+   * Usa el `color` del API (rojo / amarillo / naranja / verde).
+   * Si ya venció (días &lt; 0) prioriza `expired`. Sin color válido, cae al semáforo por días.
+   */
+  private toneDesdeColorApi(
+    color: string | undefined | null,
+    dias: number | null,
+  ): 'success' | 'warning' | 'amber' | 'danger' | 'expired' {
+    if (dias != null && dias < 0) return 'expired';
+    const c = String(color ?? '').trim().toLowerCase();
+    switch (c) {
+      case 'rojo':
+      case 'danger':
+      case 'red':
+        return 'danger';
+      case 'amarillo':
+      case 'amber':
+      case 'yellow':
+        return 'amber';
+      case 'naranja':
+      case 'orange':
+      case 'warning':
+        return 'warning';
+      case 'verde':
+      case 'green':
+      case 'success':
+        return 'success';
+      default:
+        return this.tonePorDiasFaltantesNotificacion(dias);
+    }
   }
 
   private formatNotifyDate(iso: string | undefined | null): string {

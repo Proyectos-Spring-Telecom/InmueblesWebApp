@@ -23,7 +23,6 @@ import {
   esClienteListadoVacioEnApi,
   esErrorHttpListadoClientesVacio,
 } from '../clientes/clientes-list.mapper';
-import { AuthenticationService } from 'src/app/services/auth.service';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
@@ -384,9 +383,6 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
   diagramaMapaVacio = true;
   /** Plano generado desde zonas/locales del catálogo; aún no guardado en `mapaInmueble`. */
   diagramaPlanoDesdeCatalogo = false;
-
-  /** Solo rol 1 ve la lista de Clientes; el resto solo sus Instalaciones. */
-  isRol1 = false;
 
   private map?: any;
   private markers: any[] = [];
@@ -833,18 +829,10 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private auth: AuthenticationService,
     private cdr: ChangeDetectorRef,
   ) {}
 
-  private checkRol(): void {
-    const u = this.auth.getUser();
-    const rol = u?.rol != null ? Number(u.rol) : null;
-    this.isRol1 = rol === 1;
-  }
-
   ngOnInit(): void {
-    this.checkRol();
     this.obtenerInstalacionesCentral();
   }
 
@@ -920,7 +908,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
             .map((fila) => mapClienteMonitoreoCentral(fila, []))
             .filter((c) => Number(c['id']) > 0);
 
-          this.aplicarCentralesMonitoreo(this.resolverCentralesParaUsuario(centrales));
+          // Mostrar todos los arrendadores que devolvió el API (sin recortar por rol).
+          this.aplicarCentralesMonitoreo(centrales);
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -932,21 +921,6 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
           this.cdr.markForCheck();
         },
       });
-  }
-
-  private resolverCentralesParaUsuario(centrales: any[]): any[] {
-    if (this.isRol1 || !centrales.length) {
-      return centrales;
-    }
-    const u = this.auth.getUser() as Record<string, unknown> | null;
-    const idUserCliente = Number(u?.['IdCliente'] ?? u?.['idCliente']);
-    if (Number.isFinite(idUserCliente) && idUserCliente > 0) {
-      const found = centrales.find(
-        (c) => Number(c?.idCliente ?? c?.id) === idUserCliente,
-      );
-      if (found) return [found];
-    }
-    return [centrales[0]];
   }
 
   private aplicarCentralesMonitoreo(data: any[]): void {
