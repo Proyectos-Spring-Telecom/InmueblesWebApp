@@ -24,7 +24,7 @@
                         </button>
                       </div>
                     <div class="col-12 col-md-4">
-                        <label for="idCliente" class="form-label perm-label">Cliente Encargado</label>
+                        <label for="idCliente" class="form-label perm-label">Cliente Encargado <span class="text-danger">*</span></label>
                         <div class="input-group input-group-lg perm-ig">
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">business</mat-icon>
@@ -79,6 +79,7 @@
                         <div class="col-12 col-md-4">
                             <label for="nombre" class="form-label perm-label">
                                 {{ clienteForm.value.tipoPersona == 2 ? 'Razón Social' : 'Nombre' }}
+                                <span class="text-danger">*</span>
                             </label>
                             <div class="input-group input-group-lg perm-ig">
                                 <span class="input-group-text fw-bold">
@@ -101,7 +102,7 @@
                         <!-- Apellidos (solo si Física) -->
                         <ng-container *ngIf="clienteForm.value.tipoPersona != 2">
                             <div class="col-12 col-md-4">
-                                <label for="apellidoPaterno" class="form-label perm-label">Apellido Paterno</label>
+                                <label for="apellidoPaterno" class="form-label perm-label">Apellido Paterno <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-lg perm-ig">
                                     <span class="input-group-text fw-bold">
                                         <mat-icon aria-hidden="true">badge</mat-icon>
@@ -380,7 +381,7 @@
                         <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card"
                             #autocargaCsfCardCliente
                             [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
-                            <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal <span class="text-danger">*</span></label>
+                            <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="csfDragging" (dragover)="onCsfDragOver($event)"
                                     (dragleave)="onCsfDragLeave($event)" (drop)="onCsfDrop($event)">
@@ -412,7 +413,7 @@
                         </div>
 
                         <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
-                            <label class="form-label perm-label d-block mb-2">Comprobante De Domicilio Fiscal <span class="text-danger">*</span></label>
+                            <label class="form-label perm-label d-block mb-2">Comprobante De Domicilio Fiscal</label>
                             <div class="uploader-hero">
                                 <div class="uploader" [class.dragging]="compDomDragging"
                                     (dragover)="onCompDomDragOver($event)" (dragleave)="onCompDomDragLeave($event)"
@@ -559,7 +560,7 @@
 
                         <ng-container *ngIf="esPersonaMoral()">
                             <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
-                                <label class="form-label perm-label d-block mb-2">Acta Constitutiva <span class="text-danger">*</span></label>
+                                <label class="form-label perm-label d-block mb-2">Acta Constitutiva</label>
                                 <div class="uploader-hero">
                                     <div class="uploader" [class.dragging]="actaDragging"
                                         (dragover)="onActaDragOver($event)" (dragleave)="onActaDragLeave($event)"
@@ -587,6 +588,7 @@
                                 </div>
                             </div>
 
+                            <!-- Poder / INE del representante: el DTO de /arrendadores no los admite (whitelist). -->
                             <div class="col-12 col-sm-6 col-lg-3 d-flex flex-column docs-upload-card">
                                 <label class="form-label perm-label d-block mb-2">Poder Del Rep. Legal</label>
                                 <div class="uploader-hero">

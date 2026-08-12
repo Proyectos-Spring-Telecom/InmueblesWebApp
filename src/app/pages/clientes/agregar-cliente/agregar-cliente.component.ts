@@ -1161,7 +1161,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     if (comp instanceof File) {
       fd.append('comprobanteDomicilio', comp, comp.name);
     }
-
+    
     const lic = v['licenciaFuncionamiento'];
     const pciv = v['constanciaProteccionCivil'];
     const uso = v['usoSuelo'];
@@ -1179,7 +1179,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
   }
 
   private readonly etiquetasValidacionCliente: Record<string, string> = {
-    idCliente: 'Cliente',
+    idCliente: 'Cliente Encargado',
     rfc: 'RFC',
     tipoPersona: 'Tipo de Persona',
     estatus: 'Estatus',
@@ -1333,6 +1333,37 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
+  private mensajeErrorApiArrendador(error: unknown, fallback: string): string {
+    const body =
+      error != null && typeof error === 'object'
+        ? ((error as Record<string, unknown>)['error'] as Record<string, unknown> | undefined)
+        : undefined;
+    const message =
+      body != null && typeof body['message'] === 'string' ? String(body['message']).trim() : '';
+    const errors = body != null && Array.isArray(body['errors']) ? body['errors'] : [];
+    const detalles = errors
+      .map((e: unknown) => {
+        if (e == null || typeof e !== 'object') return '';
+        const row = e as Record<string, unknown>;
+        const prop = String(row['property'] ?? '').trim();
+        const constraints = row['constraints'];
+        let detail = '';
+        if (constraints != null && typeof constraints === 'object') {
+          detail = Object.values(constraints as Record<string, unknown>)
+            .map((c) => String(c ?? '').trim())
+            .filter(Boolean)
+            .join('; ');
+        }
+        if (prop && detail) return `${prop}: ${detail}`;
+        return prop || detail;
+      })
+      .filter(Boolean);
+    if (detalles.length) {
+      return [message || fallback, ...detalles].join('\n');
+    }
+    return message || fallback;
+  }
+
   agregar() {
     this.submitButton = 'Cargando...';
     this.loading = true;
@@ -1377,7 +1408,10 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
           color: '#ffffff',
           background: '#141a21',
           title: '¡Ops!',
-          text: error?.error?.message,
+          text: this.mensajeErrorApiArrendador(
+            error,
+            'Ocurrió un error al guardar el arrendador.',
+          ),
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -1420,7 +1454,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
           });
         });
       },
-      () => {
+      (error) => {
         Swal.close();
         this.submitButton = 'Actualizar';
         this.loading = false;
@@ -1428,7 +1462,10 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
           color: '#ffffff',
           background: '#141a21',
           title: '¡Ops!',
-          text: 'Ocurrió un error al actualizar el arrendador.',
+          text: this.mensajeErrorApiArrendador(
+            error,
+            'Ocurrió un error al actualizar el arrendador.',
+          ),
           icon: 'error',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -2195,7 +2232,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.clienteForm.patchValue({ ineRepresentanteLegal: file });
     this.clienteForm.get('ineRepresentanteLegal')?.setErrors(null);
   }
-
+  
   /** Documentos opcionales: licencia, protección civil, uso de suelo, plano catastral. */
   private handleExtraDoc(
     file: File,
