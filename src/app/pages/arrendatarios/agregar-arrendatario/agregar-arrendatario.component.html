@@ -280,14 +280,13 @@
                       </div>
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label" [attr.for]="'costoPorM2' + i">Costo Por M²</label>
-                        <div class="input-group input-group-lg perm-ig"><span
+                        <div class="input-group input-group-lg perm-ig renta-calc-field"
+                          [class.renta-calc-highlight]="contratoCampoResaltado(i, 'costoPorM2')"><span
                             class="input-group-text fw-bold"><mat-icon>attach_money</mat-icon></span>
                           <div class="form-floating flex-grow-1"><input [id]="'costoPorM2' + i" type="text"
-                              class="form-control" [(ngModel)]="displayContrato(i)['costoPorM2']"
-                              [ngModelOptions]="{ standalone: true }" placeholder="Costo por m²" autocomplete="off"
-                              (focus)="onContratoMonedaFocus(i, 'costoPorM2')"
-                              (input)="onContratoCostoInput(i)"
-                              (blur)="onContratoMonedaBlur(i, 'costoPorM2')" /><label
+                              class="form-control renta-calc-input"
+                              [value]="contratoMonedaDisplay(i, 'costoPorM2')"
+                              placeholder="Costo por m²" readonly tabindex="-1" /><label
                               [attr.for]="'costoPorM2' + i">Costo Por M²</label></div>
                         </div>
                       </div>
@@ -409,20 +408,26 @@
                       <div class="col-12 renta-calc-bloque" [id]="'contratoCalcRenta' + i">
                         <p class="renta-calc-hint mb-0"
                           [class.renta-calc-hint--destacado]="contratoHintResaltado(i, 'renta')">
-                          <span class="renta-calc-hint__clave">Metros rentados</span> ×
-                          <span class="renta-calc-hint__clave">costo por m²</span> + <span class="renta-calc-hint__clave">16% IVA</span>
+                          <span class="renta-calc-hint__clave">Subtotal renta</span> +
+                          <span class="renta-calc-hint__clave">16% IVA</span>
                           = <span class="renta-calc-hint__clave">Renta Total</span>.
+                          <span class="renta-calc-hint__clave">Costo por m²</span> =
+                          <span class="renta-calc-hint__clave">Subtotal renta</span> ÷
+                          <span class="renta-calc-hint__clave">metros rentados</span>.
                         </p>
                         <div class="row g-2 gx-3 renta-calc-bloque__campos">
                           <div class="col-12 col-md-4">
                             <label class="form-label perm-label" [attr.for]="'subtotalRenta' + i">Subtotal Renta</label>
-                            <div class="input-group input-group-lg perm-ig renta-calc-field"
-                              [class.renta-calc-highlight]="contratoCampoResaltado(i, 'subtotalRenta')"><span
+                            <div class="input-group input-group-lg perm-ig"><span
                                 class="input-group-text fw-bold"><mat-icon>receipt</mat-icon></span>
                               <div class="form-floating flex-grow-1"><input [id]="'subtotalRenta' + i" type="text"
-                                  class="form-control renta-calc-input"
-                                  [value]="contratoMonedaDisplay(i, 'subtotalRenta')"
-                                  placeholder="Subtotal renta" readonly tabindex="-1" /><label
+                                  class="form-control"
+                                  [(ngModel)]="displayContrato(i)['subtotalRenta']"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  placeholder="Subtotal renta" autocomplete="off"
+                                  (focus)="onContratoMonedaFocus(i, 'subtotalRenta')"
+                                  (input)="onContratoSubtotalInput(i)"
+                                  (blur)="onContratoMonedaBlur(i, 'subtotalRenta')" /><label
                                   [attr.for]="'subtotalRenta' + i">Subtotal Renta</label></div>
                             </div>
                           </div>
@@ -601,7 +606,8 @@
                     <mat-icon>delete</mat-icon> Eliminar Servicio
                   </button>
                 </div>
-                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice"
+                <ng-container *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice">
+                <dxi-item *ngIf="mostrarFilaServicio(i)"
                   [title]="claveEstableServicioAccordion(i)">
                   <div class="arrend-accordion-inner pt-3 pb-2" [formGroup]="$any(srvCtrl)">
                     <div class="row g-3">
@@ -710,6 +716,7 @@
                     </div>
                   </div>
                 </dxi-item>
+                </ng-container>
               </dx-accordion>
             </div>
           </div>

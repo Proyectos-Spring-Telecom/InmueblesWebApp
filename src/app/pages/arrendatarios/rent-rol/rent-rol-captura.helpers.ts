@@ -24,6 +24,7 @@ export interface RentRolMontosPreview {
   renta: RentRolMontosConcepto;
   mantenimiento: RentRolMontosConcepto;
   granTotal: number;
+  costoM2: number | null;
 }
 
 export function redondearMontoRentRol(valor: number): number {
@@ -32,36 +33,41 @@ export function redondearMontoRentRol(valor: number): number {
 
 export function calcularMontosRentRolCaptura(input: {
   metros: unknown;
-  costoM2: unknown;
+  subTotalRenta: unknown;
   incluyeMantenimiento: boolean;
   pctMantenimiento: unknown;
 }): RentRolMontosPreview {
+  const subCapturado = Number(input.subTotalRenta);
   const metros = Number(input.metros);
-  const costo = Number(input.costoM2);
+  const subOk = Number.isFinite(subCapturado) && subCapturado > 0;
   const metrosOk = Number.isFinite(metros) && metros > 0;
-  const costoOk = Number.isFinite(costo) && costo > 0;
 
   let renta: RentRolMontosConcepto = { subTotal: 0, iva: 0, total: 0, listo: false };
-  if (metrosOk && costoOk) {
-    const subTotal = redondearMontoRentRol(metros * costo);
+  let costoM2: number | null = null;
+  if (subOk) {
+    const subTotal = redondearMontoRentRol(subCapturado);
     const iva = redondearMontoRentRol(subTotal * RENT_ROL_IVA);
     renta = {
       subTotal,
       iva,
-      total: redondearMontoRentRol(subTotal + iva),
+      total: redondearMontoRentRol(subTotal * (1 + RENT_ROL_IVA)),
       listo: true,
     };
+    if (metrosOk) {
+      costoM2 = redondearMontoRentRol(subTotal / metros);
+    }
   }
 
   let mantenimiento: RentRolMontosConcepto = { subTotal: 0, iva: 0, total: 0, listo: false };
   const pct = Number(input.pctMantenimiento);
   if (renta.listo && input.incluyeMantenimiento && Number.isFinite(pct) && pct > 0) {
-    const subTotal = redondearMontoRentRol(renta.subTotal * (pct / 100));
-    const iva = redondearMontoRentRol(subTotal * RENT_ROL_IVA);
+    const subMRaw = renta.subTotal * (pct / 100);
+    const subTotal = redondearMontoRentRol(subMRaw);
+    const iva = redondearMontoRentRol(subMRaw * RENT_ROL_IVA);
     mantenimiento = {
       subTotal,
       iva,
-      total: redondearMontoRentRol(subTotal + iva),
+      total: redondearMontoRentRol(subMRaw * (1 + RENT_ROL_IVA)),
       listo: true,
     };
   }
@@ -70,6 +76,7 @@ export function calcularMontosRentRolCaptura(input: {
     renta,
     mantenimiento,
     granTotal: redondearMontoRentRol(renta.total + mantenimiento.total),
+    costoM2,
   };
 }
 
@@ -238,7 +245,7 @@ export function construirFormDataArrendatarioCaptura(input: {
   fechaInicioContrato?: string;
   fechaTerminoContrato?: string;
   metrosRentados: number;
-  costoM2: number;
+  subTotalRenta: number;
   incluyeMantenimiento: boolean;
   pctMantenimiento?: number;
 }): FormData {
@@ -258,10 +265,10 @@ export function construirFormDataArrendatarioCaptura(input: {
   fd.append('arrendatario', JSON.stringify(dto));
 
   // Recalcular siempre al armar el payload (evita montosPreview desfasado).
-  // Misma regla que agregar-arrendatario: si incluye=1, manda % y montos.
+  // Misma regla que agregar-arrendatario: metros y subtotal se capturan; costo/m² = subtotal ÷ metros.
   const montosFinal = calcularMontosRentRolCaptura({
     metros: input.metrosRentados,
-    costoM2: input.costoM2,
+    subTotalRenta: input.subTotalRenta,
     incluyeMantenimiento: input.incluyeMantenimiento,
     pctMantenimiento: input.pctMantenimiento,
   });
@@ -271,9 +278,9 @@ export function construirFormDataArrendatarioCaptura(input: {
     idInmueble: Math.trunc(input.idInmueble),
     idLocales: input.idLocales.filter((id) => Number.isFinite(id) && id > 0).map((id) => Math.trunc(id)),
     metrosRentados: input.metrosRentados,
-    costoM2: input.costoM2,
     incluyeMantenimiento,
   };
+  if (montosFinal.costoM2 != null) contrato['costoM2'] = montosFinal.costoM2;
 
   const fi = String(input.fechaInicioContrato ?? '').trim();
   if (fi) contrato['fechaInicioContrato'] = fi;

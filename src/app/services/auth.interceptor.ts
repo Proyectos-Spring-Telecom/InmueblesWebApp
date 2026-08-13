@@ -8,6 +8,7 @@ import {
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, finalize, switchMap, take } from 'rxjs/operators';
+import { manejarErrorHttp413 } from '../shared/swal-archivos-pesados';
 import { AuthenticationService } from './auth.service';
 import { AUTH_RETRIED_AFTER_REFRESH } from './auth-http.context';
 
@@ -30,6 +31,9 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
+        const esSubida = req.body instanceof FormData;
+        manejarErrorHttp413(error, esSubida);
+
         if (this.shouldAttemptRefresh(error, hadAuth, req)) {
           return this.handle401Error(req, next, error);
         }

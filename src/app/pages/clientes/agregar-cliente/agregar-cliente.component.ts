@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,6 +13,7 @@ import {
   mapearConstanciaACliente,
 } from 'src/app/shared/constancia-fiscal-ocr.mapper';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
+import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
 import {
   extraerClienteDetalleApi,
   nombreDeArchivoApi,
@@ -1400,10 +1402,10 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
           });
         });
       },
-      (error) => {
-        Swal.close();
+      (error: unknown) => {
         this.submitButton = 'Guardar';
         this.loading = false;
+        if (manejarErrorHttp413(error, true)) return;
         void Swal.fire({
           color: '#ffffff',
           background: '#141a21',
@@ -1454,10 +1456,10 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
           });
         });
       },
-      (error) => {
-        Swal.close();
+      (error: unknown) => {
         this.submitButton = 'Actualizar';
         this.loading = false;
+        if (manejarErrorHttp413(error, true)) return;
         void Swal.fire({
           color: '#ffffff',
           background: '#141a21',
