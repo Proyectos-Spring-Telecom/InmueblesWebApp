@@ -1739,14 +1739,47 @@ html.light-theme {
   }
 
   /* SweetAlert / overlays de negocio comunes */
-  .swal2-popup {
+  .swal2-popup,
+  .swal2-popup.swal2-loading {
     background: var(--app-surface) !important;
     color: var(--app-text) !important;
+    --swal2-background: var(--app-surface);
+    --swal2-color: var(--app-text);
   }
 
   .swal2-title,
-  .swal2-html-container {
+  .swal2-html-container,
+  .swal2-popup.swal2-loading .swal2-title {
     color: var(--app-text) !important;
+  }
+
+  .swal2-loader {
+    border-color: #2563eb transparent #2563eb transparent !important;
+  }
+
+  /* LoadPanel del grid (DevExtreme: overlay "Loading/Cargando" sobre el DataGrid) */
+  .dx-loadpanel-content,
+  .dx-overlay-content.dx-loadpanel-content,
+  .dx-loadpanel .dx-overlay-content {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .dx-loadpanel-message {
+    color: #1e293b !important;
+  }
+
+  .dx-loadindicator,
+  .dx-loadindicator-icon {
+    color: #2563eb !important;
+  }
+
+  .dx-loadindicator-segment-inner,
+  .dx-loadindicator-segment {
+    border-color: #2563eb !important;
+    color: #2563eb !important;
   }
 
   /* =========================================================================
