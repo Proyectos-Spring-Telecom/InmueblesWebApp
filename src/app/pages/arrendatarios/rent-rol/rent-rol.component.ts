@@ -14,6 +14,7 @@ import {
 } from 'src/app/pipe/module-open.animation';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
+import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
 import { ClientesService } from 'src/app/services/moduleService/clientes.service';
 import { HistoricoPagosRentaService } from 'src/app/services/moduleService/historico-pagos-renta.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
@@ -156,7 +157,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
   switchManttoSi = true;
   montosPreview: RentRolMontosPreview = calcularMontosRentRolCaptura({
     metros: null,
-    costoM2: null,
+    subTotalRenta: null,
     incluyeMantenimiento: false,
     pctMantenimiento: null,
   });
@@ -308,9 +309,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
   }
 
   get switchManttoHabilitado(): boolean {
-    const metros = Number(this.capturaForm?.get('metrosRentados')?.value);
-    const costo = Number(this.capturaForm?.get('costoM2')?.value);
-    return Number.isFinite(metros) && metros > 0 && Number.isFinite(costo) && costo > 0;
+    const sub = Number(this.capturaForm?.get('subTotalRenta')?.value);
+    return Number.isFinite(sub) && sub > 0;
   }
 
   montoDisplay(valor: number): string {
@@ -569,7 +569,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.recalcularMontosPreview();
   }
 
-  /** Sin metros y costo/m² el switch queda en Sí (igual que agregar-arrendatario). */
+  /** Sin subtotal de renta el switch queda en Sí (igual que agregar-arrendatario). */
   private forzarSwitchManttoSiIncompleto(): void {
     if (this.switchManttoHabilitado) return;
     this.switchManttoSi = true;
@@ -660,7 +660,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
       rfc: [''],
       idInmueble: [{ value: null as number | null, disabled: true }, Validators.required],
       metrosRentados: ['', [Validators.required, Validators.min(0.01)]],
-      costoM2: ['', [Validators.required, Validators.min(0.01)]],
+      subTotalRenta: ['', [Validators.required, Validators.min(0.01)]],
+      costoM2: [''],
       fechaInicioContrato: ['', Validators.required],
       fechaTerminoContrato: ['', Validators.required],
       incluyeMantenimiento: [0],
@@ -693,6 +694,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
       rfc: '',
       idInmueble: null,
       metrosRentados: '',
+      subTotalRenta: '',
       costoM2: '',
       fechaInicioContrato: '',
       fechaTerminoContrato: '',
@@ -790,9 +792,12 @@ export class RentRolComponent implements OnInit, OnDestroy {
     const v = this.capturaForm.getRawValue();
     this.montosPreview = calcularMontosRentRolCaptura({
       metros: v.metrosRentados,
-      costoM2: v.costoM2,
+      subTotalRenta: v.subTotalRenta,
       incluyeMantenimiento: Number(v.incluyeMantenimiento) === 1,
       pctMantenimiento: v.pctMantenimiento,
+    });
+    this.capturaForm.get('costoM2')?.setValue(this.montosPreview.costoM2 ?? '', {
+      emitEvent: false,
     });
   }
 
@@ -837,16 +842,16 @@ export class RentRolComponent implements OnInit, OnDestroy {
     }
 
     const metros = Number(this.capturaForm.get('metrosRentados')?.value);
-    const costo = Number(this.capturaForm.get('costoM2')?.value);
+    const subTotal = Number(this.capturaForm.get('subTotalRenta')?.value);
     if (!(Number.isFinite(metros) && metros > 0)) {
       faltantes.push('Metros rentados');
     }
-    if (!(Number.isFinite(costo) && costo > 0)) {
-      faltantes.push('Costo por M²');
+    if (!(Number.isFinite(subTotal) && subTotal > 0)) {
+      faltantes.push('Subtotal renta');
     }
     if (!this.montosPreview.renta.listo) {
-      if (Number.isFinite(metros) && metros > 0 && Number.isFinite(costo) && costo > 0) {
-        faltantes.push('Subtotal / IVA / Renta total');
+      if (Number.isFinite(subTotal) && subTotal > 0) {
+        faltantes.push('IVA / Renta total');
       }
     }
 
@@ -983,7 +988,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
         fechaInicioContrato: String(v.fechaInicioContrato ?? ''),
         fechaTerminoContrato: String(v.fechaTerminoContrato ?? ''),
         metrosRentados: Number(v.metrosRentados),
-        costoM2: Number(v.costoM2),
+        subTotalRenta: Number(v.subTotalRenta),
         incluyeMantenimiento,
         pctMantenimiento: Number.isFinite(pctMantenimiento) ? pctMantenimiento : undefined,
       });
@@ -1001,6 +1006,11 @@ export class RentRolComponent implements OnInit, OnDestroy {
       });
       void this.router.navigateByUrl('/arrendatarios');
     } catch (err: unknown) {
+      if (manejarErrorHttp413(err, true)) {
+        this.guardandoCaptura = false;
+        this.cdr.markForCheck();
+        return;
+      }
       const e = err as { error?: { message?: string }; message?: string };
       await this.cerrarCargaYMostrarResultado({
         ok: false,

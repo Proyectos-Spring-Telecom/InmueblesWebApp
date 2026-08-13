@@ -15,6 +15,61 @@
   </header>
 
   <div class="surface">
+    <div class="clientes-flow-head mb-2">
+      <div class="clientes-search" role="search">
+        <label class="clientes-search-label" for="filtroArrendadorInmuebles">Buscar arrendador</label>
+        <div
+          class="clientes-search-field"
+          [class.clientes-search-field--open]="filtroArrendadorAbierto"
+          (click)="$event.stopPropagation()"
+        >
+          <span class="clientes-search-icon" aria-hidden="true">
+            <mat-icon>search</mat-icon>
+          </span>
+          <button
+            type="button"
+            id="filtroArrendadorInmuebles"
+            class="clientes-search-input clientes-search-input--select"
+            [class.clientes-search-input--placeholder]="idArrendadorSeleccionado == null"
+            [disabled]="cargandoArrendadores"
+            [attr.aria-expanded]="filtroArrendadorAbierto"
+            aria-haspopup="listbox"
+            (click)="toggleFiltroArrendador($event)"
+          >
+            {{ etiquetaArrendadorFiltro }}
+          </button>
+          <ul
+            class="clientes-search-options"
+            role="listbox"
+            *ngIf="filtroArrendadorAbierto"
+          >
+            <li role="presentation">
+              <button
+                type="button"
+                role="option"
+                class="clientes-search-option"
+                [class.clientes-search-option--activo]="idArrendadorSeleccionado == null"
+                (click)="onArrendadorFiltroChange(null)"
+              >
+                Todos los arrendadores
+              </button>
+            </li>
+            <li role="presentation" *ngFor="let arrendador of listaArrendadores">
+              <button
+                type="button"
+                role="option"
+                class="clientes-search-option"
+                [class.clientes-search-option--activo]="idArrendadorSeleccionado === arrendador.id"
+                (click)="onArrendadorFiltroChange(arrendador.id)"
+              >
+                {{ arrendador.nombre }}
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
       <div *appHasPermission="'43'">
         <button (click)="agregarInmueble()" mat-flat-button class="bg-secondary">
@@ -34,7 +89,7 @@
         [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
         [rowAlternationEnabled]="true" [dataSource]="listaInmuebles" [keyExpr]="'id'" [width]="'100%'"
         [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
-        [noDataText]="'Sin registros para mostrar'" [pager]="{
+        [noDataText]="textoSinDatosGrid" [pager]="{
           showPageSizeSelector: true,
           allowedPageSizes: [20],
           showInfo: true,
@@ -44,11 +99,12 @@
         (onRowClick)="onMasterRowClick($event)">
 
         <dxo-search-panel [visible]="true" [width]="240"
-          placeholder="Buscar inmueble, arrendador..."></dxo-search-panel>
+          placeholder="Buscar inmueble..."></dxo-search-panel>
         <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-sorting mode="multiple"></dxo-sorting>
+        <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
 
         <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="320" alignment="center"
           *appHasPermission="['41', '42']"

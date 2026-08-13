@@ -522,14 +522,13 @@
                   </div>
                 </div>
                 <div class="col-12 col-md-4">
-                  <label class="form-label perm-label" for="rrCapCosto">
-                    Costo por M² <span class="text-danger">*</span>
-                  </label>
+                  <label class="form-label perm-label" for="rrCapCosto">Costo por M²</label>
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">attach_money</mat-icon></span>
                     <div class="form-floating flex-grow-1">
-                      <input id="rrCapCosto" type="number" class="form-control" formControlName="costoM2"
-                        (input)="onMontosInput()" min="0" step="0.01" placeholder="Costo M²" />
+                      <input id="rrCapCosto" type="text" class="form-control"
+                        [value]="montosPreview.costoM2 != null ? montoDisplay(montosPreview.costoM2) : ''"
+                        readonly tabindex="-1" placeholder="Costo M²" />
                       <label for="rrCapCosto">Costo por M²</label>
                     </div>
                   </div>
@@ -565,14 +564,15 @@
                   </div>
                 </div>
                 <div class="col-12 col-md-4">
-                  <label class="form-label perm-label" for="rrCapSubRenta">Subtotal</label>
+                  <label class="form-label perm-label" for="rrCapSubRenta">
+                    Subtotal renta <span class="text-danger">*</span>
+                  </label>
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">calculate</mat-icon></span>
                     <div class="form-floating flex-grow-1">
-                      <input id="rrCapSubRenta" type="text" class="form-control"
-                        [value]="montoDisplay(montosPreview.renta.subTotal)" readonly tabindex="-1"
-                        placeholder="Subtotal" />
-                      <label for="rrCapSubRenta">Subtotal</label>
+                      <input id="rrCapSubRenta" type="number" class="form-control" formControlName="subTotalRenta"
+                        (input)="onMontosInput()" min="0" step="0.01" placeholder="Subtotal" />
+                      <label for="rrCapSubRenta">Subtotal renta</label>
                     </div>
                   </div>
                 </div>

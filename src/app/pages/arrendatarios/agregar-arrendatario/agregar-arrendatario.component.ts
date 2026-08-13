@@ -5,6 +5,7 @@ import { catchError, debounceTime, finalize, forkJoin, of, Subscription } from '
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
+import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import {
   CatServicioItem,
@@ -61,7 +62,7 @@ type GaleriaArrendatarioSnap = { id: number | null; nombre: string; url: string 
 const IVA_CONTRATO = 0.16;
 
 type CampoContratoCalculado =
-  | 'subtotalRenta'
+  | 'costoPorM2'
   | 'ivaRenta'
   | 'rentaTotal'
   | 'subtotalMantenimiento'
@@ -71,16 +72,16 @@ type CampoContratoCalculado =
 type HintContratoCalculado = 'renta' | 'mantenimiento';
 
 type CampoMonedaContrato =
-  | 'costoPorM2'
+  | 'subtotalRenta'
   | 'montoDeposito'
   | 'montoAdelanto'
   | CampoContratoCalculado;
 
 const CAMPOS_MONEDA_CONTRATO: CampoMonedaContrato[] = [
+  'subtotalRenta',
   'costoPorM2',
   'montoDeposito',
   'montoAdelanto',
-  'subtotalRenta',
   'ivaRenta',
   'rentaTotal',
   'subtotalMantenimiento',
@@ -89,7 +90,7 @@ const CAMPOS_MONEDA_CONTRATO: CampoMonedaContrato[] = [
 ];
 
 const CAMPOS_MONEDA_CALCULADOS: CampoContratoCalculado[] = [
-  'subtotalRenta',
+  'costoPorM2',
   'ivaRenta',
   'rentaTotal',
   'subtotalMantenimiento',
@@ -561,8 +562,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       documentoComprobanteDomicilio: [null],
       ineRepresentanteLegal: [null],
       galeriaImagenes: this.fb.array([this.crearGaleriaImagenFormGroup()]),
-      /** Dos filas por defecto: Renta y Mantenimiento (`syncServiciosIdsDesdeCatalogo`). */
-      servicios: this.fb.array([this.crearServicioFormGroup(), this.crearServicioFormGroup()]),
+      /** Renta siempre; Mantenimiento solo si el contrato lo cobra aparte. */
+      servicios: this.fb.array([this.crearServicioFormGroup()]),
       pagos: this.fb.array([]),
       socios: this.fb.array([this.crearSocioFormGroup()]),
       locales: this.fb.array([this.crearLocalFormGroup()]),
@@ -641,16 +642,16 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  onContratoCostoInput(index: number): void {
+  onContratoSubtotalInput(index: number): void {
     this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(index);
     this.cdr.markForCheck();
   }
 
   onContratoMonedaFocus(index: number, campo: CampoMonedaContrato): void {
-    if (campo !== 'costoPorM2') return;
+    if (campo !== 'subtotalRenta') return;
     this.contratoCalcCampoFoco[index] = {
       ...this.contratoCalcCampoFoco[index],
-      costoPorM2: true,
+      subtotalRenta: true,
     };
   }
 
@@ -668,23 +669,23 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   }
 
   contratoSwitchMantenimientoHabilitado(index: number): boolean {
-    const grupo = this.contratosFormArray.at(index) as FormGroup | null;
-    if (!grupo) return false;
-    return (
-      this.valorNumericoContratoCapturado(grupo, 'metrosRentados') &&
-      this.contratoCostoPorM2Capturado(index)
-    );
+    return this.contratoSubtotalRentaCapturado(index);
   }
 
-  private contratoCostoPorM2Capturado(index: number): boolean {
-    const grupo = this.contratosFormArray.at(index) as FormGroup | null;
-    if (!grupo) return false;
-    if (this.valorNumericoContratoCapturado(grupo, 'costoPorM2')) return true;
-    const raw = this.contratoCampoDisplay[index]?.['costoPorM2'] ?? '';
-    return Number.isFinite(parseMonedaNumerico(raw));
+  private contratoSubtotalRentaCapturado(index: number): boolean {
+    return this.resolverSubtotalRentaNumerico(index) != null;
   }
 
-  /** Sin metros y costo/m² el switch queda en Sí y no conserva toggles accidentales. */
+  private resolverSubtotalRentaNumerico(index: number): number | null {
+    const grupo = this.contratosFormArray.at(index) as FormGroup | null;
+    if (!grupo) return null;
+    const fromCtrl = this.valorNumericoEnControl(grupo, 'subtotalRenta');
+    if (fromCtrl != null) return fromCtrl;
+    const n = parseMonedaNumerico(this.contratoCampoDisplay[index]?.['subtotalRenta'] ?? '');
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /** Sin subtotal de renta el switch queda en Sí y no conserva toggles accidentales. */
   private forzarContratoSwitchMantenimientoInactivoSiIncompleto(index: number): void {
     if (this.contratoSwitchMantenimientoHabilitado(index)) return;
     this.contratoSwitchMantenimientoSi[index] = true;
@@ -694,6 +695,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     grupo.get('incluyeMantenimiento')?.setValue(0, { emitEvent: false });
     this.limpiarCamposMantenimientoContrato(grupo);
     this.limpiarDisplaysMantenimientoContrato(index);
+    this.syncServicioMantenimientoSegunContratos();
   }
 
   onContratoIncluyeMantenimientoClick(event: Event, index: number): void {
@@ -726,6 +728,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     }
     this.recalcularMontosContrato(index, false);
     this.actualizarDisplaysMonedaContrato(index);
+    this.syncServicioMantenimientoSegunContratos();
     this.cdr.detectChanges();
   }
 
@@ -765,7 +768,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private algunInputCalculoContratoEnfocado(index: number): boolean {
     const f = this.contratoCalcCampoFoco[index];
-    return !!(f?.['metrosRentados'] || f?.['costoPorM2'] || f?.['pctMantenimiento']);
+    return !!(f?.['metrosRentados'] || f?.['subtotalRenta'] || f?.['pctMantenimiento']);
   }
 
   private programarRecalculoAlSalirInputsContrato(indexContrato: number): void {
@@ -873,16 +876,17 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     const ctrl = grupo.get(campo);
     const n = parseMonedaNumerico(raw);
     if (Number.isFinite(n)) {
-      ctrl?.setValue(n, { emitEvent: false });
-      this.setContratoCampoDisplay(index, campo, formatMonedaDesdeNumeroNatural(n));
+      const valor = campo === 'subtotalRenta' ? this.redondearMontoCalculado(n) : n;
+      ctrl?.setValue(valor, { emitEvent: false });
+      this.setContratoCampoDisplay(index, campo, formatMonedaDesdeNumeroNatural(valor));
     } else {
       ctrl?.setValue('', { emitEvent: false });
       this.setContratoCampoDisplay(index, campo, '');
     }
-    if (campo === 'costoPorM2') {
+    if (campo === 'subtotalRenta') {
       this.contratoCalcCampoFoco[index] = {
         ...this.contratoCalcCampoFoco[index],
-        costoPorM2: false,
+        subtotalRenta: false,
       };
       this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(index);
       this.programarRecalculoAlSalirInputsContrato(index);
@@ -922,8 +926,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     this.forzarContratoSwitchMantenimientoInactivoSiIncompleto(indexContrato);
 
+    const subCapturado = this.resolverSubtotalRentaNumerico(indexContrato);
     const metrosOk = this.valorNumericoContratoCapturado(grupo, 'metrosRentados');
-    const costoOk = this.contratoCostoPorM2Capturado(indexContrato);
     const incluyeMtto = Number(grupo.get('incluyeMantenimiento')?.value) === 1;
     const pctOk =
       incluyeMtto && this.valorNumericoContratoCapturado(grupo, 'pctMantenimiento');
@@ -931,25 +935,32 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     let subR = 0;
     let ivaR = 0;
     let totR = 0;
+    let costo = 0;
+    let costoListo = false;
     let rentaLista = false;
 
-    if (metrosOk && costoOk) {
-      const metros = Number(grupo.get('metrosRentados')?.value);
-      const costo = Number(grupo.get('costoPorM2')?.value);
-      subR = this.redondearMontoCalculado(metros * costo);
+    if (subCapturado != null) {
+      subR = this.redondearMontoCalculado(subCapturado);
       ivaR = this.redondearMontoCalculado(subR * IVA_CONTRATO);
-      totR = this.redondearMontoCalculado(subR + ivaR);
+      totR = this.redondearMontoCalculado(subR * (1 + IVA_CONTRATO));
       rentaLista = true;
+      if (metrosOk) {
+        const metros = Number(grupo.get('metrosRentados')?.value);
+        if (Number.isFinite(metros) && metros !== 0) {
+          costo = this.redondearMontoCalculado(subR / metros);
+          costoListo = true;
+        }
+      }
     }
 
-    const prevSubR = grupo.get('subtotalRenta')?.value;
     const prevIvaR = grupo.get('ivaRenta')?.value;
     const prevTotR = grupo.get('rentaTotal')?.value;
+    const prevCosto = grupo.get('costoPorM2')?.value;
 
     if (!rentaLista) {
       grupo.patchValue(
         {
-          subtotalRenta: '',
+          costoPorM2: '',
           ivaRenta: '',
           rentaTotal: '',
         },
@@ -964,7 +975,11 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     }
 
     grupo.patchValue(
-      { subtotalRenta: subR, ivaRenta: ivaR, rentaTotal: totR },
+      {
+        costoPorM2: costoListo ? costo : '',
+        ivaRenta: ivaR,
+        rentaTotal: totR,
+      },
       { emitEvent: false },
     );
 
@@ -975,9 +990,10 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     if (incluyeMtto && pctOk) {
       const pct = Number(grupo.get('pctMantenimiento')?.value);
-      subM = this.redondearMontoCalculado(subR * (pct / 100));
-      ivaM = this.redondearMontoCalculado(subM * IVA_CONTRATO);
-      totM = this.redondearMontoCalculado(subM + ivaM);
+      const subMRaw = subR * (pct / 100);
+      subM = this.redondearMontoCalculado(subMRaw);
+      ivaM = this.redondearMontoCalculado(subMRaw * IVA_CONTRATO);
+      totM = this.redondearMontoCalculado(subMRaw * (1 + IVA_CONTRATO));
       mttoListo = true;
     }
 
@@ -998,15 +1014,16 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     if (!conEfecto) return;
 
-    const rentaActualizada =
-      rentaLista &&
-      (prevSubR !== subR || prevIvaR !== ivaR || prevTotR !== totR);
+    const ivaTotActualizado = prevIvaR !== ivaR || prevTotR !== totR;
+    const costoActualizado = (costoListo ? costo : '') !== prevCosto;
     const mttoActualizado =
       mttoListo &&
       (prevSubM !== subM || prevIvaM !== ivaM || prevTotM !== totM);
 
-    if (rentaActualizada) {
-      this.resaltarCampoContratoCalculado(indexContrato, 'subtotalRenta', 0);
+    if (costoActualizado) {
+      this.resaltarCampoContratoCalculado(indexContrato, 'costoPorM2', 0);
+    }
+    if (ivaTotActualizado) {
       this.resaltarCampoContratoCalculado(indexContrato, 'ivaRenta', 140);
       this.resaltarCampoContratoCalculado(indexContrato, 'rentaTotal', 280);
       this.resaltarHintContratoCalculado(indexContrato, 'renta', 280);
@@ -1016,7 +1033,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     }
 
     if (mttoActualizado) {
-      const baseMtto = rentaActualizada ? 420 : 0;
+      const baseMtto = ivaTotActualizado ? 420 : 0;
       this.resaltarCampoContratoCalculado(indexContrato, 'subtotalMantenimiento', baseMtto);
       this.resaltarCampoContratoCalculado(indexContrato, 'ivaMantenimiento', baseMtto + 140);
       this.resaltarCampoContratoCalculado(indexContrato, 'mantenimientoTotal', baseMtto + 280);
@@ -1024,7 +1041,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.scrollABloqueCalculoContrato(
         indexContrato,
         'mantenimiento',
-        rentaActualizada ? baseMtto : 0,
+        ivaTotActualizado ? baseMtto : 0,
       );
     }
   }
@@ -1886,6 +1903,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     if (this.contratoAccordionIndicesAbiertos.length === 0 && this.contratosFormArray.length > 0) {
       this.contratoAccordionIndicesAbiertos = [0];
     }
+    this.syncServicioMantenimientoSegunContratos();
     this.refrescarAccordionContratos();
   }
 
@@ -1931,29 +1949,61 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     return Math.trunc(Number(idVal));
   }
 
-  /** Renta y Mantenimiento son fijos: siempre existen y no se eliminan. */
+  /** Renta es fija. Mantenimiento es fijo solo cuando el contrato lo cobra aparte. */
   esServicioDefaultObligatorio(index: number): boolean {
     if (index < 0 || index >= this.serviciosFormArray.length) return false;
     const idTipo = Number(
       (this.serviciosFormArray.at(index) as FormGroup).get('idTipoServicio')?.value,
     );
     if (Number.isFinite(idTipo) && idTipo > 0) {
-      return this.esIdTipoServicioRentaOMantenimiento(idTipo);
+      if (this.esIdTipoServicioRenta(idTipo)) return true;
+      if (this.esIdTipoServicioMantenimiento(idTipo)) {
+        return this.contratoLlevaMantenimientoSeparado();
+      }
+      return false;
     }
-    // Alta aún sin catálogo: las dos primeras filas son Renta / Mantenimiento.
-    return !this.esEdicionArrendatario() && (index === 0 || index === 1);
+    return !this.esEdicionArrendatario() && index === 0;
+  }
+
+  mostrarFilaServicio(index: number): boolean {
+    if (!this.esFilaServicioMantenimiento(index)) return true;
+    return this.contratoLlevaMantenimientoSeparado();
+  }
+
+  private contratoLlevaMantenimientoSeparado(): boolean {
+    return this.contratosFormArray.controls.some(
+      (c) => Number((c as FormGroup).get('incluyeMantenimiento')?.value) === 1,
+    );
+  }
+
+  private esFilaServicioMantenimiento(index: number): boolean {
+    const idTipo = Number(
+      (this.serviciosFormArray.at(index) as FormGroup)?.get('idTipoServicio')?.value,
+    );
+    return Number.isFinite(idTipo) && idTipo > 0 && this.esIdTipoServicioMantenimiento(idTipo);
+  }
+
+  private esIdTipoServicioRenta(idTipo: number): boolean {
+    const rentaId = this.buscarIdServicioPorNombre(/renta/i);
+    if (rentaId != null && idTipo === rentaId) return true;
+    return this.textoTipoServicioCoincide(idTipo, /renta/i);
+  }
+
+  private esIdTipoServicioMantenimiento(idTipo: number): boolean {
+    const mttoId = this.buscarIdServicioPorNombre(/mantenimiento/i);
+    if (mttoId != null && idTipo === mttoId) return true;
+    return this.textoTipoServicioCoincide(idTipo, /mantenimiento/i);
   }
 
   private esIdTipoServicioRentaOMantenimiento(idTipo: number): boolean {
-    const rentaId = this.buscarIdServicioPorNombre(/renta/i);
-    const mttoId = this.buscarIdServicioPorNombre(/mantenimiento/i);
-    if ((rentaId != null && idTipo === rentaId) || (mttoId != null && idTipo === mttoId)) {
-      return true;
-    }
+    return this.esIdTipoServicioRenta(idTipo) || this.esIdTipoServicioMantenimiento(idTipo);
+  }
+
+  private textoTipoServicioCoincide(idTipo: number, rx: RegExp): boolean {
     const item = this.listaCatServicios.find((s) => s.id === idTipo);
     if (!item) return false;
     const t = `${item.nombre ?? ''} ${item.servicio ?? ''} ${item.descripcion ?? ''}`;
-    return /renta/i.test(t) || /mantenimiento/i.test(t);
+    return rx.test(t);
   }
 
   puedeEliminarServicioEnEdicion(index: number): boolean {
@@ -3134,7 +3184,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.asegurarServiciosDefaultRentaMantenimiento();
     } else {
       this.serviciosFormArray.push(this.crearServicioFormGroup());
-      this.serviciosFormArray.push(this.crearServicioFormGroup());
       this.syncServiciosIdsDesdeCatalogo();
     }
     this.servicioAccordionIndicesAbiertos = this.serviciosFormArray.length > 0 ? [0] : [];
@@ -3669,13 +3718,76 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   private syncServiciosIdsDesdeCatalogo(): void {
     const rentaId = this.buscarIdServicioPorNombre(/renta/i);
+    if (rentaId != null) {
+      const idxRenta = this.indiceFilaServicioRenta();
+      if (idxRenta >= 0) {
+        (this.serviciosFormArray.at(idxRenta) as FormGroup).patchValue(
+          { idTipoServicio: rentaId },
+          { emitEvent: false },
+        );
+      } else if (this.serviciosFormArray.length >= 1) {
+        const g0 = this.serviciosFormArray.at(0) as FormGroup;
+        const idActual = Number(g0.get('idTipoServicio')?.value);
+        if (!Number.isFinite(idActual) || idActual <= 0) {
+          g0.patchValue({ idTipoServicio: rentaId }, { emitEvent: false });
+        }
+      }
+    }
+    this.syncServicioMantenimientoSegunContratos();
+  }
+
+  private indiceFilaServicioRenta(): number {
+    return this.serviciosFormArray.controls.findIndex((c) => {
+      const id = Number((c as FormGroup).get('idTipoServicio')?.value);
+      return Number.isFinite(id) && id > 0 && this.esIdTipoServicioRenta(id);
+    });
+  }
+
+  private indiceFilaServicioMantenimiento(): number {
+    return this.serviciosFormArray.controls.findIndex((c, i) => this.esFilaServicioMantenimiento(i));
+  }
+
+  /** Muestra/arma el servicio Mantenimiento solo si algún contrato lo cobra aparte. */
+  private syncServicioMantenimientoSegunContratos(): void {
+    const debeIncluir = this.contratoLlevaMantenimientoSeparado();
     const mttoId = this.buscarIdServicioPorNombre(/mantenimiento/i);
-    if (this.serviciosFormArray.length >= 1 && rentaId != null) {
-      (this.serviciosFormArray.at(0) as FormGroup).patchValue({ idTipoServicio: rentaId }, { emitEvent: false });
+    let idxMtto = this.indiceFilaServicioMantenimiento();
+
+    if (debeIncluir) {
+      if (idxMtto < 0) {
+        const g = this.crearServicioFormGroup();
+        if (mttoId != null) {
+          g.patchValue({ idTipoServicio: mttoId }, { emitEvent: false });
+        }
+        const idxRenta = this.indiceFilaServicioRenta();
+        this.serviciosFormArray.insert(idxRenta >= 0 ? idxRenta + 1 : this.serviciosFormArray.length, g);
+        this.refrescarAccordionServicios();
+      } else if (mttoId != null) {
+        const g = this.serviciosFormArray.at(idxMtto) as FormGroup;
+        const idActual = Number(g.get('idTipoServicio')?.value);
+        if (!Number.isFinite(idActual) || idActual <= 0) {
+          g.patchValue({ idTipoServicio: mttoId }, { emitEvent: false });
+        }
+      }
+      return;
     }
-    if (this.serviciosFormArray.length >= 2 && mttoId != null) {
-      (this.serviciosFormArray.at(1) as FormGroup).patchValue({ idTipoServicio: mttoId }, { emitEvent: false });
+
+    if (idxMtto < 0) return;
+    const persistido = this.idServicioPersistidoEnIndice(idxMtto);
+    const g = this.serviciosFormArray.at(idxMtto) as FormGroup;
+    if (persistido == null && this.servicioSinDatosCapturados(g)) {
+      this.serviciosFormArray.removeAt(idxMtto);
+      this.refrescarAccordionServicios();
     }
+  }
+
+  private servicioSinDatosCapturados(grupo: FormGroup): boolean {
+    const nc = String(grupo.get('servicioNumeroContrato')?.value ?? '').trim();
+    const fp = String(grupo.get('servicioFechaPago')?.value ?? '').trim();
+    const ulp = String(grupo.get('servicioUltimoDiaPago')?.value ?? '').trim();
+    const file = grupo.get('servicioComprobantePago')?.value;
+    const url = String(grupo.get('servicioComprobantePagoUrl')?.value ?? '').trim();
+    return !nc && !fp && !ulp && !(file instanceof File) && !url;
   }
 
   /** Si el GET trae un tipo que aún no está en el catálogo paginado, lo agrega para el select. */
@@ -3689,10 +3801,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Garantiza que existan las filas fijas Renta y Mantenimiento. */
+  /** Garantiza Renta; Mantenimiento solo si el contrato lo cobra aparte. */
   private asegurarServiciosDefaultRentaMantenimiento(): void {
     const rentaId = this.buscarIdServicioPorNombre(/renta/i);
-    const mttoId = this.buscarIdServicioPorNombre(/mantenimiento/i);
     const tieneTipo = (id: number | null): boolean =>
       id != null &&
       this.serviciosFormArray.controls.some(
@@ -3704,20 +3815,13 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       g.patchValue({ idTipoServicio: rentaId }, { emitEvent: false });
       this.serviciosFormArray.insert(0, g);
     }
-    if (mttoId != null && !tieneTipo(mttoId)) {
-      const g = this.crearServicioFormGroup();
-      g.patchValue({ idTipoServicio: mttoId }, { emitEvent: false });
-      const idxRenta = this.serviciosFormArray.controls.findIndex(
-        (c) => Number((c as FormGroup).get('idTipoServicio')?.value) === rentaId,
-      );
-      this.serviciosFormArray.insert(idxRenta >= 0 ? idxRenta + 1 : 0, g);
-    }
 
     if (this.serviciosFormArray.length === 0) {
       this.serviciosFormArray.push(this.crearServicioFormGroup());
-      this.serviciosFormArray.push(this.crearServicioFormGroup());
       this.syncServiciosIdsDesdeCatalogo();
+      return;
     }
+    this.syncServicioMantenimientoSegunContratos();
   }
 
   private buscarIdServicioPorNombre(rx: RegExp): number | null {
@@ -4203,6 +4307,12 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       const idTipo =
         idTipoRaw != null && idTipoRaw !== '' ? Number(idTipoRaw) : Number.NaN;
       if (!Number.isFinite(idTipo)) return;
+      if (
+        this.esIdTipoServicioMantenimiento(idTipo) &&
+        !this.contratoLlevaMantenimientoSeparado()
+      ) {
+        return;
+      }
 
       if (soloModificadosEnEdicion) {
         if (!this.servicioArrendatarioModificadoVsSnapshot(g, index)) return;
@@ -4401,6 +4511,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       error: (err: unknown) => {
         Swal.close();
         this.loadingSubmit = false;
+        if (manejarErrorHttp413(err, true)) return;
         const e = err as { error?: { message?: string }; message?: string };
         const text =
           e?.error?.message ??

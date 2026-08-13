@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { conAvisoArchivosPesados } from 'src/app/shared/swal-archivos-pesados';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +20,9 @@ export class ClientesService {
 	}
 
   agregarCliente(data: any) {
-    return this.http.post(environment.API_SECURITY + '/arrendadores', data);
+    return conAvisoArchivosPesados(
+      this.http.post(environment.API_SECURITY + '/arrendadores', data),
+    );
   }
 
   eliminarCliente(idCliente: Number) {
@@ -31,7 +34,9 @@ export class ClientesService {
     }
 
   actualizarCliente(idCliente: number, saveForm: any): Observable<any> {
-    return this.http.put(`${environment.API_SECURITY}/arrendadores/` + idCliente, saveForm);
+    return conAvisoArchivosPesados(
+      this.http.put(`${environment.API_SECURITY}/arrendadores/` + idCliente, saveForm),
+    );
   }
 
   /** Soft-delete: pone Estatus = 0 en SociosArrendadores. */

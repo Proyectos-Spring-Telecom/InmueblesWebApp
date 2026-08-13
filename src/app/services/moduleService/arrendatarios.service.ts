@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { conAvisoArchivosPesados } from 'src/app/shared/swal-archivos-pesados';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +21,7 @@ export class ArrendatariosService {
   }
 
   crearArrendatario(data: FormData): Observable<unknown> {
-    return this.http.post(this.base, data);
+    return conAvisoArchivosPesados(this.http.post(this.base, data));
   }
 
   obtenerArrendatario(id: number): Observable<unknown> {
@@ -37,7 +38,7 @@ export class ArrendatariosService {
   }
 
   actualizarArrendatario(id: number, data: FormData): Observable<unknown> {
-    return this.http.put(`${this.base}/${id}`, data);
+    return conAvisoArchivosPesados(this.http.put(`${this.base}/${id}`, data));
   }
 
   /** Soft-delete del arrendatario. */

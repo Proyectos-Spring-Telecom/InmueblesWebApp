@@ -6,6 +6,7 @@ import { catchError, debounceTime, finalize, forkJoin, map, of, Subscription, sw
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
+import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
 import {
   estatusInmuebleDesdeApi,
   extraerInmuebleDetalleApi,
@@ -2130,6 +2131,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       error: (err: unknown) => {
         this.loadingSubmit = false;
         this.cerrarSwalGuardandoInmuebleInmediato();
+        if (manejarErrorHttp413(err, true)) return;
         const e = err as { error?: { message?: string }; message?: string };
         const text =
           e?.error?.message ??
@@ -2161,6 +2163,7 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
       error: (err: unknown) => {
         this.loadingSubmit = false;
         this.cerrarSwalGuardandoInmuebleInmediato();
+        if (manejarErrorHttp413(err, true)) return;
         const e = err as { error?: { message?: string }; message?: string };
         const text =
           e?.error?.message ??

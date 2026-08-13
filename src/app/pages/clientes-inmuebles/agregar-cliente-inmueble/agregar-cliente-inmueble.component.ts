@@ -12,6 +12,7 @@ import {
   extraerConstanciaDeRespuestaOcr,
   mapearConstanciaACliente,
 } from 'src/app/shared/constancia-fiscal-ocr.mapper';
+import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -429,6 +430,7 @@ export class AgregarClienteInmuebleComponent implements OnInit {
       (error) => {
         this.submitButton = 'Guardar';
         this.loading = false;
+        if (manejarErrorHttp413(error, true)) return;
         Swal.fire({
           color: '#ffffff',
           background: '#141a21',
@@ -482,9 +484,10 @@ export class AgregarClienteInmuebleComponent implements OnInit {
         });
         this.regresar();
       },
-      () => {
+      (error: unknown) => {
         this.submitButton = 'Actualizar';
         this.loading = false;
+        if (manejarErrorHttp413(error, true)) return;
         Swal.fire({
           color: '#ffffff',
           background: '#141a21',
