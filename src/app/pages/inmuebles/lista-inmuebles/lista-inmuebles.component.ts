@@ -15,6 +15,7 @@ import {
   hojasDetalleInmueble,
   obtenerItemsGridCompletos,
 } from 'src/app/shared/grid-excel-export';
+import { coloresSwalTema } from 'src/app/shared/swal-tema';
 import { mapClientesApiToGridRows } from '../../clientes/clientes-list.mapper';
 import { InmuebleGridRow, mapInmueblesApiToGridRows } from '../inmuebles-list.mapper';
 import {
@@ -193,8 +194,7 @@ export class ListaInmueblesComponent implements OnInit {
       title: '¡Eliminar Inmueble!',
       html: `¿Está seguro que requiere eliminar el inmueble: <strong>${nombre}</strong>?`,
       icon: 'warning',
-      background: '#141a21',
-      color: '#ffffff',
+      ...coloresSwalTema(),
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
@@ -205,8 +205,7 @@ export class ListaInmueblesComponent implements OnInit {
       this.inmueblesService.eliminarInmueble(row.id).subscribe({
         next: () => {
           void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
+            ...coloresSwalTema(),
             title: '¡Eliminado!',
             html: 'El inmueble ha sido eliminado de forma exitosa.',
             icon: 'success',
@@ -218,8 +217,7 @@ export class ListaInmueblesComponent implements OnInit {
         },
         error: () => {
           void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
+            ...coloresSwalTema(),
             title: '¡Ops!',
             html: 'Error al intentar eliminar el inmueble.',
             icon: 'error',
@@ -236,8 +234,7 @@ export class ListaInmueblesComponent implements OnInit {
       title: '¡Activar!',
       html: `¿Está seguro que requiere activar el inmueble: <strong>${nombre}</strong>?`,
       icon: 'warning',
-      background: '#141a21',
-      color: '#ffffff',
+      ...coloresSwalTema(),
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
@@ -248,8 +245,7 @@ export class ListaInmueblesComponent implements OnInit {
       this.inmueblesService.updateEstatus(row.id, 1).subscribe({
         next: () => {
           void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
+            ...coloresSwalTema(),
             title: '¡Confirmación Realizada!',
             html: 'El inmueble ha sido activado.',
             icon: 'success',
@@ -260,8 +256,7 @@ export class ListaInmueblesComponent implements OnInit {
         },
         error: () => {
           void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
+            ...coloresSwalTema(),
             title: '¡Ops!',
             html: 'Error al intentar activar el inmueble.',
             icon: 'error',

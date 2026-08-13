@@ -13,6 +13,7 @@ import {
   hojasDetalleArrendatario,
   obtenerItemsGridCompletos,
 } from 'src/app/shared/grid-excel-export';
+import { coloresSwalTema } from 'src/app/shared/swal-tema';
 import {
   ArrendatarioGridRow,
   mapArrendatariosApiToGridRows,
@@ -115,8 +116,7 @@ export class ListaArrendatariosComponent implements OnInit {
       title: '¡Eliminar Arrendatario!',
       html: `¿Está seguro que requiere eliminar el arrendatario: <strong>${nombre}</strong>?`,
       icon: 'warning',
-      background: '#141a21',
-      color: '#ffffff',
+      ...coloresSwalTema(),
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
@@ -127,8 +127,7 @@ export class ListaArrendatariosComponent implements OnInit {
       this.arrendatariosService.eliminarArrendatario(row.id).subscribe({
         next: () => {
           void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
+            ...coloresSwalTema(),
             title: '¡Eliminado!',
             html: 'El arrendatario ha sido eliminado de forma exitosa.',
             icon: 'success',
@@ -140,8 +139,7 @@ export class ListaArrendatariosComponent implements OnInit {
         },
         error: () => {
           void Swal.fire({
-            background: '#141a21',
-            color: '#ffffff',
+            ...coloresSwalTema(),
             title: '¡Ops!',
             html: 'Error al intentar eliminar el arrendatario.',
             icon: 'error',

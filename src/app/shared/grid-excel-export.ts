@@ -2,6 +2,7 @@ import { exportDataGrid } from 'devextreme/excel_exporter';
 import { Workbook, Worksheet } from 'exceljs';
 import { saveAs } from 'file-saver';
 import Swal from 'sweetalert2';
+import { coloresSwalTema } from 'src/app/shared/swal-tema';
 
 /** Colores de texto para etiquetas (solo font, sin fondo). */
 const LABEL_COLOR = {
@@ -756,8 +757,7 @@ function abrirSwalCargandoExport(): void {
     allowOutsideClick: false,
     allowEscapeKey: false,
     showConfirmButton: false,
-    background: '#141a21',
-    color: '#ffffff',
+    ...coloresSwalTema(),
     didOpen: () => {
       Swal.showLoading();
     },
@@ -775,8 +775,7 @@ async function mostrarErrorExport(error: unknown): Promise<void> {
     title: '¡Ops!',
     html: detalle,
     icon: 'error',
-    background: '#141a21',
-    color: '#ffffff',
+    ...coloresSwalTema(),
     confirmButtonColor: '#3085d6',
     confirmButtonText: 'Confirmar',
   });

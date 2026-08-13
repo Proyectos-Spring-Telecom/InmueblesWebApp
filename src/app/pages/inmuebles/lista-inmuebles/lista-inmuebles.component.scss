@@ -2178,16 +2178,16 @@
   }
 
   .surface .clientes-search-field {
-    background: #0e141c !important;
+    background: #ffffff !important;
     border-color: #753b55 !important;
-    box-shadow: none !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
   }
 
   .surface .clientes-search-field:focus-within,
   .surface .clientes-search-field--open {
-    background: #0e141c !important;
+    background: #ffffff !important;
     border-color: #753b55 !important;
-    box-shadow: 0 0 0 3px rgba(117, 59, 85, 0.22) !important;
+    box-shadow: 0 0 0 3px rgba(117, 59, 85, 0.18) !important;
   }
 
   .surface .clientes-search-icon {
@@ -2207,7 +2207,7 @@
   }
 
   .surface .clientes-search-input--placeholder {
-    color: #94a3b8 !important;
+    color: #64748b !important;
   }
 
   .surface .clientes-search-field--open .clientes-search-input--select {
@@ -2215,18 +2215,18 @@
   }
 
   .surface .clientes-search-options {
-    background: #0e141c !important;
+    background: #ffffff !important;
     border-color: #753b55 !important;
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16) !important;
   }
 
   .surface .clientes-search-option {
-    color: #eef3fb !important;
+    color: #1e293b !important;
   }
 
   .surface .clientes-search-option:not(.clientes-search-option--activo):hover {
-    background: rgba(117, 59, 85, 0.42) !important;
-    color: #ffffff !important;
+    background: rgba(117, 59, 85, 0.12) !important;
+    color: #1e293b !important;
   }
 
   .surface .clientes-search-option--activo,
@@ -2234,5 +2234,81 @@
     background: #753b55 !important;
     color: #ffffff !important;
     box-shadow: none !important;
+  }
+
+  .inm-vigencia-cell {
+    border-color: #93c5fd !important;
+    background: linear-gradient(165deg, #eff6ff 0%, #e2e8f0 100%) !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .inm-vigencia-cell__rango {
+    color: #1e3a8a !important;
+
+    .fa {
+      color: #2563eb !important;
+    }
+  }
+
+  .inm-vigencia-chip--total {
+    color: #1e40af !important;
+    border-color: #93c5fd !important;
+    background: #dbeafe !important;
+  }
+
+  .inm-vigencia-chip--ok {
+    color: #166534 !important;
+    border-color: #86efac !important;
+    background: #dcfce7 !important;
+  }
+
+  .inm-vigencia-chip--warning {
+    color: #9a3412 !important;
+    border-color: #fdba74 !important;
+    background: #ffedd5 !important;
+  }
+
+  .inm-vigencia-chip--amber {
+    color: #92400e !important;
+    border-color: #fcd34d !important;
+    background: #fef3c7 !important;
+  }
+
+  .inm-vigencia-chip--danger {
+    color: #9f1239 !important;
+    border-color: #fda4af !important;
+    background: #ffe4e6 !important;
+  }
+
+  .inm-vigencia-chip--muted {
+    color: #334155 !important;
+    border-color: #cbd5e1 !important;
+    background: #e2e8f0 !important;
+  }
+
+  .inm-vigencia-chip--expired {
+    color: #ffffff !important;
+    border-color: #ef4444 !important;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+  }
+
+  .inm-vigencia-cell--expired {
+    border-color: #f87171 !important;
+    background: linear-gradient(165deg, #fee2e2 0%, #fecaca 100%) !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.28) !important;
+  }
+
+  .inm-vigencia-cell--expired .inm-vigencia-cell__rango {
+    color: #991b1b !important;
+
+    .fa {
+      color: #dc2626 !important;
+    }
+  }
+
+  .inm-vigencia-cell--expired .inm-vigencia-chip--total {
+    color: #991b1b !important;
+    border-color: #fca5a5 !important;
+    background: #fecaca !important;
   }
 }
