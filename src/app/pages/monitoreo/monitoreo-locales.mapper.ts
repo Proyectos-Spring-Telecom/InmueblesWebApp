@@ -10,6 +10,22 @@ export function extraerLocalesInmuebleApi(resp: unknown): Record<string, unknown
   return extraerFilasListadoApi(resp);
 }
 
+/** Lista de locales: omite registros con `estatus` 0 (baja / inactivo). */
+export function registroLocalMonitoreoVisible(
+  row: Record<string, unknown> | null | undefined,
+): boolean {
+  if (row == null) return false;
+  const raw = row['estatus'];
+  if (raw == null || raw === '') return true;
+  return Number(raw) !== 0;
+}
+
+function filtrarRegistrosEstatusCero(
+  filas: Record<string, unknown>[],
+): Record<string, unknown>[] {
+  return filas.filter(registroLocalMonitoreoVisible);
+}
+
 /** URL de fachada del local (`fachadaUrl` en GET `/locales` y `/locales-libres`). */
 export function urlFachadaLocalApi(
   local: Record<string, unknown> | null | undefined,
@@ -461,6 +477,10 @@ export function buildMonitoreoLocalesZonasListaUnica(
   arrendatarios: Record<string, unknown>[],
   idInmueble: number,
 ): Record<string, unknown>[] {
+  localesCatalogo = filtrarRegistrosEstatusCero(localesCatalogo);
+  localesLibres = filtrarRegistrosEstatusCero(localesLibres);
+  arrendatarios = filtrarRegistrosEstatusCero(arrendatarios);
+
   const idsLibres = new Set(
     localesLibres
       .map((l) => Number(l['id']))

@@ -5,7 +5,7 @@
     </div>
     <div class="perm-head__text">
       <span class="eyebrow">Catálogos</span>
-      <h2>Lista de arrendatarios</h2>
+      <h2>Arrendatarios</h2>
     </div>
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Operación</span>
@@ -17,6 +17,40 @@
   </header>
 
   <div class="surface">
+    <div class="clientes-flow-head mb-2">
+      <div class="clientes-search" role="search">
+        <label class="clientes-search-label" for="filtroInmuebleArrendatarios">Buscar inmueble</label>
+        <div class="clientes-search-field" [class.clientes-search-field--open]="filtroInmuebleAbierto"
+          (click)="$event.stopPropagation()">
+          <span class="clientes-search-icon" aria-hidden="true">
+            <mat-icon>search</mat-icon>
+          </span>
+          <button type="button" id="filtroInmuebleArrendatarios"
+            class="clientes-search-input clientes-search-input--select"
+            [class.clientes-search-input--placeholder]="idInmuebleSeleccionado == null" [disabled]="cargandoInmuebles"
+            [attr.aria-expanded]="filtroInmuebleAbierto" aria-haspopup="listbox" (click)="toggleFiltroInmueble($event)">
+            {{ etiquetaInmuebleFiltro }}
+          </button>
+          <ul class="clientes-search-options" role="listbox" *ngIf="filtroInmuebleAbierto">
+            <li role="presentation">
+              <button type="button" role="option" class="clientes-search-option"
+                [class.clientes-search-option--activo]="idInmuebleSeleccionado == null"
+                (click)="onInmuebleFiltroChange(null)">
+                Todos los inmuebles
+              </button>
+            </li>
+            <li role="presentation" *ngFor="let inmueble of listaInmueblesFiltro">
+              <button type="button" role="option" class="clientes-search-option"
+                [class.clientes-search-option--activo]="idInmuebleSeleccionado === inmueble.id"
+                (click)="onInmuebleFiltroChange(inmueble.id)">
+                {{ inmueble.nombre }}
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
       <div *appHasPermission="'47'">
         <button (click)="agregarArrendatario()" mat-flat-button class="bg-secondary">
@@ -26,16 +60,17 @@
       <button (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
       </button>
-      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
+      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info"
+        [disabled]="!puedeExportarExcel()">
         <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
       </button>
     </div>
 
     <div class="mt-3">
-      <dx-data-grid #gridContainer id="gridArrendatarios" class="inm-data-grid inm-data-grid--master-ops" [columnHidingEnabled]="true"
-        [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
-        [rowAlternationEnabled]="true" [dataSource]="listaArrendatarios" [keyExpr]="'id'" [width]="'100%'"
-        [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+      <dx-data-grid #gridContainer id="gridArrendatarios" class="inm-data-grid inm-data-grid--master-ops"
+        [columnHidingEnabled]="true" [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false"
+        [showRowLines]="true" [rowAlternationEnabled]="true" [dataSource]="listaArrendatarios" [keyExpr]="'id'"
+        [width]="'100%'" [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
         [noDataText]="'Sin registros para mostrar'" [pager]="{
           showPageSizeSelector: true,
           allowedPageSizes: [20],
@@ -50,50 +85,28 @@
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-sorting mode="multiple"></dxo-sorting>
-
-        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="220" alignment="center"
-          *appHasPermission="['46', '48', '49']"
-          [allowFiltering]="false" [allowSorting]="false"></dxi-column>
-        <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
-          [allowFiltering]="false" [visible]="false"></dxi-column>
+        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="220" alignment="center" *appHasPermission="['46', '48', '49']" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+        <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false" [allowFiltering]="false" [visible]="false"></dxi-column>
         <dxi-column dataField="numServicios" caption="Servicios" [visible]="false"></dxi-column>
         <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
         <dxi-column dataField="numSocios" caption="Socios" [visible]="false"></dxi-column>
         <dxi-column dataField="numContratos" caption="Contratos" [visible]="false"></dxi-column>
-        <dxi-column dataField="arrendatario" caption="Arrendatario" cellTemplate="arrendatarioTpl" alignment="center"
-          [width]="250" [allowFiltering]="true"></dxi-column>
-        <dxi-column dataField="tipoPersonaLabel" caption="Tipo persona" alignment="center" [width]="180"></dxi-column>
-        <dxi-column dataField="rfc" caption="RFC" alignment="center" [width]="130"></dxi-column>
-        <dxi-column dataField="rentaFmt" caption="Renta" alignment="center" [width]="120"></dxi-column>
-        <dxi-column
-          dataField="vigenciaTexto"
-          caption="Vigencia"
-          cellTemplate="vigenciaTpl"
-          alignment="left"
-          cssClass="inm-col-vigencia"
-          [width]="220"
-          [allowSorting]="true"
-          [allowFiltering]="true"
-        ></dxi-column>
-        <dxi-column dataField="arrendadorNombre" caption="Arrendador" alignment="center" [width]="230"></dxi-column>
+        <dxi-column dataField="arrendatario" caption="Arrendatario" cellTemplate="arrendatarioTpl" alignment="center" [width]="250" [allowFiltering]="true"></dxi-column>
+        <dxi-column dataField="tipoPersonaLabel" caption="Tipo persona" alignment="center" [width]="200"></dxi-column>
+        <dxi-column dataField="rfc" caption="RFC" alignment="center" [width]="150"></dxi-column>
+        <dxi-column dataField="rentaFmt" caption="Renta" alignment="center" [width]="140"></dxi-column>
+        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" alignment="left" cssClass="inm-col-vigencia" [width]="250" [allowSorting]="true" [allowFiltering]="true"></dxi-column>
+        <dxi-column dataField="arrendadorNombre" caption="Arrendador" alignment="center" [width]="250"></dxi-column>
         <dxi-column dataField="inmuebleVinculado" caption="Inmueble" alignment="center" [width]="150"></dxi-column>
-        <dxi-column dataField="direccionInmuebleVinculado" caption="Dirección inmueble" alignment="center" [width]="220"
-          [visible]="false"></dxi-column>
-        <dxi-column caption="Representante legal" cellTemplate="representanteTpl" alignment="center" [width]="200"
-          [allowSorting]="false" [allowFiltering]="false"></dxi-column>
-        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" alignment="center"
-          [width]="110"></dxi-column>
-        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="140"
-          [visible]="false"></dxi-column>
-        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false"
-          alignment="center"></dxi-column>
+        <dxi-column dataField="direccionInmuebleVinculado" caption="Dirección inmueble" alignment="center" [width]="220" [visible]="false"></dxi-column>
+        <dxi-column caption="Representante legal" cellTemplate="representanteTpl" alignment="center" [width]="200" [allowSorting]="false" [allowFiltering]="false"></dxi-column>
+        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" alignment="center" [width]="110"></dxi-column>
+        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="140" [visible]="false"></dxi-column>
+        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false" alignment="center"></dxi-column>
         <dxi-column dataField="correoRepresentante" caption="Correo" [visible]="false" alignment="center"></dxi-column>
-        <dxi-column dataField="telefonoRepresentante" caption="Teléfono" [visible]="false"
-          alignment="center"></dxi-column>
+        <dxi-column dataField="telefonoRepresentante" caption="Teléfono" [visible]="false" alignment="center"></dxi-column>
         <dxi-column dataField="id" caption="ID" alignment="center" [width]="72" [visible]="false"></dxi-column>
-        <dxi-column dataField="etiquetaBusqueda" caption="Texto (búsqueda)" [visible]="false"
-          [allowSorting]="false"></dxi-column>
-
+        <dxi-column dataField="etiquetaBusqueda" caption="Texto (búsqueda)" [visible]="false" [allowSorting]="false"></dxi-column>
         <div *dxTemplate="let cell of 'arrendatarioTpl'">
           <div class="inm-row-card inm-row-card--nombre">
             <div class="inm-row-card__icon" aria-hidden="true">
@@ -102,13 +115,9 @@
             <span class="inm-row-card__title">{{ cell.data.arrendatario }}</span>
           </div>
         </div>
-
         <div *dxTemplate="let cell of 'vigenciaTpl'">
-          <div
-            class="inm-vigencia-cell"
-            [class.inm-vigencia-cell--expired]="cell.data.vigenciaVencida"
-            *ngIf="cell.data.fechaInicioFmt !== '—' && cell.data.fechaFinFmt !== '—'; else vigenciaVacia"
-          >
+          <div class="inm-vigencia-cell" [class.inm-vigencia-cell--expired]="cell.data.vigenciaVencida"
+            *ngIf="cell.data.fechaInicioFmt !== '—' && cell.data.fechaFinFmt !== '—'; else vigenciaVacia">
             <div class="inm-vigencia-cell__rango">
               <i class="fa fa-calendar" aria-hidden="true"></i>
               <span>{{ cell.data.fechaInicioFmt }} – {{ cell.data.fechaFinFmt }}</span>
@@ -119,7 +128,8 @@
                 {{ cell.data.vigenciaDiasTotalTexto }}
               </span>
               <span class="inm-vigencia-chip" [ngClass]="cell.data.vigenciaRestantesClase">
-                <i class="fa" [ngClass]="cell.data.vigenciaVencida ? 'fa-exclamation-triangle' : 'fa-clock-o'" aria-hidden="true"></i>
+                <i class="fa" [ngClass]="cell.data.vigenciaVencida ? 'fa-exclamation-triangle' : 'fa-clock-o'"
+                  aria-hidden="true"></i>
                 {{ cell.data.vigenciaDiasRestantesTexto }}
               </span>
             </div>
@@ -128,11 +138,9 @@
             <span class="inm-cell-line inm-cell-line--muted">—</span>
           </ng-template>
         </div>
-
         <div *dxTemplate="let cell of 'estatusTpl'">
           <span [ngClass]="cell.data.estatusClass">{{ cell.data.estatusLabel }}</span>
         </div>
-
         <div *dxTemplate="let cell of 'representanteTpl'">
           <div class="inm-cell-stack">
             <span class="inm-cell-line">{{ cell.data.representanteNombre }}</span>
@@ -144,7 +152,6 @@
             </span>
           </div>
         </div>
-
         <div *dxTemplate="let cell of 'chipsTpl'">
           <div class="inm-row-chips">
             <span class="inm-chip inm-chip--muted">
@@ -165,7 +172,6 @@
             </span>
           </div>
         </div>
-
         <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
           <div *appHasPermission="'46'">
             <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
@@ -182,30 +188,25 @@
           <div *appHasPermission="'49'">
             <div *ngIf="row.data.tieneMapa">
               <button type="button" id="pinButton" class="btnAcciones" title="Ubicación"
-              (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
-              <i class="fa fa-map-marker"></i>
-            </button>
+                (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
+                <i class="fa fa-map-marker"></i>
+              </button>
             </div>
           </div>
-        <div *appHasPermission="'49'">
-          <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
-            (click)="verDashboardArrendatario(row.data); $event.stopPropagation()">
-            <i class="fa fa-tachometer"></i>
-          </button>
+          <div *appHasPermission="'49'">
+            <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
+              (click)="verDashboardArrendatario(row.data); $event.stopPropagation()">
+              <i class="fa fa-tachometer"></i>
+            </button>
+          </div>
         </div>
-        </div>
-
         <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
-          <app-lista-arrendatarios-detalle
-            [row]="row.data"
-            (contratoCancelado)="refrescarListaArrendatarios()"
-            (detalleModificado)="refrescarListaArrendatarios()"
-          ></app-lista-arrendatarios-detalle>
+          <app-lista-arrendatarios-detalle [row]="row.data" (contratoCancelado)="refrescarListaArrendatarios()"
+            (detalleModificado)="refrescarListaArrendatarios()"></app-lista-arrendatarios-detalle>
         </div>
         <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
       </dx-data-grid>
     </div>
-
     <div class="docs-backdrop" *ngIf="mostrarModalMapa" (click)="cerrarModalMapa()">
       <div class="docs-modal" (click)="$event.stopPropagation()">
         <div class="row docs-modal__header">
@@ -313,7 +314,8 @@
                           <i class="fa fa-envelope-o"></i> {{ dashboardInfo.correoRepresentante }}
                         </span>
                         <span class="dash-info__line">
-                          Vigencia: {{ formatearFecha(dashboardInfo.fechaInicio) }} – {{ formatearFecha(dashboardInfo.fechaFin) }}
+                          Vigencia: {{ formatearFecha(dashboardInfo.fechaInicio) }} – {{
+                          formatearFecha(dashboardInfo.fechaFin) }}
                         </span>
                         <span class="dash-info__line">
                           Renta base: {{ formatearMoneda(dashboardInfo.renta) }}
@@ -345,28 +347,21 @@
                     <div class="dash-chart-wrap dash-chart-wrap--ocupacion" *ngIf="dashboardRentaEstadoData.length">
                       <div class="dash-chart-center" *ngIf="dashboardResumen" aria-hidden="true">
                         <span class="dash-chart-center__value">
-                          {{ dashboardResumen.rentasPagadas }}/{{ dashboardResumen.rentasPagadas + dashboardResumen.rentasPendientes }}
+                          {{ dashboardResumen.rentasPagadas }}/{{ dashboardResumen.rentasPagadas +
+                          dashboardResumen.rentasPendientes }}
                         </span>
                         <span class="dash-chart-center__label">pagadas</span>
                       </div>
-                      <dx-pie-chart
-                        #pieDashboardRentaEstado
-                        id="pieDashboardRentaEstado"
-                        [dataSource]="dashboardRentaEstadoData"
-                        [innerRadius]="0.58"
+                      <dx-pie-chart #pieDashboardRentaEstado id="pieDashboardRentaEstado"
+                        [dataSource]="dashboardRentaEstadoData" [innerRadius]="0.58"
                         [customizePoint]="customizarPuntoRentaEstadoDashboard">
                         <dxi-series argumentField="categoria" valueField="cantidad">
                           <dxo-label [visible]="true" [customizeText]="customizarLabelRentaEstadoDashboard"></dxo-label>
                         </dxi-series>
-                        <dxo-tooltip
-                          [enabled]="true"
-                          container="body"
-                          [zIndex]="zIndexTooltipDashboard"
+                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
                           [customizeTooltip]="customizarTooltipRentaEstadoDashboard">
                         </dxo-tooltip>
-                        <dxo-legend
-                          verticalAlignment="bottom"
-                          horizontalAlignment="center"
+                        <dxo-legend verticalAlignment="bottom" horizontalAlignment="center"
                           [customizeText]="customizarLeyendaRentaEstadoDashboard">
                         </dxo-legend>
                         <dxo-size [height]="200"></dxo-size>
@@ -382,23 +377,18 @@
                   <section class="dash-panel" aria-label="Mensualidad por local">
                     <div class="dash-panel__head">
                       <span class="dash-panel__title">Mensualidad por local</span>
-                      <span class="dash-panel__meta" *ngIf="mensualidadDesdeContratos && dashboardMensualidadData.length">
+                      <span class="dash-panel__meta"
+                        *ngIf="mensualidadDesdeContratos && dashboardMensualidadData.length">
                         Por contrato activo
                       </span>
                     </div>
                     <div class="dash-chart-wrap" *ngIf="dashboardMensualidadData.length">
-                      <dx-chart
-                        #chartDashboardMensualidad
-                        id="chartDashboardMensualidadArr"
-                        [dataSource]="dashboardMensualidadData"
-                        [customizePoint]="customizarPuntoMensualidadDashboard">
+                      <dx-chart #chartDashboardMensualidad id="chartDashboardMensualidadArr"
+                        [dataSource]="dashboardMensualidadData" [customizePoint]="customizarPuntoMensualidadDashboard">
                         <dxo-common-series-settings argumentField="local" type="bar"></dxo-common-series-settings>
                         <dxi-series valueField="mensualidad" name="Mensualidad"></dxi-series>
                         <dxo-legend [visible]="false"></dxo-legend>
-                        <dxo-tooltip
-                          [enabled]="true"
-                          container="body"
-                          [zIndex]="zIndexTooltipDashboard"
+                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
                           [customizeTooltip]="customizarTooltipMensualidadDashboard">
                         </dxo-tooltip>
                         <dxo-size [height]="200"></dxo-size>
@@ -417,18 +407,15 @@
                     <span class="dash-panel__title">Renta del periodo</span>
                     <div class="dash-panel-scroll dash-panel-scroll--renta">
                       <div class="dash-chart-wrap" *ngIf="dashboardRentaPeriodoData.length">
-                        <dx-chart
-                          #chartDashboardRenta
-                          id="chartDashboardRentaArr"
+                        <dx-chart #chartDashboardRenta id="chartDashboardRentaArr"
                           [dataSource]="dashboardRentaPeriodoData">
-                          <dxo-common-series-settings argumentField="periodo" type="stackedBar"></dxo-common-series-settings>
+                          <dxo-common-series-settings argumentField="periodo"
+                            type="stackedBar"></dxo-common-series-settings>
                           <dxi-series valueField="renta" name="Renta" color="#3b82f6"></dxi-series>
                           <dxi-series valueField="mantenimiento" name="Mantenimiento" color="#06b6d4"></dxi-series>
-                          <dxo-legend [visible]="true" verticalAlignment="bottom" horizontalAlignment="center"></dxo-legend>
-                          <dxo-tooltip
-                            [enabled]="true"
-                            container="body"
-                            [zIndex]="zIndexTooltipDashboard"
+                          <dxo-legend [visible]="true" verticalAlignment="bottom"
+                            horizontalAlignment="center"></dxo-legend>
+                          <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
                             [customizeTooltip]="customizarTooltipRentaPeriodoDashboard">
                           </dxo-tooltip>
                           <dxo-size [height]="alturaGraficaRentaDashboard()"></dxo-size>
@@ -442,7 +429,8 @@
                 </div>
               </div>
 
-              <section class="dash-rentas dash-rentas--contratos" aria-label="Contratos en el periodo" *ngIf="dashboardContratos.length">
+              <section class="dash-rentas dash-rentas--contratos" aria-label="Contratos en el periodo"
+                *ngIf="dashboardContratos.length">
                 <div class="row g-2 dash-rentas__header align-items-end">
                   <div class="col-12">
                     <div class="dash-rentas__headline">
@@ -505,7 +493,8 @@
                         </div>
                       </div>
 
-                      <footer class="dash-renta-card__footer row g-2" *ngIf="contrato.localesNombres.length || contrato.observaciones">
+                      <footer class="dash-renta-card__footer row g-2"
+                        *ngIf="contrato.localesNombres.length || contrato.observaciones">
                         <div class="col-6 col-md-4" *ngIf="contrato.localesNombres.length">
                           <span class="dash-pair dash-pair--block">
                             <span class="dash-pair__label">Local:</span>
@@ -535,9 +524,7 @@
 
                 <div class="row g-2 dash-rentas__cards">
                   <div class="col-12" *ngFor="let renta of dashboardRentaActual">
-                    <article
-                      class="dash-renta-card"
-                      [class.dash-renta-card--pagada]="renta.pagada"
+                    <article class="dash-renta-card" [class.dash-renta-card--pagada]="renta.pagada"
                       [class.dash-renta-card--pendiente]="!renta.pagada">
                       <div class="row g-2 align-items-start">
                         <div class="col-6 col-md-4">
@@ -550,7 +537,8 @@
                           <span class="dash-pair dash-pair--block">
                             <span class="dash-pair__label">Estatus:</span>
                             <span class="dash-pair__value">
-                              <span [ngClass]="renta.pagada ? 'dash-badge dash-badge--pagado' : 'dash-badge dash-badge--pendiente'">
+                              <span
+                                [ngClass]="renta.pagada ? 'dash-badge dash-badge--pagado' : 'dash-badge dash-badge--pendiente'">
                                 {{ renta.pagada ? 'Pagada' : 'Pendiente' }}
                               </span>
                             </span>

@@ -1,7 +1,7 @@
 import { OperacionPagosHubConfig } from './operacion-pagos-hub.model';
 
 export const HUB_PAGOS_MES: OperacionPagosHubConfig = {
-  titulo: 'Pagos del mes en curso',
+  titulo: 'Pagos Del Mes En Curso',
   eyebrow: 'Catálogos',
   iconoCabecera: 'event_available',
   migas: [

@@ -18,50 +18,30 @@
     <div class="clientes-flow-head mb-2">
       <div class="clientes-search" role="search">
         <label class="clientes-search-label" for="filtroArrendadorInmuebles">Buscar arrendador</label>
-        <div
-          class="clientes-search-field"
-          [class.clientes-search-field--open]="filtroArrendadorAbierto"
-          (click)="$event.stopPropagation()"
-        >
+        <div class="clientes-search-field" [class.clientes-search-field--open]="filtroArrendadorAbierto"
+          (click)="$event.stopPropagation()">
           <span class="clientes-search-icon" aria-hidden="true">
             <mat-icon>search</mat-icon>
           </span>
-          <button
-            type="button"
-            id="filtroArrendadorInmuebles"
+          <button type="button" id="filtroArrendadorInmuebles"
             class="clientes-search-input clientes-search-input--select"
             [class.clientes-search-input--placeholder]="idArrendadorSeleccionado == null"
-            [disabled]="cargandoArrendadores"
-            [attr.aria-expanded]="filtroArrendadorAbierto"
-            aria-haspopup="listbox"
-            (click)="toggleFiltroArrendador($event)"
-          >
+            [disabled]="cargandoArrendadores" [attr.aria-expanded]="filtroArrendadorAbierto" aria-haspopup="listbox"
+            (click)="toggleFiltroArrendador($event)">
             {{ etiquetaArrendadorFiltro }}
           </button>
-          <ul
-            class="clientes-search-options"
-            role="listbox"
-            *ngIf="filtroArrendadorAbierto"
-          >
+          <ul class="clientes-search-options" role="listbox" *ngIf="filtroArrendadorAbierto">
             <li role="presentation">
-              <button
-                type="button"
-                role="option"
-                class="clientes-search-option"
+              <button type="button" role="option" class="clientes-search-option"
                 [class.clientes-search-option--activo]="idArrendadorSeleccionado == null"
-                (click)="onArrendadorFiltroChange(null)"
-              >
+                (click)="onArrendadorFiltroChange(null)">
                 Todos los arrendadores
               </button>
             </li>
             <li role="presentation" *ngFor="let arrendador of listaArrendadores">
-              <button
-                type="button"
-                role="option"
-                class="clientes-search-option"
+              <button type="button" role="option" class="clientes-search-option"
                 [class.clientes-search-option--activo]="idArrendadorSeleccionado === arrendador.id"
-                (click)="onArrendadorFiltroChange(arrendador.id)"
-              >
+                (click)="onArrendadorFiltroChange(arrendador.id)">
                 {{ arrendador.nombre }}
               </button>
             </li>
@@ -79,16 +59,17 @@
       <button (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
       </button>
-      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
+      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info"
+        [disabled]="!puedeExportarExcel()">
         <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
       </button>
     </div>
 
     <div class="mt-3">
-      <dx-data-grid #gridContainer id="gridInmuebles" class="inm-data-grid inm-data-grid--master-ops" [columnHidingEnabled]="true"
-        [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false" [showRowLines]="true"
-        [rowAlternationEnabled]="true" [dataSource]="listaInmuebles" [keyExpr]="'id'" [width]="'100%'"
-        [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
+      <dx-data-grid #gridContainer id="gridInmuebles" class="inm-data-grid inm-data-grid--master-ops"
+        [columnHidingEnabled]="true" [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false"
+        [showRowLines]="true" [rowAlternationEnabled]="true" [dataSource]="listaInmuebles" [keyExpr]="'id'"
+        [width]="'100%'" [remoteOperations]="{ paging: true }" [paging]="{ pageSize: pageSize }"
         [noDataText]="textoSinDatosGrid" [pager]="{
           showPageSizeSelector: true,
           allowedPageSizes: [20],
@@ -98,8 +79,7 @@
         }" (onPageIndexChanged)="onPageIndexChanged($event)" (onOptionChanged)="onGridOptionChanged($event)"
         (onRowClick)="onMasterRowClick($event)">
 
-        <dxo-search-panel [visible]="true" [width]="240"
-          placeholder="Buscar inmueble..."></dxo-search-panel>
+        <dxo-search-panel [visible]="true" [width]="240" placeholder="Buscar inmueble..."></dxo-search-panel>
         <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
@@ -107,23 +87,30 @@
         <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
 
         <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="320" alignment="center"
-          *appHasPermission="['41', '42']"
-          [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+          *appHasPermission="['41', '42']" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
           [allowFiltering]="false" [visible]="false"></dxi-column>
         <dxi-column dataField="numZonas" caption="Zonas" [visible]="false"></dxi-column>
         <dxi-column dataField="numLocales" caption="Locales" [visible]="false"></dxi-column>
         <dxi-column dataField="numServicios" caption="Servicios" [visible]="false"></dxi-column>
         <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
-        <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="left" cssClass="inm-col-nombre" [width]="250" [allowFiltering]="true"></dxi-column>
-        <dxi-column dataField="arrendadorNombre" caption="Arrendador" [width]="250" alignment="center" cssClass="inm-col-arrendador"></dxi-column>
-        <dxi-column dataField="direccionFiscal" caption="Dirección fiscal" [width]="250" alignment="center"></dxi-column>
-        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="220" alignment="left" cssClass="inm-col-vigencia"></dxi-column>
-        <dxi-column caption="Representante Legal" cellTemplate="representanteTpl" [width]="200" alignment="center" [allowSorting]="false" [allowFiltering]="false"></dxi-column>
-        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" [width]="150" alignment="center"></dxi-column>
-        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false" alignment="center"></dxi-column>
-        <dxi-column dataField="correoRepresentante" caption="Correo representante" [visible]="false" alignment="center"></dxi-column>
-        <dxi-column dataField="telefonoRepresentante" caption="Teléfono representante" [visible]="false" alignment="center"></dxi-column>
+        <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" alignment="left" cssClass="inm-col-nombre"[allowFiltering]="true"></dxi-column>
+        <dxi-column dataField="arrendadorNombre" caption="Arrendador" [width]="250" alignment="center"
+          cssClass="inm-col-arrendador"></dxi-column>
+        <dxi-column dataField="direccionFiscal" caption="Dirección fiscal" [width]="250"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" [width]="220"
+          alignment="left" cssClass="inm-col-vigencia"></dxi-column>
+        <dxi-column caption="Representante Legal" cellTemplate="representanteTpl" [width]="200" alignment="center"
+          [allowSorting]="false" [allowFiltering]="false"></dxi-column>
+        <dxi-column dataField="estatusLabel" caption="Estatus" cellTemplate="estatusTpl" [width]="150"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="representanteNombre" caption="Representante" [visible]="false"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="correoRepresentante" caption="Correo representante" [visible]="false"
+          alignment="center"></dxi-column>
+        <dxi-column dataField="telefonoRepresentante" caption="Teléfono representante" [visible]="false"
+          alignment="center"></dxi-column>
         <div *dxTemplate="let cell of 'inmuebleTpl'">
           <div class="inm-row-card inm-row-card--nombre">
             <div class="inm-row-card__icon" aria-hidden="true">
@@ -133,11 +120,8 @@
           </div>
         </div>
         <div *dxTemplate="let cell of 'vigenciaTpl'">
-          <div
-            class="inm-vigencia-cell"
-            [class.inm-vigencia-cell--expired]="cell.data.vigenciaVencida"
-            *ngIf="cell.data.fechaInicioFmt !== '—' && cell.data.fechaFinFmt !== '—'; else vigenciaVacia"
-          >
+          <div class="inm-vigencia-cell" [class.inm-vigencia-cell--expired]="cell.data.vigenciaVencida"
+            *ngIf="cell.data.fechaInicioFmt !== '—' && cell.data.fechaFinFmt !== '—'; else vigenciaVacia">
             <div class="inm-vigencia-cell__rango">
               <i class="fa fa-calendar" aria-hidden="true"></i>
               <span>{{ cell.data.fechaInicioFmt }} – {{ cell.data.fechaFinFmt }}</span>
@@ -148,7 +132,8 @@
                 {{ cell.data.vigenciaDiasTotalTexto }}
               </span>
               <span class="inm-vigencia-chip" [ngClass]="cell.data.vigenciaRestantesClase">
-                <i class="fa" [ngClass]="cell.data.vigenciaVencida ? 'fa-exclamation-triangle' : 'fa-clock-o'" aria-hidden="true"></i>
+                <i class="fa" [ngClass]="cell.data.vigenciaVencida ? 'fa-exclamation-triangle' : 'fa-clock-o'"
+                  aria-hidden="true"></i>
                 {{ cell.data.vigenciaDiasRestantesTexto }}
               </span>
             </div>
@@ -206,23 +191,13 @@
           </div>
           <div *appHasPermission="'41'">
             @if (row.data.estatusRegistro === 0) {
-            <button
-              type="button"
-              id="activarRegistroButton"
-              class="btnAcciones"
-              title="Activar inmueble"
-              (click)="activarInmueble(row.data); $event.stopPropagation()"
-            >
+            <button type="button" id="activarRegistroButton" class="btnAcciones" title="Activar inmueble"
+              (click)="activarInmueble(row.data); $event.stopPropagation()">
               <i class="fa fa-check-circle"></i>
             </button>
             } @else {
-            <button
-              type="button"
-              id="deleteButton"
-              class="btnAcciones"
-              title="Eliminar inmueble"
-              (click)="eliminarInmueble(row.data); $event.stopPropagation()"
-            >
+            <button type="button" id="deleteButton" class="btnAcciones" title="Eliminar inmueble"
+              (click)="eliminarInmueble(row.data); $event.stopPropagation()">
               <i class="fa fa-trash"></i>
             </button>
             }
@@ -230,18 +205,18 @@
           <div *appHasPermission="'41'">
             <div *ngIf="row.data.tieneMapa">
               <button type="button" id="ubicacionMapaButton" class="btnAcciones" title="Ubicación"
-              (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
-              <i class="fa fa-map-marker"></i>
-            </button>
+                (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
+                <i class="fa fa-map-marker"></i>
+              </button>
             </div>
           </div>
-        <div *appHasPermission="'41'">
-          <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
-            (click)="verDashboardInmueble(row.data); $event.stopPropagation()">
-            <i class="fa fa-tachometer"></i>
-          </button>
-        </div>
-        <div *appHasPermission="'41'">
+          <div *appHasPermission="'41'">
+            <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
+              (click)="verDashboardInmueble(row.data); $event.stopPropagation()">
+              <i class="fa fa-tachometer"></i>
+            </button>
+          </div>
+          <div *appHasPermission="'41'">
             <button type="button" id="ubicacionButton" class="btnAcciones" title="Ocupación del inmueble"
               (click)="verLugarInmueble(row.data); $event.stopPropagation()">
               <i class="fa fa-area-chart"></i>
@@ -250,8 +225,7 @@
         </div>
 
         <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
-          <app-lista-inmuebles-detalle [row]="row.data"
-            (estatusLocalActualizado)="recargarInmueblesPaginated()"
+          <app-lista-inmuebles-detalle [row]="row.data" (estatusLocalActualizado)="recargarInmueblesPaginated()"
             (detalleModificado)="recargarInmueblesPaginated()"></app-lista-inmuebles-detalle>
         </div>
         <dxo-master-detail [enabled]="true" template="detail"></dxo-master-detail>
@@ -289,7 +263,7 @@
 
     <div class="inm-lugar-backdrop docs-backdrop" *ngIf="mostrarModalLugar" (click)="cerrarModalLugar()">
       <div class="docs-modal inm-lugar-modal" (click)="$event.stopPropagation()">
-    
+
         <div class="row docs-modal__header">
           <div class="col-10 col-md-11">
             <span class="docs-modal__eyebrow">Ocupación del inmueble</span>
@@ -301,17 +275,17 @@
             </button>
           </div>
         </div>
-    
+
         <div class="row docs-modal__body inm-lugar-modal__body">
           <div class="col-12 inm-lugar-modal__content">
-    
+
             <!-- Cargando -->
             <div class="oc-empty" *ngIf="lugarCargando">
               <span>Cargando ocupación…</span>
             </div>
-    
+
             <div class="oc-wrap" *ngIf="data && !lugarCargando">
-    
+
               <!-- Tarjetas de resumen -->
               <div class="oc-stats">
                 <div class="oc-stat oc-stat--total">
@@ -352,9 +326,7 @@
                   <div class="oc-locales" *ngIf="zonasProcesadas.length || m2Disponibles > 0">
                     <span class="oc-locales__title">Ocupación por zona</span>
                     <div class="oc-locales__list">
-                      <section
-                        class="oc-zona"
-                        *ngFor="let zona of zonasProcesadas"
+                      <section class="oc-zona" *ngFor="let zona of zonasProcesadas"
                         [attr.aria-label]="zona.nombre || 'Zona ' + zona.numeroZona">
                         <header class="oc-zona__header" *ngIf="zona.nombre">
                           <span class="oc-zona__nombre">{{ zona.nombre }}</span>
@@ -365,12 +337,9 @@
                             </span>
                           </span>
                         </header>
-                        <article
-                          class="oc-local"
-                          *ngFor="let local of zona.locales"
+                        <article class="oc-local" *ngFor="let local of zona.locales"
                           [class.oc-local--activo]="localGraficaHover === local.nombre"
-                          [style.--oc-local-accent]="local.color"
-                          (mouseenter)="resaltarGraficaLocal(local.nombre)"
+                          [style.--oc-local-accent]="local.color" (mouseenter)="resaltarGraficaLocal(local.nombre)"
                           (mouseleave)="resaltarGraficaLocal(null)">
                           <span class="oc-local__dot" [style.background-color]="local.color" aria-hidden="true"></span>
                           <div class="oc-local__main">
@@ -389,12 +358,9 @@
                           </div>
                         </article>
                       </section>
-                      <article
-                        class="oc-local oc-local--disponible"
-                        *ngIf="m2Disponibles > 0"
+                      <article class="oc-local oc-local--disponible" *ngIf="m2Disponibles > 0"
                         [class.oc-local--activo]="localGraficaHover === 'Disponible'"
-                        (mouseenter)="resaltarGraficaLocal('Disponible')"
-                        (mouseleave)="resaltarGraficaLocal(null)">
+                        (mouseenter)="resaltarGraficaLocal('Disponible')" (mouseleave)="resaltarGraficaLocal(null)">
                         <span class="oc-local__dot oc-local__dot--disponible" aria-hidden="true"></span>
                         <div class="oc-local__main">
                           <span class="oc-local__nombre">Disponible</span>
@@ -415,32 +381,17 @@
 
                 <div class="col-6">
                   <div class="oc-dona-wrap" *ngIf="donaData.length">
-                    <dx-pie-chart
-                      #pieOcupacion
-                      id="pieOcupacionInmueble"
-                      [dataSource]="donaData"
-                      [innerRadius]="0.62"
-                      [startAngle]="90"
-                      [resolveLabelOverlapping]="'shift'"
-                      [customizePoint]="customizarPuntoDona">
-                      <dxi-series
-                        argumentField="nombre"
-                        valueField="area">
-                        <dxo-label
-                          [visible]="true"
-                          [customizeText]="customizarLabelDona">
+                    <dx-pie-chart #pieOcupacion id="pieOcupacionInmueble" [dataSource]="donaData" [innerRadius]="0.62"
+                      [startAngle]="90" [resolveLabelOverlapping]="'shift'" [customizePoint]="customizarPuntoDona">
+                      <dxi-series argumentField="nombre" valueField="area">
+                        <dxo-label [visible]="true" [customizeText]="customizarLabelDona">
                           <dxo-font [color]="colorTextoGraficaOcupacion"></dxo-font>
                           <dxo-connector [visible]="true" [width]="1"></dxo-connector>
                         </dxo-label>
                       </dxi-series>
-                      <dxo-tooltip
-                        [enabled]="true"
-                        [customizeTooltip]="customizarTooltipDona">
+                      <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipDona">
                       </dxo-tooltip>
-                      <dxo-legend
-                        verticalAlignment="bottom"
-                        horizontalAlignment="center"
-                        itemTextPosition="right"
+                      <dxo-legend verticalAlignment="bottom" horizontalAlignment="center" itemTextPosition="right"
                         [rowCount]="2">
                         <dxo-font [color]="colorTextoGraficaOcupacion"></dxo-font>
                       </dxo-legend>
@@ -453,23 +404,23 @@
                   </div>
                 </div>
               </div>
-    
+
             </div>
-    
+
             <!-- Sin datos -->
             <div class="oc-empty" *ngIf="!data && !lugarCargando">
               <span>Sin información de ocupación</span>
             </div>
-    
+
           </div>
         </div>
-    
+
         <div class="row docs-modal__footer">
           <div class="col-12 d-flex justify-content-end">
             <button type="button" class="docs-modal__btn" (click)="cerrarModalLugar()">Cerrar</button>
           </div>
         </div>
-    
+
       </div>
     </div>
 
@@ -483,7 +434,8 @@
             <div class="inm-dash-header-bar">
               <p class="docs-modal__subtitle inm-dash-header-bar__dir" *ngIf="dashboardInmueble">
                 {{ dashboardInmueble.direccionFiscal }}
-                <span *ngIf="dashboardInmueble.totalM2"> · {{ dashboardInmueble.totalM2.toLocaleString('es-MX') }} m²</span>
+                <span *ngIf="dashboardInmueble.totalM2"> · {{ dashboardInmueble.totalM2.toLocaleString('es-MX') }}
+                  m²</span>
                 <span *ngIf="dashboardInmueble.estado"> · {{ dashboardInmueble.estado }}</span>
               </p>
               <div class="inm-dash-filtros">
@@ -494,8 +446,8 @@
                 </label>
                 <label class="inm-dash-filtros__inline" for="dash-fecha-fin">
                   <span class="inm-dash-filtros__label">Hasta</span>
-                  <input id="dash-fecha-fin" type="date" class="inm-dash-filtros__input"
-                    [(ngModel)]="dashboardFechaFin" (change)="aplicarFiltroDashboard()" />
+                  <input id="dash-fecha-fin" type="date" class="inm-dash-filtros__input" [(ngModel)]="dashboardFechaFin"
+                    (change)="aplicarFiltroDashboard()" />
                 </label>
               </div>
             </div>
@@ -576,27 +528,17 @@
                         </span>
                         <span class="dash-chart-center__label">locales</span>
                       </div>
-                      <dx-pie-chart
-                        #pieDashboardOcupacion
-                        id="pieDashboardOcupacion"
-                        [dataSource]="dashboardOcupacionData"
-                        [innerRadius]="0.58"
+                      <dx-pie-chart #pieDashboardOcupacion id="pieDashboardOcupacion"
+                        [dataSource]="dashboardOcupacionData" [innerRadius]="0.58"
                         [customizePoint]="customizarPuntoOcupacionDashboard">
                         <dxi-series argumentField="categoria" valueField="cantidad">
-                          <dxo-label
-                            [visible]="true"
-                            [customizeText]="customizarLabelOcupacionDashboard">
+                          <dxo-label [visible]="true" [customizeText]="customizarLabelOcupacionDashboard">
                           </dxo-label>
                         </dxi-series>
-                        <dxo-tooltip
-                          [enabled]="true"
-                          container="body"
-                          [zIndex]="zIndexTooltipDashboard"
+                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
                           [customizeTooltip]="customizarTooltipOcupacionDashboard">
                         </dxo-tooltip>
-                        <dxo-legend
-                          verticalAlignment="bottom"
-                          horizontalAlignment="center"
+                        <dxo-legend verticalAlignment="bottom" horizontalAlignment="center"
                           [customizeText]="customizarLeyendaOcupacionDashboard">
                         </dxo-legend>
                         <dxo-size [height]="200"></dxo-size>
@@ -612,18 +554,12 @@
                   <section class="dash-panel" aria-label="Mensualidad base por local">
                     <span class="dash-panel__title">Mensualidad base por local</span>
                     <div class="dash-chart-wrap" *ngIf="dashboardMensualidadData.length">
-                      <dx-chart
-                        #chartDashboardMensualidad
-                        id="chartDashboardMensualidad"
-                        [dataSource]="dashboardMensualidadData"
-                        [customizePoint]="customizarPuntoMensualidadDashboard">
+                      <dx-chart #chartDashboardMensualidad id="chartDashboardMensualidad"
+                        [dataSource]="dashboardMensualidadData" [customizePoint]="customizarPuntoMensualidadDashboard">
                         <dxo-common-series-settings argumentField="local" type="bar"></dxo-common-series-settings>
                         <dxi-series valueField="mensualidad" name="Mensualidad"></dxi-series>
                         <dxo-legend [visible]="false"></dxo-legend>
-                        <dxo-tooltip
-                          [enabled]="true"
-                          container="body"
-                          [zIndex]="zIndexTooltipDashboard"
+                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
                           [customizeTooltip]="customizarTooltipMensualidadDashboard">
                         </dxo-tooltip>
                         <dxo-size [height]="200"></dxo-size>
@@ -642,18 +578,14 @@
                     <span class="dash-panel__title">Renta del mes</span>
                     <div class="dash-panel-scroll dash-panel-scroll--renta">
                       <div class="dash-chart-wrap" *ngIf="dashboardRentaData.length">
-                        <dx-chart
-                          #chartDashboardRenta
-                          id="chartDashboardRenta"
-                          [dataSource]="dashboardRentaData">
-                          <dxo-common-series-settings argumentField="arrendatario" type="stackedBar"></dxo-common-series-settings>
+                        <dx-chart #chartDashboardRenta id="chartDashboardRenta" [dataSource]="dashboardRentaData">
+                          <dxo-common-series-settings argumentField="arrendatario"
+                            type="stackedBar"></dxo-common-series-settings>
                           <dxi-series valueField="renta" name="Renta" color="#3b82f6"></dxi-series>
                           <dxi-series valueField="mantenimiento" name="Mantenimiento" color="#06b6d4"></dxi-series>
-                          <dxo-legend [visible]="true" verticalAlignment="bottom" horizontalAlignment="center"></dxo-legend>
-                          <dxo-tooltip
-                            [enabled]="true"
-                            container="body"
-                            [zIndex]="zIndexTooltipDashboard"
+                          <dxo-legend [visible]="true" verticalAlignment="bottom"
+                            horizontalAlignment="center"></dxo-legend>
+                          <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
                             [customizeTooltip]="customizarTooltipRentaDashboard">
                           </dxo-tooltip>
                           <dxo-size [height]="alturaGraficaRentaDashboard()"></dxo-size>
@@ -669,7 +601,8 @@
                 <div class="col-12 col-lg-7">
                   <section class="dash-panel" aria-label="Zonas y locales">
                     <span class="dash-panel__title">Zonas y locales</span>
-                    <div class="dash-panel-scroll dash-panel-scroll--zonas" *ngIf="dashboardZonas.length; else sinZonasDash">
+                    <div class="dash-panel-scroll dash-panel-scroll--zonas"
+                      *ngIf="dashboardZonas.length; else sinZonasDash">
                       <div class="dash-zonas">
                         <article class="dash-zona" *ngFor="let zona of dashboardZonas">
                           <header class="dash-zona__header">
@@ -702,10 +635,12 @@
                 </div>
               </div>
 
-              <section class="dash-panel dash-panel--arr" aria-label="Arrendatarios" *ngIf="dashboardArrendatarios.length">
+              <section class="dash-panel dash-panel--arr" aria-label="Arrendatarios"
+                *ngIf="dashboardArrendatarios.length">
                 <div class="dash-panel__head dash-panel__head--arr">
                   <span class="dash-panel__title">Arrendatarios</span>
-                  <span class="dash-panel__meta">{{ dashboardArrendatarios.length }} registrado{{ dashboardArrendatarios.length === 1 ? '' : 's' }}</span>
+                  <span class="dash-panel__meta">{{ dashboardArrendatarios.length }} registrado{{
+                    dashboardArrendatarios.length === 1 ? '' : 's' }}</span>
                 </div>
                 <div class="dash-arr-grid">
                   <article class="dash-arr" *ngFor="let arr of dashboardArrendatarios">
@@ -746,7 +681,8 @@
                         <span class="dash-pair dash-pair--block">
                           <span class="dash-pair__label">Contrato:</span>
                           <span class="dash-pair__value">
-                            {{ formatearFecha(arr.contratoActivo.fechaInicio) }} – {{ formatearFecha(arr.contratoActivo.fechaFin) }}
+                            {{ formatearFecha(arr.contratoActivo.fechaInicio) }} – {{
+                            formatearFecha(arr.contratoActivo.fechaFin) }}
                           </span>
                         </span>
                       </div>
@@ -759,7 +695,8 @@
                           <span class="dash-pair dash-pair--block"
                             *ngIf="arr.contratoActivo.mantenimientoTotal != null">
                             <span class="dash-pair__label">Mantenimiento:</span>
-                            <span class="dash-pair__value">{{ formatearMoneda(arr.contratoActivo.mantenimientoTotal) }}</span>
+                            <span class="dash-pair__value">{{ formatearMoneda(arr.contratoActivo.mantenimientoTotal)
+                              }}</span>
                           </span>
                         </div>
                       </div>

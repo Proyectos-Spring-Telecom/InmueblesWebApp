@@ -568,6 +568,7 @@ export class ListaRegistroServiciosArrendatariosComponent implements OnInit {
 
   cerrarModalPago(): void {
     this.mostrarModalPago = false;
+    this.pagoComprobanteDragging = false;
     this.cdr.markForCheck();
   }
 
@@ -628,6 +629,40 @@ export class ListaRegistroServiciosArrendatariosComponent implements OnInit {
     if (conceptoActual) return;
     this.pagoForm?.patchValue({ concepto: etiqueta });
     this.cdr.markForCheck();
+  }
+
+  pagoComprobanteDragging = false;
+
+  onPagoComprobanteDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    this.pagoComprobanteDragging = true;
+  }
+
+  onPagoComprobanteDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const next = event.relatedTarget as Node | null;
+    const current = event.currentTarget as Node | null;
+    if (next && current?.contains(next)) return;
+    this.pagoComprobanteDragging = false;
+  }
+
+  onPagoComprobanteDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.pagoComprobanteDragging = false;
+    const file = event.dataTransfer?.files?.[0] ?? null;
+    if (!file) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    const change = new Event('change');
+    Object.defineProperty(change, 'target', { value: input });
+    this.onPagoComprobanteFileSelected(change);
   }
 
   onPagoComprobanteFileSelected(event: Event): void {

@@ -1,12 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { DxDataGridComponent, DxPieChartComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
-import { lastValueFrom } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { lastValueFrom, of } from 'rxjs';
+import { catchError, take } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
+import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
+import { mapInmueblesApiToGridRows } from '../../inmuebles/inmuebles-list.mapper';
 import {
   exportarDxDataGridExcel,
   gridTieneDatosParaExportar,
@@ -32,6 +34,11 @@ import {
   formatearMoneda,
   normalizarDashboardArrendatario,
 } from '../arrendatario-dashboard.mapper';
+
+interface InmuebleFiltroItem {
+  id: number;
+  nombre: string;
+}
 
 @Component({
   selector: 'app-lista-arrendatarios',
@@ -82,6 +89,11 @@ export class ListaArrendatariosComponent implements OnInit {
   formatearMoneda = formatearMoneda;
   etiquetaMes = etiquetaMes;
 
+  public listaInmueblesFiltro: InmuebleFiltroItem[] = [];
+  public idInmuebleSeleccionado: number | null = null;
+  public cargandoInmuebles = false;
+  public filtroInmuebleAbierto = false;
+
   @ViewChild('pieDashboardRentaEstado', { static: false })
   pieDashboardRentaEstado?: DxPieChartComponent;
 
@@ -94,11 +106,20 @@ export class ListaArrendatariosComponent implements OnInit {
   constructor(
     private router: Router,
     private arrendatariosService: ArrendatariosService,
+    private inmueblesService: InmueblesService,
     private cdr: ChangeDetectorRef,
   ) {}
 
+  get etiquetaInmuebleFiltro(): string {
+    if (this.cargandoInmuebles) return 'Cargando inmuebles…';
+    const id = this.idInmuebleSeleccionado;
+    if (id == null) return 'Todos los inmuebles';
+    return this.listaInmueblesFiltro.find((i) => i.id === id)?.nombre ?? 'Todos los inmuebles';
+  }
+
   ngOnInit(): void {
     this.setupDataSource();
+    this.cargarInmuebles();
   }
 
   agregarArrendatario(): void {
@@ -166,39 +187,59 @@ export class ListaArrendatariosComponent implements OnInit {
         const skip = Number(loadOptions?.skip) || 0;
         const page = Math.floor(skip / take) + 1;
 
+        const idInmueble = this.idInmuebleSeleccionado;
         try {
-          const resp = (await lastValueFrom(
-            this.arrendatariosService.obtenerArrendatariosPaginated(page, take),
-          )) as Record<string, unknown>;
+          if (idInmueble == null) {
+            const resp = (await lastValueFrom(
+              this.arrendatariosService.obtenerArrendatariosPaginated(page, take),
+            )) as Record<string, unknown>;
+            this.loading = false;
+            const rowsRaw = resp?.['data'];
+            const rows: unknown[] = Array.isArray(rowsRaw) ? rowsRaw : [];
+            const meta =
+              resp?.['paginated'] != null && typeof resp['paginated'] === 'object'
+                ? (resp['paginated'] as Record<string, unknown>)
+                : {};
+            const totalRegistros =
+              toNum(meta['total']) ?? toNum(resp?.['total']) ?? rows.length;
+            const paginaActual = toNum(meta['page']) ?? toNum(resp?.['page']) ?? page;
+            const totalPaginas =
+              toNum(meta['lastPage']) ??
+              toNum(resp?.['pages']) ??
+              Math.max(1, Math.ceil(totalRegistros / take));
+
+            const dataTransformada = mapArrendatariosApiToGridRows(rows);
+
+            this.totalRegistros = totalRegistros;
+            this.paginaActual = paginaActual;
+            this.totalPaginas = totalPaginas;
+            this.paginaActualData = dataTransformada;
+
+            return {
+              data: dataTransformada,
+              totalCount: totalRegistros,
+            };
+          }
+
+          const resp = await lastValueFrom(
+            this.arrendatariosService.obtenerArrendatariosPorInmueble(idInmueble),
+          );
           this.loading = false;
-          const rowsRaw = resp?.['data'];
-          const rows: unknown[] = Array.isArray(rowsRaw) ? rowsRaw : [];
-          const meta =
-            resp?.['paginated'] != null && typeof resp['paginated'] === 'object'
-              ? (resp['paginated'] as Record<string, unknown>)
-              : {};
-          const totalRegistros =
-            toNum(meta['total']) ?? toNum(resp?.['total']) ?? rows.length;
-          const paginaActual = toNum(meta['page']) ?? toNum(resp?.['page']) ?? page;
-          const totalPaginas =
-            toNum(meta['lastPage']) ??
-            toNum(resp?.['pages']) ??
-            Math.max(1, Math.ceil(totalRegistros / take));
-
+          const rows = this.extraerFilasArrendatariosApi(resp);
           const dataTransformada = mapArrendatariosApiToGridRows(rows);
-
-          this.totalRegistros = totalRegistros;
-          this.paginaActual = paginaActual;
-          this.totalPaginas = totalPaginas;
+          this.totalRegistros = dataTransformada.length;
+          this.paginaActual = page;
+          this.totalPaginas = Math.max(1, Math.ceil(dataTransformada.length / take));
           this.paginaActualData = dataTransformada;
-
           return {
-            data: dataTransformada,
-            totalCount: totalRegistros,
+            data: dataTransformada.slice(skip, skip + take),
+            totalCount: dataTransformada.length,
           };
         } catch (err) {
           this.loading = false;
           console.error('Error en la solicitud de arrendatarios:', err);
+          this.totalRegistros = 0;
+          this.paginaActualData = [];
           return { data: [], totalCount: 0 };
         }
       },
@@ -263,7 +304,89 @@ export class ListaArrendatariosComponent implements OnInit {
     this.dataGrid?.instance?.refresh();
   }
 
+  onInmuebleFiltroChange(id: number | null): void {
+    const n = Number(id);
+    this.idInmuebleSeleccionado = Number.isFinite(n) && n > 0 ? n : null;
+    this.filtroInmuebleAbierto = false;
+    this.reiniciarBusquedaGrid();
+    this.refrescarGridArrendatarios();
+  }
+
+  toggleFiltroInmueble(ev?: Event): void {
+    ev?.stopPropagation();
+    if (this.cargandoInmuebles) return;
+    this.filtroInmuebleAbierto = !this.filtroInmuebleAbierto;
+  }
+
+  @HostListener('document:click')
+  cerrarFiltroInmueble(): void {
+    if (!this.filtroInmuebleAbierto) return;
+    this.filtroInmuebleAbierto = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  cerrarFiltroInmuebleTecla(): void {
+    if (!this.filtroInmuebleAbierto) return;
+    this.filtroInmuebleAbierto = false;
+  }
+
+  private cargarInmuebles(): void {
+    this.cargandoInmuebles = true;
+    this.inmueblesService
+      .obtenerInmueblesData(1, 500)
+      .pipe(
+        take(1),
+        catchError((err) => {
+          console.error('Error al cargar inmuebles:', err);
+          return of(null);
+        }),
+      )
+      .subscribe((res) => {
+        const r = res as { data?: unknown[] } | unknown[] | null;
+        const rows = Array.isArray(r) ? r : ((r as { data?: unknown[] } | null)?.data ?? []);
+        this.listaInmueblesFiltro = mapInmueblesApiToGridRows(Array.isArray(rows) ? rows : [])
+          .filter((i) => Number.isFinite(i.id) && i.id > 0)
+          .map((i) => ({
+            id: i.id,
+            nombre: String(i.inmueble || `Inmueble #${i.id}`).trim() || `Inmueble #${i.id}`,
+          }));
+        this.cargandoInmuebles = false;
+        this.cdr.markForCheck();
+      });
+  }
+
+  private extraerFilasArrendatariosApi(resp: unknown): unknown[] {
+    if (Array.isArray(resp)) return resp;
+    if (resp != null && typeof resp === 'object') {
+      const r = resp as Record<string, unknown>;
+      if (Array.isArray(r['data'])) return r['data'];
+      if (Array.isArray(r['arrendatarios'])) return r['arrendatarios'];
+    }
+    return [];
+  }
+
+  private reiniciarBusquedaGrid(): void {
+    this.filtroActivo = '';
+    const grid = this.dataGrid?.instance;
+    if (!grid) return;
+    grid.option('searchPanel.text', '');
+    grid.option('dataSource', this.listaArrendatarios);
+  }
+
+  private refrescarGridArrendatarios(): void {
+    const grid = this.dataGrid?.instance;
+    if (!grid) {
+      this.cdr.markForCheck();
+      return;
+    }
+    grid.pageIndex(0);
+    grid.refresh();
+    this.cdr.markForCheck();
+  }
+
   limpiarVista(): void {
+    this.idInmuebleSeleccionado = null;
+    this.filtroInmuebleAbierto = false;
     const inst = this.dataGrid?.instance;
     if (!inst) return;
     inst.clearFilter();

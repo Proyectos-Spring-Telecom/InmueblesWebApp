@@ -13,6 +13,13 @@ export function extraerInmueblesListadoApi(resp: unknown): InmuebleApiItem[] {
   return extraerFilasListadoApi(resp) as InmuebleApiItem[];
 }
 
+/** Monitoreo: solo inmuebles con `estatus` 1 (Activo) del GET `/inmuebles/arrendador/{id}`. */
+export function filtrarInmueblesActivosMonitoreo(
+  filas: InmuebleApiItem[],
+): InmuebleApiItem[] {
+  return filas.filter((item) => Number(item.estatus) === 1);
+}
+
 /** @deprecated Usar {@link extraerInmueblesListadoApi}. */
 export function extraerInmueblesPaginatedApi(resp: unknown): InmuebleApiItem[] {
   return extraerInmueblesListadoApi(resp);

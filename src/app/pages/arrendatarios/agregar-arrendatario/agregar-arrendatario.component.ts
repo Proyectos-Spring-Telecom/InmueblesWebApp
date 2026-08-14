@@ -2651,6 +2651,67 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.pagosFormArray.push(this.crearPagoFormGroup());
   }
 
+  uploaderDraggingKey: string | null = null;
+
+  onUploaderDragOver(event: DragEvent, key: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    this.uploaderDraggingKey = key;
+  }
+
+  onUploaderDragLeave(event: DragEvent, key: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.uploaderDraggingKey === key) this.uploaderDraggingKey = null;
+  }
+
+  private archivoDesdeDrop(event: DragEvent): File | null {
+    event.preventDefault();
+    event.stopPropagation();
+    this.uploaderDraggingKey = null;
+    return event.dataTransfer?.files?.[0] ?? null;
+  }
+
+  private eventoCambioDesdeArchivo(file: File): Event {
+    const input = document.createElement('input');
+    input.type = 'file';
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    const event = new Event('change');
+    Object.defineProperty(event, 'target', { value: input });
+    return event;
+  }
+
+  onDocumentoDrop(event: DragEvent, controlName: string): void {
+    const file = this.archivoDesdeDrop(event);
+    if (!file) return;
+    this.onFileSelected(this.eventoCambioDesdeArchivo(file), controlName);
+  }
+
+  onServicioPagoDrop(event: DragEvent, index: number): void {
+    const file = this.archivoDesdeDrop(event);
+    if (!file) return;
+    this.onServicioPagoFileSelected(this.eventoCambioDesdeArchivo(file), index);
+  }
+
+  onGaleriaDrop(event: DragEvent, index: number): void {
+    const file = this.archivoDesdeDrop(event);
+    if (!file) return;
+    this.onGaleriaFileSelected(this.eventoCambioDesdeArchivo(file), index);
+  }
+
+  onSocioDrop(
+    event: DragEvent,
+    index: number,
+    field: 'constanciaFiscalArchivo' | 'comprobanteDomicilioArchivo' | 'identificacionOficialArchivo',
+  ): void {
+    const file = this.archivoDesdeDrop(event);
+    if (!file) return;
+    this.onSocioFileSelected(this.eventoCambioDesdeArchivo(file), index, field);
+  }
+
   onServicioPagoFileSelected(event: Event, index: number): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;

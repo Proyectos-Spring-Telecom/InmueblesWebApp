@@ -103,6 +103,40 @@ function fechaGridDesdeApi(raw?: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Detalle del local: no muestra hijos con `estatus` 0 (baja / inactivo). */
+function registroHijoDetalleVisible(
+  row: { estatus?: number } | Record<string, unknown> | null | undefined,
+): boolean {
+  if (row == null) return false;
+  const raw = (row as Record<string, unknown>)['estatus'];
+  if (raw == null || raw === '') return true;
+  return Number(raw) !== 0;
+}
+
+function archivosVisiblesArrendatario(
+  item: ArrendatarioApiItem,
+): ArrendatarioArchivoApi[] {
+  return (Array.isArray(item.archivos) ? item.archivos : []).filter(
+    registroHijoDetalleVisible,
+  );
+}
+
+function serviciosVisiblesArrendatario(
+  item: ArrendatarioApiItem,
+): ArrendatarioServicioApi[] {
+  return (Array.isArray(item.servicios) ? item.servicios : []).filter(
+    registroHijoDetalleVisible,
+  );
+}
+
+function contratosVisiblesArrendatario(
+  item: ArrendatarioApiItem,
+): ArrendatarioContratoApi[] {
+  return (Array.isArray(item.contratos) ? item.contratos : []).filter(
+    registroHijoDetalleVisible,
+  );
+}
+
 export function extraerArrendatarioDetalleApi(res: unknown): ArrendatarioApiItem | null {
   if (res == null || typeof res !== 'object') return null;
   const r = res as Record<string, unknown>;
@@ -152,7 +186,7 @@ export function nombreInmuebleDesdeArrendatarioApi(
 export function buildExpedienteArrendatarioLista(
   item: ArrendatarioApiItem,
 ): MonitoreoExpedienteDoc[] {
-  const archivos = Array.isArray(item.archivos) ? item.archivos : [];
+  const archivos = archivosVisiblesArrendatario(item);
   return archivos
     .filter((a) => String(a?.url ?? '').trim() || String(a?.nombre ?? '').trim())
     .sort((a, b) =>
@@ -173,7 +207,7 @@ export function buildExpedienteArrendatarioLista(
 export function buildServiciosMonitoreoArrendatario(
   item: ArrendatarioApiItem,
 ): MonitoreoServicioFila[] {
-  const servicios = Array.isArray(item.servicios) ? item.servicios : [];
+  const servicios = serviciosVisiblesArrendatario(item);
   return servicios.map((s) => {
     const tipo = s.tipoServicio;
     const concepto =
@@ -193,7 +227,7 @@ export function buildServiciosMonitoreoArrendatario(
 export function serviciosArrendatarioPagoOpciones(
   item: ArrendatarioApiItem,
 ): ServicioArrendatarioPagoOpcion[] {
-  const servicios = Array.isArray(item.servicios) ? item.servicios : [];
+  const servicios = serviciosVisiblesArrendatario(item);
   return servicios
     .map((s) => {
       const id = Number(s.id);
@@ -207,7 +241,7 @@ export function serviciosArrendatarioPagoOpciones(
 }
 
 export function urlsGaleriaArrendatario(item: ArrendatarioApiItem): string[] {
-  const archivos = Array.isArray(item.archivos) ? item.archivos : [];
+  const archivos = archivosVisiblesArrendatario(item);
   const vistos = new Set<string>();
   return archivos
     .filter((a) => {
@@ -229,7 +263,7 @@ export function urlsGaleriaArrendatario(item: ArrendatarioApiItem): string[] {
 export function archivoContratoRentaArrendatario(
   item: ArrendatarioApiItem,
 ): { url: string; nombre: string } | null {
-  const archivos = Array.isArray(item.archivos) ? item.archivos : [];
+  const archivos = archivosVisiblesArrendatario(item);
   for (const a of archivos) {
     const nombre = String(a.nombre ?? '').trim();
     const url = String(a.url ?? '').trim();
@@ -249,7 +283,9 @@ export function archivoContratoRentaArrendatario(
 export function urlDocumentacionArrendatario(item: ArrendatarioApiItem): string {
   const contrato = archivoContratoRentaArrendatario(item);
   if (contrato?.url) return contrato.url;
-  const fachada = urlFachadaDesdeArchivos(item as Record<string, unknown>);
+  const fachada = urlFachadaDesdeArchivos({
+    archivos: archivosVisiblesArrendatario(item),
+  });
   if (fachada) return fachada;
   const galeria = urlsGaleriaArrendatario(item);
   return galeria[0] ?? '';
@@ -304,6 +340,7 @@ export function idLocalesDesdeContratoApi(
     for (const raw of filas) {
       if (raw == null || typeof raw !== 'object') continue;
       const fila = raw as Record<string, unknown>;
+      if (!registroHijoDetalleVisible(fila)) continue;
       const idFila = Number(fila['idLocal']);
       if (Number.isFinite(idFila) && idFila > 0) {
         ids.add(Math.trunc(idFila));
@@ -437,7 +474,7 @@ export function contratosParaLocalEnArrendatario(
   idInmueble: number | null,
   mensualidadLocal?: number | null,
 ): ArrendatarioContratoApi[] {
-  const contratos = Array.isArray(item.contratos) ? item.contratos : [];
+  const contratos = contratosVisiblesArrendatario(item);
   if (!contratos.length) return [];
 
   if (idLocal != null && idLocal > 0) {
@@ -528,7 +565,7 @@ export function seleccionarContratoArrendatario(
 export function urlContratoRentaArrendatario(
   item: ArrendatarioApiItem,
 ): string | null {
-  const archivos = Array.isArray(item.archivos) ? item.archivos : [];
+  const archivos = archivosVisiblesArrendatario(item);
   for (const a of archivos) {
     const nombre = String(a.nombre ?? '').trim().toLowerCase();
     const url = String(a.url ?? '').trim();
@@ -582,6 +619,7 @@ export function extraerServiciosArrendatarioListaPago(resp: unknown): ServicioAr
   const out: ServicioArrendatarioListaPago[] = [];
   for (const item of rows) {
     const row = item as Record<string, unknown>;
+    if (!registroHijoDetalleVisible(row)) continue;
     const id = Number(row['id']);
     if (!Number.isFinite(id) || id <= 0) continue;
     const tipoObj = row['tipoServicio'];

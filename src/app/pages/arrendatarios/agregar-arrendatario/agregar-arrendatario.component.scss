@@ -1014,6 +1014,7 @@
 
 .uploader-wrap .uploader__cta,
 .socios-docs .uploader__cta,
+.srv-pago-uploader .uploader__cta,
 .srv-pago-uploader .srv-pago-uploader__row {
   display: flex;
   align-items: center;
@@ -1060,6 +1061,57 @@
 .uploader-wrap .uploader__badge.uploader__badge--clickable,
 .socios-docs .uploader__badge.uploader__badge--clickable {
   cursor: pointer;
+}
+
+.docs-uploader-ver-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  flex: 0 0 auto;
+  min-height: 2rem;
+  padding: 0 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  text-transform: capitalize;
+  --mdc-filled-button-container-color: rgba(15, 48, 92, 0.82);
+  --mdc-filled-button-label-text-color: #ffffff;
+  --mdc-filled-button-icon-color: #ffffff;
+  background: rgba(15, 48, 92, 0.82) !important;
+  border: 1px solid rgba(96, 165, 250, 0.72) !important;
+  color: #ffffff !important;
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    color: #ffffff;
+  }
+}
+
+.uploader-wrap .uploader__cta button.docs-uploader-ver-btn,
+.socios-docs .uploader__cta button.docs-uploader-ver-btn,
+.srv-pago-uploader .uploader__cta button.docs-uploader-ver-btn {
+  --mdc-filled-button-container-color: rgba(15, 48, 92, 0.82);
+  background: rgba(15, 48, 92, 0.82) !important;
+  border: 1px solid rgba(96, 165, 250, 0.72) !important;
+  color: #ffffff !important;
+}
+
+.uploader-wrap .uploader__cta.uploader__cta--archivo-remoto,
+.socios-docs .uploader__cta.uploader__cta--archivo-remoto,
+.srv-pago-uploader .uploader__cta.uploader__cta--archivo-remoto {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.srv-pago-uploader .uploader__cta .docs-uploader-ver-btn {
+  align-self: center;
 }
 
 .docs-uploader-inline-btn {

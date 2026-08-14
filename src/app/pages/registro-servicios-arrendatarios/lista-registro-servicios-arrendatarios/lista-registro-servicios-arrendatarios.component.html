@@ -5,7 +5,7 @@
     </div>
     <div class="perm-head__text">
       <span class="eyebrow">Reportes</span>
-      <h2>Servicios arrendatarios</h2>
+      <h2>Servicios Arrendatarios</h2>
     </div>
     <nav class="perm-head__crumbs" aria-label="Ruta">
       <span class="crumb">Reportes</span>
@@ -280,7 +280,7 @@
     >
       <div class="row docs-modal__header">
         <div class="col-10 col-md-11">
-          <h3 class="docs-modal__title" id="reg-srv-arr-pago-title">Agregar pago</h3>
+          <h3 class="docs-modal__title" id="reg-srv-arr-pago-title">Agregar Pago</h3>
           <p class="docs-modal__subtitle">Captura el pago del arrendatario y adjunta el comprobante.</p>
         </div>
         <div class="col-2 col-md-1 docs-modal__close-col">
@@ -469,11 +469,15 @@
                   <div
                     class="mono-pago-file"
                     [class.mono-pago-file--filled]="!!pagoForm.get('comprobantePagoNombre')?.value"
+                    [class.mono-pago-file--dragging]="pagoComprobanteDragging"
                     role="button"
                     tabindex="0"
                     (click)="pagoComprobanteInput.click()"
                     (keydown.enter)="pagoComprobanteInput.click()"
                     (keydown.space)="$event.preventDefault(); pagoComprobanteInput.click()"
+                    (dragover)="onPagoComprobanteDragOver($event)"
+                    (dragleave)="onPagoComprobanteDragLeave($event)"
+                    (drop)="onPagoComprobanteDrop($event)"
                   >
                     <div class="mono-pago-file__icon" aria-hidden="true">
                       <mat-icon>{{

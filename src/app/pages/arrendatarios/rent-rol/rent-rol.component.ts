@@ -19,11 +19,19 @@ import { ClientesService } from 'src/app/services/moduleService/clientes.service
 import { HistoricoPagosRentaService } from 'src/app/services/moduleService/historico-pagos-renta.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import {
+  contarMontoSimbolosAntesCursor,
+  cursorMontoTrasFormato,
+  formatMonedaAlEscribir,
+  formatMonedaDesdeNumeroNatural,
+  parseMonedaNumerico,
+} from 'src/app/shared/valor-miles-format';
+import {
   calcularMontosRentRolCaptura,
   construirFormDataArrendatarioCaptura,
   mapClientesAOpciones,
   mapInmueblesAOpciones,
   mapLocalesLibresAOpciones,
+  redondearMontoRentRol,
   RentRolLocalOpcion,
   RentRolMontosPreview,
   RentRolSelectOpcion,
@@ -155,6 +163,10 @@ export class RentRolComponent implements OnInit, OnDestroy {
   localesSeleccionados = new Set<number>();
   /** Misma semántica que agregar-arrendatario: UI «Sí» = sin capturar mantto (form 0). */
   switchManttoSi = true;
+  /** Vista con `$` del subtotal; el FormControl guarda el número. */
+  capturaSubtotalDisplay = '';
+  private capturaMontosBlurTimer: ReturnType<typeof setTimeout> | undefined;
+  private capturaCalcCampoFoco: Record<string, boolean> = {};
   montosPreview: RentRolMontosPreview = calcularMontosRentRolCaptura({
     metros: null,
     subTotalRenta: null,
@@ -309,17 +321,20 @@ export class RentRolComponent implements OnInit, OnDestroy {
   }
 
   get switchManttoHabilitado(): boolean {
-    const sub = Number(this.capturaForm?.get('subTotalRenta')?.value);
-    return Number.isFinite(sub) && sub > 0;
+    const fromCtrl = Number(this.capturaForm?.get('subTotalRenta')?.value);
+    if (Number.isFinite(fromCtrl) && fromCtrl > 0) return true;
+    const n = parseMonedaNumerico(this.capturaSubtotalDisplay);
+    return Number.isFinite(n) && n > 0;
   }
 
-  montoDisplay(valor: number): string {
+  montoDisplay(valor: number | null | undefined, listo = true): string {
+    if (!listo || valor == null || !Number.isFinite(valor)) return '';
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: 'MXN',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(valor || 0);
+    }).format(valor);
   }
 
   readonly mapaTitulo = 'Ubicación del arrendatario';
@@ -402,6 +417,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.busquedaTimer);
+    if (this.capturaMontosBlurTimer != null) clearTimeout(this.capturaMontosBlurTimer);
   }
 
   onBusquedaInput(event: Event): void {
@@ -564,9 +580,77 @@ export class RentRolComponent implements OnInit, OnDestroy {
     return this.localesOpciones.find((l) => l.id === id)?.nombre ?? `Local ${id}`;
   }
 
-  onMontosInput(): void {
+  onCapturaMetrosFocus(): void {
+    this.capturaCalcCampoFoco = { ...this.capturaCalcCampoFoco, metrosRentados: true };
+  }
+
+  onCapturaMetrosBlur(): void {
+    this.capturaCalcCampoFoco = { ...this.capturaCalcCampoFoco, metrosRentados: false };
     this.forzarSwitchManttoSiIncompleto();
-    this.recalcularMontosPreview();
+    this.programarRecalculoAlSalirInputsCaptura();
+    this.cdr.markForCheck();
+  }
+
+  onCapturaPctFocus(): void {
+    if (this.switchManttoVisualSi) return;
+    this.capturaCalcCampoFoco = { ...this.capturaCalcCampoFoco, pctMantenimiento: true };
+  }
+
+  onCapturaPctBlur(): void {
+    this.capturaCalcCampoFoco = { ...this.capturaCalcCampoFoco, pctMantenimiento: false };
+    this.programarRecalculoAlSalirInputsCaptura();
+    this.cdr.markForCheck();
+  }
+
+  onCapturaSubtotalFocus(): void {
+    this.capturaCalcCampoFoco = { ...this.capturaCalcCampoFoco, subTotalRenta: true };
+  }
+
+  onCapturaSubtotalInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const cursor = input.selectionStart ?? 0;
+    const simbolosAntes = contarMontoSimbolosAntesCursor(input.value, cursor);
+    const formatted = formatMonedaAlEscribir(input.value);
+    this.capturaSubtotalDisplay = formatted;
+    input.value = formatted;
+    const newCursor = cursorMontoTrasFormato(formatted, simbolosAntes);
+    input.setSelectionRange(newCursor, newCursor);
+    this.forzarSwitchManttoSiIncompleto();
+    this.cdr.markForCheck();
+  }
+
+  onCapturaSubtotalBlur(): void {
+    const n = parseMonedaNumerico(this.capturaSubtotalDisplay);
+    if (Number.isFinite(n)) {
+      const valor = redondearMontoRentRol(n);
+      this.capturaForm.get('subTotalRenta')?.setValue(valor, { emitEvent: false });
+      this.capturaSubtotalDisplay = formatMonedaDesdeNumeroNatural(valor);
+    } else {
+      this.capturaForm.get('subTotalRenta')?.setValue('', { emitEvent: false });
+      this.capturaSubtotalDisplay = '';
+    }
+    this.capturaCalcCampoFoco = { ...this.capturaCalcCampoFoco, subTotalRenta: false };
+    this.forzarSwitchManttoSiIncompleto();
+    this.programarRecalculoAlSalirInputsCaptura();
+    this.cdr.markForCheck();
+  }
+
+  private algunInputCalculoCapturaEnfocado(): boolean {
+    return !!(
+      this.capturaCalcCampoFoco['metrosRentados'] ||
+      this.capturaCalcCampoFoco['subTotalRenta'] ||
+      this.capturaCalcCampoFoco['pctMantenimiento']
+    );
+  }
+
+  private programarRecalculoAlSalirInputsCaptura(): void {
+    if (this.capturaMontosBlurTimer != null) clearTimeout(this.capturaMontosBlurTimer);
+    this.capturaMontosBlurTimer = setTimeout(() => {
+      this.capturaMontosBlurTimer = undefined;
+      if (this.algunInputCalculoCapturaEnfocado()) return;
+      this.recalcularMontosPreview();
+      this.cdr.markForCheck();
+    }, 0);
   }
 
   /** Sin subtotal de renta el switch queda en Sí (igual que agregar-arrendatario). */
@@ -707,6 +791,12 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.capturaForm.get('pctMantenimiento')?.clearValidators();
     this.capturaForm.get('pctMantenimiento')?.updateValueAndValidity({ emitEvent: false });
     this.switchManttoSi = true;
+    this.capturaSubtotalDisplay = '';
+    this.capturaCalcCampoFoco = {};
+    if (this.capturaMontosBlurTimer != null) {
+      clearTimeout(this.capturaMontosBlurTimer);
+      this.capturaMontosBlurTimer = undefined;
+    }
     this.inmueblesOpciones = [];
     this.localesOpciones = [];
     this.localesSeleccionados.clear();
@@ -788,6 +878,18 @@ export class RentRolComponent implements OnInit, OnDestroy {
       });
   }
 
+  private sincronizarSubtotalDesdeDisplay(): void {
+    const n = parseMonedaNumerico(this.capturaSubtotalDisplay);
+    if (Number.isFinite(n)) {
+      const valor = redondearMontoRentRol(n);
+      this.capturaForm.get('subTotalRenta')?.setValue(valor, { emitEvent: false });
+      this.capturaSubtotalDisplay = formatMonedaDesdeNumeroNatural(valor);
+    } else {
+      this.capturaForm.get('subTotalRenta')?.setValue('', { emitEvent: false });
+      this.capturaSubtotalDisplay = '';
+    }
+  }
+
   private recalcularMontosPreview(): void {
     const v = this.capturaForm.getRawValue();
     this.montosPreview = calcularMontosRentRolCaptura({
@@ -807,6 +909,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.capturaForm.get('incluyeMantenimiento')?.setValue(this.switchManttoSi ? 0 : 1, {
       emitEvent: false,
     });
+    this.sincronizarSubtotalDesdeDisplay();
     this.recalcularMontosPreview();
 
     const faltantes: string[] = [];

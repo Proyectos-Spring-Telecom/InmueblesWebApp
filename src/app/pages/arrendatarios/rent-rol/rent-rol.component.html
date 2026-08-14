@@ -516,18 +516,19 @@
                     <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">straighten</mat-icon></span>
                     <div class="form-floating flex-grow-1">
                       <input id="rrCapMetros" type="number" class="form-control" formControlName="metrosRentados"
-                        (input)="onMontosInput()" min="0" step="0.01" placeholder="Metros" />
+                        (focus)="onCapturaMetrosFocus()" (blur)="onCapturaMetrosBlur()"
+                        min="0" step="0.01" placeholder="Metros" />
                       <label for="rrCapMetros">Metros rentados</label>
                     </div>
                   </div>
                 </div>
                 <div class="col-12 col-md-4">
                   <label class="form-label perm-label" for="rrCapCosto">Costo por M²</label>
-                  <div class="input-group input-group-lg perm-ig">
+                  <div class="input-group input-group-lg perm-ig renta-calc-field">
                     <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">attach_money</mat-icon></span>
                     <div class="form-floating flex-grow-1">
-                      <input id="rrCapCosto" type="text" class="form-control"
-                        [value]="montosPreview.costoM2 != null ? montoDisplay(montosPreview.costoM2) : ''"
+                      <input id="rrCapCosto" type="text" class="form-control renta-calc-input"
+                        [value]="montoDisplay(montosPreview.costoM2, montosPreview.costoM2 != null)"
                         readonly tabindex="-1" placeholder="Costo M²" />
                       <label for="rrCapCosto">Costo por M²</label>
                     </div>
@@ -558,81 +559,107 @@
                     <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">construction</mat-icon></span>
                     <div class="form-floating flex-grow-1">
                       <input id="rrCapPct" type="number" class="form-control" formControlName="pctMantenimiento"
-                        (input)="onMontosInput()" min="0" step="0.01" placeholder="Porcentaje" />
+                        (focus)="onCapturaPctFocus()" (blur)="onCapturaPctBlur()"
+                        min="0" step="0.01" placeholder="Porcentaje" />
                       <label for="rrCapPct">Porcentaje mantenimiento</label>
                     </div>
                   </div>
                 </div>
-                <div class="col-12 col-md-4">
-                  <label class="form-label perm-label" for="rrCapSubRenta">
-                    Subtotal renta <span class="text-danger">*</span>
-                  </label>
-                  <div class="input-group input-group-lg perm-ig">
-                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">calculate</mat-icon></span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="rrCapSubRenta" type="number" class="form-control" formControlName="subTotalRenta"
-                        (input)="onMontosInput()" min="0" step="0.01" placeholder="Subtotal" />
-                      <label for="rrCapSubRenta">Subtotal renta</label>
+                <div class="col-12 renta-calc-bloque">
+                  <p class="renta-calc-hint mb-0">
+                    <span class="renta-calc-hint__clave">Subtotal renta</span> +
+                    <span class="renta-calc-hint__clave">16% IVA</span>
+                    = <span class="renta-calc-hint__clave">Renta Total</span>.
+                    <span class="renta-calc-hint__clave">Costo por m²</span> =
+                    <span class="renta-calc-hint__clave">Subtotal renta</span> ÷
+                    <span class="renta-calc-hint__clave">metros rentados</span>.
+                  </p>
+                  <div class="row g-2 gx-3 renta-calc-bloque__campos">
+                    <div class="col-12 col-md-4">
+                      <label class="form-label perm-label" for="rrCapSubRenta">
+                        Subtotal renta <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group input-group-lg perm-ig">
+                        <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">receipt</mat-icon></span>
+                        <div class="form-floating flex-grow-1">
+                          <input id="rrCapSubRenta" type="text" class="form-control"
+                            [(ngModel)]="capturaSubtotalDisplay" [ngModelOptions]="{ standalone: true }"
+                            (focus)="onCapturaSubtotalFocus()" (input)="onCapturaSubtotalInput($event)"
+                            (blur)="onCapturaSubtotalBlur()" autocomplete="off" placeholder="Subtotal" />
+                          <label for="rrCapSubRenta">Subtotal renta</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label perm-label" for="rrCapIvaRenta">IVA renta</label>
+                      <div class="input-group input-group-lg perm-ig renta-calc-field">
+                        <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">calculate</mat-icon></span>
+                        <div class="form-floating flex-grow-1">
+                          <input id="rrCapIvaRenta" type="text" class="form-control renta-calc-input"
+                            [value]="montoDisplay(montosPreview.renta.iva, montosPreview.renta.listo)"
+                            readonly tabindex="-1" placeholder="IVA renta" />
+                          <label for="rrCapIvaRenta">IVA renta</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label perm-label" for="rrCapRentaTotal">Renta total</label>
+                      <div class="input-group input-group-lg perm-ig renta-calc-field">
+                        <span class="input-group-text fw-bold"><mat-icon
+                            aria-hidden="true">account_balance_wallet</mat-icon></span>
+                        <div class="form-floating flex-grow-1">
+                          <input id="rrCapRentaTotal" type="text" class="form-control renta-calc-input"
+                            [value]="montoDisplay(montosPreview.renta.total, montosPreview.renta.listo)"
+                            readonly tabindex="-1" placeholder="Renta total" />
+                          <label for="rrCapRentaTotal">Renta total</label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div class="col-12 col-md-4">
-                  <label class="form-label perm-label" for="rrCapIvaRenta">IVA renta</label>
-                  <div class="input-group input-group-lg perm-ig">
-                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">functions</mat-icon></span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="rrCapIvaRenta" type="text" class="form-control"
-                        [value]="montoDisplay(montosPreview.renta.iva)" readonly tabindex="-1"
-                        placeholder="IVA renta" />
-                      <label for="rrCapIvaRenta">IVA renta</label>
+                <div class="col-12 renta-calc-bloque" *ngIf="!switchManttoVisualSi" @rrCapturaFade>
+                  <p class="renta-calc-hint mb-0">
+                    <span class="renta-calc-hint__clave">Subtotal renta</span> ×
+                    <span class="renta-calc-hint__clave">% mantenimiento</span> +
+                    <span class="renta-calc-hint__clave">16% IVA</span>
+                    = <span class="renta-calc-hint__clave">Mantenimiento Total</span>.
+                  </p>
+                  <div class="row g-2 gx-3 renta-calc-bloque__campos">
+                    <div class="col-12 col-md-4">
+                      <label class="form-label perm-label" for="rrCapSubMant">Subtotal mantenimiento</label>
+                      <div class="input-group input-group-lg perm-ig renta-calc-field">
+                        <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">build</mat-icon></span>
+                        <div class="form-floating flex-grow-1">
+                          <input id="rrCapSubMant" type="text" class="form-control renta-calc-input"
+                            [value]="montoDisplay(montosPreview.mantenimiento.subTotal, montosPreview.mantenimiento.listo)"
+                            readonly tabindex="-1" placeholder="Subtotal mantenimiento" />
+                          <label for="rrCapSubMant">Subtotal mantenimiento</label>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div class="col-12 col-md-4">
-                  <label class="form-label perm-label" for="rrCapRentaTotal">Renta total</label>
-                  <div class="input-group input-group-lg perm-ig">
-                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">summarize</mat-icon></span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="rrCapRentaTotal" type="text" class="form-control"
-                        [value]="montoDisplay(montosPreview.renta.total)" readonly tabindex="-1"
-                        placeholder="Renta total" />
-                      <label for="rrCapRentaTotal">Renta total</label>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label perm-label" for="rrCapIvaMant">IVA mantenimiento</label>
+                      <div class="input-group input-group-lg perm-ig renta-calc-field">
+                        <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">functions</mat-icon></span>
+                        <div class="form-floating flex-grow-1">
+                          <input id="rrCapIvaMant" type="text" class="form-control renta-calc-input"
+                            [value]="montoDisplay(montosPreview.mantenimiento.iva, montosPreview.mantenimiento.listo)"
+                            readonly tabindex="-1" placeholder="IVA mantenimiento" />
+                          <label for="rrCapIvaMant">IVA mantenimiento</label>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div class="col-12 col-md-4" *ngIf="!switchManttoVisualSi" @rrCapturaFade>
-                  <label class="form-label perm-label" for="rrCapSubMant">Subtotal mantenimiento</label>
-                  <div class="input-group input-group-lg perm-ig">
-                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">build</mat-icon></span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="rrCapSubMant" type="text" class="form-control"
-                        [value]="montoDisplay(montosPreview.mantenimiento.subTotal)" readonly tabindex="-1"
-                        placeholder="Subtotal mantenimiento" />
-                      <label for="rrCapSubMant">Subtotal mantenimiento</label>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-12 col-md-4" *ngIf="!switchManttoVisualSi" @rrCapturaFade>
-                  <label class="form-label perm-label" for="rrCapIvaMant">IVA mantenimiento</label>
-                  <div class="input-group input-group-lg perm-ig">
-                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">functions</mat-icon></span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="rrCapIvaMant" type="text" class="form-control"
-                        [value]="montoDisplay(montosPreview.mantenimiento.iva)" readonly tabindex="-1"
-                        placeholder="IVA mantenimiento" />
-                      <label for="rrCapIvaMant">IVA mantenimiento</label>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-12 col-md-4" *ngIf="!switchManttoVisualSi" @rrCapturaFade>
-                  <label class="form-label perm-label" for="rrCapMantTotal">Mantenimiento total</label>
-                  <div class="input-group input-group-lg perm-ig">
-                    <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">summarize</mat-icon></span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="rrCapMantTotal" type="text" class="form-control"
-                        [value]="montoDisplay(montosPreview.mantenimiento.total)" readonly tabindex="-1"
-                        placeholder="Mantenimiento total" />
-                      <label for="rrCapMantTotal">Mantenimiento total</label>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label perm-label" for="rrCapMantTotal">Mantenimiento total</label>
+                      <div class="input-group input-group-lg perm-ig renta-calc-field">
+                        <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">summarize</mat-icon></span>
+                        <div class="form-floating flex-grow-1">
+                          <input id="rrCapMantTotal" type="text" class="form-control renta-calc-input"
+                            [value]="montoDisplay(montosPreview.mantenimiento.total, montosPreview.mantenimiento.listo)"
+                            readonly tabindex="-1" placeholder="Mantenimiento total" />
+                          <label for="rrCapMantTotal">Mantenimiento total</label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

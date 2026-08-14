@@ -1866,6 +1866,40 @@ tfoot {
   min-width: 0;
 }
 
+.rr-captura-campos .renta-calc-bloque {
+  scroll-margin-top: 1rem;
+
+  .renta-calc-hint {
+    margin-bottom: 0.35rem;
+  }
+
+  .renta-calc-bloque__campos {
+    margin-top: 0;
+
+    > [class*='col-'] > .perm-label {
+      margin-bottom: 0.25rem;
+    }
+  }
+}
+
+.rr-captura-campos .renta-calc-hint {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+}
+
+.rr-captura-campos .renta-calc-hint__clave {
+  color: #7dd3fc;
+  letter-spacing: 0.03em;
+  font-size: 0.78rem;
+}
+
+.rr-captura-campos .renta-calc-field .renta-calc-input {
+  cursor: default;
+  background-color: rgba(15, 23, 42, 0.45);
+}
+
 .rr-inmueble-row {
   display: flex;
   flex-wrap: wrap;

@@ -14,6 +14,7 @@ import {
 } from 'src/app/shared/constancia-fiscal-ocr.mapper';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
+import { urlArchivoNavegador } from '../../inmuebles/inmuebles-list.mapper';
 import {
   extraerClienteDetalleApi,
   nombreDeArchivoApi,
@@ -173,7 +174,6 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
             return;
           }
           this.poblarFormularioDesdeDetalleApi(d);
-          this.onTipoPersonaChange(null);
         },
         error: (err: unknown) => {
           const e = err as { error?: { message?: string }; message?: string };
@@ -206,7 +206,6 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
           d['estatus'] != null && String(d['estatus']).trim() !== ''
             ? Number(d['estatus'])
             : 1,
-        logotipo: urlOCadenaDeArchivoApi(d['logotipo']) || null,
         nombre: this.strApi(d['nombre']),
         apellidoPaterno:
           d['apellidoPaterno'] != null && String(d['apellidoPaterno']).trim() !== ''
@@ -230,44 +229,22 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
         telefonoEncargado: this.strApi(d['telefonoEncargado']),
         correoEncargado: this.strApi(d['correoEncargado']),
         sitioWeb: this.strApi(d['sitioWeb']),
-        constanciaSituacionFiscal: urlOCadenaDeArchivoApi(d['constanciaSituacionFiscal']) || null,
-        comprobanteDomicilio: urlOCadenaDeArchivoApi(d['comprobanteDomicilio']) || null,
-        licenciaFuncionamiento: urlOCadenaDeArchivoApi(d['licenciaFuncionamiento']) || null,
-        constanciaProteccionCivil: urlOCadenaDeArchivoApi(d['constanciaProteccionCivil']) || null,
-        usoSuelo: urlOCadenaDeArchivoApi(d['usoSuelo']) || null,
-        planoCatastral: urlOCadenaDeArchivoApi(d['planoCatastral']) || null,
-        actaConstitutiva: urlOCadenaDeArchivoApi(d['actaConstitutiva']) || null,
-        poderRepresentanteLegal: urlOCadenaDeArchivoApi(d['poderRepresentanteLegal']) || null,
-        ineRepresentanteLegal: urlOCadenaDeArchivoApi(d['ineRepresentanteLegal']) || null,
+        logotipo: null,
+        constanciaSituacionFiscal: null,
+        comprobanteDomicilio: null,
+        licenciaFuncionamiento: null,
+        constanciaProteccionCivil: null,
+        usoSuelo: null,
+        planoCatastral: null,
+        actaConstitutiva: null,
+        poderRepresentanteLegal: null,
+        ineRepresentanteLegal: null,
       },
       { emitEvent: false },
     );
 
-    const logoUrl = urlOCadenaDeArchivoApi(d['logotipo']);
-    this.logoPreviewUrl = logoUrl && this.isImageUrl(logoUrl) ? logoUrl : null;
-
-    this.csfFileName = nombreDeArchivoApi(d['constanciaSituacionFiscal'], 'Constancia');
-    this.compDomFileName = nombreDeArchivoApi(d['comprobanteDomicilio'], 'Comprobante');
-    this.actaFileName = nombreDeArchivoApi(d['actaConstitutiva'], 'Acta');
-    this.poderFileName = nombreDeArchivoApi(d['poderRepresentanteLegal'], 'Poder');
-    this.ineFileName = nombreDeArchivoApi(d['ineRepresentanteLegal'], 'INE');
-    this.licenciaFileName = nombreDeArchivoApi(d['licenciaFuncionamiento'], 'Licencia');
-    this.proteccionCivilFileName = nombreDeArchivoApi(d['constanciaProteccionCivil'], 'Protección civil');
-    this.usoSueloFileName = nombreDeArchivoApi(d['usoSuelo'], 'Uso de suelo');
-    this.planoCatastralFileName = nombreDeArchivoApi(d['planoCatastral'], 'Plano');
-
-    this.originalDocs = {
-      logotipo: logoUrl,
-      constanciaSituacionFiscal: urlOCadenaDeArchivoApi(d['constanciaSituacionFiscal']),
-      comprobanteDomicilio: urlOCadenaDeArchivoApi(d['comprobanteDomicilio']),
-      licenciaFuncionamiento: urlOCadenaDeArchivoApi(d['licenciaFuncionamiento']),
-      constanciaProteccionCivil: urlOCadenaDeArchivoApi(d['constanciaProteccionCivil']),
-      usoSuelo: urlOCadenaDeArchivoApi(d['usoSuelo']),
-      planoCatastral: urlOCadenaDeArchivoApi(d['planoCatastral']),
-      actaConstitutiva: urlOCadenaDeArchivoApi(d['actaConstitutiva']),
-      poderRepresentanteLegal: urlOCadenaDeArchivoApi(d['poderRepresentanteLegal']),
-      ineRepresentanteLegal: urlOCadenaDeArchivoApi(d['ineRepresentanteLegal']),
-    };
+    this.onTipoPersonaChange(null);
+    this.aplicarArchivosRemotosDesdeDetalle(d);
 
     this.sociosFormArray.clear();
     const sociosRaw = d['sociosArrendadores'] ?? d['socios'];
@@ -304,20 +281,17 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
             comprobanteDomicilioArchivo: null,
             identificacionOficialArchivo: null,
             constanciaFiscalUrl: csfUrl,
-            constanciaFiscalNombre: nombreDeArchivoApi(
-              csfUrl || s['constanciaSituacionFiscal'] || s['constanciaFiscalArchivo'],
-              'Constancia fiscal',
-            ),
+            constanciaFiscalNombre: csfUrl
+              ? nombreDeArchivoApi(csfUrl, 'Constancia fiscal')
+              : '',
             comprobanteDomicilioUrl: compUrl,
-            comprobanteDomicilioNombre: nombreDeArchivoApi(
-              compUrl || s['comprobanteDomicilio'] || s['comprobanteDomicilioArchivo'],
-              'Comprobante',
-            ),
+            comprobanteDomicilioNombre: compUrl
+              ? nombreDeArchivoApi(compUrl, 'Comprobante')
+              : '',
             identificacionOficialUrl: ineUrl,
-            identificacionOficialNombre: nombreDeArchivoApi(
-              ineUrl || s['identificacionOficial'] || s['identificacionOficialArchivo'],
-              'Identificación',
-            ),
+            identificacionOficialNombre: ineUrl
+              ? nombreDeArchivoApi(ineUrl, 'Identificación')
+              : '',
           },
           { emitEvent: false },
         );
@@ -328,7 +302,116 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     }
 
     this.syncSociosEdicionSnapshotsDesdeFormulario();
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * En edición los controles de archivo quedan en `null` (File nuevo).
+   * Las URLs del GET van a `*Url` / `*FileName` para el layout remoto.
+   */
+  private aplicarArchivosRemotosDesdeDetalle(d: Record<string, unknown>): void {
+    this.logotipoUrl = this.urlRemotaDesdeApi(d['logotipo']);
+    this.logoPreviewUrl =
+      this.logotipoUrl && this.isImageUrl(this.logotipoUrl) ? this.logotipoUrl : null;
+
+    this.csfUrl = this.urlRemotaDesdeApi(d['constanciaSituacionFiscal']);
+    this.csfFileName = this.nombreRemotoSiHayUrl(
+      d['constanciaSituacionFiscal'],
+      this.csfUrl,
+      'Constancia De Situación Fiscal',
+    );
+
+    this.compDomUrl = this.urlRemotaDesdeApi(d['comprobanteDomicilio']);
+    this.compDomFileName = this.nombreRemotoSiHayUrl(
+      d['comprobanteDomicilio'],
+      this.compDomUrl,
+      'Comprobante De Domicilio Fiscal',
+    );
+
+    this.licenciaUrl = this.urlRemotaDesdeApi(d['licenciaFuncionamiento']);
+    this.licenciaFileName = this.nombreRemotoSiHayUrl(
+      d['licenciaFuncionamiento'],
+      this.licenciaUrl,
+      'Licencia De Funcionamiento',
+    );
+
+    this.proteccionCivilUrl = this.urlRemotaDesdeApi(d['constanciaProteccionCivil']);
+    this.proteccionCivilFileName = this.nombreRemotoSiHayUrl(
+      d['constanciaProteccionCivil'],
+      this.proteccionCivilUrl,
+      'Constancia De Protección Civil',
+    );
+
+    this.usoSueloUrl = this.urlRemotaDesdeApi(d['usoSuelo']);
+    this.usoSueloFileName = this.nombreRemotoSiHayUrl(
+      d['usoSuelo'],
+      this.usoSueloUrl,
+      'Uso De Suelo',
+    );
+
+    this.planoCatastralUrl = this.urlRemotaDesdeApi(d['planoCatastral']);
+    this.planoCatastralFileName = this.nombreRemotoSiHayUrl(
+      d['planoCatastral'],
+      this.planoCatastralUrl,
+      'Plano Catastral',
+    );
+
+    if (this.esPersonaMoral()) {
+      this.actaUrl = this.urlRemotaDesdeApi(d['actaConstitutiva']);
+      this.actaFileName = this.nombreRemotoSiHayUrl(
+        d['actaConstitutiva'],
+        this.actaUrl,
+        'Acta Constitutiva',
+      );
+      this.poderUrl = this.urlRemotaDesdeApi(d['poderRepresentanteLegal']);
+      this.poderFileName = this.nombreRemotoSiHayUrl(
+        d['poderRepresentanteLegal'],
+        this.poderUrl,
+        'Poder Del Rep. Legal',
+      );
+      this.ineUrl = this.urlRemotaDesdeApi(d['ineRepresentanteLegal']);
+      this.ineFileName = this.nombreRemotoSiHayUrl(
+        d['ineRepresentanteLegal'],
+        this.ineUrl,
+        'Identificación Oficial',
+      );
+    } else {
+      this.actaUrl = null;
+      this.poderUrl = null;
+      this.ineUrl = null;
+      this.actaFileName = null;
+      this.poderFileName = null;
+      this.ineFileName = null;
+    }
+
+    this.originalDocs = {
+      logotipo: this.logotipoUrl ?? '',
+      constanciaSituacionFiscal: this.csfUrl ?? '',
+      comprobanteDomicilio: this.compDomUrl ?? '',
+      licenciaFuncionamiento: this.licenciaUrl ?? '',
+      constanciaProteccionCivil: this.proteccionCivilUrl ?? '',
+      usoSuelo: this.usoSueloUrl ?? '',
+      planoCatastral: this.planoCatastralUrl ?? '',
+      actaConstitutiva: this.actaUrl ?? '',
+      poderRepresentanteLegal: this.poderUrl ?? '',
+      ineRepresentanteLegal: this.ineUrl ?? '',
+    };
+  }
+
+  private urlRemotaDesdeApi(raw: unknown): string | null {
+    const url = urlOCadenaDeArchivoApi(raw);
+    if (!url || this.esUrlPlaceholder(url)) return null;
+    return urlArchivoNavegador(url);
+  }
+
+  private nombreRemotoSiHayUrl(
+    raw: unknown,
+    url: string | null,
+    etiqueta: string,
+  ): string | null {
+    if (!url) return null;
+    const nombre = nombreDeArchivoApi(raw, '');
+    return nombre || etiqueta;
   }
 
   verArchivoRemoto(url: string | null | undefined, titulo: string): void {
@@ -367,7 +450,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.docPreview?.abrir(url, titulo, subtitulo, { esImagen });
   }
 
-  /** Clic en etiqueta uploader con archivo (File o URL). */
+  /** Clic en etiqueta uploader con archivo (File o URL remota). */
   onBadgeArchivoClick(
     event: Event,
     controlName: string,
@@ -381,9 +464,8 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
       this.abrirPreviewArchivo(v, titulo, opciones);
       return;
     }
-    if (typeof v === 'string' && v.trim() && !this.esUrlPlaceholder(v)) {
-      this.abrirPreviewArchivo(v.trim(), titulo, opciones);
-    }
+    const url = this.urlRemotaDeControl(controlName);
+    if (url) this.abrirPreviewArchivo(url, titulo, opciones);
   }
 
   onBadgeSocioClick(
@@ -404,21 +486,61 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     if (url) this.abrirPreviewArchivo(url, titulo);
   }
 
+  tieneArchivoSocio(
+    socioCtrl: AbstractControl,
+    fileKey: string,
+    urlKey: string,
+  ): boolean {
+    const file = socioCtrl.get(fileKey)?.value;
+    if (file instanceof File) return true;
+    return !!String(socioCtrl.get(urlKey)?.value ?? '').trim();
+  }
+
+  etiquetaArchivoSocio(
+    socioCtrl: AbstractControl,
+    fileKey: string,
+    urlKey: string,
+    placeholder = 'PDF · PNG · JPG',
+  ): string {
+    const file = socioCtrl.get(fileKey)?.value;
+    if (file instanceof File && file.name) return file.name;
+    const nombre = String(socioCtrl.get(fileKey.replace('Archivo', 'Nombre'))?.value ?? '').trim();
+    if (nombre) return nombre;
+    const url = String(socioCtrl.get(urlKey)?.value ?? '').trim();
+    if (!url) return placeholder;
+    const nom = url.split('/').pop()?.split('?')[0]?.trim();
+    return nom || url;
+  }
+
   private esUrlPlaceholder(url: string): boolean {
     return url === this.DEFAULT_AVATAR_URL;
   }
 
-  /** URL remota en control del formulario (edición por id). */
   urlRemotoControl(controlName: string): string | null {
-    const v = this.clienteForm.get(controlName)?.value;
-    if (typeof v === 'string' && v.trim() && !this.esUrlPlaceholder(v)) return v.trim();
-    return null;
+    return this.urlRemotaDeControl(controlName);
+  }
+
+  urlRemotaDeControl(controlName: string): string | null {
+    const map: Record<string, string | null | undefined> = {
+      logotipo: this.logotipoUrl,
+      constanciaSituacionFiscal: this.csfUrl,
+      comprobanteDomicilio: this.compDomUrl,
+      licenciaFuncionamiento: this.licenciaUrl,
+      constanciaProteccionCivil: this.proteccionCivilUrl,
+      usoSuelo: this.usoSueloUrl,
+      planoCatastral: this.planoCatastralUrl,
+      actaConstitutiva: this.actaUrl,
+      poderRepresentanteLegal: this.poderUrl,
+      ineRepresentanteLegal: this.ineUrl,
+    };
+    const url = String(map[controlName] ?? '').trim();
+    return url && !this.esUrlPlaceholder(url) ? url : null;
   }
 
   tieneArchivoControl(controlName: string): boolean {
     const v = this.clienteForm.get(controlName)?.value;
     if (v instanceof File) return true;
-    return typeof v === 'string' && !!v.trim() && !this.esUrlPlaceholder(v);
+    return !!this.urlRemotaDeControl(controlName);
   }
 
   etiquetaArchivoControl(
@@ -426,13 +548,45 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     nombreLocal: string | null | undefined,
     placeholder: string,
   ): string {
-    if (nombreLocal?.trim()) return nombreLocal.trim();
     const v = this.clienteForm.get(controlName)?.value;
-    if (v instanceof File) return v.name;
-    if (typeof v === 'string' && v.trim() && !this.esUrlPlaceholder(v)) {
-      return this.nombreArchivoDesdeUrlRemota(v) || v;
-    }
+    if (v instanceof File && v.name) return v.name;
+    if (nombreLocal?.trim()) return nombreLocal.trim();
+    const url = this.urlRemotaDeControl(controlName);
+    if (url) return this.nombreArchivoDesdeUrlRemota(url) || url;
     return placeholder;
+  }
+
+  /** Edición por id con archivo ya guardado. Si no hay URL, el slot se ve como alta. */
+  layoutArchivoRemoto(url: string | null | undefined): boolean {
+    return this.esEdicionCliente() && !!String(url ?? '').trim() && !this.esUrlPlaceholder(String(url));
+  }
+
+  abrirSelectorArchivo(
+    selector:
+      | 'logotipo'
+      | 'constanciaSituacionFiscal'
+      | 'comprobanteDomicilio'
+      | 'licenciaFuncionamiento'
+      | 'constanciaProteccionCivil'
+      | 'usoSuelo'
+      | 'planoCatastral'
+      | 'actaConstitutiva'
+      | 'poderRepresentanteLegal'
+      | 'ineRepresentanteLegal',
+  ): void {
+    const map = {
+      logotipo: this.logoFileInput,
+      constanciaSituacionFiscal: this.csfFileInput,
+      comprobanteDomicilio: this.compDomFileInput,
+      licenciaFuncionamiento: this.licenciaFileInput,
+      constanciaProteccionCivil: this.proteccionCivilFileInput,
+      usoSuelo: this.usoSueloFileInput,
+      planoCatastral: this.planoCatastralFileInput,
+      actaConstitutiva: this.actaFileInput,
+      poderRepresentanteLegal: this.poderFileInput,
+      ineRepresentanteLegal: this.ineFileInput,
+    };
+    map[selector]?.nativeElement?.click();
   }
 
   private urlDocSocioApi(
@@ -441,14 +595,9 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
   ): string {
     for (const key of keys) {
       const url = urlOCadenaDeArchivoApi(socio[key]);
-      if (url) return url;
+      if (url) return urlArchivoNavegador(url);
     }
     return '';
-  }
-
-  /** Documentos remotos del GET: mismo criterio que inmuebles/arrendatarios (id + URL). */
-  layoutArchivoRemoto(url: string | null | undefined): boolean {
-    return this.idCliente != null && !!String(url ?? '').trim();
   }
 
   setSociosMock() {
@@ -614,6 +763,9 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
       ac?.setValue(null, { emitEvent: false });
       poder?.setValue(null, { emitEvent: false });
       ine?.setValue(null, { emitEvent: false });
+      this.actaUrl = null;
+      this.poderUrl = null;
+      this.ineUrl = null;
       this.actaFileName = null;
       this.poderFileName = null;
       this.ineFileName = null;
@@ -993,6 +1145,45 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
 
   openSocioFilePicker(input: HTMLInputElement): void {
     input.click();
+  }
+
+  socioDraggingKey: string | null = null;
+
+  private activarZonaSoltar(e: DragEvent): void {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+  }
+
+  onSocioDragOver(e: DragEvent, key: string): void {
+    this.activarZonaSoltar(e);
+    this.socioDraggingKey = key;
+  }
+
+  onSocioDragLeave(e: DragEvent, key: string): void {
+    e.preventDefault();
+    e.stopPropagation();
+    if (this.socioDraggingKey === key) this.socioDraggingKey = null;
+  }
+
+  onSocioDrop(
+    e: DragEvent,
+    index: number,
+    field: 'constanciaFiscalArchivo' | 'comprobanteDomicilioArchivo' | 'identificacionOficialArchivo',
+  ): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.socioDraggingKey = null;
+    const file = e.dataTransfer?.files?.[0] ?? null;
+    if (!file) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    const event = new Event('change');
+    Object.defineProperty(event, 'target', { value: input });
+    this.onSocioFileSelected(event, index, field);
   }
 
   onSocioFileSelected(
@@ -1517,6 +1708,17 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
   actaPreviewUrl: string | ArrayBuffer | null = null;
   poderPreviewUrl: string | ArrayBuffer | null = null;
 
+  logotipoUrl: string | null = null;
+  csfUrl: string | null = null;
+  compDomUrl: string | null = null;
+  actaUrl: string | null = null;
+  poderUrl: string | null = null;
+  ineUrl: string | null = null;
+  licenciaUrl: string | null = null;
+  proteccionCivilUrl: string | null = null;
+  usoSueloUrl: string | null = null;
+  planoCatastralUrl: string | null = null;
+
   logoDragging = false;
   csfDragging = false;
   compDomDragging = false;
@@ -1584,16 +1786,15 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
 
   /** URL remota del logotipo (el API devuelve string). Si eligieron archivo local, es instancia de `File`. */
   get urlLogotipoRemoto(): string | null {
-    const v = this.clienteForm.get('logotipo')?.value;
-    return typeof v === 'string' && v.trim() ? v : null;
+    return this.logotipoUrl;
   }
 
   /** Texto del badge: nombre local o último segmento de la URL (evita repetir la URL completa dos veces en pantalla). */
   etiquetaLogotipoUploader(): string {
     const v = this.clienteForm.get('logotipo')?.value;
     if (v instanceof File) return v.name;
-    if (typeof v === 'string' && v.trim() && !this.esUrlPlaceholder(v)) {
-      return this.nombreArchivoDesdeUrlRemota(v) || v;
+    if (this.logotipoUrl) {
+      return this.nombreArchivoDesdeUrlRemota(this.logotipoUrl) || 'Logotipo';
     }
     return 'PNG · JPG · JPEG';
   }
@@ -1610,7 +1811,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
   }
 
   onLogoDragOver(e: DragEvent) {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.logoDragging = true;
   }
   onLogoDragLeave(e: DragEvent) {
@@ -1649,6 +1850,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     }
 
     this.loadPreview(file, (url) => (this.logoPreviewUrl = url));
+    this.logotipoUrl = null;
     this.clienteForm.patchValue({ logotipo: file });
     this.clienteForm.get('logotipo')?.setErrors(null);
   }
@@ -1900,7 +2102,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.csfFileInput.nativeElement.click();
   }
   onCsfDragOver(e: DragEvent) {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.csfDragging = true;
   }
   onCsfDragLeave(e: DragEvent) {
@@ -1952,6 +2154,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
       return;
     }
     this.csfFileName = file.name;
+    this.csfUrl = null;
     this.loadPreview(file, (url) => (this.csfPreviewUrl = url));
     this.clienteForm.patchValue({ constanciaSituacionFiscal: file });
     this.clienteForm.get('constanciaSituacionFiscal')?.setErrors(null);
@@ -2001,7 +2204,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.compDomFileInput.nativeElement.click();
   }
   onCompDomDragOver(e: DragEvent) {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.compDomDragging = true;
   }
   onCompDomDragLeave(e: DragEvent) {
@@ -2038,6 +2241,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
       return;
     }
     this.compDomFileName = file.name;
+    this.compDomUrl = null;
     this.loadPreview(file, (url) => (this.compDomPreviewUrl = url));
     this.clienteForm.patchValue({ comprobanteDomicilio: file });
     this.clienteForm.get('comprobanteDomicilio')?.setErrors(null);
@@ -2083,7 +2287,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.actaFileInput.nativeElement.click();
   }
   onActaDragOver(e: DragEvent) {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.actaDragging = true;
   }
   onActaDragLeave(e: DragEvent) {
@@ -2116,6 +2320,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
       return;
     }
     this.actaFileName = file.name;
+    this.actaUrl = null;
     this.loadPreview(file, (url) => (this.actaPreviewUrl = url));
     this.clienteForm.patchValue({ actaConstitutiva: file });
     this.clienteForm.get('actaConstitutiva')?.setErrors(null);
@@ -2161,7 +2366,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.poderFileInput.nativeElement.click();
   }
   onPoderDragOver(e: DragEvent): void {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.poderDragging = true;
   }
   onPoderDragLeave(e: DragEvent): void {
@@ -2188,6 +2393,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
       return;
     }
     this.poderFileName = file.name;
+    this.poderUrl = null;
     this.loadPreview(file, (url) => (this.poderPreviewUrl = url));
     this.clienteForm.patchValue({ poderRepresentanteLegal: file });
     this.clienteForm.get('poderRepresentanteLegal')?.setErrors(null);
@@ -2197,7 +2403,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.ineFileInput.nativeElement.click();
   }
   onIneDragOver(e: DragEvent): void {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.ineDragging = true;
   }
   onIneDragLeave(e: DragEvent): void {
@@ -2230,6 +2436,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
       return;
     }
     this.ineFileName = file.name;
+    this.ineUrl = null;
     this.loadPreview(file, (url) => (this.inePreviewUrl = url));
     this.clienteForm.patchValue({ ineRepresentanteLegal: file });
     this.clienteForm.get('ineRepresentanteLegal')?.setErrors(null);
@@ -2246,15 +2453,19 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     }
     if (control === 'licenciaFuncionamiento') {
       this.licenciaFileName = file.name;
+      this.licenciaUrl = null;
       this.loadPreview(file, (url) => (this.licenciaPreviewUrl = url));
     } else if (control === 'constanciaProteccionCivil') {
       this.proteccionCivilFileName = file.name;
+      this.proteccionCivilUrl = null;
       this.loadPreview(file, (url) => (this.proteccionCivilPreviewUrl = url));
     } else if (control === 'usoSuelo') {
       this.usoSueloFileName = file.name;
+      this.usoSueloUrl = null;
       this.loadPreview(file, (url) => (this.usoSueloPreviewUrl = url));
     } else {
       this.planoCatastralFileName = file.name;
+      this.planoCatastralUrl = null;
       this.loadPreview(file, (url) => (this.planoCatastralPreviewUrl = url));
     }
     this.clienteForm.patchValue({ [control]: file });
@@ -2265,7 +2476,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.licenciaFileInput.nativeElement.click();
   }
   onLicenciaDragOver(e: DragEvent): void {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.licenciaDragging = true;
   }
   onLicenciaDragLeave(e: DragEvent): void {
@@ -2289,7 +2500,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.proteccionCivilFileInput.nativeElement.click();
   }
   onProteccionCivilDragOver(e: DragEvent): void {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.proteccionCivilDragging = true;
   }
   onProteccionCivilDragLeave(e: DragEvent): void {
@@ -2313,7 +2524,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.usoSueloFileInput.nativeElement.click();
   }
   onUsoSueloDragOver(e: DragEvent): void {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.usoSueloDragging = true;
   }
   onUsoSueloDragLeave(e: DragEvent): void {
@@ -2337,7 +2548,7 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     this.planoCatastralFileInput.nativeElement.click();
   }
   onPlanoCatastralDragOver(e: DragEvent): void {
-    e.preventDefault();
+    this.activarZonaSoltar(e);
     this.planoCatastralDragging = true;
   }
   onPlanoCatastralDragLeave(e: DragEvent): void {
