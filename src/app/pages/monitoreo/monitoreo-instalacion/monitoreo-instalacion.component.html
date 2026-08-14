@@ -1175,11 +1175,15 @@
                   <div
                     class="mono-pago-file"
                     [class.mono-pago-file--filled]="!!pagoForm.get('comprobantePagoNombre')?.value"
+                    [class.mono-pago-file--dragging]="pagoComprobanteDragging"
                     role="button"
                     tabindex="0"
                     (click)="pagoComprobanteInput.click()"
                     (keydown.enter)="pagoComprobanteInput.click()"
                     (keydown.space)="$event.preventDefault(); pagoComprobanteInput.click()"
+                    (dragover)="onPagoComprobanteDragOver($event)"
+                    (dragleave)="onPagoComprobanteDragLeave($event)"
+                    (drop)="onPagoComprobanteDrop($event)"
                   >
                     <div class="mono-pago-file__icon" aria-hidden="true">
                       <mat-icon>{{

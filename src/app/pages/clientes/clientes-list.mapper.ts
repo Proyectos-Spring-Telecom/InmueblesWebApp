@@ -189,6 +189,50 @@ function construirTextoBusquedaCliente(
   return parts.join(' ');
 }
 
+function strCelda(v: unknown): string {
+  if (v == null) return '';
+  return String(v).trim();
+}
+
+/** Texto para celdas del grid: null, '' o solo espacios → em dash. */
+function celda(v: unknown): string {
+  const s = strCelda(v);
+  return s !== '' ? s : '—';
+}
+
+function nombreCompletoCliente(item: Record<string, unknown>): string {
+  const tipo = Number(item['tipoPersona']);
+  const nombre = strCelda(item['nombre']);
+  if (tipo === 2) return nombre || '—';
+  const partes = [
+    nombre,
+    strCelda(item['apellidoPaterno']),
+    strCelda(item['apellidoMaterno']),
+  ].filter(Boolean);
+  return partes.join(' ') || '—';
+}
+
+function direccionCompletaCliente(item: Record<string, unknown>): string {
+  const calle = strCelda(item['calle']);
+  const numExt = strCelda(item['numeroExterior']);
+  const numInt = strCelda(item['numeroInterior']);
+  const cp = strCelda(item['cp']);
+  const entre = strCelda(item['entreCalles']);
+  const joined = [
+    calle ? `Calle ${calle}` : '',
+    numExt ? `#${numExt}` : '',
+    numInt ? `Int. ${numInt}` : '',
+    strCelda(item['colonia']),
+    strCelda(item['municipio']),
+    strCelda(item['estado']),
+    cp ? `CP ${cp}` : '',
+    entre ? `(Entre calles: ${entre})` : '',
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return joined || '—';
+}
+
 export function mapClientesApiToGridRows(items: unknown[]): ClienteGridRow[] {
   if (!Array.isArray(items)) return [];
 
@@ -201,23 +245,9 @@ export function mapClientesApiToGridRows(items: unknown[]): ClienteGridRow[] {
     const id = Number(item['id']);
     const idFinal = Number.isFinite(id) ? id : index + 1;
 
-    const nombre = String(item['nombre'] ?? '');
-    const paterno = String(item['apellidoPaterno'] ?? '');
-    const materno = String(item['apellidoMaterno'] ?? '');
-    const NombreCompleto = [nombre, paterno, materno].filter(Boolean).join(' ').trim();
-
-    const direccionCompleta = [
-      item['calle'] ? `Calle ${item['calle']}` : '',
-      item['numeroExterior'] ? `#${item['numeroExterior']}` : '',
-      item['numeroInterior'] ? `Int. ${item['numeroInterior']}` : '',
-      item['colonia'] || '',
-      item['municipio'] || '',
-      item['estado'] || '',
-      item['cp'] ? `CP ${item['cp']}` : '',
-      item['entreCalles'] ? `(Entre calles: ${item['entreCalles']})` : '',
-    ]
-      .filter(Boolean)
-      .join(', ');
+    const NombreCompleto = nombreCompletoCliente(item);
+    const direccionCompleta = direccionCompletaCliente(item);
+    const nombre = strCelda(item['nombre']);
 
     const estatusRaw = item['estatusCliente'] ?? item['estatus'] ?? 0;
     const estatus = Number(estatusRaw);
@@ -238,25 +268,25 @@ export function mapClientesApiToGridRows(items: unknown[]): ClienteGridRow[] {
         ? 'Físico'
         : item['tipoPersona'] == 2
           ? 'Moral'
-          : 'Desconocido';
+          : '—';
 
     const busqueda = construirTextoBusquedaCliente(
       item,
-      NombreCompleto,
-      direccionCompleta,
+      NombreCompleto === '—' ? '' : NombreCompleto,
+      direccionCompleta === '—' ? '' : direccionCompleta,
     );
 
     return {
       id: idFinal,
-      nombre: nombre || NombreCompleto || '—',
-      NombreCompleto: NombreCompleto || '—',
-      telefono: String(item['telefono'] ?? ''),
-      rfc: String(item['rfc'] ?? ''),
-      correo: String(item['correo'] ?? ''),
+      nombre: nombre || (NombreCompleto !== '—' ? NombreCompleto : '') || '—',
+      NombreCompleto,
+      telefono: celda(item['telefono']),
+      rfc: celda(item['rfc']),
+      correo: celda(item['correo']),
       tipoPersona,
-      nombreEncargado: String(item['nombreEncargado'] ?? ''),
-      telefonoEncargado: String(item['telefonoEncargado'] ?? ''),
-      correoEncargado: String(item['correoEncargado'] ?? ''),
+      nombreEncargado: celda(item['nombreEncargado']),
+      telefonoEncargado: celda(item['telefonoEncargado']),
+      correoEncargado: celda(item['correoEncargado']),
       direccionCompleta,
       estatus: Number.isFinite(estatus) ? estatus : 0,
       estatusCliente: Number.isFinite(estatus) ? estatus : 0,

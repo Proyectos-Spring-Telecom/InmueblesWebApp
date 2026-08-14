@@ -518,7 +518,7 @@
             </div>
           </div>
           <ng-template #btnVerArchivo let-url="url" let-titulo="titulo">
-            <button *ngIf="url" type="button" mat-flat-button class="bg-warn docs-uploader-ver-btn"
+            <button *ngIf="url" type="button" mat-flat-button class="docs-uploader-ver-btn"
               (click)="verArchivoRemoto(url, titulo)">
               <mat-icon>visibility</mat-icon>
               <span>Ver</span>
@@ -528,13 +528,10 @@
             let-placeholder="placeholder" let-tituloVer="tituloVer" let-selector="selector">
             <ng-container *ngIf="layoutArchivoRemoto(url); else docsUploaderCtaDefault">
               <div class="uploader__cta uploader__cta--archivo-remoto">
-                <div class="uploader__cta-actions">
-                  <button mat-flat-button color="primary" type="button"
-                    (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
-                  <ng-container
-                    *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
-                </div>
-                <span class="uploader__badge uploader__badge--file">{{ nombreRemoto }}</span>
+                <button mat-flat-button color="primary" type="button"
+                  (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
+                <ng-container
+                  *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
               </div>
             </ng-container>
             <ng-template #docsUploaderCtaDefault>
@@ -545,8 +542,6 @@
                   [class.uploader__badge--file]="nombreRemoto || url || arrendatarioForm.get(controlName)?.value?.name">
                   {{ nombreRemoto || arrendatarioForm.get(controlName)?.value?.name || placeholder }}
                 </span>
-                <ng-container
-                  *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
               </div>
             </ng-template>
           </ng-template>
@@ -554,22 +549,18 @@
             let-titulo="titulo" let-fileInput="fileInput">
             <ng-container *ngIf="layoutArchivoRemoto(url); else docsUploaderCtaGaleriaDefault">
               <div class="uploader__cta uploader__cta--archivo-remoto">
-                <div class="uploader__cta-actions">
-                  <button mat-flat-button color="primary" type="button"
-                    (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
-                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
-                </div>
-                <span class="uploader__badge uploader__badge--file">{{ nombre }}</span>
+                <button mat-flat-button color="primary" type="button"
+                  (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
+                <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
               </div>
             </ng-container>
             <ng-template #docsUploaderCtaGaleriaDefault>
               <div class="uploader__cta">
                 <button mat-flat-button color="primary" type="button"
                   (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
-                <span class="uploader__badge" [class.uploader__badge--file]="nombre || url">
+                <span class="uploader__badge" [class.uploader__badge--file]="nombre">
                   {{ nombre || placeholder }}
                 </span>
-                <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
               </div>
             </ng-template>
           </ng-template>
@@ -664,53 +655,67 @@
 
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label d-block mb-2">Comprobante de pago</label>
-                        <div class="uploader-hero srv-pago-uploader">
-                          <div class="uploader srv-pago-uploader__card">
-                            <div class="uploader__glow"></div>
-                            <div class="uploader__body">
-                              <ng-container
-                                *ngIf="layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value); else srvPagoUploaderDefault">
-                                <div class="srv-pago-uploader__row srv-pago-uploader__row--archivo-remoto">
-                                  <div class="uploader__cta-actions">
-                                    <button mat-flat-button color="primary" type="button"
-                                      (click)="srvPagoInput.click()">
-                                      Seleccionar
-                                    </button>
-                                    <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
-                                      url: srvCtrl.get('servicioComprobantePagoUrl')?.value,
-                                      titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
-                                    }"></ng-container>
-                                  </div>
-                                  <span class="uploader__badge uploader__badge--file srv-pago-uploader__formats">
-                                    {{ srvCtrl.get('servicioComprobantePagoNombre')?.value }}
-                                  </span>
-                                </div>
-                              </ng-container>
-                              <ng-template #srvPagoUploaderDefault>
-                                <div class="srv-pago-uploader__row">
-                                  <div class="srv-pago-uploader__left">
-                                    <div class="uploader__icon srv-pago-uploader__icon" aria-hidden="true">
-                                      <mat-icon>receipt</mat-icon>
-                                    </div>
-                                    <button mat-flat-button color="primary" type="button"
-                                      (click)="srvPagoInput.click()">
-                                      Selecciona un archivo
-                                    </button>
-                                  </div>
-                                  <span class="uploader__badge srv-pago-uploader__formats"
-                                    [class.uploader__badge--file]="srvCtrl.get('servicioComprobantePagoNombre')?.value || srvCtrl.get('servicioComprobantePagoUrl')?.value">
-                                    {{ srvCtrl.get('servicioComprobantePagoNombre')?.value || etiquetaPdfImagenes }}
-                                  </span>
-                                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
-                                    url: srvCtrl.get('servicioComprobantePagoUrl')?.value,
-                                    titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
-                                  }"></ng-container>
-                                </div>
-                              </ng-template>
-                              <input #srvPagoInput type="file" [accept]="acceptPdfImagenes" class="uploader__input"
-                                (change)="onServicioPagoFileSelected($event, i)" />
-                            </div>
+                        <div
+                          class="mono-pago-file"
+                          [class.mono-pago-file--filled]="!!srvCtrl.get('servicioComprobantePagoNombre')?.value || layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)"
+                          [class.mono-pago-file--dragging]="uploaderDraggingKey === ('srvPago-' + i)"
+                          role="button"
+                          tabindex="0"
+                          (click)="srvPagoInput.click()"
+                          (keydown.enter)="srvPagoInput.click()"
+                          (keydown.space)="$event.preventDefault(); srvPagoInput.click()"
+                          (dragover)="onUploaderDragOver($event, 'srvPago-' + i)"
+                          (dragleave)="onUploaderDragLeave($event, 'srvPago-' + i)"
+                          (drop)="onServicioPagoDrop($event, i)"
+                        >
+                          <div class="mono-pago-file__icon" aria-hidden="true">
+                            <mat-icon>{{
+                              srvCtrl.get('servicioComprobantePagoNombre')?.value || layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)
+                                ? 'description'
+                                : 'upload_file'
+                            }}</mat-icon>
                           </div>
+                          <div class="mono-pago-file__text">
+                            <span class="mono-pago-file__title">
+                              {{
+                                layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)
+                                  ? 'Adjunta el comprobante de pago'
+                                  : (srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Adjunta el comprobante de pago')
+                              }}
+                            </span>
+                            <span class="mono-pago-file__hint">
+                              {{
+                                layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)
+                                  ? 'Archivo guardado · selecciona para reemplazar'
+                                  : (srvCtrl.get('servicioComprobantePagoNombre')?.value
+                                    ? 'Haz clic para reemplazar el archivo'
+                                    : 'PDF, PNG o JPG · un solo archivo')
+                              }}
+                            </span>
+                          </div>
+                          <div class="mono-pago-file__actions" (click)="$event.stopPropagation()">
+                            <span class="mono-pago-file__action" (click)="srvPagoInput.click()">
+                              {{
+                                srvCtrl.get('servicioComprobantePagoNombre')?.value && !layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)
+                                  ? 'Cambiar'
+                                  : 'Seleccionar'
+                              }}
+                            </span>
+                            <ng-container *ngIf="layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)">
+                              <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
+                                url: srvCtrl.get('servicioComprobantePagoUrl')?.value,
+                                titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
+                              }"></ng-container>
+                            </ng-container>
+                          </div>
+                          <input
+                            #srvPagoInput
+                            type="file"
+                            [accept]="acceptPdfImagenes"
+                            class="mono-pago-file__input"
+                            (change)="onServicioPagoFileSelected($event, i)"
+                            (click)="$event.stopPropagation()"
+                          />
                         </div>
                       </div>
                     </div>
@@ -765,7 +770,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Fachada</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'fachada'"
+                    (dragover)="onUploaderDragOver($event, 'fachada')"
+                    (dragleave)="onUploaderDragLeave($event, 'fachada')"
+                    (drop)="onDocumentoDrop($event, 'documentoPlano')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>home</mat-icon></div>
@@ -789,7 +798,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Contrato De Renta</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'contrato'"
+                    (dragover)="onUploaderDragOver($event, 'contrato')"
+                    (dragleave)="onUploaderDragLeave($event, 'contrato')"
+                    (drop)="onDocumentoDrop($event, 'documentoContratoRenta')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>description</mat-icon></div>
@@ -896,7 +909,11 @@
                 #autocargaCsfCardArrendatario [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
                 <label class="form-label perm-label docs-uploader-label">Constancia De Situación Fiscal</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'csf'"
+                    (dragover)="onUploaderDragOver($event, 'csf')"
+                    (dragleave)="onUploaderDragLeave($event, 'csf')"
+                    (drop)="onDocumentoDrop($event, 'documentoConstanciaFiscal')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
@@ -923,7 +940,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Comprobante De Domicilio</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'comprobante'"
+                    (dragover)="onUploaderDragOver($event, 'comprobante')"
+                    (dragleave)="onUploaderDragLeave($event, 'comprobante')"
+                    (drop)="onDocumentoDrop($event, 'documentoComprobanteDomicilio')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
@@ -993,7 +1014,11 @@
                     </div>
                   </div>
                   <div class="uploader-hero flex-grow-1">
-                    <div class="uploader">
+                    <div class="uploader"
+                      [class.dragging]="uploaderDraggingKey === ('galeria-' + i)"
+                      (dragover)="onUploaderDragOver($event, 'galeria-' + i)"
+                      (dragleave)="onUploaderDragLeave($event, 'galeria-' + i)"
+                      (drop)="onGaleriaDrop($event, i)">
                       <div class="uploader__glow"></div>
                       <div class="uploader__body">
                         <div class="uploader__icon"><mat-icon>image</mat-icon></div>
@@ -1019,7 +1044,11 @@
                   situación
                   fiscal del rep. legal</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'csfRep'"
+                    (dragover)="onUploaderDragOver($event, 'csfRep')"
+                    (dragleave)="onUploaderDragLeave($event, 'csfRep')"
+                    (drop)="onDocumentoDrop($event, 'constanciaSituacionFiscalRepresentanteLegal')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
@@ -1047,7 +1076,11 @@
                   Identificación Oficial del Rep. Legal
                 </label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'ineRep'"
+                    (dragover)="onUploaderDragOver($event, 'ineRep')"
+                    (dragleave)="onUploaderDragLeave($event, 'ineRep')"
+                    (drop)="onDocumentoDrop($event, 'ineRepresentanteLegal')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>badge</mat-icon></div>
@@ -1161,22 +1194,40 @@
                           <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
                             <label class="form-label perm-label d-block mb-2">Constancia De Situación Fiscal</label>
                             <div class="uploader-hero flex-grow-1">
-                              <div class="uploader">
+                              <div class="uploader"
+                                [class.dragging]="uploaderDraggingKey === ('socio-csf-' + i)"
+                                (dragover)="onUploaderDragOver($event, 'socio-csf-' + i)"
+                                (dragleave)="onUploaderDragLeave($event, 'socio-csf-' + i)"
+                                (drop)="onSocioDrop($event, i, 'constanciaFiscalArchivo')">
                                 <div class="uploader__glow"></div>
                                 <div class="uploader__body">
                                   <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                                   <h6 class="uploader__title">Sube archivo</h6>
                                   <p class="uploader__subtitle">Arrastra y suelta o</p>
-                                  <div class="uploader__cta">
-                                    <button mat-flat-button color="primary" type="button"
-                                      (click)="openSocioFilePicker(socioCsfInput)">Seleccionar</button>
-                                    <span class="uploader__badge"
-                                      [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl')"
-                                      [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl')"
-                                      (click)="onBadgeSocioClick($event, socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl', 'Constancia fiscal del socio')">
-                                      {{ etiquetaArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl') }}
-                                    </span>
-                                  </div>
+                                  <ng-container
+                                    *ngIf="layoutArchivoRemoto(socioCtrl.get('constanciaFiscalUrl')?.value); else socioCsfDefault">
+                                    <div class="uploader__cta uploader__cta--archivo-remoto">
+                                      <button mat-flat-button color="primary" type="button"
+                                        (click)="openSocioFilePicker(socioCsfInput)">Seleccionar</button>
+                                      <button type="button" mat-flat-button class="docs-uploader-ver-btn"
+                                        (click)="onBadgeSocioClick($event, socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl', 'Constancia fiscal del socio')">
+                                        <mat-icon>visibility</mat-icon>
+                                        <span>Ver</span>
+                                      </button>
+                                    </div>
+                                  </ng-container>
+                                  <ng-template #socioCsfDefault>
+                                    <div class="uploader__cta">
+                                      <button mat-flat-button color="primary" type="button"
+                                        (click)="openSocioFilePicker(socioCsfInput)">Seleccionar</button>
+                                      <span class="uploader__badge"
+                                        [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl')"
+                                        [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl')"
+                                        (click)="onBadgeSocioClick($event, socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl', 'Constancia fiscal del socio')">
+                                        {{ etiquetaArchivoSocio(socioCtrl, 'constanciaFiscalArchivo', 'constanciaFiscalUrl') }}
+                                      </span>
+                                    </div>
+                                  </ng-template>
                                   <input #socioCsfInput type="file"
                                     accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
                                     (change)="onSocioFileSelected($event, i, 'constanciaFiscalArchivo')" />
@@ -1187,22 +1238,40 @@
                           <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
                             <label class="form-label perm-label d-block mb-2">Comprobante De Domicilio</label>
                             <div class="uploader-hero flex-grow-1">
-                              <div class="uploader">
+                              <div class="uploader"
+                                [class.dragging]="uploaderDraggingKey === ('socio-comp-' + i)"
+                                (dragover)="onUploaderDragOver($event, 'socio-comp-' + i)"
+                                (dragleave)="onUploaderDragLeave($event, 'socio-comp-' + i)"
+                                (drop)="onSocioDrop($event, i, 'comprobanteDomicilioArchivo')">
                                 <div class="uploader__glow"></div>
                                 <div class="uploader__body">
                                   <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                                   <h6 class="uploader__title">Sube archivo</h6>
                                   <p class="uploader__subtitle">Arrastra y suelta o</p>
-                                  <div class="uploader__cta">
-                                    <button mat-flat-button color="primary" type="button"
-                                      (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
-                                    <span class="uploader__badge"
-                                      [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl')"
-                                      [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl')"
-                                      (click)="onBadgeSocioClick($event, socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl', 'Comprobante del socio')">
-                                      {{ etiquetaArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl') }}
-                                    </span>
-                                  </div>
+                                  <ng-container
+                                    *ngIf="layoutArchivoRemoto(socioCtrl.get('comprobanteDomicilioUrl')?.value); else socioCompDefault">
+                                    <div class="uploader__cta uploader__cta--archivo-remoto">
+                                      <button mat-flat-button color="primary" type="button"
+                                        (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
+                                      <button type="button" mat-flat-button class="docs-uploader-ver-btn"
+                                        (click)="onBadgeSocioClick($event, socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl', 'Comprobante del socio')">
+                                        <mat-icon>visibility</mat-icon>
+                                        <span>Ver</span>
+                                      </button>
+                                    </div>
+                                  </ng-container>
+                                  <ng-template #socioCompDefault>
+                                    <div class="uploader__cta">
+                                      <button mat-flat-button color="primary" type="button"
+                                        (click)="openSocioFilePicker(socioCompInput)">Seleccionar</button>
+                                      <span class="uploader__badge"
+                                        [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl')"
+                                        [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl')"
+                                        (click)="onBadgeSocioClick($event, socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl', 'Comprobante del socio')">
+                                        {{ etiquetaArchivoSocio(socioCtrl, 'comprobanteDomicilioArchivo', 'comprobanteDomicilioUrl') }}
+                                      </span>
+                                    </div>
+                                  </ng-template>
                                   <input #socioCompInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
                                     (change)="onSocioFileSelected($event, i, 'comprobanteDomicilioArchivo')" />
                                 </div>
@@ -1212,21 +1281,40 @@
                           <div class="col-12 col-sm-6 col-lg-4 d-flex flex-column">
                             <label class="form-label perm-label d-block mb-2">Identificación Oficial</label>
                             <div class="uploader-hero flex-grow-1">
-                              <div class="uploader">
+                              <div class="uploader"
+                                [class.dragging]="uploaderDraggingKey === ('socio-ine-' + i)"
+                                (dragover)="onUploaderDragOver($event, 'socio-ine-' + i)"
+                                (dragleave)="onUploaderDragLeave($event, 'socio-ine-' + i)"
+                                (drop)="onSocioDrop($event, i, 'identificacionOficialArchivo')">
                                 <div class="uploader__glow"></div>
                                 <div class="uploader__body">
                                   <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
                                   <h6 class="uploader__title">Sube archivo</h6>
                                   <p class="uploader__subtitle">Arrastra y suelta o</p>
-                                  <div class="uploader__cta">
-                                    <button mat-flat-button color="primary" type="button" (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
-                                    <span class="uploader__badge"
-                                      [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl')"
-                                      [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl')"
-                                      (click)="onBadgeSocioClick($event, socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl', 'Identificación del socio')">
-                                      {{ etiquetaArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl') }}
-                                    </span>
-                                  </div>
+                                  <ng-container
+                                    *ngIf="layoutArchivoRemoto(socioCtrl.get('identificacionOficialUrl')?.value); else socioIneDefault">
+                                    <div class="uploader__cta uploader__cta--archivo-remoto">
+                                      <button mat-flat-button color="primary" type="button"
+                                        (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
+                                      <button type="button" mat-flat-button class="docs-uploader-ver-btn"
+                                        (click)="onBadgeSocioClick($event, socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl', 'Identificación del socio')">
+                                        <mat-icon>visibility</mat-icon>
+                                        <span>Ver</span>
+                                      </button>
+                                    </div>
+                                  </ng-container>
+                                  <ng-template #socioIneDefault>
+                                    <div class="uploader__cta">
+                                      <button mat-flat-button color="primary" type="button"
+                                        (click)="openSocioFilePicker(socioIneInput)">Seleccionar</button>
+                                      <span class="uploader__badge"
+                                        [class.uploader__badge--file]="tieneArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl')"
+                                        [class.uploader__badge--clickable]="tieneArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl')"
+                                        (click)="onBadgeSocioClick($event, socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl', 'Identificación del socio')">
+                                        {{ etiquetaArchivoSocio(socioCtrl, 'identificacionOficialArchivo', 'identificacionOficialUrl') }}
+                                      </span>
+                                    </div>
+                                  </ng-template>
                                   <input #socioIneInput type="file"
                                     accept="application/pdf,image/png,image/jpeg,image/jpg" class="uploader__input"
                                     (change)="onSocioFileSelected($event, i, 'identificacionOficialArchivo')" />

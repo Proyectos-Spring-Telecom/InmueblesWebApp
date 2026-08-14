@@ -244,45 +244,67 @@
                       </div>
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label d-block mb-2">Comprobante de pago</label>
-                        <div class="uploader-hero srv-pago-uploader">
-                          <div class="uploader srv-pago-uploader__card">
-                            <div class="uploader__glow"></div>
-                            <div class="uploader__body">
-                              <ng-container *ngIf="layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value); else srvPagoUploaderDefault">
-                                <div class="uploader__cta uploader__cta--archivo-remoto">
-                                  <div class="uploader__cta-actions">
-                                    <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
-                                      Seleccionar
-                                    </button>
-                                    <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
-                                      url: srvCtrl.get('servicioComprobantePagoUrl')?.value,
-                                      titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
-                                    }"></ng-container>
-                                  </div>
-                                  <span class="uploader__badge uploader__badge--file">
-                                    {{ srvCtrl.get('servicioComprobantePagoNombre')?.value }}
-                                  </span>
-                                </div>
-                              </ng-container>
-                              <ng-template #srvPagoUploaderDefault>
-                                <div class="uploader__cta">
-                                  <button mat-flat-button color="primary" type="button" (click)="srvPagoInput.click()">
-                                    Seleccionar
-                                  </button>
-                                  <span class="uploader__badge"
-                                    [class.uploader__badge--file]="srvCtrl.get('servicioComprobantePagoNombre')?.value || srvCtrl.get('servicioComprobantePagoUrl')?.value">
-                                    {{ srvCtrl.get('servicioComprobantePagoNombre')?.value || etiquetaPdfImagenes }}
-                                  </span>
-                                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
-                                    url: srvCtrl.get('servicioComprobantePagoUrl')?.value,
-                                    titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
-                                  }"></ng-container>
-                                </div>
-                              </ng-template>
-                              <input #srvPagoInput type="file" [accept]="acceptPdfImagenes"
-                                class="uploader__input" (change)="onServicioPagoFileSelected($event, i)" />
-                            </div>
+                        <div
+                          class="mono-pago-file"
+                          [class.mono-pago-file--filled]="!!srvCtrl.get('servicioComprobantePagoNombre')?.value || layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)"
+                          [class.mono-pago-file--dragging]="uploaderDraggingKey === ('srvPago-' + i)"
+                          role="button"
+                          tabindex="0"
+                          (click)="srvPagoInput.click()"
+                          (keydown.enter)="srvPagoInput.click()"
+                          (keydown.space)="$event.preventDefault(); srvPagoInput.click()"
+                          (dragover)="onUploaderDragOver($event, 'srvPago-' + i)"
+                          (dragleave)="onUploaderDragLeave($event, 'srvPago-' + i)"
+                          (drop)="onServicioPagoDrop($event, i)"
+                        >
+                          <div class="mono-pago-file__icon" aria-hidden="true">
+                            <mat-icon>{{
+                              srvCtrl.get('servicioComprobantePagoNombre')?.value || layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)
+                                ? 'description'
+                                : 'upload_file'
+                            }}</mat-icon>
                           </div>
+                          <div class="mono-pago-file__text">
+                            <span class="mono-pago-file__title">
+                              {{
+                                layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)
+                                  ? 'Adjunta el comprobante de pago'
+                                  : (srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Adjunta el comprobante de pago')
+                              }}
+                            </span>
+                            <span class="mono-pago-file__hint">
+                              {{
+                                layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)
+                                  ? 'Archivo guardado · selecciona para reemplazar'
+                                  : (srvCtrl.get('servicioComprobantePagoNombre')?.value
+                                    ? 'Haz clic para reemplazar el archivo'
+                                    : 'PDF, PNG o JPG · un solo archivo')
+                              }}
+                            </span>
+                          </div>
+                          <div class="mono-pago-file__actions" (click)="$event.stopPropagation()">
+                            <span class="mono-pago-file__action" (click)="srvPagoInput.click()">
+                              {{
+                                srvCtrl.get('servicioComprobantePagoNombre')?.value && !layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)
+                                  ? 'Cambiar'
+                                  : 'Seleccionar'
+                              }}
+                            </span>
+                            <ng-container *ngIf="layoutArchivoRemoto(srvCtrl.get('servicioComprobantePagoUrl')?.value)">
+                              <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
+                                url: srvCtrl.get('servicioComprobantePagoUrl')?.value,
+                                titulo: srvCtrl.get('servicioComprobantePagoNombre')?.value || 'Comprobante de pago'
+                              }"></ng-container>
+                            </ng-container>
+                          </div>
+                          <input
+                            #srvPagoInput
+                            type="file"
+                            [accept]="acceptPdfImagenes"
+                            class="mono-pago-file__input"
+                            (change)="onServicioPagoFileSelected($event, i)"
+                            (click)="$event.stopPropagation()"
+                          />
                         </div>
                       </div>
                     </div>
@@ -482,49 +504,67 @@
                                 </div>
                                 <div class="col-12 col-md-4">
                                   <label class="form-label perm-label d-block mb-2">Fachada del Local</label>
-                                  <div class="uploader-hero srv-pago-uploader">
-                                    <div class="uploader srv-pago-uploader__card">
-                                      <div class="uploader__glow"></div>
-                                      <div class="uploader__body">
-                                        <ng-container
-                                          *ngIf="layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value); else localFachadaUploaderDefault">
-                                          <div class="uploader__cta uploader__cta--archivo-remoto">
-                                            <div class="uploader__cta-actions">
-                                              <button mat-flat-button color="primary" type="button"
-                                                (click)="localFachadaInput.click()">
-                                                Seleccionar
-                                              </button>
-                                              <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
-                                                url: localCtrl.get('fachadaUrl')?.value,
-                                                titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
-                                              }"></ng-container>
-                                            </div>
-                                            <span class="uploader__badge uploader__badge--file">
-                                              {{ localCtrl.get('fachadaNombre')?.value }}
-                                            </span>
-                                          </div>
-                                        </ng-container>
-                                        <ng-template #localFachadaUploaderDefault>
-                                          <div class="uploader__cta">
-                                            <button mat-flat-button color="primary" type="button"
-                                              (click)="localFachadaInput.click()">
-                                              Seleccionar
-                                            </button>
-                                            <span class="uploader__badge"
-                                              [class.uploader__badge--file]="localCtrl.get('fachadaNombre')?.value || localCtrl.get('fachadaUrl')?.value">
-                                              {{ localCtrl.get('fachadaNombre')?.value || etiquetaSoloImagenes }}
-                                            </span>
-                                            <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
-                                              url: localCtrl.get('fachadaUrl')?.value,
-                                              titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
-                                            }"></ng-container>
-                                          </div>
-                                        </ng-template>
-                                        <input #localFachadaInput type="file" [accept]="acceptSoloImagenes"
-                                          class="uploader__input"
-                                          (change)="onLocalFachadaFileSelected($event, i, j)" />
-                                      </div>
+                                  <div
+                                    class="mono-pago-file"
+                                    [class.mono-pago-file--filled]="!!localCtrl.get('fachadaNombre')?.value || layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value)"
+                                    [class.mono-pago-file--dragging]="uploaderDraggingKey === ('fachada-' + i + '-' + j)"
+                                    role="button"
+                                    tabindex="0"
+                                    (click)="localFachadaInput.click()"
+                                    (keydown.enter)="localFachadaInput.click()"
+                                    (keydown.space)="$event.preventDefault(); localFachadaInput.click()"
+                                    (dragover)="onUploaderDragOver($event, 'fachada-' + i + '-' + j)"
+                                    (dragleave)="onUploaderDragLeave($event, 'fachada-' + i + '-' + j)"
+                                    (drop)="onLocalFachadaDrop($event, i, j)"
+                                  >
+                                    <div class="mono-pago-file__icon" aria-hidden="true">
+                                      <mat-icon>{{
+                                        localCtrl.get('fachadaNombre')?.value || layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value)
+                                          ? 'image'
+                                          : 'upload_file'
+                                      }}</mat-icon>
                                     </div>
+                                    <div class="mono-pago-file__text">
+                                      <span class="mono-pago-file__title">
+                                        {{
+                                          layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value)
+                                            ? 'Adjunta la fachada del local'
+                                            : (localCtrl.get('fachadaNombre')?.value || 'Adjunta la fachada del local')
+                                        }}
+                                      </span>
+                                      <span class="mono-pago-file__hint">
+                                        {{
+                                          layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value)
+                                            ? 'Archivo guardado · selecciona para reemplazar'
+                                            : (localCtrl.get('fachadaNombre')?.value
+                                              ? 'Haz clic para reemplazar el archivo'
+                                              : 'PNG, JPG o JPEG · un solo archivo')
+                                        }}
+                                      </span>
+                                    </div>
+                                    <div class="mono-pago-file__actions" (click)="$event.stopPropagation()">
+                                      <span class="mono-pago-file__action" (click)="localFachadaInput.click()">
+                                        {{
+                                          localCtrl.get('fachadaNombre')?.value && !layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value)
+                                            ? 'Cambiar'
+                                            : 'Seleccionar'
+                                        }}
+                                      </span>
+                                      <ng-container *ngIf="layoutArchivoRemoto(localCtrl.get('fachadaUrl')?.value)">
+                                        <ng-container *ngTemplateOutlet="btnVerArchivo; context: {
+                                          url: localCtrl.get('fachadaUrl')?.value,
+                                          titulo: localCtrl.get('fachadaNombre')?.value || 'Fachada del local'
+                                        }"></ng-container>
+                                      </ng-container>
+                                    </div>
+                                    <input
+                                      #localFachadaInput
+                                      type="file"
+                                      [accept]="acceptSoloImagenes"
+                                      class="mono-pago-file__input"
+                                      (change)="onLocalFachadaFileSelected($event, i, j)"
+                                      (click)="$event.stopPropagation()"
+                                    />
                                   </div>
                                 </div>
                               </div>
@@ -583,7 +623,7 @@
               </div>
             </div>
             <ng-template #btnVerArchivo let-url="url" let-titulo="titulo">
-              <button *ngIf="url" type="button" mat-flat-button class="bg-warn docs-uploader-ver-btn"
+              <button *ngIf="url" type="button" mat-flat-button class="docs-uploader-ver-btn"
                 (click)="verArchivoRemoto(url, titulo)">
                 <mat-icon>visibility</mat-icon>
                 <span>Ver</span>
@@ -596,10 +636,6 @@
                   <button mat-flat-button color="primary" type="button"
                     (click)="abrirSelectorArchivo(selector)">Seleccionar</button>
                   <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
-                  <span
-                    class="uploader__badge uploader__badge--file"
-                    [attr.title]="nombreRemoto"
-                  >{{ nombreRemoto }}</span>
                 </div>
               </ng-container>
               <ng-template #docsUploaderCtaDefault>
@@ -610,28 +646,24 @@
                     [class.uploader__badge--file]="nombreRemoto || url || inmuebleForm.get(controlName)?.value?.name">
                     {{ nombreRemoto || inmuebleForm.get(controlName)?.value?.name || placeholder }}
                   </span>
-                  <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: tituloVer }"></ng-container>
                 </div>
               </ng-template>
             </ng-template>
             <ng-template #docsUploaderCtaGaleria let-url="url" let-nombre="nombre" let-placeholder="placeholder"
               let-titulo="titulo" let-fileInput="fileInput">
-              <ng-container *ngIf="nombre || url; else docsUploaderCtaGaleriaVacia">
+              <ng-container *ngIf="layoutArchivoRemoto(url); else docsUploaderCtaGaleriaVacia">
                 <div class="uploader__cta uploader__cta--archivo-remoto">
                   <button mat-flat-button color="primary" type="button"
                     (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
                   <ng-container *ngTemplateOutlet="btnVerArchivo; context: { url: url, titulo: titulo }"></ng-container>
-                  <span
-                    class="uploader__badge uploader__badge--file"
-                    [attr.title]="nombre || placeholder"
-                  >{{ nombre || placeholder }}</span>
                 </div>
               </ng-container>
               <ng-template #docsUploaderCtaGaleriaVacia>
                 <div class="uploader__cta">
                   <button mat-flat-button color="primary" type="button"
                     (click)="abrirSelectorGaleria(fileInput)">Seleccionar</button>
-                  <span class="uploader__badge">{{ placeholder }}</span>
+                  <span class="uploader__badge"
+                    [class.uploader__badge--file]="nombre">{{ nombre || placeholder }}</span>
                 </div>
               </ng-template>
             </ng-template>
@@ -639,7 +671,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Licencia de funcionamiento</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'licencia'"
+                    (dragover)="onUploaderDragOver($event, 'licencia')"
+                    (dragleave)="onUploaderDragLeave($event, 'licencia')"
+                    (drop)="onDocumentoDrop($event, 'documentoLicenciaFuncionamiento')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>image</mat-icon></div>
@@ -663,7 +699,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Uso de suelo</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'usoSuelo'"
+                    (dragover)="onUploaderDragOver($event, 'usoSuelo')"
+                    (dragleave)="onUploaderDragLeave($event, 'usoSuelo')"
+                    (drop)="onDocumentoDrop($event, 'documentoUsoSuelo')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>image</mat-icon></div>
@@ -687,7 +727,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Fachada</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'fachadaInmueble'"
+                    (dragover)="onUploaderDragOver($event, 'fachadaInmueble')"
+                    (dragleave)="onUploaderDragLeave($event, 'fachadaInmueble')"
+                    (drop)="onDocumentoDrop($event, 'documentoFachada')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>home</mat-icon></div>
@@ -711,7 +755,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Plano</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'plano'"
+                    (dragover)="onUploaderDragOver($event, 'plano')"
+                    (dragleave)="onUploaderDragLeave($event, 'plano')"
+                    (drop)="onDocumentoDrop($event, 'documentoPlano')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>map</mat-icon></div>
@@ -737,7 +785,11 @@
                 [class.autocarga-contrato-highlight]="resaltarAutocargaContrato">
                 <label class="form-label perm-label docs-uploader-label">Constancia de Situación Fiscal</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'csf'"
+                    (dragover)="onUploaderDragOver($event, 'csf')"
+                    (dragleave)="onUploaderDragLeave($event, 'csf')"
+                    (drop)="onDocumentoDrop($event, 'documentoConstanciaFiscal')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
@@ -766,7 +818,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Comprobante de Domicilio</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'comprobante'"
+                    (dragover)="onUploaderDragOver($event, 'comprobante')"
+                    (dragleave)="onUploaderDragLeave($event, 'comprobante')"
+                    (drop)="onDocumentoDrop($event, 'documentoComprobanteDomicilio')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
@@ -812,7 +868,11 @@
                   </div>
                 </div>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === ('galeria-' + i)"
+                    (dragover)="onUploaderDragOver($event, 'galeria-' + i)"
+                    (dragleave)="onUploaderDragLeave($event, 'galeria-' + i)"
+                    (drop)="onGaleriaDrop($event, i)">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>image</mat-icon></div>
@@ -837,7 +897,11 @@
                 <label class="form-label perm-label docs-uploader-label" id="label-csf-rep-legal">Constancia de Situación
                   Fiscal del Representante Legal</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'csfRep'"
+                    (dragover)="onUploaderDragOver($event, 'csfRep')"
+                    (dragleave)="onUploaderDragLeave($event, 'csfRep')"
+                    (drop)="onDocumentoDrop($event, 'constanciaSituacionFiscalRepresentanteLegal')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
@@ -864,7 +928,11 @@
                   Identificación Oficial Rep. Legal
                 </label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'ineRep'"
+                    (dragover)="onUploaderDragOver($event, 'ineRep')"
+                    (dragleave)="onUploaderDragLeave($event, 'ineRep')"
+                    (drop)="onDocumentoDrop($event, 'ineRepresentanteLegal')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>badge</mat-icon></div>
@@ -889,7 +957,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Escrituras O Título De Propiedad</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'escritura'"
+                    (dragover)="onUploaderDragOver($event, 'escritura')"
+                    (dragleave)="onUploaderDragLeave($event, 'escritura')"
+                    (drop)="onDocumentoDrop($event, 'documentoEscritura')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>picture_as_pdf</mat-icon></div>
@@ -912,7 +984,11 @@
               <div class="col-12 col-sm-6 col-md-4 col-xl-3 d-flex flex-column docs-upload-card">
                 <label class="form-label perm-label docs-uploader-label">Boleta Predial Vigente</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'predial'"
+                    (dragover)="onUploaderDragOver($event, 'predial')"
+                    (dragleave)="onUploaderDragLeave($event, 'predial')"
+                    (drop)="onDocumentoDrop($event, 'documentoBoletaPredial')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>receipt_long</mat-icon></div>
@@ -940,7 +1016,11 @@
               >
                 <label class="form-label perm-label docs-uploader-label">Contrato de renta</label>
                 <div class="uploader-hero flex-grow-1">
-                  <div class="uploader">
+                  <div class="uploader"
+                    [class.dragging]="uploaderDraggingKey === 'contrato'"
+                    (dragover)="onUploaderDragOver($event, 'contrato')"
+                    (dragleave)="onUploaderDragLeave($event, 'contrato')"
+                    (drop)="onDocumentoDrop($event, 'documentoContratoRenta')">
                     <div class="uploader__glow"></div>
                     <div class="uploader__body">
                       <div class="uploader__icon"><mat-icon>description</mat-icon></div>

@@ -902,6 +902,14 @@ body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal.
   letter-spacing: 0.02em;
 }
 
+.mono-pago-file__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+
 .mono-pago-file__action {
   flex: 0 0 auto;
   display: inline-flex;
@@ -922,10 +930,21 @@ body:has(.docs-backdrop.contract-docs-backdrop) .docs-modal.contract-docs-modal.
   background: #059669;
 }
 
+.mono-pago-file .docs-uploader-ver-btn {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.7rem;
+}
+
 .mono-pago-file__input {
   position: absolute;
   width: 1px;
   height: 1px;
   opacity: 0;
   pointer-events: none;
+}
+
+.mono-pago-file--dragging {
+  border-color: rgba(125, 211, 252, 0.7);
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.28);
 }

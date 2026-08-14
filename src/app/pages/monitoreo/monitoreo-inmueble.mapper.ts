@@ -1,4 +1,5 @@
 import {
+  archivoInmuebleActivo,
   esImagenArchivo,
   esPdfArchivo,
   extraerInmuebleDetalleApi,
@@ -14,6 +15,8 @@ import {
   nombreArrendador,
   nombreServicio,
   separarArchivosInmueble,
+  servicioInmuebleActivo,
+  zonaInmuebleActiva,
 } from '../inmuebles/inmuebles-list.mapper';
 
 export { extraerInmuebleDetalleApi };
@@ -80,14 +83,30 @@ function fechaGridDesdeApi(raw?: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Detalle del inmueble: omite locales con `estatus` 0 (fuera de servicio). */
+function localMonitoreoVisible(local: InmuebleLocalApi | null | undefined): boolean {
+  if (local == null) return false;
+  const est = local.estatus;
+  if (est == null || String(est).trim() === '') return true;
+  return Number(est) !== 0;
+}
+
+function archivosVisiblesInmueble(item: InmuebleApiItem): InmuebleArchivoApi[] {
+  return [
+    ...(Array.isArray(item.archivos) ? item.archivos : []),
+    ...(Array.isArray(item.imagenes) ? item.imagenes : []),
+  ].filter(archivoInmuebleActivo);
+}
+
+function zonasVisiblesInmueble(item: InmuebleApiItem): InmuebleZonaApi[] {
+  return (Array.isArray(item.zonas) ? item.zonas : []).filter(zonaInmuebleActiva);
+}
+
 /** Todos los archivos del GET `/inmuebles/{id}` (sin filtrar por checklist). */
 export function buildArchivosInmuebleLista(
   item: InmuebleApiItem,
 ): MonitoreoExpedienteDoc[] {
-  const todos: InmuebleArchivoApi[] = [
-    ...(Array.isArray(item.archivos) ? item.archivos : []),
-    ...(Array.isArray(item.imagenes) ? item.imagenes : []),
-  ];
+  const todos = archivosVisiblesInmueble(item);
 
   return todos
     .filter((a) => String(a?.url ?? '').trim() || String(a?.nombre ?? '').trim())
@@ -136,7 +155,7 @@ function mapLocalMonitoreo(local: InmuebleLocalApi): MonitoreoLocalFila {
 export function buildZonasMonitoreoInmueble(
   item: InmuebleApiItem,
 ): MonitoreoZonaFila[] {
-  const zonas = Array.isArray(item.zonas) ? item.zonas : [];
+  const zonas = zonasVisiblesInmueble(item);
   return [...zonas]
     .sort((a, b) => {
       const na = Number(a.numeroZona);
@@ -151,7 +170,9 @@ export function buildZonasMonitoreoInmueble(
     })
     .map((z) => {
       const localesRaw = Array.isArray(z.locales) ? z.locales : [];
-      const locales = localesRaw.map((loc) => mapLocalMonitoreo(loc));
+      const locales = localesRaw
+        .filter(localMonitoreoVisible)
+        .map((loc) => mapLocalMonitoreo(loc));
       return {
         zonaPrincipal:
           String(z.zonaPrincipal ?? 'Sin nombre').trim() || 'Sin nombre',
@@ -163,7 +184,7 @@ export function buildZonasMonitoreoInmueble(
 }
 
 export function superficieDisponiblePredioTexto(item: InmuebleApiItem): string {
-  const zonas = Array.isArray(item.zonas) ? item.zonas : [];
+  const zonas = zonasVisiblesInmueble(item);
   const total = zonas.reduce(
     (s, z) => s + (Number(z.superficieDisponibleM2) || 0),
     0,
@@ -175,7 +196,9 @@ export function superficieDisponiblePredioTexto(item: InmuebleApiItem): string {
 export function buildServiciosMonitoreoInmueble(
   item: InmuebleApiItem,
 ): MonitoreoServicioFila[] {
-  const servicios = Array.isArray(item.servicios) ? item.servicios : [];
+  const servicios = (Array.isArray(item.servicios) ? item.servicios : []).filter(
+    servicioInmuebleActivo,
+  );
   return servicios.map((s) => {
     const id = Number(s.id);
     const idOk = Number.isFinite(id) && id > 0;
@@ -191,10 +214,7 @@ export function buildServiciosMonitoreoInmueble(
 }
 
 export function urlsGaleriaInmueble(item: InmuebleApiItem): string[] {
-  const todos: InmuebleArchivoApi[] = [
-    ...(Array.isArray(item.archivos) ? item.archivos : []),
-    ...(Array.isArray(item.imagenes) ? item.imagenes : []),
-  ];
+  const todos = archivosVisiblesInmueble(item);
   const vistos = new Set<string>();
 
   return todos

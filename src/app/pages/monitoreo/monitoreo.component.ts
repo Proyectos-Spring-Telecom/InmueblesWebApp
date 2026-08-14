@@ -37,6 +37,7 @@ import {
 import {
   extraerFilasListadoApi,
   extraerInmueblesListadoApi,
+  filtrarInmueblesActivosMonitoreo,
   mapClienteMonitoreoCentral,
   mapInmuebleMonitoreoInstalacion,
   nombreClienteMonitoreo,
@@ -990,8 +991,8 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       .obtenerInmueblesPorArrendador(id)
       .pipe(
         map((resp) =>
-          extraerInmueblesListadoApi(resp).map((item) =>
-            mapInmuebleMonitoreoInstalacion(item, nombre),
+          filtrarInmueblesActivosMonitoreo(extraerInmueblesListadoApi(resp)).map(
+            (item) => mapInmuebleMonitoreoInstalacion(item, nombre),
           ),
         ),
         catchError((err) => {

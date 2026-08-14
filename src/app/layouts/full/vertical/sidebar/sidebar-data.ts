@@ -228,7 +228,7 @@ export const navItems: NavItem[] = [
         permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
       {
-        displayName: 'Histórico de pagos',
+        displayName: 'Histórico De Pagos',
         route: '/arrendatarios/pagos-historico',
         permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
