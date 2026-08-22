@@ -45,6 +45,53 @@ export const rentaResumenRevealAnim = trigger('rentaResumenReveal', [
   ]),
 ]);
 
+/**
+ * Mostrar/ocultar secciones del modal (cards).
+ * Incluye colapso de altura para que al ocultar no desaparezca de golpe.
+ */
+export const rentaSeccionRevealAnim = trigger('rentaSeccionReveal', [
+  transition(':enter', [
+    style({
+      height: 0,
+      opacity: 0,
+      transform: 'translateY(10px)',
+      overflow: 'hidden',
+      marginTop: 0,
+      marginBottom: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+    }),
+    animate(
+      '320ms cubic-bezier(0.33, 1, 0.68, 1)',
+      style({
+        height: '*',
+        opacity: 1,
+        transform: 'translateY(0)',
+        overflow: 'hidden',
+        marginTop: '*',
+        marginBottom: '*',
+        paddingTop: '*',
+        paddingBottom: '*',
+      }),
+    ),
+  ]),
+  transition(':leave', [
+    style({ overflow: 'hidden', height: '*', opacity: 1 }),
+    animate(
+      '280ms cubic-bezier(0.4, 0, 1, 1)',
+      style({
+        height: 0,
+        opacity: 0,
+        transform: 'translateY(-8px)',
+        marginTop: 0,
+        marginBottom: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+      }),
+    ),
+  ]),
+]);
+
 /** Cambio de texto en aviso del resumen (hint). */
 export const rentaHintMsgAnim = trigger('rentaHintMsgAnim', [
   transition('* => *', [

@@ -223,7 +223,7 @@ export const navItems: NavItem[] = [
         permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
       {
-        displayName: 'Pagos del mes',
+        displayName: 'Pagos Del Mes',
         route: '/arrendatarios/pagos-mes',
         permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
