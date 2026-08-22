@@ -3,6 +3,9 @@ import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+/** Periodo que cubre el registro de renta. */
+export type RentaActualPeriodoTipo = 'mes_actual' | 'rango';
+
 /** POST `/renta-actual` */
 export interface RentaActualPostPayload {
   idArrendatario: number;
@@ -14,6 +17,16 @@ export interface RentaActualPostPayload {
   montoFinalMantenimiento: number;
   factorVariable: number;
   ocupoFormula: number;
+  /** Fecha en que se registra el pago (YYYY-MM-DD). Requiere soporte en back. */
+  fechaRegistro: string;
+  /** `mes_actual` o `rango`. Requiere soporte en back. */
+  periodoTipo: RentaActualPeriodoTipo;
+  /** Fecha que cubre el pago (YYYY-MM-DD) cuando `periodoTipo === 'mes_actual'`. */
+  mes?: string | null;
+  /** Inicio del rango (YYYY-MM-DD) cuando `periodoTipo === 'rango'`. */
+  fechaInicio?: string | null;
+  /** Fin del rango (YYYY-MM-DD) cuando `periodoTipo === 'rango'`. */
+  fechaFin?: string | null;
 }
 
 /** PUT `/renta-actual/{id}` */
@@ -25,6 +38,11 @@ export interface RentaActualPutPayload {
   montoFinalMantenimiento: number;
   factorVariable: number;
   ocupoFormula: number;
+  fechaRegistro: string;
+  periodoTipo: RentaActualPeriodoTipo;
+  mes?: string | null;
+  fechaInicio?: string | null;
+  fechaFin?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
