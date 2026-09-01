@@ -817,6 +817,27 @@ export function formatearFechaHora(raw?: string): string {
   return `${dd}/${mm}/${d.getFullYear()} ${hh}:${min}`;
 }
 
+/**
+ * Fecha/hora del ISO del API (`…Z`) sin corrimiento a zona local.
+ * `2026-08-25T16:11:03.000Z` → `25/08/2026 16:11` (no 10:11 en UTC−6).
+ */
+export function formatearFechaHoraUtc(raw?: string): string {
+  if (!raw) return '';
+  const texto = String(raw).trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(texto);
+  if (iso) {
+    const [, y, mo, d, hh, min] = iso;
+    return `${d}/${mo}/${y} ${hh}:${min}`;
+  }
+  const parsed = new Date(texto);
+  if (Number.isNaN(parsed.getTime())) return texto.slice(0, 16);
+  const dd = String(parsed.getUTCDate()).padStart(2, '0');
+  const mm = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+  const hh = String(parsed.getUTCHours()).padStart(2, '0');
+  const min = String(parsed.getUTCMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${parsed.getUTCFullYear()} ${hh}:${min}`;
+}
+
 export function etiquetaEstatusRegistro(estatus: unknown): string {
   const n = Number(estatus);
   if (n === 1) return 'Activo';

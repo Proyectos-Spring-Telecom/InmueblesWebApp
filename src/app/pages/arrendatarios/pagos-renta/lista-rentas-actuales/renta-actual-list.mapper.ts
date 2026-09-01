@@ -1,27 +1,21 @@
 import { formatMonedaDesdeNumero } from 'src/app/shared/valor-miles-format';
-import { formatearFechaHora } from '../../../inmuebles/inmuebles-list.mapper';
+import { formatearFecha, formatearFechaHoraUtc } from '../../../inmuebles/inmuebles-list.mapper';
 import { nombreArrendatarioDesdeApi } from '../../arrendatarios-list.mapper';
-
-const MESES_PERIODO_ES = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-] as const;
 
 export interface RentaActualDesgloseVm {
   rentaFmt: string;
   mantenimientoFmt: string;
   muestraRenta: boolean;
   muestraMantenimiento: boolean;
+}
+
+export interface RentaActualPeriodoVm {
+  inicioFmt: string;
+  finFmt: string;
+  esRango: boolean;
+  /** ISO/raw del API para hidratar datebox en edición. */
+  inicioRaw: string;
+  finRaw: string;
 }
 
 export interface RentaActualGridRow {
@@ -44,6 +38,9 @@ export interface RentaActualGridRow {
   pagada: boolean;
   pagadaLabel: string;
   mesLabel: string;
+  periodoVm: RentaActualPeriodoVm;
+  /** Disponible para rentas pendientes, aunque tengan `fechaFin`. */
+  puedeDuplicarMes: boolean;
   fhRegistroFmt: string;
   detalle: Record<string, unknown>;
 }
@@ -121,29 +118,37 @@ function esPagada(row: Record<string, unknown>): boolean {
 }
 
 function etiquetaPeriodoMes(row: Record<string, unknown>): string {
-  const raw = row['mes'] ?? row['mesRenta'] ?? row['periodo'];
-  if (raw == null || String(raw).trim() === '') return '—';
+  const vm = extraerPeriodoVm(row);
+  if (!vm.inicioFmt && !vm.finFmt) return '—';
+  if (vm.esRango) return `${vm.inicioFmt} → ${vm.finFmt}`;
+  return vm.inicioFmt || vm.finFmt || '—';
+}
 
-  const texto = String(raw).trim();
-  const fecha = new Date(texto);
-  if (!Number.isNaN(fecha.getTime())) {
-    const nombreMes = MESES_PERIODO_ES[fecha.getMonth()] ?? '';
-    const anio = fecha.getFullYear();
-    return nombreMes ? `${nombreMes} ${anio}` : '—';
-  }
+function extraerPeriodoVm(row: Record<string, unknown>): RentaActualPeriodoVm {
+  const inicioRaw = str(
+    row['mes'] ?? row['fechaInicio'] ?? row['fecha_inicio'] ?? row['mesRenta'] ?? row['periodo'],
+  );
+  const finRaw = str(row['fechaFin'] ?? row['fecha_fin']);
 
-  const partes = texto.match(/^(\d{4})-(\d{2})/);
-  if (partes) {
-    const anio = partes[1];
-    const idx = Number(partes[2]) - 1;
-    const nombreMes = MESES_PERIODO_ES[idx];
-    return nombreMes ? `${nombreMes} ${anio}` : texto;
-  }
+  const inicioFmt = inicioRaw ? formatearFecha(inicioRaw) : '';
+  const finFmt = finRaw ? formatearFecha(finRaw) : '';
+  const esRango = Boolean(inicioFmt && finFmt && inicioFmt !== finFmt);
 
-  const mesNombre = str(row['mesNombre'] ?? row['nombreMes']);
-  const anio = row['anio'] ?? row['year'];
-  if (mesNombre && anio != null) return `${mesNombre} ${anio}`;
-  return texto || '—';
+  return {
+    inicioFmt: inicioFmt || finFmt || '',
+    finFmt: esRango ? finFmt : '',
+    esRango,
+    inicioRaw: inicioRaw || finRaw || '',
+    finRaw: esRango ? finRaw : '',
+  };
+}
+
+/** Ocultar duplicar mes si vienen `mes` y `fechaFin`; mostrar si `fechaFin` es null/vacío. */
+function puedeDuplicarMesDesdeApi(row: Record<string, unknown>): boolean {
+  const mes = str(row['mes'] ?? row['mesRenta'] ?? row['periodo']);
+  const fechaFin = str(row['fechaFin'] ?? row['fecha_fin']);
+  if (mes && fechaFin) return false;
+  return !fechaFin;
 }
 
 function extraerMontosFinalesDesglose(row: Record<string, unknown>): {
@@ -204,6 +209,14 @@ function extraerDesglose(row: Record<string, unknown>): RentaActualDesgloseVm {
   };
 }
 
+/** `fhRegistro` del API → `dd/mm/aaaa hh:mm` UTC (sin segundos ni corrimiento local). */
+function formatearFhRegistroGrid(row: Record<string, unknown>): string {
+  const raw =
+    row['fhRegistro'] ?? row['FhRegistro'] ?? row['fh_registro'] ?? row['fechaRegistro'];
+  if (raw == null || String(raw).trim() === '') return '—';
+  return formatearFechaHoraUtc(String(raw)) || '—';
+}
+
 export function mapRentaActualApiToGridRow(item: unknown): RentaActualGridRow | null {
   const row = item as Record<string, unknown>;
   const id = num(row['id'] ?? row['idRentaActual']);
@@ -238,7 +251,9 @@ export function mapRentaActualApiToGridRow(item: unknown): RentaActualGridRow | 
     pagada,
     pagadaLabel: pagada ? 'Pagada' : 'Pendiente',
     mesLabel: etiquetaPeriodoMes(row),
-    fhRegistroFmt: formatearFechaHora(String(row['fhRegistro'] ?? '')) || '—',
+    periodoVm: extraerPeriodoVm(row),
+    puedeDuplicarMes: puedeDuplicarMesDesdeApi(row),
+    fhRegistroFmt: formatearFhRegistroGrid(row),
     detalle: row,
   };
 }

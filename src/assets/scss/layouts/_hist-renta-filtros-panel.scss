@@ -30,11 +30,47 @@
 .hist-renta-filtros-panel__accion {
   display: flex;
   justify-content: stretch;
+  align-items: stretch;
 }
 
 .hist-renta-filtros-panel__accion .mat-mdc-unelevated-button,
 .hist-renta-filtros-panel__accion button.mat-mdc-button-base {
   width: 100%;
+  min-height: 2.5rem;
+  border-radius: 10px !important;
+}
+
+/* Misma familia visual que Limpiar / Contraer / Exportar (azul) */
+.hist-renta-filtros-panel__accion .mat-mdc-unelevated-button.bg-primary,
+.hist-renta-filtros-panel__accion .mat-mdc-raised-button.bg-primary,
+.hist-renta-filtros-panel__accion button.mat-mdc-button-base.bg-primary {
+  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.28) !important;
+  --mat-button-filled-container-color: rgba(96, 165, 250, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  --mat-button-filled-label-text-color: #ffffff !important;
+  background: rgba(96, 165, 250, 0.28) !important;
+  border: 1px solid rgba(186, 230, 253, 0.74) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.hist-renta-filtros-panel__accion .mat-mdc-unelevated-button.bg-primary .mdc-button__label,
+.hist-renta-filtros-panel__accion .mat-mdc-unelevated-button.bg-primary i,
+.hist-renta-filtros-panel__accion button.bg-primary .mdc-button__label,
+.hist-renta-filtros-panel__accion button.bg-primary i {
+  color: #ffffff !important;
+}
+
+html.light-theme .hist-renta-filtros-panel__accion .mat-mdc-unelevated-button.bg-primary,
+html.light-theme .hist-renta-filtros-panel__accion .mat-mdc-raised-button.bg-primary,
+html.light-theme .hist-renta-filtros-panel__accion button.mat-mdc-button-base.bg-primary {
+  --mdc-filled-button-container-color: #2563eb !important;
+  --mat-button-filled-container-color: #2563eb !important;
+  background: #2563eb !important;
+  border: 1px solid #93c5fd !important;
+  color: #ffffff !important;
 }
 
 .hist-renta-filtros-panel .hist-renta-filtro-fechas__input.form-control,
