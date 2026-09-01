@@ -208,7 +208,7 @@ function nombresLocalesContratoApi(c: Record<string, unknown>): string[] {
 }
 
 function resumenLocalesContratoApi(locales: string[]): string {
-  return locales[0] ?? '';
+  return locales.length ? locales.join(', ') : '';
 }
 
 /** Etiqueta corta del select: título identificable + inmueble + descripción si aporta contexto. */
@@ -232,9 +232,6 @@ export function etiquetaContratoArrendatarioApi(c: Record<string, unknown>): str
         : String(c['nombreInmueble'] ?? c['inmuebleNombre'] ?? '').trim();
 
   let titulo = num || locales;
-  if (!titulo && Number.isFinite(id) && id > 0) {
-    titulo = `Contrato ${Math.trunc(id)}`;
-  }
   if (!titulo) titulo = 'Contrato';
 
   if (
@@ -251,7 +248,14 @@ export function etiquetaContratoArrendatarioApi(c: Record<string, unknown>): str
     titulo = `${titulo} · ${descripcion}`;
   }
 
-  return truncarEtiquetaContrato(titulo, 72);
+  if (Number.isFinite(id) && id > 0) {
+    const idTxt = `#${Math.trunc(id)}`;
+    if (!titulo.includes(idTxt) && !titulo.startsWith(`Contrato ${Math.trunc(id)}`)) {
+      titulo = `${idTxt} · ${titulo}`;
+    }
+  }
+
+  return truncarEtiquetaContrato(titulo, 96);
 }
 
 export function etiquetaTipoPersonaArrendatario(raw: unknown): string {

@@ -138,54 +138,87 @@ $dark-body-bg: #141a21;
 
 .mat-mdc-unelevated-button.bg-primary,
 .mat-mdc-raised-button.bg-primary {
-  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.28);
-  --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-filled-button-icon-color: #ffffff;
+  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.28) !important;
+  --mat-button-filled-container-color: rgba(96, 165, 250, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  --mat-button-filled-label-text-color: #ffffff !important;
+  background: rgba(96, 165, 250, 0.28) !important;
   border: 1px solid rgba(186, 230, 253, 0.74) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
 }
 .mat-mdc-unelevated-button.bg-secondary,
 .mat-mdc-raised-button.bg-secondary {
-  --mdc-filled-button-container-color: rgba(104, 19, 48, 0.28);
-  --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-filled-button-icon-color: #ffffff;
+  --mdc-filled-button-container-color: rgba(104, 19, 48, 0.28) !important;
+  --mat-button-filled-container-color: rgba(104, 19, 48, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  --mat-button-filled-label-text-color: #ffffff !important;
+  background: rgba(104, 19, 48, 0.28) !important;
   border: 1px solid rgba(251, 165, 180, 0.74) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
 }
 .mat-mdc-unelevated-button.bg-success,
 .mat-mdc-raised-button.bg-success {
-  --mdc-filled-button-container-color: rgba(55, 163, 22, 0.28);
-  --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-filled-button-icon-color: #ffffff;
+  --mdc-filled-button-container-color: rgba(55, 163, 22, 0.28) !important;
+  --mat-button-filled-container-color: rgba(55, 163, 22, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  --mat-button-filled-label-text-color: #ffffff !important;
+  background: rgba(55, 163, 22, 0.28) !important;
   border: 1px solid rgba(187, 247, 208, 0.74) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
 }
 .mat-mdc-unelevated-button.bg-info,
 .mat-mdc-raised-button.bg-info {
-  --mdc-filled-button-container-color: rgba(20, 184, 166, 0.28);
-  --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-filled-button-icon-color: #ffffff;
+  --mdc-filled-button-container-color: rgba(20, 184, 166, 0.28) !important;
+  --mat-button-filled-container-color: rgba(20, 184, 166, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  --mat-button-filled-label-text-color: #ffffff !important;
+  background: rgba(20, 184, 166, 0.28) !important;
   border: 1px solid rgba(94, 234, 212, 0.55) !important;
   border-radius: 10px !important;
+  color: #ffffff !important;
 }
 .mat-mdc-unelevated-button.bg-warning,
 .mat-mdc-raised-button.bg-warning {
-  --mdc-filled-button-container-color: rgba(245, 158, 11, 0.28);
-  --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-filled-button-icon-color: #ffffff;
+  --mdc-filled-button-container-color: rgba(245, 158, 11, 0.28) !important;
+  --mat-button-filled-container-color: rgba(245, 158, 11, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  --mat-button-filled-label-text-color: #ffffff !important;
+  background: rgba(245, 158, 11, 0.28) !important;
   border: 1px solid rgba(254, 243, 199, 0.74) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
 }
 .mat-mdc-unelevated-button.bg-warn,
 .mat-mdc-raised-button.bg-warn {
-  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.28);
-  --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-filled-button-icon-color: #ffffff;
+  --mdc-filled-button-container-color: rgba(96, 165, 250, 0.28) !important;
+  --mat-button-filled-container-color: rgba(96, 165, 250, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  --mat-button-filled-label-text-color: #ffffff !important;
+  background: rgba(96, 165, 250, 0.28) !important;
   border: 1px solid rgba(186, 230, 253, 0.74) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
 }
 .mat-mdc-unelevated-button.bg-error,
 .mat-mdc-raised-button.bg-error {
-  --mdc-filled-button-container-color: rgba(220, 38, 38, 0.28);
-  --mat-button-filled-container-color: rgba(220, 38, 38, 0.28);
-  --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-filled-button-icon-color: #ffffff;
+  --mdc-filled-button-container-color: rgba(220, 38, 38, 0.28) !important;
+  --mat-button-filled-container-color: rgba(220, 38, 38, 0.28) !important;
+  --mdc-filled-button-label-text-color: #ffffff !important;
+  --mdc-filled-button-icon-color: #ffffff !important;
+  --mat-button-filled-label-text-color: #ffffff !important;
+  background: rgba(220, 38, 38, 0.28) !important;
   border: 1px solid rgba(254, 202, 202, 0.74) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
 }
 
 .mat-mdc-fab.bg-primary,

@@ -73,14 +73,14 @@
 
     <div class="d-flex flex-wrap gap-10 align-items-end justify-content-end w-100 inm-lista__toolbar mt-5">
       <div *appHasPermission="'45'">
-        <button type="button" (click)="abrirModalPago()" mat-flat-button class="bg-primary">
+        <button type="button" (click)="abrirModalPago()" mat-flat-button class="bg-secondary">
           <i class="fa fa-plus" aria-hidden="true"></i> Registrar pago
         </button>
       </div>
       <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
       </button>
-      <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+      <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warning">
         <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
         {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
       </button>

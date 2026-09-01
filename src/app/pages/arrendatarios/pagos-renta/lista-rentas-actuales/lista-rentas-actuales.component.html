@@ -38,7 +38,8 @@
         <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
         {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
       </button>
-      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
+      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info"
+        [disabled]="!puedeExportarExcel()">
         <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
       </button>
     </div>
@@ -60,21 +61,104 @@
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
 
-        <dxi-column caption="Acciones" cellTemplate="accionesRentasTpl" alignment="center" [width]="240"
+        <dxi-column caption="Acciones" cellTemplate="accionesRentasTpl" alignment="center" [width]="200"
           [allowFiltering]="false" [allowSorting]="false"></dxi-column>
-        <dxi-column dataField="mesLabel" caption="Periodo" alignment="center" ></dxi-column>
-        <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center"  [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="250"></dxi-column>
-        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" ></dxi-column>
+        <dxi-column
+          dataField="mesLabel"
+          caption="Vigencia"
+          alignment="center"
+          [width]="220"
+          cellTemplate="periodoRentaTpl"
+        ></dxi-column>
+        <dxi-column
+          dataField="fhRegistroFmt"
+          caption="Fecha de creación"
+          [width]="220"
+          alignment="center"
+          cellTemplate="fhRegistroRentaTpl"
+        ></dxi-column>
+        <dxi-column
+          dataField="arrendatarioLabel"
+          caption="Arrendatario"
+          alignment="left"
+          cssClass="renta-col-titulo-centro"
+          [width]="220"
+          cellTemplate="arrendatarioRentaTpl"
+        ></dxi-column>
+        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="150"></dxi-column>
         <!-- <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column> -->
-        <dxi-column caption="Desglose" cellTemplate="desgloseRentaTpl" alignment="center" [width]="250"
-          [minWidth]="240" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
-        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="200"></dxi-column>
-        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center"  [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center"  [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="100" [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" [width]="250" cellTemplate="estatusRentaTpl"></dxi-column>
-        <dxi-column dataField="id" caption="ID" alignment="center"  [visible]="false"></dxi-column>
+        <dxi-column
+          caption="Desglose"
+          cellTemplate="desgloseRentaTpl"
+          alignment="left"
+          cssClass="renta-col-titulo-centro"
+          [width]="220"
+          [minWidth]="220"
+          [allowFiltering]="false"
+          [allowSorting]="false"
+        ></dxi-column>
+        <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="180" [minWidth]="180"
+          cellTemplate="montoFinalRentaTpl"></dxi-column>
+        <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center"
+          [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center"
+          [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="100"
+          [visible]="!embebidoEnHub"></dxi-column>
+        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" [width]="200"
+          cellTemplate="estatusRentaTpl"></dxi-column>
+        <dxi-column dataField="id" caption="ID" alignment="center" [visible]="false"></dxi-column>
+
+        <div *dxTemplate="let row of 'periodoRentaTpl'" class="renta-grid-periodo">
+          @if (row.data.periodoVm?.inicioFmt) {
+          <span class="renta-grid-periodo__fecha renta-grid-periodo__fecha--inicio">{{
+            row.data.periodoVm.inicioFmt
+          }}</span>
+          @if (row.data.periodoVm.esRango) {
+          <span class="renta-grid-periodo__sep" aria-hidden="true">→</span>
+          <span class="renta-grid-periodo__fecha renta-grid-periodo__fecha--fin">{{
+            row.data.periodoVm.finFmt
+          }}</span>
+          }
+          } @else {
+          <span class="renta-grid-desglose__vacio">—</span>
+          }
+        </div>
+
+        <div *dxTemplate="let row of 'fhRegistroRentaTpl'" class="renta-grid-fh-registro">
+          @if (row.data.fhRegistroFmt && row.data.fhRegistroFmt !== '—') {
+          <div class="renta-grid-desglose__item renta-grid-desglose__item--registro">
+            <span class="renta-grid-desglose__valor renta-grid-desglose__valor--centrado">{{
+              row.data.fhRegistroFmt
+              }}</span>
+          </div>
+          } @else {
+          <span class="renta-grid-desglose__vacio">—</span>
+          }
+        </div>
+
+        <div *dxTemplate="let row of 'arrendatarioRentaTpl'" class="renta-grid-celda-destacada">
+          @if (row.data.arrendatarioLabel && row.data.arrendatarioLabel !== '—') {
+          <div class="inm-row-card inm-row-card--nombre renta-grid-arrendatario">
+            <div class="inm-row-card__icon" aria-hidden="true">
+              <mat-icon>storefront</mat-icon>
+            </div>
+            <span class="inm-row-card__title">{{ row.data.arrendatarioLabel }}</span>
+          </div>
+          } @else {
+          <span class="renta-grid-desglose__vacio">—</span>
+          }
+        </div>
+
+        <div *dxTemplate="let row of 'montoFinalRentaTpl'" class="renta-grid-celda-destacada renta-grid-celda-destacada--centro">
+          @if (row.data.montoFinalFmt && row.data.montoFinalFmt !== '—') {
+          <div class="renta-grid-desglose__item renta-grid-desglose__item--total renta-grid-monto-final">
+            <span class="renta-grid-desglose__valor">{{ row.data.montoFinalFmt }}</span>
+          </div>
+          } @else {
+          <span class="renta-grid-desglose__vacio">—</span>
+          }
+        </div>
 
         <div *dxTemplate="let row of 'estatusRentaTpl'">
           @if (row.data.pagada) {
@@ -103,7 +187,8 @@
           }
         </div>
 
-        <div *dxTemplate="let row of 'accionesRentasTpl'" class="d-flex gap-3 justify-content-center align-items-center">
+        <div *dxTemplate="let row of 'accionesRentasTpl'"
+          class="d-flex gap-3 justify-content-center align-items-center">
           @if (!row.data.pagada) {
           <div>
             <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
@@ -117,12 +202,14 @@
               <i class="fa fa-check"></i>
             </button>
           </div>
+          @if (row.data.puedeDuplicarMes) {
           <div>
             <button type="button" id="ubicacionButton" class="btnAcciones" title="Duplicar al mes siguiente"
               (click)="duplicarRentaAlSiguienteMes(row.data); $event.stopPropagation()">
               <i class="fa fa-calendar" aria-hidden="true"></i>
             </button>
           </div>
+          }
           } @else {
           <span class="renta-acciones-vacio" title="La renta ya fue pagada y no admite cambios">
             Renta Pagada
@@ -137,12 +224,8 @@
 <ng-container *ngIf="mostrarModalRenta">
   <div class="contract-page-dim" [@contractDimAnim]></div>
   <div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim]>
-    <div
-      class="docs-modal contract-docs-modal mono-pago-modal renta-alta-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="renta-modal-title"
-    >
+    <div class="docs-modal contract-docs-modal mono-pago-modal renta-alta-modal" role="dialog" aria-modal="true"
+      aria-labelledby="renta-modal-title">
       <div class="row docs-modal__header">
         <div class="col-10 col-md-11">
           <h3 class="docs-modal__title" id="renta-modal-title">
@@ -153,12 +236,8 @@
           </p>
         </div>
         <div class="col-2 col-md-1 docs-modal__close-col">
-          <button
-            type="button"
-            class="docs-modal__close"
-            (click)="cerrarModalRenta()"
-            aria-label="Cerrar modal de renta"
-          >
+          <button type="button" class="docs-modal__close" (click)="cerrarModalRenta()"
+            aria-label="Cerrar modal de renta">
             <mat-icon aria-hidden="true">close</mat-icon>
           </button>
         </div>
@@ -170,720 +249,672 @@
             <form [formGroup]="rentaForm" class="perm-form-body mono-pago-form renta-alta-form-stack">
               <div class="row g-3 renta-alta-cards-row">
 
-              <!-- (a) Arrendatario y contrato — solo alta -->
-              <div class="col-12" *ngIf="rentaModalModo === 'alta'">
-                <article class="renta-alta-bloque">
-                  <header class="renta-alta-bloque__head">
-                    <mat-icon aria-hidden="true">person</mat-icon>
-                    <div>
-                      <h4>Arrendatario y contrato</h4>
-                      <p>Selecciona quién paga y el contrato vigente.</p>
-                    </div>
-                  </header>
-                  <div class="row g-3">
-                    <div class="col-12 col-lg-6 renta-modal-campo">
-                      <label for="rentaArrendatario" class="form-label perm-label">
-                        Arrendatario <span class="text-danger">*</span>
-                      </label>
-                      <div class="renta-reveal-slot"
-                        [class.renta-reveal-slot--cerrado]="!catalogosModalCargando"
-                        [attr.aria-hidden]="!catalogosModalCargando"
-                        [attr.inert]="!catalogosModalCargando ? '' : null">
-                        <div class="renta-reveal-slot__inner">
-                          <div class="mono-pago-servicio-loading mb-0">
-                            <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                            <span>Cargando arrendatarios…</span>
+                <!-- (a) Arrendatario y contrato — alta y edición -->
+                <div class="col-12">
+                  <article class="renta-alta-bloque">
+                    <header class="renta-alta-bloque__head">
+                      <mat-icon aria-hidden="true">person</mat-icon>
+                      <div>
+                        <h4>Arrendatario y contrato</h4>
+                        <p>Selecciona quién paga y el contrato vigente.</p>
+                      </div>
+                    </header>
+                    <div class="row g-3">
+                      <div class="col-12 col-md-6 renta-modal-campo">
+                        <label for="rentaArrendatario" class="form-label perm-label">
+                          Arrendatario <span class="text-danger">*</span>
+                        </label>
+                        <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="!catalogosModalCargando"
+                          [attr.aria-hidden]="!catalogosModalCargando"
+                          [attr.inert]="!catalogosModalCargando ? '' : null">
+                          <div class="renta-reveal-slot__inner">
+                            <div class="mono-pago-servicio-loading mb-0">
+                              <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                              <span>Cargando arrendatarios…</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="catalogosModalCargando"
+                          [attr.aria-hidden]="catalogosModalCargando" [attr.inert]="catalogosModalCargando ? '' : null">
+                          <div class="renta-reveal-slot__inner">
+                            <div class="input-group input-group-lg perm-ig">
+                              <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">person</mat-icon>
+                              </span>
+                              <div class="form-floating flex-grow-1">
+                                <select id="rentaArrendatario" class="form-select"
+                                  [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                                  formControlName="idArrendatario"
+                                  [attr.aria-invalid]="!arrendatariosOpciones.length">
+                                  <option [ngValue]="null" disabled [hidden]="arrendatariosOpciones.length > 0">
+                                    {{ textoPlaceholderArrendatario() }}
+                                  </option>
+                                  <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}
+                                  </option>
+                                </select>
+                                <label for="rentaArrendatario">{{ textoPlaceholderArrendatario() }}</label>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div class="renta-reveal-slot"
-                        [class.renta-reveal-slot--cerrado]="catalogosModalCargando"
-                        [attr.aria-hidden]="catalogosModalCargando"
-                        [attr.inert]="catalogosModalCargando ? '' : null">
-                        <div class="renta-reveal-slot__inner">
-                          <div class="input-group input-group-lg perm-ig">
-                            <span class="input-group-text fw-bold">
-                              <mat-icon aria-hidden="true">person</mat-icon>
-                            </span>
-                            <div class="form-floating flex-grow-1">
-                              <select id="rentaArrendatario" class="form-select" formControlName="idArrendatario"
-                                [attr.aria-invalid]="!arrendatariosOpciones.length">
-                                <option [ngValue]="null" disabled [hidden]="arrendatariosOpciones.length > 0">
-                                  {{ textoPlaceholderArrendatario() }}
-                                </option>
-                                <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
-                              </select>
-                              <label for="rentaArrendatario">{{ textoPlaceholderArrendatario() }}</label>
+
+                      <div class="col-12 col-md-6 renta-modal-campo"
+                        [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'contrato'">
+                        <label for="rentaContrato" class="form-label perm-label">
+                          Contrato <span class="text-danger">*</span>
+                        </label>
+                        <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="!catalogosModalCargando"
+                          [attr.aria-hidden]="!catalogosModalCargando"
+                          [attr.inert]="!catalogosModalCargando ? '' : null">
+                          <div class="renta-reveal-slot__inner">
+                            <div class="mono-pago-servicio-loading mb-0">
+                              <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                              <span>Cargando contratos…</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="catalogosModalCargando"
+                          [attr.aria-hidden]="catalogosModalCargando" [attr.inert]="catalogosModalCargando ? '' : null">
+                          <div class="renta-reveal-slot__inner">
+                            <div class="input-group input-group-lg perm-ig">
+                              <span class="input-group-text fw-bold">
+                                <mat-icon aria-hidden="true">description</mat-icon>
+                              </span>
+                              <div class="form-floating flex-grow-1">
+                                <select id="rentaContrato" class="form-select"
+                                  [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                                  formControlName="idContrato"
+                                  [attr.aria-invalid]="!!rentaForm.get('idArrendatario')?.value && !contratosOpciones.length">
+                                  <option [ngValue]="null" disabled [hidden]="contratosOpciones.length > 0">
+                                    {{ textoPlaceholderContrato() }}
+                                  </option>
+                                  <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
+                                </select>
+                                <label for="rentaContrato">{{ textoPlaceholderContrato() }}</label>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </article>
+                </div>
 
-                    <div
-                      class="col-12 col-lg-6 renta-modal-campo"
-                      [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'contrato'"
-                    >
-                      <label for="rentaContrato" class="form-label perm-label">
-                        Contrato <span class="text-danger">*</span>
-                      </label>
-                      <div class="renta-reveal-slot"
-                        [class.renta-reveal-slot--cerrado]="!catalogosModalCargando"
-                        [attr.aria-hidden]="!catalogosModalCargando"
-                        [attr.inert]="!catalogosModalCargando ? '' : null">
-                        <div class="renta-reveal-slot__inner">
-                          <div class="mono-pago-servicio-loading mb-0">
-                            <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                            <span>Cargando contratos…</span>
-                          </div>
-                        </div>
+                <!-- (b) Periodo, fecha, captura libre, rango -->
+                <div class="col-12" *ngIf="rentaModalModo === 'edicion' || rentaForm.get('idContrato')?.value"
+                  @rentaSeccionReveal>
+                  <article class="renta-alta-bloque">
+                    <header class="renta-alta-bloque__head">
+                      <mat-icon aria-hidden="true">event</mat-icon>
+                      <div>
+                        <h4>Vigencia del pago y registro</h4>
+                        <p>Vigencia de una fecha o un rango y si aplica fórmula o no.</p>
                       </div>
-                      <div class="renta-reveal-slot"
-                        [class.renta-reveal-slot--cerrado]="catalogosModalCargando"
-                        [attr.aria-hidden]="catalogosModalCargando"
-                        [attr.inert]="catalogosModalCargando ? '' : null">
-                        <div class="renta-reveal-slot__inner">
-                          <div class="input-group input-group-lg perm-ig">
-                            <span class="input-group-text fw-bold">
-                              <mat-icon aria-hidden="true">description</mat-icon>
+                    </header>
+                    <div class="row g-3 align-items-end renta-alta-periodo-row">
+                      <div class="col-12 col-md-4 renta-alta-periodo-col--tipo">
+                        <label class="form-label perm-label">
+                          Vigencia del pago <span class="text-danger">*</span>
+                        </label>
+                        <div class="renta-modo-calculo renta-modo-calculo--dos renta-modo-calculo--compacto w-100"
+                          role="group" aria-label="Vigencia del pago">
+                          <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--inpc"
+                            [class.renta-control-bloqueado]="rentaModalModo === 'edicion'"
+                            [disabled]="rentaModalModo === 'edicion'"
+                            [class.renta-modo-calculo__btn--activo]="rentaPeriodoTipo === 'mes_actual'"
+                            (click)="cambiarPeriodoTipoRenta('mes_actual')">
+                            <mat-icon aria-hidden="true">today</mat-icon>
+                            <span class="renta-modo-calculo__texto">
+                          <span class="renta-modo-calculo__nombre">Mes actual</span>
+                              <span class="renta-modo-calculo__desc">Una fecha</span>
                             </span>
-                            <div class="form-floating flex-grow-1">
-                              <select id="rentaContrato" class="form-select" formControlName="idContrato"
-                                [attr.aria-invalid]="!!rentaForm.get('idArrendatario')?.value && !contratosOpciones.length">
-                                <option [ngValue]="null" disabled [hidden]="contratosOpciones.length > 0">
-                                  {{ textoPlaceholderContrato() }}
-                                </option>
-                                <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
-                              </select>
-                              <label for="rentaContrato">{{ textoPlaceholderContrato() }}</label>
-                            </div>
-                          </div>
+                          </button>
+                          <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--pct"
+                            [class.renta-control-bloqueado]="rentaModalModo === 'edicion'"
+                            [disabled]="rentaModalModo === 'edicion'"
+                            [class.renta-modo-calculo__btn--activo]="rentaPeriodoTipo === 'rango'"
+                            (click)="cambiarPeriodoTipoRenta('rango')">
+                            <mat-icon aria-hidden="true">date_range</mat-icon>
+                            <span class="renta-modo-calculo__texto">
+                              <span class="renta-modo-calculo__nombre">Rango</span>
+                              <span class="renta-modo-calculo__desc">Desde → hasta</span>
+                            </span>
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </article>
-              </div>
 
-              <!-- (b) Periodo, fecha, captura libre, rango -->
-              <div
-                class="col-12"
-                *ngIf="rentaModalModo === 'edicion' || rentaForm.get('idContrato')?.value"
-                @rentaSeccionReveal
-              >
-                <article class="renta-alta-bloque">
-                  <header class="renta-alta-bloque__head">
-                    <mat-icon aria-hidden="true">event</mat-icon>
-                    <div>
-                      <h4>Periodo y registro del pago</h4>
-                      <p>Cobertura de una fecha o un rango, fecha de registro y si aplica fórmula o no.</p>
-                    </div>
-                  </header>
-                  <div class="row g-3 align-items-end renta-alta-periodo-row">
-                    <div class="col-12 col-md-6 col-lg renta-alta-periodo-col--tipo">
-                      <label class="form-label perm-label">
-                        Periodo del pago <span class="text-danger">*</span>
-                      </label>
-                      <div class="renta-modo-calculo renta-modo-calculo--dos renta-modo-calculo--compacto w-100"
-                        role="group" aria-label="Periodo del pago">
-                        <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--inpc"
-                          [class.renta-modo-calculo__btn--activo]="rentaPeriodoTipo === 'mes_actual'"
-                          (click)="cambiarPeriodoTipoRenta('mes_actual')">
-                          <mat-icon aria-hidden="true">today</mat-icon>
-                          <span class="renta-modo-calculo__texto">
-                            <span class="renta-modo-calculo__nombre">Mes actual</span>
-                            <span class="renta-modo-calculo__desc">Una fecha</span>
-                          </span>
-                        </button>
-                        <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--pct"
-                          [class.renta-modo-calculo__btn--activo]="rentaPeriodoTipo === 'rango'"
-                          (click)="cambiarPeriodoTipoRenta('rango')">
-                          <mat-icon aria-hidden="true">date_range</mat-icon>
-                          <span class="renta-modo-calculo__texto">
-                            <span class="renta-modo-calculo__nombre">Rango</span>
-                            <span class="renta-modo-calculo__desc">Desde → hasta</span>
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div class="col-12 col-md-6 col-lg renta-reveal-slot renta-reveal-slot--en-fila"
-                      [class.renta-reveal-slot--cerrado]="rentaPeriodoTipo !== 'mes_actual'"
-                      [attr.aria-hidden]="rentaPeriodoTipo !== 'mes_actual'"
-                      [attr.inert]="rentaPeriodoTipo !== 'mes_actual' ? '' : null">
-                      <div class="renta-reveal-slot__inner">
-                        <label class="form-label perm-label" for="rentaPeriodoFechaMes">Fecha del periodo</label>
-                        <dx-date-box
-                          [inputAttr]="{ id: 'rentaPeriodoFechaMes' }"
+                      <div class="col-12 col-md-3" *ngIf="rentaMostrarCampoFechaRegistro">
+                        <label for="rentaFechaRegistro" class="form-label perm-label">
+                          Cuándo registro <span class="text-danger">*</span>
+                        </label>
+                        <dx-date-box [inputAttr]="{ id: 'rentaFechaRegistro' }"
                           class="renta-modo-filtros__mes-datebox w-100"
-                          [(value)]="fechaPeriodoMesRenta"
-                          type="date"
-                          displayFormat="dd/MM/yyyy"
-                          placeholder="Fecha del periodo"
-                          [openOnFieldClick]="true"
-                          [showClearButton]="false"
+                          [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                          [(value)]="fechaRegistroRenta" type="date"
+                          displayFormat="dd/MM/yyyy" placeholder="Fecha de registro" [openOnFieldClick]="true"
+                          [showClearButton]="false" [readOnly]="rentaModalModo === 'edicion'"
                           stylingMode="outlined"
                           (onValueChanged)="onPeriodoFechaRentaChange()">
                         </dx-date-box>
                       </div>
-                    </div>
 
-                    <div class="col-12 col-md-6 col-lg">
-                      <label for="rentaFechaRegistro" class="form-label perm-label">
-                        Cuándo registro <span class="text-danger">*</span>
-                      </label>
-                      <dx-date-box
-                        [inputAttr]="{ id: 'rentaFechaRegistro' }"
-                        class="renta-modo-filtros__mes-datebox w-100"
-                        [(value)]="fechaRegistroRenta"
-                        type="date"
-                        displayFormat="dd/MM/yyyy"
-                        placeholder="Fecha de registro"
-                        [openOnFieldClick]="true"
-                        [showClearButton]="false"
-                        stylingMode="outlined"
-                        (onValueChanged)="onPeriodoFechaRentaChange()">
-                      </dx-date-box>
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-lg-2">
-                      <label class="form-label perm-label" for="rentaCapturaLibre">Sin fórmula</label>
-                      <div class="contrato-incluye-mtto">
-                        <label class="toggle-switch">
-                          <input
-                            type="checkbox"
-                            id="rentaCapturaLibre"
-                            [checked]="rentaCapturaLibre"
-                            (click)="$event.preventDefault(); alternarCapturaLibreRenta()"
-                          />
-                          <div class="toggle-switch-background">
-                            <div class="toggle-switch-handle"></div>
-                          </div>
-                        </label>
-                        <span class="contrato-incluye-mtto__estado">{{ rentaCapturaLibre ? 'Si' : 'No' }}</span>
+                      <!-- Fechas del periodo: siempre visibles cuando hay tipo y en la misma fila -->
+                      <div class="col-12 col-md-4" *ngIf="rentaPeriodoTipo === 'mes_actual'">
+                        <label class="form-label perm-label" for="rentaPeriodoFechaMes">Fecha de vigencia</label>
+                        <dx-date-box
+                          [inputAttr]="{ id: 'rentaPeriodoFechaMes' }"
+                          class="renta-modo-filtros__mes-datebox w-100"
+                          [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                          [(value)]="fechaPeriodoMesRenta"
+                          type="date"
+                          displayFormat="dd/MM/yyyy"
+                          placeholder="Fecha de vigencia"
+                          [openOnFieldClick]="true"
+                          [showClearButton]="false"
+                          [readOnly]="rentaModalModo === 'edicion'"
+                          stylingMode="outlined"
+                          (onValueChanged)="onPeriodoFechaRentaChange()"
+                        >
+                        </dx-date-box>
                       </div>
-                    </div>
 
-                    <div class="col-12 renta-reveal-slot"
-                      [class.renta-reveal-slot--cerrado]="rentaPeriodoTipo !== 'rango'"
-                      [attr.aria-hidden]="rentaPeriodoTipo !== 'rango'"
-                      [attr.inert]="rentaPeriodoTipo !== 'rango' ? '' : null">
-                      <div class="renta-reveal-slot__inner">
-                        <div class="row g-3">
-                          <div class="col-12 col-lg-6">
-                            <label class="form-label perm-label" for="rentaPeriodoMesDesde">Desde</label>
-                            <dx-date-box
-                              [inputAttr]="{ id: 'rentaPeriodoMesDesde' }"
-                              class="renta-modo-filtros__mes-datebox w-100"
-                              [(value)]="mesPeriodoDesdeRenta"
-                              type="date"
-                              displayFormat="dd/MM/yyyy"
-                              placeholder="Fecha desde"
-                              [openOnFieldClick]="true"
-                              [showClearButton]="false"
-                              stylingMode="outlined"
-                              (onValueChanged)="onPeriodoFechaRentaChange()">
-                            </dx-date-box>
-                          </div>
-                          <div class="col-12 col-lg-6">
-                            <label class="form-label perm-label" for="rentaPeriodoMesHasta">Hasta</label>
-                            <dx-date-box
-                              [inputAttr]="{ id: 'rentaPeriodoMesHasta' }"
-                              class="renta-modo-filtros__mes-datebox w-100"
-                              [(value)]="mesPeriodoHastaRenta"
-                              type="date"
-                              displayFormat="dd/MM/yyyy"
-                              placeholder="Fecha hasta"
-                              [openOnFieldClick]="true"
-                              [showClearButton]="false"
-                              stylingMode="outlined"
-                              (onValueChanged)="onPeriodoFechaRentaChange()">
-                            </dx-date-box>
-                          </div>
+                      <ng-container *ngIf="rentaPeriodoTipo === 'rango'">
+                        <div class="col-12 col-md-3">
+                          <label class="form-label perm-label" for="rentaPeriodoMesDesde">Desde</label>
+                          <dx-date-box
+                            [inputAttr]="{ id: 'rentaPeriodoMesDesde' }"
+                            class="renta-modo-filtros__mes-datebox w-100"
+                            [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                            [(value)]="mesPeriodoDesdeRenta"
+                            type="date"
+                            displayFormat="dd/MM/yyyy"
+                            placeholder="Fecha desde"
+                            [openOnFieldClick]="true"
+                            [showClearButton]="false"
+                            [readOnly]="rentaModalModo === 'edicion'"
+                            stylingMode="outlined"
+                            (onValueChanged)="onPeriodoFechaRentaChange()"
+                          >
+                          </dx-date-box>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              </div>
-
-              <!-- (c) Forma de cálculo — solo alta -->
-              <div
-                class="col-12"
-                *ngIf="rentaMostrarCardFormaCalculo"
-                @rentaSeccionReveal
-              >
-                <article class="renta-alta-bloque" id="rentaCardFormaCalculo">
-                  <header class="renta-alta-bloque__head">
-                    <mat-icon aria-hidden="true">functions</mat-icon>
-                    <div>
-                      <h4>Forma de cálculo</h4>
-                      <p>Fórmula guardada, INPC directo o porcentaje anual.</p>
-                    </div>
-                  </header>
-                  <div class="renta-modal-campo"
-                    [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'formula'">
-                    <div class="renta-modo-panel renta-modo-panel--wide" [attr.data-modo]="rentaModoCalculo">
-                      <div class="renta-modo-panel__main">
-                        <div class="renta-modo-calculo" role="group" aria-label="Forma de cálculo">
-                          <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--formula"
-                            [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'formula'"
-                            (click)="cambiarModoCalculoRenta('formula')">
-                            <mat-icon aria-hidden="true">functions</mat-icon>
-                            <span class="renta-modo-calculo__texto">
-                              <span class="renta-modo-calculo__nombre">Fórmula</span>
-                              <span class="renta-modo-calculo__desc">Guardada</span>
-                            </span>
-                          </button>
-                          <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--inpc"
-                            [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'inpc'"
-                            (click)="cambiarModoCalculoRenta('inpc')">
-                            <mat-icon aria-hidden="true">trending_up</mat-icon>
-                            <span class="renta-modo-calculo__texto">
-                              <span class="renta-modo-calculo__nombre">INPC</span>
-                              <span class="renta-modo-calculo__desc">Directo</span>
-                            </span>
-                          </button>
-                          <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--pct"
-                            [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'porcentaje'"
-                            (click)="cambiarModoCalculoRenta('porcentaje')">
-                            <mat-icon aria-hidden="true">percent</mat-icon>
-                            <span class="renta-modo-calculo__texto">
-                              <span class="renta-modo-calculo__nombre">% Anual</span>
-                              <span class="renta-modo-calculo__desc">Directo</span>
-                            </span>
-                          </button>
+                        <div class="col-12 col-md-3">
+                          <label class="form-label perm-label" for="rentaPeriodoMesHasta">Hasta</label>
+                          <dx-date-box
+                            [inputAttr]="{ id: 'rentaPeriodoMesHasta' }"
+                            class="renta-modo-filtros__mes-datebox w-100"
+                            [(value)]="mesPeriodoHastaRenta"
+                            type="date"
+                            displayFormat="dd/MM/yyyy"
+                            placeholder="Fecha hasta"
+                            [openOnFieldClick]="true"
+                            [showClearButton]="false"
+                            stylingMode="outlined"
+                            (onValueChanged)="onPeriodoFechaRentaChange()"
+                          >
+                          </dx-date-box>
                         </div>
-                      </div>
-                      <div class="renta-modo-panel__body-stack">
-                        <div class="renta-reveal-slot"
-                          [class.renta-reveal-slot--cerrado]="rentaModoCalculo !== 'formula'"
-                          [attr.aria-hidden]="rentaModoCalculo !== 'formula'"
-                          [attr.inert]="rentaModoCalculo !== 'formula' ? '' : null">
-                          <div class="renta-reveal-slot__inner">
-                            <div class="renta-modo-panel__body">
-                              <div class="renta-reveal-slot"
-                                [class.renta-reveal-slot--cerrado]="!catalogosModalCargando"
-                                [attr.aria-hidden]="!catalogosModalCargando"
-                                [attr.inert]="!catalogosModalCargando ? '' : null">
-                                <div class="renta-reveal-slot__inner">
-                                  <div class="mono-pago-servicio-loading mb-0">
-                                    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                                    <span>Cargando fórmulas…</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="renta-reveal-slot"
-                                [class.renta-reveal-slot--cerrado]="catalogosModalCargando"
-                                [attr.aria-hidden]="catalogosModalCargando"
-                                [attr.inert]="catalogosModalCargando ? '' : null">
-                                <div class="renta-reveal-slot__inner">
-                                  <div class="input-group input-group-lg perm-ig">
-                                    <span class="input-group-text fw-bold">
-                                      <mat-icon aria-hidden="true">functions</mat-icon>
-                                    </span>
-                                    <div class="form-floating flex-grow-1">
-                                      <select id="rentaFormulaAlta" class="form-select" formControlName="idFormula"
-                                        [attr.aria-invalid]="!formulasOpciones.length">
-                                        <option [ngValue]="null" disabled [hidden]="formulasOpciones.length > 0">
-                                          {{ textoPlaceholderFormula() }}
-                                        </option>
-                                        <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
-                                      </select>
-                                      <label for="rentaFormulaAlta">{{ textoPlaceholderFormula() }}</label>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="renta-reveal-slot"
-                                [class.renta-reveal-slot--cerrado]="!evaluandoFormula"
-                                [attr.aria-hidden]="!evaluandoFormula"
-                                [attr.inert]="!evaluandoFormula ? '' : null">
-                                <div class="renta-reveal-slot__inner">
-                                  <p class="renta-modo-panel__status">
-                                    <mat-progress-spinner mode="indeterminate" diameter="14"></mat-progress-spinner>
-                                    Calculando…
-                                  </p>
-                                </div>
-                              </div>
+                      </ng-container>
+
+                      <div class="col-12 col-md-2">
+                        <label class="form-label perm-label" for="rentaCapturaLibre">Captura manual</label>
+                        <div class="contrato-incluye-mtto">
+                          <label class="toggle-switch">
+                            <input type="checkbox" id="rentaCapturaLibre" [checked]="rentaCapturaLibre"
+                              (click)="$event.preventDefault(); alternarCapturaLibreRenta()" />
+                            <div class="toggle-switch-background">
+                              <div class="toggle-switch-handle"></div>
                             </div>
-                          </div>
-                        </div>
-                        <div class="renta-reveal-slot"
-                          [class.renta-reveal-slot--cerrado]="rentaModoCalculo === 'formula'"
-                          [attr.aria-hidden]="rentaModoCalculo === 'formula'"
-                          [attr.inert]="rentaModoCalculo === 'formula' ? '' : null">
-                          <div class="renta-reveal-slot__inner">
-                            <div class="renta-modo-panel__body renta-inpc-directo"
-                              [class.renta-inpc-directo--pct]="rentaModoCalculo === 'porcentaje'">
-                              <div class="renta-modo-filtros">
-                                <div class="renta-modo-filtros__filtro">
-                                  <label class="renta-modo-filtros__label" for="rentaInpcMesDesde">Mes desde</label>
-                                  <dx-date-box
-                                    [inputAttr]="{ id: 'rentaInpcMesDesde' }"
-                                    class="renta-modo-filtros__mes-datebox"
-                                    [(value)]="mesDesdeInpcRenta"
-                                    type="date"
-                                    displayFormat="monthAndYear"
-                                    placeholder="Seleccione mes"
-                                    [openOnFieldClick]="true"
-                                    [showClearButton]="false"
-                                    [calendarOptions]="mesCalendarOptionsInpcRenta"
-                                    [disabled]="cargandoInpcRenta"
-                                    stylingMode="outlined"
-                                    (onValueChanged)="onMesRangoInpcRentaChange()">
-                                  </dx-date-box>
-                                </div>
-                                <div class="renta-modo-filtros__filtro">
-                                  <label class="renta-modo-filtros__label" for="rentaInpcMesHasta">Mes hasta</label>
-                                  <dx-date-box
-                                    [inputAttr]="{ id: 'rentaInpcMesHasta' }"
-                                    class="renta-modo-filtros__mes-datebox"
-                                    [(value)]="mesHastaInpcRenta"
-                                    type="date"
-                                    displayFormat="monthAndYear"
-                                    placeholder="Seleccione mes"
-                                    [openOnFieldClick]="true"
-                                    [showClearButton]="false"
-                                    [calendarOptions]="mesCalendarOptionsInpcRenta"
-                                    [disabled]="cargandoInpcRenta"
-                                    stylingMode="outlined"
-                                    (onValueChanged)="onMesRangoInpcRentaChange()">
-                                  </dx-date-box>
-                                </div>
-                                <button type="button" class="btn bg-primary renta-modo-filtros__consultar"
-                                  [disabled]="cargandoInpcRenta"
-                                  (click)="aplicarFiltrosInpcRenta()">
-                                  <mat-icon aria-hidden="true">filter_alt</mat-icon>
-                                  Consultar
-                                </button>
-                              </div>
-                              <div class="renta-reveal-slot"
-                                [class.renta-reveal-slot--cerrado]="!cargandoInpcRenta"
-                                [attr.aria-hidden]="!cargandoInpcRenta"
-                                [attr.inert]="!cargandoInpcRenta ? '' : null">
-                                <div class="renta-reveal-slot__inner">
-                                  <div class="mono-pago-servicio-loading mb-0">
-                                    <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
-                                    <span>Cargando catálogo INPC…</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="renta-reveal-slot"
-                                [class.renta-reveal-slot--cerrado]="cargandoInpcRenta || rentaModoCalculo !== 'inpc'"
-                                [attr.aria-hidden]="cargandoInpcRenta || rentaModoCalculo !== 'inpc'"
-                                [attr.inert]="(cargandoInpcRenta || rentaModoCalculo !== 'inpc') ? '' : null">
-                                <div class="renta-reveal-slot__inner">
-                                  <div class="renta-inpc-directo__division">
-                                    <div class="renta-inpc-directo__field">
-                                      <label class="renta-inpc-directo__label" for="rentaInpcNumerador">INPC numerador</label>
-                                      <dx-select-box
-                                        [inputAttr]="{ id: 'rentaInpcNumerador' }"
-                                        class="renta-inpc-directo__dx-select"
-                                        [items]="opcionesInpcDx"
-                                        displayExpr="texto"
-                                        valueExpr="idx"
-                                        [(value)]="periodoInpcNumeradorRenta"
-                                        [placeholder]="textoPlaceholderInpcPeriodo()"
-                                        [searchEnabled]="true"
-                                        [showClearButton]="false"
-                                        [disabled]="!opcionesInpcDx.length"
-                                        stylingMode="outlined"
-                                        [noDataText]="textoPlaceholderInpcPeriodo()">
-                                      </dx-select-box>
-                                    </div>
-                                    <span class="renta-inpc-directo__op" aria-hidden="true">÷</span>
-                                    <div class="renta-inpc-directo__field">
-                                      <label class="renta-inpc-directo__label" for="rentaInpcDenominador">INPC denominador</label>
-                                      <dx-select-box
-                                        [inputAttr]="{ id: 'rentaInpcDenominador' }"
-                                        class="renta-inpc-directo__dx-select"
-                                        [items]="opcionesInpcDx"
-                                        displayExpr="texto"
-                                        valueExpr="idx"
-                                        [(value)]="periodoInpcDenominadorRenta"
-                                        [placeholder]="textoPlaceholderInpcPeriodo()"
-                                        [searchEnabled]="true"
-                                        [showClearButton]="false"
-                                        [disabled]="!opcionesInpcDx.length"
-                                        stylingMode="outlined"
-                                        [noDataText]="textoPlaceholderInpcPeriodo()">
-                                      </dx-select-box>
-                                    </div>
-                                    <button type="button" class="btn bg-success renta-inpc-directo__aplicar"
-                                      [disabled]="periodoInpcNumeradorRenta == null || periodoInpcDenominadorRenta == null"
-                                      (click)="aplicarValorInpcDirectoARenta()">
-                                      <mat-icon aria-hidden="true">check</mat-icon>
-                                      Aplicar
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="renta-reveal-slot"
-                                [class.renta-reveal-slot--cerrado]="cargandoInpcRenta || rentaModoCalculo !== 'porcentaje'"
-                                [attr.aria-hidden]="cargandoInpcRenta || rentaModoCalculo !== 'porcentaje'"
-                                [attr.inert]="(cargandoInpcRenta || rentaModoCalculo !== 'porcentaje') ? '' : null">
-                                <div class="renta-reveal-slot__inner">
-                                  <div class="renta-inpc-directo__row">
-                                    <div class="renta-inpc-directo__field renta-inpc-directo__field--grow">
-                                      <label class="renta-inpc-directo__label" for="rentaPeriodoPct">% Anual</label>
-                                      <dx-select-box
-                                        [inputAttr]="{ id: 'rentaPeriodoPct' }"
-                                        class="renta-inpc-directo__dx-select"
-                                        [items]="opcionesPorcentajeAnualDx"
-                                        displayExpr="texto"
-                                        valueExpr="idx"
-                                        [(value)]="periodoInpcSeleccionadoRenta"
-                                        [placeholder]="textoPlaceholderPorcentajePeriodo()"
-                                        [searchEnabled]="true"
-                                        [showClearButton]="false"
-                                        [disabled]="!opcionesPorcentajeAnualDx.length"
-                                        stylingMode="outlined"
-                                        [noDataText]="textoPlaceholderPorcentajePeriodo()">
-                                      </dx-select-box>
-                                    </div>
-                                    <button type="button" class="btn bg-success renta-inpc-directo__aplicar"
-                                      [disabled]="periodoInpcSeleccionadoRenta == null"
-                                      (click)="aplicarValorInpcDirectoARenta()">
-                                      <mat-icon aria-hidden="true">check</mat-icon>
-                                      Aplicar
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              </div>
-
-              <!-- (d) Importes, factor, flags -->
-              <div
-                class="col-12"
-                *ngIf="rentaModalModo === 'edicion' || rentaForm.get('idContrato')?.value"
-                @rentaSeccionReveal
-              >
-                <article class="renta-alta-bloque">
-                <header class="renta-alta-bloque__head">
-                  <mat-icon aria-hidden="true">payments</mat-icon>
-                  <div>
-                    <h4>Importes y factor</h4>
-                    <p>Montos de renta, mantenimiento y metadatos del cálculo.</p>
-                  </div>
-                </header>
-                <div class="row g-3 align-items-start renta-alta-importes-row">
-                  <div class="col-12 col-lg-6">
-                    <label for="rentaTotal" class="form-label perm-label">
-                      Total <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group input-group-lg perm-ig">
-                      <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true">payments</mat-icon>
-                      </span>
-                      <div class="form-floating flex-grow-1">
-                        <input id="rentaTotal" type="text" class="form-control"
-                          inputmode="decimal"
-                          [value]="rentaTotalDisplay" placeholder=" " autocomplete="off"
-                          (focus)="onRentaMonedaFocus($event, 'total')"
-                          (input)="onRentaMonedaInput($event, 'total')"
-                          (blur)="onRentaMonedaBlur($event, 'total')" />
-                        <label for="rentaTotal">Total</label>
-                      </div>
-                    </div>
-                    <div class="renta-reveal-slot"
-                      [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
-                      [attr.aria-hidden]="rentaModalModo !== 'alta'">
-                      <div class="renta-reveal-slot__inner">
-                        <p class="renta-campo-hint">
-                          <mat-icon aria-hidden="true">edit</mat-icon>
-                          Dato del contrato · puedes editarlo
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-lg-6">
-                    <label for="rentaMontoFinal" class="form-label perm-label">
-                      Monto final <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group input-group-lg perm-ig">
-                      <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true"
-                          [class.opacity-50]="evaluandoFormula">account_balance_wallet</mat-icon>
-                      </span>
-                      <div class="form-floating flex-grow-1">
-                        <input id="rentaMontoFinal" type="text" inputmode="decimal" class="form-control"
-                          [value]="rentaMontoFinalDisplay" placeholder=" " autocomplete="off"
-                          [readonly]="evaluandoFormula"
-                          (focus)="onRentaMonedaFocus($event, 'montoFinal')"
-                          (input)="onRentaMonedaInput($event, 'montoFinal')"
-                          (blur)="onRentaMonedaBlur($event, 'montoFinal')" />
-                        <label for="rentaMontoFinal">
-                          {{ evaluandoFormula ? 'Calculando…' : 'Monto final' }}
-                        </label>
-                      </div>
-                    </div>
-                    <div class="renta-reveal-slot"
-                      [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
-                      [attr.aria-hidden]="rentaModalModo !== 'alta'">
-                      <div class="renta-reveal-slot__inner">
-                        <p class="renta-campo-hint">
-                          <mat-icon aria-hidden="true">{{ rentaCapturaLibre ? 'edit' : 'auto_fix_high' }}</mat-icon>
-                          {{ rentaCapturaLibre ? 'Sin fórmula · editable' : 'Calculado por fórmula · puede modificarse' }}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-lg-6 renta-reveal-slot renta-reveal-slot--en-fila"
-                    [class.renta-reveal-slot--cerrado]="!rentaMostrarMantenimiento"
-                    [attr.aria-hidden]="!rentaMostrarMantenimiento"
-                    [attr.inert]="!rentaMostrarMantenimiento ? '' : null">
-                    <div class="renta-reveal-slot__inner">
-                      <label for="rentaTotalMantenimiento" class="form-label perm-label">
-                        Total mantenimiento <span class="text-danger">*</span>
-                      </label>
-                      <div class="input-group input-group-lg perm-ig">
-                        <span class="input-group-text fw-bold">
-                          <mat-icon aria-hidden="true">build</mat-icon>
-                        </span>
-                        <div class="form-floating flex-grow-1">
-                          <input id="rentaTotalMantenimiento" type="text" class="form-control"
-                            inputmode="decimal"
-                            [value]="rentaTotalMantenimientoDisplay" placeholder=" " autocomplete="off"
-                            (focus)="onRentaMonedaFocus($event, 'totalMantenimiento')"
-                            (input)="onRentaMonedaInput($event, 'totalMantenimiento')"
-                            (blur)="onRentaMonedaBlur($event, 'totalMantenimiento')" />
-                          <label for="rentaTotalMantenimiento">Total mantenimiento</label>
-                        </div>
-                      </div>
-                      <div class="renta-reveal-slot"
-                        [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
-                        [attr.aria-hidden]="rentaModalModo !== 'alta'">
-                        <div class="renta-reveal-slot__inner">
-                          <p class="renta-campo-hint">
-                            <mat-icon aria-hidden="true">edit</mat-icon>
-                            Dato del contrato · puedes editarlo
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-lg-6 renta-reveal-slot renta-reveal-slot--en-fila"
-                    [class.renta-reveal-slot--cerrado]="!rentaMostrarMantenimiento"
-                    [attr.aria-hidden]="!rentaMostrarMantenimiento"
-                    [attr.inert]="!rentaMostrarMantenimiento ? '' : null">
-                    <div class="renta-reveal-slot__inner">
-                      <label for="rentaMontoFinalMantenimiento" class="form-label perm-label">
-                        Monto final mantenimiento <span class="text-danger">*</span>
-                      </label>
-                      <div class="input-group input-group-lg perm-ig">
-                        <span class="input-group-text fw-bold">
-                          <mat-icon aria-hidden="true"
-                            [class.opacity-50]="evaluandoFormula">handyman</mat-icon>
-                        </span>
-                        <div class="form-floating flex-grow-1">
-                          <input id="rentaMontoFinalMantenimiento" type="text" inputmode="decimal" class="form-control"
-                            [value]="rentaMontoFinalMantenimientoDisplay" placeholder=" " autocomplete="off"
-                            [readonly]="evaluandoFormula"
-                            (focus)="onRentaMonedaFocus($event, 'montoFinalMantenimiento')"
-                            (input)="onRentaMonedaInput($event, 'montoFinalMantenimiento')"
-                            (blur)="onRentaMonedaBlur($event, 'montoFinalMantenimiento')" />
-                          <label for="rentaMontoFinalMantenimiento">
-                            {{ evaluandoFormula ? 'Calculando…' : 'Monto final mantenimiento' }}
                           </label>
-                        </div>
-                      </div>
-                      <div class="renta-reveal-slot"
-                        [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
-                        [attr.aria-hidden]="rentaModalModo !== 'alta'">
-                        <div class="renta-reveal-slot__inner">
-                          <p class="renta-campo-hint">
-                            <mat-icon aria-hidden="true">{{ rentaCapturaLibre ? 'edit' : 'auto_fix_high' }}</mat-icon>
-                            {{ rentaCapturaLibre ? 'Sin fórmula · editable' : 'Calculado por fórmula · puede modificarse' }}
-                          </p>
+                          <span class="contrato-incluye-mtto__estado">{{ rentaCapturaLibre ? 'Si' : 'No' }}</span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="col-12 col-lg-6">
-                    <label for="rentaFactor" class="form-label perm-label">Factor fórmula</label>
-                    <div class="input-group input-group-lg perm-ig">
-                      <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true">percent</mat-icon>
-                      </span>
-                      <div class="form-floating flex-grow-1">
-                        <input id="rentaFactor" type="text" inputmode="decimal" class="form-control"
-                          formControlName="factorVariable" placeholder=" " autocomplete="off" />
-                        <label for="rentaFactor">Factor INPC</label>
-                      </div>
-                    </div>
-                    <div class="renta-reveal-slot"
-                      [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
-                      [attr.aria-hidden]="rentaModalModo !== 'alta'">
-                      <div class="renta-reveal-slot__inner">
-                        <p class="renta-campo-hint">
-                          <mat-icon aria-hidden="true">auto_fix_high</mat-icon>
-                          Calculado por fórmula · puede modificarse
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-lg-6">
-                    <label for="rentaOcupoFormula" class="form-label perm-label">Usó fórmula</label>
-                    <div class="input-group input-group-lg perm-ig">
-                      <span class="input-group-text fw-bold">
-                        <mat-icon aria-hidden="true">flag</mat-icon>
-                      </span>
-                      <div class="form-floating flex-grow-1">
-                        <select id="rentaOcupoFormula" class="form-select" formControlName="ocupoFormula">
-                          <option [ngValue]="0">No</option>
-                          <option [ngValue]="1">Sí</option>
-                        </select>
-                        <label for="rentaOcupoFormula">Usó fórmula</label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-12 col-lg-6 renta-reveal-slot renta-reveal-slot--en-fila"
-                    [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'edicion' || rentaCapturaLibre"
-                    [attr.aria-hidden]="rentaModalModo !== 'edicion' || rentaCapturaLibre"
-                    [attr.inert]="(rentaModalModo !== 'edicion' || rentaCapturaLibre) ? '' : null">
-                    <div class="renta-reveal-slot__inner">
-                      <label for="rentaFormula" class="form-label perm-label">
-                        Fórmula <span class="text-danger">*</span>
-                      </label>
-                      <div class="input-group input-group-lg perm-ig">
-                        <span class="input-group-text fw-bold">
-                          <mat-icon aria-hidden="true">functions</mat-icon>
-                        </span>
-                        <div class="form-floating flex-grow-1">
-                          <select id="rentaFormula" class="form-select" formControlName="idFormula"
-                            [attr.aria-invalid]="!formulasOpciones.length">
-                            <option [ngValue]="null" disabled [hidden]="formulasOpciones.length > 0">
-                              {{ textoPlaceholderFormula() }}
-                            </option>
-                            <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
-                          </select>
-                          <label for="rentaFormula">{{ textoPlaceholderFormula() }}</label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  </article>
                 </div>
-                </article>
-              </div>
 
-              <!-- (e) Resumen — solo cuando el flujo está completo -->
-              <div class="col-12" *ngIf="resumenRentaModal.listo" @rentaSeccionReveal>
-                <article class="renta-alta-bloque renta-alta-bloque--resumen">
-                <header class="renta-alta-bloque__head">
-                  <mat-icon aria-hidden="true">summarize</mat-icon>
-                  <div>
-                    <h4>Resumen del pago</h4>
-                    <p>Verifica arrendatario, periodo, cálculo e importes antes de registrar.</p>
-                  </div>
-                </header>
+                <!-- (c) Forma de cálculo — solo alta -->
+                <div class="col-12" *ngIf="rentaMostrarCardFormaCalculo" @rentaSeccionReveal>
+                  <article class="renta-alta-bloque" id="rentaCardFormaCalculo">
+                    <header class="renta-alta-bloque__head">
+                      <mat-icon aria-hidden="true">functions</mat-icon>
+                      <div>
+                        <h4>Forma de cálculo</h4>
+                        <p>Fórmula guardada, INPC directo o porcentaje anual.</p>
+                      </div>
+                    </header>
+                    <div class="renta-modal-campo"
+                      [class.renta-modal-campo--pulso]="rentaModalCampoAnimando === 'formula'">
+                      <div class="renta-modo-panel renta-modo-panel--wide" [attr.data-modo]="rentaModoCalculo">
+                        <div class="renta-modo-panel__main">
+                          <div class="renta-modo-calculo" role="group" aria-label="Forma de cálculo">
+                            <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--formula"
+                              [class.renta-control-bloqueado]="rentaModalModo === 'edicion'"
+                              [disabled]="rentaModalModo === 'edicion'"
+                              [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'formula'"
+                              (click)="cambiarModoCalculoRenta('formula')">
+                              <mat-icon aria-hidden="true">functions</mat-icon>
+                              <span class="renta-modo-calculo__texto">
+                                <span class="renta-modo-calculo__nombre">Fórmula</span>
+                                <span class="renta-modo-calculo__desc">Guardada</span>
+                              </span>
+                            </button>
+                            <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--inpc"
+                              [class.renta-control-bloqueado]="rentaModalModo === 'edicion'"
+                              [disabled]="rentaModalModo === 'edicion'"
+                              [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'inpc'"
+                              (click)="cambiarModoCalculoRenta('inpc')">
+                              <mat-icon aria-hidden="true">trending_up</mat-icon>
+                              <span class="renta-modo-calculo__texto">
+                                <span class="renta-modo-calculo__nombre">INPC</span>
+                                <span class="renta-modo-calculo__desc">Directo</span>
+                              </span>
+                            </button>
+                            <button type="button" class="renta-modo-calculo__btn renta-modo-calculo__btn--pct"
+                              [class.renta-control-bloqueado]="rentaModalModo === 'edicion'"
+                              [disabled]="rentaModalModo === 'edicion'"
+                              [class.renta-modo-calculo__btn--activo]="rentaModoCalculo === 'porcentaje'"
+                              (click)="cambiarModoCalculoRenta('porcentaje')">
+                              <mat-icon aria-hidden="true">percent</mat-icon>
+                              <span class="renta-modo-calculo__texto">
+                                <span class="renta-modo-calculo__nombre">% Anual</span>
+                                <span class="renta-modo-calculo__desc">Directo</span>
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="renta-modo-panel__body-stack">
+                          <div class="renta-reveal-slot"
+                            [class.renta-reveal-slot--cerrado]="rentaModoCalculo !== 'formula'"
+                            [attr.aria-hidden]="rentaModoCalculo !== 'formula'"
+                            [attr.inert]="rentaModoCalculo !== 'formula' ? '' : null">
+                            <div class="renta-reveal-slot__inner">
+                              <div class="renta-modo-panel__body">
+                                <div class="renta-reveal-slot"
+                                  [class.renta-reveal-slot--cerrado]="!catalogosModalCargando"
+                                  [attr.aria-hidden]="!catalogosModalCargando"
+                                  [attr.inert]="!catalogosModalCargando ? '' : null">
+                                  <div class="renta-reveal-slot__inner">
+                                    <div class="mono-pago-servicio-loading mb-0">
+                                      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                                      <span>Cargando fórmulas…</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="renta-reveal-slot"
+                                  [class.renta-reveal-slot--cerrado]="catalogosModalCargando"
+                                  [attr.aria-hidden]="catalogosModalCargando"
+                                  [attr.inert]="catalogosModalCargando ? '' : null">
+                                  <div class="renta-reveal-slot__inner">
+                                    <div class="input-group input-group-lg perm-ig">
+                                      <span class="input-group-text fw-bold">
+                                        <mat-icon aria-hidden="true">functions</mat-icon>
+                                      </span>
+                                      <div class="form-floating flex-grow-1">
+                                        <select id="rentaFormulaAlta" class="form-select"
+                                          [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                                          [disabled]="rentaModalModo === 'edicion'"
+                                          formControlName="idFormula"
+                                          [attr.aria-invalid]="!formulasOpciones.length">
+                                          <option [ngValue]="null" disabled [hidden]="formulasOpciones.length > 0">
+                                            {{ textoPlaceholderFormula() }}
+                                          </option>
+                                          <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}
+                                          </option>
+                                        </select>
+                                        <label for="rentaFormulaAlta">{{ textoPlaceholderFormula() }}</label>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="!evaluandoFormula"
+                                  [attr.aria-hidden]="!evaluandoFormula" [attr.inert]="!evaluandoFormula ? '' : null">
+                                  <div class="renta-reveal-slot__inner">
+                                    <p class="renta-modo-panel__status">
+                                      <mat-progress-spinner mode="indeterminate" diameter="14"></mat-progress-spinner>
+                                      Calculando…
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="renta-reveal-slot"
+                            [class.renta-reveal-slot--cerrado]="rentaModoCalculo === 'formula'"
+                            [attr.aria-hidden]="rentaModoCalculo === 'formula'"
+                            [attr.inert]="rentaModoCalculo === 'formula' ? '' : null">
+                            <div class="renta-reveal-slot__inner">
+                              <div class="renta-modo-panel__body renta-inpc-directo"
+                                [class.renta-inpc-directo--pct]="rentaModoCalculo === 'porcentaje'">
+                                <div class="renta-modo-filtros">
+                                  <div class="renta-modo-filtros__filtro">
+                                    <label class="renta-modo-filtros__label" for="rentaInpcMesDesde">Mes desde</label>
+                                    <dx-date-box [inputAttr]="{ id: 'rentaInpcMesDesde' }"
+                                      class="renta-modo-filtros__mes-datebox" [(value)]="mesDesdeInpcRenta" type="date"
+                                      displayFormat="monthAndYear" placeholder="Seleccione mes"
+                                      [openOnFieldClick]="true" [showClearButton]="false"
+                                      [calendarOptions]="mesCalendarOptionsInpcRenta" [disabled]="cargandoInpcRenta"
+                                      stylingMode="outlined" (onValueChanged)="onMesRangoInpcRentaChange()">
+                                    </dx-date-box>
+                                  </div>
+                                  <div class="renta-modo-filtros__filtro">
+                                    <label class="renta-modo-filtros__label" for="rentaInpcMesHasta">Mes hasta</label>
+                                    <dx-date-box [inputAttr]="{ id: 'rentaInpcMesHasta' }"
+                                      class="renta-modo-filtros__mes-datebox" [(value)]="mesHastaInpcRenta" type="date"
+                                      displayFormat="monthAndYear" placeholder="Seleccione mes"
+                                      [openOnFieldClick]="true" [showClearButton]="false"
+                                      [calendarOptions]="mesCalendarOptionsInpcRenta" [disabled]="cargandoInpcRenta"
+                                      stylingMode="outlined" (onValueChanged)="onMesRangoInpcRentaChange()">
+                                    </dx-date-box>
+                                  </div>
+                                  <button type="button" class="btn bg-primary renta-modo-filtros__consultar"
+                                    [disabled]="cargandoInpcRenta" (click)="aplicarFiltrosInpcRenta()">
+                                    <mat-icon aria-hidden="true">filter_alt</mat-icon>
+                                    Consultar
+                                  </button>
+                                </div>
+                                <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="!cargandoInpcRenta"
+                                  [attr.aria-hidden]="!cargandoInpcRenta" [attr.inert]="!cargandoInpcRenta ? '' : null">
+                                  <div class="renta-reveal-slot__inner">
+                                    <div class="mono-pago-servicio-loading mb-0">
+                                      <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
+                                      <span>Cargando catálogo INPC…</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="renta-reveal-slot"
+                                  [class.renta-reveal-slot--cerrado]="cargandoInpcRenta || rentaModoCalculo !== 'inpc'"
+                                  [attr.aria-hidden]="cargandoInpcRenta || rentaModoCalculo !== 'inpc'"
+                                  [attr.inert]="(cargandoInpcRenta || rentaModoCalculo !== 'inpc') ? '' : null">
+                                  <div class="renta-reveal-slot__inner">
+                                    <div class="renta-inpc-directo__division">
+                                      <div class="renta-inpc-directo__field">
+                                        <label class="renta-inpc-directo__label" for="rentaInpcNumerador">INPC
+                                          numerador</label>
+                                        <dx-select-box [inputAttr]="{ id: 'rentaInpcNumerador' }"
+                                          class="renta-inpc-directo__dx-select" [items]="opcionesInpcDx"
+                                          displayExpr="texto" valueExpr="idx" [(value)]="periodoInpcNumeradorRenta"
+                                          [placeholder]="textoPlaceholderInpcPeriodo()" [searchEnabled]="true"
+                                          [showClearButton]="false" [disabled]="!opcionesInpcDx.length"
+                                          stylingMode="outlined" [noDataText]="textoPlaceholderInpcPeriodo()">
+                                        </dx-select-box>
+                                      </div>
+                                      <span class="renta-inpc-directo__op" aria-hidden="true">÷</span>
+                                      <div class="renta-inpc-directo__field">
+                                        <label class="renta-inpc-directo__label" for="rentaInpcDenominador">INPC
+                                          denominador</label>
+                                        <dx-select-box [inputAttr]="{ id: 'rentaInpcDenominador' }"
+                                          class="renta-inpc-directo__dx-select" [items]="opcionesInpcDx"
+                                          displayExpr="texto" valueExpr="idx" [(value)]="periodoInpcDenominadorRenta"
+                                          [placeholder]="textoPlaceholderInpcPeriodo()" [searchEnabled]="true"
+                                          [showClearButton]="false" [disabled]="!opcionesInpcDx.length"
+                                          stylingMode="outlined" [noDataText]="textoPlaceholderInpcPeriodo()">
+                                        </dx-select-box>
+                                      </div>
+                                      <button type="button" class="btn bg-success renta-inpc-directo__aplicar"
+                                        [disabled]="periodoInpcNumeradorRenta == null || periodoInpcDenominadorRenta == null"
+                                        (click)="aplicarValorInpcDirectoARenta()">
+                                        <mat-icon aria-hidden="true">check</mat-icon>
+                                        Aplicar
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="renta-reveal-slot"
+                                  [class.renta-reveal-slot--cerrado]="cargandoInpcRenta || rentaModoCalculo !== 'porcentaje'"
+                                  [attr.aria-hidden]="cargandoInpcRenta || rentaModoCalculo !== 'porcentaje'"
+                                  [attr.inert]="(cargandoInpcRenta || rentaModoCalculo !== 'porcentaje') ? '' : null">
+                                  <div class="renta-reveal-slot__inner">
+                                    <div class="renta-inpc-directo__row">
+                                      <div class="renta-inpc-directo__field renta-inpc-directo__field--grow">
+                                        <label class="renta-inpc-directo__label" for="rentaPeriodoPct">% Anual</label>
+                                        <dx-select-box [inputAttr]="{ id: 'rentaPeriodoPct' }"
+                                          class="renta-inpc-directo__dx-select" [items]="opcionesPorcentajeAnualDx"
+                                          displayExpr="texto" valueExpr="idx" [(value)]="periodoInpcSeleccionadoRenta"
+                                          [placeholder]="textoPlaceholderPorcentajePeriodo()" [searchEnabled]="true"
+                                          [showClearButton]="false" [disabled]="!opcionesPorcentajeAnualDx.length"
+                                          stylingMode="outlined" [noDataText]="textoPlaceholderPorcentajePeriodo()">
+                                        </dx-select-box>
+                                      </div>
+                                      <button type="button" class="btn bg-success renta-inpc-directo__aplicar"
+                                        [disabled]="periodoInpcSeleccionadoRenta == null"
+                                        (click)="aplicarValorInpcDirectoARenta()">
+                                        <mat-icon aria-hidden="true">check</mat-icon>
+                                        Aplicar
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+
+                <!-- (d) Importes, factor, flags -->
+                <div class="col-12" *ngIf="rentaModalModo === 'edicion' || rentaForm.get('idContrato')?.value"
+                  @rentaSeccionReveal>
+                  <article class="renta-alta-bloque">
+                    <header class="renta-alta-bloque__head">
+                      <mat-icon aria-hidden="true">payments</mat-icon>
+                      <div>
+                        <h4>Importes y factor</h4>
+                        <p>Montos de renta, mantenimiento y metadatos del cálculo.</p>
+                      </div>
+                    </header>
+                    <div class="row g-3 align-items-start renta-alta-importes-row">
+                      <div class="col-12 col-md-6">
+                        <label for="rentaTotal" class="form-label perm-label">
+                          Total <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">payments</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <input id="rentaTotal" type="text" class="form-control" inputmode="decimal"
+                              [value]="rentaTotalDisplay" placeholder=" " autocomplete="off"
+                              (focus)="onRentaMonedaFocus($event, 'total')"
+                              (input)="onRentaMonedaInput($event, 'total')"
+                              (blur)="onRentaMonedaBlur($event, 'total')" />
+                            <label for="rentaTotal">Total</label>
+                          </div>
+                        </div>
+                        <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
+                          [attr.aria-hidden]="rentaModalModo !== 'alta'">
+                          <div class="renta-reveal-slot__inner">
+                            <p class="renta-campo-hint">
+                              <mat-icon aria-hidden="true">edit</mat-icon>
+                              Dato del contrato · puedes editarlo
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6">
+                        <label for="rentaMontoFinal" class="form-label perm-label">
+                          Monto final <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true"
+                              [class.opacity-50]="evaluandoFormula">account_balance_wallet</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <input id="rentaMontoFinal" type="text" inputmode="decimal" class="form-control"
+                              [value]="rentaMontoFinalDisplay" placeholder=" " autocomplete="off"
+                              [readonly]="evaluandoFormula" (focus)="onRentaMonedaFocus($event, 'montoFinal')"
+                              (input)="onRentaMonedaInput($event, 'montoFinal')"
+                              (blur)="onRentaMonedaBlur($event, 'montoFinal')" />
+                            <label for="rentaMontoFinal">
+                              {{ evaluandoFormula ? 'Calculando…' : 'Monto final' }}
+                            </label>
+                          </div>
+                        </div>
+                        <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
+                          [attr.aria-hidden]="rentaModalModo !== 'alta'">
+                          <div class="renta-reveal-slot__inner">
+                            <p class="renta-campo-hint">
+                              <mat-icon aria-hidden="true">{{ rentaCapturaLibre ? 'edit' : 'auto_fix_high' }}</mat-icon>
+                              {{ rentaCapturaLibre ? 'Captura manual · editable' : 'Calculado por fórmula · puede
+                              modificarse' }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6 renta-reveal-slot renta-reveal-slot--en-fila"
+                        [class.renta-reveal-slot--cerrado]="!rentaMostrarMantenimiento"
+                        [attr.aria-hidden]="!rentaMostrarMantenimiento"
+                        [attr.inert]="!rentaMostrarMantenimiento ? '' : null">
+                        <div class="renta-reveal-slot__inner">
+                          <label for="rentaTotalMantenimiento" class="form-label perm-label">
+                            Total mantenimiento <span class="text-danger">*</span>
+                          </label>
+                          <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                              <mat-icon aria-hidden="true">build</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                              <input id="rentaTotalMantenimiento" type="text" class="form-control" inputmode="decimal"
+                                [value]="rentaTotalMantenimientoDisplay" placeholder=" " autocomplete="off"
+                                (focus)="onRentaMonedaFocus($event, 'totalMantenimiento')"
+                                (input)="onRentaMonedaInput($event, 'totalMantenimiento')"
+                                (blur)="onRentaMonedaBlur($event, 'totalMantenimiento')" />
+                              <label for="rentaTotalMantenimiento">Total mantenimiento</label>
+                            </div>
+                          </div>
+                          <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
+                            [attr.aria-hidden]="rentaModalModo !== 'alta'">
+                            <div class="renta-reveal-slot__inner">
+                              <p class="renta-campo-hint">
+                                <mat-icon aria-hidden="true">edit</mat-icon>
+                                Dato del contrato · puedes editarlo
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6 renta-reveal-slot renta-reveal-slot--en-fila"
+                        [class.renta-reveal-slot--cerrado]="!rentaMostrarMantenimiento"
+                        [attr.aria-hidden]="!rentaMostrarMantenimiento"
+                        [attr.inert]="!rentaMostrarMantenimiento ? '' : null">
+                        <div class="renta-reveal-slot__inner">
+                          <label for="rentaMontoFinalMantenimiento" class="form-label perm-label">
+                            Monto final mantenimiento <span class="text-danger">*</span>
+                          </label>
+                          <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                              <mat-icon aria-hidden="true" [class.opacity-50]="evaluandoFormula">handyman</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                              <input id="rentaMontoFinalMantenimiento" type="text" inputmode="decimal"
+                                class="form-control" [value]="rentaMontoFinalMantenimientoDisplay" placeholder=" "
+                                autocomplete="off" [readonly]="evaluandoFormula"
+                                (focus)="onRentaMonedaFocus($event, 'montoFinalMantenimiento')"
+                                (input)="onRentaMonedaInput($event, 'montoFinalMantenimiento')"
+                                (blur)="onRentaMonedaBlur($event, 'montoFinalMantenimiento')" />
+                              <label for="rentaMontoFinalMantenimiento">
+                                {{ evaluandoFormula ? 'Calculando…' : 'Monto final mantenimiento' }}
+                              </label>
+                            </div>
+                          </div>
+                          <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
+                            [attr.aria-hidden]="rentaModalModo !== 'alta'">
+                            <div class="renta-reveal-slot__inner">
+                              <p class="renta-campo-hint">
+                                <mat-icon aria-hidden="true">{{ rentaCapturaLibre ? 'edit' : 'auto_fix_high'
+                                  }}</mat-icon>
+                                {{ rentaCapturaLibre ? 'Captura manual · editable' : 'Calculado por fórmula · puede
+                                modificarse' }}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6" *ngIf="!rentaCapturaLibre">
+                        <label for="rentaFactor" class="form-label perm-label">Factor fórmula</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">percent</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <input id="rentaFactor" type="text" inputmode="decimal" class="form-control"
+                              formControlName="factorVariable" placeholder=" " autocomplete="off" />
+                            <label for="rentaFactor">Factor INPC</label>
+                          </div>
+                        </div>
+                        <div class="renta-reveal-slot" [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'alta'"
+                          [attr.aria-hidden]="rentaModalModo !== 'alta'">
+                          <div class="renta-reveal-slot__inner">
+                            <p class="renta-campo-hint">
+                              <mat-icon aria-hidden="true">auto_fix_high</mat-icon>
+                              Calculado por fórmula · puede modificarse
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Usó fórmula se conserva en el formulario y el payload, pero no se muestra como campo. -->
+                      <!--
+                      <div class="col-12 col-md-6">
+                        <label for="rentaOcupoFormula" class="form-label perm-label">Usó fórmula</label>
+                        <div class="input-group input-group-lg perm-ig">
+                          <span class="input-group-text fw-bold">
+                            <mat-icon aria-hidden="true">flag</mat-icon>
+                          </span>
+                          <div class="form-floating flex-grow-1">
+                            <select id="rentaOcupoFormula" class="form-select" formControlName="ocupoFormula">
+                              <option [ngValue]="0">No</option>
+                              <option [ngValue]="1">Sí</option>
+                            </select>
+                            <label for="rentaOcupoFormula">Usó fórmula</label>
+                          </div>
+                        </div>
+                      </div>
+                      -->
+                      <div class="col-12 col-md-6 renta-reveal-slot renta-reveal-slot--en-fila"
+                        [class.renta-reveal-slot--cerrado]="rentaModalModo !== 'edicion' || rentaCapturaLibre"
+                        [attr.aria-hidden]="rentaModalModo !== 'edicion' || rentaCapturaLibre"
+                        [attr.inert]="(rentaModalModo !== 'edicion' || rentaCapturaLibre) ? '' : null">
+                        <div class="renta-reveal-slot__inner">
+                          <label for="rentaFormula" class="form-label perm-label">
+                            Fórmula <span class="text-danger">*</span>
+                          </label>
+                          <div class="input-group input-group-lg perm-ig">
+                            <span class="input-group-text fw-bold">
+                              <mat-icon aria-hidden="true">functions</mat-icon>
+                            </span>
+                            <div class="form-floating flex-grow-1">
+                              <select id="rentaFormula" class="form-select"
+                                [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                                [disabled]="rentaModalModo === 'edicion'"
+                                formControlName="idFormula"
+                                [attr.aria-invalid]="!formulasOpciones.length">
+                                <option [ngValue]="null" disabled [hidden]="formulasOpciones.length > 0">
+                                  {{ textoPlaceholderFormula() }}
+                                </option>
+                                <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
+                              </select>
+                              <label for="rentaFormula">{{ textoPlaceholderFormula() }}</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+
+                <!-- (e) Resumen — solo cuando el flujo está completo -->
+                <div class="col-12" *ngIf="resumenRentaModal.listo" @rentaSeccionReveal>
+                  <article class="renta-alta-bloque renta-alta-bloque--resumen">
+                    <header class="renta-alta-bloque__head">
+                      <mat-icon aria-hidden="true">summarize</mat-icon>
+                      <div>
+                        <h4>Resumen del pago</h4>
+                        <p>Verifica arrendatario, periodo, cálculo e importes antes de registrar.</p>
+                      </div>
+                    </header>
                     <section class="renta-pago-resumen" aria-live="polite">
                       <article class="renta-pago-resumen__hero">
                         <div class="renta-pago-resumen__hero-row">
@@ -896,8 +927,7 @@
                         <p class="renta-pago-resumen__hero-meta">
                           Arrendatario: <span>{{ resumenRentaModal.arrendatario }}</span>
                         </p>
-                        <p class="renta-pago-resumen__hero-meta"
-                          *ngIf="resumenRentaModal.inmueble">
+                        <p class="renta-pago-resumen__hero-meta" *ngIf="resumenRentaModal.inmueble">
                           Inmueble: <span>{{ resumenRentaModal.inmueble }}</span>
                         </p>
                       </article>
@@ -907,67 +937,52 @@
                         <div class="renta-reveal-slot__inner">
                           <article class="renta-pago-resumen__card">
                             <h5 class="renta-pago-resumen__card-title">Detalle del registro</h5>
-                            <div class="row g-2">
-                              <div class="col-12 col-sm-6 col-md-4"
+                            <div class="renta-pago-resumen__detalle-grid">
+                              <div class="renta-pago-resumen__detalle-item"
                                 *ngFor="let campo of resumenRentaModal.campos; trackBy: trackByResumenCampo">
                                 <div class="renta-pago-resumen__field h-100">
                                   <span>{{ campo.etiqueta }}</span>
                                   <p [class.is-money]="campo.dinero">{{ campo.valor }}</p>
                                 </div>
                               </div>
-                              <div class="col-12 col-sm-6 col-md-4 renta-reveal-slot renta-reveal-slot--en-fila"
-                                [class.renta-reveal-slot--cerrado]="!resumenRentaModal.filaMontos?.factor"
-                                [attr.aria-hidden]="!resumenRentaModal.filaMontos?.factor">
-                                <div class="renta-reveal-slot__inner">
-                                  <div class="renta-pago-resumen__field renta-pago-resumen__field--compact h-100">
-                                    <span>{{ resumenRentaModal.filaMontos?.factor?.etiqueta }}</span>
-                                    <p>{{ resumenRentaModal.filaMontos?.factor?.valor }}</p>
-                                  </div>
+                              <div class="renta-pago-resumen__detalle-item"
+                                *ngIf="resumenRentaModal.filaMontos?.factor">
+                                <div class="renta-pago-resumen__field renta-pago-resumen__field--compact h-100">
+                                  <span>{{ resumenRentaModal.filaMontos?.factor?.etiqueta }}</span>
+                                  <p>{{ resumenRentaModal.filaMontos?.factor?.valor }}</p>
                                 </div>
                               </div>
                             </div>
-                            <div class="row g-2 mt-1 renta-pago-resumen__montos-row">
-                              <div class="col-12 col-md-6">
-                                <div class="row g-2 h-100">
-                                  <div class="col-6 renta-reveal-slot renta-reveal-slot--en-fila"
-                                    [class.renta-reveal-slot--cerrado]="!resumenRentaModal.filaMontos?.montoACobrar"
-                                    [attr.aria-hidden]="!resumenRentaModal.filaMontos?.montoACobrar">
-                                    <div class="renta-reveal-slot__inner h-100">
-                                      <div
-                                        class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-renta h-100">
-                                        <span>{{ resumenRentaModal.filaMontos?.montoACobrar?.etiqueta }}</span>
-                                        <p [class.is-money]="resumenRentaModal.filaMontos?.montoACobrar?.dinero">
-                                          {{ resumenRentaModal.filaMontos?.montoACobrar?.valor }}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div class="col-6 renta-reveal-slot renta-reveal-slot--en-fila"
-                                    [class.renta-reveal-slot--cerrado]="!resumenRentaModal.filaMontos?.montoFinalMantenimiento"
-                                    [attr.aria-hidden]="!resumenRentaModal.filaMontos?.montoFinalMantenimiento">
-                                    <div class="renta-reveal-slot__inner h-100">
-                                      <div
-                                        class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-mantenimiento h-100">
-                                        <span>{{ resumenRentaModal.filaMontos?.montoFinalMantenimiento?.etiqueta }}</span>
-                                        <p [class.is-money]="resumenRentaModal.filaMontos?.montoFinalMantenimiento?.dinero">
-                                          {{ resumenRentaModal.filaMontos?.montoFinalMantenimiento?.valor }}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
+                            <div class="row g-2 mt-2 renta-pago-resumen__montos-row align-items-stretch">
+                              <div class="col-12"
+                                [class.col-md-3]="resumenRentaModal.filaMontos?.montoFinalMantenimiento"
+                                [class.col-md-6]="!resumenRentaModal.filaMontos?.montoFinalMantenimiento"
+                                *ngIf="resumenRentaModal.filaMontos?.montoACobrar">
+                                <div
+                                  class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-renta h-100">
+                                  <span>{{ resumenRentaModal.filaMontos?.montoACobrar?.etiqueta }}</span>
+                                  <p [class.is-money]="resumenRentaModal.filaMontos?.montoACobrar?.dinero">
+                                    {{ resumenRentaModal.filaMontos?.montoACobrar?.valor }}
+                                  </p>
                                 </div>
                               </div>
-                              <div class="col-12 col-md-6 renta-reveal-slot renta-reveal-slot--en-fila"
-                                [class.renta-reveal-slot--cerrado]="!resumenRentaModal.filaMontos?.montoTotalCombinado"
-                                [attr.aria-hidden]="!resumenRentaModal.filaMontos?.montoTotalCombinado">
-                                <div class="renta-reveal-slot__inner h-100">
-                                  <div
-                                    class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-total h-100">
-                                    <span>{{ resumenRentaModal.filaMontos?.montoTotalCombinado?.etiqueta }}</span>
-                                    <p [class.is-money]="resumenRentaModal.filaMontos?.montoTotalCombinado?.dinero">
-                                      {{ resumenRentaModal.filaMontos?.montoTotalCombinado?.valor }}
-                                    </p>
-                                  </div>
+                              <div class="col-12 col-md-3"
+                                *ngIf="resumenRentaModal.filaMontos?.montoFinalMantenimiento">
+                                <div
+                                  class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-mantenimiento h-100">
+                                  <span>{{ resumenRentaModal.filaMontos?.montoFinalMantenimiento?.etiqueta }}</span>
+                                  <p [class.is-money]="resumenRentaModal.filaMontos?.montoFinalMantenimiento?.dinero">
+                                    {{ resumenRentaModal.filaMontos?.montoFinalMantenimiento?.valor }}
+                                  </p>
+                                </div>
+                              </div>
+                              <div class="col-12 col-md-6" *ngIf="resumenRentaModal.filaMontos?.montoTotalCombinado">
+                                <div
+                                  class="renta-pago-resumen__field renta-pago-resumen__field--destacado renta-pago-resumen__field--destacado-total h-100">
+                                  <span>{{ resumenRentaModal.filaMontos?.montoTotalCombinado?.etiqueta }}</span>
+                                  <p [class.is-money]="resumenRentaModal.filaMontos?.montoTotalCombinado?.dinero">
+                                    {{ resumenRentaModal.filaMontos?.montoTotalCombinado?.valor }}
+                                  </p>
                                 </div>
                               </div>
                             </div>
@@ -975,21 +990,21 @@
                         </div>
                       </div>
                     </section>
-                </article>
-              </div>
+                  </article>
+                </div>
 
-              <!-- (f) Acciones -->
-              <div class="col-12">
-              <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
-                <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalRenta()">
-                  Cancelar
-                </button>
-                <button type="button" class="button-success mono-pago-form-btn" (click)="guardarRentaDesdeModal()"
-                  [disabled]="rentaGuardando || evaluandoFormula">
-                  {{ rentaGuardando ? 'Enviando…' : (rentaModalModo === 'edicion' ? 'Guardar' : 'Registrar') }}
-                </button>
-              </div>
-              </div>
+                <!-- (f) Acciones -->
+                <div class="col-12">
+                  <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+                    <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrarModalRenta()">
+                      Cancelar
+                    </button>
+                    <button type="button" class="button-success mono-pago-form-btn" (click)="guardarRentaDesdeModal()"
+                      [disabled]="rentaGuardando || evaluandoFormula">
+                      {{ rentaGuardando ? 'Enviando…' : (rentaModalModo === 'edicion' ? 'Guardar' : 'Registrar') }}
+                    </button>
+                  </div>
+                </div>
 
               </div>
             </form>
@@ -999,4 +1014,3 @@
     </div>
   </div>
 </ng-container>
-

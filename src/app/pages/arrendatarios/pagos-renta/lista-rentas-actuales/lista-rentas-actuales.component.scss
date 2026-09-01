@@ -81,9 +81,14 @@
 
   .renta-pago-resumen__field--destacado {
     --renta-glow: 148, 163, 184;
-    align-items: center;
+    align-items: stretch;
     text-align: center;
     animation: renta-alta-borde-loop 2.2s ease-in-out infinite;
+  }
+
+  .renta-pago-resumen__field--destacado-total {
+    --renta-glow: 74, 222, 128;
+    align-items: center;
   }
 
   .renta-pago-resumen__field--destacado p,
@@ -99,8 +104,32 @@
     --renta-glow: 251, 191, 36;
   }
 
-  .renta-pago-resumen__field--destacado-total {
-    --renta-glow: 74, 222, 128;
+  .renta-pago-resumen__detalle-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 576px) {
+    .renta-pago-resumen__detalle-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 992px) {
+    .renta-pago-resumen__detalle-grid {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+    }
+  }
+
+  .renta-pago-resumen__detalle-item {
+    min-width: 0;
+  }
+
+  .renta-pago-resumen__montos-row {
+    > [class*='col-'] {
+      min-width: 0;
+    }
   }
 
   .dx-texteditor.dx-state-focused,
@@ -392,8 +421,10 @@
   align-items: stretch;
   gap: 0.35rem;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   padding: 0.15rem 0;
+  box-sizing: border-box;
 }
 
 .renta-grid-desglose__item {
@@ -401,17 +432,20 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  min-width: 0;
-  padding: 0.32rem 0.55rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.32rem 0.65rem;
   border-radius: 8px;
   border: 1px solid transparent;
 }
 
 .renta-grid-desglose__label {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   letter-spacing: 0.06em;
   /* text-transform: uppercase; */
   flex-shrink: 0;
+  font-weight: 400;
 }
 
 .renta-grid-desglose__valor {
@@ -469,8 +503,241 @@
   font-size: 0.9rem;
 }
 
+.renta-grid-periodo {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.15rem 0;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.renta-grid-periodo__fecha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+}
+
+.renta-grid-periodo__fecha--inicio {
+  color: #dcfce7;
+  background: linear-gradient(135deg, rgba(22, 101, 52, 0.82), rgba(21, 128, 61, 0.62));
+  border-color: rgba(74, 222, 128, 0.72);
+}
+
+.renta-grid-periodo__fecha--fin {
+  color: #fee2e2;
+  background: linear-gradient(135deg, rgba(153, 27, 27, 0.82), rgba(185, 28, 28, 0.62));
+  border-color: rgba(248, 113, 113, 0.72);
+}
+
+.renta-grid-periodo__sep {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.renta-grid-fh-registro {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.15rem 0;
+  box-sizing: border-box;
+}
+
+.renta-grid-celda-destacada {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.15rem 0;
+  box-sizing: border-box;
+}
+
+.renta-grid-celda-destacada--centro {
+  justify-content: center;
+}
+
+.renta-grid-arrendatario {
+  width: auto;
+  max-width: 100%;
+  padding: 0.32rem 0.95rem;
+  border-radius: 12px;
+  border-color: transparent;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.renta-grid-arrendatario .inm-row-card__icon {
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 10px;
+  background: rgba(89, 109, 255, 0.22);
+  border-color: rgba(165, 180, 252, 0.45);
+}
+
+.renta-grid-arrendatario .inm-row-card__icon mat-icon {
+  font-size: 1.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  color: #c7d2fe;
+}
+
+.renta-grid-arrendatario .inm-row-card__title {
+  color: #ffffff;
+  font-size: 0.95rem;
+  letter-spacing: 0.025em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.renta-grid-monto-final.renta-grid-desglose__item,
+.renta-grid-desglose__item.renta-grid-monto-final {
+  width: auto;
+  max-width: 100%;
+  justify-content: center;
+  padding: 0.32rem 0.65rem;
+  background: transparent;
+  border-color: transparent;
+}
+
+.renta-grid-monto-final .renta-grid-desglose__valor {
+  text-align: center;
+  font-size: 0.95rem;
+  letter-spacing: 0.025em;
+  font-weight: 600;
+}
+
+.renta-grid-desglose__item--registro {
+  width: auto;
+  max-width: 100%;
+  justify-content: center;
+  padding: 0.32rem 0.65rem;
+  border-color: rgba(148, 163, 184, 0.75);
+  background: linear-gradient(135deg, rgba(51, 65, 85, 0.9), rgba(71, 85, 105, 0.7));
+}
+
+.renta-grid-desglose__item--registro .renta-grid-desglose__valor {
+  color: #f1f5f9;
+  text-align: center;
+}
+
+.renta-grid-desglose__valor--centrado {
+  text-align: center;
+  flex: 0 1 auto;
+}
+
 .renta-grid-desglose__vacio {
   color: #94a3b8;
+}
+
+:host ::ng-deep .inm-data-grid {
+  .dx-data-row > td {
+    vertical-align: middle !important;
+  }
+
+  .dx-header-row > td.renta-col-titulo-centro,
+  .dx-header-row > td.renta-col-titulo-centro .dx-datagrid-text-content {
+    text-align: center !important;
+  }
+
+  .dx-data-row > td.renta-col-titulo-centro,
+  .dx-datagrid-filter-row > td.renta-col-titulo-centro {
+    text-align: left !important;
+  }
+
+  .dx-adaptive-detail-row .renta-grid-desglose,
+  .dx-adaptive-detail-row .renta-grid-fh-registro,
+  .dx-adaptive-detail-row .renta-grid-celda-destacada {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dx-adaptive-detail-row .renta-grid-desglose {
+    width: fit-content;
+    max-width: min(100%, 18rem);
+  }
+
+  .dx-adaptive-detail-row .renta-grid-desglose__item {
+    width: auto;
+    max-width: 100%;
+  }
+
+  .dx-adaptive-detail-row .renta-grid-fh-registro,
+  .dx-adaptive-detail-row .renta-grid-celda-destacada--centro {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .dx-adaptive-detail-row .renta-grid-celda-destacada:not(.renta-grid-celda-destacada--centro) {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  .dx-adaptive-detail-row .renta-grid-celda-destacada--centro {
+    justify-content: flex-start;
+  }
+
+  .dx-adaptive-detail-row .renta-grid-monto-final {
+    justify-content: flex-start;
+  }
+
+  .dx-adaptive-detail-row .renta-grid-monto-final .renta-grid-desglose__valor {
+    color: #ffffff !important;
+    text-align: left;
+  }
+
+  .inm-row-card {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.65rem;
+    min-width: 0;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .inm-row-card--nombre {
+    justify-content: flex-start;
+  }
+
+  .dx-data-row > td .renta-grid-desglose {
+    width: 100%;
+  }
+
+  .dx-data-row > td .renta-grid-celda-destacada,
+  .dx-data-row > td .renta-grid-fh-registro {
+    width: 100%;
+  }
+
+  .dx-data-row > td .renta-grid-arrendatario,
+  .dx-data-row > td .renta-grid-monto-final,
+  .dx-data-row > td .renta-grid-desglose__item--registro {
+    width: auto;
+    max-width: 100%;
+  }
 }
 
 .renta-acciones-vacio {
@@ -538,6 +805,33 @@
   background-color: rgba(15, 23, 42, 0.55);
   border-color: rgba(148, 163, 184, 0.28);
   color: #cbd5e1;
+}
+
+.renta-input-disabled {
+  cursor: not-allowed !important;
+  pointer-events: none;
+  opacity: 0.62 !important;
+  background-color: rgba(15, 23, 42, 0.58) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  color: #cbd5e1 !important;
+}
+
+.renta-input-disabled ::ng-deep .dx-texteditor {
+  cursor: not-allowed !important;
+  background-color: rgba(15, 23, 42, 0.58) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+.renta-input-disabled ::ng-deep .dx-texteditor-input {
+  cursor: not-allowed !important;
+  color: #cbd5e1 !important;
+}
+
+.renta-control-bloqueado,
+.renta-modo-calculo__btn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.62;
+  filter: saturate(0.55);
 }
 
 .renta-modo-panel {
@@ -1148,6 +1442,55 @@
     color: #14532d !important;
   }
 
+  .renta-grid-desglose__item--registro {
+    background: #e2e8f0 !important;
+    border-color: #94a3b8 !important;
+  }
+
+  .renta-grid-desglose__item--registro .renta-grid-desglose__valor {
+    color: #1e293b !important;
+  }
+
+  .renta-grid-periodo__fecha--inicio {
+    color: #14532d !important;
+    background: #dcfce7 !important;
+    border-color: #4ade80 !important;
+  }
+
+  .renta-grid-periodo__fecha--fin {
+    color: #7f1d1d !important;
+    background: #fee2e2 !important;
+    border-color: #f87171 !important;
+  }
+
+  .renta-grid-periodo__sep {
+    color: #64748b !important;
+  }
+
+  .renta-grid-arrendatario {
+    background: transparent !important;
+    border-color: transparent !important;
+  }
+
+  .renta-grid-arrendatario .inm-row-card__icon {
+    background: #e0e7ff !important;
+    border-color: #c7d2fe !important;
+  }
+
+  .renta-grid-arrendatario .inm-row-card__icon mat-icon {
+    color: #4338ca !important;
+  }
+
+  .renta-grid-arrendatario .inm-row-card__title {
+    color: #ffffff !important;
+  }
+
+  .renta-grid-monto-final.renta-grid-desglose__item,
+  .renta-grid-desglose__item.renta-grid-monto-final {
+    background: transparent !important;
+    border-color: transparent !important;
+  }
+
   .renta-grid-desglose__vacio,
   .renta-acciones-vacio {
     color: #64748b !important;
@@ -1160,6 +1503,22 @@
     border-color: #cbd5e1 !important;
     color: #334155 !important;
     opacity: 1 !important;
+  }
+
+  .renta-input-disabled {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #64748b !important;
+    opacity: 0.72 !important;
+  }
+
+  .renta-input-disabled ::ng-deep .dx-texteditor-input {
+    color: #64748b !important;
+  }
+
+  .renta-input-disabled ::ng-deep .dx-texteditor {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
   }
 
   .renta-modo-panel {

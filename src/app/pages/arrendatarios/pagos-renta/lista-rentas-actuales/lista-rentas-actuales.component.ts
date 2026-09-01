@@ -202,11 +202,12 @@ export class ListaRentasActualesComponent implements OnInit {
   rentaCapturaLibre = true;
   /** Periodo que cubre el pago: una fecha, rango, o sin elegir aún. */
   rentaPeriodoTipo: RentaActualPeriodoTipo | null = null;
-  /** Fecha en que se registra el pago. */
+  /** Fecha en que se registra el pago (UI; oculta por ahora, no va al API). */
   fechaRegistroRenta: Date = new Date();
+  readonly rentaMostrarCampoFechaRegistro = false;
   /** Día que cubre el pago cuando `rentaPeriodoTipo === 'mes_actual'`. */
   fechaPeriodoMesRenta: Date = new Date();
-  /** Rango de cobertura del pago (solo si `rentaPeriodoTipo === 'rango'`). */
+  /** Rango de vigencia del pago (solo si `rentaPeriodoTipo === 'rango'`). */
   mesPeriodoDesdeRenta: Date = new Date();
   mesPeriodoHastaRenta: Date = new Date();
   /** Tras elegir contrato, la card Forma de cálculo aparece solo cuando el usuario confirma periodo/fecha. */
@@ -418,6 +419,7 @@ export class ListaRentasActualesComponent implements OnInit {
       this.limpiarEvaluacionFormulaCache();
     } else {
       this.marcarPeriodoListoParaFormaCalculo();
+      this.rentaForm.get('ocupoFormula')?.setValue(1, { emitEvent: false });
     }
     this.sincronizarValidadorIdFormulaRenta();
     this.actualizarResumenRentaModal();
@@ -425,9 +427,9 @@ export class ListaRentasActualesComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  /** Card Forma de cálculo (alta): no al elegir contrato; solo tras periodo/fecha y sin captura libre. */
+  /** Card Forma de cálculo: aparece tras periodo/fecha y cuando no es captura libre. */
   get rentaMostrarCardFormaCalculo(): boolean {
-    if (this.rentaModalModo !== 'alta' || this.rentaCapturaLibre) return false;
+    if (this.rentaCapturaLibre) return false;
     const idCon = Number(this.rentaForm.get('idContrato')?.value);
     if (!Number.isFinite(idCon) || idCon <= 0) return false;
     if (!this.rentaPeriodoListoParaFormaCalculo) return false;
@@ -489,26 +491,13 @@ export class ListaRentasActualesComponent implements OnInit {
   }
 
   private validarPeriodoYFechaRegistroRenta(mostrarAlerta: boolean): boolean {
-    if (!this.fechaRegistroRentaValida()) {
-      if (mostrarAlerta) {
-        void Swal.fire({
-          background: '#141a21',
-          color: '#ffffff',
-          icon: 'warning',
-          title: 'Fecha de registro',
-          text: 'Indica cuándo registras este pago.',
-          confirmButtonText: 'Entendido',
-        });
-      }
-      return false;
-    }
     if (this.rentaPeriodoTipo == null) {
       if (mostrarAlerta) {
         void Swal.fire({
           background: '#141a21',
           color: '#ffffff',
           icon: 'warning',
-          title: 'Periodo del pago',
+          title: 'Vigencia del pago',
           text: 'Selecciona si el pago es de mes actual o de un rango.',
           confirmButtonText: 'Entendido',
         });
@@ -523,8 +512,8 @@ export class ListaRentasActualesComponent implements OnInit {
             background: '#141a21',
             color: '#ffffff',
             icon: 'warning',
-            title: 'Periodo incompleto',
-            text: 'Selecciona la fecha que cubre este pago.',
+          title: 'Vigencia incompleta',
+          text: 'Selecciona la fecha que cubre este pago.',
             confirmButtonText: 'Entendido',
           });
         }
@@ -542,8 +531,8 @@ export class ListaRentasActualesComponent implements OnInit {
           background: '#141a21',
           color: '#ffffff',
           icon: 'warning',
-          title: 'Periodo incompleto',
-          text: 'Selecciona la fecha desde y la fecha hasta del pago.',
+        title: 'Vigencia incompleta',
+        text: 'Selecciona la fecha desde y la fecha hasta del pago.',
           confirmButtonText: 'Entendido',
         });
       }
@@ -557,7 +546,7 @@ export class ListaRentasActualesComponent implements OnInit {
           background: '#141a21',
           color: '#ffffff',
           icon: 'warning',
-          title: 'Periodo inválido',
+          title: 'Vigencia inválida',
           text: 'La fecha desde no puede ser posterior a la fecha hasta.',
           confirmButtonText: 'Entendido',
         });
@@ -567,31 +556,34 @@ export class ListaRentasActualesComponent implements OnInit {
     return true;
   }
 
-  /** Campos de periodo/fecha para el body POST/PUT (pendientes de soporte en back). */
-  private payloadPeriodoYFechaRegistro(): Pick<
-    RentaActualPostPayload,
-    'fechaRegistro' | 'periodoTipo' | 'mes' | 'fechaInicio' | 'fechaFin'
-  > {
-    const fechaRegistro = this.toIsoFechaInpcRenta(this.fechaRegistroRentaValida() ?? new Date());
+  /**
+   * Fechas del periodo.
+   * POST: `fechaInicio` obligatorio; `fechaFin` solo en rango.
+   * PUT: solo `fechaFin` (o `null`) se actualiza; nunca `fechaInicio`.
+   */
+  private payloadFechaInicioPost(): string {
     if (this.rentaPeriodoTipo === 'rango') {
-      const desde = this.mesPeriodoDesdeRenta;
-      const hasta = this.mesPeriodoHastaRenta;
-      return {
-        fechaRegistro,
-        periodoTipo: 'rango',
-        mes: null,
-        fechaInicio: this.toIsoFechaInpcRenta(desde),
-        fechaFin: this.toIsoFechaInpcRenta(hasta),
-      };
+      return this.toIsoDateTimeUtcRenta(this.mesPeriodoDesdeRenta);
     }
     const dia = this.fechaPeriodoMesRenta;
-    return {
-      fechaRegistro,
-      periodoTipo: 'mes_actual',
-      mes: this.toIsoFechaInpcRenta(dia instanceof Date && !Number.isNaN(dia.getTime()) ? dia : new Date()),
-      fechaInicio: null,
-      fechaFin: null,
-    };
+    const fecha =
+      dia instanceof Date && !Number.isNaN(dia.getTime()) ? dia : new Date();
+    return this.toIsoDateTimeUtcRenta(fecha);
+  }
+
+  private payloadFechaFinOpcional(): string | null {
+    if (this.rentaPeriodoTipo !== 'rango') return null;
+    return this.toIsoDateTimeUtcRenta(this.mesPeriodoHastaRenta);
+  }
+
+  /** `YYYY-MM-DDT00:00:00.000Z` (día local → medianoche UTC, como el swagger). */
+  private toIsoDateTimeUtcRenta(d: Date): string {
+    return `${this.toIsoFechaInpcRenta(d)}T00:00:00.000Z`;
+  }
+
+  /** 1 = captura manual desactivada; 0 = captura manual activada. */
+  private usaFormulaParaPayload(): number {
+    return this.rentaCapturaLibre ? 0 : 1;
   }
 
   /** Periodo que cubre este pago (mes actual o rango capturado), no las fechas del contrato. */
@@ -1661,6 +1653,7 @@ export class ListaRentasActualesComponent implements OnInit {
         row.montoFinalFmt,
         row.pagadaLabel,
         row.mesLabel,
+        row.fhRegistroFmt,
         String(row.id),
       ];
       return extras.some((s) => String(s).toLowerCase().includes(texto));
@@ -1729,6 +1722,7 @@ export class ListaRentasActualesComponent implements OnInit {
     });
     this.rentaForm.get('idArrendatario')?.enable();
     this.rentaForm.get('idContrato')?.enable();
+    this.rentaForm.get('idFormula')?.enable();
     this.contratosOpciones    = [];
     this.resumenRentaModal    = this.resumenRentaModalVacio();
     this.rentaTotalDisplay    = '';
@@ -1738,6 +1732,9 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaMostrarMantenimiento = false;
     this.rentaModoCalculo = 'formula';
     this.resetPeriodoYFechaRegistroRenta();
+    // En alta el periodo inicia siempre en Mes actual, con su fecha visible.
+    this.rentaPeriodoTipo = 'mes_actual';
+    this.rentaPeriodoListoParaFormaCalculo = true;
     this.limpiarSeleccionPeriodosInpcRenta();
     this.limpiarEvaluacionFormulaCache();
     this.actualizarValidadoresMantenimientoModal();
@@ -1752,7 +1749,7 @@ export class ListaRentasActualesComponent implements OnInit {
   // ─── Modal edición ───────────────────────────────────────────────────────────
 
   abrirModalEdicion(row: RentaActualGridRow): void {
-    if (row?.pagada) return;
+    if (row?.pagada || !row?.puedeDuplicarMes) return;
     const id = Number(row?.id);
     if (!Number.isFinite(id) || id <= 0) return;
     this.rentaModalModo    = 'edicion';
@@ -1763,6 +1760,7 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaForm.reset();
     this.rentaForm.get('idArrendatario')?.disable();
     this.rentaForm.get('idContrato')?.disable();
+    this.rentaForm.get('idFormula')?.disable();
     this.resumenRentaModal = this.resumenRentaModalVacio();
     this.rentaTotalDisplay = '';
     this.rentaMontoFinalDisplay = '';
@@ -1775,6 +1773,7 @@ export class ListaRentasActualesComponent implements OnInit {
     this.limpiarEvaluacionFormulaCache();
     this.sincronizarValidadorIdFormulaRenta();
     this.aplicarDetalleRentaEnFormulario(row.detalle);
+    this.aplicarPeriodoDesdeGridRow(row);
     this.cargarCatalogosModal();
     this.cdr.markForCheck();
   }
@@ -1826,8 +1825,91 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaMostrarMantenimiento =
       (vals.totalMantenimiento != null && vals.totalMantenimiento > 0) ||
       (vals.montoFinalMantenimiento != null && vals.montoFinalMantenimiento > 0);
+    this.rentaCapturaLibre = vals.ocupoFormula !== 1;
+    this.sincronizarValidadorIdFormulaRenta();
     this.actualizarValidadoresMantenimientoModal();
     this.actualizarDisplayMonedaRenta();
+    this.aplicarPeriodoDesdeDetalleApi(det);
+  }
+
+  /** Carga mes / fechaFin del API en los datebox del modal (edición). */
+  private aplicarPeriodoDesdeDetalleApi(det: Record<string, unknown>): void {
+    const inicio = this.parseFechaApiALocal(
+      det['mes'] ?? det['fechaInicio'] ?? det['fecha_inicio'] ?? det['mesRenta'] ?? det['periodo'],
+    );
+    const fin = this.parseFechaApiALocal(det['fechaFin'] ?? det['fecha_fin']);
+    this.asignarPeriodoFechasEdit(inicio, fin);
+  }
+
+  /** Respaldo: usa `periodoVm` del grid si el detalle no hidrató el tipo. */
+  private aplicarPeriodoDesdeGridRow(row: RentaActualGridRow): void {
+    if (this.rentaPeriodoTipo != null) return;
+    const vm = row?.periodoVm;
+    if (!vm) return;
+    const inicio = this.parseFechaApiALocal(vm.inicioRaw) ?? this.parseFechaFmtLocal(vm.inicioFmt);
+    const fin = this.parseFechaApiALocal(vm.finRaw) ?? this.parseFechaFmtLocal(vm.finFmt);
+    if (vm.esRango) {
+      this.asignarPeriodoFechasEdit(inicio, fin ?? inicio);
+    } else {
+      this.asignarPeriodoFechasEdit(inicio ?? fin, null);
+    }
+  }
+
+  private asignarPeriodoFechasEdit(inicio: Date | null, fin: Date | null): void {
+    if (inicio && fin && inicio.getTime() !== fin.getTime()) {
+      this.rentaPeriodoTipo = 'rango';
+      this.mesPeriodoDesdeRenta = inicio;
+      this.mesPeriodoHastaRenta = fin;
+      this.fechaPeriodoMesRenta = new Date(inicio.getTime());
+    } else if (inicio) {
+      this.rentaPeriodoTipo = 'mes_actual';
+      this.fechaPeriodoMesRenta = inicio;
+      this.mesPeriodoDesdeRenta = new Date(inicio.getTime());
+      this.mesPeriodoHastaRenta = new Date(inicio.getTime());
+    } else if (fin) {
+      this.rentaPeriodoTipo = 'mes_actual';
+      this.fechaPeriodoMesRenta = fin;
+      this.mesPeriodoDesdeRenta = new Date(fin.getTime());
+      this.mesPeriodoHastaRenta = new Date(fin.getTime());
+    }
+
+    if (this.rentaPeriodoTipo != null) {
+      this.rentaPeriodoListoParaFormaCalculo = true;
+    }
+  }
+
+  /** Día de calendario del ISO del API, sin corrimiento por zona. */
+  private parseFechaApiALocal(raw: unknown): Date | null {
+    if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
+      return new Date(raw.getFullYear(), raw.getMonth(), raw.getDate());
+    }
+    if (typeof raw === 'number' && Number.isFinite(raw)) {
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) return null;
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    const texto = String(raw ?? '').trim();
+    if (!texto) return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(texto);
+    if (match) {
+      return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+    const fmt = this.parseFechaFmtLocal(texto);
+    if (fmt) return fmt;
+    const parsed = new Date(texto);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  }
+
+  /** `dd/MM/yyyy` (como en la columna Periodo del grid). */
+  private parseFechaFmtLocal(texto: string): Date | null {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(texto ?? '').trim());
+    if (!m) return null;
+    const d = Number(m[1]);
+    const mo = Number(m[2]);
+    const y = Number(m[3]);
+    if (!Number.isFinite(d) || !Number.isFinite(mo) || !Number.isFinite(y)) return null;
+    return new Date(y, mo - 1, d);
   }
 
   /** Sincroniza resumen y displays cuando catálogo y detalle de edición están listos. */
@@ -1925,17 +2007,9 @@ export class ListaRentasActualesComponent implements OnInit {
       : '';
   
     if (this.rentaPeriodoTipo) {
-      campos.push({ etiqueta: 'Periodo del pago', valor: this.etiquetaPeriodoEstePago() });
+      campos.push({ etiqueta: 'Vigencia del pago', valor: this.etiquetaPeriodoEstePago() });
     }
 
-    const fechaReg = this.fechaRegistroRentaValida();
-    campos.push({
-      etiqueta: 'Fecha de Registro',
-      valor: fechaReg
-        ? formatearFecha(this.toIsoFechaInpcRenta(fechaReg))
-        : '—',
-    });
-  
     const montoFinalMtto = String(raw['montoFinalMantenimiento'] ?? '').trim();
     const factorVariable = String(raw['factorVariable'] ?? '').trim();
 
@@ -1946,7 +2020,7 @@ export class ListaRentasActualesComponent implements OnInit {
     const montoFinal = String(raw['montoFinal'] ?? '').trim();
     if (montoFinal) {
       filaMontos.montoACobrar = {
-        etiqueta: 'Monto A Cobrar',
+        etiqueta: 'Renta a cobrar',
         valor: this.esNumeroCaptura(montoFinal) ? formatearMoneda(montoFinal) : montoFinal,
         dinero: true,
         destacado: true,
@@ -1967,16 +2041,16 @@ export class ListaRentasActualesComponent implements OnInit {
     const numMtto = this.rentaMostrarMantenimiento
       ? this.parseNumeroFormulario(raw['montoFinalMantenimiento'])
       : NaN;
-    if (
-      this.rentaMostrarMantenimiento &&
-      Number.isFinite(numRenta) &&
-      numRenta > 0 &&
-      Number.isFinite(numMtto) &&
-      numMtto > 0
-    ) {
+    if (Number.isFinite(numRenta) && numRenta > 0) {
+      const totalCobrar =
+        this.rentaMostrarMantenimiento &&
+        Number.isFinite(numMtto) &&
+        numMtto > 0
+          ? numRenta + numMtto
+          : numRenta;
       filaMontos.montoTotalCombinado = {
         etiqueta: 'Total a cobrar',
-        valor: formatearMoneda(numRenta + numMtto),
+        valor: formatearMoneda(totalCobrar),
         dinero: true,
         destacado: true,
       };
@@ -2279,7 +2353,7 @@ export class ListaRentasActualesComponent implements OnInit {
 
   // ─── Guardar ─────────────────────────────────────────────────────────────────
 
-  guardarRentaDesdeModal(): void {
+  async guardarRentaDesdeModal(): Promise<void> {
     if (!this.rentaForm || this.rentaForm.invalid) {
       void Swal.fire({
         background: '#141a21', color: '#ffffff',
@@ -2297,13 +2371,31 @@ export class ListaRentasActualesComponent implements OnInit {
     if (!this.validarMantenimientoRentaModal(true)) {
       return;
     }
+
+    const esEdicion = this.rentaModalModo === 'edicion';
+    const confirmacion = await Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      icon: 'question',
+      title: esEdicion ? '¿Actualizar la renta?' : '¿Registrar Pago?',
+      text: 'Verifica que los datos de la renta sean correctos antes de continuar.',
+      showCancelButton: true,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      confirmButtonText: esEdicion ? 'Sí, actualizar' : 'Sí, registrar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+    });
+    if (!confirmacion.isConfirmed) {
+      return;
+    }
   
     const raw            = this.rentaForm.getRawValue();
     const total          = this.parseNumeroFormulario(raw.total);
     const idFormula      = Number(raw.idFormula);
     const idContrato     = Number(raw.idContrato);
     const idArrendatario = Number(raw.idArrendatario);
-    const ocupoFormula   = this.rentaCapturaLibre ? 0 : (Number(raw.ocupoFormula) === 1 ? 1 : 0);
+    const ocupoFormula   = this.rentaCapturaLibre ? 0 : 1;
 
     // Captura libre o INPC/% Anual: mismo POST/PUT, sin auditoría de fórmula.
     if (this.rentaCapturaLibre || this.rentaModoCalculo !== 'formula') {
@@ -2354,16 +2446,17 @@ export class ListaRentasActualesComponent implements OnInit {
     });
 
     const montosMtto = this.montosMantenimientoDesdeFormulario(raw);
-    const periodoFecha = this.payloadPeriodoYFechaRegistro();
+    const usaFormula = this.usaFormulaParaPayload();
+    const fechaFin = this.payloadFechaFinOpcional();
     const putBody: RentaActualPutPayload = {
       total,
-      idFormula: Math.floor(idFormula),
       montoFinal,
       totalMantenimiento: montosMtto.totalMantenimiento,
       montoFinalMantenimiento: montosMtto.montoFinalMantenimiento,
+      fechaFin,
+      usaFormula,
       factorVariable,
       ocupoFormula,
-      ...periodoFecha,
     };
 
     if (this.rentaModalModo === 'edicion' && this.rentaEditId != null) {
@@ -2391,8 +2484,17 @@ export class ListaRentasActualesComponent implements OnInit {
 
     const postBody: RentaActualPostPayload = {
       idArrendatario: Math.floor(idArrendatario),
-      idContrato:     Math.floor(idContrato),
-      ...putBody,
+      idContrato: Math.floor(idContrato),
+      fechaInicio: this.payloadFechaInicioPost(),
+      total,
+      montoFinal,
+      totalMantenimiento: montosMtto.totalMantenimiento,
+      montoFinalMantenimiento: montosMtto.montoFinalMantenimiento,
+      fechaFin,
+      usaFormula,
+      idFormula: Math.floor(idFormula),
+      factorVariable,
+      ocupoFormula,
     };
 
     this.rentaActualService.registrarRenta(postBody)
@@ -2439,17 +2541,18 @@ export class ListaRentasActualesComponent implements OnInit {
     this.cdr.markForCheck();
 
     const montosMtto = this.montosMantenimientoDesdeFormulario(raw);
-    const periodoFecha = this.payloadPeriodoYFechaRegistro();
+    const usaFormula = this.usaFormulaParaPayload();
+    const fechaFin = this.payloadFechaFinOpcional();
 
     const putBody: RentaActualPutPayload = {
       total,
-      idFormula: Number.isFinite(idFormula) && idFormula > 0 ? Math.floor(idFormula) : (null as unknown as number),
       montoFinal,
       totalMantenimiento: montosMtto.totalMantenimiento,
       montoFinalMantenimiento: montosMtto.montoFinalMantenimiento,
+      fechaFin,
+      usaFormula,
       factorVariable,
       ocupoFormula,
-      ...periodoFecha,
     };
 
     if (this.rentaModalModo === 'edicion' && this.rentaEditId != null) {
@@ -2477,8 +2580,17 @@ export class ListaRentasActualesComponent implements OnInit {
 
     const postBody: RentaActualPostPayload = {
       idArrendatario: Math.floor(idArrendatario),
-      idContrato:     Math.floor(idContrato),
-      ...putBody,
+      idContrato: Math.floor(idContrato),
+      fechaInicio: this.payloadFechaInicioPost(),
+      total,
+      montoFinal,
+      totalMantenimiento: montosMtto.totalMantenimiento,
+      montoFinalMantenimiento: montosMtto.montoFinalMantenimiento,
+      ...(fechaFin != null ? { fechaFin } : {}),
+      usaFormula,
+      idFormula: Number.isFinite(idFormula) && idFormula > 0 ? Math.floor(idFormula) : null,
+      factorVariable,
+      ocupoFormula,
     };
 
     this.rentaActualService.registrarRenta(postBody)
@@ -2502,7 +2614,7 @@ export class ListaRentasActualesComponent implements OnInit {
   private onRentaGuardadaError(err: unknown): void {
     void Swal.fire({
       background: '#141a21', color: '#ffffff',
-      icon: 'error', title: 'No se pudo guardar',
+      icon: 'error', title: '¡Ops!',
       text: this.mensajeErrorRentaActual(err),
       confirmButtonText: 'Entendido',
     });
