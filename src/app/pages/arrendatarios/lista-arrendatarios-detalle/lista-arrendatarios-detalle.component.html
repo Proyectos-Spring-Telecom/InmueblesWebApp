@@ -295,6 +295,12 @@
             </span>
           </span>
           <span class="arr-ctr-panel__chips">
+            <span
+              class="arr-ctr-chip arr-ctr-chip--baja"
+              *ngIf="!contratoEsCancelable(c)"
+            >
+              Cancelado
+            </span>
             <span class="arr-ctr-chip" *ngIf="c['moneda']">{{ c['moneda'] }}</span>
             <span class="arr-ctr-chip" *ngIf="cantidadLocalesContrato(c)">
               {{ cantidadLocalesContrato(c) }}

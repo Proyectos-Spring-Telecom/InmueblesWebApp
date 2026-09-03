@@ -85,7 +85,7 @@
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-sorting mode="multiple"></dxo-sorting>
-        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="220" alignment="center" *appHasPermission="['46', '48', '49']" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="260" alignment="center" *ngIf="mostrarColumnaAcciones" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false" [allowFiltering]="false" [visible]="false"></dxi-column>
         <dxi-column dataField="numServicios" caption="Servicios" [visible]="false"></dxi-column>
         <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
@@ -95,7 +95,7 @@
         <dxi-column dataField="tipoPersonaLabel" caption="Tipo persona" alignment="center" [width]="200"></dxi-column>
         <dxi-column dataField="rfc" caption="RFC" alignment="center" [width]="150"></dxi-column>
         <dxi-column dataField="rentaFmt" caption="Renta" alignment="center" [width]="140"></dxi-column>
-        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" alignment="left" cssClass="inm-col-vigencia" [width]="250" [allowSorting]="true" [allowFiltering]="true"></dxi-column>
+        <dxi-column dataField="vigenciaTexto" caption="Vigencia" cellTemplate="vigenciaTpl" alignment="left" cssClass="inm-col-vigencia" [width]="220" [allowSorting]="true" [allowFiltering]="true"></dxi-column>
         <dxi-column dataField="arrendadorNombre" caption="Arrendador" alignment="center" [width]="250"></dxi-column>
         <dxi-column dataField="inmuebleVinculado" caption="Inmueble" alignment="center" [width]="150"></dxi-column>
         <dxi-column dataField="direccionInmuebleVinculado" caption="Dirección inmueble" alignment="center" [width]="220" [visible]="false"></dxi-column>
@@ -173,6 +173,14 @@
           </div>
         </div>
         <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
+          <div *ngIf="puedeDarAltaArrendatario(row.data)">
+            <button type="button" id="activarRegistroButton" class="btnAcciones"
+              title="Dar de alta arrendatario"
+              [disabled]="dandoAltaId === row.data.id"
+              (click)="darAltaArrendatario(row.data); $event.stopPropagation()">
+              <i class="fa fa-user-plus"></i>
+            </button>
+          </div>
           <div *appHasPermission="'46'">
             <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
               (click)="editarArrendatario(row.data); $event.stopPropagation()">

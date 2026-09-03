@@ -6,6 +6,7 @@ import { lastValueFrom, of } from 'rxjs';
 import { catchError, take } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
+import { AuthenticationService } from 'src/app/services/auth.service';
 import { ArrendatariosService } from 'src/app/services/moduleService/arrendatarios.service';
 import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { mapInmueblesApiToGridRows } from '../../inmuebles/inmuebles-list.mapper';
@@ -62,6 +63,10 @@ export class ListaArrendatariosComponent implements OnInit {
   public mensajeAgrupar =
     'Arrastre un encabezado de columna aquí para agrupar por dicha columna';
 
+  /** Solo rol `1` ve / usa «Dar de alta». */
+  public esUsuarioRolUno = false;
+  public dandoAltaId: number | null = null;
+
   mostrarModalMapa = false;
   mapaTitulo = '';
   private mapaLat: number | null = null;
@@ -107,6 +112,7 @@ export class ListaArrendatariosComponent implements OnInit {
     private router: Router,
     private arrendatariosService: ArrendatariosService,
     private inmueblesService: InmueblesService,
+    private authService: AuthenticationService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -118,8 +124,38 @@ export class ListaArrendatariosComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.esUsuarioRolUno = this.usuarioTieneRolUno();
     this.setupDataSource();
     this.cargarInmuebles();
+  }
+
+  /** Columna Acciones: permisos de módulo o rol 1 (para ver «Dar de alta»). */
+  get mostrarColumnaAcciones(): boolean {
+    if (this.esUsuarioRolUno) return true;
+    const perms = this.authService.getPermissions() || [];
+    return ['46', '48', '49'].some((p) => perms.includes(p));
+  }
+
+  /** `user.rol === 1` (número u objeto con id/idRol). */
+  private usuarioTieneRolUno(): boolean {
+    const user = this.authService.getUser() as Record<string, unknown> | null;
+    if (user == null) return false;
+    const rolRaw = user['rol'] ?? user['idRol'];
+    if (rolRaw != null && typeof rolRaw === 'object' && !Array.isArray(rolRaw)) {
+      const o = rolRaw as Record<string, unknown>;
+      const id = Number(o['id'] ?? o['idRol'] ?? o['rol']);
+      return Number.isFinite(id) && id === 1;
+    }
+    const n = Number(rolRaw);
+    return Number.isFinite(n) && n === 1;
+  }
+
+  /** Solo inactivos (estatus 0) pueden reactivarse. */
+  puedeDarAltaArrendatario(row: ArrendatarioGridRow): boolean {
+    if (!this.esUsuarioRolUno || row == null) return false;
+    const estatus = Number(row.detalle?.['estatus'] ?? NaN);
+    if (Number.isFinite(estatus)) return estatus === 0;
+    return String(row.estatusLabel ?? '').trim().toLowerCase() === 'inactivo';
   }
 
   agregarArrendatario(): void {
@@ -128,6 +164,142 @@ export class ListaArrendatariosComponent implements OnInit {
 
   editarArrendatario(row: ArrendatarioGridRow): void {
     void this.router.navigate(['/arrendatarios/editar-arrendatario', row.id]);
+  }
+
+  darAltaArrendatario(row: ArrendatarioGridRow): void {
+    if (!this.puedeDarAltaArrendatario(row)) return;
+    const nombre =
+      String(row?.arrendatario ?? '').trim() || `Arrendatario ${row?.id ?? ''}`;
+    const nombreEsc = this.escapeHtmlSwal(nombre);
+
+    void Swal.fire({
+      title: 'Dar de alta arrendatario',
+      icon: 'question',
+      ...coloresSwalTema(),
+      html: this.htmlModalDarAltaArrendatario(nombreEsc),
+      showCancelButton: true,
+      focusConfirm: true,
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true,
+      width: 540,
+      customClass: { popup: 'swal-dar-alta' },
+      didOpen: (popup) => this.enlazarOpcionesDarAlta(popup),
+      preConfirm: () => {
+        const activo = Swal.getPopup()?.querySelector(
+          '.swal-dar-alta__opt--active',
+        ) as HTMLElement | null;
+        const val = activo?.getAttribute('data-value');
+        // Swal trata `return false` como validación fallida; no devolver boolean crudo.
+        if (val !== 'true' && val !== 'false') {
+          Swal.showValidationMessage('Elige una opción: recuperar todo o solo el arrendatario.');
+          return false;
+        }
+        return { conDependientes: val === 'true' };
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const payload = result.value as { conDependientes?: boolean } | undefined;
+      this.ejecutarDarAlta(row, payload?.conDependientes === true);
+    });
+  }
+
+  private htmlModalDarAltaArrendatario(nombreEsc: string): string {
+    return `
+      <div class="swal-dar-alta__wrap">
+        <p class="swal-dar-alta__nombre-bar">
+          Vas a reactivar a <strong>${nombreEsc}</strong>
+        </p>
+        <p class="swal-dar-alta__hint">Elige cómo quieres darlo de alta</p>
+        <div class="swal-dar-alta__options" role="listbox" aria-label="Tipo de alta">
+          <button type="button" class="swal-dar-alta__opt swal-dar-alta__opt--todo swal-dar-alta__opt--active"
+            data-value="true" aria-pressed="true" role="option">
+            <span class="swal-dar-alta__opt-badge" aria-hidden="true"><i class="fa fa-refresh"></i></span>
+            <span class="swal-dar-alta__opt-body">
+              <span class="swal-dar-alta__opt-title">Recuperar todo</span>
+              <span class="swal-dar-alta__opt-desc">
+                Reactiva contratos, servicios, documentos y lo relacionado.
+                Los locales del contrato quedan como <em>Ocupado</em>.
+              </span>
+            </span>
+          </button>
+          <button type="button" class="swal-dar-alta__opt swal-dar-alta__opt--solo"
+            data-value="false" aria-pressed="false" role="option">
+            <span class="swal-dar-alta__opt-badge" aria-hidden="true"><i class="fa fa-user"></i></span>
+            <span class="swal-dar-alta__opt-body">
+              <span class="swal-dar-alta__opt-title">Solo el arrendatario</span>
+              <span class="swal-dar-alta__opt-desc">
+                Solo lo marca otra vez como activo. Contratos y el resto quedan
+                solo como historial (no se reactivan).
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  private enlazarOpcionesDarAlta(popup: HTMLElement): void {
+    const botones = popup.querySelectorAll<HTMLButtonElement>('.swal-dar-alta__opt');
+    botones.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        botones.forEach((b) => {
+          b.classList.remove('swal-dar-alta__opt--active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('swal-dar-alta__opt--active');
+        btn.setAttribute('aria-pressed', 'true');
+      });
+    });
+  }
+
+  private ejecutarDarAlta(
+    row: ArrendatarioGridRow,
+    conDependientes: boolean,
+  ): void {
+    this.dandoAltaId = row.id;
+    this.cdr.markForCheck();
+    this.arrendatariosService.darAltaArrendatario(row.id, conDependientes).subscribe({
+      next: () => {
+        this.dandoAltaId = null;
+        void Swal.fire({
+          ...coloresSwalTema(),
+          title: 'Operación Exitosa',
+          text: 'Los cambios se guardaron correctamente.',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'Confirmar',
+        });
+        this.refrescarListaArrendatarios();
+        this.cdr.markForCheck();
+      },
+      error: (err: unknown) => {
+        this.dandoAltaId = null;
+        this.cdr.markForCheck();
+        const e = err as { error?: { message?: string }; message?: string };
+        const text =
+          e?.error?.message ??
+          e?.message ??
+          'No se pudo completar la operación. Intenta de nuevo.';
+        void Swal.fire({
+          ...coloresSwalTema(),
+          title: '¡Ops!',
+          html: String(text),
+          icon: 'error',
+          showCancelButton: false,
+        });
+      },
+    });
+  }
+
+  private escapeHtmlSwal(texto: string): string {
+    return texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   eliminarArrendatario(row: ArrendatarioGridRow): void {

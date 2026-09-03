@@ -23,7 +23,7 @@ import {
   ARRENDATARIOS_FORM_DEMO,
   INMUEBLES_ARRENDATARIOS_DEMO,
 } from '../arrendatarios-demo.data';
-import { extraerArrendatarioDetalleApi, registroArrendatarioHijoActivo } from '../arrendatarios-list.mapper';
+import { extraerArrendatarioDetalleApi, registrosArrendatarioParaExpediente } from '../arrendatarios-list.mapper';
 import {
   fechaParaInputDate,
   separarArchivosInmueble,
@@ -2046,21 +2046,19 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       if (!result.isConfirmed && !result.value) return;
       this.arrendatariosService.eliminarServicioArrendatario(idServicio).subscribe({
         next: () => {
-          this.recargarFormularioTrasEliminacion(
-            () => this.quitarServicioDelFormulario(index),
-            () => {
-              void Swal.fire({
-                background: '#141a21',
-                color: '#ffffff',
-                title: '¡Eliminado!',
-                html: 'El servicio ha sido eliminado de forma exitosa.',
-                icon: 'success',
-                showCancelButton: false,
-                confirmButtonColor: '#3085d6',
-                confirmButtonText: 'Confirmar',
-              });
-            },
-          );
+          // Quitamos en UI local: un re-GET con solo bajas volvería a pintar el soft-delete.
+          this.quitarServicioDelFormulario(index);
+          this.syncArrendatarioEdicionSnapshotsDesdeFormulario();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El servicio ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
         },
         error: () => {
           void Swal.fire({
@@ -2134,21 +2132,18 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       if (!result.isConfirmed && !result.value) return;
       this.arrendatariosService.eliminarSocioArrendatario(idSocio).subscribe({
         next: () => {
-          this.recargarFormularioTrasEliminacion(
-            () => this.quitarSocioDelFormulario(index),
-            () => {
-              void Swal.fire({
-                background: '#141a21',
-                color: '#ffffff',
-                title: '¡Eliminado!',
-                html: 'El socio ha sido eliminado de forma exitosa.',
-                icon: 'success',
-                showCancelButton: false,
-                confirmButtonColor: '#3085d6',
-                confirmButtonText: 'Confirmar',
-              });
-            },
-          );
+          this.quitarSocioDelFormulario(index);
+          this.syncArrendatarioEdicionSnapshotsDesdeFormulario();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El socio ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
         },
         error: () => {
           void Swal.fire({
@@ -2215,21 +2210,18 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       if (!result.isConfirmed && !result.value) return;
       this.arrendatariosService.eliminarArchivoArrendatario(idArchivo).subscribe({
         next: () => {
-          this.recargarFormularioTrasEliminacion(
-            () => this.quitarGaleriaDelFormulario(index),
-            () => {
-              void Swal.fire({
-                background: '#141a21',
-                color: '#ffffff',
-                title: '¡Eliminado!',
-                html: 'El archivo ha sido eliminado de forma exitosa.',
-                icon: 'success',
-                showCancelButton: false,
-                confirmButtonColor: '#3085d6',
-                confirmButtonText: 'Confirmar',
-              });
-            },
-          );
+          this.quitarGaleriaDelFormulario(index);
+          this.syncArrendatarioEdicionSnapshotsDesdeFormulario();
+          void Swal.fire({
+            background: '#141a21',
+            color: '#ffffff',
+            title: '¡Eliminado!',
+            html: 'El archivo ha sido eliminado de forma exitosa.',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmar',
+          });
         },
         error: () => {
           void Swal.fire({
@@ -2252,43 +2244,6 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       this.galeriaImagenesFormArray.push(this.crearGaleriaImagenFormGroup());
     }
     this.cdr.detectChanges();
-  }
-
-  /** Tras DELETE OK: vuelve a pedir el arrendatario y re-aplica el formulario. */
-  private recargarFormularioTrasEliminacion(
-    fallbackLocal: () => void,
-    onDone?: () => void,
-  ): void {
-    const id = this.idArrendatario;
-    if (id == null || !Number.isFinite(Number(id)) || Number(id) <= 0) {
-      fallbackLocal();
-      onDone?.();
-      return;
-    }
-    this.cargandoDetalle = true;
-    this.arrendatariosService
-      .obtenerArrendatario(Number(id))
-      .pipe(
-        finalize(() => {
-          this.cargandoDetalle = false;
-          this.cdr.detectChanges();
-        }),
-      )
-      .subscribe({
-        next: (resp) => {
-          const item = extraerArrendatarioDetalleApi(resp);
-          if (item && Object.keys(item).length > 0) {
-            this.poblarFormularioDesdeDetalleApi(item);
-          } else {
-            fallbackLocal();
-          }
-          onDone?.();
-        },
-        error: () => {
-          fallbackLocal();
-          onDone?.();
-        },
-      });
   }
 
   tituloContratoAccordion(index: number): string {
@@ -3194,10 +3149,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private poblarRestoFormularioDesdeDetalleApi(item: Record<string, unknown>): void {
     const serviciosRaw = item['servicios'];
     this.serviciosFormArray.clear();
-    const serviciosLista = (Array.isArray(serviciosRaw) ? serviciosRaw : [])
-      .map((x) => (x != null && typeof x === 'object' ? (x as Record<string, unknown>) : null))
-      .filter((x): x is Record<string, unknown> => x != null)
-      .filter(registroArrendatarioHijoActivo);
+    const serviciosLista = registrosArrendatarioParaExpediente(
+      Array.isArray(serviciosRaw) ? serviciosRaw : [],
+    );
     if (serviciosLista.length > 0) {
       for (const s of serviciosLista) {
         const g = this.crearServicioFormGroup();
@@ -3252,10 +3206,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     this.sociosFormArray.clear();
     const sociosRaw = item['socios'];
-    const sociosLista = (Array.isArray(sociosRaw) ? sociosRaw : [])
-      .map((x) => (x != null && typeof x === 'object' ? (x as Record<string, unknown>) : null))
-      .filter((x): x is Record<string, unknown> => x != null)
-      .filter(registroArrendatarioHijoActivo);
+    const sociosLista = registrosArrendatarioParaExpediente(
+      Array.isArray(sociosRaw) ? sociosRaw : [],
+    );
     if (sociosLista.length > 0) {
       for (const s of sociosLista) {
         const g = this.crearSocioFormGroup();
@@ -3301,18 +3254,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private aplicarArchivosEImagenesDesdeDetalle(item: Record<string, unknown>): void {
     const archivosRaw = Array.isArray(item['archivos']) ? item['archivos'] : [];
     const imagenesRaw = Array.isArray(item['imagenes']) ? item['imagenes'] : [];
-    const archivos = archivosRaw.filter(
-      (x): x is InmuebleArchivoApi =>
-        x != null &&
-        typeof x === 'object' &&
-        registroArrendatarioHijoActivo(x as Record<string, unknown>),
-    ) as InmuebleArchivoApi[];
-    const imagenes = imagenesRaw.filter(
-      (x): x is InmuebleArchivoApi =>
-        x != null &&
-        typeof x === 'object' &&
-        registroArrendatarioHijoActivo(x as Record<string, unknown>),
-    ) as InmuebleArchivoApi[];
+    const archivos = registrosArrendatarioParaExpediente(archivosRaw) as InmuebleArchivoApi[];
+    const imagenes = registrosArrendatarioParaExpediente(imagenesRaw) as InmuebleArchivoApi[];
     const { documentos, galeria } = separarArchivosInmueble(archivos, imagenes);
     this.documentosApiUltimaCarga = { ...documentos };
     this.resetVistasDocumentosEnlaces();
@@ -3529,12 +3472,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
   /** Contratos del GET ordenados por antigüedad (`fhRegistro` / `id`). */
   private listarContratosOrdenadosDesdeItem(item: Record<string, unknown>): Record<string, unknown>[] {
-    const contratos = item['contratos'];
-    if (!Array.isArray(contratos) || contratos.length === 0) return [];
-    const rows = contratos
-      .map((x) => (x != null && typeof x === 'object' ? (x as Record<string, unknown>) : null))
-      .filter((x): x is Record<string, unknown> => x != null)
-      .filter(registroArrendatarioHijoActivo);
+    const rows = registrosArrendatarioParaExpediente(
+      Array.isArray(item['contratos']) ? item['contratos'] : [],
+    );
     rows.sort((a, b) => {
       const ta = new Date(String(a['fhRegistro'] ?? '')).getTime();
       const tb = new Date(String(b['fhRegistro'] ?? '')).getTime();

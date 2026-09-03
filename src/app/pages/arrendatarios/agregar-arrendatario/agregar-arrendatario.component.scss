@@ -364,6 +364,22 @@
 
 .arrend-accordion-inner {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.arrend-accordion-inner > .row > [class*='col-'] {
+  min-width: 0;
+}
+
+:host ::ng-deep .arrend-accordion-servicios .dx-accordion-item-body,
+:host ::ng-deep .arrend-accordion-contratos .dx-accordion-item-body,
+:host ::ng-deep .arrend-accordion-socios .dx-accordion-item-body {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Fila de contrato: labels arriba e inputs alineados entre columnas */
