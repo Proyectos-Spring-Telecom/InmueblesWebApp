@@ -1,0 +1,307 @@
+/* Modal SweetAlert2 — dar de alta arrendatario */
+.swal-dar-alta.swal2-popup {
+  background: linear-gradient(165deg, #152033 0%, #0f141c 55%, #121a24 100%) !important;
+  color: #f4f6ff;
+  border: 1px solid rgba(110, 231, 183, 0.28);
+  border-radius: 18px;
+  padding: 1.4rem 1.2rem 1.15rem;
+  max-width: 32rem;
+  box-shadow:
+    0 22px 56px rgba(0, 0, 0, 0.58),
+    0 0 0 1px rgba(56, 189, 248, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.swal-dar-alta .swal2-title {
+  color: #f8fafc;
+  font-size: 1.12rem;
+  letter-spacing: 0.03em;
+  padding: 0;
+  margin: 0;
+}
+
+.swal-dar-alta .swal2-html-container {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  color: #c8d2f0;
+  overflow: visible;
+}
+
+.swal-dar-alta .swal2-actions {
+  margin-top: 1rem;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0 0.1rem;
+}
+
+.swal-dar-alta .swal2-styled.swal2-confirm,
+.swal-dar-alta .swal2-styled.swal2-cancel {
+  border-radius: 11px;
+  font-size: 0.92rem;
+  letter-spacing: 0.03em;
+  padding: 0.55rem 1.2rem;
+  border: 1px solid transparent;
+  box-shadow: none;
+  color: #fff;
+}
+
+.swal-dar-alta .swal2-styled.swal2-confirm {
+  background: linear-gradient(180deg, #10b981, #059669) !important;
+  border-color: rgba(110, 231, 183, 0.55) !important;
+}
+
+.swal-dar-alta .swal2-styled.swal2-confirm:hover {
+  filter: brightness(1.08);
+}
+
+.swal-dar-alta .swal2-styled.swal2-cancel {
+  background: rgba(71, 85, 105, 0.55) !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+  color: #e2e8f0 !important;
+}
+
+.swal-dar-alta .swal2-styled.swal2-cancel:hover {
+  background: rgba(100, 116, 139, 0.65) !important;
+}
+
+.swal-dar-alta__wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+}
+
+.swal-dar-alta__nombre-bar {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  color: #e2e8f0;
+  background: linear-gradient(120deg, rgba(5, 150, 105, 0.2), rgba(14, 165, 233, 0.14));
+  border: 1px solid rgba(110, 231, 183, 0.32);
+}
+
+.swal-dar-alta__nombre-bar strong {
+  color: #f8fafc;
+  letter-spacing: 0.025em;
+}
+
+.swal-dar-alta__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.swal-dar-alta__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.swal-dar-alta__opt {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  text-align: left;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.55);
+  color: #f1f5f9;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+.swal-dar-alta__opt:hover {
+  transform: translateY(-1px);
+}
+
+.swal-dar-alta__opt-badge {
+  flex: 0 0 auto;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
+
+.swal-dar-alta__opt-badge .fa {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.swal-dar-alta__opt-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.swal-dar-alta__opt-title {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
+}
+
+.swal-dar-alta__opt-desc {
+  font-size: 0.78rem;
+  letter-spacing: 0.015em;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.swal-dar-alta__opt-desc em {
+  font-style: normal;
+  color: #fde68a;
+  letter-spacing: 0.02em;
+}
+
+/* Opción: recuperar todo (verde) */
+.swal-dar-alta__opt--todo {
+  border-color: rgba(52, 211, 153, 0.28);
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.35), rgba(15, 23, 42, 0.65));
+}
+
+.swal-dar-alta__opt--todo .swal-dar-alta__opt-badge {
+  background: rgba(5, 150, 105, 0.85);
+  border-color: rgba(110, 231, 183, 0.45);
+  color: #fff;
+}
+
+.swal-dar-alta__opt--todo:hover {
+  border-color: rgba(110, 231, 183, 0.55);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.18);
+}
+
+.swal-dar-alta__opt--todo.swal-dar-alta__opt--active {
+  border-color: rgba(110, 231, 183, 0.75);
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.42), rgba(15, 23, 42, 0.7));
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.35),
+    0 12px 28px rgba(16, 185, 129, 0.22);
+}
+
+.swal-dar-alta__opt--todo.swal-dar-alta__opt--active .swal-dar-alta__opt-title {
+  color: #a7f3d0;
+}
+
+/* Opción: solo arrendatario (azul) */
+.swal-dar-alta__opt--solo {
+  border-color: rgba(56, 189, 248, 0.28);
+  background: linear-gradient(135deg, rgba(7, 89, 133, 0.32), rgba(15, 23, 42, 0.65));
+}
+
+.swal-dar-alta__opt--solo .swal-dar-alta__opt-badge {
+  background: rgba(2, 132, 199, 0.9);
+  border-color: rgba(125, 211, 252, 0.45);
+  color: #fff;
+}
+
+.swal-dar-alta__opt--solo:hover {
+  border-color: rgba(125, 211, 252, 0.55);
+  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.18);
+}
+
+.swal-dar-alta__opt--solo.swal-dar-alta__opt--active {
+  border-color: rgba(125, 211, 252, 0.75);
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.4), rgba(15, 23, 42, 0.7));
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.35),
+    0 12px 28px rgba(14, 165, 233, 0.22);
+}
+
+.swal-dar-alta__opt--solo.swal-dar-alta__opt--active .swal-dar-alta__opt-title {
+  color: #bae6fd;
+}
+
+.swal-dar-alta .swal2-validation-message {
+  background: rgba(127, 29, 29, 0.35);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+
+html.light-theme .swal-dar-alta.swal2-popup {
+  background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%) !important;
+  color: #0f172a;
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.16);
+}
+
+html.light-theme .swal-dar-alta .swal2-title {
+  color: #0f172a;
+}
+
+html.light-theme .swal-dar-alta__nombre-bar {
+  background: linear-gradient(120deg, rgba(16, 185, 129, 0.12), rgba(14, 165, 233, 0.1));
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #334155;
+}
+
+html.light-theme .swal-dar-alta__nombre-bar strong {
+  color: #0f172a;
+}
+
+html.light-theme .swal-dar-alta__hint {
+  color: #64748b;
+}
+
+html.light-theme .swal-dar-alta__opt {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+html.light-theme .swal-dar-alta__opt-title {
+  color: #0f172a;
+}
+
+html.light-theme .swal-dar-alta__opt-desc {
+  color: #475569;
+}
+
+html.light-theme .swal-dar-alta__opt--todo {
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.95), #fff);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+html.light-theme .swal-dar-alta__opt--todo.swal-dar-alta__opt--active {
+  background: #ecfdf5;
+  border-color: #34d399;
+}
+
+html.light-theme .swal-dar-alta__opt--todo.swal-dar-alta__opt--active .swal-dar-alta__opt-title {
+  color: #047857;
+}
+
+html.light-theme .swal-dar-alta__opt--solo {
+  background: linear-gradient(135deg, rgba(240, 249, 255, 0.95), #fff);
+  border-color: rgba(14, 165, 233, 0.35);
+}
+
+html.light-theme .swal-dar-alta__opt--solo.swal-dar-alta__opt--active {
+  background: #f0f9ff;
+  border-color: #38bdf8;
+}
+
+html.light-theme .swal-dar-alta__opt--solo.swal-dar-alta__opt--active .swal-dar-alta__opt-title {
+  color: #0369a1;
+}

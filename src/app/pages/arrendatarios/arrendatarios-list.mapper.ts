@@ -137,6 +137,23 @@ export function registroArrendatarioHijoActivo(
   return !Number.isFinite(estatus) || estatus !== 0;
 }
 
+/**
+ * Para UI de expediente (edición / detalle): preferir activos;
+ * si el GET solo trae bajas (`estatus === 0`), mostrarlas igual
+ * para no vaciar contratos/servicios/docs del arrendatario.
+ */
+export function registrosArrendatarioParaExpediente(
+  rows: unknown[] | null | undefined,
+): Record<string, unknown>[] {
+  if (!Array.isArray(rows) || rows.length === 0) return [];
+  const all = rows.filter(
+    (x): x is Record<string, unknown> =>
+      x != null && typeof x === 'object' && !Array.isArray(x),
+  );
+  const activos = all.filter(registroArrendatarioHijoActivo);
+  return activos.length > 0 ? activos : all;
+}
+
 /** Contrato vigente (no cancelado / estatus distinto de 0). */
 export function contratoArrendatarioEsActivo(c: Record<string, unknown>): boolean {
   return registroArrendatarioHijoActivo(c);

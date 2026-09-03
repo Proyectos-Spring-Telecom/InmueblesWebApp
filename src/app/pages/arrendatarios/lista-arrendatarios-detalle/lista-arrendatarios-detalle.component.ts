@@ -18,8 +18,7 @@ import { ArrendatariosService } from 'src/app/services/moduleService/arrendatari
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import {
   ArrendatarioGridRow,
-  contratoArrendatarioEsActivo,
-  registroArrendatarioHijoActivo,
+  registrosArrendatarioParaExpediente,
 } from '../arrendatarios-list.mapper';
 import {
   claseChipEstatusLocal,
@@ -112,28 +111,22 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
 
   get servicios(): Record<string, unknown>[] {
     const s = this.item['servicios'];
-    if (!Array.isArray(s)) return [];
-    return (s as Record<string, unknown>[]).filter(registroArrendatarioHijoActivo);
+    return registrosArrendatarioParaExpediente(Array.isArray(s) ? s : []);
   }
 
   get archivos(): Record<string, unknown>[] {
     const a = this.item['archivos'];
-    if (!Array.isArray(a)) return [];
-    return (a as Record<string, unknown>[]).filter(registroArrendatarioHijoActivo);
+    return registrosArrendatarioParaExpediente(Array.isArray(a) ? a : []);
   }
 
   get socios(): Record<string, unknown>[] {
     const so = this.item['socios'];
-    if (!Array.isArray(so)) return [];
-    return (so as Record<string, unknown>[]).filter(registroArrendatarioHijoActivo);
+    return registrosArrendatarioParaExpediente(Array.isArray(so) ? so : []);
   }
 
   get contratos(): Record<string, unknown>[] {
     const c = this.item['contratos'];
-    if (!Array.isArray(c)) return [];
-    return (c as Record<string, unknown>[]).filter((contrato) =>
-      contratoArrendatarioEsActivo(contrato),
-    );
+    return registrosArrendatarioParaExpediente(Array.isArray(c) ? c : []);
   }
 
   nombreTipoServicio(s: Record<string, unknown>): string {

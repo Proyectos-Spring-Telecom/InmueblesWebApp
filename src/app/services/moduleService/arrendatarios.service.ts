@@ -46,6 +46,18 @@ export class ArrendatariosService {
     return this.http.delete(`${this.base}/${id}`);
   }
 
+  /**
+   * Reactivar arrendatario dado de baja (`PATCH /arrendatarios/{id}/alta`).
+   * - `conDependientes: true` → reactiva todo (contratos, servicios, docs…) y marca locales ocupados.
+   * - `conDependientes: false` → solo reactiva el arrendatario; el resto queda histórico.
+   */
+  darAltaArrendatario(
+    id: number,
+    conDependientes: boolean,
+  ): Observable<unknown> {
+    return this.http.patch(`${this.base}/${id}/alta`, { conDependientes });
+  }
+
   /** Soft-delete: contrato de arrendatario. */
   eliminarContratoArrendatario(idContrato: number): Observable<unknown> {
     return this.http.delete(`${this.base}/contratos/${idContrato}`);
