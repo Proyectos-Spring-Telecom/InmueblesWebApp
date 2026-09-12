@@ -5,6 +5,61 @@
   min-width: 0;
 }
 
+:host .clientes-flow-head.pagos-mes-filtros-head {
+  display: block;
+  width: 100%;
+}
+
+:host .pagos-mes-filtros-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem 0.75rem;
+  width: 100%;
+}
+
+:host .pagos-mes-filtro {
+  flex: 0 1 540px;
+  width: min(100%, 540px);
+  min-width: 0;
+}
+
+:host .pagos-mes-filtro-acciones {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+:host .pagos-mes-filtros-head .clientes-search {
+  width: 100%;
+  max-width: none;
+  flex: none;
+}
+
+:host .pagos-mes-filtros-limpiar {
+  white-space: nowrap;
+}
+
+:host .pagos-mes-filtros-limpiar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 767.98px) {
+  :host .pagos-mes-filtro {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  :host .pagos-mes-filtro-acciones {
+    width: 100%;
+  }
+
+  :host .pagos-mes-filtros-limpiar {
+    width: 100%;
+  }
+}
+
 .renta-alta-modal {
   .renta-alta-bloque {
     margin-bottom: 0;
@@ -577,13 +632,15 @@
 }
 
 .renta-grid-arrendatario {
-  width: auto;
+  width: 100%;
   max-width: 100%;
-  padding: 0.32rem 0.95rem;
+  padding: 0.32rem 0.55rem;
   border-radius: 12px;
   border-color: transparent;
   background: transparent;
   box-sizing: border-box;
+  align-items: flex-start;
+  flex-wrap: nowrap;
 }
 
 .renta-grid-arrendatario .inm-row-card__icon {
@@ -592,6 +649,7 @@
   border-radius: 10px;
   background: rgba(89, 109, 255, 0.22);
   border-color: rgba(165, 180, 252, 0.45);
+  margin-top: 0.05rem;
 }
 
 .renta-grid-arrendatario .inm-row-card__icon mat-icon {
@@ -605,8 +663,13 @@
   color: #ffffff;
   font-size: 0.95rem;
   letter-spacing: 0.025em;
-  font-weight: 600;
   text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.28;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .renta-grid-monto-final.renta-grid-desglose__item,
@@ -662,6 +725,17 @@
   .dx-data-row > td.renta-col-titulo-centro,
   .dx-datagrid-filter-row > td.renta-col-titulo-centro {
     text-align: left !important;
+  }
+
+  .dx-data-row > td.renta-col-arrendatario {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    vertical-align: middle !important;
+  }
+
+  .dx-data-row > td.renta-col-arrendatario .dx-datagrid-text-content {
+    white-space: normal !important;
   }
 
   .dx-adaptive-detail-row .renta-grid-desglose,
@@ -732,7 +806,11 @@
     width: 100%;
   }
 
-  .dx-data-row > td .renta-grid-arrendatario,
+  .dx-data-row > td .renta-grid-arrendatario {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .dx-data-row > td .renta-grid-monto-final,
   .dx-data-row > td .renta-grid-desglose__item--registro {
     width: auto;
@@ -1483,6 +1561,9 @@
 
   .renta-grid-arrendatario .inm-row-card__title {
     color: #ffffff !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .renta-grid-monto-final.renta-grid-desglose__item,

@@ -2,12 +2,13 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  HostListener,
   OnInit,
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { catchError, finalize, of, take } from 'rxjs';
+import { catchError, finalize, lastValueFrom, of, take } from 'rxjs';
 import Swal from 'sweetalert2';
 import {
   contractDimAnim,
@@ -19,6 +20,8 @@ import {
   CatMetodoPagoItem,
   CatMetodosPagoService,
 } from 'src/app/services/moduleService/cat-metodos-pago.service';
+import { ClientesService } from 'src/app/services/moduleService/clientes.service';
+import { InmueblesService } from 'src/app/services/moduleService/inmuebles.service';
 import { PagoArrendatarioService } from 'src/app/services/moduleService/pago-arrendatario.service';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import {
@@ -51,6 +54,16 @@ import {
   resolverIdArrendatarioApi,
 } from '../../arrendatarios-list.mapper';
 import {
+  ArrendadorFiltroOpcion,
+  claveCacheFiltroPagosMes,
+  etiquetaArrendadorFiltroUi,
+  etiquetaInmuebleFiltroUi,
+  idsArrendatarioDesdeRespuestaApi,
+  InmuebleFiltroOpcion,
+  mapArrendadoresAFiltroOpciones,
+  mapInmueblesAFiltroOpciones,
+} from '../../pagos-mes-inmueble-filtro.helpers';
+import {
   claveMesActual,
   formatearEtiquetaMesPago,
   esServicioArrendatarioExcluidoHub,
@@ -78,6 +91,18 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
   pagosVisibles: PagoServicioHubGridRow[] = [];
   busquedaPagos = '';
   loading = false;
+
+  listaArrendadoresFiltro: ArrendadorFiltroOpcion[] = [];
+  idArrendadorSeleccionado: number | null = null;
+  cargandoArrendadores = false;
+  filtroArrendadorAbierto = false;
+
+  listaInmueblesFiltro: InmuebleFiltroOpcion[] = [];
+  idInmuebleSeleccionado: number | null = null;
+  cargandoInmuebles = false;
+  filtroInmuebleAbierto = false;
+  private idsArrendatarioFiltro: Set<number> | null = null;
+  private cacheClaveFiltroArrendatarios: string | null = null;
 
   mesFiltroPagosSeleccionado = claveMesActual();
   mesesFiltroPagosOpciones: { value: string; label: string }[] = [];
@@ -117,11 +142,35 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
     private pagoArrendatarioService: PagoArrendatarioService,
     private arrendatariosService: ArrendatariosService,
     private catMetodosPagoService: CatMetodosPagoService,
+    private inmueblesService: InmueblesService,
+    private clientesService: ClientesService,
   ) {}
+
+  get etiquetaArrendadorFiltro(): string {
+    return etiquetaArrendadorFiltroUi(
+      this.idArrendadorSeleccionado,
+      this.listaArrendadoresFiltro,
+      this.cargandoArrendadores,
+    );
+  }
+
+  get etiquetaInmuebleFiltro(): string {
+    return etiquetaInmuebleFiltroUi(
+      this.idInmuebleSeleccionado,
+      this.listaInmueblesFiltro,
+      this.cargandoInmuebles,
+    );
+  }
+
+  get hayFiltrosPagosMesActivos(): boolean {
+    return this.idArrendadorSeleccionado != null || this.idInmuebleSeleccionado != null;
+  }
 
   ngOnInit(): void {
     this.embebidoEnHub = this.leerEmbebidoEnHub();
     this.initPagoForm();
+    this.cargarArrendadoresFiltro();
+    this.cargarInmueblesFiltro();
     this.cargarArrendatariosCatalogo();
     this.cargarPagosGrid();
   }
@@ -326,6 +375,13 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
   aplicarFiltrosVista(): void {
     let rows = [...this.pagosData];
 
+    if (this.idsArrendatarioFiltro != null) {
+      const ids = this.idsArrendatarioFiltro;
+      rows = rows.filter(
+        (r) => r.idArrendatario != null && ids.has(r.idArrendatario),
+      );
+    }
+
     if (this.mesFiltroPagosSeleccionado !== '__all__') {
       rows = rows.filter((r) => r.mesClave === this.mesFiltroPagosSeleccionado);
     }
@@ -344,9 +400,28 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
     this.pagosVisibles = rows;
   }
 
+  limpiarFiltrosPagosMes(): void {
+    if (!this.hayFiltrosPagosMesActivos) return;
+    this.idArrendadorSeleccionado = null;
+    this.filtroArrendadorAbierto = false;
+    this.idInmuebleSeleccionado = null;
+    this.filtroInmuebleAbierto = false;
+    this.idsArrendatarioFiltro = null;
+    this.cacheClaveFiltroArrendatarios = null;
+    this.cargarInmueblesFiltro();
+    void this.aplicarFiltroArrendadorInmueble();
+  }
+
   limpiarVista(): void {
     this.busquedaPagos = '';
     this.estatusFiltroPagos = null;
+    this.idArrendadorSeleccionado = null;
+    this.filtroArrendadorAbierto = false;
+    this.idInmuebleSeleccionado = null;
+    this.filtroInmuebleAbierto = false;
+    this.idsArrendatarioFiltro = null;
+    this.cacheClaveFiltroArrendatarios = null;
+    this.cargarInmueblesFiltro();
     this.mesFiltroPagosSeleccionado = claveMesActual();
     const mesActualExiste = this.mesesFiltroPagosOpciones.some(
       (o) => o.value === this.mesFiltroPagosSeleccionado,
@@ -355,6 +430,161 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
       this.mesFiltroPagosSeleccionado = '__all__';
     }
     this.cargarPagosGrid();
+  }
+
+  onArrendadorFiltroChange(id: number | null): void {
+    const n = Number(id);
+    this.idArrendadorSeleccionado = Number.isFinite(n) && n > 0 ? n : null;
+    this.filtroArrendadorAbierto = false;
+    this.filtroInmuebleAbierto = false;
+    this.idsArrendatarioFiltro = null;
+    this.cacheClaveFiltroArrendatarios = null;
+    this.idInmuebleSeleccionado = null;
+    this.cargarInmueblesFiltro();
+    void this.aplicarFiltroArrendadorInmueble();
+  }
+
+  onInmuebleFiltroChange(id: number | null): void {
+    const n = Number(id);
+    this.idInmuebleSeleccionado = Number.isFinite(n) && n > 0 ? n : null;
+    this.filtroInmuebleAbierto = false;
+    this.filtroArrendadorAbierto = false;
+    this.idsArrendatarioFiltro = null;
+    this.cacheClaveFiltroArrendatarios = null;
+    void this.aplicarFiltroArrendadorInmueble();
+  }
+
+  private async aplicarFiltroArrendadorInmueble(): Promise<void> {
+    if (this.idArrendadorSeleccionado == null && this.idInmuebleSeleccionado == null) {
+      this.idsArrendatarioFiltro = null;
+      this.cacheClaveFiltroArrendatarios = null;
+      this.aplicarFiltrosVista();
+      this.cdr.markForCheck();
+      return;
+    }
+    try {
+      this.idsArrendatarioFiltro = await this.obtenerIdsArrendatarioFiltro();
+    } catch (err) {
+      console.error('Error al filtrar por arrendador/inmueble:', err);
+      this.idsArrendatarioFiltro = new Set();
+    }
+    this.aplicarFiltrosVista();
+    this.cdr.markForCheck();
+  }
+
+  toggleFiltroArrendador(ev?: Event): void {
+    ev?.stopPropagation();
+    if (this.cargandoArrendadores) return;
+    this.filtroInmuebleAbierto = false;
+    this.filtroArrendadorAbierto = !this.filtroArrendadorAbierto;
+  }
+
+  toggleFiltroInmueble(ev?: Event): void {
+    ev?.stopPropagation();
+    if (this.cargandoInmuebles) return;
+    this.filtroArrendadorAbierto = false;
+    this.filtroInmuebleAbierto = !this.filtroInmuebleAbierto;
+  }
+
+  @HostListener('document:click')
+  cerrarFiltrosDropdown(): void {
+    if (!this.filtroInmuebleAbierto && !this.filtroArrendadorAbierto) return;
+    this.filtroInmuebleAbierto = false;
+    this.filtroArrendadorAbierto = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  cerrarFiltrosDropdownTecla(): void {
+    if (!this.filtroInmuebleAbierto && !this.filtroArrendadorAbierto) return;
+    this.filtroInmuebleAbierto = false;
+    this.filtroArrendadorAbierto = false;
+  }
+
+  private cargarArrendadoresFiltro(): void {
+    this.cargandoArrendadores = true;
+    this.clientesService
+      .obtenerClientes()
+      .pipe(
+        take(1),
+        catchError((err) => {
+          console.error('Error al cargar arrendadores:', err);
+          return of(null);
+        }),
+      )
+      .subscribe((res) => {
+        this.listaArrendadoresFiltro = mapArrendadoresAFiltroOpciones(res);
+        this.cargandoArrendadores = false;
+        this.cdr.markForCheck();
+      });
+  }
+
+  private cargarInmueblesFiltro(): void {
+    this.cargandoInmuebles = true;
+    const idArrendador = this.idArrendadorSeleccionado;
+    const req$ =
+      idArrendador == null
+        ? this.inmueblesService.obtenerInmueblesData(1, 500)
+        : this.inmueblesService.obtenerInmueblesPorArrendador(idArrendador);
+    req$
+      .pipe(
+        take(1),
+        catchError((err) => {
+          console.error('Error al cargar inmuebles:', err);
+          return of(null);
+        }),
+      )
+      .subscribe((res) => {
+        this.listaInmueblesFiltro = mapInmueblesAFiltroOpciones(res);
+        if (
+          this.idInmuebleSeleccionado != null &&
+          !this.listaInmueblesFiltro.some((i) => i.id === this.idInmuebleSeleccionado)
+        ) {
+          this.idInmuebleSeleccionado = null;
+        }
+        this.cargandoInmuebles = false;
+        this.cdr.markForCheck();
+      });
+  }
+
+  private async obtenerIdsArrendatarioFiltro(): Promise<Set<number>> {
+    const idArrendador = this.idArrendadorSeleccionado;
+    const idInmueble = this.idInmuebleSeleccionado;
+    const cacheKey = claveCacheFiltroPagosMes(idArrendador, idInmueble);
+    if (
+      this.cacheClaveFiltroArrendatarios === cacheKey &&
+      this.idsArrendatarioFiltro != null
+    ) {
+      return this.idsArrendatarioFiltro;
+    }
+
+    let idsInmuebles: number[] = [];
+    if (idInmueble != null) {
+      if (idArrendador != null) {
+        const respInm = await lastValueFrom(
+          this.inmueblesService.obtenerInmueblesPorArrendador(idArrendador),
+        );
+        const permitidos = new Set(mapInmueblesAFiltroOpciones(respInm).map((i) => i.id));
+        idsInmuebles = permitidos.has(idInmueble) ? [idInmueble] : [];
+      } else {
+        idsInmuebles = [idInmueble];
+      }
+    } else if (idArrendador != null) {
+      const respInm = await lastValueFrom(
+        this.inmueblesService.obtenerInmueblesPorArrendador(idArrendador),
+      );
+      idsInmuebles = mapInmueblesAFiltroOpciones(respInm).map((i) => i.id);
+    }
+
+    const ids = new Set<number>();
+    for (const iid of idsInmuebles) {
+      const resp = await lastValueFrom(
+        this.arrendatariosService.obtenerArrendatariosPorInmueble(iid),
+      );
+      for (const id of idsArrendatarioDesdeRespuestaApi(resp)) ids.add(id);
+    }
+    this.cacheClaveFiltroArrendatarios = cacheKey;
+    this.idsArrendatarioFiltro = ids;
+    return ids;
   }
 
   clasesEstatusPago(estatus: unknown): Record<string, boolean> {

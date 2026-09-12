@@ -5,6 +5,61 @@
   min-width: 0;
 }
 
+:host .clientes-flow-head.pagos-mes-filtros-head {
+  display: block;
+  width: 100%;
+}
+
+:host .pagos-mes-filtros-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem 0.75rem;
+  width: 100%;
+}
+
+:host .pagos-mes-filtro {
+  flex: 0 1 540px;
+  width: min(100%, 540px);
+  min-width: 0;
+}
+
+:host .pagos-mes-filtro-acciones {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+:host .pagos-mes-filtros-head .clientes-search {
+  width: 100%;
+  max-width: none;
+  flex: none;
+}
+
+:host .pagos-mes-filtros-limpiar {
+  white-space: nowrap;
+}
+
+:host .pagos-mes-filtros-limpiar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 767.98px) {
+  :host .pagos-mes-filtro {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  :host .pagos-mes-filtro-acciones {
+    width: 100%;
+  }
+
+  :host .pagos-mes-filtros-limpiar {
+    width: 100%;
+  }
+}
+
 .operacion-hub-vista .surface {
   padding-top: 1rem;
 }
