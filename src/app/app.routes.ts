@@ -70,6 +70,27 @@ export const routes: Routes = [
           import('./pages/clientes/clientes.module').then((m) => m.ClientesModule),
       },
       {
+        path: 'prospectos',
+        loadChildren: () =>
+          import('./pages/prospectos/prospectos.module').then(
+            (m) => m.ProspectosModule
+          ),
+      },
+      {
+        path: 'generar-contrato',
+        loadChildren: () =>
+          import('./pages/generar-contrato/generar-contrato.module').then(
+            (m) => m.GenerarContratoModule
+          ),
+      },
+      {
+        path: 'embudo',
+        loadChildren: () =>
+          import('./pages/embudo-ventas/embudo-ventas.module').then(
+            (m) => m.EmbudoVentasModule
+          ),
+      },
+      {
         path: 'clientes-inmuebles',
         loadChildren: () =>
           import('./pages/clientes-inmuebles/clientes-inmuebles.module').then(

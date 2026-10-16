@@ -38,6 +38,7 @@ import { AppThemeMode, ThemeService } from 'src/app/services/theme.service';
 /** Rutas mostradas en Panel de accesos para ítems que en sidebar usan `/menu-level`. */
 const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
   Administración: '/modulos',
+  Prospectos: '/prospectos',
   Clientes: '/clientes',
   Usuarios: '/usuarios',
   Roles: '/roles',
@@ -48,7 +49,10 @@ const PANEL_ROUTE_FOR_MENU_LEVEL: Record<string, string> = {
 const PANEL_SUBTEXT_BY_DISPLAY_NAME: Record<string, string> = {
   Administración: 'Configuración general del sistema y gestión de módulos.',
   Usuarios: 'Alta, edición y control de usuarios del sistema.',
+  Prospectos: 'Alta, edición y consulta de prospectos.',
   Clientes: 'Alta, edición y consulta de clientes.',
+  Embudo: 'Seguimiento del embudo de ventas de prospectos.',
+  'Generar Contrato': 'Captura y genera el contrato de subarrendamiento en PDF.',
   Roles: 'Definición de permisos y niveles de acceso.',
   Bitácora: 'Consulta del historial de movimientos del sistema.',
   Propiedades: 'Monitoreo geográfico de arrendadores e inmuebles.',

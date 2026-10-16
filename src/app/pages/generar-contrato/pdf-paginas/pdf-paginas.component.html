@@ -1,0 +1,8 @@
+<div class="pp-scroller" #scroller>
+    <div class="pp-hojas" #hojas></div>
+    @if (renderizando && !totalPaginas) {
+    <div class="pp-cargando">
+        <div class="pp-hoja-fantasma"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    }
+</div>

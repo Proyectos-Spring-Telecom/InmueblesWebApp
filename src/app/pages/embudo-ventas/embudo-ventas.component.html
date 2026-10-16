@@ -1,0 +1,569 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+    <header class="perm-head" role="region" aria-label="Sección: Embudo de ventas">
+        <div class="perm-head__icon" aria-hidden="true">
+            <mat-icon>filter_alt</mat-icon>
+        </div>
+
+        <div class="perm-head__text">
+            <span class="eyebrow">Sección</span>
+            <h2>Embudo de Ventas</h2>
+        </div>
+
+        <nav class="perm-head__crumbs" aria-label="Ruta">
+            <span class="crumb">Administración</span>
+            <span class="sep">/</span>
+            <span class="crumb active">Embudo</span>
+        </nav>
+    </header>
+
+    <div class="surface">
+        <!-- ===== Portada con indicadores ===== -->
+        <section class="eh" aria-labelledby="ehTitulo">
+            <div class="eh__intro">
+                <span class="eh__eyebrow">
+                    <mat-icon aria-hidden="true">insights</mat-icon> Embudo de ventas
+                </span>
+                <h3 class="eh__titulo" id="ehTitulo">Seguimiento de prospectos</h3>
+                <p class="eh__texto">
+                    Da seguimiento a cada prospecto por etapa, programa sus próximos eventos y conviértelos en clientes.
+                </p>
+
+                <!-- Distribución por etapa -->
+                <div class="eh__pipeline" aria-label="Distribución por etapa">
+                    <div class="eh__barra">
+                        @for (col of columnas; track col.id) {
+                        <span class="eh__segmento eh__segmento--{{ col.id }}" [style.flex-grow]="col.cards.length || 0"
+                            [title]="col.titulo + ': ' + col.cards.length"></span>
+                        }
+                        @if (!totalEmbudos) { <span class="eh__segmento eh__segmento--vacio"></span> }
+                    </div>
+                    <div class="eh__leyenda">
+                        @for (col of columnas; track col.id) {
+                        <span class="eh__leyenda-item eh__leyenda-item--{{ col.id }}">
+                            <i></i> {{ col.titulo }} <strong>{{ col.cards.length }}</strong>
+                        </span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="eh__kpis">
+                <article class="kpi">
+                    <span class="kpi__icono"><mat-icon aria-hidden="true">groups</mat-icon></span>
+                    <div>
+                        <span class="kpi__label">Prospectos activos</span>
+                        <strong class="kpi__valor">{{ loading && !totalEmbudos ? '…' : totalEmbudos }}</strong>
+                    </div>
+                </article>
+                <article class="kpi kpi--pendiente">
+                    <span class="kpi__icono"><mat-icon aria-hidden="true">pending_actions</mat-icon></span>
+                    <div>
+                        <span class="kpi__label">Eventos pendientes</span>
+                        <strong class="kpi__valor">{{ totalEventosPendientes }}</strong>
+                    </div>
+                </article>
+                <article class="kpi kpi--alerta" [class.kpi--activo]="totalAtrasados > 0">
+                    <span class="kpi__icono"><mat-icon aria-hidden="true">alarm</mat-icon></span>
+                    <div>
+                        <span class="kpi__label">Atrasados</span>
+                        <strong class="kpi__valor">{{ totalAtrasados }}</strong>
+                    </div>
+                </article>
+                <article class="kpi kpi--anillo">
+                    <div class="kpi__anillo" role="progressbar" [attr.aria-valuenow]="porcentajeFinalizado"
+                        aria-valuemin="0" aria-valuemax="100" aria-label="Embudos finalizados">
+                        <svg viewBox="0 0 60 60" aria-hidden="true">
+                            <circle class="kpi__anillo-fondo" cx="30" cy="30" r="26"></circle>
+                            <circle class="kpi__anillo-valor" cx="30" cy="30" r="26"
+                                [attr.stroke-dasharray]="circunferenciaAnillo" [attr.stroke-dashoffset]="trazoAnillo">
+                            </circle>
+                        </svg>
+                        <span>{{ porcentajeFinalizado }}%</span>
+                    </div>
+                    <div>
+                        <span class="kpi__label">Finalizados</span>
+                        <strong class="kpi__valor kpi__valor--sm">{{ columnas[2].cards.length }} de {{ totalEmbudos }}</strong>
+                    </div>
+                </article>
+                <article class="kpi kpi--proximo">
+                    <span class="kpi__icono"><mat-icon aria-hidden="true">upcoming</mat-icon></span>
+                    @if (proximoGlobal; as prox) {
+                    <div class="kpi__proximo">
+                        <span class="kpi__label">Próximo evento · {{ tiempoRelativo(prox.fh) }}</span>
+                        <strong class="kpi__valor kpi__valor--sm" [title]="prox.card.nombreCliente">{{ prox.card.nombreCliente }}</strong>
+                        <small>{{ formatearFecha(prox.fh) }}</small>
+                    </div>
+                    } @else {
+                    <div class="kpi__proximo">
+                        <span class="kpi__label">Próximo evento</span>
+                        <strong class="kpi__valor kpi__valor--sm kpi__valor--vacio">Sin eventos programados</strong>
+                    </div>
+                    }
+                </article>
+            </div>
+        </section>
+
+        <!-- ===== Herramientas ===== -->
+        <div class="et">
+            <div class="et__buscar">
+                <mat-icon aria-hidden="true">search</mat-icon>
+                <input type="text" [(ngModel)]="filtro" placeholder="Buscar por prospecto, vendedor, correo, teléfono o RFC…"
+                    aria-label="Buscar prospecto" />
+                @if (filtro) {
+                <button type="button" class="et__limpiar" (click)="filtro = ''" aria-label="Limpiar búsqueda">
+                    <mat-icon>close</mat-icon>
+                </button>
+                }
+            </div>
+
+            <div class="et__filtros" role="group" aria-label="Filtros rápidos">
+                @for (f of filtrosRapidos; track f.id) {
+                <button type="button" class="et__chip" [class.et__chip--activo]="filtroRapido === f.id"
+                    [class.et__chip--alerta]="f.id === 'atrasados'" [attr.aria-pressed]="filtroRapido === f.id"
+                    (click)="filtroRapido = f.id">
+                    <mat-icon aria-hidden="true">{{ f.icono }}</mat-icon>
+                    {{ f.texto }}
+                    <span class="et__chip-n">{{ contarFiltroRapido(f.id) }}</span>
+                </button>
+                }
+            </div>
+
+            <button type="button" class="eb-btn eb-btn--fantasma et__refrescar" (click)="obtenerEmbudos()"
+                [disabled]="loading" title="Actualizar embudo">
+                <mat-icon [class.eb-girando]="loading" aria-hidden="true">sync</mat-icon>
+                <span>Actualizar</span>
+            </button>
+        </div>
+
+        <p class="et__ayuda">
+            <mat-icon aria-hidden="true">swipe</mat-icon>
+            Arrastra una tarjeta entre <strong>Registro</strong>, <strong>Seguimiento</strong> y <strong>Finalizado</strong>
+            para cambiar su etapa.
+        </p>
+
+        @if (loading && !hayEmbudos()) {
+        <!-- Esqueleto de carga -->
+        <div class="eboard" aria-busy="true" aria-label="Cargando embudo de ventas">
+            @for (col of columnas; track col.id) {
+            <section class="ecol ecol--{{ col.id }} ecol--cargando">
+                <div class="ecol__head"><span class="esk esk--icono"></span><span class="esk esk--titulo"></span></div>
+                <div class="ecol__list">
+                    <div class="esk esk--card"></div>
+                    <div class="esk esk--card"></div>
+                </div>
+            </section>
+            }
+        </div>
+        } @else {
+        <!-- ===== Tablero ===== -->
+        <div class="eboard" cdkDropListGroup>
+            @for (col of columnas; track col.id) {
+            <section class="ecol ecol--{{ col.id }}">
+                <header class="ecol__head">
+                    <span class="ecol__icono"><mat-icon aria-hidden="true">{{ col.icono }}</mat-icon></span>
+                    <div class="ecol__titulo">
+                        <h3 [title]="col.titulo">
+                            <span class="ecol__titulo-largo">{{ col.titulo }}</span>
+                            <span class="ecol__titulo-corto">{{ col.tituloCorto }}</span>
+                        </h3>
+                        <small>{{ porcentajeColumna(col) }}% del embudo</small>
+                    </div>
+                    <span class="ecol__count">{{ visibles(col) }}</span>
+                </header>
+                <div class="ecol__barra"><span [style.width.%]="porcentajeColumna(col)"></span></div>
+
+                <div class="ecol__list" cdkDropList [id]="col.id" [cdkDropListData]="col" cdkDropListSortingDisabled
+                    (cdkDropListDropped)="onDrop($event)">
+                    @for (card of col.cards; track card.id) {
+                    @if (coincideFiltro(card)) {
+                    <article class="ec" cdkDrag [cdkDragData]="card" cdkDragPreviewContainer="global"
+                        [class.ec--atrasado]="esAtrasado(card)">
+                        <div class="ec__placeholder" *cdkDragPlaceholder></div>
+
+                        <header class="ec__head">
+                            <span class="ec__avatar" [style.--tono]="tonoAvatar(card.nombreCliente)" aria-hidden="true">
+                                {{ iniciales(card.nombreCliente) }}
+                            </span>
+                            <div class="ec__titulo">
+                                <strong [title]="card.nombreCliente">{{ card.nombreCliente }}</strong>
+                                <small [class.ec__vacio]="!card.nombreUsuario">
+                                    <mat-icon aria-hidden="true">support_agent</mat-icon>{{ textoVendedor(card) }}
+                                </small>
+                            </div>
+                            <mat-icon class="ec__grip" aria-hidden="true">drag_indicator</mat-icon>
+                        </header>
+
+                        <div class="ec__proximo" [class.ec__proximo--atrasado]="esAtrasado(card)"
+                            [class.ec__proximo--vacio]="!fhProximo(card)">
+                            <span class="ec__proximo-icono"><mat-icon aria-hidden="true">{{ iconoProximo(card) }}</mat-icon></span>
+                            <div class="ec__proximo-texto">
+                                <span class="ec__proximo-label">{{ esAtrasado(card) ? 'Evento atrasado' : 'Próximo evento' }}</span>
+                                <span class="ec__proximo-valor">{{ textoProximoEvento(card) }}</span>
+                            </div>
+                            @if (fhProximo(card)) {
+                            <span class="ec__relativo">{{ tiempoRelativo(fhProximo(card)) }}</span>
+                            }
+                        </div>
+
+                        <div class="ec__contacto">
+                            <span [class.ec__vacio]="!card.telefono" [title]="textoTelefono(card)">
+                                <mat-icon aria-hidden="true">call</mat-icon>{{ textoTelefono(card) }}
+                            </span>
+                            <span [class.ec__vacio]="!card.correo" [title]="textoCorreo(card)">
+                                <mat-icon aria-hidden="true">mail</mat-icon>{{ textoCorreo(card) }}
+                            </span>
+                        </div>
+
+                        <!-- Resumen mínimo para columnas muy angostas -->
+                        <div class="ec__mini">
+                            <span [title]="'Próximo evento: ' + textoProximoEvento(card)">
+                                <mat-icon aria-hidden="true">event</mat-icon>{{ fechaCortaProximoEvento(card) }}
+                            </span>
+                            <span [title]="textoEventosPendientes(card)">
+                                <mat-icon aria-hidden="true">pending_actions</mat-icon>{{ card.eventosPendientes }}
+                            </span>
+                        </div>
+
+                        <footer class="ec__pie">
+                            <div class="ec__stats">
+                                <span class="ec__stat ec__stat--pendiente" [title]="textoEventosPendientes(card)">
+                                    <mat-icon aria-hidden="true">pending_actions</mat-icon>{{ card.eventosPendientes }}
+                                </span>
+                                <span class="ec__stat ec__stat--realizado" [title]="textoEventosRealizados(card)">
+                                    <mat-icon aria-hidden="true">task_alt</mat-icon>{{ card.eventosRealizados }}
+                                </span>
+                            </div>
+                            <div class="ec__acciones">
+                                <button type="button" class="ec__btn" (click)="verHistorial(card)"
+                                    title="Ver detalle e historial" aria-label="Ver detalle e historial">
+                                    <mat-icon>visibility</mat-icon>
+                                </button>
+                                <button type="button" class="ec__btn ec__btn--evento" (click)="abrirModalEvento(card)"
+                                    title="Programar evento" aria-label="Programar evento">
+                                    <mat-icon>event_available</mat-icon>
+                                </button>
+                                <button type="button" class="ec__btn ec__btn--cliente" (click)="convertirACliente(card)"
+                                    [disabled]="card.idCliente == null" title="Pasar a cliente" aria-label="Pasar a cliente">
+                                    <mat-icon>person_add</mat-icon>
+                                </button>
+                            </div>
+                        </footer>
+                    </article>
+                    }
+                    } @empty {
+                    <div class="ecol__vacio">
+                        <span class="ecol__vacio-icono"><mat-icon aria-hidden="true">{{ col.icono }}</mat-icon></span>
+                        <span>{{ col.vacio }}</span>
+                    </div>
+                    }
+                </div>
+            </section>
+            }
+        </div>
+        }
+    </div>
+</div>
+
+<!-- ===== Editor de conclusión (reutilizado en próximo evento e historial) ===== -->
+<ng-template #conclusionTpl let-ev let-emb="emb">
+    <div class="embudo-hist__conclusion-wrap">
+        @if (editandoConclusionId === ev.id) {
+        <div class="embudo-conclusion-editor" @conclusionSwap>
+            <label class="embudo-conclusion-editor__label" [for]="'conclusion-' + ev.id">
+                {{ ev.conclusionEvento ? 'Modificar conclusión' : 'Registrar conclusión' }}
+            </label>
+            <textarea class="form-control embudo-conclusion-editor__input" [id]="'conclusion-' + ev.id" rows="3"
+                maxlength="500" [(ngModel)]="borradorConclusion" (ngModelChange)="errorConclusion = ''"
+                [class.is-invalid]="errorConclusion" [disabled]="guardandoConclusion"
+                placeholder="Describe lo que ocurrió en el evento..." (keydown)="onTeclaConclusion($event, emb, ev)"></textarea>
+            @if (errorConclusion) {
+            <span class="embudo-conclusion-editor__error" @conclusionSwap>
+                <mat-icon aria-hidden="true">error_outline</mat-icon>{{ errorConclusion }}
+            </span>
+            }
+            <div class="embudo-conclusion-editor__footer">
+                <span class="embudo-conclusion-editor__hint">Escribe la conclusión y pulsa Confirmar para guardarla, o
+                    Cancelar para cerrar sin guardar.</span>
+                <div class="embudo-conclusion-editor__actions">
+                    <button type="button" class="eb-btn eb-btn--sm eb-btn--peligro" (click)="cancelarConclusion()"
+                        [disabled]="guardandoConclusion">
+                        Cancelar
+                    </button>
+                    <button type="button" class="eb-btn eb-btn--sm eb-btn--exito" (click)="confirmarConclusion(emb, ev)"
+                        [disabled]="guardandoConclusion || !borradorConclusion.trim()">
+                        <i class="fa" [class.fa-check]="!guardandoConclusion" [class.fa-spinner]="guardandoConclusion"
+                            [class.fa-spin]="guardandoConclusion"></i>
+                        {{ guardandoConclusion ? 'Guardando…' : 'Confirmar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+        } @else {
+        <div class="embudo-hist__conclusion" @conclusionSwap
+            [class.embudo-hist__conclusion--guardada]="conclusionGuardadaId === ev.id">
+            <mat-icon aria-hidden="true">{{ ev.conclusionEvento ? 'check_circle' : 'help_outline' }}</mat-icon>
+            <span [class.ec__vacio]="!ev.conclusionEvento">
+                {{ ev.conclusionEvento || 'Sin conclusión registrada' }}
+            </span>
+        </div>
+        }
+    </div>
+</ng-template>
+
+<ng-template #accionConclusionTpl let-ev>
+    <button type="button" class="ec__btn embudo-hist__accion" [class.embudo-hist__accion--abierto]="editandoConclusionId === ev.id"
+        [class.ec__btn--exito]="!ev.conclusionEvento && editandoConclusionId !== ev.id"
+        [class.ec__btn--editar]="ev.conclusionEvento && editandoConclusionId !== ev.id" [disabled]="guardandoConclusion"
+        [title]="editandoConclusionId === ev.id ? 'Cancelar' : (ev.conclusionEvento ? 'Modificar conclusión' : 'Registrar conclusión')"
+        [attr.aria-label]="editandoConclusionId === ev.id ? 'Cancelar' : (ev.conclusionEvento ? 'Modificar conclusión' : 'Registrar conclusión')"
+        [attr.aria-expanded]="editandoConclusionId === ev.id" (click)="toggleConclusion(ev)">
+        <mat-icon class="embudo-hist__accion-icon">{{ editandoConclusionId === ev.id ? 'close' : (ev.conclusionEvento ? 'edit' : 'check') }}</mat-icon>
+    </button>
+</ng-template>
+
+<!-- ===== Modal: detalle del embudo ===== -->
+@if (mostrarModalHistorial && historialEmbudo; as emb) {
+<div class="contract-page-dim" [@contractDimAnim]></div>
+<div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim]>
+    <div class="docs-modal contract-docs-modal mono-pago-modal embudo-modal" role="dialog" aria-modal="true"
+        aria-labelledby="embudoHistorialTitle">
+        <!-- Perfil -->
+        <header class="ed-perfil">
+            <span class="ec__avatar ec__avatar--lg" [style.--tono]="tonoAvatar(emb.nombreCliente)" aria-hidden="true">
+                {{ iniciales(emb.nombreCliente) }}
+            </span>
+            <div class="ed-perfil__info">
+                <span class="ed-perfil__eyebrow">Detalle del embudo</span>
+                <h3 class="ed-perfil__nombre" id="embudoHistorialTitle">{{ emb.nombreCliente }}</h3>
+                <div class="ed-perfil__chips">
+                    <span class="ed-chip ed-chip--etapa ed-chip--{{ emb.estatus }}">
+                        <mat-icon aria-hidden="true">flag</mat-icon>{{ textoEstatus(emb) }}
+                    </span>
+                    <span class="ed-chip"><mat-icon aria-hidden="true">person</mat-icon>{{ textoTipo(emb) }}</span>
+                    <span class="ed-chip" [class.ec__vacio]="!emb.nombreUsuario">
+                        <mat-icon aria-hidden="true">support_agent</mat-icon>{{ textoVendedor(emb) }}
+                    </span>
+                </div>
+            </div>
+            <button type="button" class="ed-cerrar" (click)="cerrarModalHistorial()" aria-label="Cerrar detalle">
+                <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+        </header>
+
+        <div class="ed-cuerpo">
+            <!-- Resumen -->
+            <div class="ed-stats">
+                <div class="ed-stat ed-stat--pendiente">
+                    <mat-icon aria-hidden="true">pending_actions</mat-icon>
+                    <div><strong>{{ emb.eventosPendientes }}</strong><span>Pendientes</span></div>
+                </div>
+                <div class="ed-stat ed-stat--realizado">
+                    <mat-icon aria-hidden="true">task_alt</mat-icon>
+                    <div><strong>{{ emb.eventosRealizados }}</strong><span>Realizados</span></div>
+                </div>
+                <div class="ed-stat">
+                    <mat-icon aria-hidden="true">event_available</mat-icon>
+                    <div><strong class="ed-stat__fecha">{{ formatearFecha(emb.fechaCreacion) }}</strong><span>Registro</span></div>
+                </div>
+            </div>
+
+            <!-- Contacto -->
+            <h4 class="ed-seccion">Información de contacto</h4>
+            <div class="ed-info">
+                <div class="ed-info__item">
+                    <mat-icon aria-hidden="true">call</mat-icon>
+                    <div><span>Teléfono</span><strong [class.ec__vacio]="!emb.telefono">{{ textoTelefono(emb) }}</strong></div>
+                </div>
+                <div class="ed-info__item">
+                    <mat-icon aria-hidden="true">mail</mat-icon>
+                    <div><span>Correo</span><strong [class.ec__vacio]="!emb.correo">{{ textoCorreo(emb) }}</strong></div>
+                </div>
+                <div class="ed-info__item">
+                    <mat-icon aria-hidden="true">badge</mat-icon>
+                    <div><span>RFC</span><strong [class.ec__vacio]="!emb.rfc">{{ textoRfc(emb) }}</strong></div>
+                </div>
+                <div class="ed-info__item">
+                    <mat-icon aria-hidden="true">update</mat-icon>
+                    <div><span>Última actualización</span><strong [class.ec__vacio]="!emb.fechaActualizacion">{{ formatearFecha(emb.fechaActualizacion) }}</strong></div>
+                </div>
+            </div>
+
+            <!-- Próximo evento -->
+            <h4 class="ed-seccion">Próximo evento</h4>
+            @if (proximoEventoDetalle(emb); as prox) {
+            <div class="ed-proximo" [class.ed-proximo--atrasado]="esAtrasado(emb)"
+                [class.ed-proximo--realizado]="eventoConcluido(prox)">
+                <span class="ed-proximo__icono"><mat-icon aria-hidden="true">{{ iconoMedio(prox) }}</mat-icon></span>
+                <div class="ed-proximo__cuerpo">
+                    <div class="ed-proximo__top">
+                        <div>
+                            <strong class="ed-proximo__medio">{{ prox.medioNombre }}</strong>
+                            <span class="ed-proximo__fecha">
+                                <mat-icon aria-hidden="true">schedule</mat-icon>
+                                {{ formatearFecha(prox.fhProximoEvento) }} · {{ tiempoRelativo(prox.fhProximoEvento) }}
+                            </span>
+                        </div>
+                        <span class="ed-estado" [class.ed-estado--realizado]="eventoConcluido(prox)"
+                            [class.ed-estado--atrasado]="esAtrasado(emb)">
+                            {{ esAtrasado(emb) ? 'Atrasado' : textoEstatusEvento(prox) }}
+                        </span>
+                    </div>
+                    <p class="ed-comentario" [class.ec__vacio]="!prox.comentario">
+                        <mat-icon aria-hidden="true">chat_bubble_outline</mat-icon>
+                        {{ prox.comentario || 'Sin comentario registrado' }}
+                    </p>
+                    <ng-container *ngTemplateOutlet="conclusionTpl; context: { $implicit: prox, emb: emb }"></ng-container>
+                </div>
+                <ng-container *ngTemplateOutlet="accionConclusionTpl; context: { $implicit: prox }"></ng-container>
+            </div>
+            } @else {
+            <div class="ed-vacio">
+                <mat-icon aria-hidden="true">event_busy</mat-icon>
+                <span>{{ textoProximoEvento(emb) }}</span>
+                <button type="button" class="eb-btn eb-btn--sm eb-btn--primario" (click)="agregarEventoDesdeDetalle(emb)">
+                    <mat-icon aria-hidden="true">add</mat-icon> Programar evento
+                </button>
+            </div>
+            }
+
+            <!-- Historial -->
+            <h4 class="ed-seccion">Historial de eventos</h4>
+            @if (cargandoHistorial && !emb.eventos.length) {
+            <div class="ed-cargando">
+                <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+                <span>Cargando historial…</span>
+            </div>
+            } @else {
+            <ol class="ed-timeline">
+                @for (ev of eventosHistorial(emb); track ev.id) {
+                <li class="ed-tl" [class.ed-tl--realizado]="eventoConcluido(ev)">
+                    <span class="ed-tl__punto"><mat-icon aria-hidden="true">{{ iconoMedio(ev) }}</mat-icon></span>
+                    <div class="ed-tl__card">
+                        <div class="ed-tl__top">
+                            <div>
+                                <strong>{{ ev.medioNombre }}</strong>
+                                <span class="ed-proximo__fecha">
+                                    <mat-icon aria-hidden="true">schedule</mat-icon>{{ formatearFecha(ev.fhProximoEvento) }}
+                                </span>
+                            </div>
+                            <div class="ed-tl__derecha">
+                                <span class="ed-estado" [class.ed-estado--realizado]="eventoConcluido(ev)">
+                                    {{ textoEstatusEvento(ev) }}
+                                </span>
+                                <ng-container *ngTemplateOutlet="accionConclusionTpl; context: { $implicit: ev }"></ng-container>
+                            </div>
+                        </div>
+                        <p class="ed-comentario" [class.ec__vacio]="!ev.comentario">
+                            <mat-icon aria-hidden="true">chat_bubble_outline</mat-icon>
+                            {{ ev.comentario || 'Sin comentario registrado' }}
+                        </p>
+                        <ng-container *ngTemplateOutlet="conclusionTpl; context: { $implicit: ev, emb: emb }"></ng-container>
+                    </div>
+                </li>
+                } @empty {
+                <li class="ed-vacio">
+                    <mat-icon aria-hidden="true">history</mat-icon>
+                    <span>{{ emb.eventos.length ? 'No hay más eventos en el historial.' : 'Este embudo aún no tiene eventos registrados.' }}</span>
+                </li>
+                }
+            </ol>
+            }
+        </div>
+
+        <footer class="ed-pie">
+            <button type="button" class="eb-btn eb-btn--fantasma" (click)="cerrarModalHistorial()">Cerrar</button>
+            <div class="ed-pie__acciones">
+                <button type="button" class="eb-btn eb-btn--exito-suave" (click)="convertirACliente(emb)"
+                    [disabled]="emb.idCliente == null">
+                    <mat-icon aria-hidden="true">person_add</mat-icon> Pasar a cliente
+                </button>
+                <button type="button" class="eb-btn eb-btn--primario" (click)="agregarEventoDesdeDetalle(emb)">
+                    <mat-icon aria-hidden="true">event_available</mat-icon> Programar evento
+                </button>
+            </div>
+        </footer>
+    </div>
+</div>
+}
+
+<!-- ===== Modal: programar evento ===== -->
+@if (mostrarModalEvento) {
+<div class="contract-page-dim" [@contractDimAnim]></div>
+<div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim]>
+    <div class="docs-modal contract-docs-modal mono-pago-modal embudo-modal embudo-modal--evento" role="dialog"
+        aria-modal="true" aria-labelledby="embudoModalTitle">
+        <header class="ed-perfil ed-perfil--compacto">
+            <span class="ev-icono" aria-hidden="true"><mat-icon>event_available</mat-icon></span>
+            <div class="ed-perfil__info">
+                <span class="ed-perfil__eyebrow">Programar evento</span>
+                <h3 class="ed-perfil__nombre" id="embudoModalTitle">{{ embudoSeleccionado?.nombreCliente }}</h3>
+            </div>
+            <button type="button" class="ed-cerrar" (click)="cerrarModalEvento()" aria-label="Cerrar">
+                <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+        </header>
+
+        <form [formGroup]="eventoForm" (ngSubmit)="guardarEvento()" class="evf" novalidate>
+            <!-- Medio -->
+            <div class="evf__grupo">
+                <span class="evf__label" id="evfMedio">Medio de comunicación <span class="evf__req">*</span></span>
+                <div class="evf__medios" role="radiogroup" aria-labelledby="evfMedio">
+                    @for (m of medios; track m.id) {
+                    <button type="button" role="radio" class="evf__medio"
+                        [class.evf__medio--activo]="eventoForm.value.medioComunicacion === m.id"
+                        [attr.aria-checked]="eventoForm.value.medioComunicacion === m.id" (click)="seleccionarMedio(m.id)">
+                        <span class="evf__medio-icono"><mat-icon aria-hidden="true">{{ iconoMedioId(m.id) }}</mat-icon></span>
+                        {{ m.nombre }}
+                    </button>
+                    }
+                </div>
+                @if (campoEventoInvalido('medioComunicacion')) {
+                <span class="evf__error"><mat-icon aria-hidden="true">error_outline</mat-icon> Selecciona un medio de comunicación.</span>
+                }
+            </div>
+
+            <!-- Fecha -->
+            <div class="evf__grupo">
+                <label class="evf__label" for="fhProximoEvento">Fecha y hora <span class="evf__req">*</span></label>
+                <div class="evf__atajos">
+                    <button type="button" class="evf__atajo" (click)="aplicarFechaRapida('hoy')">Hoy</button>
+                    <button type="button" class="evf__atajo" (click)="aplicarFechaRapida('manana')">Mañana 10:00</button>
+                    <button type="button" class="evf__atajo" (click)="aplicarFechaRapida('tresDias')">En 3 días</button>
+                    <button type="button" class="evf__atajo" (click)="aplicarFechaRapida('semana')">En una semana</button>
+                </div>
+                <div class="evf__control" [class.evf__control--error]="campoEventoInvalido('fhProximoEvento')">
+                    <mat-icon aria-hidden="true">event</mat-icon>
+                    <input type="datetime-local" id="fhProximoEvento" formControlName="fhProximoEvento" />
+                </div>
+                @if (campoEventoInvalido('fhProximoEvento')) {
+                <span class="evf__error"><mat-icon aria-hidden="true">error_outline</mat-icon> Indica la fecha y hora del evento.</span>
+                } @else if (eventoForm.value.fhProximoEvento) {
+                <span class="evf__nota">{{ formatearFecha(eventoForm.value.fhProximoEvento) }} · {{ tiempoRelativo(eventoForm.value.fhProximoEvento) }}</span>
+                }
+            </div>
+
+            <!-- Comentario -->
+            <div class="evf__grupo">
+                <label class="evf__label" for="comentario">Comentario <span class="evf__opcional">(opcional)</span></label>
+                <div class="evf__control evf__control--area">
+                    <mat-icon aria-hidden="true">notes</mat-icon>
+                    <textarea id="comentario" formControlName="comentario" rows="3" maxlength="500"
+                        placeholder="Ej: El prospecto pidió que lo contacten por la tarde."></textarea>
+                </div>
+                <span class="evf__nota evf__nota--derecha">{{ (eventoForm.value.comentario || '').length }}/500</span>
+            </div>
+
+            <footer class="ed-pie ed-pie--form">
+                <button type="button" class="eb-btn eb-btn--fantasma" (click)="cerrarModalEvento()" [disabled]="guardandoEvento">
+                    Cancelar
+                </button>
+                <button type="submit" class="eb-btn eb-btn--primario" [disabled]="guardandoEvento">
+                    <i class="fa" [class.fa-calendar-check-o]="!guardandoEvento" [class.fa-spinner]="guardandoEvento"
+                        [class.fa-spin]="guardandoEvento"></i>
+                    {{ guardandoEvento ? 'Guardando…' : 'Programar evento' }}
+                </button>
+            </footer>
+        </form>
+    </div>
+</div>
+}

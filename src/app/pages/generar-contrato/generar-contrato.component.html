@@ -1,0 +1,463 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper">
+    <header class="perm-head" role="region" aria-label="Sección: Generar contrato">
+        <div class="perm-head__icon" aria-hidden="true">
+            <mat-icon>description</mat-icon>
+        </div>
+
+        <div class="perm-head__text">
+            <span class="eyebrow">Sección</span>
+            <h2>Generar Contrato</h2>
+        </div>
+
+        <nav class="perm-head__crumbs" aria-label="Ruta">
+            <span class="crumb">Administración</span>
+            <span class="sep">/</span>
+            <span class="crumb active">Generar Contrato</span>
+        </nav>
+    </header>
+
+    <div class="surface">
+        @if (!plantilla || !form) {
+        <!-- ===== Estado inicial ===== -->
+        <section class="gc-hero" aria-labelledby="gcHeroTitulo">
+            <div class="gc-hero__contenido">
+                <span class="gc-hero__eyebrow">
+                    <mat-icon aria-hidden="true">auto_awesome</mat-icon> Plantilla de contrato
+                </span>
+                <h3 class="gc-hero__titulo" id="gcHeroTitulo">Contrato de subarrendamiento de local comercial</h3>
+                <p class="gc-hero__texto">
+                    Captura la información por secciones, mira el contrato armarse en tiempo real y guárdalo listo
+                    para firmar.
+                </p>
+<!-- 
+                <ol class="gc-hero__pasos">
+                    <li>
+                        <span class="gc-hero__paso-icono"><mat-icon aria-hidden="true">edit_note</mat-icon></span>
+                        <span><strong>Captura</strong> por secciones</span>
+                    </li>
+                    <li>
+                        <span class="gc-hero__paso-icono"><mat-icon aria-hidden="true">visibility</mat-icon></span>
+                        <span><strong>Vista previa</strong> en vivo</span>
+                    </li>
+                    <li>
+                        <span class="gc-hero__paso-icono"><mat-icon aria-hidden="true">download</mat-icon></span>
+                        <span><strong>Guarda</strong> y descarga en PDF</span>
+                    </li>
+                </ol> -->
+
+                <div class="gc-hero__acciones">
+                    <button type="button" class="gc-hero__btn" (click)="generarContrato()" [disabled]="cargandoPlantilla">
+                        <i class="fa" [class.fa-plus]="!cargandoPlantilla" [class.fa-spinner]="cargandoPlantilla"
+                            [class.fa-spin]="cargandoPlantilla"></i>
+                        {{ cargandoPlantilla ? 'Preparando formulario…' : 'Generar Contrato' }}
+                    </button>
+
+                    <dl class="gc-hero__datos">
+                        <div>
+                            <dt>Contratos guardados</dt>
+                            <dd>{{ cargandoGenerados ? '…' : contratosGenerados.length }}</dd>
+                        </div>
+                        <div>
+                            <dt>Último registro</dt>
+                            <dd>{{ contratosGenerados.length ? formatearFechaGrid(contratosGenerados[0].fhRegistro) : '—' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Ilustración del contrato (decorativa) -->
+            <div class="gc-hero__arte" aria-hidden="true">
+                <div class="gc-hoja gc-hoja--atras"></div>
+                <div class="gc-hoja">
+                    <span class="gc-hoja__titulo"></span>
+                    <span class="gc-hoja__linea"></span>
+                    <span class="gc-hoja__linea gc-hoja__linea--corta"></span>
+                    <span class="gc-hoja__linea"></span>
+                    <span class="gc-hoja__linea gc-hoja__linea--media"></span>
+                    <span class="gc-hoja__linea"></span>
+                    <span class="gc-hoja__linea gc-hoja__linea--corta"></span>
+                    <div class="gc-hoja__firmas">
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <span class="gc-hoja__sello"><mat-icon>verified</mat-icon></span>
+                </div>
+                <span class="gc-hero__chip gc-hero__chip--vivo"><i></i> En vivo</span>
+                <span class="gc-hero__chip gc-hero__chip--pdf"><mat-icon>picture_as_pdf</mat-icon> PDF</span>
+            </div>
+        </section>
+
+        <!-- ===== Contratos generados ===== -->
+        <section class="gc-generados">
+            <!-- <header class="gc-generados__head">
+                <div>
+                    <h3 class="gc-generados__titulo">Contratos generados</h3>
+                    <span class="gc-generados__sub">{{ contratosGenerados.length }} {{ contratosGenerados.length === 1 ? 'contrato guardado' : 'contratos guardados' }}</span>
+                </div>
+            </header> -->
+
+            <dx-data-grid [dataSource]="contratosGenerados" keyExpr="id" [columnHidingEnabled]="true"
+                [showBorders]="true" [showColumnLines]="true" [showRowLines]="true" [rowAlternationEnabled]="true"
+                [width]="'100%'" [noDataText]="cargandoGenerados ? 'Cargando contratos…' : 'Aún no hay contratos generados.'">
+                <!-- Barra del grid: agrupación a la izquierda; Actualizar junto al buscador -->
+                <dxo-toolbar>
+                    <dxi-item name="groupPanel"></dxi-item>
+                    <dxi-item location="after" template="actualizarTpl"></dxi-item>
+                    <dxi-item name="searchPanel"></dxi-item>
+                </dxo-toolbar>
+                <div *dxTemplate="let d of 'actualizarTpl'">
+                    <button type="button" class="gc-grid-refrescar" (click)="obtenerContratosGenerados()"
+                        [disabled]="cargandoGenerados" title="Actualizar contratos generados">
+                        <i class="fa fa-refresh" [class.fa-spin]="cargandoGenerados"></i>
+                        <span>{{ cargandoGenerados ? 'Actualizando…' : 'Actualizar' }}</span>
+                    </button>
+                </div>
+                <dxo-search-panel [visible]="true" [width]="220" placeholder="Buscar..."></dxo-search-panel>
+                <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
+                <dxo-filter-row [visible]="true"></dxo-filter-row>
+                <dxo-header-filter [visible]="true"></dxo-header-filter>
+                <dxo-paging [pageSize]="20"></dxo-paging>
+                <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20, 50]" [showInfo]="true"
+                    infoText="Página {0} de {1} ({2} contratos)"></dxo-pager>
+
+                <dxi-column caption="Acciones" cellTemplate="accionesTpl" alignment="center" [width]="100"
+                    [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+                <dxi-column dataField="nombre" caption="Nombre" alignment="center"></dxi-column>
+                <dxi-column dataField="clave" caption="Clave" alignment="center"></dxi-column>
+                <dxi-column dataField="nombreUsuario" caption="Registrado por" alignment="center"></dxi-column>
+                <dxi-column dataField="fhRegistro" caption="Fecha de registro" dataType="datetime"
+                    cellTemplate="fhRegistroTpl" alignment="center" sortOrder="desc"></dxi-column>
+                <dxi-column dataField="fhUpdate" caption="Última actualización" dataType="datetime"
+                    cellTemplate="fhUpdateTpl" alignment="center"></dxi-column>
+
+                <div *dxTemplate="let row of 'accionesTpl'" class="d-flex justify-content-center">
+                    <button type="button" class="btnAcciones bg-warning" (click)="editarContrato(row.data)"
+                        [disabled]="idCargandoEdicion != null"
+                        title="Editar contrato" aria-label="Editar contrato">
+                        <i class="fa" [class.fa-edit]="idCargandoEdicion !== row.data.id"
+                            [class.fa-spinner]="idCargandoEdicion === row.data.id"
+                            [class.fa-spin]="idCargandoEdicion === row.data.id"></i>
+                    </button>
+                </div>
+                <div *dxTemplate="let row of 'fhRegistroTpl'" class="gc-fecha-celda">
+                    @if (row.data.fhRegistro) {
+                    <span class="gc-fecha-tag gc-fecha-tag--registro">
+                        <mat-icon aria-hidden="true">event</mat-icon>
+                        {{ formatearFechaGrid(row.data.fhRegistro) }}
+                    </span>
+                    } @else {
+                    <span class="gc-fecha-tag gc-fecha-tag--vacio">Sin fecha</span>
+                    }
+                </div>
+                <div *dxTemplate="let row of 'fhUpdateTpl'" class="gc-fecha-celda">
+                    @if (row.data.fhUpdate) {
+                    <span class="gc-fecha-tag gc-fecha-tag--update">
+                        <mat-icon aria-hidden="true">update</mat-icon>
+                        {{ formatearFechaGrid(row.data.fhUpdate) }}
+                    </span>
+                    } @else {
+                    <span class="gc-fecha-tag gc-fecha-tag--vacio">Sin fecha</span>
+                    }
+                </div>
+            </dx-data-grid>
+        </section>
+        } @else {
+        <!-- ===== Espacio de trabajo: una sola card con encabezado, formulario y vista previa en vivo ===== -->
+        <div class="cw" [class.cw--movil-preview]="vistaMovil === 'preview'">
+            <!-- Encabezado -->
+            <header class="cw-head">
+                <button type="button" class="cw-back" (click)="cancelarContrato()" title="Regresar"
+                    aria-label="Regresar">
+                    <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                </button>
+
+                <div class="cw-head__info">
+                    @if (idContratoEditando != null) {
+                    <span class="cw-tag cw-tag--edicion">
+                        <mat-icon aria-hidden="true">edit</mat-icon> Editando · {{ nombreContratoEditando }}
+                    </span>
+                    <h3 class="cw-head__titulo">Edita la información del contrato</h3>
+                    } @else {
+                    <span class="cw-tag">
+                        <mat-icon aria-hidden="true">auto_awesome</mat-icon> Subarrendamiento
+                    </span>
+                    <h3 class="cw-head__titulo">Captura la información del contrato</h3>
+                    }
+                </div>
+
+                <div class="cw-head__acciones">
+                    <div class="cw-progreso" role="progressbar" [attr.aria-valuenow]="porcentajeAvance"
+                        aria-valuemin="0" aria-valuemax="100" aria-label="Avance del contrato">
+                        <svg class="cw-anillo" viewBox="0 0 60 60" aria-hidden="true">
+                            <circle class="cw-anillo__fondo" cx="30" cy="30" r="26"></circle>
+                            <circle class="cw-anillo__valor" [class.cw-anillo__valor--completo]="form.valid" cx="30"
+                                cy="30" r="26" [attr.stroke-dasharray]="circunferenciaAnillo"
+                                [attr.stroke-dashoffset]="trazoAnillo"></circle>
+                        </svg>
+                        <span class="cw-anillo__texto">{{ porcentajeAvance }}%</span>
+                        <div class="cw-progreso__detalle">
+                            <strong>{{ totalCompletos }}/{{ totalCampos }}</strong>
+                            <span>campos</span>
+                        </div>
+                    </div>
+
+                    <button type="button" class="cw-btn cw-btn--primario cw-head__cta" (click)="generarPdf()"
+                        [disabled]="form.invalid || generandoPdf"
+                        [title]="form.invalid ? 'Completa todos los campos para habilitar la vista previa' : 'Generar vista previa del contrato'">
+                        <i class="fa" [class.fa-eye]="!generandoPdf" [class.fa-spinner]="generandoPdf"
+                            [class.fa-spin]="generandoPdf"></i>
+                        {{ generandoPdf ? 'Generando…' : 'Generar Vista Previa' }}
+                    </button>
+                </div>
+            </header>
+
+            <!-- Selector de vista (solo pantallas angostas) -->
+            <div class="cw-switch" role="tablist" aria-label="Vista">
+                <button type="button" role="tab" [attr.aria-selected]="vistaMovil === 'form'"
+                    [class.cw-switch__btn--activo]="vistaMovil === 'form'" class="cw-switch__btn"
+                    (click)="cambiarVistaMovil('form')">
+                    <mat-icon aria-hidden="true">edit_document</mat-icon> Formulario
+                </button>
+                <button type="button" role="tab" [attr.aria-selected]="vistaMovil === 'preview'"
+                    [class.cw-switch__btn--activo]="vistaMovil === 'preview'" class="cw-switch__btn"
+                    (click)="cambiarVistaMovil('preview')">
+                    <mat-icon aria-hidden="true">picture_as_pdf</mat-icon> Vista previa
+                    @if (vivoNuevoSinVer) { <span class="cw-switch__punto" aria-label="Hay cambios nuevos"></span> }
+                </button>
+            </div>
+
+            <!-- lg en adelante: vista previa (6) a la izquierda y formulario (6) a la derecha -->
+            <div class="row g-3 cw-body">
+                <!-- ===== Vista previa en vivo ===== -->
+                <div class="col-12 col-lg-6 cw-col-preview">
+                <aside class="cw-preview" aria-label="Vista previa en vivo del contrato">
+                    <div class="cw-preview__barra">
+                        <div class="cw-preview__titulo">
+                            <span class="cw-vivo" [class.cw-vivo--activo]="vivoEstado === 'cargando'"></span>
+                            <strong>Vista previa en vivo</strong>
+                            <span class="cw-estado" [attr.data-estado]="vivoEstado" aria-live="polite">
+                                {{ textoEstadoVivo }}
+                            </span>
+                        </div>
+                        <div class="cw-preview__acciones">
+                            <button type="button" class="cw-icono-btn" (click)="zoomVivo(-0.15)" [disabled]="vivoZoom <= 0.5"
+                                title="Alejar" aria-label="Alejar">
+                                <mat-icon>remove</mat-icon>
+                            </button>
+                            <span class="cw-zoom">{{ (vivoZoom * 100) | number: '1.0-0' }}%</span>
+                            <button type="button" class="cw-icono-btn" (click)="zoomVivo(0.15)" [disabled]="vivoZoom >= 2"
+                                title="Acercar" aria-label="Acercar">
+                                <mat-icon>add</mat-icon>
+                            </button>
+                            <span class="cw-sep" aria-hidden="true"></span>
+                            <button type="button" class="cw-icono-btn" (click)="refrescarVivo()"
+                                [disabled]="vivoEstado === 'cargando'" title="Actualizar ahora" aria-label="Actualizar ahora">
+                                <mat-icon [class.cw-girando]="vivoEstado === 'cargando'">sync</mat-icon>
+                            </button>
+                            <button type="button" class="cw-icono-btn" (click)="abrirVivoEnPestana()" [disabled]="!vivoPdf"
+                                title="Abrir en nueva pestaña" aria-label="Abrir en nueva pestaña">
+                                <mat-icon>open_in_new</mat-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="cw-preview__lienzo" [class.cw-preview__lienzo--actualizando]="vivoEstado === 'cargando' && vivoPdf">
+                        @if (vivoEstado === 'error' && !vivoPdf) {
+                        <div class="cw-preview__vacio">
+                            <mat-icon aria-hidden="true">cloud_off</mat-icon>
+                            <p>No se pudo generar la vista previa.</p>
+                            <button type="button" class="cw-btn cw-btn--fantasma" (click)="refrescarVivo()">
+                                <mat-icon aria-hidden="true">refresh</mat-icon> Reintentar
+                            </button>
+                        </div>
+                        } @else {
+                        <app-pdf-paginas [pdf]="vivoPdf" [zoom]="vivoZoom" (paginasRenderizadas)="onVivoRenderizado($event)"
+                            (errorRender)="onVivoErrorRender()"></app-pdf-paginas>
+                        }
+                        @if (vivoEstado === 'error' && vivoPdf) {
+                        <button type="button" class="cw-preview__toast" (click)="refrescarVivo()">
+                            <mat-icon aria-hidden="true">error_outline</mat-icon> No se pudo actualizar · Reintentar
+                        </button>
+                        }
+                    </div>
+
+                    <p class="cw-preview__pie">
+                        <mat-icon aria-hidden="true">bolt</mat-icon>
+                        Se actualiza sola mientras escribes. Los campos vacíos aparecen en blanco.
+                        @if (vivoTotalPaginas) { <span>· {{ vivoTotalPaginas }} páginas</span> }
+                    </p>
+                </aside>
+                </div>
+
+                <!-- ===== Editor ===== -->
+                <div class="col-12 col-lg-6 cw-col-editor">
+                <section class="cw-editor" aria-label="Formulario del contrato">
+                    <div class="cw-barra">
+                    <nav class="cw-pasos" role="tablist" aria-label="Secciones del contrato"
+                        (keydown)="onTeclaTabs($event)">
+                        @for (seccion of plantilla.secciones; track seccion.clave; let i = $index) {
+                        <button type="button" class="cw-paso" role="tab" [id]="'tab-' + seccion.clave"
+                            [title]="seccion.titulo"
+                            [attr.aria-selected]="i === seccionActiva" [attr.aria-controls]="'seccion-' + seccion.clave"
+                            [attr.tabindex]="i === seccionActiva ? 0 : -1"
+                            [class.cw-paso--activo]="i === seccionActiva"
+                            [class.cw-paso--completo]="seccionCompleta(seccion)"
+                            [class.cw-paso--error]="intentoEnviar && !seccionCompleta(seccion)"
+                            (click)="seleccionarSeccion(i)">
+                            <span class="cw-paso__punto">
+                                @if (seccionCompleta(seccion)) {
+                                <mat-icon aria-hidden="true">check</mat-icon>
+                                } @else {
+                                {{ i + 1 }}
+                                }
+                            </span>
+                            <span class="cw-paso__texto">
+                                <span class="cw-paso__titulo">{{ seccion.titulo }}</span>
+                                <span class="cw-paso__conteo">{{ completosSeccion(seccion) }}/{{ seccion.campos.length }}</span>
+                            </span>
+                        </button>
+                        }
+                    </nav>
+
+                    <div class="cw-barra__lado">
+                        <button type="button" class="cw-btn cw-btn--cancelar" (click)="cancelarContrato()"
+                            title="Cancelar contrato">
+                            <mat-icon aria-hidden="true">close</mat-icon> Cancelar
+                        </button>
+                    </div>
+                    </div>
+
+                    <form [formGroup]="form" (ngSubmit)="generarPdf()" novalidate class="cw-form">
+                        @for (seccion of plantilla.secciones; track seccion.clave; let i = $index) {
+                        @if (i === seccionActiva) {
+                        <div class="cw-seccion" [id]="'seccion-' + seccion.clave" [formGroupName]="seccion.clave"
+                            role="tabpanel" [attr.aria-labelledby]="'tab-' + seccion.clave" @seccionTab>
+                            <header class="cw-seccion__head">
+                                <span class="cw-seccion__icono" [class.cw-seccion__icono--completo]="seccionCompleta(seccion)">
+                                    <mat-icon aria-hidden="true">{{ iconoSeccion(seccion) }}</mat-icon>
+                                </span>
+                                <div class="cw-seccion__texto">
+                                    <span class="cw-seccion__paso">Paso {{ i + 1 }} de {{ plantilla.secciones.length }}</span>
+                                    <h4>{{ seccion.titulo }}</h4>
+                                    <p>{{ descripcionSeccion(seccion) }}</p>
+                                </div>
+                                <div class="cw-seccion__avance">
+                                    <span>{{ completosSeccion(seccion) }} de {{ seccion.campos.length }}</span>
+                                    <div class="cw-mini-barra"><span [style.width.%]="porcentajeSeccion(seccion)"></span></div>
+                                </div>
+                            </header>
+
+                            <!-- Un solo row: 1 por fila en móvil, 2 en md y 3 (col-lg-4) en lg en adelante -->
+                            <div class="row gx-3 gy-1 cw-campos">
+                                @for (campo of seccion.campos; track campo.clave) {
+                                <div class="cf col-12 col-md-6 col-lg-4"
+                                    [class.cf--error]="campoConError(seccion, campo)"
+                                    [class.cf--ok]="campoValido(seccion, campo)">
+                                    <label class="cf__label" [for]="idCampo(seccion, campo)">
+                                        {{ campo.etiqueta }} <span class="cf__req" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="cf__control">
+                                        <mat-icon class="cf__icono" aria-hidden="true">{{ icono(campo) }}</mat-icon>
+                                        @if (prefijo(campo); as pre) { <span class="cf__adorno">{{ pre }}</span> }
+                                        <input class="cf__input" [id]="idCampo(seccion, campo)" [type]="tipoInput(campo)"
+                                            [formControlName]="campo.clave" [placeholder]="placeholder(campo)"
+                                            [attr.step]="paso(campo)"
+                                            [attr.min]="campo.tipo === 'numero' || campo.tipo === 'decimal' ? 0 : null"
+                                            [attr.maxlength]="maxLength(campo)" [attr.inputmode]="inputMode(campo)"
+                                            [attr.aria-invalid]="campoConError(seccion, campo)"
+                                            [attr.aria-required]="true"
+                                            [attr.aria-describedby]="idCampo(seccion, campo) + '-nota'"
+                                            (input)="normalizarEntrada(seccion, campo)" />
+                                        @if (sufijo(campo); as suf) { <span class="cf__adorno cf__adorno--sufijo">{{ suf }}</span> }
+                                        <mat-icon class="cf__estado" aria-hidden="true">
+                                            {{ campoConError(seccion, campo) ? 'error' : 'check_circle' }}
+                                        </mat-icon>
+                                    </div>
+                                    <span class="cf__nota" [id]="idCampo(seccion, campo) + '-nota'">
+                                        @if (campoConError(seccion, campo)) {
+                                        {{ mensajeError(seccion, campo) }}
+                                        } @else {
+                                        {{ ayuda(campo) }}
+                                        }
+                                    </span>
+                                </div>
+                                }
+                            </div>
+
+                            <footer class="cw-seccion__nav">
+                                <button type="button" class="cw-btn cw-btn--fantasma" (click)="seleccionarSeccion(i - 1)"
+                                    [disabled]="i === 0">
+                                    <mat-icon aria-hidden="true">arrow_back</mat-icon> Anterior
+                                </button>
+                                @if (esUltimaSeccion) {
+                                <button type="submit" class="cw-btn cw-btn--exito" [disabled]="form.invalid || generandoPdf"
+                                    [title]="form.invalid ? 'Completa todos los campos para habilitar la vista previa' : 'Generar vista previa del contrato'">
+                                    <i class="fa" [class.fa-eye]="!generandoPdf" [class.fa-spinner]="generandoPdf"
+                                        [class.fa-spin]="generandoPdf"></i>
+                                    {{ generandoPdf ? 'Generando…' : 'Generar Vista Previa' }}
+                                </button>
+                                } @else {
+                                <button type="button" class="cw-btn cw-btn--primario" (click)="seleccionarSeccion(i + 1)">
+                                    Siguiente <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                                </button>
+                                }
+                            </footer>
+                            @if (esUltimaSeccion && form.invalid) {
+                            <p class="cw-seccion__aviso">
+                                <mat-icon aria-hidden="true">info</mat-icon>
+                                Completa todos los campos para habilitar la vista previa ({{ totalCompletos }}/{{ totalCampos }}).
+                            </p>
+                            }
+                        </div>
+                        }
+                        }
+                    </form>
+                </section>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+</div>
+
+<!-- ===== Visor del PDF ===== -->
+@if (mostrarVisorPdf && pdfBlob) {
+<div class="contract-page-dim" [@contractDimAnim]></div>
+<div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim]>
+    <div class="docs-modal contract-docs-modal gc-visor" role="dialog" aria-modal="true" aria-labelledby="gcVisorTitulo">
+        <div class="row docs-modal__header">
+            <div class="col-10 col-md-11">
+                <h3 class="docs-modal__title" id="gcVisorTitulo">Vista previa del contrato</h3>
+                <p class="docs-modal__subtitle">{{ plantilla?.nombre }}</p>
+            </div>
+            <div class="col-2 col-md-1 docs-modal__close-col">
+                <button type="button" class="docs-modal__close" (click)="solicitarCancelar()" aria-label="Cancelar vista previa">
+                    <mat-icon aria-hidden="true">close</mat-icon>
+                </button>
+            </div>
+        </div>
+
+        <div class="gc-visor__frame">
+            <app-pdf-paginas [pdf]="pdfBlob"></app-pdf-paginas>
+        </div>
+
+        <div class="gc-visor__footer">
+            <button type="button" class="docs-modal__link gc-visor__link" (click)="abrirPdfEnPestana()">
+                <i class="fa fa-external-link"></i> Abrir en nueva pestaña
+            </button>
+            <div class="gc-visor__acciones">
+                <button type="button" class="button-danger gc-visor__accion" (click)="solicitarCancelar()"
+                    [disabled]="guardandoContrato">
+                    <i class="fa fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="button-success gc-visor__accion" (click)="guardarContrato()"
+                    [disabled]="guardandoContrato">
+                    <i class="fa" [class.fa-save]="!guardandoContrato" [class.fa-spinner]="guardandoContrato"
+                        [class.fa-spin]="guardandoContrato"></i>
+                    {{ guardandoContrato ? 'Guardando…' : 'Guardar' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}

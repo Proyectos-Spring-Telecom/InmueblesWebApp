@@ -1,0 +1,65 @@
+@use '../../clientes/agregar-cliente/agregar-cliente.component.scss';
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+/* Solo evita desbordes en columnas angostas; no altera el look de labels */
+.ci-docs-row {
+  width: 100%;
+}
+
+.ci-docs-row > [class*='col-'] {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ci-docs-card {
+  height: 100%;
+  min-width: 0;
+}
+
+.ci-docs-card .uploader-hero,
+.ci-docs-card .uploader {
+  width: 100%;
+  min-width: 0;
+}
+
+.ci-docs-card .uploader-hero {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ci-docs-card .uploader {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ci-docs-card .uploader__body {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ci-docs-card .uploader__cta {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.ci-docs-card .uploader__badge,
+.ci-docs-card .uploader__filename {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 767.98px) {
+  .ci-docs-card .uploader__cta {
+    flex-direction: column;
+  }
+}

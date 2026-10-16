@@ -141,6 +141,29 @@ export const navItems: NavItem[] = [
     ],
   },
   {
+    displayName: 'Prospectos',
+    iconName: 'user-search',
+    route: '/menu-level',
+    permission: [
+      Permiso.CONSULTAR_PROSPECTOS,
+      Permiso.ACTUALIZAR_PROSPECTO,
+      Permiso.AGREGAR_PROSPECTO,
+      Permiso.ELIMINAR_PROSPECTO,
+    ],
+    children: [
+      {
+        displayName: 'Agregar Prospecto',
+        route: '/prospectos/agregar-prospecto',
+        permission: Permiso.AGREGAR_PROSPECTO,
+      },
+      {
+        displayName: 'Lista Prospectos',
+        route: '/prospectos',
+        permission: Permiso.CONSULTAR_PROSPECTOS,
+      },
+    ],
+  },
+  {
     displayName: 'Clientes',
     iconName: 'briefcase',
     route: '/menu-level',
@@ -162,6 +185,17 @@ export const navItems: NavItem[] = [
         permission: Permiso.CONSULTAR_CLIENTES_INMUEBLES,
       },
     ],
+  },
+  {
+    displayName: 'Embudo',
+    iconName: 'filter',
+    route: '/embudo',
+    permission: Permiso.CONSULTAR_EMBUDOS,
+  },
+  {
+    displayName: 'Generar Contrato',
+    iconName: 'file-text',
+    route: '/generar-contrato',
   },
   {
     displayName: 'Roles',
