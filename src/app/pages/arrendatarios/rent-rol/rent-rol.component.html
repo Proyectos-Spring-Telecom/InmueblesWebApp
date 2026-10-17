@@ -76,18 +76,24 @@
       <section class="rrv-datos">
         <section class="rrv-barra" role="search" aria-label="Filtros del periodo">
           <div class="rrv-periodo-acciones" role="group" aria-label="Acciones del periodo">
-            <button type="button" mat-flat-button class="bg-warning rrv-periodo-btn"
-              title="Apertura de Mes" (click)="aperturaDeMes()"
-              [disabled]="cargando || cargandoBusqueda || !mesFechaFiltro">
-              <i class="fa fa-calendar-plus-o" aria-hidden="true"></i>
-              Apertura de Mes
-            </button>
-            <button type="button" mat-flat-button class="bg-success rrv-periodo-btn"
-              title="Cierre de Mes" (click)="cierreDeMes()"
-              [disabled]="cargando || cargandoBusqueda || !mesFechaFiltro">
-              <i class="fa fa-calendar-check-o" aria-hidden="true"></i>
-              Cierre de Mes
-            </button>
+            <!-- Pasa las rentas azules del mes a amarillo (bloqueadas, solo se pagan) -->
+            <span class="rrv-periodo-tip" [title]="motivoAperturaBloqueada">
+              <button type="button" mat-flat-button class="bg-warning rrv-periodo-btn"
+                (click)="aperturaDeMes()" [disabled]="!puedeAbrirMes || !mesFechaFiltro">
+                <i class="fa" [class.fa-calendar-plus-o]="!abriendoMes" [class.fa-spinner]="abriendoMes"
+                  [class.fa-spin]="abriendoMes" aria-hidden="true"></i>
+                {{ abriendoMes ? 'Abriendo…' : 'Apertura de Mes' }}
+              </button>
+            </span>
+            <!-- Solo se habilita cuando todas las rentas del mes están pagadas -->
+            <span class="rrv-periodo-tip" [title]="motivoCierreBloqueado">
+              <button type="button" mat-flat-button class="bg-success rrv-periodo-btn"
+                (click)="cierreDeMes()" [disabled]="!puedeCerrarMes || !mesFechaFiltro">
+                <i class="fa" [class.fa-calendar-check-o]="!cerrandoMes" [class.fa-spinner]="cerrandoMes"
+                  [class.fa-spin]="cerrandoMes" aria-hidden="true"></i>
+                {{ cerrandoMes ? 'Cerrando…' : 'Cierre de Mes' }}
+              </button>
+            </span>
           </div>
           <div class="rrv-filtros">
             <div class="rrv-campo">
@@ -156,7 +162,8 @@
           </div>
           <div class="rrv-leyenda" aria-label="Leyenda de estatus">
             <span class="rrv-leyenda__item rrv-leyenda__item--pagada"><i></i> Pagada <strong>{{ conteoPagadas }}</strong></span>
-            <span class="rrv-leyenda__item rrv-leyenda__item--pendiente"><i></i> Pendiente <strong>{{ conteoPendientes }}</strong></span>
+            <span class="rrv-leyenda__item rrv-leyenda__item--azul" title="Generada; se puede editar"><i></i> Editable <strong>{{ conteoEditables }}</strong></span>
+            <span class="rrv-leyenda__item rrv-leyenda__item--amarillo" title="Mes abierto; solo se puede marcar como pagada"><i></i> Por pagar <strong>{{ conteoPorPagar }}</strong></span>
             <span class="rrv-leyenda__item rrv-leyenda__item--incremento"><i></i> Incremento</span>
           </div>
           <div class="rr-export-wrap rrv-export" [class.rr-export-wrap--open]="exportMenuAbierto">
@@ -254,26 +261,29 @@
             </div>
             <div *dxTemplate="let cell of 'pagadaTpl'" class="cell-center">
               <span class="rr-tag" [class.rr-tag--pagada]="cell.data.pagada"
-                [class.rr-tag--pendiente]="!cell.data.pagada">
+                [class.rr-tag--azul]="cell.data.esPendiente && !cell.data.registro.abierta"
+                [class.rr-tag--amarillo]="cell.data.esPendiente && cell.data.registro.abierta"
+                [class.rr-tag--pendiente]="!cell.data.pagada && !cell.data.esPendiente">
                 {{ cell.data.pagadaLabel }}
               </span>
             </div>
             <div *dxTemplate="let cell of 'accionesTpl'" class="rr-acciones">
               @if (cell.data.esPendiente && cell.data.registro.idRentaActual != null) {
+              @if (!cell.data.registro.abierta) {
+              <!-- AZUL: generada, solo se puede editar (opcional) -->
               @if (cell.data.registro.puedeDuplicarMes) {
               <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
                 (click)="editarRenta(cell.data); $event.stopPropagation()">
                 <i class="fa fa-edit"></i>
               </button>
+              } @else {
+              <span class="rr-acciones__vacio" title="Los pagos por rango se editan en Pagos del mes">—</span>
               }
+              } @else {
+              <!-- AMARILLO: mes abierto, bloqueada; solo se marca como pagada -->
               <button type="button" id="pinButton" class="btnAcciones" title="Marcar como pagada"
                 (click)="marcarRentaPagada(cell.data); $event.stopPropagation()">
                 <i class="fa fa-check"></i>
-              </button>
-              @if (cell.data.registro.puedeDuplicarMes) {
-              <button type="button" id="ubicacionButton" class="btnAcciones" title="Duplicar al mes siguiente"
-                (click)="duplicarRenta(cell.data); $event.stopPropagation()">
-                <i class="fa fa-calendar" aria-hidden="true"></i>
               </button>
               }
               } @else if (cell.data.pagada) {

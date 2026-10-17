@@ -29,6 +29,11 @@ export interface RentRolRow {
   mantenimiento: RentRolConceptoVm;
   /** Registrada en Pagos del mes (renta-actual) y aún sin pagar. */
   esPendiente?: boolean;
+  /**
+   * Solo pendientes. false = AZUL: generada, editable (solo botón Editar).
+   * true = AMARILLO: el mes ya se abrió (Apertura de Mes); bloqueada, solo se marca como pagada.
+   */
+  abierta?: boolean;
   /** Id en /renta-actual (solo pendientes) para las acciones de Pagos del mes. */
   idRentaActual?: number;
   /** Igual que Pagos del mes: no se duplica si el registro es un rango (mes + fechaFin). */
@@ -37,6 +42,8 @@ export interface RentRolRow {
   periodoLabel?: string;
   /** Respuesta original de /renta-actual (para editar con el mismo payload). */
   detalleRentaActual?: Record<string, unknown>;
+  /** Registro original del API (histórico o renta-actual); lo usa el cierre de mes. */
+  detalleApi?: Record<string, unknown>;
 }
 
 /** Fila del grid DevExtreme (2 por registro histórico: Renta + Mantto). */
@@ -245,15 +252,20 @@ function extraerConceptoMantenimiento(
   return { subTotal, iva, total: montoFinal, montoFinal };
 }
 
+/** Azul = pendiente editable · Amarillo = mes abierto, solo pagar · Verde = pagada. */
+function claseEstatusPendiente(row: RentRolRow): string {
+  return row.abierta ? 'row-estatus--amarillo' : 'row-estatus--azul';
+}
+
 function claseEstatusRentaRow(row: RentRolRow): string {
-  if (row.esPendiente) return 'row-estatus--pendiente';
+  if (row.esPendiente) return claseEstatusPendiente(row);
   if (row.tieneIncrementoRenta) return 'row-estatus--incremento';
   if (row.pagada) return 'row-estatus--pagada';
   return 'row-estatus--neutral';
 }
 
 function claseEstatusMantenimientoRow(row: RentRolRow): string {
-  if (row.esPendiente) return 'row-estatus--pendiente';
+  if (row.esPendiente) return claseEstatusPendiente(row);
   if (row.tieneIncrementoMantenimiento) return 'row-estatus--incremento';
   if (row.pagada) return 'row-estatus--pagada';
   return 'row-estatus--neutral';
@@ -432,6 +444,7 @@ export function mapHistoricoPagoRentaToRentRolRow(item: unknown): RentRolRow | n
     tieneIncrementoMantenimiento: tieneIncrementoEnObj(row['incrementoMantenimiento']),
     renta: extraerConceptoRenta(row, contrato),
     mantenimiento: extraerConceptoMantenimiento(row, contrato),
+    detalleApi: row,
   };
 }
 
@@ -452,7 +465,7 @@ function etiquetaMesApi(raw: unknown): string {
  * La respuesta trae el mismo anidado (contrato, inmueble, locales) que el histórico,
  * así que se reutiliza el mismo mapeo y solo se marca como pendiente.
  */
-export function mapRentaActualPendienteToRentRolRow(item: unknown): RentRolRow | null {
+export function mapRentaActualPendienteToRentRolRow(item: unknown, abierta = false): RentRolRow | null {
   const base = mapHistoricoPagoRentaToRentRolRow(item);
   if (!base) return null;
   const row = item as Record<string, unknown>;
@@ -463,8 +476,9 @@ export function mapRentaActualPendienteToRentRolRow(item: unknown): RentRolRow |
   return {
     ...base,
     pagada: false,
-    pagadaLabel: 'Pendiente',
+    pagadaLabel: abierta ? 'Por pagar' : 'Editable',
     esPendiente: true,
+    abierta,
     idRentaActual: base.id,
     puedeDuplicarMes: !(mes && fechaFin),
     periodoLabel: fin && fin !== inicio ? `${inicio} → ${fin}` : inicio,

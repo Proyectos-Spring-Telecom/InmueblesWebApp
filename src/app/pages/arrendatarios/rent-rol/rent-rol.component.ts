@@ -50,7 +50,10 @@ import {
   RentRolRow,
 } from './rent-rol-list.mapper';
 import { exportarRentRolExcel, exportarRentRolPdf } from './rent-rol-export';
-import { RentaActualService } from 'src/app/services/moduleService/renta-actual.service';
+import {
+  RentaActualPostPayload,
+  RentaActualService,
+} from 'src/app/services/moduleService/renta-actual.service';
 import {
   extraerFilasRentasActualApi,
   mapRentaActualApiToGridRow,
@@ -62,6 +65,7 @@ import {
   cubreMes,
   mapRentaActualAPendiente,
 } from './pago-renta/rent-rol-pago-renta.helpers';
+import { RentRolAperturaStore } from './pago-renta/rent-rol-apertura.store';
 import {
   etiquetaContratoArrendatarioApi,
   extraerFilasPaginadasApi,
@@ -1415,13 +1419,14 @@ export class RentRolComponent implements OnInit, OnDestroy {
       );
       const idArr = Number(this.idArrendatarioFiltro);
       const idCon = Number(this.idContratoFiltro);
+      const abiertas = RentRolAperturaStore.leer();
       const filas: RentRolRow[] = [];
       for (const item of raw) {
         const vm = mapRentaActualAPendiente(item);
         if (!vm || vm.pagada || !cubreMes(vm, mes)) continue;
         if (idArr > 0 && vm.idArrendatario !== idArr) continue;
         if (idCon > 0 && vm.idContrato !== idCon) continue;
-        const fila = mapRentaActualPendienteToRentRolRow(item);
+        const fila = mapRentaActualPendienteToRentRolRow(item, abiertas.has(vm.id));
         if (fila) filas.push(fila);
       }
       return filas.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
@@ -1498,11 +1503,6 @@ export class RentRolComponent implements OnInit, OnDestroy {
     if (fila) void this.rentasMes?.marcarRentaPagada(fila);
   }
 
-  duplicarRenta(line: RentRolGridLine): void {
-    const fila = this.filaRentaActual(line);
-    if (fila) void this.rentasMes?.duplicarRentaAlSiguienteMes(fila);
-  }
-
   /** Tras registrar / editar / pagar / duplicar: vuelve a consultar conservando la página. */
   onPagoRentaCambio(): void {
     this.cacheRegistrosKey = '';
@@ -1512,12 +1512,450 @@ export class RentRolComponent implements OnInit, OnDestroy {
   }
 
   // ── Periodo del grid (apertura / cierre de mes) ─────────────────
-  aperturaDeMes(): void {
-    // Pendiente: conectar endpoint de apertura de mes del Rent Rol.
+
+  /** Pendientes azules: generadas y aún editables. */
+  get conteoEditables(): number {
+    return this.filasPendientesBase().filter((r) => !r.abierta).length;
   }
 
-  cierreDeMes(): void {
-    // Pendiente: conectar endpoint de cierre de mes del Rent Rol.
+  /** Pendientes amarillas: mes abierto, solo se pueden marcar como pagadas. */
+  get conteoPorPagar(): number {
+    return this.filasPendientesBase().filter((r) => r.abierta).length;
+  }
+
+  private filasPendientesBase(): RentRolRow[] {
+    const base = this.registrosParaKpi.length > 0 ? this.registrosParaKpi : this.registrosVisibles;
+    return base.filter((r) => r.esPendiente);
+  }
+
+  abriendoMes = false;
+
+  /** Hay rentas azules (pendientes y editables) en el mes que se pueden abrir. */
+  get puedeAbrirMes(): boolean {
+    return !this.cargando && !this.cargandoBusqueda && !this.abriendoMes && !this.cerrandoMes &&
+      !this.modoBusquedaActivo && this.conteoEditables > 0;
+  }
+
+  get motivoAperturaBloqueada(): string {
+    if (this.modoBusquedaActivo) return 'Limpia la búsqueda para abrir el mes.';
+    if (this.conteoEditables === 0) return 'No hay rentas editables (azules) en el mes seleccionado.';
+    return 'Apertura de Mes';
+  }
+
+  /**
+   * Apertura de mes: las rentas AZULES (pendientes y editables) del mes filtrado pasan a
+   * AMARILLO. Desde ese momento ya no se pueden editar; solo se pueden marcar como pagadas.
+   * Las que se registren después quedan en azul hasta una nueva apertura.
+   */
+  async aperturaDeMes(): Promise<void> {
+    if (this.abriendoMes) return;
+    const mes = this.mesFiltro;
+    if (!mes) {
+      void this.alertaValidacion('Selecciona el mes a abrir.');
+      return;
+    }
+
+    // Se toma el mes completo, no solo la página visible.
+    let registros: RentRolRow[];
+    try {
+      registros = await this.cargarTodosLosRegistros();
+    } catch {
+      void this.alertaValidacion('No se pudieron consultar las rentas del mes. Intenta de nuevo.');
+      return;
+    }
+    const azules = registros.filter((r) => r.esPendiente && !r.abierta && r.idRentaActual != null);
+    if (!azules.length) {
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff', icon: 'info',
+        title: 'Nada que abrir',
+        text: `No hay rentas editables en ${this.etiquetaMesClave(mes)}.`,
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    const confirmado = await this.confirmarAccionCritica({
+      titulo: `Apertura de ${this.etiquetaMesClave(mes)}`,
+      color: '#f5c542',
+      pasos: [
+        `<strong>${azules.length}</strong> ${azules.length === 1 ? 'renta pasará' : 'rentas pasarán'} de ` +
+          '<strong>Editable</strong> (azul) a <strong>Por pagar</strong> (amarillo).',
+        'Ya <strong>no se podrán editar</strong>: solo tendrán el botón <strong>Marcar como pagada</strong>.',
+        'Las rentas que se registren después quedarán en azul hasta una nueva apertura.',
+      ],
+      irreversible: 'Esta acción no se puede deshacer: las rentas abiertas ya no vuelven a ser editables.',
+      listaTitulo: 'Rentas que se abrirán',
+      lista: azules.map((r) => r.nombre),
+      casilla: 'Entiendo que estas rentas ya no se podrán editar.',
+      confirmar: 'Sí, abrir mes',
+    });
+    if (!confirmado) return;
+
+    this.abriendoMes = true;
+    this.cdr.markForCheck();
+    const ok = RentRolAperturaStore.abrir(azules.map((r) => r.idRentaActual as number));
+    this.abriendoMes = false;
+
+    if (!ok) {
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff', icon: 'error',
+        title: 'No se pudo abrir el mes',
+        text: 'El navegador no permitió guardar la apertura. Revisa que no esté en modo privado e intenta de nuevo.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    this.onPagoRentaCambio();
+    void Swal.fire({
+      background: '#141a21', color: '#ffffff', icon: 'success',
+      title: '¡Mes abierto!',
+      html:
+        `${azules.length} ${azules.length === 1 ? 'renta quedó' : 'rentas quedaron'} en <strong>Por pagar</strong>. ` +
+        'Ya solo se pueden marcar como pagadas.',
+      confirmButtonText: 'Listo',
+    });
+  }
+
+  /** ¿Se puede cerrar el mes filtrado? Hay registros y ninguno está pendiente de pago. */
+  get puedeCerrarMes(): boolean {
+    return !this.cargando && !this.cargandoBusqueda && !this.cerrandoMes &&
+      !this.modoBusquedaActivo && this.conteoPagadas > 0 && this.conteoPendientes === 0;
+  }
+
+  get motivoCierreBloqueado(): string {
+    if (this.modoBusquedaActivo) return 'Limpia la búsqueda para cerrar el mes.';
+    if (this.conteoPendientes > 0) {
+      return `Hay ${this.conteoPendientes} ${this.conteoPendientes === 1 ? 'renta pendiente' : 'rentas pendientes'} de pago en el mes.`;
+    }
+    if (this.conteoPagadas === 0) return 'No hay rentas pagadas en el mes seleccionado.';
+    return 'Cierre de Mes';
+  }
+
+  cerrandoMes = false;
+
+  /**
+   * Cierre de mes: solo cuando TODAS las rentas del mes filtrado están pagadas.
+   * Por cada renta pagada genera la del mes siguiente con el mismo servicio que
+   * "Duplicar al mes siguiente" (POST /renta-actual/{id}/siguiente-mes). Si el pago ya solo
+   * existe en el histórico o es por rango, se registra la misma copia con POST /renta-actual.
+   * Quedan como pendientes de cobro en el mes siguiente.
+   */
+  async cierreDeMes(): Promise<void> {
+    if (this.cerrandoMes) return;
+    const mes = this.mesFiltro;
+    const siguiente = this.claveMesSiguiente(mes);
+    if (!mes || !siguiente) {
+      void this.alertaValidacion('Selecciona el mes a cerrar.');
+      return;
+    }
+
+    // Se valida contra el mes completo (no solo la página visible).
+    let registros: RentRolRow[];
+    try {
+      registros = await this.cargarTodosLosRegistros();
+    } catch {
+      void this.alertaValidacion('No se pudieron consultar las rentas del mes. Intenta de nuevo.');
+      return;
+    }
+    const pendientes = registros.filter((r) => r.esPendiente || !r.pagada);
+    const pagadas = registros.filter((r) => r.pagada && !r.esPendiente);
+    if (pendientes.length > 0) {
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff', icon: 'warning',
+        title: 'Aún no se puede cerrar el mes',
+        html:
+          `Hay <strong>${pendientes.length}</strong> ${pendientes.length === 1 ? 'renta pendiente' : 'rentas pendientes'} de pago en ` +
+          `<strong>${this.etiquetaMesClave(mes)}</strong>.<br>Márcalas como pagadas para poder cerrar el mes.`,
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    if (!pagadas.length) {
+      void this.alertaValidacion(`No hay rentas pagadas en ${this.etiquetaMesClave(mes)} para cerrar.`);
+      return;
+    }
+
+    // Una renta por arrendatario + contrato (si hubo varios pagos del mismo contrato, se toma el último).
+    const porContrato = new Map<string, Record<string, unknown>>();
+    for (const r of pagadas) {
+      const d = r.detalleApi;
+      const idArr = Number(d?.['idArrendatario']);
+      const idCon = Number(d?.['idContrato']);
+      if (!d || !(idArr > 0) || !(idCon > 0)) continue;
+      porContrato.set(`${idArr}|${idCon}`, d);
+    }
+
+    // Rentas de Pagos del mes: sirven para (1) no duplicar lo que ya existe en el mes siguiente
+    // y (2) obtener el id de renta-actual de cada pago del mes, que es el que usa el servicio
+    // "Duplicar al mes siguiente" (POST /renta-actual/{id}/siguiente-mes).
+    let yaExisten = new Set<string>();
+    const idRentaActualDelMes = new Map<string, number>();
+    try {
+      const raw = await cargarTodasRentasActuales(
+        (page, limit) => lastValueFrom(this.rentaActualService.obtenerRentasPaginadas(page, limit)),
+        extraerFilasRentasActualApi,
+      );
+      const vms = raw
+        .map((item) => mapRentaActualAPendiente(item))
+        .filter((vm): vm is NonNullable<typeof vm> => vm != null);
+      yaExisten = new Set(vms.filter((vm) => cubreMes(vm, siguiente)).map((vm) => `${vm.idArrendatario}|${vm.idContrato}`));
+      for (const vm of vms) {
+        // El API no duplica pagos por rango (esPeriodo): esos se registran como copia.
+        if (vm.mesClave === mes && vm.mesFinClave === vm.mesClave) idRentaActualDelMes.set(`${vm.idArrendatario}|${vm.idContrato}`, vm.id);
+      }
+    } catch {
+      /* Si falla, el API igual rechaza los meses duplicados. */
+    }
+
+    const aGenerar: { clave: string; detalle: Record<string, unknown>; nombre: string; idRentaActual: number | null }[] = [];
+    const omitidas: string[] = [];
+    for (const [clave, d] of porContrato) {
+      const nombre = this.nombreDesdeDetalle(d);
+      if (yaExisten.has(clave)) {
+        omitidas.push(nombre);
+        continue;
+      }
+      aGenerar.push({ clave, detalle: d, nombre, idRentaActual: idRentaActualDelMes.get(clave) ?? null });
+    }
+
+    if (!aGenerar.length) {
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff', icon: 'info',
+        title: 'Ya está todo generado',
+        html:
+          `Todas las rentas ya tienen su renta de <strong>${this.etiquetaMesClave(siguiente)}</strong> creada; ` +
+          'no hay nada nuevo que generar.' + this.htmlLista(omitidas),
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    const mesSig = this.etiquetaMesClave(siguiente);
+    const confirmado = await this.confirmarAccionCritica({
+      titulo: `Cierre de ${this.etiquetaMesClave(mes)}`,
+      color: '#22b07d',
+      pasos: [
+        `Se cerrará <strong>${this.etiquetaMesClave(mes)}</strong>: todas sus rentas ya están pagadas.`,
+        `Se generarán <strong>${aGenerar.length}</strong> ${aGenerar.length === 1 ? 'renta' : 'rentas'} para ` +
+          `<strong>${mesSig}</strong>, con los mismos montos y fórmula.`,
+        `Quedarán en <strong>Editable</strong> (azul), pendientes de cobro en ${mesSig}.`,
+        ...(omitidas.length
+          ? [`<strong>${omitidas.length}</strong> ${omitidas.length === 1 ? 'ya tiene' : 'ya tienen'} su renta de ${mesSig} ` +
+              'creada (de un cierre anterior); <strong>no se vuelven a crear</strong> para no duplicar el cobro.']
+          : []),
+      ],
+      irreversible: `Las rentas de ${mesSig} quedarán creadas en el sistema; si alguna sobra habría que quitarla una por una.`,
+      listaTitulo: `Ya tienen su renta de ${mesSig}`,
+      lista: omitidas,
+      casilla: `Entiendo que se crearán las rentas de ${mesSig}.`,
+      confirmar: 'Sí, cerrar mes',
+    });
+    if (!confirmado) return;
+
+    this.cerrandoMes = true;
+    this.cdr.markForCheck();
+    void Swal.fire({
+      background: '#141a21', color: '#ffffff',
+      title: 'Cerrando mes…',
+      html: `Generando rentas de ${this.etiquetaMesClave(siguiente)}`,
+      allowOutsideClick: false, allowEscapeKey: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    let creadas = 0;
+    const errores: string[] = [];
+    // En serie: el API valida traslapes por arrendatario + contrato.
+    for (const item of aGenerar) {
+      try {
+        if (item.idRentaActual != null) {
+          // Mismo servicio que "Duplicar al mes siguiente": copia idéntica con el mes siguiente.
+          await lastValueFrom(this.rentaActualService.duplicarAlSiguienteMes(item.idRentaActual));
+        } else {
+          // El pago ya solo existe en el histórico (meses anteriores): se registra la misma copia.
+          await lastValueFrom(this.rentaActualService.registrarRenta(this.payloadMesSiguiente(item.detalle, siguiente)));
+        }
+        creadas++;
+      } catch (err) {
+        errores.push(`${item.nombre}: ${this.mensajeErrorApi(err)}`);
+      }
+    }
+
+    this.cerrandoMes = false;
+    this.cdr.markForCheck();
+    const resultado = await Swal.fire({
+      background: '#141a21', color: '#ffffff',
+      icon: errores.length ? (creadas ? 'warning' : 'error') : 'success',
+      title: errores.length ? 'Cierre con observaciones' : '¡Mes cerrado!',
+      html:
+        `Se generaron <strong>${creadas}</strong> ${creadas === 1 ? 'renta' : 'rentas'} para ` +
+        `<strong>${this.etiquetaMesClave(siguiente)}</strong>.` +
+        (errores.length ? `<br><br><small>No se pudieron generar ${errores.length}:</small>` + this.htmlLista(errores) : ''),
+      showCancelButton: creadas > 0,
+      confirmButtonText: creadas > 0 ? `Ver ${this.etiquetaMesClave(siguiente)}` : 'Entendido',
+      cancelButtonText: 'Quedarme aquí',
+      reverseButtons: true,
+    });
+
+    if (creadas > 0 && resultado.isConfirmed) {
+      const [anio, mesNum] = siguiente.split('-').map(Number);
+      this.mesFechaFiltro = new Date(anio, mesNum - 1, 1);
+      this.aplicarFiltros();
+    } else {
+      this.onPagoRentaCambio();
+    }
+  }
+
+  /**
+   * Confirmación para acciones de periodo (Apertura / Cierre): explica paso a paso qué va
+   * a pasar, resalta lo que no se puede deshacer y exige marcar una casilla para continuar.
+   */
+  private async confirmarAccionCritica(o: {
+    titulo: string;
+    color: string;
+    pasos: string[];
+    irreversible: string;
+    listaTitulo: string;
+    lista: string[];
+    casilla: string;
+    confirmar: string;
+  }): Promise<boolean> {
+    const pasos = o.pasos
+      .map(
+        (p, i) =>
+          '<li style="display:flex;gap:10px;align-items:flex-start;margin:0 0 8px">' +
+          `<span style="flex-shrink:0;width:22px;height:22px;border-radius:7px;background:${o.color};color:#141a21;` +
+          `font-weight:800;font-size:12px;display:inline-flex;align-items:center;justify-content:center">${i + 1}</span>` +
+          `<span>${p}</span></li>`,
+      )
+      .join('');
+    const html =
+      '<div style="text-align:left;font-size:0.92rem;line-height:1.45">' +
+      '<p style="margin:0 0 8px;font-weight:700;color:#a6b0c8;text-transform:uppercase;letter-spacing:.06em;font-size:.72rem">' +
+      '¿Qué va a pasar?</p>' +
+      `<ol style="list-style:none;margin:0;padding:0">${pasos}</ol>` +
+      '<div style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px 14px;border-radius:12px;' +
+      'background:rgba(255,107,111,.12);border:1px solid rgba(255,107,111,.55);color:#ffc2c4">' +
+      '<span style="font-size:18px;line-height:1.1">⚠</span>' +
+      `<span><strong style="color:#ff8a8d">Importante:</strong> ${o.irreversible}</span></div>` +
+      (o.lista.length ? this.htmlListaPlegable(o.listaTitulo, o.lista) : '') +
+      '</div>';
+
+    const r = await Swal.fire({
+      background: '#141a21',
+      color: '#ffffff',
+      icon: 'warning',
+      iconColor: o.color,
+      title: o.titulo,
+      html,
+      width: 560,
+      input: 'checkbox',
+      inputValue: 0,
+      inputPlaceholder: o.casilla,
+      inputValidator: (marcada) => (marcada ? null : 'Marca la casilla para confirmar que entiendes lo que va a pasar.'),
+      showCancelButton: true,
+      confirmButtonText: o.confirmar,
+      cancelButtonText: 'No, cancelar',
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      reverseButtons: true,
+      focusCancel: true,
+      allowOutsideClick: false,
+      customClass: { popup: 'rr-swal-critica' },
+    });
+    return r.isConfirmed;
+  }
+
+  /**
+   * Lista compacta para alertas: muestra solo el conteo y los nombres quedan plegados
+   * («Ver las N»). Al abrirse, caja de alto fijo con scroll y en dos columnas, para que
+   * la alerta no crezca aunque sean 30 o más registros.
+   */
+  private htmlListaPlegable(titulo: string, items: string[]): string {
+    const esc = (t: string) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    const n = items.length;
+    // Nombres cortos en dos columnas; textos largos (ej. motivos del cierre) en una sola.
+    const columnas = items.some((i) => i.length > 32) ? 1 : 2;
+    const textoLi = columnas === 1 ? 'white-space:normal' : 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    return (
+      '<details style="margin-top:12px;border:1px solid rgba(255,255,255,.1);border-radius:12px;' +
+      'background:rgba(255,255,255,.03)">' +
+      '<summary style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;' +
+      'cursor:pointer;list-style:none;font-size:.85rem;color:#a6b0c8">' +
+      `<span><strong style="color:#e8ecf6">${esc(titulo)}</strong></span>` +
+      '<span style="display:inline-flex;align-items:center;gap:8px">' +
+      `<span style="padding:2px 10px;border-radius:999px;background:rgba(93,135,255,.18);color:#c7d2fe;font-weight:800">${n}</span>` +
+      `<span style="color:#8fa8ff;font-weight:600">Ver ${n === 1 ? 'nombre' : 'los ' + n}</span></span>` +
+      '</summary>' +
+      `<ul style="display:grid;grid-template-columns:repeat(${columnas},minmax(0,1fr));`+'gap:4px 16px;max-height:150px;overflow:auto;' +
+      'margin:0;padding:6px 14px 12px 30px;border-top:1px solid rgba(255,255,255,.08);font-size:.82rem;color:#d6dcef">' +
+      items.map((i) => `<li style="${textoLi}" title="${esc(i)}">${esc(i)}</li>`).join('') +
+      '</ul></details>'
+    );
+  }
+
+  /** Copia idéntica del pago (montos y configuración de fórmula) para el mes siguiente. */
+  private payloadMesSiguiente(d: Record<string, unknown>, mesClave: string): RentaActualPostPayload {
+    const n = (v: unknown, def = 0) => {
+      const x = Number(v);
+      return Number.isFinite(x) ? Math.round(x * 100) / 100 : def;
+    };
+    const montoFinal = n(d['montoFinal']);
+    const montoFinalMtto = n(d['montoFinalMantenimiento']);
+    const idFormula = Number(d['idFormula']);
+    return {
+      idArrendatario: Math.floor(Number(d['idArrendatario'])),
+      idContrato: Math.floor(Number(d['idContrato'])),
+      // Mediodía UTC: el API trabaja en hora de CDMX (UTC-6); con T00:00Z el día 1 se recorre
+      // al último día del mes anterior y el API lo toma como el mes equivocado.
+      fechaInicio: `${mesClave}-01T12:00:00.000Z`,
+      total: n(d['total'], montoFinal) || montoFinal,
+      montoFinal,
+      totalMantenimiento: n(d['totalMantenimiento'], montoFinalMtto),
+      montoFinalMantenimiento: montoFinalMtto,
+      usaFormula: Number(d['usaFormula']) === 1 ? 1 : 0,
+      idFormula: Number.isFinite(idFormula) && idFormula > 0 ? Math.floor(idFormula) : null,
+      factorVariable: n(d['factorVariable']),
+      ocupoFormula: Number(d['ocupoFormula']) === 1 ? 1 : 0,
+    };
+  }
+
+  private claveMesSiguiente(clave: string): string {
+    const m = clave.match(/^(\d{4})-(\d{2})$/);
+    if (!m) return '';
+    const d = new Date(Number(m[1]), Number(m[2]), 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private etiquetaMesClave(clave: string): string {
+    const m = clave.match(/^(\d{4})-(\d{2})$/);
+    if (!m) return clave;
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    ];
+    return `${meses[Number(m[2]) - 1] ?? ''} ${m[1]}`;
+  }
+
+  private nombreDesdeDetalle(d: Record<string, unknown>): string {
+    const arr = d['arrendatario'] as Record<string, unknown> | undefined;
+    return String(arr?.['arrendatario'] ?? d['arrendatarioNombre'] ?? `Arrendatario #${d['idArrendatario']}`);
+  }
+
+  private mensajeErrorApi(err: unknown): string {
+    const e = err as { error?: { message?: string | string[] } | string; message?: string };
+    const msg = typeof e?.error === 'string' ? e.error : e?.error?.message ?? e?.message;
+    return Array.isArray(msg) ? msg.join(' ') : String(msg ?? 'Error desconocido');
+  }
+
+  private htmlLista(items: string[]): string {
+    if (!items.length) return '';
+    const esc = (t: string) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    return (
+      '<ul style="text-align:left;max-height:160px;overflow:auto;margin:8px 0 0;padding-left:18px;font-size:0.85rem">' +
+      items.map((i) => `<li>${esc(i)}</li>`).join('') +
+      '</ul>'
+    );
   }
 
   // ── Export menu ─────────────────────────────────────────────────

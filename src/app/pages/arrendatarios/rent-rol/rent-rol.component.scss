@@ -3605,3 +3605,122 @@ tfoot {
     padding: 14px 12px 16px;
   }
 }
+
+/* Envoltura del botón Cierre de Mes: muestra el motivo aunque el botón esté deshabilitado */
+.rrv-periodo-tip {
+  display: inline-flex;
+}
+
+/* =============================================================================
+ * Estados de fila: AZUL (generada, editable) · AMARILLO (mes abierto, solo pagar) · VERDE (pagada)
+ * ========================================================================== */
+$rr-azul: #5d9bff;
+$rr-amarillo: #f5c542;
+
+:host ::ng-deep .rr-data-grid {
+  .dx-row.row-renta.row-estatus--azul > td {
+    background: rgba(93, 155, 255, 0.1);
+  }
+
+  .dx-row.row-mant.row-estatus--azul > td {
+    background: rgba(93, 155, 255, 0.15);
+  }
+
+  .dx-row.row-renta.row-estatus--azul > td:first-child {
+    border-left: 3px solid $rr-azul;
+  }
+
+  .dx-row.row-renta.row-estatus--amarillo > td {
+    background: rgba(245, 197, 66, 0.1);
+  }
+
+  .dx-row.row-mant.row-estatus--amarillo > td {
+    background: rgba(245, 197, 66, 0.15);
+  }
+
+  .dx-row.row-renta.row-estatus--amarillo > td:first-child {
+    border-left: 3px solid $rr-amarillo;
+  }
+
+  .rr-tag--azul {
+    color: $rr-azul;
+    background: rgba(93, 155, 255, 0.14);
+    border: 1px solid rgba(93, 155, 255, 0.4);
+  }
+
+  .rr-tag--amarillo {
+    color: $rr-amarillo;
+    background: rgba(245, 197, 66, 0.14);
+    border: 1px solid rgba(245, 197, 66, 0.4);
+  }
+}
+
+.rrv-leyenda__item--azul {
+  --ley-color: #{$rr-azul};
+}
+
+.rrv-leyenda__item--amarillo {
+  --ley-color: #{$rr-amarillo};
+}
+
+:host-context(html.light-theme) {
+  ::ng-deep .rr-data-grid .dx-data-rows .dx-row.row-estatus--azul > td {
+    background: #eef4ff !important;
+  }
+
+  ::ng-deep .rr-data-grid .dx-data-rows .dx-row.row-estatus--amarillo > td {
+    background: #fff8e1 !important;
+  }
+
+  .rrv-leyenda__item--amarillo {
+    --ley-color: #b7791f;
+  }
+}
+
+/* Alerta de Apertura / Cierre de Mes: casilla "Entiendo…" resaltada y legible en tema oscuro */
+::ng-deep .rr-swal-critica {
+  .swal2-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 1.6em 4px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px dashed rgba(245, 197, 66, 0.6);
+    background: rgba(245, 197, 66, 0.08) !important;
+    color: #f8e7b0 !important;
+    cursor: pointer;
+
+    input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      flex-shrink: 0;
+      accent-color: #22b07d;
+      cursor: pointer;
+    }
+
+    .swal2-label {
+      margin: 0;
+      color: #f8e7b0 !important;
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    &:has(input:checked) {
+      border-style: solid;
+      border-color: rgba(34, 176, 125, 0.7);
+      background: rgba(34, 176, 125, 0.12) !important;
+
+      .swal2-label {
+        color: #b8f0d6 !important;
+      }
+    }
+  }
+
+  .swal2-validation-message {
+    background: rgba(255, 107, 111, 0.14);
+    color: #ffc2c4;
+  }
+}
