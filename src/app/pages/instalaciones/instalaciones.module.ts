@@ -9,11 +9,13 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ListaInstalacionesComponent } from './lista-instalaciones/lista-instalaciones.component';
 import { AgregarInstalacionComponent } from './agregar-instalacion/agregar-instalacion.component';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 
 @NgModule({
   declarations: [ListaInstalacionesComponent, AgregarInstalacionComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     InstalacionesRoutingModule,
     MatIconModule,

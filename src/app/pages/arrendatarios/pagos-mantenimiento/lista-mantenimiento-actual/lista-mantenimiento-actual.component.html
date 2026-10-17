@@ -4,22 +4,8 @@
   </div>
 } @else {
   <div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
-    <header class="perm-head" role="region" aria-label="Sección: Mantenimiento actual">
-      <div class="perm-head__icon" aria-hidden="true">
-        <mat-icon>handyman</mat-icon>
-      </div>
-      <div class="perm-head__text">
-        <span class="eyebrow">Catálogos</span>
-        <h2>Mantenimiento actual</h2>
-      </div>
-      <nav class="perm-head__crumbs" aria-label="Ruta">
-        <span class="crumb">Operación</span>
-        <span class="sep">/</span>
-        <span class="crumb">Arrendatarios</span>
-        <span class="sep">/</span>
-        <span class="crumb active">Mantenimiento actual</span>
-      </nav>
-    </header>
+    <app-module-hero icon="handyman" eyebrow="Operación · Arrendatarios" titulo="Mantenimiento actual"
+      descripcion="Registra el mantenimiento del mes y márcalo como pagado cuando se reciba el pago."></app-module-hero>
     <ng-container *ngTemplateOutlet="contenidoMantenimiento"></ng-container>
   </div>
 }

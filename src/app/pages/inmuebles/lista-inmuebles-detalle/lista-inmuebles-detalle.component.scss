@@ -245,15 +245,16 @@
 }
 
 .inm-zonas-scroll {
+  // Usa todo el ancho del detalle, con un margen lateral (antes se limitaba a 960px).
   width: 100%;
-  max-width: 960px;
+  max-width: none;
   margin: 0 auto;
   max-height: min(52vh, 520px);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  padding-right: 0.2rem;
+  padding: 0 clamp(0.5rem, 2.5vw, 2rem);
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -911,5 +912,177 @@
     line-height: 1.1;
     min-width: 0;
     font-size: 0.68rem !important;
+  }
+}
+
+/* =============================================================================
+ * Pestañas del detalle: barra segmentada a todo el ancho (alineada con las zonas),
+ * con ícono, título y conteo. Misma paleta que Contratos / Embudo.
+ * ========================================================================== */
+$det-gutter: clamp(0.5rem, 2.5vw, 2rem);
+
+.inm-detalle__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 $det-gutter 1rem;
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 14, 22, 0.7);
+}
+
+.inm-detalle__tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #a6b0c8;
+  text-align: left;
+  letter-spacing: normal;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+  &:hover:not(.inm-detalle__tab--active):not(:disabled) {
+    color: #e8ecf6;
+    border-color: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
+.inm-detalle__tab--active,
+.inm-detalle__tab--loading.inm-detalle__tab--active {
+  color: #ffffff;
+  border-color: rgba(93, 135, 255, 0.45);
+  background: linear-gradient(135deg, rgba(93, 135, 255, 0.24), rgba(124, 92, 255, 0.16));
+  box-shadow: 0 8px 20px rgba(93, 135, 255, 0.18);
+}
+
+.inm-detalle__tab-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  color: #8fa8ff;
+  background: rgba(93, 135, 255, 0.12);
+  transition: background 0.2s ease, color 0.2s ease;
+
+  mat-icon {
+    font-size: 21px;
+    width: 21px;
+    height: 21px;
+  }
+
+  .inm-detalle__tab--active & {
+    color: #ffffff;
+    background: linear-gradient(135deg, #5d87ff, #7c5cff);
+    box-shadow: 0 6px 16px rgba(93, 135, 255, 0.35);
+  }
+}
+
+.inm-detalle__tab-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.inm-detalle__tab-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.inm-detalle__tab-sub {
+  font-size: 0.74rem;
+  color: #7f8aa5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .inm-detalle__tab--active & {
+    color: #c7d2fe;
+  }
+}
+
+.inm-detalle__tab-spinner {
+  margin-left: auto;
+}
+
+/* Buscador de locales: mismo ancho que las zonas */
+.inm-zonas-toolbar {
+  position: relative;
+  max-width: none;
+  margin: 0 $det-gutter 0.85rem;
+  width: auto;
+}
+
+.inm-zonas-toolbar__icono {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7f8aa5;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.inm-zonas-toolbar__input {
+  flex: 1 1 auto;
+  min-height: 42px;
+  padding: 0.5rem 1rem 0.5rem 2.6rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 14, 22, 0.7);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #5d87ff;
+    box-shadow: 0 0 0 4px rgba(93, 135, 255, 0.16);
+  }
+}
+
+@media (max-width: 720px) {
+  .inm-detalle__tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+:host-context(html.light-theme) {
+  .inm-detalle__tabs {
+    border-color: #e2e8f0;
+    background: #f1f5f9;
+  }
+
+  .inm-detalle__tab {
+    color: #475569;
+    background: transparent;
+    border-color: transparent;
+  }
+
+  .inm-detalle__tab--active,
+  .inm-detalle__tab--loading.inm-detalle__tab--active {
+    color: #1e3a8a;
+    background: #ffffff;
+    border-color: #c7d2fe;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  }
+
+  .inm-detalle__tab-sub {
+    color: #64748b;
+  }
+
+  .inm-zonas-toolbar__input {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
   }
 }

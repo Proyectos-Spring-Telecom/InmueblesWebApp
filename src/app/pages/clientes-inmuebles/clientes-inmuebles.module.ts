@@ -8,6 +8,7 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { ClientesInmueblesRoutingModule } from './clientes-inmuebles-routing.module';
 import { ListaClientesInmueblesComponent } from './lista-clientes-inmuebles/lista-clientes-inmuebles.component';
 import { AgregarClienteInmuebleComponent } from './agregar-cliente-inmueble/agregar-cliente-inmueble.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { AgregarClienteInmuebleComponent } from './agregar-cliente-inmueble/agre
     AgregarClienteInmuebleComponent,
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     ClientesInmueblesRoutingModule,
     MatIconModule,

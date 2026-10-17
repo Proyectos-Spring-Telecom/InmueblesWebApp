@@ -8,10 +8,12 @@ import { ContratosRoutingModule } from './contratos-routing.module';
 import { ListaContratosComponent } from './lista-contratos/lista-contratos.component';
 import { AgregarContratoComponent } from './agregar-contrato/agregar-contrato.component';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [ListaContratosComponent, AgregarContratoComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     ContratosRoutingModule,
     MatIconModule,

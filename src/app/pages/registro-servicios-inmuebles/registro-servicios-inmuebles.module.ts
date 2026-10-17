@@ -8,10 +8,12 @@ import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documen
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { RegistroServiciosInmueblesRoutingModule } from './registro-servicios-inmuebles-routing.module';
 import { ListaRegistroServiciosInmueblesComponent } from './lista-registro-servicios-inmuebles/lista-registro-servicios-inmuebles.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [ListaRegistroServiciosInmueblesComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

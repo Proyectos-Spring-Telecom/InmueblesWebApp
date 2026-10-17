@@ -27,6 +27,16 @@ export interface RentRolRow {
   tieneIncrementoMantenimiento: boolean;
   renta: RentRolConceptoVm;
   mantenimiento: RentRolConceptoVm;
+  /** Registrada en Pagos del mes (renta-actual) y aún sin pagar. */
+  esPendiente?: boolean;
+  /** Id en /renta-actual (solo pendientes) para las acciones de Pagos del mes. */
+  idRentaActual?: number;
+  /** Igual que Pagos del mes: no se duplica si el registro es un rango (mes + fechaFin). */
+  puedeDuplicarMes?: boolean;
+  /** Etiqueta del periodo que cubre el pago (ej. "Octubre 2026"). */
+  periodoLabel?: string;
+  /** Respuesta original de /renta-actual (para editar con el mismo payload). */
+  detalleRentaActual?: Record<string, unknown>;
 }
 
 /** Fila del grid DevExtreme (2 por registro histórico: Renta + Mantto). */
@@ -52,6 +62,9 @@ export interface RentRolGridLine {
   subTotal: number;
   iva: number;
   montoFinal: number;
+  esPendiente: boolean;
+  /** Registro completo (para las acciones del grid). */
+  registro: RentRolRow;
 }
 
 export const RENT_ROL_COLUMNAS_ROWSPAN: readonly string[] = [
@@ -63,6 +76,7 @@ export const RENT_ROL_COLUMNAS_ROWSPAN: readonly string[] = [
   'inicioContrato',
   'finContrato',
   'pagadaLabel',
+  'acciones',
 ];
 
 export const RENT_ROL_REGISTROS_POR_PAGINA = 20;
@@ -232,12 +246,14 @@ function extraerConceptoMantenimiento(
 }
 
 function claseEstatusRentaRow(row: RentRolRow): string {
+  if (row.esPendiente) return 'row-estatus--pendiente';
   if (row.tieneIncrementoRenta) return 'row-estatus--incremento';
   if (row.pagada) return 'row-estatus--pagada';
   return 'row-estatus--neutral';
 }
 
 function claseEstatusMantenimientoRow(row: RentRolRow): string {
+  if (row.esPendiente) return 'row-estatus--pendiente';
   if (row.tieneIncrementoMantenimiento) return 'row-estatus--incremento';
   if (row.pagada) return 'row-estatus--pagada';
   return 'row-estatus--neutral';
@@ -263,15 +279,19 @@ function baseGridLineDesdeRow(row: RentRolRow): Omit<
     finContrato: row.finContrato,
     pagada: row.pagada,
     pagadaLabel: row.pagadaLabel,
+    esPendiente: !!row.esPendiente,
+    registro: row,
   };
 }
 
 export function mapRentRolRowToGridLines(row: RentRolRow): RentRolGridLine[] {
   const base = baseGridLineDesdeRow(row);
+  // Los ids de renta-actual e histórico pueden coincidir: prefijo para llaves únicas.
+  const llave = row.esPendiente ? `p${row.id}` : String(row.id);
   return [
     {
       ...base,
-      gridKey: `${row.id}-renta`,
+      gridKey: `${llave}-renta`,
       tipoConcepto: 'Renta',
       esLineaRenta: true,
       subTotal: row.renta.subTotal,
@@ -280,7 +300,7 @@ export function mapRentRolRowToGridLines(row: RentRolRow): RentRolGridLine[] {
     },
     {
       ...base,
-      gridKey: `${row.id}-mant`,
+      gridKey: `${llave}-mant`,
       tipoConcepto: 'Mantto',
       esLineaRenta: false,
       subTotal: row.mantenimiento.subTotal,
@@ -412,5 +432,42 @@ export function mapHistoricoPagoRentaToRentRolRow(item: unknown): RentRolRow | n
     tieneIncrementoMantenimiento: tieneIncrementoEnObj(row['incrementoMantenimiento']),
     renta: extraerConceptoRenta(row, contrato),
     mantenimiento: extraerConceptoMantenimiento(row, contrato),
+  };
+}
+
+const MESES_PERIODO = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+function etiquetaMesApi(raw: unknown): string {
+  const m = str(raw).match(/^(\d{4})-(\d{2})/);
+  if (!m) return '';
+  const nombre = MESES_PERIODO[Number(m[2]) - 1];
+  return nombre ? `${nombre} ${m[1]}` : '';
+}
+
+/**
+ * Renta registrada en Pagos del mes (`/renta-actual`) y aún no pagada.
+ * La respuesta trae el mismo anidado (contrato, inmueble, locales) que el histórico,
+ * así que se reutiliza el mismo mapeo y solo se marca como pendiente.
+ */
+export function mapRentaActualPendienteToRentRolRow(item: unknown): RentRolRow | null {
+  const base = mapHistoricoPagoRentaToRentRolRow(item);
+  if (!base) return null;
+  const row = item as Record<string, unknown>;
+  const mes = str(row['mes'] ?? row['fechaInicio']);
+  const fechaFin = str(row['fechaFin']);
+  const inicio = etiquetaMesApi(mes);
+  const fin = etiquetaMesApi(fechaFin);
+  return {
+    ...base,
+    pagada: false,
+    pagadaLabel: 'Pendiente',
+    esPendiente: true,
+    idRentaActual: base.id,
+    puedeDuplicarMes: !(mes && fechaFin),
+    periodoLabel: fin && fin !== inicio ? `${inicio} → ${fin}` : inicio,
+    detalleRentaActual: row,
   };
 }

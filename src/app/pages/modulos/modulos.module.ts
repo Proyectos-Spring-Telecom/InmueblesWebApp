@@ -9,6 +9,7 @@ import { MaterialModule } from 'src/app/material.module';
 import { AgregarModuloComponent } from './agregar-modulo/agregar-modulo.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 
 @NgModule({
@@ -17,6 +18,7 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
     AgregarModuloComponent
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     ModulosRoutingModule,
     MatIconModule,

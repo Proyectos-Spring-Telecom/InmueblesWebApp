@@ -1,20 +1,6 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-    <header class="perm-head" role="region" aria-label="Sección: Clientes">
-        <div class="perm-head__icon" aria-hidden="true">
-            <mat-icon>contacts</mat-icon>
-        </div>
-
-        <div class="perm-head__text">
-            <span class="eyebrow">Sección</span>
-            <h2>Clientes</h2>
-        </div>
-
-        <nav class="perm-head__crumbs" aria-label="Ruta">
-            <span class="crumb">Administración</span>
-            <span class="sep">/</span>
-            <span class="crumb active">Clientes</span>
-        </nav>
-    </header>
+    <app-module-hero icon="contacts" eyebrow="Administración" titulo="Clientes"
+      descripcion="Consulta y administra los clientes registrados en el sistema."></app-module-hero>
 
     <div class="surface">
         <div class="d-flex flex-wrap gap-10 justify-content-end w-100">

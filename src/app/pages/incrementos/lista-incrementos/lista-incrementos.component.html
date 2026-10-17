@@ -1,22 +1,6 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-  <header class="perm-head" role="region" aria-label="Sección: INPC">
-    <div class="perm-head__icon" aria-hidden="true">
-      <mat-icon>receipt_long</mat-icon>
-    </div>
-
-    <div class="perm-head__text">
-      <span class="eyebrow">Sección</span>
-      <h2>INPC</h2>
-    </div>
-
-    <nav class="perm-head__crumbs" aria-label="Ruta">
-      <span class="crumb">Administración</span>
-      <span class="sep">/</span>
-      <span class="crumb">INPC</span>
-      <span class="sep">/</span>
-      <span class="crumb active">Consultar Histórico</span>
-    </nav>
-  </header>
+  <app-module-hero icon="receipt_long" eyebrow="Administración · INPC" titulo="INPC"
+    descripcion="Consulta el histórico del INPC que se usa para calcular los incrementos de renta."></app-module-hero>
 
   <div class="surface">
     <div class="inpc-filtros-panel w-100">

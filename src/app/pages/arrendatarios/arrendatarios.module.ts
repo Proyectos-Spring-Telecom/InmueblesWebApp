@@ -15,6 +15,7 @@ import { PagosRentaModule } from './pagos-renta/pagos-renta.module';
 import { PagosMantenimientoModule } from './pagos-mantenimiento/pagos-mantenimiento.module';
 import { PagosServiciosModule } from './pagos-servicios/pagos-servicios.module';
 import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.module';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [
@@ -23,6 +24,7 @@ import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/oper
     AgregarArrendatarioComponent,
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     ArrendatariosRoutingModule,
     PagosRentaModule,

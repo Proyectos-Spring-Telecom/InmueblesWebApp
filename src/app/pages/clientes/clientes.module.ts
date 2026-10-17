@@ -12,10 +12,12 @@ import { AgregarClienteComponent } from './agregar-cliente/agregar-cliente.compo
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documento-preview.module';
 import { ListaClientesDetalleComponent } from './lista-clientes-detalle/lista-clientes-detalle.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [ListaClientesComponent, AgregarClienteComponent, ListaClientesDetalleComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     ClientesRoutingModule,
     MatIconModule,

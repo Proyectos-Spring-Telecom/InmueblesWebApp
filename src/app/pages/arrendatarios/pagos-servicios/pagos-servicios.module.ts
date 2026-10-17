@@ -8,10 +8,12 @@ import { MaterialModule } from 'src/app/material.module';
 import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documento-preview.module';
 import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.module';
 import { ListaPagosServiciosActualesComponent } from './lista-pagos-servicios-actuales/lista-pagos-servicios-actuales.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [ListaPagosServiciosActualesComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     RouterModule,
     FormsModule,

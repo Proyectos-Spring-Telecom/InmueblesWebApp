@@ -163,6 +163,12 @@ body {
   border-top: 1px solid rgba(255, 255, 255, .06);
 }
 
+/* Encabezado estándar (app-module-hero): la superficie continúa sin línea divisoria */
+app-module-hero + .surface,
+app-module-hero ~ .surface {
+  border-top: 0;
+}
+
 .perm-wrapper .dx-datagrid {
   background: transparent;
 }

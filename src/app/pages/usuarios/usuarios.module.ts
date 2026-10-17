@@ -10,6 +10,7 @@ import { MaterialModule } from 'src/app/material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { PerfilUsuarioComponent } from './perfil-usuario/perfil-usuario.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 
 @NgModule({
@@ -19,6 +20,7 @@ import { PerfilUsuarioComponent } from './perfil-usuario/perfil-usuario.componen
     PerfilUsuarioComponent
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     UsuariosRoutingModule,
     MatIconModule,

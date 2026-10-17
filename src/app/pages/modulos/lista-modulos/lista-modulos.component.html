@@ -1,20 +1,6 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-    <header class="perm-head" role="region" aria-label="Sección: Módulos">
-        <div class="perm-head__icon" aria-hidden="true">
-            <mat-icon>view_module</mat-icon>
-        </div>
-
-        <div class="perm-head__text">
-            <span class="eyebrow">Sección</span>
-            <h2>Módulos</h2>
-        </div>
-
-        <nav class="perm-head__crumbs" aria-label="Ruta">
-            <span class="crumb">Administración</span>
-            <span class="sep">/</span>
-            <span class="crumb active">Módulos</span>
-        </nav>
-    </header>
+    <app-module-hero icon="view_module" eyebrow="Administración" titulo="Módulos"
+      descripcion="Consulta y administra los módulos del sistema y sus permisos."></app-module-hero>
 
     <div class="surface">
         <div class="d-flex flex-wrap gap-10 justify-content-end w-100">

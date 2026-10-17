@@ -42,6 +42,7 @@ import {
   filtrarRegistrosRentRol,
   flattenRentRolRowsToGridLines,
   mapHistoricoPagoRentaToRentRolRow,
+  mapRentaActualPendienteToRentRolRow,
   RENT_ROL_COLUMNAS_ROWSPAN,
   RENT_ROL_FILAS_GRID_POR_PAGINA,
   RENT_ROL_REGISTROS_POR_PAGINA,
@@ -49,6 +50,18 @@ import {
   RentRolRow,
 } from './rent-rol-list.mapper';
 import { exportarRentRolExcel, exportarRentRolPdf } from './rent-rol-export';
+import { RentaActualService } from 'src/app/services/moduleService/renta-actual.service';
+import {
+  extraerFilasRentasActualApi,
+  mapRentaActualApiToGridRow,
+  RentaActualGridRow,
+} from '../pagos-renta/lista-rentas-actuales/renta-actual-list.mapper';
+import { ListaRentasActualesComponent } from '../pagos-renta/lista-rentas-actuales/lista-rentas-actuales.component';
+import {
+  cargarTodasRentasActuales,
+  cubreMes,
+  mapRentaActualAPendiente,
+} from './pago-renta/rent-rol-pago-renta.helpers';
 import {
   etiquetaContratoArrendatarioApi,
   extraerFilasPaginadasApi,
@@ -185,8 +198,13 @@ export class RentRolComponent implements OnInit, OnDestroy {
   @ViewChild('gridRentRol', { static: false })
   gridRentRol?: DxDataGridComponent;
 
+  /** Modal de renta de Pagos del mes (misma lógica), usado en modo solo-modal. */
+  @ViewChild(ListaRentasActualesComponent)
+  rentasMes?: ListaRentasActualesComponent;
+
   constructor(
     private historicoPagosRentaService: HistoricoPagosRentaService,
+    private rentaActualService: RentaActualService,
     private arrendatariosService: ArrendatariosService,
     private inmueblesService: InmueblesService,
     private clientesService: ClientesService,
@@ -1254,19 +1272,39 @@ export class RentRolComponent implements OnInit, OnDestroy {
     return Math.round(valor * 100) / 100;
   }
 
-  /** KPIs sobre todo el periodo (o todo lo filtrado), no solo la página visible del grid. */
+  /**
+   * KPIs sobre todo el periodo (o todo lo filtrado), no solo la página visible del grid.
+   * Solo cuentan los registros pagados: las rentas pendientes no suman a los totalizadores.
+   */
   private filasParaKpi(): RentRolRow[] {
-    return this.registrosParaKpi.length > 0 ? this.registrosParaKpi : this.registrosVisibles;
+    const base = this.registrosParaKpi.length > 0 ? this.registrosParaKpi : this.registrosVisibles;
+    return base.filter((r) => r.pagada && !r.esPendiente);
   }
 
-  private async refrescarTotalesGlobales(): Promise<void> {
-    if (this.modoBusquedaActivo) return;
-    try {
-      this.registrosParaKpi = await this.cargarTodosLosRegistros();
-    } catch (err) {
-      console.error('Error al calcular totales globales rent-rol:', err);
-      this.registrosParaKpi = [...this.registrosVisibles];
-    }
+  /** Registros pagados del periodo (o de la búsqueda). */
+  get conteoPagadas(): number {
+    return this.filasParaKpi().length;
+  }
+
+  /** Rentas registradas en Pagos del mes que aún no se pagan. */
+  get conteoPendientes(): number {
+    const base = this.registrosParaKpi.length > 0 ? this.registrosParaKpi : this.registrosVisibles;
+    return base.filter((r) => r.esPendiente).length;
+  }
+
+  get porcentajeCobrado(): number {
+    const total = this.conteoPagadas + this.conteoPendientes;
+    return total ? Math.round((this.conteoPagadas / total) * 100) : 0;
+  }
+
+  get mesFiltroLabel(): string {
+    const m = this.mesFiltro.match(/^(\d{4})-(\d{2})$/);
+    if (!m) return '';
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    ];
+    return `${meses[Number(m[2]) - 1] ?? ''} ${m[1]}`;
   }
 
   private fechaMesPorDefecto(): Date {
@@ -1303,50 +1341,94 @@ export class RentRolComponent implements OnInit, OnDestroy {
   }
 
   private claveCacheRegistros(): string {
-    return `${this.fechaInicioFiltro}|${this.fechaFinFiltro}`;
+    return `${this.fechaInicioFiltro}|${this.fechaFinFiltro}|${this.idArrendatarioFiltro ?? ''}|${this.idContratoFiltro ?? ''}`;
   }
 
+  /**
+   * Todos los registros del mes: pagos del histórico + rentas registradas en
+   * Pagos del mes que aún no se pagan (para que la tabla muestre ambos).
+   */
   private async cargarTodosLosRegistros(): Promise<RentRolRow[]> {
     const clave = this.claveCacheRegistros();
-    if (this.cacheRegistrosKey === clave && this.todosRegistrosCache.length > 0) {
+    if (this.cacheRegistrosKey === clave) {
       return this.todosRegistrosCache;
     }
 
     this.cargandoBusqueda = true;
-    const acumulado: RentRolRow[] = [];
-    let page = 1;
-    let totalPaginas = 1;
-
     try {
-      do {
-        const resp = await lastValueFrom(
-          this.historicoPagosRentaService.obtenerHistoricoPaginado({
-            page,
-            limit: this.LIMITE_CARGA_BUSQUEDA,
-            fechaInicio: this.fechaInicioFiltro,
-            fechaFin: this.fechaFinFiltro,
-            idArrendatario: this.idArrendatarioFiltro,
-            idContrato: this.idContratoFiltro,
-          }),
-        );
-
-        const rowsRaw = extraerFilasRentRolApi(resp);
-        const meta = extraerMetaPaginacionRentRol(resp, page, this.LIMITE_CARGA_BUSQUEDA);
-        totalPaginas = meta.totalPaginas;
-
-        const rows = rowsRaw
-          .map((item) => mapHistoricoPagoRentaToRentRolRow(item))
-          .filter((r): r is RentRolRow => r != null);
-
-        acumulado.push(...rows);
-        page += 1;
-      } while (page <= totalPaginas);
-
+      const [historico, pendientes] = await Promise.all([
+        this.cargarHistoricoDelMes(),
+        this.cargarPendientesDelMes(),
+      ]);
+      // Pendientes primero: son los que requieren acción.
+      const acumulado = [...pendientes, ...historico];
       this.todosRegistrosCache = acumulado;
       this.cacheRegistrosKey = clave;
       return acumulado;
     } finally {
       this.cargandoBusqueda = false;
+    }
+  }
+
+  private async cargarHistoricoDelMes(): Promise<RentRolRow[]> {
+    const acumulado: RentRolRow[] = [];
+    let page = 1;
+    let totalPaginas = 1;
+    do {
+      const resp = await lastValueFrom(
+        this.historicoPagosRentaService.obtenerHistoricoPaginado({
+          page,
+          limit: this.LIMITE_CARGA_BUSQUEDA,
+          fechaInicio: this.fechaInicioFiltro,
+          fechaFin: this.fechaFinFiltro,
+          idArrendatario: this.idArrendatarioFiltro,
+          idContrato: this.idContratoFiltro,
+        }),
+      );
+
+      const rowsRaw = extraerFilasRentRolApi(resp);
+      const meta = extraerMetaPaginacionRentRol(resp, page, this.LIMITE_CARGA_BUSQUEDA);
+      totalPaginas = meta.totalPaginas;
+
+      const rows = rowsRaw
+        .map((item) => mapHistoricoPagoRentaToRentRolRow(item))
+        .filter((r): r is RentRolRow => r != null);
+
+      acumulado.push(...rows);
+      page += 1;
+    } while (page <= totalPaginas);
+    return acumulado;
+  }
+
+  /**
+   * Rentas de `/renta-actual` del mes filtrado con `pagada = 0`.
+   * Las del mes en curso ya pagadas siguen en renta-actual con `pagada = 1`, pero esas
+   * también están en el histórico, por eso aquí solo se toman las no pagadas.
+   */
+  private async cargarPendientesDelMes(): Promise<RentRolRow[]> {
+    const mes = this.mesFiltro;
+    if (!mes) return [];
+    try {
+      const raw = await cargarTodasRentasActuales(
+        (page, limit) => lastValueFrom(this.rentaActualService.obtenerRentasPaginadas(page, limit)),
+        extraerFilasRentasActualApi,
+      );
+      const idArr = Number(this.idArrendatarioFiltro);
+      const idCon = Number(this.idContratoFiltro);
+      const filas: RentRolRow[] = [];
+      for (const item of raw) {
+        const vm = mapRentaActualAPendiente(item);
+        if (!vm || vm.pagada || !cubreMes(vm, mes)) continue;
+        if (idArr > 0 && vm.idArrendatario !== idArr) continue;
+        if (idCon > 0 && vm.idContrato !== idCon) continue;
+        const fila = mapRentaActualPendienteToRentRolRow(item);
+        if (fila) filas.push(fila);
+      }
+      return filas.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    } catch (err) {
+      // Si falla, la tabla sigue mostrando los pagos del histórico como siempre.
+      console.error('Error al cargar rentas pendientes de Pagos del mes:', err);
+      return [];
     }
   }
 
@@ -1358,84 +1440,75 @@ export class RentRolComponent implements OnInit, OnDestroy {
         const skip = Number(loadOptions?.skip) || 0;
         const textoBusqueda = this.busquedaTexto.trim();
 
-        if (textoBusqueda) {
-          this.cargando = true;
-          try {
-            const todos = await this.cargarTodosLosRegistros();
-            const filtrados = filtrarRegistrosRentRol(todos, textoBusqueda);
-            const dataCompleta = flattenRentRolRowsToGridLines(filtrados);
-            const pagina = Math.floor(skip / take) + 1;
-
-            this.cargando = false;
-            this.registrosParaKpi = filtrados;
-            this.registrosVisibles = filtrados.slice(
-              (pagina - 1) * this.REGISTROS_POR_PAGINA,
-              pagina * this.REGISTROS_POR_PAGINA,
-            );
-            this.totalRegistrosFiltrados = filtrados.length;
-            this.totalRegistros = todos.length;
-            this.totalPaginasApi = Math.max(1, Math.ceil(filtrados.length / this.REGISTROS_POR_PAGINA));
-            this.paginaActual = pagina;
-
-            return {
-              data: dataCompleta.slice(skip, skip + take),
-              totalCount: dataCompleta.length,
-            };
-          } catch (err) {
-            this.cargando = false;
-            console.error('Error al buscar rent-rol:', err);
-            this.registrosVisibles = [];
-            this.registrosParaKpi = [];
-            this.totalRegistrosFiltrados = 0;
-            return { data: [], totalCount: 0 };
-          }
-        }
-
         this.cargando = true;
-        const page = Math.floor(skip / take) + 1;
-        const apiLimit = Math.max(1, Math.floor(take / 2));
-
         try {
-          const resp = await lastValueFrom(
-            this.historicoPagosRentaService.obtenerHistoricoPaginado({
-              page,
-              limit: apiLimit,
-              fechaInicio: this.fechaInicioFiltro,
-              fechaFin: this.fechaFinFiltro,
-              idArrendatario: this.idArrendatarioFiltro,
-              idContrato: this.idContratoFiltro,
-            }),
-          );
-
-          const rowsRaw = extraerFilasRentRolApi(resp);
-          const meta = extraerMetaPaginacionRentRol(resp, page, apiLimit);
-          const rows = rowsRaw
-            .map((item) => mapHistoricoPagoRentaToRentRolRow(item))
-            .filter((r): r is RentRolRow => r != null);
+          const todos = await this.cargarTodosLosRegistros();
+          const filtrados = textoBusqueda ? filtrarRegistrosRentRol(todos, textoBusqueda) : todos;
+          const dataCompleta = flattenRentRolRowsToGridLines(filtrados);
+          const pagina = Math.floor(skip / take) + 1;
 
           this.cargando = false;
-          this.totalRegistros = meta.total;
-          this.totalPaginasApi = meta.totalPaginas;
-          this.paginaActual = meta.page;
-          this.registrosVisibles = rows;
-          this.totalRegistrosFiltrados = 0;
-          void this.refrescarTotalesGlobales();
+          this.registrosParaKpi = filtrados;
+          this.registrosVisibles = filtrados.slice(
+            (pagina - 1) * this.REGISTROS_POR_PAGINA,
+            pagina * this.REGISTROS_POR_PAGINA,
+          );
+          this.totalRegistrosFiltrados = textoBusqueda ? filtrados.length : 0;
+          this.totalRegistros = todos.length;
+          this.totalPaginasApi = Math.max(1, Math.ceil(filtrados.length / this.REGISTROS_POR_PAGINA));
+          this.paginaActual = pagina;
+          this.cdr.markForCheck();
 
-          const data = flattenRentRolRowsToGridLines(rows);
-          const totalCount = meta.total > 0 ? meta.total * 2 : data.length;
-
-          return { data, totalCount };
+          return {
+            data: dataCompleta.slice(skip, skip + take),
+            totalCount: dataCompleta.length,
+          };
         } catch (err) {
           this.cargando = false;
           console.error('Error al cargar rent-rol:', err);
           this.registrosVisibles = [];
           this.registrosParaKpi = [];
           this.totalRegistros = 0;
+          this.totalRegistrosFiltrados = 0;
           this.totalPaginasApi = 1;
           return { data: [], totalCount: 0 };
         }
       },
     });
+  }
+
+  // ── Registro y acciones de renta: mismo modal y flujos de Pagos del mes ──
+  abrirRegistroPago(): void {
+    this.rentasMes?.abrirModalAlta();
+  }
+
+  /** Fila de Rent Rol → fila de Pagos del mes (misma respuesta de /renta-actual). */
+  private filaRentaActual(line: RentRolGridLine): RentaActualGridRow | null {
+    const detalle = line.registro.detalleRentaActual;
+    return detalle ? mapRentaActualApiToGridRow(detalle) : null;
+  }
+
+  editarRenta(line: RentRolGridLine): void {
+    const fila = this.filaRentaActual(line);
+    if (fila) this.rentasMes?.abrirModalEdicion(fila);
+  }
+
+  marcarRentaPagada(line: RentRolGridLine): void {
+    const fila = this.filaRentaActual(line);
+    if (fila) void this.rentasMes?.marcarRentaPagada(fila);
+  }
+
+  duplicarRenta(line: RentRolGridLine): void {
+    const fila = this.filaRentaActual(line);
+    if (fila) void this.rentasMes?.duplicarRentaAlSiguienteMes(fila);
+  }
+
+  /** Tras registrar / editar / pagar / duplicar: vuelve a consultar conservando la página. */
+  onPagoRentaCambio(): void {
+    this.cacheRegistrosKey = '';
+    this.todosRegistrosCache = [];
+    this.registrosParaKpi = [];
+    this.gridRentRol?.instance?.refresh();
   }
 
   // ── Export menu ─────────────────────────────────────────────────

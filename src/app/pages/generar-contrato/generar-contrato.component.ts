@@ -572,12 +572,32 @@ export class GenerarContratoComponent implements OnInit, OnDestroy {
     const total = this.plantilla?.secciones.length ?? 0;
     if (indice < 0 || indice >= total) return;
     this.seccionActiva = indice;
-    // Mantiene visible el paso activo en el carrusel de pasos
-    setTimeout(() =>
-      document
-        .getElementById(`tab-${this.plantilla!.secciones[indice].clave}`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }),
-    );
+    // Solo desplaza el carrusel de pasos (no la página ni la vista previa del PDF)
+    setTimeout(() => this.asegurarPasoVisible(indice));
+  }
+
+  /**
+   * Centra el paso activo dentro de .cw-pasos sin usar scrollIntoView del documento,
+   * que desplazaba toda la interfaz y dejaba un hueco blanco a la derecha.
+   */
+  private asegurarPasoVisible(indice: number) {
+    const clave = this.plantilla?.secciones[indice]?.clave;
+    if (!clave) return;
+    const tab = document.getElementById(`tab-${clave}`) as HTMLElement | null;
+    const carrusel = tab?.closest('.cw-pasos') as HTMLElement | null;
+    if (!tab || !carrusel) return;
+
+    // Evita que el foco nativo vuelva a desplazar la página
+    tab.focus({ preventScroll: true });
+
+    if (carrusel.scrollWidth <= carrusel.clientWidth + 1) return;
+
+    const tabRect = tab.getBoundingClientRect();
+    const contRect = carrusel.getBoundingClientRect();
+    if (tabRect.left >= contRect.left && tabRect.right <= contRect.right) return;
+
+    const delta = tabRect.left - contRect.left - (contRect.width - tabRect.width) / 2;
+    carrusel.scrollBy({ left: delta, behavior: 'smooth' });
   }
 
   /** Flechas izquierda/derecha, Inicio y Fin para moverse entre pasos. */
@@ -591,7 +611,11 @@ export class GenerarContratoComponent implements OnInit, OnDestroy {
     if (destino == null) return;
     event.preventDefault();
     this.seleccionarSeccion(destino);
-    setTimeout(() => document.getElementById(`tab-${this.plantilla!.secciones[destino!].clave}`)?.focus());
+    setTimeout(() =>
+      document
+        .getElementById(`tab-${this.plantilla!.secciones[destino!].clave}`)
+        ?.focus({ preventScroll: true }),
+    );
   }
 
   // ---------- Vista previa en vivo ----------

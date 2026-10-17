@@ -9,6 +9,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ListaMarcasComponent } from './lista-marcas/lista-marcas.component';
 import { AgregarMarcaComponent } from './agregar-marca/agregar-marca.component';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 
 @NgModule({
@@ -17,6 +18,7 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
     AgregarMarcaComponent
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     MarcasRoutingModule,
     MatIconModule,

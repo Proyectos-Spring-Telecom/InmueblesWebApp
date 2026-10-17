@@ -8,10 +8,12 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { ServiciosRoutingModule } from './servicios-routing.module';
 import { ListaServiciosComponent } from './lista-servicios/lista-servicios.component';
 import { AgregarServicioComponent } from './agregar-servicio/agregar-servicio.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [ListaServiciosComponent, AgregarServicioComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     ServiciosRoutingModule,
     MatIconModule,

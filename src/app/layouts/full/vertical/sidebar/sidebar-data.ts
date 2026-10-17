@@ -240,16 +240,28 @@ export const navItems: NavItem[] = [
     permission: permisosArrendadores,
   },
   {
-    displayName: 'Lista Inmuebles',
+    displayName: 'Inmuebles',
     iconName: 'building',
-    route: '/inmuebles',
-    permission: permisosInmuebles,
+    route: '/menu-level',
+    permission: [...permisosInmuebles, Permiso.CONSULTAR_SERVICIOS_INMUEBLES],
+    children: [
+      {
+        displayName: 'Lista Inmuebles',
+        route: '/inmuebles',
+        permission: permisosInmuebles,
+      },
+      {
+        displayName: 'Pago de Servicios',
+        route: '/registro-servicios-inmuebles',
+        permission: Permiso.CONSULTAR_SERVICIOS_INMUEBLES,
+      },
+    ],
   },
   {
     displayName: 'Arrendatarios',
     iconName: 'users',
     route: '/menu-level',
-    permission: permisosArrendatarios,
+    permission: [...permisosArrendatarios, Permiso.CONSULTAR_SERVICIOS_ARRENDATARIOS],
     children: [
       {
         displayName: 'Lista de Arrendatarios',
@@ -257,12 +269,17 @@ export const navItems: NavItem[] = [
         permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
       {
-        displayName: 'Pagos Del Mes',
+        displayName: 'Pago Renta y Mantto',
         route: '/arrendatarios/pagos-mes',
         permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
       {
-        displayName: 'Histórico De Pagos',
+        displayName: 'Pago de Servicios',
+        route: '/registro-servicios-arrendatarios',
+        permission: Permiso.CONSULTAR_SERVICIOS_ARRENDATARIOS,
+      },
+      {
+        displayName: 'Historial de Pagos',
         route: '/arrendatarios/pagos-historico',
         permission: Permiso.CONSULTAR_ARRENDATARIOS,
       },
@@ -276,21 +293,6 @@ export const navItems: NavItem[] = [
       Permiso.PERMISO_RESERVADO_RENT_ROL,
       Permiso.CONSULTAR_ARRENDATARIOS,
     ],
-  },
-  {
-    navCap: 'Reportes',
-  },
-  {
-    displayName: 'Servicios Inmuebles',
-    iconName: 'building',
-    route: '/registro-servicios-inmuebles',
-    permission: Permiso.CONSULTAR_SERVICIOS_INMUEBLES,
-  },
-  {
-    displayName: 'Servicios Arrendatarios',
-    iconName: 'users',
-    route: '/registro-servicios-arrendatarios',
-    permission: Permiso.CONSULTAR_SERVICIOS_ARRENDATARIOS,
   },
   {
     navCap: 'Ajustes',

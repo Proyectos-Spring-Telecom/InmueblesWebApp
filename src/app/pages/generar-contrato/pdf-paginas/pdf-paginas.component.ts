@@ -81,11 +81,17 @@ export class PdfPaginasComponent implements OnChanges, AfterViewInit, OnDestroy 
 
   ngAfterViewInit(): void {
     // Re-render al cambiar el ancho del panel (rotar pantalla, abrir sidebar…)
+    // Umbral alto: ignora microcambios (scrollbar, sticky, cambio de sección del formulario)
     this.resizeObserver = new ResizeObserver(() => {
       const ancho = this.anchoDisponible();
-      if (!this.pdf || Math.abs(ancho - this.anchoRenderizado) < 24) return;
+      if (!this.pdf || ancho < 160 || this.anchoRenderizado === 0) return;
+      if (Math.abs(ancho - this.anchoRenderizado) < 40) return;
       clearTimeout(this.resizeTimer);
-      this.resizeTimer = setTimeout(() => this.zone.run(() => this.render()), 250);
+      this.resizeTimer = setTimeout(() => {
+        const estable = this.anchoDisponible();
+        if (!this.pdf || Math.abs(estable - this.anchoRenderizado) < 40) return;
+        this.zone.run(() => this.render());
+      }, 320);
     });
     this.resizeObserver.observe(this.scroller.nativeElement);
     if (this.pdf) this.render();

@@ -11,6 +11,7 @@ import { AgregarInmuebleComponent } from './agregar-inmueble/agregar-inmueble.co
 import { InmueblesRoutingModule } from './inmuebles-routing.module';
 import { ListaInmueblesDetalleComponent } from './lista-inmuebles-detalle/lista-inmuebles-detalle.component';
 import { ListaInmueblesComponent } from './lista-inmuebles/lista-inmuebles.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [
@@ -19,6 +20,7 @@ import { ListaInmueblesComponent } from './lista-inmuebles/lista-inmuebles.compo
     AgregarInmuebleComponent,
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     InmueblesRoutingModule,
     MatIconModule,

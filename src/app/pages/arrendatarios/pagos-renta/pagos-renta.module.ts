@@ -9,6 +9,7 @@ import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/oper
 import { PagosRentaComponent } from './pagos-renta.component';
 import { ListaHistoricoPagosRentaComponent } from './lista-historico-pagos-renta/lista-historico-pagos-renta.component';
 import { ListaRentasActualesComponent } from './lista-rentas-actuales/lista-rentas-actuales.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [
@@ -17,6 +18,7 @@ import { ListaRentasActualesComponent } from './lista-rentas-actuales/lista-rent
     ListaHistoricoPagosRentaComponent,
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     RouterModule,
     FormsModule,

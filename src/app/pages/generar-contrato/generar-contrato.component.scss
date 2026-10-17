@@ -516,6 +516,19 @@ $pdf-fondo: #222934;
   border: 1px solid $border;
   background: $surface;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  // Evita que un scroll lateral (p. ej. al cambiar de paso) empuje la UI y deje un hueco blanco
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.cw-body {
+  min-width: 0;
+}
+
+.cw-col-preview,
+.cw-col-editor {
+  min-width: 0;
+  max-width: 100%;
 }
 
 // Un contenedor no puede consultar su propio ancho: aquí va media query
@@ -858,9 +871,14 @@ $pdf-fondo: #222934;
 /* Pasos */
 .cw-pasos {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
 }
 
 .cw-paso {
@@ -1468,6 +1486,9 @@ $pdf-fondo: #222934;
     top: 12px;
     height: calc(100vh - 150px);
     min-height: 540px;
+    // Evita que el cambio de altura del formulario mueva o reescale el lienzo del PDF
+    align-self: flex-start;
+    width: 100%;
   }
 }
 
@@ -1491,10 +1512,6 @@ $pdf-fondo: #222934;
 // Los pasos dependen del ancho real del editor (columna de 7 o fila completa):
 // si los 8 con nombre no caben en una línea, solo el activo muestra su nombre
 @container cwe (max-width: 1150px) {
-  .cw-pasos {
-    justify-content: center;
-  }
-
   .cw-paso:not(.cw-paso--activo) {
     padding: 4px;
 
@@ -1535,7 +1552,6 @@ $pdf-fondo: #222934;
   }
 
   .cw-pasos {
-    justify-content: center;
     width: 100%;
   }
 

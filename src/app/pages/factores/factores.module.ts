@@ -9,10 +9,12 @@ import { ListaFactoresComponent } from './lista-factores/lista-factores.componen
 import { AgregarFactorComponent } from './agregar-factor/agregar-factor.component';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { AgregarFormulaComponent } from './agregar-formula/agregar-formula.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [ListaFactoresComponent, AgregarFactorComponent, AgregarFormulaComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     FactoresRoutingModule,
     MatIconModule,

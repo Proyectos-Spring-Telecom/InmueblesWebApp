@@ -1,21 +1,33 @@
 <div class="inm-detalle" *ngIf="row">
-  <nav class="inm-detalle__tabs" aria-label="Secciones del inmueble">
-    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
-      [class.inm-detalle__tab--loading]="tabEstaCargando(0)" [disabled]="cargandoTabPanel"
-      (click)="cambiarTab(0)">
-      <span class="inm-detalle__tab-label">Zonas ({{ zonas.length }}) · Locales ({{ totalLocales() }})</span>
+  <nav class="inm-detalle__tabs" role="tablist" aria-label="Secciones del inmueble">
+    <button type="button" role="tab" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
+      [attr.aria-selected]="detalleTab === 0" [class.inm-detalle__tab--loading]="tabEstaCargando(0)"
+      [disabled]="cargandoTabPanel" (click)="cambiarTab(0)">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>grid_view</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Zonas y locales</span>
+        <span class="inm-detalle__tab-sub">{{ zonas.length }} {{ zonas.length === 1 ? 'zona' : 'zonas' }} · {{ totalLocales() }} {{ totalLocales() === 1 ? 'local' : 'locales' }}</span>
+      </span>
       <span class="inm-detalle__tab-spinner" *ngIf="tabEstaCargando(0)" aria-hidden="true"></span>
     </button>
-    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 1"
-      [class.inm-detalle__tab--loading]="tabEstaCargando(1)" [disabled]="cargandoTabPanel"
-      (click)="cambiarTab(1)">
-      <span class="inm-detalle__tab-label">Servicios ({{ servicios.length }})</span>
+    <button type="button" role="tab" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 1"
+      [attr.aria-selected]="detalleTab === 1" [class.inm-detalle__tab--loading]="tabEstaCargando(1)"
+      [disabled]="cargandoTabPanel" (click)="cambiarTab(1)">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>design_services</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Servicios</span>
+        <span class="inm-detalle__tab-sub">{{ servicios.length }} {{ servicios.length === 1 ? 'registrado' : 'registrados' }}</span>
+      </span>
       <span class="inm-detalle__tab-spinner" *ngIf="tabEstaCargando(1)" aria-hidden="true"></span>
     </button>
-    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 2"
-      [class.inm-detalle__tab--loading]="tabEstaCargando(2)" [disabled]="cargandoTabPanel"
-      (click)="cambiarTab(2)">
-      <span class="inm-detalle__tab-label">Documentos ({{ archivos.length }})</span>
+    <button type="button" role="tab" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 2"
+      [attr.aria-selected]="detalleTab === 2" [class.inm-detalle__tab--loading]="tabEstaCargando(2)"
+      [disabled]="cargandoTabPanel" (click)="cambiarTab(2)">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>folder_open</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Documentos</span>
+        <span class="inm-detalle__tab-sub">{{ archivos.length }} {{ archivos.length === 1 ? 'archivo' : 'archivos' }}</span>
+      </span>
       <span class="inm-detalle__tab-spinner" *ngIf="tabEstaCargando(2)" aria-hidden="true"></span>
     </button>
   </nav>
@@ -27,23 +39,11 @@
     </div>
 
   <div class="inm-detalle__panel inm-detalle__panel--zonas" *ngIf="detalleTab === 0 && !mostrarCargaPanel">
-    <div class="inm-zonas-resumen" *ngIf="zonas.length">
-      <span class="inm-chip inm-chip--muted">
-        <i class="fa fa-object-group"></i> Superficie total: {{ superficieTotalZonas() | number:'1.0-2' }} m²
-      </span>
-      <span class="inm-chip inm-chip--muted">
-        <i class="fa fa-square-o"></i> Disponible: {{ superficieDisponibleTotal() | number:'1.0-2' }} m²
-      </span>
-      <span class="inm-chip inm-chip--muted">
-        <i class="fa fa-store"></i> {{ totalLocales() }}
-        {{ totalLocales() === 1 ? 'Local' : 'Locales' }}
-      </span>
-    </div>
-
     <div class="inm-zonas-toolbar" *ngIf="zonas.length && totalLocales()">
-      <label class="inm-zonas-toolbar__label" for="inm-filtro-local">Buscar local</label>
+      <mat-icon class="inm-zonas-toolbar__icono" aria-hidden="true">search</mat-icon>
+      <label class="visually-hidden" for="inm-filtro-local">Buscar local</label>
       <input id="inm-filtro-local" type="search" class="inm-zonas-toolbar__input" [(ngModel)]="filtroLocal"
-        placeholder="Local, estatus, renta, mantenimiento o giro…" autocomplete="off" />
+        placeholder="Buscar local por nombre, estatus, renta, mantenimiento o giro…" autocomplete="off" />
       <span class="inm-zonas-toolbar__hint" *ngIf="filtroLocal.trim()">
         {{ totalLocalesVisibles() }} de {{ totalLocales() }} visibles
       </span>

@@ -1,18 +1,6 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
-  <header class="perm-head" role="region" aria-label="Sección: Inmuebles">
-    <div class="perm-head__icon" aria-hidden="true">
-      <mat-icon>apartment</mat-icon>
-    </div>
-    <div class="perm-head__text">
-      <span class="eyebrow">Sección</span>
-      <h2>Inmuebles</h2>
-    </div>
-    <nav class="perm-head__crumbs" aria-label="Ruta">
-      <span class="crumb">Operación</span>
-      <span class="sep">/</span>
-      <span class="crumb active">Inmuebles</span>
-    </nav>
-  </header>
+  <app-module-hero icon="apartment" eyebrow="Operación" titulo="Inmuebles"
+    descripcion="Consulta los inmuebles, sus zonas, locales y ocupación."></app-module-hero>
 
   <div class="surface">
     <div class="clientes-flow-head mb-2">
@@ -86,7 +74,7 @@
         <dxo-sorting mode="multiple"></dxo-sorting>
         <dxo-group-panel [emptyPanelText]="mensajeAgrupar" [visible]="true"></dxo-group-panel>
 
-        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="320" alignment="center"
+        <dxi-column caption="Opciones" cellTemplate="accionesTpl" [width]="160" alignment="center"
           *appHasPermission="['41', '42']" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false"
           [allowFiltering]="false" [visible]="false"></dxi-column>
@@ -182,46 +170,15 @@
             </span>
           </div>
         </div>
-        <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
-          <div *appHasPermission="'42'">
-            <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
-              (click)="editarInmueble(row.data); $event.stopPropagation()">
-              <i class="fa fa-edit"></i>
-            </button>
-          </div>
-          <div *appHasPermission="'41'">
-            @if (row.data.estatusRegistro === 0) {
-            <button type="button" id="activarRegistroButton" class="btnAcciones" title="Activar inmueble"
-              (click)="activarInmueble(row.data); $event.stopPropagation()">
-              <i class="fa fa-check-circle"></i>
-            </button>
-            } @else {
-            <button type="button" id="deleteButton" class="btnAcciones" title="Eliminar inmueble"
-              (click)="eliminarInmueble(row.data); $event.stopPropagation()">
-              <i class="fa fa-trash"></i>
-            </button>
-            }
-          </div>
-          <div *appHasPermission="'41'">
-            <div *ngIf="row.data.tieneMapa">
-              <button type="button" id="ubicacionMapaButton" class="btnAcciones" title="Ubicación"
-                (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
-                <i class="fa fa-map-marker"></i>
-              </button>
-            </div>
-          </div>
-          <div *appHasPermission="'41'">
-            <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
-              (click)="verDashboardInmueble(row.data); $event.stopPropagation()">
-              <i class="fa fa-tachometer"></i>
-            </button>
-          </div>
-          <div *appHasPermission="'41'">
-            <button type="button" id="ubicacionButton" class="btnAcciones" title="Ocupación del inmueble"
-              (click)="verLugarInmueble(row.data); $event.stopPropagation()">
-              <i class="fa fa-area-chart"></i>
-            </button>
-          </div>
+        <!-- Opciones: un botón que despliega las acciones del inmueble (el menú se pinta fuera del grid) -->
+        <div *dxTemplate="let row of 'accionesTpl'" class="inm-opciones-celda">
+          <button type="button" class="inm-opciones-btn" [class.inm-opciones-btn--abierto]="menuAcciones?.row === row.data"
+            aria-haspopup="menu" [attr.aria-expanded]="menuAcciones?.row === row.data"
+            (click)="abrirMenuAcciones(row.data, $event)">
+            <i class="fa fa-sliders" aria-hidden="true"></i>
+            <span>Acciones</span>
+            <mat-icon aria-hidden="true" class="inm-opciones-btn__chevron">expand_more</mat-icon>
+          </button>
         </div>
 
         <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
@@ -800,3 +757,36 @@
     </div>
   </div>
 </div>
+
+<!-- Menú de acciones del inmueble (posición fija junto al botón para que no lo recorte el grid) -->
+@if (menuAcciones; as m) {
+<div class="inm-opciones-menu" role="menu" aria-label="Acciones del inmueble" [class.inm-opciones-menu--arriba]="m.arriba"
+  [style.top.px]="m.top" [style.left.px]="m.left" (click)="$event.stopPropagation()">
+  <button *appHasPermission="'42'" type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--editar"
+    (click)="ejecutarAccion('editar')">
+    <i class="fa fa-edit"></i><span>Editar</span>
+  </button>
+  <ng-container *appHasPermission="'41'">
+    @if (m.row.estatusRegistro === 0) {
+    <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--activar" (click)="ejecutarAccion('activar')">
+      <i class="fa fa-check-circle"></i><span>Activar inmueble</span>
+    </button>
+    } @else {
+    <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--eliminar" (click)="ejecutarAccion('eliminar')">
+      <i class="fa fa-trash"></i><span>Eliminar inmueble</span>
+    </button>
+    }
+    @if (m.row.tieneMapa) {
+    <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--mapa" (click)="ejecutarAccion('mapa')">
+      <i class="fa fa-map-marker"></i><span>Ubicación</span>
+    </button>
+    }
+    <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--dashboard" (click)="ejecutarAccion('dashboard')">
+      <i class="fa fa-tachometer"></i><span>Dashboard</span>
+    </button>
+    <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--ocupacion" (click)="ejecutarAccion('ocupacion')">
+      <i class="fa fa-area-chart"></i><span>Ocupación del inmueble</span>
+    </button>
+  </ng-container>
+</div>
+}

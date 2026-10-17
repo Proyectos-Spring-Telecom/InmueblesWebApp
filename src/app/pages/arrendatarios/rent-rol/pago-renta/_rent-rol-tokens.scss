@@ -1,0 +1,75 @@
+// Tokens compartidos por Rent Rol y su modal de pagos.
+// Misma paleta que Generar Contrato y Embudo de ventas.
+// Los tokens --app-* solo existen en tema claro; los valores por defecto corresponden al tema oscuro.
+$rr-surface: var(--app-surface, #111821);
+$rr-surface-2: var(--app-surface-2, #0d131b);
+$rr-surface-3: var(--app-surface-3, #1b2430);
+$rr-text: var(--app-text, #e8ecf6);
+$rr-text-muted: var(--app-text-muted, #a6b0c8);
+$rr-text-soft: var(--app-text-soft, #7f8aa5);
+$rr-border: var(--app-border, rgba(255, 255, 255, 0.08));
+$rr-border-strong: var(--app-border-strong, rgba(255, 255, 255, 0.16));
+
+$rr-accent: #5d87ff;
+$rr-accent-2: #7c5cff;
+$rr-pendiente: #f0a33a;
+$rr-pagada: #22b07d;
+$rr-incremento: #fa8072;
+$rr-error: #ff6b6f;
+
+@mixin rr-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  &:not(:disabled):active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primario {
+    color: #ffffff;
+    background: linear-gradient(135deg, $rr-accent, $rr-accent-2);
+    box-shadow: 0 8px 20px rgba(93, 135, 255, 0.3);
+  }
+
+  &--exito {
+    color: #ffffff;
+    background: linear-gradient(135deg, #1fa971, #22c08a);
+    box-shadow: 0 8px 18px rgba(34, 176, 125, 0.28);
+  }
+
+  &--fantasma {
+    color: $rr-text;
+    background: transparent;
+    border-color: $rr-border-strong;
+
+    &:not(:disabled):hover {
+      border-color: $rr-accent;
+    }
+  }
+}

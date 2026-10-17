@@ -9,6 +9,7 @@ import { ListaInstalacionesCentralesComponent } from './lista-instalaciones-cent
 import { InstalacionesCentralesRoutingModule } from './instalaciones-centrales-routing.module';
 import { AgregarInstalacionCentralComponent } from './agregar-instalacion-central/agregar-instalacion-central.component';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 
 @NgModule({
@@ -17,6 +18,7 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
     AgregarInstalacionCentralComponent
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     InstalacionesCentralesRoutingModule,
     MatIconModule,

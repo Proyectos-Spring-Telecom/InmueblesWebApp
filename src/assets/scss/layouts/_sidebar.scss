@@ -6,6 +6,9 @@
   transition: width .4s cubic-bezier(.25,.8,.25,1);
   position: fixed !important;
   top: $header-height !important;
+  bottom: 0 !important;
+  height: auto !important;
+  max-height: calc(100vh - #{$header-height});
   overflow-x: hidden;
   border-right: 0;
   border-radius: 0px !important;
@@ -13,7 +16,22 @@
   background-color: var(--mat-card-elevated-container-color);
 
   .mat-drawer-inner-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
     overflow: hidden;
+  }
+
+  app-sidebar {
+    flex: 0 0 auto;
+  }
+
+  // El menú ocupa el espacio restante bajo el perfil (sin altura fija que recorte "Cerrar Sesión")
+  .sidebar-menu-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
   }
 
   .ng-scroll-content {
@@ -182,7 +200,7 @@
 
 .sidebarNav-mini {
   .mini-scroll {
-    height: calc(100vh - 70px) !important;
+    height: auto !important;
   }
 
   .branding {
@@ -251,7 +269,7 @@
       width: $sidenav-desktop;
 
       .mini-scroll {
-        height: calc(100vh - 230px) !important;
+        height: auto !important;
       }
 
       .hide-menu {
@@ -364,7 +382,7 @@
 
 .sidebar-list {
   &.mdc-list {
-    padding: 0 12px;
+    padding: 0 12px 28px;
     width: 100%;
     overflow-x: hidden;
     overflow-y: visible;

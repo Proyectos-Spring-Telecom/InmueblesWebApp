@@ -1,18 +1,6 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-  <header class="perm-head perm-head--left" role="region" aria-label="Sección: Fórmulas">
-    <div class="perm-head__icon" aria-hidden="true">
-      <mat-icon>functions</mat-icon>
-    </div>
-    <div class="perm-head__text">
-      <span class="eyebrow">Sección</span>
-      <h2>{{ title }}</h2>
-    </div>
-    <nav class="perm-head__crumbs" aria-label="Ruta">
-      <span class="crumb">Administración</span>
-      <span class="sep">/</span>
-      <span class="crumb active">Fórmulas</span>
-    </nav>
-  </header>
+  <app-module-hero icon="functions" eyebrow="Administración" [titulo]="title"
+    descripcion="Arma la fórmula con los factores disponibles para calcular incrementos de renta."></app-module-hero>
 
   <div class="surface">
     <section class="perm-form-nc container-fluid py-4 formula-form">

@@ -8,6 +8,7 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { ProspectosRoutingModule } from './prospectos-routing.module';
 import { ListaProspectosComponent } from './lista-prospectos/lista-prospectos.component';
 import { AgregarProspectoComponent } from './agregar-prospecto/agregar-prospecto.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { AgregarProspectoComponent } from './agregar-prospecto/agregar-prospecto
     AgregarProspectoComponent,
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     ProspectosRoutingModule,
     MatIconModule,

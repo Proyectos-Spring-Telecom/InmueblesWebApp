@@ -1,0 +1,28 @@
+<header class="mh" role="region" [attr.aria-label]="'Sección: ' + titulo">
+  <div class="mh__contenido">
+    <span class="mh__eyebrow">
+      <mat-icon aria-hidden="true">auto_awesome</mat-icon> {{ eyebrow }}
+    </span>
+    <h2 class="mh__titulo">{{ titulo }}</h2>
+    @if (descripcion) {
+    <p class="mh__texto">{{ descripcion }}</p>
+    }
+    <div class="mh__extra"><ng-content></ng-content></div>
+  </div>
+
+  <!-- Ilustración decorativa con el ícono del módulo -->
+  <div class="mh__arte" aria-hidden="true">
+    <div class="mh-tarjeta mh-tarjeta--atras"></div>
+    <div class="mh-tarjeta">
+      <span class="mh-tarjeta__icono"><mat-icon>{{ icon }}</mat-icon></span>
+      <span class="mh-tarjeta__linea"></span>
+      <span class="mh-tarjeta__linea mh-tarjeta__linea--media"></span>
+      <span class="mh-tarjeta__linea mh-tarjeta__linea--corta"></span>
+      <div class="mh-tarjeta__barras">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span class="mh-tarjeta__sello"><mat-icon>verified</mat-icon></span>
+    </div>
+    <span class="mh__chip"><i></i> En línea</span>
+  </div>
+</header>

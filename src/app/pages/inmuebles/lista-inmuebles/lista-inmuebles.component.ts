@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { DxDataGridComponent, DxPieChartComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
@@ -82,7 +82,7 @@ const COLORES_LOCALES = [
   standalone: false,
   animations: [routeAnimation],
 })
-export class ListaInmueblesComponent implements OnInit {
+export class ListaInmueblesComponent implements OnInit, OnDestroy {
   public listaInmuebles: any;
   public showFilterRow = true;
   public showHeaderFilter = true;
@@ -178,7 +178,61 @@ export class ListaInmueblesComponent implements OnInit {
   ngOnInit(): void {
     this.setupDataSource();
     this.cargarArrendadores();
+    // El menú de acciones es fijo en pantalla: se cierra al desplazar cualquier contenedor.
+    document.addEventListener('scroll', this.cerrarMenuAccionesPorScroll, true);
   }
+
+  ngOnDestroy(): void {
+    document.removeEventListener('scroll', this.cerrarMenuAccionesPorScroll, true);
+  }
+
+  // ─── Menú de acciones (columna Opciones) ─────────────────────────────────────
+
+  /** Fila con el menú abierto y su posición en pantalla (se pinta fuera del grid para no recortarse). */
+  menuAcciones: { row: InmuebleGridRow; top: number; left: number; arriba: boolean } | null = null;
+
+  private static readonly ANCHO_MENU_ACCIONES = 240;
+  private static readonly ALTO_MENU_ACCIONES = 260;
+
+  abrirMenuAcciones(row: InmuebleGridRow, ev: MouseEvent): void {
+    ev.stopPropagation();
+    if (this.menuAcciones?.row === row) {
+      this.menuAcciones = null;
+      return;
+    }
+    const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+    const ancho = ListaInmueblesComponent.ANCHO_MENU_ACCIONES;
+    const arriba = r.bottom + ListaInmueblesComponent.ALTO_MENU_ACCIONES > window.innerHeight && r.top > ListaInmueblesComponent.ALTO_MENU_ACCIONES;
+    const left = Math.max(8, Math.min(r.left + r.width / 2 - ancho / 2, window.innerWidth - ancho - 8));
+    this.menuAcciones = { row, left, top: arriba ? r.top - 8 : r.bottom + 8, arriba };
+  }
+
+  ejecutarAccion(accion: 'editar' | 'activar' | 'eliminar' | 'mapa' | 'dashboard' | 'ocupacion'): void {
+    const row = this.menuAcciones?.row;
+    this.menuAcciones = null;
+    if (!row) return;
+    switch (accion) {
+      case 'editar': this.editarInmueble(row); break;
+      case 'activar': this.activarInmueble(row); break;
+      case 'eliminar': this.eliminarInmueble(row); break;
+      case 'mapa': this.verMapaDesdeDetalle(row); break;
+      case 'dashboard': this.verDashboardInmueble(row); break;
+      case 'ocupacion': this.verLugarInmueble(row); break;
+    }
+  }
+
+  // Clic fuera y Escape se atienden en los listeners de documento que ya existen (Angular registra
+  // un solo listener por evento por componente); aquí solo el cambio de tamaño.
+  @HostListener('window:resize')
+  cerrarMenuAcciones(): void {
+    if (this.menuAcciones) this.menuAcciones = null;
+  }
+
+  private readonly cerrarMenuAccionesPorScroll = (): void => {
+    if (!this.menuAcciones) return;
+    this.menuAcciones = null;
+    this.cdr.markForCheck();
+  };
 
   agregarInmueble(): void {
     void this.router.navigateByUrl('/inmuebles/agregar-inmueble');
@@ -294,12 +348,14 @@ export class ListaInmueblesComponent implements OnInit {
 
   @HostListener('document:click')
   cerrarFiltroArrendador(): void {
+    this.cerrarMenuAcciones();
     if (!this.filtroArrendadorAbierto) return;
     this.filtroArrendadorAbierto = false;
   }
 
   @HostListener('document:keydown.escape')
   cerrarFiltroArrendadorTecla(): void {
+    this.cerrarMenuAcciones();
     if (!this.filtroArrendadorAbierto) return;
     this.filtroArrendadorAbierto = false;
   }

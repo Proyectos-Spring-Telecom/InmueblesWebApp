@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -135,6 +135,16 @@ interface RentaModalResumenVm {
 })
 export class ListaRentasActualesComponent implements OnInit {
   embebidoEnHub = false;
+
+  /**
+   * Solo el modal de renta (sin grid ni filtros). Lo usa Rent Rol para registrar,
+   * editar, pagar y duplicar con exactamente la misma lógica de Pagos del mes.
+   */
+  @Input() modoSoloModal = false;
+  /** Se emite tras registrar, editar, marcar pagada o duplicar una renta. */
+  @Output() rentaCambio = new EventEmitter<void>();
+  /** Solo en modo modal: marcar la renta como pagada al registrarla. */
+  marcarPagadaAlRegistrar = false;
   listaRentas!: InstanceType<typeof CustomStore>;
   showFilterRow = true;
   showHeaderFilter = true;
@@ -280,6 +290,7 @@ export class ListaRentasActualesComponent implements OnInit {
   ngOnInit(): void {
     this.embebidoEnHub = this.leerEmbebidoEnHub();
     this.inicializarFormulario();
+    if (this.modoSoloModal) return; // sin grid ni filtros: no se consultan
     this.cargarArrendadoresFiltro();
     this.cargarInmueblesFiltro();
     this.setupDataSource();
@@ -1950,6 +1961,7 @@ export class ListaRentasActualesComponent implements OnInit {
   // ─── Modal alta ──────────────────────────────────────────────────────────────
 
   abrirModalAlta(): void {
+    this.marcarPagadaAlRegistrar = false;
     this.limpiarEfectoPasoRentaModal();
     this.rentaModalModo = 'alta';
     this.rentaEditId    = null;
@@ -2744,7 +2756,7 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaActualService.registrarRenta(postBody)
       .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => this.onRentaGuardadaOk('La renta del mes se registró correctamente.'),
+        next: (resp) => this.onRentaRegistrada(resp),
         error: (err) => this.onRentaGuardadaError(err),
       });
   }
@@ -2840,14 +2852,58 @@ export class ListaRentasActualesComponent implements OnInit {
     this.rentaActualService.registrarRenta(postBody)
       .pipe(take(1), finalize(() => { this.rentaGuardando = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => this.onRentaGuardadaOk('La renta del mes se registró correctamente.'),
+        next: (resp) => this.onRentaRegistrada(resp),
         error: (err) => this.onRentaGuardadaError(err),
+      });
+  }
+
+  /** Alta exitosa: en modo modal puede marcarla como pagada en el mismo paso. */
+  private onRentaRegistrada(resp: unknown): void {
+    if (!this.modoSoloModal || !this.marcarPagadaAlRegistrar) {
+      this.onRentaGuardadaOk('La renta del mes se registró correctamente.');
+      return;
+    }
+    const r = resp as { id?: unknown; data?: { id?: unknown } } | null;
+    const id = Number(r?.data?.id ?? r?.id);
+    this.cerrarModalRenta();
+    if (!Number.isFinite(id) || id <= 0) {
+      this.rentaCambio.emit();
+      void Swal.fire({
+        background: '#141a21', color: '#ffffff',
+        icon: 'info', title: 'Renta registrada',
+        text: 'La renta se registró como pendiente, pero no se pudo identificar para marcarla como pagada. Márcala desde la tabla.',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+    this.rentaActualService.marcarComoPagada(Math.floor(id))
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.rentaCambio.emit();
+          void Swal.fire({
+            background: '#141a21', color: '#ffffff',
+            icon: 'success', title: '¡Operación Exitosa!',
+            text: 'La renta se registró y quedó marcada como pagada en el histórico.',
+            confirmButtonText: 'Listo',
+          });
+        },
+        error: (err) => {
+          this.rentaCambio.emit();
+          void Swal.fire({
+            background: '#141a21', color: '#ffffff',
+            icon: 'warning', title: 'Renta registrada sin pagar',
+            text: 'La renta se registró, pero no se pudo marcar como pagada: ' + this.mensajeErrorHttp(err),
+            confirmButtonText: 'Entendido',
+          });
+        },
       });
   }
 
   private onRentaGuardadaOk(texto: string): void {
     this.cerrarModalRenta();
     this.dataGrid?.instance?.refresh();
+    this.rentaCambio.emit();
     void Swal.fire({
       background: '#141a21', color: '#ffffff',
       icon: 'success', title: '¡Operación Exitosa!',
@@ -2887,6 +2943,7 @@ export class ListaRentasActualesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.dataGrid?.instance?.refresh();
+          this.rentaCambio.emit();
           void Swal.fire({
             background: '#141a21', color: '#ffffff',
             icon: 'success', title: '¡Operación Exitosa!',
@@ -2938,6 +2995,7 @@ export class ListaRentasActualesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.dataGrid?.instance?.refresh();
+          this.rentaCambio.emit();
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',

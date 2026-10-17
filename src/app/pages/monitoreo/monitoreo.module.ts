@@ -12,11 +12,13 @@ import { DxiValueAxisModule } from 'devextreme-angular/ui/nested';
 import { MonitoreoInstalacionComponent } from './monitoreo-instalacion/monitoreo-instalacion.component';
 import { MonitoreoLocalesPlanoComponent } from './locales-plano/monitoreo-locales-plano.component';
 import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documento-preview.module';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 
 @NgModule({
   declarations: [MonitoreoComponent, MonitoreoInstalacionComponent, MonitoreoLocalesPlanoComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     MonitoreoRoutingModule,
     DocumentoPreviewModule,

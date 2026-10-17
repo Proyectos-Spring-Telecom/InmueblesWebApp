@@ -7,10 +7,12 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MetodosPagoRoutingModule } from './metodos-pago-routing.module';
 import { ListaMetodosPagoComponent } from './lista-metodos-pago/lista-metodos-pago.component';
 import { AgregarMetodoPagoComponent } from './agregar-metodo-pago/agregar-metodo-pago.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [ListaMetodosPagoComponent, AgregarMetodoPagoComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     MetodosPagoRoutingModule,
     MatIconModule,

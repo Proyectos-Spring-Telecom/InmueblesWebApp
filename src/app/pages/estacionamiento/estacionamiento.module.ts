@@ -10,10 +10,12 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { ListaEstacionamientoComponent } from './lista-estacionamiento/lista-estacionamiento.component';
 import { AgregarEstacionamientoComponent } from './agregar-estacionamiento/agregar-estacionamiento.component';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 @NgModule({
   declarations: [ListaEstacionamientoComponent, AgregarEstacionamientoComponent],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     EstacionamientoRoutingModule,
     MatIconModule,

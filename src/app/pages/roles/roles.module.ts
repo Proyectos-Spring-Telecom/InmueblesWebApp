@@ -9,6 +9,7 @@ import { AgregarRolComponent } from './agregar-rol/agregar-rol.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from 'src/app/material.module';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
+import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 
 @NgModule({
@@ -17,6 +18,7 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
     AgregarRolComponent
   ],
   imports: [
+    ModuleHeroComponent,
     CommonModule,
     RolesRoutingModule,
     MatIconModule,

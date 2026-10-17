@@ -1,12 +1,6 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper" #topFormularioInmueble>
-  <header class="perm-head perm-head--left" role="region" aria-label="Sección: Inmuebles">
-    <div class="perm-head__icon" aria-hidden="true"><mat-icon>apartment</mat-icon></div>
-    <div class="perm-head__text"><span class="eyebrow">Sección</span>
-      <h2>{{ title }}</h2>
-    </div>
-    <nav class="perm-head__crumbs" aria-label="Ruta"><span class="crumb">Operación</span><span class="sep">/</span><span
-        class="crumb active">Inmuebles</span></nav>
-  </header>
+  <app-module-hero icon="apartment" eyebrow="Operación" [titulo]="title"
+    descripcion="Captura los datos del inmueble, su ubicación y zonas. Los campos con * son obligatorios."></app-module-hero>
   <div class="surface">
     <section class="perm-form-nc container-fluid py-4">
       <form [formGroup]="inmuebleForm" class="perm-form-body">

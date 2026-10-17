@@ -1,20 +1,4 @@
 <div [@routeAnimation] class="card card--panel perm-wrapper">
-    <header class="perm-head" role="region" aria-label="Sección: Generar contrato">
-        <div class="perm-head__icon" aria-hidden="true">
-            <mat-icon>description</mat-icon>
-        </div>
-
-        <div class="perm-head__text">
-            <span class="eyebrow">Sección</span>
-            <h2>Generar Contrato</h2>
-        </div>
-
-        <nav class="perm-head__crumbs" aria-label="Ruta">
-            <span class="crumb">Administración</span>
-            <span class="sep">/</span>
-            <span class="crumb active">Generar Contrato</span>
-        </nav>
-    </header>
 
     <div class="surface">
         @if (!plantilla || !form) {
@@ -303,6 +287,7 @@
                             [class.cw-paso--activo]="i === seccionActiva"
                             [class.cw-paso--completo]="seccionCompleta(seccion)"
                             [class.cw-paso--error]="intentoEnviar && !seccionCompleta(seccion)"
+                            (mousedown)="$event.preventDefault()"
                             (click)="seleccionarSeccion(i)">
                             <span class="cw-paso__punto">
                                 @if (seccionCompleta(seccion)) {

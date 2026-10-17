@@ -1,64 +1,155 @@
 <div class="rr-root" [@routeAnimation]>
-  <div class="card card--panel perm-wrapper rr-rent-rol">
-    <header class="perm-head" role="region" aria-label="Sección: Rent-rol">
-      <div class="perm-head__icon" aria-hidden="true">
-        <mat-icon>table_view</mat-icon>
-      </div>
-      <div class="perm-head__text">
-        <span class="eyebrow">Catálogos</span>
-        <h2>Rent Rol</h2>
-      </div>
-      <nav class="perm-head__crumbs" aria-label="Ruta">
-        <span class="crumb">Operación</span>
-        <span class="sep">/</span>
-        <span class="crumb">Arrendatarios</span>
-        <span class="sep">/</span>
-        <span class="crumb active">Rent-rol</span>
-      </nav>
-    </header>
+  <div class="card card--panel perm-wrapper rr-rent-rol rrv">
     <div class="surface">
-      <div class="rr-kpi-slot" role="region" aria-label="Resumen del periodo">
-        <div class="rr-kpi-grid">
-          <div class="rr-kpi rr-kpi--renta">
-            <div class="rr-kpi__body">
-              <span class="rr-kpi__label">Sub-total renta</span>
-              <span class="rr-kpi__value">{{ totalRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-              <span class="rr-kpi__hint">IVA {{ totalIvaRenta | currency:'MXN':'symbol-narrow':'1.2-2' }} · Total
-                {{ totalRentaConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+      <!-- ═════ Resumen: portada, avance y totales cobrados ═════ -->
+      <section class="rrv-panel">
+        <!-- ═════ Portada ═════ -->
+        <header class="rrv-hero" role="region" aria-label="Rent Rol">
+          <div class="rrv-hero__info">
+            <span class="rrv-eyebrow"><mat-icon aria-hidden="true">table_view</mat-icon> Operación · Arrendatarios</span>
+            <h2 class="rrv-hero__titulo">Rent Rol</h2>
+            <div class="rrv-avance" [attr.aria-label]="'Avance de cobro ' + porcentajeCobrado + '%'">
+              <div class="rrv-avance__barra">
+                <span class="rrv-avance__relleno" [style.width.%]="porcentajeCobrado"></span>
+              </div>
+              <div class="rrv-avance__leyenda">
+                <span class="rrv-avance__item rrv-avance__item--pagada"><i></i> Pagadas <strong>{{ conteoPagadas }}</strong></span>
+                <span class="rrv-avance__item rrv-avance__item--pendiente"><i></i> Pendientes <strong>{{ conteoPendientes }}</strong></span>
+                <span class="rrv-avance__pct">{{ porcentajeCobrado }}% cobrado</span>
+              </div>
             </div>
           </div>
-          <div class="rr-kpi rr-kpi--mantto">
-            <div class="rr-kpi__body">
-              <span class="rr-kpi__label">Sub-total mantenimiento</span>
-              <span class="rr-kpi__value">{{ totalMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-              <span class="rr-kpi__hint">IVA {{ totalIvaMantto | currency:'MXN':'symbol-narrow':'1.2-2' }} · Total
-                {{ totalManttoConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+
+          <div class="rrv-hero__acciones">
+            <button type="button" class="rrv-btn rrv-btn--primario" (click)="abrirRegistroPago()">
+              <mat-icon aria-hidden="true">add_card</mat-icon> Registrar pago de renta
+            </button>
+            <button type="button" class="rrv-btn rrv-btn--fantasma" (click)="abrirModalCaptura()">
+              <mat-icon aria-hidden="true">person_add</mat-icon> Agregar arrendatario
+            </button>
+          </div>
+        </header>
+
+        <!-- ═════ Totalizadores (solo pagados) ═════ -->
+        <section class="rrv-totales" role="region" aria-label="Totales cobrados del periodo">
+          <header class="rrv-totales__head">
+            <span class="rrv-totales__icono"><mat-icon aria-hidden="true">account_balance_wallet</mat-icon></span>
+            <div>
+              <h3 class="rrv-totales__titulo">Totales cobrados</h3>
+              <span class="rrv-totales__sub">{{ mesFiltroLabel || 'Mes seleccionado' }} · solo pagos marcados como pagados</span>
+            </div>
+          </header>
+          <div class="rrv-kpis">
+            <article class="rrv-kpi rrv-kpi--renta">
+              <span class="rrv-kpi__icono"><mat-icon aria-hidden="true">home_work</mat-icon></span>
+              <div class="rrv-kpi__cuerpo">
+                <span class="rrv-kpi__label">Renta cobrada</span>
+                <span class="rrv-kpi__valor">{{ totalRentaConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                <span class="rrv-kpi__hint">Sub-total {{ totalRenta | currency:'MXN':'symbol-narrow':'1.2-2' }} · IVA
+                  {{ totalIvaRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+              </div>
+            </article>
+            <article class="rrv-kpi rrv-kpi--mantto">
+              <span class="rrv-kpi__icono"><mat-icon aria-hidden="true">build_circle</mat-icon></span>
+              <div class="rrv-kpi__cuerpo">
+                <span class="rrv-kpi__label">Mantenimiento cobrado</span>
+                <span class="rrv-kpi__valor">{{ totalManttoConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                <span class="rrv-kpi__hint">Sub-total {{ totalMantto | currency:'MXN':'symbol-narrow':'1.2-2' }} · IVA
+                  {{ totalIvaMantto | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+              </div>
+            </article>
+            <article class="rrv-kpi rrv-kpi--total">
+              <span class="rrv-kpi__icono"><mat-icon aria-hidden="true">payments</mat-icon></span>
+              <div class="rrv-kpi__cuerpo">
+                <span class="rrv-kpi__label">Gran total cobrado</span>
+                <span class="rrv-kpi__valor">{{ granTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                <span class="rrv-kpi__hint">Sub-total {{ subTotalCombinado | currency:'MXN':'symbol-narrow':'1.2-2' }} · IVA
+                  {{ ivaCombinado | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+      </section>
+
+      <!-- ═════ Datos: filtros, búsqueda, exportación y tabla en una sola card ═════ -->
+      <section class="rrv-datos">
+        <section class="rrv-barra" role="search" aria-label="Filtros del periodo">
+          <div class="rrv-filtros">
+            <div class="rrv-campo">
+              <label class="rrv-label" for="rrMesFiltro">Mes <span class="rrv-req">*</span></label>
+              <dx-date-box
+                [inputAttr]="{ id: 'rrMesFiltro' }"
+                class="rr-mes-datebox rrv-datebox"
+                [(value)]="mesFechaFiltro"
+                type="date"
+                displayFormat="monthAndYear"
+                placeholder="Seleccione mes"
+                [openOnFieldClick]="true"
+                [showClearButton]="false"
+                [calendarOptions]="mesCalendarOptions"
+                stylingMode="outlined"
+                (onValueChanged)="onMesFechaChange($event)">
+              </dx-date-box>
+            </div>
+            <div class="rrv-campo">
+              <label class="rrv-label" for="rrArrendatario">Arrendatario</label>
+              <div class="rrv-control">
+                <mat-icon aria-hidden="true">person</mat-icon>
+                <select id="rrArrendatario" [(ngModel)]="idArrendatarioFiltro" (ngModelChange)="onArrendatarioFiltroChange()"
+                  [disabled]="catalogosFiltroCargando">
+                  <option [ngValue]="null">Todos</option>
+                  <option *ngFor="let a of arrendatariosFiltroOpciones" [ngValue]="a.id">{{ a.label }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="rrv-campo">
+              <label class="rrv-label" for="rrContrato">Contrato</label>
+              <div class="rrv-control" [class.rrv-control--deshabilitado]="catalogosFiltroCargando || !idArrendatarioFiltro">
+                <mat-icon aria-hidden="true">description</mat-icon>
+                <select id="rrContrato" [(ngModel)]="idContratoFiltro" [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro">
+                  <option [ngValue]="null">{{ textoPlaceholderContratoFiltro() }}</option>
+                  <option *ngFor="let c of contratosFiltroOpciones" [ngValue]="c.id">{{ c.label }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="rrv-campo rrv-campo--boton">
+              <button type="button" class="rrv-btn rrv-btn--secundario" (click)="aplicarFiltros()"
+                [disabled]="cargando || cargandoBusqueda">
+                <mat-icon aria-hidden="true" [class.rrv-girando]="cargando || cargandoBusqueda">
+                  {{ cargando || cargandoBusqueda ? 'autorenew' : 'search' }}
+                </mat-icon>
+                Buscar
+              </button>
             </div>
           </div>
-          <div class="rr-kpi rr-kpi--accent">
-            <div class="rr-kpi__body">
-              <span class="rr-kpi__label">Gran total del periodo</span>
-              <span class="rr-kpi__value">{{ granTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-              <span class="rr-kpi__hint">Sub-total {{ subTotalCombinado | currency:'MXN':'symbol-narrow':'1.2-2' }} ·
-                IVA
-                {{ ivaCombinado | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-            </div>
+
+        </section>
+
+      <div class="rr-body">
+
+        <!-- Búsqueda, estatus y exportación de la tabla -->
+        <div class="rrv-tabla-barra">
+          <div class="rrv-busqueda">
+            <mat-icon aria-hidden="true">search</mat-icon>
+            <input id="rentRolSearchInput" type="search" [value]="busquedaTexto" (input)="onBusquedaInput($event)"
+              placeholder="Buscar arrendatario, inmueble, local, montos, fechas, estatus…" autocomplete="off"
+              spellcheck="false" aria-label="Buscar en toda la tabla" />
+            <button type="button" class="rrv-busqueda__limpiar" *ngIf="busquedaTexto.trim().length > 0"
+              (click)="limpiarBusqueda()" aria-label="Limpiar búsqueda">
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
           </div>
-        </div>
-      </div>
-      <!-- Controles: acciones → filtros → búsqueda (sin tocar KPIs ni grid) -->
-      <div class="rr-controls">
-        <div class="rr-controls__acciones">
-          <button type="button" (click)="abrirModalCaptura()" mat-flat-button class="btn-renta bg-primary">
-            <i class="fa fa-plus" aria-hidden="true"></i>
-            Agregar Arrendatario
-          </button>
-          <div class="rr-export-wrap" [class.rr-export-wrap--open]="exportMenuAbierto">
-            <button type="button" class="rr-export-btn" [disabled]="!registrosVisibles.length"
+          <div class="rrv-leyenda" aria-label="Leyenda de estatus">
+            <span class="rrv-leyenda__item rrv-leyenda__item--pagada"><i></i> Pagada <strong>{{ conteoPagadas }}</strong></span>
+            <span class="rrv-leyenda__item rrv-leyenda__item--pendiente"><i></i> Pendiente <strong>{{ conteoPendientes }}</strong></span>
+            <span class="rrv-leyenda__item rrv-leyenda__item--incremento"><i></i> Incremento</span>
+          </div>
+          <div class="rr-export-wrap rrv-export" [class.rr-export-wrap--open]="exportMenuAbierto">
+            <button type="button" class="rrv-btn rrv-btn--fantasma" [disabled]="!registrosVisibles.length"
               [attr.aria-expanded]="exportMenuAbierto" aria-haspopup="menu" (click)="toggleExportMenu()">
-              <i class="fa fa-file-excel-o"></i>
-              <span>Exportar</span>
-              <i class="fa fa-chevron-down rr-export-chevron"></i>
+              <mat-icon aria-hidden="true">file_download</mat-icon> Exportar
+              <mat-icon aria-hidden="true" class="rr-export-chevron">expand_more</mat-icon>
             </button>
             <div class="rr-export-menu" role="menu" aria-label="Opciones de exportación" *ngIf="exportMenuAbierto">
               <button type="button" class="rr-export-option rr-export-option--excel" role="menuitem"
@@ -74,81 +165,6 @@
             </div>
           </div>
         </div>
-
-        <div class="rr-controls__filtros" role="search" aria-label="Filtros del periodo">
-          <div class="rr-controls__campo rr-controls__campo--mes">
-            <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="rrMesFiltro">Mes <span
-                class="text-danger">*</span></label>
-            <dx-date-box
-              [inputAttr]="{ id: 'rrMesFiltro' }"
-              class="rr-mes-datebox hist-renta-filtro-fechas__input"
-              [(value)]="mesFechaFiltro"
-              type="date"
-              displayFormat="monthAndYear"
-              placeholder="Seleccione mes"
-              [openOnFieldClick]="true"
-              [showClearButton]="false"
-              [calendarOptions]="mesCalendarOptions"
-              stylingMode="outlined"
-              (onValueChanged)="onMesFechaChange($event)">
-            </dx-date-box>
-          </div>
-          <div class="rr-controls__campo">
-            <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="rrArrendatario">Arrendatario</label>
-            <select id="rrArrendatario" class="form-select form-select-sm hist-renta-filtro-fechas__input"
-              [(ngModel)]="idArrendatarioFiltro" (ngModelChange)="onArrendatarioFiltroChange()"
-              [disabled]="catalogosFiltroCargando">
-              <option [ngValue]="null">Todos</option>
-              <option *ngFor="let a of arrendatariosFiltroOpciones" [ngValue]="a.id">{{ a.label }}</option>
-            </select>
-          </div>
-          <div class="rr-controls__campo">
-            <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="rrContrato">Contrato</label>
-            <select id="rrContrato" class="form-select form-select-sm hist-renta-filtro-fechas__input"
-              [(ngModel)]="idContratoFiltro" [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro">
-              <option [ngValue]="null">{{ textoPlaceholderContratoFiltro() }}</option>
-              <option *ngFor="let c of contratosFiltroOpciones" [ngValue]="c.id">{{ c.label }}</option>
-            </select>
-          </div>
-          <div class="rr-controls__filtrar">
-            <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-secondary"
-              [disabled]="cargando || cargandoBusqueda">
-              <i class="fa fa-filter" aria-hidden="true"></i> Filtrar
-            </button>
-          </div>
-        </div>
-
-        <div class="rr-controls__tabla">
-          <div class="clientes-search" role="search">
-            <label class="clientes-search-label" for="rentRolSearchInput">Buscar registro</label>
-            <div class="clientes-search-field">
-              <span class="clientes-search-icon" aria-hidden="true">
-                <mat-icon>search</mat-icon>
-              </span>
-              <input id="rentRolSearchInput" type="search" class="clientes-search-input" [value]="busquedaTexto"
-                (input)="onBusquedaInput($event)"
-                placeholder="Arrendatario, inmueble, local, montos, fechas, estatus…" autocomplete="off"
-                spellcheck="false" aria-label="Buscar en toda la tabla" />
-              <button type="button" class="clientes-search-clear" *ngIf="busquedaTexto.trim().length > 0"
-                (click)="limpiarBusqueda()" aria-label="Limpiar búsqueda">
-                <mat-icon>close</mat-icon>
-              </button>
-            </div>
-          </div>
-          <div class="rr-leyenda rr-leyenda--head" aria-label="Leyenda de estatus">
-            <div class="rr-leyenda__item rr-leyenda__item--pagada">
-              <span class="rr-leyenda__caja"></span>
-              <span>Pagada</span>
-            </div>
-            <div class="rr-leyenda__item rr-leyenda__item--incremento">
-              <span class="rr-leyenda__caja"></span>
-              <span>Incremento</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="rr-body">
 
         <div class="rr-table-wrap rr-grid-wrap">
 
@@ -190,6 +206,8 @@
               [allowHiding]="false" alignment="center"></dxi-column>
             <dxi-column dataField="pagadaLabel" caption="Pagada" cellTemplate="pagadaTpl" [minWidth]="88"
               [allowHiding]="false" alignment="center"></dxi-column>
+            <dxi-column dataField="acciones" caption="Acciones" cellTemplate="accionesTpl" [minWidth]="150"
+              [allowHiding]="false" [allowSorting]="false" alignment="center"></dxi-column>
             <div *dxTemplate="let cell of 'empresaTpl'">
               <div class="empresa-nombre">{{ cell.data.nombre }}</div>
               <div class="empresa-nota" *ngIf="cell.data.representanteLegal || cell.data.telefonoRepresentante">
@@ -225,6 +243,30 @@
                 [class.rr-tag--pendiente]="!cell.data.pagada">
                 {{ cell.data.pagadaLabel }}
               </span>
+            </div>
+            <div *dxTemplate="let cell of 'accionesTpl'" class="rr-acciones">
+              @if (cell.data.esPendiente && cell.data.registro.idRentaActual != null) {
+              @if (cell.data.registro.puedeDuplicarMes) {
+              <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
+                (click)="editarRenta(cell.data); $event.stopPropagation()">
+                <i class="fa fa-edit"></i>
+              </button>
+              }
+              <button type="button" id="pinButton" class="btnAcciones" title="Marcar como pagada"
+                (click)="marcarRentaPagada(cell.data); $event.stopPropagation()">
+                <i class="fa fa-check"></i>
+              </button>
+              @if (cell.data.registro.puedeDuplicarMes) {
+              <button type="button" id="ubicacionButton" class="btnAcciones" title="Duplicar al mes siguiente"
+                (click)="duplicarRenta(cell.data); $event.stopPropagation()">
+                <i class="fa fa-calendar" aria-hidden="true"></i>
+              </button>
+              }
+              } @else if (cell.data.pagada) {
+              <span class="rr-acciones__pagada" title="La renta ya fue pagada y no admite cambios">Renta Pagada</span>
+              } @else {
+              <span class="rr-acciones__vacio">—</span>
+              }
             </div>
           </dx-data-grid>
 
@@ -291,6 +333,7 @@
           </section> -->
         </div>
       </div>
+      </section>
     </div>
   </div>
 </div>
@@ -717,3 +760,6 @@
     </div>
   </div>
 </ng-container>
+
+<!-- ── Modal de renta de Pagos del mes (misma lógica y orden), sin su grid ── -->
+<app-lista-rentas-actuales [modoSoloModal]="true" (rentaCambio)="onPagoRentaCambio()"></app-lista-rentas-actuales>
