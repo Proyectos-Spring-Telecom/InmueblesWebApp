@@ -71,7 +71,7 @@
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[20]" [showInfo]="true"></dxo-pager>
         <dxo-sorting mode="multiple"></dxo-sorting>
-        <dxi-column caption="Acciones" cellTemplate="accionesTpl" [width]="260" alignment="center" *ngIf="mostrarColumnaAcciones" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
+        <dxi-column caption="Opciones" cellTemplate="accionesTpl" [width]="160" alignment="center" *ngIf="mostrarColumnaAcciones" [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column caption="Resumen" cellTemplate="chipsTpl" [width]="230" alignment="center" [allowSorting]="false" [allowFiltering]="false" [visible]="false"></dxi-column>
         <dxi-column dataField="numServicios" caption="Servicios" [visible]="false"></dxi-column>
         <dxi-column dataField="numArchivos" caption="Documentos" [visible]="false"></dxi-column>
@@ -158,41 +158,16 @@
             </span>
           </div>
         </div>
-        <div *dxTemplate="let row of 'accionesTpl'" class="d-flex gap-3 justify-content-center">
-          <div *ngIf="puedeDarAltaArrendatario(row.data)">
-            <button type="button" id="activarRegistroButton" class="btnAcciones"
-              title="Dar de alta arrendatario"
-              [disabled]="dandoAltaId === row.data.id"
-              (click)="darAltaArrendatario(row.data); $event.stopPropagation()">
-              <i class="fa fa-user-plus"></i>
-            </button>
-          </div>
-          <div *appHasPermission="'46'">
-            <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
-              (click)="editarArrendatario(row.data); $event.stopPropagation()">
-              <i class="fa fa-edit"></i>
-            </button>
-          </div>
-          <div *appHasPermission="'48'">
-            <button type="button" id="deleteButton" class="btnAcciones" title="Eliminar arrendatario"
-              (click)="eliminarArrendatario(row.data); $event.stopPropagation()">
-              <i class="fa fa-trash"></i>
-            </button>
-          </div>
-          <div *appHasPermission="'49'">
-            <div *ngIf="row.data.tieneMapa">
-              <button type="button" id="pinButton" class="btnAcciones" title="Ubicación"
-                (click)="verMapaDesdeDetalle(row.data); $event.stopPropagation()">
-                <i class="fa fa-map-marker"></i>
-              </button>
-            </div>
-          </div>
-          <div *appHasPermission="'49'">
-            <button type="button" id="dashboardButton" class="btnAcciones" title="Dashboard"
-              (click)="verDashboardArrendatario(row.data); $event.stopPropagation()">
-              <i class="fa fa-tachometer"></i>
-            </button>
-          </div>
+        <!-- Opciones: un botón que despliega las acciones (el menú se pinta fuera del grid) -->
+        <div *dxTemplate="let row of 'accionesTpl'" class="inm-opciones-celda">
+          <button type="button" class="inm-opciones-btn"
+            [class.inm-opciones-btn--abierto]="menuAcciones?.row === row.data"
+            aria-haspopup="menu" [attr.aria-expanded]="menuAcciones?.row === row.data"
+            (click)="abrirMenuAcciones(row.data, $event)">
+            <i class="fa fa-sliders" aria-hidden="true"></i>
+            <span>Acciones</span>
+            <mat-icon aria-hidden="true" class="inm-opciones-btn__chevron">expand_more</mat-icon>
+          </button>
         </div>
         <div *dxTemplate="let row of 'detail'" class="inm-master-detail">
           <app-lista-arrendatarios-detalle [row]="row.data" (contratoCancelado)="refrescarListaArrendatarios()"
@@ -646,3 +621,37 @@
     </div>
   </div>
 </div>
+
+<!-- Menú de acciones del arrendatario (posición fija junto al botón para que no lo recorte el grid) -->
+@if (menuAcciones; as m) {
+<div class="inm-opciones-menu" role="menu" aria-label="Acciones del arrendatario"
+  [class.inm-opciones-menu--arriba]="m.arriba" [style.top.px]="m.top" [style.left.px]="m.left"
+  (click)="$event.stopPropagation()">
+  @if (puedeDarAltaArrendatario(m.row)) {
+  <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--activar"
+    [disabled]="dandoAltaId === m.row.id" (click)="ejecutarAccion('alta')">
+    <i class="fa fa-user-plus"></i><span>Dar de alta arrendatario</span>
+  </button>
+  }
+  <button *appHasPermission="'46'" type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--editar"
+    (click)="ejecutarAccion('editar')">
+    <i class="fa fa-edit"></i><span>Editar</span>
+  </button>
+  <button *appHasPermission="'48'" type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--eliminar"
+    (click)="ejecutarAccion('eliminar')">
+    <i class="fa fa-trash"></i><span>Eliminar arrendatario</span>
+  </button>
+  <ng-container *appHasPermission="'49'">
+    @if (m.row.tieneMapa) {
+    <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--mapa"
+      (click)="ejecutarAccion('mapa')">
+      <i class="fa fa-map-marker"></i><span>Ubicación</span>
+    </button>
+    }
+    <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--dashboard"
+      (click)="ejecutarAccion('dashboard')">
+      <i class="fa fa-tachometer"></i><span>Dashboard</span>
+    </button>
+  </ng-container>
+</div>
+}

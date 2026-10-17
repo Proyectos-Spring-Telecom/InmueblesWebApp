@@ -1511,6 +1511,15 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.gridRentRol?.instance?.refresh();
   }
 
+  // ── Periodo del grid (apertura / cierre de mes) ─────────────────
+  aperturaDeMes(): void {
+    // Pendiente: conectar endpoint de apertura de mes del Rent Rol.
+  }
+
+  cierreDeMes(): void {
+    // Pendiente: conectar endpoint de cierre de mes del Rent Rol.
+  }
+
   // ── Export menu ─────────────────────────────────────────────────
   toggleExportMenu(): void {
     this.exportMenuAbierto = !this.exportMenuAbierto;

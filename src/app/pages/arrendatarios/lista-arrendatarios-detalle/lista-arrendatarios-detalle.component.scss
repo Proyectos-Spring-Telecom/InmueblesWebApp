@@ -1,5 +1,35 @@
 @use '../../inmuebles/lista-inmuebles-detalle/lista-inmuebles-detalle.component.scss';
 
+/* Mismo gutter horizontal que los tabs ($det-gutter del detalle de inmuebles). */
+$arr-det-gutter: clamp(0.5rem, 2.5vw, 2rem);
+
+/* Arrendatarios tiene 4 pestañas; el detalle de inmuebles define 3 columnas. */
+.inm-detalle__tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex-wrap: nowrap;
+}
+
+/* Cards/paneles alineados al ancho de los tabs (mismo gutter lateral) */
+.inm-detalle__panel {
+  width: 100%;
+  max-width: 100%;
+  padding-inline: $arr-det-gutter;
+  box-sizing: border-box;
+}
+
+@media (max-width: 960px) {
+  .inm-detalle__tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .inm-detalle__tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* Socios (grid con Bootstrap row/col en plantilla) */
 .arr-socios-grid {
   width: 100%;

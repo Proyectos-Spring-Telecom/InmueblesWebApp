@@ -1,36 +1,40 @@
 <div class="inm-detalle" *ngIf="row">
-  <nav class="inm-detalle__tabs" aria-label="Detalle del arrendatario">
-    <button
-      type="button"
-      class="inm-detalle__tab"
+  <nav class="inm-detalle__tabs" role="tablist" aria-label="Secciones del arrendatario">
+    <button type="button" role="tab" class="inm-detalle__tab"
       [class.inm-detalle__tab--active]="detalleTab === 0"
-      (click)="detalleTab = 0"
-    >
-      Contratos ({{ contratos.length }})
+      [attr.aria-selected]="detalleTab === 0" (click)="detalleTab = 0">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>description</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Contratos</span>
+        <span class="inm-detalle__tab-sub">{{ contratos.length }} {{ contratos.length === 1 ? 'registrado' : 'registrados' }}</span>
+      </span>
     </button>
-    <button
-      type="button"
-      class="inm-detalle__tab"
+    <button type="button" role="tab" class="inm-detalle__tab"
       [class.inm-detalle__tab--active]="detalleTab === 1"
-      (click)="detalleTab = 1"
-    >
-      Servicios ({{ servicios.length }})
+      [attr.aria-selected]="detalleTab === 1" (click)="detalleTab = 1">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>design_services</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Servicios</span>
+        <span class="inm-detalle__tab-sub">{{ servicios.length }} {{ servicios.length === 1 ? 'registrado' : 'registrados' }}</span>
+      </span>
     </button>
-    <button
-      type="button"
-      class="inm-detalle__tab"
+    <button type="button" role="tab" class="inm-detalle__tab"
       [class.inm-detalle__tab--active]="detalleTab === 2"
-      (click)="detalleTab = 2"
-    >
-      Documentos ({{ archivos.length }})
+      [attr.aria-selected]="detalleTab === 2" (click)="detalleTab = 2">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>folder_open</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Documentos</span>
+        <span class="inm-detalle__tab-sub">{{ archivos.length }} {{ archivos.length === 1 ? 'archivo' : 'archivos' }}</span>
+      </span>
     </button>
-    <button
-      type="button"
-      class="inm-detalle__tab"
+    <button type="button" role="tab" class="inm-detalle__tab"
       [class.inm-detalle__tab--active]="detalleTab === 3"
-      (click)="detalleTab = 3"
-    >
-      Socios ({{ socios.length }})
+      [attr.aria-selected]="detalleTab === 3" (click)="detalleTab = 3">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>groups</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Socios</span>
+        <span class="inm-detalle__tab-sub">{{ socios.length }} {{ socios.length === 1 ? 'registrado' : 'registrados' }}</span>
+      </span>
     </button>
   </nav>
 

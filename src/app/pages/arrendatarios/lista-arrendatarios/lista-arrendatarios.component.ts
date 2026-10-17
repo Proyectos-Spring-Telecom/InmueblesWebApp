@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { DxDataGridComponent, DxPieChartComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
@@ -48,7 +48,7 @@ interface InmuebleFiltroItem {
   standalone: false,
   animations: [routeAnimation],
 })
-export class ListaArrendatariosComponent implements OnInit {
+export class ListaArrendatariosComponent implements OnInit, OnDestroy {
   /** ``CustomStore`` remoto (paridad ``lista-inmuebles``). */
   public listaArrendatarios: InstanceType<typeof CustomStore>;
   public showFilterRow = true;
@@ -127,9 +127,75 @@ export class ListaArrendatariosComponent implements OnInit {
     this.esUsuarioRolUno = this.usuarioTieneRolUno();
     this.setupDataSource();
     this.cargarInmuebles();
+    // El menú de acciones es fijo en pantalla: se cierra al desplazar cualquier contenedor.
+    document.addEventListener('scroll', this.cerrarMenuAccionesPorScroll, true);
   }
 
-  /** Columna Acciones: permisos de módulo o rol 1 (para ver «Dar de alta»). */
+  ngOnDestroy(): void {
+    document.removeEventListener('scroll', this.cerrarMenuAccionesPorScroll, true);
+  }
+
+  // ─── Menú de acciones (columna Opciones) ─────────────────────────────────────
+
+  /** Fila con el menú abierto y su posición en pantalla (se pinta fuera del grid para no recortarse). */
+  menuAcciones: { row: ArrendatarioGridRow; top: number; left: number; arriba: boolean } | null = null;
+
+  private static readonly ANCHO_MENU_ACCIONES = 250;
+  private static readonly ALTO_MENU_ACCIONES = 280;
+
+  abrirMenuAcciones(row: ArrendatarioGridRow, ev: MouseEvent): void {
+    ev.stopPropagation();
+    if (this.menuAcciones?.row === row) {
+      this.menuAcciones = null;
+      return;
+    }
+    const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+    const ancho = ListaArrendatariosComponent.ANCHO_MENU_ACCIONES;
+    const arriba =
+      r.bottom + ListaArrendatariosComponent.ALTO_MENU_ACCIONES > window.innerHeight &&
+      r.top > ListaArrendatariosComponent.ALTO_MENU_ACCIONES;
+    const left = Math.max(
+      8,
+      Math.min(r.left + r.width / 2 - ancho / 2, window.innerWidth - ancho - 8),
+    );
+    this.menuAcciones = { row, left, top: arriba ? r.top - 8 : r.bottom + 8, arriba };
+  }
+
+  ejecutarAccion(accion: 'alta' | 'editar' | 'eliminar' | 'mapa' | 'dashboard'): void {
+    const row = this.menuAcciones?.row;
+    this.menuAcciones = null;
+    if (!row) return;
+    switch (accion) {
+      case 'alta':
+        this.darAltaArrendatario(row);
+        break;
+      case 'editar':
+        this.editarArrendatario(row);
+        break;
+      case 'eliminar':
+        this.eliminarArrendatario(row);
+        break;
+      case 'mapa':
+        this.verMapaDesdeDetalle(row);
+        break;
+      case 'dashboard':
+        this.verDashboardArrendatario(row);
+        break;
+    }
+  }
+
+  @HostListener('window:resize')
+  cerrarMenuAcciones(): void {
+    if (this.menuAcciones) this.menuAcciones = null;
+  }
+
+  private readonly cerrarMenuAccionesPorScroll = (): void => {
+    if (!this.menuAcciones) return;
+    this.menuAcciones = null;
+    this.cdr.markForCheck();
+  };
+
+  /** Columna Opciones: permisos de módulo o rol 1 (para ver «Dar de alta»). */
   get mostrarColumnaAcciones(): boolean {
     if (this.esUsuarioRolUno) return true;
     const perms = this.authService.getPermissions() || [];
@@ -492,12 +558,14 @@ export class ListaArrendatariosComponent implements OnInit {
 
   @HostListener('document:click')
   cerrarFiltroInmueble(): void {
+    this.cerrarMenuAcciones();
     if (!this.filtroInmuebleAbierto) return;
     this.filtroInmuebleAbierto = false;
   }
 
   @HostListener('document:keydown.escape')
   cerrarFiltroInmuebleTecla(): void {
+    this.cerrarMenuAcciones();
     if (!this.filtroInmuebleAbierto) return;
     this.filtroInmuebleAbierto = false;
   }
@@ -597,7 +665,7 @@ export class ListaArrendatariosComponent implements OnInit {
     // Clics dentro del detalle (p. ej. Cancelar local) no deben colapsar la fila.
     if (
       target?.closest(
-        'button, a, input, textarea, select, .btnAcciones, .mat-mdc-button-base, .dx-command-expand, .inm-master-detail',
+        'button, a, input, textarea, select, .btnAcciones, .inm-opciones-btn, .mat-mdc-button-base, .dx-command-expand, .inm-master-detail',
       )
     ) {
       return;

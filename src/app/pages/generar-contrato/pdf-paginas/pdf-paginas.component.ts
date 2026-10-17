@@ -14,32 +14,35 @@ import {
 
 type PdfJs = typeof import('pdfjs-dist');
 
-const WORKER_SRC = 'assets/pdfjs/pdf.worker.min.mjs';
-
 let pdfjsCargado: Promise<PdfJs> | null = null;
 
-/** El worker se copia a /assets/pdfjs desde angular.json (requiere reiniciar `ng serve` tras agregarlo). */
-async function workerDisponible(): Promise<boolean> {
-  try {
-    const r = await fetch(WORKER_SRC, { method: 'HEAD', cache: 'no-store' });
-    // Algunos servidores responden index.html (200) en rutas inexistentes
-    return r.ok && !(r.headers.get('content-type') ?? '').includes('text/html');
-  } catch {
-    return false;
-  }
-}
-
-/** pdf.js se carga bajo demanda (solo en este módulo) y una sola vez. */
+/**
+ * pdf.js se carga bajo demanda (solo en este módulo) y una sola vez.
+ *
+ * En producción el worker en /assets suele fallar (MIME de .mjs en IIS/Apache, base href,
+ * o fallback SPA a index.html). Si pdf.js cae a su "fake worker" y hace import(workerSrc)
+ * con una ruta relativa, el navegador marca: Failed to resolve module specifier.
+ *
+ * Solución: registrar siempre el worker empaquetado en globalThis.pdfjsWorker antes de
+ * dibujar. Así el fake worker usa WorkerMessageHandler y no intenta importar /assets.
+ */
 function cargarPdfJs(): Promise<PdfJs> {
   if (!pdfjsCargado) {
     pdfjsCargado = (async () => {
-      const pdfjs = await import('pdfjs-dist');
-      pdfjs.GlobalWorkerOptions.workerSrc = WORKER_SRC;
-      if (!(await workerDisponible())) {
-        // Respaldo: pdf.js usa globalThis.pdfjsWorker y procesa el PDF en el hilo principal
-        console.warn(`pdf.js: no se encontró ${WORKER_SRC}; se usa el worker en el hilo principal.`);
-        (globalThis as any).pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.min.mjs');
-      }
+      const [pdfjs, workerMod] = await Promise.all([
+        import('pdfjs-dist'),
+        import('pdfjs-dist/build/pdf.worker.min.mjs'),
+      ]);
+
+      (globalThis as any).pdfjsWorker = workerMod;
+
+      // workerSrc sigue siendo obligatorio para pdf.js; URL absoluta evita el error de
+      // "module specifier" si en algún momento intenta el import dinámico de respaldo.
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'assets/pdfjs/pdf.worker.min.mjs',
+        document.baseURI,
+      ).href;
+
       return pdfjs;
     })();
     // Si algo falla, permite reintentar en la siguiente carga
