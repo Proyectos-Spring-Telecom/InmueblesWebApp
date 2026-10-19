@@ -3,6 +3,7 @@ import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Valida
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, debounceTime, finalize, forkJoin, of, Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
+import { esRegistroNoEncontrado, mensajeErrorApi } from 'src/app/shared/http-errores';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
@@ -126,6 +127,21 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   /** Carga del GET `/arrendatarios/{id}` en curso. */
   cargandoDetalle = false;
   public listaClientes: { id: number; nombre?: string; apellidoPaterno?: string; apellidoMaterno?: string }[] = [];
+
+  /** Opciones de Tipo Persona (mismos valores que el select nativo: 1 Física, 2 Moral). */
+  readonly opcionesTipoPersona = [
+    { id: 1, nombre: 'Física' },
+    { id: 2, nombre: 'Moral' },
+  ];
+
+  /** Texto de cada arrendador en el select: nombre + apellidos (igual que el `<option>` anterior). */
+  readonly etiquetaClienteSelect = (c: { nombre?: string; apellidoPaterno?: string; apellidoMaterno?: string } | null): string =>
+    c ? `${c.nombre ?? ''}${c.apellidoPaterno ? ' ' + c.apellidoPaterno : ''}${c.apellidoMaterno ? ' ' + c.apellidoMaterno : ''}` : '';
+
+  /** Texto de cada tipo de servicio en el select (misma regla que `etiquetaCatServicio`). */
+  readonly etiquetaCatServicioSelect = (item: CatServicioItem | null): string =>
+    item ? this.etiquetaCatServicio(item) : '';
+
   /** Inmuebles del arrendador seleccionado (GET `/inmuebles/arrendador/{id}`). */
   public listaInmuebles: { id: number; etiqueta: string }[] = [];
   cargandoInmueblesArrendador = false;
@@ -941,8 +957,9 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
 
     if (subCapturado != null) {
       subR = this.redondearMontoCalculado(subCapturado);
+      // Regla API: IVA = redondeo(subtotal × 0.16, 2) y total = subtotal + IVA (cuadra al centavo).
       ivaR = this.redondearMontoCalculado(subR * IVA_CONTRATO);
-      totR = this.redondearMontoCalculado(subR * (1 + IVA_CONTRATO));
+      totR = this.redondearMontoCalculado(subR + ivaR);
       rentaLista = true;
       if (metrosOk) {
         const metros = Number(grupo.get('metrosRentados')?.value);
@@ -992,8 +1009,8 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       const pct = Number(grupo.get('pctMantenimiento')?.value);
       const subMRaw = subR * (pct / 100);
       subM = this.redondearMontoCalculado(subMRaw);
-      ivaM = this.redondearMontoCalculado(subMRaw * IVA_CONTRATO);
-      totM = this.redondearMontoCalculado(subMRaw * (1 + IVA_CONTRATO));
+      ivaM = this.redondearMontoCalculado(subM * IVA_CONTRATO);
+      totM = this.redondearMontoCalculado(subM + ivaM);
       mttoListo = true;
     }
 
@@ -1848,7 +1865,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
-            title: '¡Eliminado!',
+            title: '¡Operación Exitosa!',
             html: 'El contrato ha sido eliminado de forma exitosa.',
             icon: 'success',
             showCancelButton: false,
@@ -2052,7 +2069,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
-            title: '¡Eliminado!',
+            title: '¡Operación Exitosa!',
             html: 'El servicio ha sido eliminado de forma exitosa.',
             icon: 'success',
             showCancelButton: false,
@@ -2137,7 +2154,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
-            title: '¡Eliminado!',
+            title: '¡Operación Exitosa!',
             html: 'El socio ha sido eliminado de forma exitosa.',
             icon: 'success',
             showCancelButton: false,
@@ -2215,7 +2232,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
-            title: '¡Eliminado!',
+            title: '¡Operación Exitosa!',
             html: 'El archivo ha sido eliminado de forma exitosa.',
             icon: 'success',
             showCancelButton: false,
@@ -3078,19 +3095,16 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
           this.abrirModalMapaInicial();
         },
         error: (err: unknown) => {
-          const e = err as { error?: { message?: string }; message?: string };
-          const text =
-            e?.error?.message ??
-            e?.message ??
-            'No se pudo cargar el arrendatario. Intenta de nuevo.';
+          const noEncontrado = esRegistroNoEncontrado(err);
           void Swal.fire({
-            title: 'Error al cargar',
-            text: String(text),
+            title: noEncontrado ? 'Registro no encontrado' : 'Error al cargar',
+            text: mensajeErrorApi(err, 'No se pudo cargar el arrendatario. Intenta de nuevo.'),
             icon: 'error',
             confirmButtonColor: '#3085d6',
             background: '#141a21',
             color: '#ffffff',
           });
+          if (noEncontrado) void this.router.navigateByUrl('/arrendatarios');
         },
       });
   }
@@ -4462,7 +4476,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
       color: '#ffffff',
       background: '#141a21',
       title: '¡Operación Exitosa!',
-      text,
+      html: String(text),
       icon: 'success',
       confirmButtonColor: '#3085d6',
       confirmButtonText: 'Confirmar',

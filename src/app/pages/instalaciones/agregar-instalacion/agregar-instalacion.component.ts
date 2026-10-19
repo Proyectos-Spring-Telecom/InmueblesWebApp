@@ -10,6 +10,7 @@ import { InstalacionService } from 'src/app/services/moduleService/instalaciones
 import { ModulosService } from 'src/app/services/moduleService/modulos.service';
 import { DepartamentosService } from 'src/app/services/moduleService/departamentos.service';
 import Swal from 'sweetalert2';
+import { etiquetaNombreApellidos } from 'src/app/shared/campos-dx/campos-dx.config';
 
 @Component({
   selector: 'app-agregar-instalacion',
@@ -29,6 +30,11 @@ export class AgregarInstalacionComponent implements OnInit, AfterViewInit {
   public listaSedeCentrales: any[] = [];
   public listaPisos: any[] = [];
   public listaDepartamentos: any[] = [];
+  /** Texto de cada arrendador en el select: nombre + apellidos (igual que el `<option>` anterior). */
+  readonly etiquetaClienteSelect = etiquetaNombreApellidos();
+  /** Texto de cada piso (misma regla que el `<option>` anterior). */
+  readonly etiquetaPisoSelect = (piso: any): string =>
+    piso ? String(piso.nombre || piso.numero || `Piso ${piso.id}`) : '';
   selectedFileName: string = '';
   previewUrl: string | ArrayBuffer | null = null;
 

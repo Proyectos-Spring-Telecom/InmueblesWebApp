@@ -53,7 +53,11 @@ export function mapRentaActualAPendiente(item: unknown): RentaActualResumenVm | 
   if (id == null || idArrendatario == null || idContrato == null || !mesClave) return null;
 
   const finClave = claveMesDesdeApi(row['fechaFin']);
-  const pagada = row['pagada'] === true || row['pagada'] === 1 || row['pagada'] === '1';
+  // Cobranza: `estadoPago` manda (saldo en 0 = pagada); `pagada` queda como respaldo.
+  const estadoPago = String(row['estadoPago'] ?? '').toUpperCase();
+  const pagada = estadoPago
+    ? estadoPago === 'PAGADO'
+    : row['pagada'] === true || row['pagada'] === 1 || row['pagada'] === '1';
   return {
     id,
     idArrendatario,

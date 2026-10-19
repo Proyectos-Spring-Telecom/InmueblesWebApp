@@ -1,0 +1,127 @@
+<div class="contract-page-dim" (click)="cerrarSiLibre()" [@contractDimAnim]></div>
+<div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarSiLibre()">
+  <div class="docs-modal contract-docs-modal" role="dialog" aria-modal="true" aria-labelledby="cob-detalle-pago-titulo"
+    (click)="$event.stopPropagation()">
+    <div class="row docs-modal__header">
+      <div class="col-10 col-md-11">
+        <span class="docs-modal__eyebrow">Cobranza</span>
+        <h3 class="docs-modal__title" id="cob-detalle-pago-titulo">Detalle del pago</h3>
+      </div>
+      <div class="col-2 col-md-1 docs-modal__close-col">
+        <button type="button" class="docs-modal__close" (click)="cerrar.emit()" [disabled]="procesando"
+          aria-label="Cerrar detalle del pago">
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="row docs-modal__body">
+      <div class="col-12 contract-docs__scroll">
+        @if (cargando && !pago) {
+        <div class="contract-docs__loading">
+          <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+          <p>Obteniendo datos del pago…</p>
+        </div>
+        } @else if (pago) {
+        <section class="contract-docs-shell">
+          <article class="contract-docs-card contract-docs-card--hero">
+            <div class="contract-docs-card__hero-row">
+              <div>
+                <span class="contract-docs-card__kicker">Pago #{{ pago.id }} · {{ pago.arrendatario }}</span>
+                <h4 class="contract-docs-card__hero-title">{{ fmtMoneda(pago.monto) }}</h4>
+              </div>
+              <span [class]="claseEstado(pago.estatus)">{{ etiquetaEstado(pago.estatus) }}</span>
+            </div>
+            @if (pago.comprobanteUrl) {
+            <a class="mono-grid-action-btn text-decoration-none" [href]="pago.comprobanteUrl" target="_blank"
+              rel="noopener">
+              <mat-icon aria-hidden="true">visibility</mat-icon><span>Comprobante de pago</span>
+            </a>
+            }
+          </article>
+
+          <article class="contract-docs-card">
+            <h5 class="contract-docs-card__title">Información del pago</h5>
+            <div class="contract-docs-grid">
+              <div class="contract-docs-field"><span>Fecha de pago</span><p>{{ fmtFecha(pago.fechaPago) }}</p></div>
+              <div class="contract-docs-field"><span>Aplicado</span><p class="is-money">{{ fmtMoneda(pago.aplicado) }}</p></div>
+              <div class="contract-docs-field"><span>Disponible (a favor)</span><p class="is-money">{{ fmtMoneda(pago.disponible) }}</p></div>
+              <div class="contract-docs-field">
+                <span>Método de pago</span>
+                <p>{{ pago.metodoPago || '—' }}{{ pago.formaPagoSat ? ' (SAT ' + pago.formaPagoSat + ')' : '' }}</p>
+              </div>
+              <div class="contract-docs-field"><span>Referencia</span><p>{{ pago.referencia || '—' }}</p></div>
+              <div class="contract-docs-field"><span>Origen</span><p>{{ etiquetaOrigen(pago.origen) }}</p></div>
+              <div class="contract-docs-field"><span>Registrado</span><p>{{ fmtFechaHora(pago.fhRegistro) || '—' }}</p></div>
+              @if (cancelado) {
+              <div class="contract-docs-field">
+                <span>Motivo de cancelación</span>
+                <p>{{ pago.motivoCancelacion || '—' }}</p>
+              </div>
+              <div class="contract-docs-field"><span>Cancelado</span><p>{{ fmtFechaHora(pago.fhCancelacion || '') || '—' }}</p></div>
+              }
+            </div>
+          </article>
+
+          <article class="contract-docs-card">
+            <h5 class="contract-docs-card__title">Aplicaciones</h5>
+            @if (pago.aplicaciones?.length) {
+            <ul class="hub-vista-simple__lista">
+              @for (a of pago.aplicaciones; track a.id) {
+              <li class="hub-vista-simple__tarjeta" [class.cob-anulada]="!a.vigente">
+                <div class="hub-vista-simple__tarjeta-cabecera">
+                  <div>
+                    <span class="hub-vista-simple__tarjeta-arrendatario">{{ etiquetaAplicacion(a) }}</span>
+                    <span class="hub-vista-simple__tarjeta-servicio">
+                      {{ fmtMes(a.cargo.mes) }} · {{ etiquetaClase(a.cargo.clase) }} #{{ a.cargo.id }}
+                    </span>
+                  </div>
+                  <span [class]="a.vigente ? claseEstado('PAGADO') : claseEstado('CANCELADO')">
+                    {{ a.vigente ? 'Vigente' : 'Anulada' }}
+                  </span>
+                </div>
+                <div class="hub-vista-simple__tarjeta-datos">
+                  <span><mat-icon aria-hidden="true">payments</mat-icon> {{ fmtMoneda(a.monto) }}</span>
+                  <span><mat-icon aria-hidden="true">schedule</mat-icon> {{ fmtFechaHora(a.fhRegistro) || '—' }}</span>
+                  @if (!a.vigente) {
+                  <span><mat-icon aria-hidden="true">block</mat-icon> Anulada {{ fmtFechaHora(a.fhAnulacion || '') }}</span>
+                  }
+                </div>
+                @if (a.vigente && !cancelado) {
+                <div class="hub-vista-simple__tarjeta-acciones">
+                  <button type="button" class="hub-vista-simple__accion hub-vista-simple__accion--secundaria"
+                    [disabled]="procesando" (click)="anularAplicacion(a)">
+                    <mat-icon aria-hidden="true">undo</mat-icon> Quitar de este cargo
+                  </button>
+                </div>
+                }
+              </li>
+              }
+            </ul>
+            } @else {
+            <div class="hub-vista-simple__vacio">
+              <mat-icon aria-hidden="true">savings</mat-icon>
+              <p>El pago no tiene aplicaciones: todo el monto está como saldo a favor.</p>
+            </div>
+            }
+          </article>
+          @if (!cancelado) {
+          <article class="contract-docs-card cob-que-hacer">
+            <h5 class="contract-docs-card__title">¿Qué puedes hacer?</h5>
+            <ul class="cob-que-hacer__lista">
+              <li><strong class="cob-que-hacer__ambar">Quitar de este cargo</strong> (botón en cada aplicación): si el pago se aplicó al cargo equivocado. El dinero regresa como saldo a favor; úsalo con «Usar saldo» en el grid de pagos.</li>
+            </ul>
+          </article>
+          }
+        </section>
+        }
+      </div>
+    </div>
+
+    <div class="row docs-modal__footer">
+      <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
+        <button type="button" class="docs-modal__btn" (click)="cerrar.emit()" [disabled]="procesando">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

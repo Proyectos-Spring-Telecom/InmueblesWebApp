@@ -1,0 +1,50 @@
+@if (conceptos.length) {
+<ul class="hub-vista-simple__lista">
+  @for (c of conceptos; track c.idCargoConcepto) {
+  <li class="hub-vista-simple__tarjeta cob-concepto" [class.cob-concepto--excede]="excede(c)">
+    <div>
+      <div class="hub-vista-simple__tarjeta-cabecera mb-1">
+        <div>
+          <span class="hub-vista-simple__tarjeta-arrendatario">{{ c.concepto }}</span>
+          <span class="hub-vista-simple__tarjeta-servicio">{{ c.periodo }}{{ c.inmueble ? ' · ' + c.inmueble : '' }}</span>
+        </div>
+      </div>
+      <div class="hub-vista-simple__tarjeta-datos mb-0">
+        <span><mat-icon aria-hidden="true">account_balance_wallet</mat-icon> Saldo {{ fmtMoneda(c.saldo) }}</span>
+        @if (montoDe(c) > 0) {
+        <span>
+          <mat-icon aria-hidden="true">{{ pendienteDe(c) > 0 ? 'hourglass_bottom' : 'check_circle' }}</mat-icon>
+          {{ pendienteDe(c) > 0 ? 'Pago parcial · quedará pendiente ' + fmtMoneda(pendienteDe(c)) : 'Queda saldado' }}
+        </span>
+        }
+      </div>
+    </div>
+
+    <div class="cob-concepto__monto">
+      <div class="input-group perm-ig">
+        <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">payments</mat-icon></span>
+        <div class="form-floating flex-grow-1">
+          <input type="number" inputmode="decimal" class="form-control" min="0" step="0.01" [max]="c.saldo"
+            placeholder=" " [id]="'cobAplicar' + c.idCargoConcepto" [ngModel]="montos[c.idCargoConcepto]"
+            (ngModelChange)="actualizar(c.idCargoConcepto, $event)" />
+          <label [for]="'cobAplicar' + c.idCargoConcepto">Aplicar</label>
+        </div>
+      </div>
+      <button type="button" class="mono-grid-action-btn" (click)="saldar(c)" title="Aplicar el saldo completo de este concepto">
+        Saldar
+      </button>
+    </div>
+  </li>
+  }
+</ul>
+<div class="d-flex justify-content-end mt-2">
+  <button type="button" class="hub-vista-simple__accion hub-vista-simple__accion--secundaria" (click)="limpiar()">
+    <mat-icon aria-hidden="true">backspace</mat-icon> Limpiar montos
+  </button>
+</div>
+} @else {
+<div class="hub-vista-simple__vacio">
+  <mat-icon aria-hidden="true">task_alt</mat-icon>
+  <p>El arrendatario no tiene conceptos con saldo pendiente.</p>
+</div>
+}

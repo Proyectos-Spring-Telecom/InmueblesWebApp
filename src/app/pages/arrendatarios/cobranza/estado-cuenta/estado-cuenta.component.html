@@ -1,0 +1,305 @@
+<div [@routeAnimation] class="card card--panel perm-wrapper inm-lista">
+  <app-module-hero icon="account_balance_wallet" eyebrow="Operación · Arrendatarios" titulo="Estado de cuenta"
+    descripcion="Cuánto debe, qué ha pagado y qué saldo tiene a favor."></app-module-hero>
+
+  <div class="surface ec">
+    @if (cargando && !estado) {
+    <div class="ec-cargando">
+      <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
+      <span>Cargando estado de cuenta…</span>
+      <button type="button" class="hero-header__back-btn ec-hero__regresar" (click)="regresar()">
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        <span>Regresar</span>
+      </button>
+    </div>
+    }
+
+    @if (estado) {
+    <!-- Héroe: quién es y cuánto debe -->
+    <section class="ec-hero" aria-label="Resumen de saldos">
+      <div class="ec-hero__izq">
+        <div class="ec-hero__identidad">
+          <span class="ec-hero__avatar">{{ iniciales(nombre) }}</span>
+          <div class="ec-hero__textos">
+            <span class="ec-hero__kicker">Arrendatario</span>
+            <h3 class="ec-hero__nombre">{{ nombre }}</h3>
+            @if (estado.arrendatario.rfc) {
+            <span class="ec-hero__rfc"><i class="fa fa-id-card-o" aria-hidden="true"></i> RFC {{ estado.arrendatario.rfc }}</span>
+            }
+            <button type="button" class="hero-header__back-btn ec-hero__regresar" (click)="regresar()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>Regresar</span>
+            </button>
+          </div>
+        </div>
+        <div class="ec-hero__deuda">
+          <span class="ec-hero__deuda-etiqueta">Debe en total</span>
+          <strong class="ec-hero__deuda-monto" [class.ec-hero__deuda-monto--cero]="montoNum(estado.resumen.saldoTotal) <= 0">
+            {{ fmtMoneda(estado.resumen.saldoTotal) }}
+          </strong>
+          <span class="ec-hero__deuda-nota">
+            @if (montoNum(estado.resumen.saldoTotal) <= 0) {
+            <mat-icon aria-hidden="true">verified</mat-icon> Está al corriente
+            } @else {
+            <mat-icon aria-hidden="true">pending_actions</mat-icon>
+            {{ estado.resumen.cargosConSaldo }} cargo{{ estado.resumen.cargosConSaldo === 1 ? '' : 's' }} pendiente{{ estado.resumen.cargosConSaldo === 1 ? '' : 's' }}
+            }
+          </span>
+        </div>
+      </div>
+      <div class="ec-anillo" [style.--p]="porcentajeCobrado" [attr.aria-label]="porcentajeCobrado + '% cobrado'">
+        <div class="ec-anillo__centro">
+          <strong>{{ porcentajeCobrado }}%</strong>
+          <span>cobrado</span>
+        </div>
+        <span class="ec-anillo__pie">{{ fmtMoneda(totalCobrado) }} de {{ fmtMoneda(totalCargado) }}</span>
+      </div>
+    </section>
+
+    <!-- Tarjetas de desglose -->
+    <section class="ec-kpis" aria-label="Desglose de saldos">
+      <article class="ec-kpi ec-kpi--rojo" [class.ec-kpi--apagado]="montoNum(estado.resumen.saldoVencido) <= 0">
+        <span class="ec-kpi__icono"><mat-icon aria-hidden="true">warning_amber</mat-icon></span>
+        <div class="ec-kpi__txt">
+          <span class="ec-kpi__etiqueta">Vencido</span>
+          <strong class="ec-kpi__valor">{{ fmtMoneda(estado.resumen.saldoVencido) }}</strong>
+          <small>De meses anteriores</small>
+        </div>
+      </article>
+      <article class="ec-kpi ec-kpi--azul">
+        <span class="ec-kpi__icono"><mat-icon aria-hidden="true">event</mat-icon></span>
+        <div class="ec-kpi__txt">
+          <span class="ec-kpi__etiqueta">Del mes actual</span>
+          <strong class="ec-kpi__valor">{{ fmtMoneda(estado.resumen.saldoDelPeriodoActual) }}</strong>
+          <small>Por cobrar este mes</small>
+        </div>
+      </article>
+      <article class="ec-kpi ec-kpi--verde" [class.ec-kpi--apagado]="montoNum(estado.resumen.saldoAFavor) <= 0">
+        <span class="ec-kpi__icono"><mat-icon aria-hidden="true">savings</mat-icon></span>
+        <div class="ec-kpi__txt">
+          <span class="ec-kpi__etiqueta">Saldo a favor</span>
+          <strong class="ec-kpi__valor">{{ fmtMoneda(estado.resumen.saldoAFavor) }}</strong>
+          <small>Pagado sin aplicar</small>
+        </div>
+      </article>
+      <article class="ec-kpi ec-kpi--morado">
+        <span class="ec-kpi__icono"><mat-icon aria-hidden="true">receipt_long</mat-icon></span>
+        <div class="ec-kpi__txt">
+          <span class="ec-kpi__etiqueta">Pagos recibidos</span>
+          <strong class="ec-kpi__valor">{{ fmtMoneda(totalPagos) }}</strong>
+          <small>{{ pagosVigentes }} pago{{ pagosVigentes === 1 ? '' : 's' }} en el periodo</small>
+        </div>
+      </article>
+    </section>
+    }
+
+    <!-- Filtros (panel estándar del proyecto) -->
+    <div class="hist-renta-filtros-panel w-100 ec-filtros">
+      <div class="hist-renta-filtros-panel__grid ec-filtros__grid">
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="ecFechaInicio">Desde</label>
+          <app-campo-fecha inputId="ecFechaInicio" class="campo-dx--sm" [(ngModel)]="fechaInicio"></app-campo-fecha>
+        </div>
+        <div>
+          <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="ecFechaFin">Hasta</label>
+          <app-campo-fecha inputId="ecFechaFin" class="campo-dx--sm" [(ngModel)]="fechaFin"></app-campo-fecha>
+        </div>
+        <div class="hist-renta-filtros-panel__accion ec-filtros__buscar">
+          <button type="button" mat-flat-button class="bg-primary" (click)="cargar()" [disabled]="cargando">
+            <i class="fa fa-search" aria-hidden="true"></i> Buscar
+          </button>
+        </div>
+        <div class="hist-renta-filtros-panel__accion ec-filtros__limpiar">
+          <button type="button" mat-flat-button class="bg-success" (click)="limpiarFiltros()"
+            [disabled]="cargando || (!fechaInicio && !fechaFin)">
+            <i class="fa fa-eraser" aria-hidden="true"></i> Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    @if (estado) {
+    <!-- Movimientos -->
+    <section class="ec-panel">
+      <header class="ec-panel__head">
+        <div class="ec-tabs" role="tablist" aria-label="Ver cargos o pagos">
+          <button type="button" role="tab" class="ec-tabs__btn" [class.ec-tabs__btn--activo]="vista === 'cargos'"
+            [attr.aria-selected]="vista === 'cargos'" (click)="vista = 'cargos'">
+            <i class="fa fa-file-text-o" aria-hidden="true"></i> Lo que debe <span class="ec-tabs__n">{{ cargosVisibles.length }}</span>
+          </button>
+          <button type="button" role="tab" class="ec-tabs__btn" [class.ec-tabs__btn--activo]="vista === 'pagos'"
+            [attr.aria-selected]="vista === 'pagos'" (click)="vista = 'pagos'">
+            <i class="fa fa-money" aria-hidden="true"></i> Lo que ha pagado <span class="ec-tabs__n">{{ pagosVisibles.length }}</span>
+          </button>
+        </div>
+        <div class="ec-panel__herramientas">
+          @if (vista === 'cargos') {
+          <button type="button" class="ec-btn ec-btn--azul" (click)="abrir({ tipo: 'registrarCargo' })"
+            title="Anota un cobro nuevo (luz, agua, etc.) que el arrendatario debe">
+            <i class="fa fa-plus" aria-hidden="true"></i> Agregar cargo de servicio
+          </button>
+          <label class="ec-check">
+            <input type="checkbox" [ngModel]="!verCargosSaldados" (ngModelChange)="verCargosSaldados = !$event" />
+            <span>Solo con saldo</span>
+          </label>
+          }
+          <label class="hub-vista-simple__busqueda ec-busqueda">
+            <mat-icon aria-hidden="true">search</mat-icon>
+            <input type="search" [(ngModel)]="busqueda" placeholder="Buscar…" aria-label="Buscar en el estado de cuenta" />
+          </label>
+        </div>
+      </header>
+
+      @if (vista === 'cargos') {
+      @if (cargosVisibles.length === 0) {
+      <div class="ec-vacio">
+        <mat-icon aria-hidden="true">{{ busqueda.trim() ? 'search_off' : 'task_alt' }}</mat-icon>
+        <p>{{ busqueda.trim() ? 'No se encontró nada con «' + busqueda.trim() + '».' : 'No hay cargos en el periodo.' }}</p>
+      </div>
+      } @else {
+      <div class="ec-tabla-wrap">
+        <table class="ec-tabla">
+          <thead>
+            <tr>
+              <th>Periodo</th>
+              <th>Concepto</th>
+              <th class="num">Total</th>
+              <th class="num">Pagado</th>
+              <th class="num">Saldo</th>
+              <th class="centro">Estado</th>
+              <th class="centro">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of cargosVisibles; track c.id) {
+            <tr [class]="claseFilaCargo(c)">
+              <td data-label="Periodo"><span class="ec-periodo">{{ fmtPeriodoCargo(c) }}</span></td>
+              <td data-label="Concepto">
+                <div class="ec-celda-texto">
+                <span class="ec-concepto">{{ resumenConceptos(c) }}</span>
+                <span class="ec-sub">
+                  {{ etiquetaClase(c.clase) }}{{ c.inmueble ? ' · ' + c.inmueble : '' }}{{ c.descripcion ? ' · ' + c.descripcion : '' }}
+                </span>
+                @if (tieneIvaEstimado(c)) { <span class="cob-nota">IVA calculado</span> }
+                </div>
+              </td>
+              <td data-label="Total" class="num">{{ fmtMoneda(c.total) }}</td>
+              <td data-label="Pagado" class="num">
+                <span class="ec-pagado">
+                  {{ fmtMoneda(c.pagado) }}
+                  <span class="ec-avance" [attr.title]="porcentajeCargo(c) + '% pagado'"><span [style.width.%]="porcentajeCargo(c)"></span></span>
+                </span>
+              </td>
+              <td data-label="Saldo" class="num"><strong>{{ fmtMoneda(c.saldo) }}</strong></td>
+              <td data-label="Estado" class="centro"><span [class]="claseEstado(c.estadoPago)">{{ etiquetaEstado(c.estadoPago) }}</span></td>
+              <td data-label="Acciones" class="centro">
+                <div class="ec-acciones">
+                  <button type="button" class="ec-btn ec-btn--azul" title="Ver el desglose del cargo y sus pagos"
+                    (click)="abrir({ tipo: 'detalleCargo', idCargo: c.id })">
+                    <i class="fa fa-eye" aria-hidden="true"></i> Ver
+                  </button>
+                  @if (puedePagarCargo(c)) {
+                  <button type="button" class="ec-btn ec-btn--verde" title="Registrar un pago (completo o parcial) de este cargo"
+                    (click)="abrir({ tipo: 'registrarPago', idCargo: c.id })">
+                    <i class="fa fa-money" aria-hidden="true"></i> Pagar
+                  </button>
+                  }
+                  @if (puedeCancelarCargo(c)) {
+                  <button type="button" class="ec-btn ec-btn--rojo" title="Cancelar: solo si el cargo se creó por error y no tiene pagos"
+                    [disabled]="procesando" (click)="cancelarCargo(c)">
+                    <i class="fa fa-ban" aria-hidden="true"></i> Cancelar
+                  </button>
+                  }
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+      } @else {
+      @if (pagosVisibles.length === 0) {
+      <div class="ec-vacio">
+        <mat-icon aria-hidden="true">{{ busqueda.trim() ? 'search_off' : 'payments' }}</mat-icon>
+        <p>{{ busqueda.trim() ? 'No se encontró nada con «' + busqueda.trim() + '».' : 'No hay pagos en el periodo.' }}</p>
+      </div>
+      } @else {
+      <div class="ec-tabla-wrap">
+        <table class="ec-tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Método / referencia</th>
+              <th class="num">Monto</th>
+              <th class="num">Aplicado</th>
+              <th class="num">A favor</th>
+              <th class="centro">Estatus</th>
+              <th class="centro">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of pagosVisibles; track p.id) {
+            <tr [class.ec-fila-cancelada]="p.estatus === 'CANCELADO'">
+              <td data-label="Fecha"><span class="ec-periodo">{{ fmtFecha(p.fechaPago) }}</span></td>
+              <td data-label="Método / referencia">
+                <div class="ec-celda-texto">
+                  <span class="ec-concepto"><i class="fa ec-metodo-icono" [ngClass]="iconoMetodo(p.metodoPago)" aria-hidden="true"></i> {{ p.metodoPago || 'Sin método' }}</span>
+                  @if (p.referencia) { <span class="ec-sub">{{ p.referencia }}</span> }
+                </div>
+              </td>
+              <td data-label="Monto" class="num"><strong>{{ fmtMoneda(p.monto) }}</strong></td>
+              <td data-label="Aplicado" class="num">{{ fmtMoneda(p.aplicado) }}</td>
+              <td data-label="A favor" class="num">{{ fmtMoneda(p.disponible) }}</td>
+              <td data-label="Estatus" class="centro"><span [class]="claseEstado(p.estatus)">{{ etiquetaEstado(p.estatus) }}</span></td>
+              <td data-label="Acciones" class="centro">
+                <div class="ec-acciones">
+                  <button type="button" class="ec-btn ec-btn--azul" title="Ver a qué cargos se aplicó el pago"
+                    (click)="abrir({ tipo: 'detallePago', idPago: p.id })">
+                    <i class="fa fa-eye" aria-hidden="true"></i> Ver
+                  </button>
+                  @if (montoNum(p.disponible) > 0 && p.estatus !== 'CANCELADO') {
+                  <button type="button" class="ec-btn ec-btn--verde" title="Usar lo que sobró de este pago para otro cargo"
+                    (click)="abrir({ tipo: 'aplicarSaldo', idPago: p.id })">
+                    <i class="fa fa-random" aria-hidden="true"></i> Usar saldo
+                  </button>
+                  }
+                  @if (p.estatus !== 'CANCELADO') {
+                  <button type="button" class="ec-btn ec-btn--rojo" title="Cancelar: si el pago se capturó mal (monto, fecha o arrendatario)"
+                    [disabled]="procesando" (click)="cancelarPago(p)">
+                    <i class="fa fa-ban" aria-hidden="true"></i> Cancelar
+                  </button>
+                  }
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+      }
+    </section>
+    }
+  </div>
+</div>
+
+@if (modalRegistrarPago; as m) {
+<app-registrar-pago-modal [idArrendatario]="idArrendatario" [nombreArrendatario]="nombre"
+  [idCargoPreseleccionado]="m.idCargo" (cerrar)="cerrarModal()" (guardado)="alGuardar()"></app-registrar-pago-modal>
+}
+@if (modalAplicarSaldo; as m) {
+<app-aplicar-saldo-modal [idArrendatario]="idArrendatario" [nombreArrendatario]="nombre"
+  [idPagoPreseleccionado]="m.idPago" (cerrar)="cerrarModal()" (guardado)="alGuardar()"></app-aplicar-saldo-modal>
+}
+@if (modalDetallePago; as m) {
+<app-detalle-pago-modal [idPago]="m.idPago" (cerrar)="cerrarModal()" (cambio)="cargar()"></app-detalle-pago-modal>
+}
+@if (modalDetalleCargo; as m) {
+<app-detalle-cargo-modal [idCargo]="m.idCargo" (cerrar)="cerrarModal()" (cambio)="cargar()"
+  (verPago)="abrir({ tipo: 'detallePago', idPago: $event })"></app-detalle-cargo-modal>
+}
+@if (modal?.tipo === 'registrarCargo') {
+<app-registrar-cargo-modal [idArrendatario]="idArrendatario" [nombreArrendatario]="nombre"
+  (cerrar)="cerrarModal()" (guardado)="alGuardar()"></app-registrar-cargo-modal>
+}

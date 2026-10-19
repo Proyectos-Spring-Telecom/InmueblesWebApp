@@ -1,0 +1,91 @@
+<div class="contract-page-dim" (click)="cerrarSiLibre()" [@contractDimAnim]></div>
+<div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarSiLibre()">
+  <div class="docs-modal contract-docs-modal mono-pago-modal renta-alta-modal" role="dialog" aria-modal="true"
+    aria-labelledby="cob-aplicar-saldo-titulo" (click)="$event.stopPropagation()">
+    <div class="row docs-modal__header">
+      <div class="col-10 col-md-11">
+        <h3 class="docs-modal__title" id="cob-aplicar-saldo-titulo">Aplicar saldo a favor</h3>
+        <p class="docs-modal__subtitle">
+          {{ nombreArrendatario || 'Arrendatario #' + idArrendatario }} · reparte el dinero que quedó sin aplicar.
+        </p>
+      </div>
+      <div class="col-2 col-md-1 docs-modal__close-col">
+        <button type="button" class="docs-modal__close" (click)="cerrar.emit()" [disabled]="guardando"
+          aria-label="Cerrar modal de saldo a favor">
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="row docs-modal__body">
+      <div class="col-12">
+        @if (cargando) {
+        <div class="mono-pago-servicio-loading">
+          <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+          <span>Cargando pagos con saldo a favor…</span>
+        </div>
+        } @else if (!pagos.length) {
+        <div class="hub-vista-simple__vacio">
+          <mat-icon aria-hidden="true">savings</mat-icon>
+          <p>El arrendatario no tiene pagos con saldo a favor.</p>
+        </div>
+        } @else {
+        <div class="perm-form-nc">
+          <div class="perm-form-body mono-pago-form">
+            <div class="row g-3 align-items-end">
+              <div class="col-12">
+                <label for="cobAplicarPago" class="form-label perm-label">
+                  Pago con saldo a favor <span class="text-danger">*</span>
+                </label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">savings</mat-icon></span>
+                  <app-campo-select inputId="cobAplicarPago" label="Pago" placeholder="Seleccione el pago"
+                    [items]="pagos" valueExpr="id" [displayExpr]="etiquetaPagoSelect"
+                    [(ngModel)]="idPago" (ngModelChange)="montos = {}"></app-campo-select>
+                </div>
+              </div>
+            </div>
+
+            @if (pagoSeleccionado) {
+            <div class="contract-docs-card mt-3">
+              <h5 class="contract-docs-card__title">¿A qué se aplica el saldo?</h5>
+              <app-aplicaciones-editor [conceptos]="conceptos" [limite]="disponible" [(montos)]="montos"></app-aplicaciones-editor>
+
+              <div class="hub-vista-simple__resumen cob-contador mb-0" aria-label="Resumen del saldo">
+                <span class="hub-vista-simple__stat">Disponible <strong>{{ fmtMoneda(disponible) }}</strong></span>
+                <span class="hub-vista-simple__stat hub-vista-simple__stat--pagado">
+                  Por aplicar <strong>{{ fmtMoneda(porAplicar) }}</strong>
+                </span>
+                @if (restante < 0) {
+                <span class="hub-vista-simple__stat cob-stat--error">
+                  Excede el disponible <strong>{{ fmtMoneda(-restante) }}</strong>
+                </span>
+                } @else {
+                <span class="hub-vista-simple__stat hub-vista-simple__stat--pendiente">
+                  Seguirá a favor <strong>{{ fmtMoneda(restante) }}</strong>
+                </span>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="row docs-modal__footer">
+      <div class="col-12">
+        <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+          <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrar.emit()" [disabled]="guardando">
+            Cancelar
+          </button>
+          <button type="button" class="button-success mono-pago-form-btn" (click)="guardar()"
+            [disabled]="guardando || cargando || !pagoSeleccionado">
+            {{ guardando ? 'Enviando…' : 'Aplicar saldo' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

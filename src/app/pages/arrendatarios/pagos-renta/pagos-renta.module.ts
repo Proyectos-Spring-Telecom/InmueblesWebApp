@@ -10,6 +10,11 @@ import { PagosRentaComponent } from './pagos-renta.component';
 import { ListaHistoricoPagosRentaComponent } from './lista-historico-pagos-renta/lista-historico-pagos-renta.component';
 import { ListaRentasActualesComponent } from './lista-rentas-actuales/lista-rentas-actuales.component';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
+import { RegistrarPagoModalComponent } from '../cobranza/registrar-pago-modal/registrar-pago-modal.component';
+import { PortalBodyDirective } from 'src/app/shared/portal-body.directive';
+
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +23,11 @@ import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.comp
     ListaHistoricoPagosRentaComponent,
   ],
   imports: [
+    CampoFechaComponent,
+    CampoSelectComponent,
     ModuleHeroComponent,
+    RegistrarPagoModalComponent,
+    PortalBodyDirective,
     CommonModule,
     RouterModule,
     FormsModule,

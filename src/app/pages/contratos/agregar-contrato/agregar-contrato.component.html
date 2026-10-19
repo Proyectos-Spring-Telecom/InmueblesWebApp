@@ -12,13 +12,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">list</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="ctrTipoMod" formControlName="tipoModificacion" required>
-                  <option [ngValue]="null"></option>
-                  <option *ngFor="let t of tiposModificacion" [ngValue]="t">{{ t }}</option>
-                </select>
-                <label for="ctrTipoMod">Seleccione…</label>
-              </div>
+              <app-campo-select inputId="ctrTipoMod" formControlName="tipoModificacion" required label="Seleccione…" placeholder=""
+                [limpiable]="true" [items]="tiposModificacion" valueExpr="this" displayExpr="this"></app-campo-select>
             </div>
           </div>
 
@@ -48,17 +43,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">business</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="ctrArrendador" formControlName="idArrendador" required>
-                  <option [ngValue]="null"></option>
-                  <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
-                    {{ cliente.nombre }}
-                    <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
-                    <ng-container *ngIf="cliente.apellidoMaterno">{{ ' ' + cliente.apellidoMaterno }}</ng-container>
-                  </option>
-                </select>
-                <label for="ctrArrendador">Selecciona un arrendador</label>
-              </div>
+              <app-campo-select inputId="ctrArrendador" formControlName="idArrendador" required label="Selecciona un arrendador" placeholder=""
+                [limpiable]="true" [items]="listaClientes" valueExpr="id" [displayExpr]="etiquetaClienteSelect"></app-campo-select>
             </div>
           </div>
 
@@ -68,17 +54,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">person</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="ctrArrendatario" formControlName="idArrendatario" required>
-                  <option [ngValue]="null"></option>
-                  <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
-                    {{ cliente.nombre }}
-                    <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
-                    <ng-container *ngIf="cliente.apellidoMaterno">{{ ' ' + cliente.apellidoMaterno }}</ng-container>
-                  </option>
-                </select>
-                <label for="ctrArrendatario">Selecciona un arrendatario</label>
-              </div>
+              <app-campo-select inputId="ctrArrendatario" formControlName="idArrendatario" required label="Selecciona un arrendatario" placeholder=""
+                [limpiable]="true" [items]="listaClientes" valueExpr="id" [displayExpr]="etiquetaClienteSelect"></app-campo-select>
             </div>
           </div>
 
@@ -88,17 +65,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">apartment</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select
-                  class="form-select"
-                  id="ctrInmuebles"
-                  formControlName="idInmuebles"
-                >
-                  <option>
-                  </option>
-                </select>
-                <label for="ctrInmuebles">Seleccione...</label>
-              </div>
+              <app-campo-select inputId="ctrInmuebles" formControlName="idInmuebles" label="Seleccione..." placeholder=""
+                [items]="[]" valueExpr="this" displayExpr="this"></app-campo-select>
             </div>
           </div>
 
@@ -108,10 +76,7 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">event</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1">
-                <input type="date" class="form-control" id="ctrFechaIni" formControlName="fechaInicio" required />
-                <label for="ctrFechaIni">dd/mm/aaaa</label>
-              </div>
+              <app-campo-fecha inputId="ctrFechaIni" formControlName="fechaInicio" required label="dd/mm/aaaa"></app-campo-fecha>
             </div>
           </div>
 
@@ -121,10 +86,7 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">event</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1">
-                <input type="date" class="form-control" id="ctrFechaFin" formControlName="fechaTermino" required />
-                <label for="ctrFechaFin">dd/mm/aaaa</label>
-              </div>
+              <app-campo-fecha inputId="ctrFechaFin" formControlName="fechaTermino" required label="dd/mm/aaaa"></app-campo-fecha>
             </div>
           </div>
 
@@ -134,13 +96,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">payments</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="ctrMoneda" formControlName="tipoMoneda" required>
-                  <option [ngValue]="null"></option>
-                  <option *ngFor="let m of tiposMoneda" [ngValue]="m">{{ m }}</option>
-                </select>
-                <label for="ctrMoneda">Seleccione…</label>
-              </div>
+              <app-campo-select inputId="ctrMoneda" formControlName="tipoMoneda" required label="Seleccione…" placeholder=""
+                [limpiable]="true" [items]="tiposMoneda" valueExpr="this" displayExpr="this"></app-campo-select>
             </div>
           </div>
 
@@ -194,13 +151,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">schedule</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="ctrMesesDep" formControlName="mesesDeposito" required>
-                  <option [ngValue]="null"></option>
-                  <option *ngFor="let m of mesesCatalogo" [ngValue]="m.id">{{ m.text }}</option>
-                </select>
-                <label for="ctrMesesDep">Seleccione…</label>
-              </div>
+              <app-campo-select inputId="ctrMesesDep" formControlName="mesesDeposito" required label="Seleccione…" placeholder=""
+                [limpiable]="true" [items]="mesesCatalogo" valueExpr="id" displayExpr="text"></app-campo-select>
             </div>
           </div>
 
@@ -255,13 +207,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">calendar_view_month</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="ctrAnosArr" formControlName="anosForzososArrendador" required>
-                  <option [ngValue]="null"></option>
-                  <option *ngFor="let a of anosForzososCatalogo" [ngValue]="a.id">{{ a.text }}</option>
-                </select>
-                <label for="ctrAnosArr">Seleccione…</label>
-              </div>
+              <app-campo-select inputId="ctrAnosArr" formControlName="anosForzososArrendador" required label="Seleccione…" placeholder=""
+                [limpiable]="true" [items]="anosForzososCatalogo" valueExpr="id" displayExpr="text"></app-campo-select>
             </div>
           </div>
 
@@ -271,13 +218,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">calendar_view_month</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="ctrAnosArre" formControlName="anosForzososArrendatario" required>
-                  <option [ngValue]="null"></option>
-                  <option *ngFor="let a of anosForzososCatalogo" [ngValue]="a.id">{{ a.text }}</option>
-                </select>
-                <label for="ctrAnosArre">Seleccione…</label>
-              </div>
+              <app-campo-select inputId="ctrAnosArre" formControlName="anosForzososArrendatario" required label="Seleccione…" placeholder=""
+                [limpiable]="true" [items]="anosForzososCatalogo" valueExpr="id" displayExpr="text"></app-campo-select>
             </div>
           </div>
 
@@ -287,13 +229,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">schedule</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="ctrMesesAdel" formControlName="mesesAdelanto" required>
-                  <option [ngValue]="null"></option>
-                  <option *ngFor="let m of mesesCatalogo" [ngValue]="m.id">{{ m.text }}</option>
-                </select>
-                <label for="ctrMesesAdel">Seleccione…</label>
-              </div>
+              <app-campo-select inputId="ctrMesesAdel" formControlName="mesesAdelanto" required label="Seleccione…" placeholder=""
+                [limpiable]="true" [items]="mesesCatalogo" valueExpr="id" displayExpr="text"></app-campo-select>
             </div>
           </div>
 

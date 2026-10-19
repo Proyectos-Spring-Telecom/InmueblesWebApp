@@ -576,7 +576,7 @@ export function etiquetaMes(raw: string): string {
   if (!raw) return '—';
   const fecha = new Date(raw);
   if (Number.isNaN(fecha.getTime())) return formatearFecha(raw);
-  return fecha.toLocaleDateString('es-MX', { month: 'short', year: 'numeric' });
+  return fecha.toLocaleDateString('es-MX', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 export { formatearFecha, formatearMoneda };

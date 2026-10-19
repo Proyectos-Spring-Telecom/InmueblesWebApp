@@ -11,12 +11,17 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
+
 @NgModule({
   declarations: [
     ListaPermisosComponent,
     AgregarPermisoComponent
   ],
   imports: [
+    CampoFechaComponent,
+    CampoSelectComponent,
     ModuleHeroComponent,
     CommonModule,
     PermisosRoutingModule,

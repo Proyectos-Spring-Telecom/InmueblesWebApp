@@ -116,21 +116,19 @@
               <label class="rrv-label" for="rrArrendatario">Arrendatario</label>
               <div class="rrv-control">
                 <mat-icon aria-hidden="true">person</mat-icon>
-                <select id="rrArrendatario" [(ngModel)]="idArrendatarioFiltro" (ngModelChange)="onArrendatarioFiltroChange()"
-                  [disabled]="catalogosFiltroCargando">
-                  <option [ngValue]="null">Todos</option>
-                  <option *ngFor="let a of arrendatariosFiltroOpciones" [ngValue]="a.id">{{ a.label }}</option>
-                </select>
+                <app-campo-select inputId="rrArrendatario" class="campo-dx--plano" placeholder="Todos" [limpiable]="true"
+                  [items]="arrendatariosFiltroOpciones" valueExpr="id" displayExpr="label"
+                  [(ngModel)]="idArrendatarioFiltro" (ngModelChange)="onArrendatarioFiltroChange()"
+                  [disabled]="catalogosFiltroCargando"></app-campo-select>
               </div>
             </div>
             <div class="rrv-campo">
               <label class="rrv-label" for="rrContrato">Contrato</label>
               <div class="rrv-control" [class.rrv-control--deshabilitado]="catalogosFiltroCargando || !idArrendatarioFiltro">
                 <mat-icon aria-hidden="true">description</mat-icon>
-                <select id="rrContrato" [(ngModel)]="idContratoFiltro" [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro">
-                  <option [ngValue]="null">{{ textoPlaceholderContratoFiltro() }}</option>
-                  <option *ngFor="let c of contratosFiltroOpciones" [ngValue]="c.id">{{ c.label }}</option>
-                </select>
+                <app-campo-select inputId="rrContrato" class="campo-dx--plano" [placeholder]="textoPlaceholderContratoFiltro()"
+                  [limpiable]="true" [items]="contratosFiltroOpciones" valueExpr="id" displayExpr="label"
+                  [(ngModel)]="idContratoFiltro" [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro"></app-campo-select>
               </div>
             </div>
             <div class="rrv-campo rrv-campo--boton">
@@ -164,7 +162,10 @@
             <span class="rrv-leyenda__item rrv-leyenda__item--pagada"><i></i> Pagada <strong>{{ conteoPagadas }}</strong></span>
             <span class="rrv-leyenda__item rrv-leyenda__item--azul" title="Generada; se puede editar"><i></i> Editable <strong>{{ conteoEditables }}</strong></span>
             <span class="rrv-leyenda__item rrv-leyenda__item--amarillo" title="Mes abierto; solo se puede marcar como pagada"><i></i> Por pagar <strong>{{ conteoPorPagar }}</strong></span>
-            <span class="rrv-leyenda__item rrv-leyenda__item--incremento"><i></i> Incremento</span>
+            <span class="rrv-leyenda__item rrv-leyenda__item--inc-badge"
+              title="Se indica en la columna Concepto de la línea que tiene incremento">
+              <span class="concepto-inc concepto-inc--leyenda"><mat-icon aria-hidden="true">trending_up</mat-icon>Incremento</span>
+            </span>
           </div>
           <div class="rr-export-wrap rrv-export" [class.rr-export-wrap--open]="exportMenuAbierto">
             <button type="button" class="rrv-btn rrv-btn--fantasma" [disabled]="!registrosVisibles.length"
@@ -247,11 +248,17 @@
             <div *dxTemplate="let cell of 'costoM2Tpl'" class="cell-right cell-num">
               {{ cell.data.costoM2 | currency:'MXN':'symbol-narrow':'1.2-2' }}
             </div>
-            <div *dxTemplate="let cell of 'conceptoTpl'" class="cell-center">
+            <div *dxTemplate="let cell of 'conceptoTpl'" class="cell-center concepto-celda">
               <span class="concepto-pill" [class.concepto-pill--renta]="cell.data.tipoConcepto === 'Renta'"
                 [class.concepto-pill--mant]="cell.data.tipoConcepto === 'Mantto'">
                 {{ cell.data.tipoConcepto === 'Renta' ? 'Renta' : 'Mantto' }}
               </span>
+              @if (cell.data.tieneIncremento) {
+              <span class="concepto-inc"
+                [attr.title]="(cell.data.tipoConcepto === 'Renta' ? 'La renta' : 'El mantenimiento') + ' tiene incremento'">
+                <mat-icon aria-hidden="true">trending_up</mat-icon>Incremento
+              </span>
+              }
             </div>
             <div *dxTemplate="let cell of 'monedaTpl'" class="cell-right cell-num">
               {{ cell.value | currency:'MXN':'symbol-narrow':'1.2-2' }}
@@ -280,7 +287,12 @@
               <span class="rr-acciones__vacio" title="Los pagos por rango se editan en Pagos del mes">—</span>
               }
               } @else {
-              <!-- AMARILLO: mes abierto, bloqueada; solo se marca como pagada -->
+              <!-- AMARILLO: mes abierto, bloqueada; solo se cobra (pago total o parcial) -->
+              <button type="button" id="registrarPagoButton" class="btnAcciones"
+                title="Registrar pago (total o parcial, con fecha real, método y comprobante)"
+                (click)="registrarPagoRenta(cell.data); $event.stopPropagation()">
+                <i class="fa fa-money"></i>
+              </button>
               <button type="button" id="pinButton" class="btnAcciones" title="Marcar como pagada"
                 (click)="marcarRentaPagada(cell.data); $event.stopPropagation()">
                 <i class="fa fa-check"></i>
@@ -410,13 +422,9 @@
                   </div>
                   <div class="input-group input-group-lg perm-ig" *ngIf="!catalogosCapturaCargando" @rrCapturaFade>
                     <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">person_outline</mat-icon></span>
-                    <div class="form-floating flex-grow-1 perm-select-floating">
-                      <select id="rrCapArrendador" class="form-select" formControlName="idArrendador">
-                        <option [ngValue]="null" disabled>Selecciona arrendador</option>
-                        <option *ngFor="let a of arrendadoresOpciones" [ngValue]="a.id">{{ a.label }}</option>
-                      </select>
-                      <label for="rrCapArrendador">Arrendador</label>
-                    </div>
+                    <app-campo-select inputId="rrCapArrendador" formControlName="idArrendador" label="Arrendador"
+                      placeholder="Selecciona arrendador" [items]="arrendadoresOpciones" valueExpr="id"
+                      displayExpr="label"></app-campo-select>
                   </div>
                 </div>
 
@@ -424,15 +432,10 @@
                   <label class="form-label perm-label" for="rrCapTipoPersona">Tipo Persona</label>
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">person</mat-icon></span>
-                    <div class="form-floating flex-grow-1 perm-select-floating">
-                      <select id="rrCapTipoPersona" class="form-select" formControlName="tipoPersona"
-                        (change)="onTipoPersonaChange($event)">
-                        <option [ngValue]="null" disabled>Selecciona tipo de persona</option>
-                        <option [ngValue]="1">Física</option>
-                        <option [ngValue]="2">Moral</option>
-                      </select>
-                      <label for="rrCapTipoPersona">Selecciona Tipo De Persona</label>
-                    </div>
+                    <app-campo-select inputId="rrCapTipoPersona" formControlName="tipoPersona"
+                      label="Selecciona Tipo De Persona" placeholder="Selecciona tipo de persona"
+                      [items]="opcionesTipoPersona" valueExpr="id" displayExpr="nombre" [buscar]="false"
+                      (cambio)="onTipoPersonaChange($any($event))"></app-campo-select>
                   </div>
                 </div>
 
@@ -467,14 +470,9 @@
                       <div class="input-group input-group-lg perm-ig rr-inmueble-field__select"
                         [class.is-loading]="cargandoInmuebles">
                         <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">home_work</mat-icon></span>
-                        <div class="form-floating flex-grow-1 perm-select-floating">
-                          <select id="rrCapInmueble" class="form-select" formControlName="idInmueble"
-                            (change)="onInmuebleChange()">
-                            <option [ngValue]="null" disabled>{{ placeholderInmueble }}</option>
-                            <option *ngFor="let i of inmueblesOpciones" [ngValue]="i.id">{{ i.label }}</option>
-                          </select>
-                          <label for="rrCapInmueble">Inmueble</label>
-                        </div>
+                        <app-campo-select inputId="rrCapInmueble" formControlName="idInmueble" label="Inmueble"
+                          [placeholder]="placeholderInmueble" [items]="inmueblesOpciones" valueExpr="id" displayExpr="label"
+                          (cambio)="onInmuebleChange()"></app-campo-select>
                       </div>
                     </div>
                     <p *ngIf="mostrarAvisoSeleccionarArrendadorInmueble"
@@ -554,11 +552,8 @@
                   </label>
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">event</mat-icon></span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="rrCapInicio" type="date" class="form-control" formControlName="fechaInicioContrato"
-                        placeholder="Inicio" />
-                      <label for="rrCapInicio">Fecha inicio</label>
-                    </div>
+                    <app-campo-fecha inputId="rrCapInicio" formControlName="fechaInicioContrato"
+                      label="Fecha inicio"></app-campo-fecha>
                   </div>
                 </div>
                 <div class="col-12 col-md-4">
@@ -568,11 +563,8 @@
                   <div class="input-group input-group-lg perm-ig">
                     <span class="input-group-text fw-bold"><mat-icon
                         aria-hidden="true">event_available</mat-icon></span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="rrCapFin" type="date" class="form-control" formControlName="fechaTerminoContrato"
-                        placeholder="Término" />
-                      <label for="rrCapFin">Fecha término</label>
-                    </div>
+                    <app-campo-fecha inputId="rrCapFin" formControlName="fechaTerminoContrato"
+                      label="Fecha término"></app-campo-fecha>
                   </div>
                 </div>
                 <div class="col-12 col-md-4">

@@ -4,6 +4,7 @@ import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, debounceTime, finalize, forkJoin, map, of, Subscription, switchMap, tap } from 'rxjs';
 import Swal from 'sweetalert2';
+import { esRegistroNoEncontrado, MENSAJE_REGISTRO_NO_ENCONTRADO } from 'src/app/shared/http-errores';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { DocumentoPreviewComponent } from 'src/app/shared/documento-preview/documento-preview.component';
 import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
@@ -153,6 +154,29 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
   }[] = [];
   /** Catálogo GET `/cat-servicios/paginated` para el select de servicios. */
   public listaCatServicios: CatServicioItem[] = [];
+
+  /** Estatus del inmueble: mismos valores de texto que el select nativo. */
+  readonly opcionesEstatusInmueble = [
+    { id: 'RENTADO', nombre: 'Rentado' },
+    { id: 'PROPIO', nombre: 'Propio' },
+  ];
+
+  /** Estatus del local: mismos valores numéricos que el select nativo. */
+  readonly opcionesEstatusLocal = [
+    { id: 0, nombre: 'Fuera de servicio' },
+    { id: 1, nombre: 'Disponible para renta' },
+    { id: 2, nombre: 'Ocupado' },
+    { id: 3, nombre: 'Apartado' },
+  ];
+
+  /** Texto de cada arrendador en el select: nombre + apellidos (igual que el `<option>` anterior). */
+  readonly etiquetaClienteSelect = (c: { nombre?: string; apellidoPaterno?: string; apellidoMaterno?: string } | null): string =>
+    c ? `${c.nombre ?? ''}${c.apellidoPaterno ? ' ' + c.apellidoPaterno : ''}${c.apellidoMaterno ? ' ' + c.apellidoMaterno : ''}` : '';
+
+  /** Texto de cada tipo de servicio en el select (misma regla que `etiquetaCatServicio`). */
+  readonly etiquetaCatServicioSelect = (item: CatServicioItem | null): string =>
+    item ? this.etiquetaCatServicio(item) : '';
+
   public loadingSubmit = false;
   /** SweetAlert de guardado activo tras confirmar ubicación en el mapa. */
   private swalGuardadoInmuebleActivo = false;
@@ -306,8 +330,10 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
           const err = (detalle as { __error?: unknown } | null)?.__error;
           if (err) {
             void Swal.fire({
-              title: 'No se pudo cargar el inmueble',
-              text: 'No fue posible obtener la información. Intente de nuevo.',
+              title: esRegistroNoEncontrado(err) ? 'Registro no encontrado' : 'No se pudo cargar el inmueble',
+              text: esRegistroNoEncontrado(err)
+                ? MENSAJE_REGISTRO_NO_ENCONTRADO
+                : 'No fue posible obtener la información. Intente de nuevo.',
               icon: 'error',
               confirmButtonColor: '#3085d6',
               background: '#141a21',

@@ -1,0 +1,160 @@
+<div class="contract-page-dim" (click)="cerrarSiLibre()" [@contractDimAnim]></div>
+<div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarSiLibre()">
+  <div class="docs-modal contract-docs-modal mono-pago-modal" role="dialog" aria-modal="true"
+    aria-labelledby="cob-registrar-cargo-titulo" (click)="$event.stopPropagation()">
+    <div class="row docs-modal__header">
+      <div class="col-10 col-md-11">
+        <h3 class="docs-modal__title" id="cob-registrar-cargo-titulo">Registrar cargo de servicio</h3>
+        <p class="docs-modal__subtitle">
+          {{ nombreArrendatario || 'Arrendatario #' + idArrendatario }} · recibo de luz, agua u otro cobro (las rentas se
+          generan en Pagos del mes).
+        </p>
+      </div>
+      <div class="col-2 col-md-1 docs-modal__close-col">
+        <button type="button" class="docs-modal__close" (click)="cerrar.emit()" [disabled]="guardando"
+          aria-label="Cerrar modal de cargo">
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="row docs-modal__body">
+      <div class="col-12">
+        @if (cargando) {
+        <div class="mono-pago-servicio-loading">
+          <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+          <span>Cargando catálogos…</span>
+        </div>
+        } @else {
+        <div class="perm-form-nc">
+          <div class="perm-form-body mono-pago-form">
+            <div class="row g-3 align-items-start">
+              <div class="col-12 col-md-6 col-lg-4">
+                <label for="cobCargoClase" class="form-label perm-label">Tipo de cargo <span class="text-danger">*</span></label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">category</mat-icon></span>
+                  <app-campo-select inputId="cobCargoClase" label="Tipo de cargo" placeholder="" [buscar]="false"
+                    [items]="opcionesClase" valueExpr="id" displayExpr="nombre" [(ngModel)]="clase"></app-campo-select>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6 col-lg-4">
+                <label for="cobCargoContrato" class="form-label perm-label">Contrato</label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">description</mat-icon></span>
+                  <app-campo-select inputId="cobCargoContrato" label="Contrato" placeholder="Sin contrato" [limpiable]="true"
+                    [items]="contratos" valueExpr="id" displayExpr="nombre" [(ngModel)]="idContrato"></app-campo-select>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6 col-lg-4">
+                <label for="cobCargoFecha" class="form-label perm-label">Fecha del recibo <span class="text-danger">*</span></label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">event</mat-icon></span>
+                  <app-campo-fecha inputId="cobCargoFecha" label="Fecha del recibo" [limpiable]="false"
+                    [(ngModel)]="fecha"></app-campo-fecha>
+                </div>
+              </div>
+
+              @if (clase === 'SERVICIO') {
+              <div class="col-12 col-md-6 col-lg-4">
+                <label for="cobCargoTipo" class="form-label perm-label">Tipo de servicio <span class="text-danger">*</span></label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">design_services</mat-icon></span>
+                  <app-campo-select inputId="cobCargoTipo" label="Tipo de servicio" placeholder="Seleccione tipo de servicio"
+                    [items]="tiposServicio" valueExpr="id" displayExpr="nombre"
+                    [(ngModel)]="idTipoServicio" (ngModelChange)="onTipoServicio()"></app-campo-select>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6 col-lg-4">
+                <label for="cobCargoServicioArr" class="form-label perm-label">Servicio del arrendatario</label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">receipt_long</mat-icon></span>
+                  <app-campo-select inputId="cobCargoServicioArr" label="Servicio del arrendatario" [limpiable]="true"
+                    [placeholder]="serviciosDelTipo.length ? 'Ninguno' : 'Sin servicios de este tipo'"
+                    [items]="serviciosDelTipo" valueExpr="id" displayExpr="nombre"
+                    [(ngModel)]="idServicioArrendatario" [disabled]="!serviciosDelTipo.length"></app-campo-select>
+                </div>
+                <span class="cob-ayuda">
+                  {{ !idTipoServicio ? 'Primero elige el tipo de servicio.' : serviciosDelTipo.length
+                    ? 'Opcional: liga el cargo al contrato de ese servicio (ej. número de CFE).'
+                    : 'El arrendatario no tiene registrado un servicio de este tipo. Es opcional; puedes guardar sin él.' }}
+                </span>
+              </div>
+              }
+
+              <div class="col-12" [class.col-lg-4]="clase === 'SERVICIO'">
+                <label for="cobCargoDescripcion" class="form-label perm-label">
+                  Descripción @if (clase === 'OTRO') { <span class="text-danger">*</span> }
+                </label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">notes</mat-icon></span>
+                  <div class="form-floating flex-grow-1">
+                    <input id="cobCargoDescripcion" type="text" class="form-control" maxlength="200" placeholder=" "
+                      [(ngModel)]="descripcion" />
+                    <label for="cobCargoDescripcion">Ej.: Recibo de luz septiembre</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label for="cobCargoSubtotal" class="form-label perm-label">Subtotal</label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">payments</mat-icon></span>
+                  <div class="form-floating flex-grow-1">
+                    <input id="cobCargoSubtotal" type="number" inputmode="decimal" min="0" step="0.01" class="form-control"
+                      placeholder=" " [(ngModel)]="subtotal" (change)="calcularDesdeSubtotal()" />
+                    <label for="cobCargoSubtotal">Opcional</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="cobCargoIva" class="form-label perm-label">IVA 16 %</label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">percent</mat-icon></span>
+                  <div class="form-floating flex-grow-1">
+                    <input id="cobCargoIva" type="number" inputmode="decimal" min="0" step="0.01" class="form-control"
+                      placeholder=" " [(ngModel)]="iva" />
+                    <label for="cobCargoIva">Opcional</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="cobCargoTotal" class="form-label perm-label">Total <span class="text-danger">*</span></label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">attach_money</mat-icon></span>
+                  <div class="form-floating flex-grow-1">
+                    <input id="cobCargoTotal" type="number" inputmode="decimal" min="0" step="0.01" class="form-control"
+                      placeholder=" " [(ngModel)]="total" />
+                    <label for="cobCargoTotal">Total</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 mt-1">
+                <span class="cob-ayuda">
+                  Si capturas el subtotal se calculan IVA y total. Si sólo capturas el total, el IVA se estima (total ÷ 1.16).
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="row docs-modal__footer">
+      <div class="col-12">
+        <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+          <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrar.emit()" [disabled]="guardando">
+            Cancelar
+          </button>
+          <button type="button" class="button-success mono-pago-form-btn" (click)="guardar()"
+            [disabled]="guardando || cargando">
+            {{ guardando ? 'Enviando…' : 'Registrar cargo' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

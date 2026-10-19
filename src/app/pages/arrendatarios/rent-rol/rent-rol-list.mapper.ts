@@ -70,6 +70,8 @@ export interface RentRolGridLine {
   iva: number;
   montoFinal: number;
   esPendiente: boolean;
+  /** Esta línea (renta o mantenimiento) tiene incremento: se indica con un distintivo en la columna Concepto. */
+  tieneIncremento: boolean;
   /** Registro completo (para las acciones del grid). */
   registro: RentRolRow;
 }
@@ -259,21 +261,20 @@ function claseEstatusPendiente(row: RentRolRow): string {
 
 function claseEstatusRentaRow(row: RentRolRow): string {
   if (row.esPendiente) return claseEstatusPendiente(row);
-  if (row.tieneIncrementoRenta) return 'row-estatus--incremento';
+  // El incremento ya no pinta la fila: se indica con el distintivo de la columna Concepto.
   if (row.pagada) return 'row-estatus--pagada';
   return 'row-estatus--neutral';
 }
 
 function claseEstatusMantenimientoRow(row: RentRolRow): string {
   if (row.esPendiente) return claseEstatusPendiente(row);
-  if (row.tieneIncrementoMantenimiento) return 'row-estatus--incremento';
   if (row.pagada) return 'row-estatus--pagada';
   return 'row-estatus--neutral';
 }
 
 function baseGridLineDesdeRow(row: RentRolRow): Omit<
   RentRolGridLine,
-  'gridKey' | 'tipoConcepto' | 'esLineaRenta' | 'subTotal' | 'iva' | 'montoFinal'
+  'gridKey' | 'tipoConcepto' | 'esLineaRenta' | 'subTotal' | 'iva' | 'montoFinal' | 'tieneIncremento'
 > {
   return {
     parentId: row.id,
@@ -306,6 +307,7 @@ export function mapRentRolRowToGridLines(row: RentRolRow): RentRolGridLine[] {
       gridKey: `${llave}-renta`,
       tipoConcepto: 'Renta',
       esLineaRenta: true,
+      tieneIncremento: row.tieneIncrementoRenta,
       subTotal: row.renta.subTotal,
       iva: row.renta.iva,
       montoFinal: row.renta.montoFinal,
@@ -315,6 +317,7 @@ export function mapRentRolRowToGridLines(row: RentRolRow): RentRolGridLine[] {
       gridKey: `${llave}-mant`,
       tipoConcepto: 'Mantto',
       esLineaRenta: false,
+      tieneIncremento: row.tieneIncrementoMantenimiento,
       subTotal: row.mantenimiento.subTotal,
       iva: row.mantenimiento.iva,
       montoFinal: row.mantenimiento.montoFinal,

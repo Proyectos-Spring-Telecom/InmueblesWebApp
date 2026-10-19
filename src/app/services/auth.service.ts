@@ -247,6 +247,8 @@ export class AuthenticationService extends BaseServicesService {
       sessionStorage.removeItem(key);
       localStorage.removeItem(key);
     }
+    // textAgentAPI: conversation_id no debe sobrevivir al logout (agente_consumo_front.md §9)
+    sessionStorage.removeItem('agente.conversationId');
   }
 
   public getUser(): User | null {

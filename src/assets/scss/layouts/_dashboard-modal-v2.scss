@@ -1,0 +1,407 @@
+/* =============================================================================
+ * Dashboards v2 — encabezado héroe, anillo de porcentaje, pestañas y mosaico de locales.
+ * Complementa `_dashboard-modal.scss` (clases `dbx-`).
+ * ========================================================================== */
+
+/* ---------- Héroe ---------- */
+.dbx-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.4rem;
+  border-radius: 16px;
+  border: 1px solid rgba(251, 165, 180, 0.22);
+  background:
+    radial-gradient(600px 220px at 0% 0%, rgba(104, 19, 48, 0.55), transparent 65%),
+    radial-gradient(520px 240px at 100% 100%, rgba(29, 78, 216, 0.35), transparent 60%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.85));
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(90deg, transparent, #000 40%, #000 60%, transparent);
+    pointer-events: none;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.dbx-hero__identidad {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.dbx-hero__icono {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #8b1e3f, #681330);
+  box-shadow: 0 10px 24px rgba(104, 19, 48, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+
+  mat-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 28px;
+  }
+
+  &--azul {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+}
+
+.dbx-hero__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.dbx-hero__kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fbcfe8;
+}
+
+.dbx-hero__titulo {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.dbx-hero__datos {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dbx-hero__dato {
+  display: flex;
+  flex-direction: column;
+
+  span {
+    font-size: 0.72rem;
+    color: #cbd5e1;
+  }
+
+  strong {
+    font-size: 1.15rem;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &--alerta strong { color: #fca5a5; }
+  &--favor strong { color: #86efac; }
+}
+
+/* ---------- Anillo de porcentaje ---------- */
+.dbx-anillo {
+  --p: 0;
+  --c: #3b82f6;
+  --resto: rgba(148, 163, 184, 0.22);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--resto) 0);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.45);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: #0e141c;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+
+  &--verde { --c: #22c55e; }
+  &--ambar { --c: #f59e0b; }
+}
+
+.dbx-anillo__centro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+
+  strong {
+    font-size: 1.6rem;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    margin-top: 0.2rem;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-align: center;
+  }
+}
+
+/* ---------- Pestañas ---------- */
+.dbx-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(2, 6, 23, 0.5);
+}
+
+.dbx-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &--activo {
+    color: #fff;
+    background: linear-gradient(135deg, #8b1e3f, #681330);
+    box-shadow: 0 6px 16px rgba(104, 19, 48, 0.35);
+  }
+}
+
+.dbx-tab__n {
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.72rem;
+}
+
+/* ---------- KPI: acento superior y elevación ---------- */
+.dbx-kpi {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--kpi), transparent);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--kpi) 45%, transparent);
+  }
+}
+
+/* ---------- Mosaico de locales (plano) ---------- */
+.dbx-mosaico {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dbx-tile {
+  --c: #3b82f6;
+  flex: var(--peso, 1) 1 130px;
+  min-width: 130px;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 10%, transparent));
+  color: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover,
+  &--activo {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--c) 35%, transparent);
+  }
+
+  &--libre {
+    --c: #22c55e;
+    border-style: dashed;
+  }
+
+  &--ocupado { --c: #3b82f6; }
+  &--otro { --c: #94a3b8; }
+}
+
+.dbx-tile__nombre {
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.dbx-tile__ocupante {
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.78);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dbx-tile__pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-variant-numeric: tabular-nums;
+
+  strong {
+    font-size: 0.84rem;
+    color: #fff;
+  }
+}
+
+.dbx-zona__titulo-mosaico {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+/* Barra de progreso dentro de una fila de tabla */
+.dbx-mini-barra {
+  display: block;
+  width: 100%;
+  min-width: 90px;
+  height: 6px;
+  margin-top: 0.35rem;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.2);
+  overflow: hidden;
+
+  > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2563eb, #22c55e);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .dbx-hero {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    padding: 1rem;
+  }
+
+  .dbx-anillo {
+    width: 108px;
+    height: 108px;
+  }
+
+  .dbx-hero__titulo {
+    font-size: 1.2rem;
+  }
+
+  .dbx-tab {
+    flex: 1 1 calc(50% - 4px);
+  }
+}
+
+html.light-theme {
+  .dbx-hero {
+    border-color: rgba(157, 23, 77, 0.2);
+    background:
+      radial-gradient(600px 220px at 0% 0%, #fdf2f8, transparent 65%),
+      radial-gradient(520px 240px at 100% 100%, #dbeafe, transparent 60%),
+      #ffffff;
+
+    &::after {
+      background-image:
+        linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+    }
+  }
+
+  .dbx-hero__kicker { color: #9d174d; }
+
+  .dbx-hero__titulo,
+  .dbx-hero__dato strong,
+  .dbx-anillo__centro strong { color: #0f172a; }
+
+  .dbx-hero__dato span { color: #475569; }
+  .dbx-hero__dato--alerta strong { color: #b91c1c; }
+  .dbx-hero__dato--favor strong { color: #15803d; }
+
+  .dbx-anillo {
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+
+    &::before {
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+    }
+  }
+
+  .dbx-tabs {
+    background: #f1f5f9;
+    border-color: rgba(148, 163, 184, 0.35);
+  }
+
+  .dbx-tab { color: #475569; }
+  .dbx-tab--activo { color: #fff; }
+
+  .dbx-tile {
+    color: #0f172a;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--c) 18%, #fff), color-mix(in srgb, var(--c) 6%, #fff));
+  }
+
+  .dbx-tile__ocupante,
+  .dbx-tile__pie { color: #334155; }
+
+  .dbx-tile__pie strong { color: #0f172a; }
+}

@@ -203,15 +203,8 @@
                         <span class="input-group-text fw-bold">
                           <mat-icon aria-hidden="true">person</mat-icon>
                         </span>
-                        <div class="form-floating flex-grow-1 perm-select-floating">
-                          <select class="form-select" id="selArrendatarioEst" formControlName="idArrendatario">
-                            <option [ngValue]="null" selected disabled hidden></option>
-                            @for (op of opcionesArrendatario; track op.value) {
-                            <option [ngValue]="op.value">{{ op.label }}</option>
-                            }
-                          </select>
-                          <label for="selArrendatarioEst">Selecciona un arrendatario</label>
-                        </div>
+                        <app-campo-select inputId="selArrendatarioEst" formControlName="idArrendatario" label="Selecciona un arrendatario"
+                          placeholder="" [items]="opcionesArrendatario" valueExpr="value" displayExpr="label"></app-campo-select>
                       </div>
                       @if (opcionesArrendatario.length === 0 && !cargandoArrendatarios) {
                       <p class="small text-body-secondary mb-0 mt-1">
@@ -279,15 +272,8 @@
                         <span class="input-group-text fw-bold">
                           <mat-icon aria-hidden="true">person</mat-icon>
                         </span>
-                        <div class="form-floating flex-grow-1 perm-select-floating">
-                          <select class="form-select" id="selArrendatarioEstEdit" formControlName="idArrendatario">
-                            <option [ngValue]="null" selected disabled hidden></option>
-                            @for (op of opcionesArrendatario; track op.value) {
-                            <option [ngValue]="op.value">{{ op.label }}</option>
-                            }
-                          </select>
-                          <label for="selArrendatarioEstEdit">Selecciona un arrendatario</label>
-                        </div>
+                        <app-campo-select inputId="selArrendatarioEstEdit" formControlName="idArrendatario" label="Selecciona un arrendatario"
+                          placeholder="" [items]="opcionesArrendatario" valueExpr="value" displayExpr="label"></app-campo-select>
                       </div>
                       @if (opcionesArrendatario.length === 0 && !cargandoArrendatarios) {
                       <p class="small text-body-secondary mb-0 mt-1">No hay arrendatarios cargados para este predio.</p>

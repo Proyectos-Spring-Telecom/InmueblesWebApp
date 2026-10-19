@@ -41,6 +41,14 @@ export class AgregarProspectoComponent implements OnInit {
   public idCliente: number;
   public title = 'Agregar Prospecto';
   public listaClientes: any[] = [];
+  /** Tipo Persona: mismos valores que el select nativo (1 Física, 2 Moral). */
+  readonly opcionesTipoPersona = [
+    { id: 1, nombre: 'Física' },
+    { id: 2, nombre: 'Moral' },
+  ];
+  /** Texto de cada cuenta padre en el select: nombre + apellidos (igual que el `<option>` anterior). */
+  readonly etiquetaClienteSelect = (c: any): string =>
+    c ? [c.nombre, c.apellidoPaterno, c.apellidoMaterno].filter((x) => x != null && String(x).trim() !== '').join(' ') : '';
   selectedFileName: string = '';
   previewUrl: string | ArrayBuffer | null = null;
   public showRol: any;

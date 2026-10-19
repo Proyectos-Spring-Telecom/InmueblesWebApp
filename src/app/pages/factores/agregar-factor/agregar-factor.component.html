@@ -14,25 +14,15 @@
               <label class="form-label mb-1 inpc-filtro-fechas__label" for="facInpcFechaInicio">
                 Fecha inicio
               </label>
-              <input
-                id="facInpcFechaInicio"
-                type="date"
-                class="form-control form-control-sm inpc-filtro-fechas__input"
-                [(ngModel)]="fechaInicioFiltro"
-                [ngModelOptions]="{ standalone: true }"
-              />
+              <app-campo-fecha inputId="facInpcFechaInicio" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+                [(ngModel)]="fechaInicioFiltro" [ngModelOptions]="{ standalone: true }"></app-campo-fecha>
             </div>
             <div>
               <label class="form-label mb-1 inpc-filtro-fechas__label" for="facInpcFechaFin">
                 Fecha fin
               </label>
-              <input
-                id="facInpcFechaFin"
-                type="date"
-                class="form-control form-control-sm inpc-filtro-fechas__input"
-                [(ngModel)]="fechaFinFiltro"
-                [ngModelOptions]="{ standalone: true }"
-              />
+              <app-campo-fecha inputId="facInpcFechaFin" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+                [(ngModel)]="fechaFinFiltro" [ngModelOptions]="{ standalone: true }"></app-campo-fecha>
             </div>
             <div class="inpc-filtros-panel__accion">
               <button
@@ -81,26 +71,10 @@
               <span class="input-group-text">
                 <mat-icon aria-hidden="true">calendar_month</mat-icon>
               </span>
-              <div
-                class="form-floating flex-grow-1 perm-select-floating factor-inpc-select"
-                [class.factor-inpc-select--filled]="!!inpcSeleccionado"
-              >
-                <select
-                  class="form-select"
-                  id="facInpc"
-                  formControlName="inpcId"
-                  aria-label="Seleccionar periodo INPC"
-                  [disabled]="cargandoInpc || inpcOpciones.length === 0"
-                >
-                  <option [ngValue]="null" disabled>
-                    {{ cargandoInpc ? 'Cargando INPC…' : 'Selecciona mes y año' }}
-                  </option>
-                  <option *ngFor="let row of inpcOpciones" [ngValue]="row.id">
-                    {{ etiquetaOpcionInpc(row) }}
-                  </option>
-                </select>
-                <label for="facInpc">Mes y año del INPC</label>
-              </div>
+              <app-campo-select inputId="facInpc" formControlName="inpcId" ariaLabel="Seleccionar periodo INPC"
+                [disabled]="cargandoInpc || inpcOpciones.length === 0" label="Mes y año del INPC"
+                [placeholder]="cargandoInpc ? 'Cargando INPC…' : 'Selecciona mes y año'"
+                [items]="inpcOpciones" valueExpr="id" [displayExpr]="etiquetaOpcionInpcSelect"></app-campo-select>
             </div>
             <p class="factor-form__aviso small opacity-50 mt-2 mb-0" *ngIf="!cargandoInpc && inpcOpciones.length === 0">
               No hay registros de INPC en el rango seleccionado.
@@ -114,28 +88,9 @@
               <span class="input-group-text">
                 <mat-icon aria-hidden="true">pin</mat-icon>
               </span>
-              <div
-                class="form-floating flex-grow-1 perm-select-floating factor-inpc-select"
-                [class.factor-inpc-select--filled]="!!factorForm.get('valor')?.value"
-              >
-                <select
-                  class="form-select"
-                  id="facValor"
-                  formControlName="valor"
-                  aria-label="Seleccionar valor del periodo INPC"
-                >
-                  <option [ngValue]="null" disabled>
-                    {{ inpcSeleccionado ? 'Selecciona el valor' : 'Primero elige el periodo' }}
-                  </option>
-                  <option [ngValue]="'inpc'">
-                    {{ etiquetaOpcionValorInpc(inpcSeleccionado) }}
-                  </option>
-                  <option [ngValue]="'porcentajeAnual'" [disabled]="!porcentajeAnualDisponible">
-                    {{ etiquetaOpcionValorPorcentaje(inpcSeleccionado) }}
-                  </option>
-                </select>
-                <label for="facValor">INPC o % anual</label>
-              </div>
+              <app-campo-select inputId="facValor" formControlName="valor" ariaLabel="Seleccionar valor del periodo INPC"
+                label="INPC o % anual" [placeholder]="inpcSeleccionado ? 'Selecciona el valor' : 'Primero elige el periodo'"
+                [items]="opcionesValorInpc" valueExpr="id" displayExpr="nombre" [buscar]="false"></app-campo-select>
             </div>
           </div>
 

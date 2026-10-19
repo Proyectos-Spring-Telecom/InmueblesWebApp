@@ -89,6 +89,15 @@ export class ListaRegistroServiciosInmueblesComponent implements OnInit {
   idInmuebleFiltro: number | null = null;
   estatusFiltroPagos: number | null = null;
   readonly opcionesEstatusPagoFiltro = OPCIONES_ESTATUS_PAGO_FILTRO_PANEL;
+  /** Estatus del modal: mismos valores de texto que el select nativo. */
+  readonly opcionesEstatusPagoModal = [
+    { id: 'Pagado', nombre: 'Pagado' },
+    { id: 'Pendiente', nombre: 'Pendiente' },
+    { id: 'Cancelado', nombre: 'Cancelado' },
+  ];
+  /** Texto de cada método de pago en el select (misma regla que `etiquetaCatMetodoPago`). */
+  readonly etiquetaCatMetodoPagoSelect = (item: CatMetodoPagoItem | null): string =>
+    item ? this.etiquetaCatMetodoPago(item) : '';
   inmueblesOpciones: SelectOpcion[] = [];
   catalogosFiltroCargando = false;
 

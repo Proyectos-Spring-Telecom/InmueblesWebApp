@@ -126,6 +126,9 @@ export class AgregarUsuarioComponent implements OnInit {
   public listaModulos: any[] = [];
   public listaRoles: any;
   public listaClientes: any;
+  /** Texto de cada arrendador en el select: nombre + apellidos (igual que el `<option>` anterior). */
+  readonly etiquetaClienteSelect = (c: any): string =>
+    c ? `${c.nombre ?? ''}${c.apellidoPaterno ? ' ' + c.apellidoPaterno : ''}${c.apellidoMaterno ? ' ' + c.apellidoMaterno : ''}` : '';
 
   public showInputsId = true;
   type = 'password';

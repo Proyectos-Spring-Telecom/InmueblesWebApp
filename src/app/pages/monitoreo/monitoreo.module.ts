@@ -15,9 +15,14 @@ import { DocumentoPreviewModule } from 'src/app/shared/documento-preview/documen
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
+
 @NgModule({
   declarations: [MonitoreoComponent, MonitoreoInstalacionComponent, MonitoreoLocalesPlanoComponent],
   imports: [
+    CampoFechaComponent,
+    CampoSelectComponent,
     ModuleHeroComponent,
     CommonModule,
     MonitoreoRoutingModule,

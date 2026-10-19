@@ -187,7 +187,7 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
-            title: '¡Eliminado!',
+            title: '¡Operación Exitosa!',
             html: 'El servicio ha sido eliminado de forma exitosa.',
             icon: 'success',
             showCancelButton: false,
@@ -289,7 +289,7 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
-            title: '¡Eliminado!',
+            title: '¡Operación Exitosa!',
             html: 'El archivo ha sido eliminado de forma exitosa.',
             icon: 'success',
             showCancelButton: false,
@@ -354,7 +354,7 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
           void Swal.fire({
             background: '#141a21',
             color: '#ffffff',
-            title: '¡Eliminado!',
+            title: '¡Operación Exitosa!',
             html: 'El socio ha sido eliminado de forma exitosa.',
             icon: 'success',
             showCancelButton: false,
@@ -715,7 +715,7 @@ export class ListaArrendatariosDetalleComponent implements OnChanges {
             void Swal.fire({
               background: '#141a21',
               color: '#ffffff',
-              title: '¡Contrato cancelado!',
+              title: '¡Operación Exitosa!',
               html: `El ${etiquetaContrato} fue cancelado correctamente.`,
               icon: 'success',
               confirmButtonColor: '#3085d6',

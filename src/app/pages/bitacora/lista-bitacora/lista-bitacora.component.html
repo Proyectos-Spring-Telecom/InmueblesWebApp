@@ -8,14 +8,14 @@
         <div>
           <label class="form-label mb-1 inpc-filtro-fechas__label" for="bitacoraFechaInicio">Fecha inicio <span
               class="text-danger">*</span></label>
-          <input id="bitacoraFechaInicio" type="date" class="form-control form-control-sm inpc-filtro-fechas__input"
-            [(ngModel)]="fechaInicioFiltro" />
+          <app-campo-fecha inputId="bitacoraFechaInicio" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaInicioFiltro"></app-campo-fecha>
         </div>
         <div>
           <label class="form-label mb-1 inpc-filtro-fechas__label" for="bitacoraFechaFin">Fecha fin <span
               class="text-danger">*</span></label>
-          <input id="bitacoraFechaFin" type="date" class="form-control form-control-sm inpc-filtro-fechas__input"
-            [(ngModel)]="fechaFinFiltro" />
+          <app-campo-fecha inputId="bitacoraFechaFin" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaFinFiltro"></app-campo-fecha>
         </div>
         <div class="inpc-filtros-panel__accion">
           <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">

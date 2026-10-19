@@ -369,37 +369,23 @@
                 <label class="form-label mb-1 mono-pagos-fechas-filter__label" for="monoPagosFechaInicio">
                   Fecha inicio <span class="text-danger">*</span>
                 </label>
-                <input
-                  id="monoPagosFechaInicio"
-                  type="date"
-                  class="form-control form-control-sm mono-pagos-fechas-filter__input"
-                  [(ngModel)]="fechaInicioFiltroPagos"
-                />
+                <app-campo-fecha inputId="monoPagosFechaInicio" class="campo-dx--en-caja mono-pagos-fechas-filter__input"
+                  placeholder="dd/mm/aaaa" [(ngModel)]="fechaInicioFiltroPagos"></app-campo-fecha>
               </div>
               <div class="mono-pagos-fechas-filter">
                 <label class="form-label mb-1 mono-pagos-fechas-filter__label" for="monoPagosFechaFin">
                   Fecha fin <span class="text-danger">*</span>
                 </label>
-                <input
-                  id="monoPagosFechaFin"
-                  type="date"
-                  class="form-control form-control-sm mono-pagos-fechas-filter__input"
-                  [(ngModel)]="fechaFinFiltroPagos"
-                />
+                <app-campo-fecha inputId="monoPagosFechaFin" class="campo-dx--en-caja mono-pagos-fechas-filter__input"
+                  placeholder="dd/mm/aaaa" [(ngModel)]="fechaFinFiltroPagos"></app-campo-fecha>
               </div>
               <div class="mono-pagos-fechas-filter">
                 <label class="form-label mb-1 mono-pagos-fechas-filter__label" for="monoPagosEstatus">
                   Estatus
                 </label>
-                <select
-                  id="monoPagosEstatus"
-                  class="form-select form-select-sm mono-pagos-fechas-filter__input"
-                  [(ngModel)]="estatusFiltroPagos"
-                >
-                  <option *ngFor="let op of opcionesEstatusPagoFiltro" [ngValue]="op.value">
-                    {{ op.label }}
-                  </option>
-                </select>
+                <app-campo-select inputId="monoPagosEstatus" class="campo-dx--en-caja mono-pagos-fechas-filter__input"
+                  placeholder="Todos" [buscar]="false" [items]="opcionesEstatusPagoFiltro" valueExpr="value"
+                  displayExpr="label" [(ngModel)]="estatusFiltroPagos"></app-campo-select>
               </div>
               <button type="button" class="mono-grid-action-btn mono-grid-action-btn--consult" (click)="aplicarFiltrosPagos()">
                 <mat-icon aria-hidden="true">search</mat-icon>
@@ -1015,19 +1001,9 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">design_services</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="pagoServicioInmueble"
-                        class="form-select"
-                        formControlName="idServicioInmueble"
-                        (change)="onPagoServicioInmuebleChange()"
-                      >
-                        <option *ngFor="let srv of serviciosInmueblePago" [ngValue]="srv.id">
-                          {{ srv.nombre }}
-                        </option>
-                      </select>
-                      <label for="pagoServicioInmueble">Servicio del inmueble</label>
-                    </div>
+                    <app-campo-select inputId="pagoServicioInmueble" formControlName="idServicioInmueble"
+                      label="Servicio del inmueble" placeholder="" [items]="serviciosInmueblePago" valueExpr="id"
+                      displayExpr="nombre" (cambio)="onPagoServicioInmuebleChange()"></app-campo-select>
                   </div>
                 </div>
 
@@ -1046,26 +1022,11 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">design_services</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="pagoServicioArrendatario"
-                        class="form-select"
-                        formControlName="idServicioInmueble"
-                        (change)="onPagoServicioInmuebleChange()"
-                      >
-                        <option [ngValue]="null" disabled hidden>
-                          {{
-                            serviciosArrendatarioModalPago.length
-                              ? 'Seleccione tipo de servicio'
-                              : 'Sin servicios del arrendatario'
-                          }}
-                        </option>
-                        <option *ngFor="let srv of serviciosArrendatarioModalPago" [ngValue]="srv.id">
-                          {{ srv.etiquetaTipoServicio }}
-                        </option>
-                      </select>
-                      <label for="pagoServicioArrendatario">Tipo de servicio</label>
-                    </div>
+                    <app-campo-select inputId="pagoServicioArrendatario" formControlName="idServicioInmueble"
+                      label="Tipo de servicio"
+                      [placeholder]="serviciosArrendatarioModalPago.length ? 'Seleccione tipo de servicio' : 'Sin servicios del arrendatario'"
+                      [items]="serviciosArrendatarioModalPago" valueExpr="id" displayExpr="etiquetaTipoServicio"
+                      (cambio)="onPagoServicioInmuebleChange()"></app-campo-select>
                   </div>
                 </div>
 
@@ -1094,10 +1055,7 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">event</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="pagoFecha" type="date" class="form-control" formControlName="fechaPago" />
-                      <label for="pagoFecha">Fecha de pago</label>
-                    </div>
+                    <app-campo-fecha inputId="pagoFecha" formControlName="fechaPago" label="Fecha de pago"></app-campo-fecha>
                   </div>
                 </div>
 
@@ -1132,22 +1090,10 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">credit_card</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="pagoMetodo"
-                        class="form-select"
-                        formControlName="idMetodoPago"
-                        [disabled]="metodosPagoCargando"
-                      >
-                        <option [ngValue]="null" disabled hidden>
-                          {{ metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago' }}
-                        </option>
-                        <option *ngFor="let mp of listaCatMetodosPago" [ngValue]="mp.id">
-                          {{ etiquetaCatMetodoPago(mp) }}
-                        </option>
-                      </select>
-                      <label for="pagoMetodo">Método de pago</label>
-                    </div>
+                    <app-campo-select inputId="pagoMetodo" formControlName="idMetodoPago"
+                      [disabled]="metodosPagoCargando" label="Método de pago"
+                      [placeholder]="metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago'"
+                      [items]="listaCatMetodosPago" valueExpr="id" [displayExpr]="etiquetaCatMetodoPagoSelect"></app-campo-select>
                   </div>
                 </div>
 
@@ -1157,14 +1103,8 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">flag</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="pagoEstatus" class="form-select" formControlName="estatus">
-                        <option [ngValue]="'Pagado'">Pagado</option>
-                        <option [ngValue]="'Pendiente'">Pendiente</option>
-                        <option [ngValue]="'Cancelado'">Cancelado</option>
-                      </select>
-                      <label for="pagoEstatus">Estatus</label>
-                    </div>
+                    <app-campo-select inputId="pagoEstatus" formControlName="estatus" label="Estatus" placeholder=""
+                      [items]="opcionesEstatusPagoModal" valueExpr="id" displayExpr="nombre" [buscar]="false"></app-campo-select>
                   </div>
                 </div>
 

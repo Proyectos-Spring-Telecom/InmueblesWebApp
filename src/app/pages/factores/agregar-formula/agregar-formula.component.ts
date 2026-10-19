@@ -65,6 +65,11 @@ export class AgregarFormulaComponent implements OnInit {
   public submitButton = 'Guardar';
   public loading      = false;
   public formulaForm: FormGroup;
+  /** Tipo de resultado: mismos valores de texto que el select nativo. */
+  readonly opcionesTipoResultado = [
+    { id: 'PORCENTAJE', nombre: 'Porcentaje (%)' },
+    { id: 'MONTO', nombre: 'Monto ($)' },
+  ];
   public idFormula: number | null = null;
   public title = 'Agregar Fórmula';
   public factoresParaSelectFormula: FactorOpcionFormula[] = [];

@@ -1475,7 +1475,10 @@
     background-color 180ms ease;
 }
 
-.mono-pagos-fechas-filter__input:focus {
+.mono-pagos-fechas-filter__input:focus,
+
+
+.mono-pagos-fechas-filter__input:focus-within {
   border-color: rgba(56, 189, 248, 0.85);
   background: rgba(8, 20, 36, 0.96);
   box-shadow:
@@ -4286,7 +4289,10 @@ $darkText: #0f172a;
     box-shadow: none !important;
   }
 
-  .mono-pagos-fechas-filter__input:focus {
+  .mono-pagos-fechas-filter__input:focus,
+
+
+  .mono-pagos-fechas-filter__input:focus-within {
     background: #ffffff !important;
     border-color: #64748b !important;
     color: #1e293b !important;

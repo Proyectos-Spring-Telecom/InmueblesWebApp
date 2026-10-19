@@ -592,6 +592,7 @@ export class ListaInmueblesComponent implements OnInit, OnDestroy {
     this.donaData     = [];
     this.lugarCargando = true;
     this.localGraficaHover = null;
+    this.ocupacionVista = 'plano';
     this.mostrarModalLugar = true;
 
     this.inmueblesService.obtenerMetrosInmueble(Math.floor(id))
@@ -630,6 +631,7 @@ export class ListaInmueblesComponent implements OnInit, OnDestroy {
     this.dashboardOcupacionData = [];
     this.dashboardRentaData = [];
     this.dashboardMensualidadData = [];
+    this.dashboardTab = 'resumen';
     this.mostrarModalDashboard = true;
     this.cargarDashboardInmueble();
   }
@@ -702,6 +704,42 @@ export class ListaInmueblesComponent implements OnInit, OnDestroy {
   get dashboardArrendador() { return this.dashboardData?.arrendador ?? null; }
 
   get dashboardInmueble() { return this.dashboardData?.inmueble ?? null; }
+
+  /** Pestaña visible del dashboard del inmueble. */
+  dashboardTab: 'resumen' | 'locales' | 'arrendatarios' | 'pagos' = 'resumen';
+  /** Vista del modal de ocupación: plano en mosaico o gráfica con detalle. */
+  ocupacionVista: 'plano' | 'grafica' = 'plano';
+
+  /** Color del cuadro del mosaico según el estado del local. */
+  claseTileLocal(estado: string): string {
+    const e = (estado ?? '').toLowerCase();
+    if (e === 'ocupado') return 'dbx-tile--ocupado';
+    if (e === 'libre' || e === 'disponible') return 'dbx-tile--libre';
+    return 'dbx-tile--otro';
+  }
+
+  /** Chip de estatus de pago (pagado verde, pendiente ámbar, otro gris). */
+  claseChipEstatus(estatus: string): string {
+    const e = (estatus ?? '').toLowerCase();
+    if (e.includes('pagad')) return 'dbx-chip--verde';
+    if (e.includes('pend')) return 'dbx-chip--ambar';
+    return 'dbx-chip--gris';
+  }
+
+  /** Iniciales para el avatar de las fichas de persona (máx. 2 letras). */
+  iniciales(nombre: string | null | undefined): string {
+    const partes = String(nombre ?? '').trim().split(/\s+/).filter(Boolean);
+    if (!partes.length) return '—';
+    return (partes[0][0] + (partes.length > 1 ? partes[1][0] : '')).toUpperCase();
+  }
+
+  /** Porcentaje 0–100 (seguro ante total 0) para barras y textos del dashboard. */
+  porcentaje(parte: number | null | undefined, total: number | null | undefined): number {
+    const p = Number(parte) || 0;
+    const t = Number(total) || 0;
+    if (t <= 0) return 0;
+    return Math.max(0, Math.min(100, (p / t) * 100));
+  }
 
   claseEstadoLocal(estado: string): string {
     const e = (estado ?? '').toLowerCase();

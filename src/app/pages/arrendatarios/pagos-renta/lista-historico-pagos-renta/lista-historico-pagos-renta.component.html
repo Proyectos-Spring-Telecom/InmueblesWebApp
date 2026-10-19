@@ -36,34 +36,22 @@
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histArrendatario"
             >Arrendatario</label
           >
-          <select
-            id="histArrendatario"
-            class="form-select form-select-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="idArrendatarioFiltro"
-            (ngModelChange)="onArrendatarioFiltroChange()"
-            [disabled]="catalogosFiltroCargando"
-          >
-            <option [ngValue]="null">Todos</option>
-            <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
-          </select>
+          <app-campo-select inputId="histArrendatario" class="campo-dx--sm" placeholder="Todos" [limpiable]="true"
+            [items]="arrendatariosOpciones" valueExpr="id" displayExpr="label"
+            [(ngModel)]="idArrendatarioFiltro" (ngModelChange)="onArrendatarioFiltroChange()"
+            [disabled]="catalogosFiltroCargando"></app-campo-select>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histContrato"
             >Contrato</label
           >
-          <select
-            id="histContrato"
-            class="form-select form-select-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="idContratoFiltro"
-            [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro"
-          >
-            <option [ngValue]="null">{{ textoPlaceholderContratoFiltro() }}</option>
-            <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
-          </select>
+          <app-campo-select inputId="histContrato" class="campo-dx--sm" [placeholder]="textoPlaceholderContratoFiltro()"
+            [limpiable]="true" [items]="contratosOpciones" valueExpr="id" displayExpr="label"
+            [(ngModel)]="idContratoFiltro" [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro"></app-campo-select>
         </div>
         <div class="hist-renta-filtros-panel__accion">
           <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
-            <i class="fa fa-filter"></i> Filtrar
+            <i class="fa fa-search"></i> Buscar
           </button>
         </div>
       </div>
@@ -127,7 +115,7 @@
         <dxi-column dataField="mesLabel" caption="Periodo" alignment="center" [width]="150"></dxi-column>
         <dxi-column dataField="fhRegistroFmt" caption="Registro" alignment="center" [width]="160"></dxi-column>
         <dxi-column dataField="arrendatarioLabel" caption="Arrendatario" alignment="center" [width]="200"></dxi-column>
-        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusHistoricoTpl" [width]="150"></dxi-column>
         <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column>
         <dxi-column
           caption="Desglose"
@@ -139,10 +127,12 @@
           [allowSorting]="false"
         ></dxi-column>
         <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="160"></dxi-column>
+        <dxi-column dataField="pagadoFmt" caption="Pagado" alignment="center" [width]="140"></dxi-column>
         <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center" [width]="90"></dxi-column>
         <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center" [width]="160"></dxi-column>
         <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="110"></dxi-column>
-        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" cellTemplate="estatusHistoricoTpl" [width]="120"></dxi-column>
+        
+        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="160"></dxi-column>
 
         <div *dxTemplate="let row of 'desgloseRentaTpl'" class="renta-grid-desglose">
           @if (row.data.desgloseVm?.muestraRenta || row.data.desgloseVm?.muestraMantenimiento) {

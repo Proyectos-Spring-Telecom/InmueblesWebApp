@@ -108,6 +108,15 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
   mesesFiltroPagosOpciones: { value: string; label: string }[] = [];
   estatusFiltroPagos: number | null = null;
   readonly opcionesEstatusPagoFiltro = OPCIONES_ESTATUS_PAGO_FILTRO_PANEL;
+  /** Estatus del modal: mismos valores de texto que el select nativo. */
+  readonly opcionesEstatusPagoModal = [
+    { id: 'Pagado', nombre: 'Pagado' },
+    { id: 'Pendiente', nombre: 'Pendiente' },
+    { id: 'Cancelado', nombre: 'Cancelado' },
+  ];
+  /** Texto de cada método de pago en el select (misma regla que `etiquetaCatMetodoPago`). */
+  readonly etiquetaCatMetodoPagoSelect = (item: CatMetodoPagoItem | null): string =>
+    item ? this.etiquetaCatMetodoPago(item) : '';
 
   mostrarModalPago = false;
   mostrarModalPagoDetalle = false;
@@ -799,7 +808,7 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
             color: '#ffffff',
             icon: 'success',
             title: '¡Operación Exitosa!',
-            text: 'El pago y el comprobante se enviaron correctamente.',
+            html: 'El pago y el comprobante se enviaron correctamente.',
             confirmButtonText: 'Listo',
           });
         },
@@ -880,7 +889,7 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
     const conceptoLabel = String(row.concepto ?? 'Pago').trim() || 'Pago';
 
     const result = await Swal.fire({
-      title: '¡Actualizar estatus del pago!',
+      title: '¡Actualizar Estatus Del Pago!',
       html: this.htmlModalEstatusPago(estatusInicial, conceptoLabel),
       showCancelButton: true,
       confirmButtonText: 'Guardar',
@@ -919,7 +928,7 @@ export class ListaPagosServiciosActualesComponent implements OnInit {
             color: '#ffffff',
             icon: 'success',
             title: '¡Operación Exitosa!',
-            text: 'El estatus del pago se guardó correctamente.',
+            html: 'El estatus del pago se guardó correctamente.',
             confirmButtonText: 'Listo',
           });
         },

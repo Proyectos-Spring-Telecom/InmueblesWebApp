@@ -10,12 +10,17 @@ import { ListaClientesInmueblesComponent } from './lista-clientes-inmuebles/list
 import { AgregarClienteInmuebleComponent } from './agregar-cliente-inmueble/agregar-cliente-inmueble.component';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
+
 @NgModule({
   declarations: [
     ListaClientesInmueblesComponent,
     AgregarClienteInmuebleComponent,
   ],
   imports: [
+    CampoFechaComponent,
+    CampoSelectComponent,
     ModuleHeroComponent,
     CommonModule,
     ClientesInmueblesRoutingModule,

@@ -1,0 +1,756 @@
+/* =============================================================================
+ * Dashboards (inmueble, ocupación y arrendatario) — sistema visual `dbx-`.
+ * Tarjetas con encabezado, KPIs con ícono, rejilla responsive y tablas que se apilan en móvil.
+ * Radios 10–14px (mismo criterio que los botones del proyecto).
+ * ========================================================================== */
+
+.dbx {
+  --dbx-surface: rgba(15, 23, 42, 0.55);
+  --dbx-surface-2: rgba(2, 6, 23, 0.4);
+  --dbx-border: rgba(148, 163, 184, 0.2);
+  --dbx-text: #f1f5f9;
+  --dbx-muted: #94a3b8;
+  --dbx-soft: #64748b;
+  --dbx-vino: #681330;
+  --dbx-azul: #3b82f6;
+  --dbx-verde: #22c55e;
+  --dbx-ambar: #f59e0b;
+  --dbx-cian: #06b6d4;
+  --dbx-rojo: #ef4444;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--dbx-text);
+}
+
+/* ---------- Metadatos bajo el título del modal ---------- */
+.dbx-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.dbx-meta__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  color: #cbd5e1;
+
+  i {
+    color: #94a3b8;
+  }
+}
+
+/* Barra de filtros dentro del encabezado */
+.dbx-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.dbx-filtros__campo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+/* ---------- KPIs ---------- */
+.dbx-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  &--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.dbx-kpi {
+  --kpi: var(--dbx-azul);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--dbx-border);
+  background: var(--dbx-surface);
+  min-width: 0;
+
+  &--verde { --kpi: var(--dbx-verde); }
+  &--ambar { --kpi: var(--dbx-ambar); }
+  &--cian { --kpi: var(--dbx-cian); }
+  &--vino { --kpi: #e11d74; }
+  &--gris { --kpi: #94a3b8; }
+}
+
+.dbx-kpi__icono {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: var(--kpi);
+  background: color-mix(in srgb, var(--kpi) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kpi) 35%, transparent);
+
+  mat-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+  }
+}
+
+.dbx-kpi__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dbx-kpi__etiqueta {
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: var(--dbx-muted);
+}
+
+.dbx-kpi__valor {
+  font-size: 1.35rem;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--dbx-text);
+  overflow-wrap: anywhere;
+}
+
+.dbx-kpi__nota {
+  font-size: 0.74rem;
+  color: var(--dbx-soft);
+}
+
+/* Barra de progreso */
+.dbx-progreso {
+  position: relative;
+  height: 6px;
+  margin-top: 0.4rem;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.18);
+  overflow: hidden;
+}
+
+.dbx-progreso__relleno {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--kpi, var(--dbx-azul));
+  transition: width 0.4s ease;
+}
+
+/* Barra apilada ocupado / disponible */
+.dbx-apilada {
+  display: flex;
+  height: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.dbx-apilada__parte {
+  height: 100%;
+  transition: width 0.4s ease;
+
+  &--ocupado { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+  &--disponible { background: linear-gradient(90deg, #16a34a, #22c55e); }
+}
+
+.dbx-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin-top: 0.55rem;
+  font-size: 0.78rem;
+  color: var(--dbx-muted);
+}
+
+.dbx-leyenda__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--c, #3b82f6);
+  }
+
+  strong {
+    color: var(--dbx-text);
+  }
+}
+
+/* ---------- Rejilla ---------- */
+.dbx-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dbx-col-12 { grid-column: span 12; }
+.dbx-col-8 { grid-column: span 8; }
+.dbx-col-7 { grid-column: span 7; }
+.dbx-col-6 { grid-column: span 6; }
+.dbx-col-5 { grid-column: span 5; }
+.dbx-col-4 { grid-column: span 4; }
+
+/* ---------- Tarjetas ---------- */
+.dbx-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 14px;
+  border: 1px solid var(--dbx-border);
+  background: var(--dbx-surface);
+  overflow: hidden;
+}
+
+.dbx-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.dbx-card__titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--dbx-text);
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--dbx-muted);
+  }
+}
+
+.dbx-card__meta {
+  font-size: 0.76rem;
+  color: var(--dbx-muted);
+  white-space: nowrap;
+}
+
+.dbx-card__body {
+  padding: 0.85rem 1rem;
+  flex: 1 1 auto;
+  min-width: 0;
+
+  &--sin-padding {
+    padding: 0;
+  }
+
+  &--scroll {
+    max-height: 360px;
+    overflow: auto;
+  }
+}
+
+/* Gráfica con texto al centro (dona) */
+.dbx-dona {
+  position: relative;
+}
+
+.dbx-dona__centro {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 1;
+
+  strong {
+    font-size: 1.35rem;
+    line-height: 1;
+    color: var(--dbx-text);
+  }
+
+  span {
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    color: var(--dbx-muted);
+  }
+}
+
+/* ---------- Persona (arrendador / arrendatario) ---------- */
+.dbx-persona {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+
+  & + & {
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px dashed rgba(148, 163, 184, 0.2);
+  }
+}
+
+.dbx-avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--dbx-vino);
+  color: #fff;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+
+  &--azul {
+    background: #1d4ed8;
+  }
+}
+
+.dbx-persona__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.dbx-persona__rol {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--dbx-muted);
+}
+
+.dbx-persona__nombre {
+  font-size: 0.98rem;
+  color: var(--dbx-text);
+  overflow-wrap: anywhere;
+}
+
+.dbx-linea {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  overflow-wrap: anywhere;
+
+  i {
+    width: 14px;
+    text-align: center;
+    color: var(--dbx-muted);
+  }
+}
+
+/* ---------- Pares etiqueta/valor ---------- */
+.dbx-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.dbx-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: var(--dbx-surface-2);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  min-width: 0;
+
+  span {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--dbx-muted);
+  }
+
+  strong {
+    font-size: 0.88rem;
+    color: var(--dbx-text);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  &--destacado strong {
+    font-size: 1.05rem;
+    color: #bfdbfe;
+  }
+}
+
+/* ---------- Tabla compacta ---------- */
+.dbx-tabla-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dbx-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+
+  th,
+  td {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  }
+
+  th {
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    color: var(--dbx-muted);
+    background: var(--dbx-surface-2);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .centro {
+    text-align: center;
+  }
+}
+
+.dbx-sub {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--dbx-muted);
+}
+
+/* ---------- Zonas y locales ---------- */
+.dbx-zona {
+  padding: 0.85rem 1rem;
+
+  & + & {
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+  }
+}
+
+.dbx-zona__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.dbx-zona__nombre {
+  font-size: 0.92rem;
+  color: var(--dbx-text);
+}
+
+.dbx-zona__meta {
+  font-size: 0.76rem;
+  color: var(--dbx-muted);
+}
+
+.dbx-locales {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.dbx-local {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: var(--dbx-surface-2);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &--activo,
+  &:hover {
+    border-color: rgba(147, 197, 253, 0.45);
+    background: rgba(59, 130, 246, 0.08);
+  }
+}
+
+.dbx-local__punto {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--c, #3b82f6);
+}
+
+.dbx-local__principal {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dbx-local__nombre {
+  font-size: 0.86rem;
+  color: var(--dbx-text);
+}
+
+.dbx-local__detalle {
+  font-size: 0.74rem;
+  color: var(--dbx-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dbx-local__cifras {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: #e2e8f0;
+  white-space: nowrap;
+
+  small {
+    font-size: 0.72rem;
+    color: var(--dbx-muted);
+  }
+}
+
+/* ---------- Tarjetas de arrendatario dentro del dashboard de inmueble ---------- */
+.dbx-arrs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dbx-arr {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: var(--dbx-surface-2);
+  min-width: 0;
+}
+
+.dbx-arr__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dbx-arr__contacto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+}
+
+/* Chip de estatus genérico */
+.dbx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  border: 1px solid transparent;
+
+  &::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &--verde {
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.14);
+    border-color: rgba(34, 197, 94, 0.35);
+  }
+
+  &--ambar {
+    color: #fcd34d;
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+
+  &--azul {
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+
+  &--gris {
+    color: #cbd5e1;
+    background: rgba(148, 163, 184, 0.14);
+    border-color: rgba(148, 163, 184, 0.3);
+  }
+}
+
+/* ---------- Vacío / cargando ---------- */
+.dbx-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.6rem 1rem;
+  color: var(--dbx-muted);
+  font-size: 0.86rem;
+  text-align: center;
+
+  mat-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 32px;
+    opacity: 0.7;
+  }
+}
+
+.dbx-cargando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1rem;
+  color: #cbd5e1;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1199.98px) {
+  .dbx-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991.98px) {
+  .dbx-col-8,
+  .dbx-col-7,
+  .dbx-col-6,
+  .dbx-col-5,
+  .dbx-col-4 {
+    grid-column: span 12;
+  }
+
+  .dbx-arrs {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .dbx-kpis,
+  .dbx-kpis--3 {
+    grid-template-columns: 1fr;
+  }
+
+  .dbx-local {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+
+    > :last-child {
+      grid-column: 2 / -1;
+      justify-self: start;
+    }
+  }
+
+  .dbx-tabla {
+    thead {
+      display: none;
+    }
+
+    tbody tr {
+      display: block;
+      padding: 0.55rem 0.9rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    }
+
+    td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.3rem 0;
+      border: 0;
+      text-align: right !important;
+
+      &::before {
+        content: attr(data-label);
+        font-size: 0.72rem;
+        color: var(--dbx-muted);
+        text-align: left;
+      }
+    }
+  }
+}
+
+/* ---------- Tema claro ---------- */
+html.light-theme .dbx {
+  --dbx-surface: #ffffff;
+  --dbx-surface-2: #f8fafc;
+  --dbx-border: rgba(148, 163, 184, 0.35);
+  --dbx-text: #0f172a;
+  --dbx-muted: #64748b;
+  --dbx-soft: #94a3b8;
+
+  .dbx-linea,
+  .dbx-local__cifras {
+    color: #334155;
+  }
+
+  .dbx-dato--destacado strong {
+    color: #1d4ed8;
+  }
+
+  .dbx-chip--verde { color: #15803d; }
+  .dbx-chip--ambar { color: #b45309; }
+  .dbx-chip--azul { color: #1d4ed8; }
+  .dbx-chip--gris { color: #475569; }
+}
+
+html.light-theme {
+  .dbx-meta__item {
+    background: #f1f5f9;
+    border-color: rgba(148, 163, 184, 0.35);
+    color: #334155;
+  }
+
+  .dbx-filtros__campo {
+    color: #64748b;
+  }
+
+  .dbx-cargando {
+    color: #475569;
+  }
+}

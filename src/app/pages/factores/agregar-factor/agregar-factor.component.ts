@@ -207,6 +207,37 @@ export class AgregarFactorComponent implements OnInit {
     return this.inpcSeleccionado?.porcentajeAnual != null;
   }
 
+  /** Texto de cada periodo en el select (misma regla que etiquetaOpcionInpc). */
+  readonly etiquetaOpcionInpcSelect = (row: InpcPaginatedGridRow | null): string =>
+    row ? this.etiquetaOpcionInpc(row) : '';
+
+  private opcionesValorCache: {
+    row: InpcPaginatedGridRow | null;
+    items: { id: FactorValorOrigen; nombre: string; disabled: boolean }[];
+  } | null = null;
+
+  /**
+   * Opciones de «Valor» (mismos valores y textos que el select nativo). Se recalculan sólo al cambiar el periodo
+   * para que el desplegable no se redibuje en cada ciclo.
+   */
+  get opcionesValorInpc(): { id: FactorValorOrigen; nombre: string; disabled: boolean }[] {
+    const row = this.inpcSeleccionado;
+    if (this.opcionesValorCache?.row !== row || !this.opcionesValorCache) {
+      this.opcionesValorCache = {
+        row,
+        items: [
+          { id: 'inpc' as FactorValorOrigen, nombre: this.etiquetaOpcionValorInpc(row), disabled: false },
+          {
+            id: 'porcentajeAnual' as FactorValorOrigen,
+            nombre: this.etiquetaOpcionValorPorcentaje(row),
+            disabled: row?.porcentajeAnual == null,
+          },
+        ],
+      };
+    }
+    return this.opcionesValorCache.items;
+  }
+
   private resolverValorOrigenDesdeData(
     data: Record<string, unknown>,
     match: InpcPaginatedGridRow | null,

@@ -1067,6 +1067,57 @@ $incremento-row-alt: rgba(250, 128, 114, 0.16);
   &--mant  { background: rgba(251,191,36,0.15); color: #fbbf24; }
 }
 
+// ── Indicador de incremento (en la columna Concepto, sin pintar la fila) ──
+.concepto-celda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.concepto-inc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px 2px 5px;
+  border-radius: $radius-sm;
+  border: 1px solid rgba(250, 128, 114, 0.55);
+  background: rgba(250, 128, 114, 0.14);
+  color: $incremento-text;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+}
+
+/* En la leyenda, el distintivo va solo (sin la pastilla de color de la leyenda) */
+.rrv-leyenda__item--inc-badge {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.concepto-inc--leyenda {
+  font-size: 0.76rem;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+}
+
+:host-context(html.light-theme) {
+  .concepto-inc {
+    color: #c2410c;
+    background: #fff1ec;
+    border-color: #fdba9f;
+  }
+}
+
 // ─────────────────────────────────────────────
 //  Tfoot
 // ─────────────────────────────────────────────

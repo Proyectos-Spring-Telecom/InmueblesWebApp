@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -133,7 +133,7 @@ interface RentaModalResumenVm {
     rentaSeccionRevealAnim,
   ],
 })
-export class ListaRentasActualesComponent implements OnInit {
+export class ListaRentasActualesComponent implements OnInit, OnDestroy {
   embebidoEnHub = false;
 
   /**
@@ -294,6 +294,12 @@ export class ListaRentasActualesComponent implements OnInit {
     this.cargarArrendadoresFiltro();
     this.cargarInmueblesFiltro();
     this.setupDataSource();
+    // El menú de acciones es fijo en pantalla: se cierra al desplazar cualquier contenedor.
+    document.addEventListener('scroll', this.cerrarMenuAccionesPorScroll, true);
+  }
+
+  ngOnDestroy(): void {
+    document.removeEventListener('scroll', this.cerrarMenuAccionesPorScroll, true);
   }
 
   // ─── Formulario ──────────────────────────────────────────────────────────────
@@ -1827,8 +1833,70 @@ export class ListaRentasActualesComponent implements OnInit {
     this.filtroInmuebleAbierto = !this.filtroInmuebleAbierto;
   }
 
+  // ─── Menú "Acciones" de la columna Opciones (mismo patrón que Lista Inmuebles) ──────────
+
+  /** Fila con el menú abierto y su posición en pantalla (se pinta fuera del grid para que no se recorte). */
+  menuAcciones: { row: RentaActualGridRow; top: number; left: number; arriba: boolean } | null = null;
+
+  private static readonly ANCHO_MENU_ACCIONES = 250;
+  private static readonly ALTO_MENU_ACCIONES = 220;
+
+  abrirMenuAcciones(row: RentaActualGridRow, ev: MouseEvent): void {
+    ev.stopPropagation();
+    if (this.menuAcciones?.row === row) {
+      this.menuAcciones = null;
+      return;
+    }
+    const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+    const ancho = ListaRentasActualesComponent.ANCHO_MENU_ACCIONES;
+    const alto = ListaRentasActualesComponent.ALTO_MENU_ACCIONES;
+    const arriba = r.bottom + alto > window.innerHeight && r.top > alto;
+    const left = Math.max(8, Math.min(r.left + r.width / 2 - ancho / 2, window.innerWidth - ancho - 8));
+    this.menuAcciones = { row, left, top: arriba ? r.top - 8 : r.bottom + 8, arriba };
+    this.menuAbiertoEn = Date.now();
+  }
+
+  /** Momento de apertura: el grid hace scroll al enfocar la celda y eso no debe cerrar el menú recién abierto. */
+  private menuAbiertoEn = 0;
+
+  /** Ejecuta la misma función que tenían los botones de la columna (sin cambios de lógica). */
+  ejecutarAccionRenta(accion: 'editar' | 'pago' | 'pagada' | 'duplicar'): void {
+    const row = this.menuAcciones?.row;
+    this.menuAcciones = null;
+    if (!row) return;
+    switch (accion) {
+      case 'editar':
+        this.abrirModalEdicion(row);
+        break;
+      case 'pago':
+        this.abrirRegistrarPago(row);
+        break;
+      case 'pagada':
+        void this.marcarRentaPagada(row);
+        break;
+      case 'duplicar':
+        this.duplicarRentaAlSiguienteMes(row);
+        break;
+    }
+  }
+
+  @HostListener('window:resize')
+  cerrarMenuAcciones(): void {
+    if (this.menuAcciones) this.menuAcciones = null;
+  }
+
+  private readonly cerrarMenuAccionesPorScroll = (ev?: Event): void => {
+    if (!this.menuAcciones) return;
+    if (Date.now() - this.menuAbiertoEn < 400) return;
+    const t = ev?.target as HTMLElement | null;
+    if (t instanceof HTMLElement && t.closest('.inm-opciones-menu')) return;
+    this.menuAcciones = null;
+    this.cdr.markForCheck();
+  };
+
   @HostListener('document:click')
   cerrarFiltrosDropdown(): void {
+    this.cerrarMenuAcciones();
     if (!this.filtroInmuebleAbierto && !this.filtroArrendadorAbierto) return;
     this.filtroInmuebleAbierto = false;
     this.filtroArrendadorAbierto = false;
@@ -1836,6 +1904,7 @@ export class ListaRentasActualesComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   cerrarFiltrosDropdownTecla(): void {
+    this.cerrarMenuAcciones();
     if (!this.filtroInmuebleAbierto && !this.filtroArrendadorAbierto) return;
     this.filtroInmuebleAbierto = false;
     this.filtroArrendadorAbierto = false;
@@ -2633,8 +2702,10 @@ export class ListaRentasActualesComponent implements OnInit {
       background: '#141a21',
       color: '#ffffff',
       icon: 'question',
-      title: esEdicion ? '¿Actualizar la renta?' : '¿Registrar Pago?',
-      text: 'Verifica que los datos de la renta sean correctos antes de continuar.',
+      title: esEdicion ? '¡Actualizar Renta!' : '¡Registrar Pago!',
+      html: esEdicion
+        ? 'Se actualizarán los datos de la renta pendiente. Verifica que todo sea correcto antes de continuar.'
+        : 'Se registrará el pago de renta. Verifica que los datos sean correctos antes de continuar.',
       showCancelButton: true,
       allowOutsideClick: false,
       allowEscapeKey: false,
@@ -2857,9 +2928,9 @@ export class ListaRentasActualesComponent implements OnInit {
       });
   }
 
-  /** Alta exitosa: en modo modal puede marcarla como pagada en el mismo paso. */
+  /** Alta exitosa: puede marcarla como pagada en el mismo paso (igual en Rent Rol y en Pagos del mes). */
   private onRentaRegistrada(resp: unknown): void {
-    if (!this.modoSoloModal || !this.marcarPagadaAlRegistrar) {
+    if (!this.marcarPagadaAlRegistrar) {
       this.onRentaGuardadaOk('La renta del mes se registró correctamente.');
       return;
     }
@@ -2867,6 +2938,7 @@ export class ListaRentasActualesComponent implements OnInit {
     const id = Number(r?.data?.id ?? r?.id);
     this.cerrarModalRenta();
     if (!Number.isFinite(id) || id <= 0) {
+      this.dataGrid?.instance?.refresh();
       this.rentaCambio.emit();
       void Swal.fire({
         background: '#141a21', color: '#ffffff',
@@ -2880,15 +2952,17 @@ export class ListaRentasActualesComponent implements OnInit {
       .pipe(take(1))
       .subscribe({
         next: () => {
+          this.dataGrid?.instance?.refresh();
           this.rentaCambio.emit();
           void Swal.fire({
             background: '#141a21', color: '#ffffff',
             icon: 'success', title: '¡Operación Exitosa!',
-            text: 'La renta se registró y quedó marcada como pagada en el histórico.',
+            html: 'La renta se registró y quedó marcada como pagada en el histórico.',
             confirmButtonText: 'Listo',
           });
         },
         error: (err) => {
+          this.dataGrid?.instance?.refresh();
           this.rentaCambio.emit();
           void Swal.fire({
             background: '#141a21', color: '#ffffff',
@@ -2907,7 +2981,7 @@ export class ListaRentasActualesComponent implements OnInit {
     void Swal.fire({
       background: '#141a21', color: '#ffffff',
       icon: 'success', title: '¡Operación Exitosa!',
-      text: texto, confirmButtonText: 'Listo',
+      html: texto, confirmButtonText: 'Listo',
     });
   }
 
@@ -2918,6 +2992,34 @@ export class ListaRentasActualesComponent implements OnInit {
       text: this.mensajeErrorRentaActual(err),
       confirmButtonText: 'Entendido',
     });
+  }
+
+  // ─── Registrar pago (cobranza: parcial o total) ──────────────────────────────
+
+  /** Renta para la que está abierto el modal de Registrar pago. */
+  rentaRegistrarPago: RentaActualGridRow | null = null;
+
+  abrirRegistrarPago(row: RentaActualGridRow): void {
+    if (row?.pagada || row?.idArrendatario == null) return;
+    this.rentaRegistrarPago = row;
+  }
+
+  cerrarRegistrarPago(): void {
+    this.rentaRegistrarPago = null;
+  }
+
+  /** Modal de pago abierto desde la barra (el usuario elige el arrendatario). */
+  abonoGeneralAbierto = false;
+
+  abrirAbonoGeneral(): void {
+    this.abonoGeneralAbierto = true;
+  }
+
+  onPagoRegistrado(): void {
+    this.rentaRegistrarPago = null;
+    this.abonoGeneralAbierto = false;
+    this.dataGrid?.instance?.refresh();
+    this.rentaCambio.emit();
   }
 
   // ─── Marcar pagada ───────────────────────────────────────────────────────────
@@ -2931,7 +3033,11 @@ export class ListaRentasActualesComponent implements OnInit {
     const result  = await Swal.fire({
       background: '#141a21', color: '#ffffff',
       icon: 'question', title: '¡Marcar Renta Como Pagada!',
-      html: `Se registrara como pagada la renta de <strong>${row.arrendatarioLabel}</strong> (${periodo}).`,
+      html:
+        `Se registrará un pago con fecha de hoy por el saldo pendiente` +
+        (row.saldo != null ? ` (<strong>${row.saldoFmt}</strong>)` : '') +
+        ` de la renta de <strong>${row.arrendatarioLabel}</strong> (${periodo}).` +
+        `<br><small>Si conoces la fecha real, el método o la referencia, usa <strong>Registrar pago</strong>.</small>`,
       showCancelButton: true,
       confirmButtonText: 'Confirmar',
       cancelButtonText:  'Cancelar',
@@ -2947,7 +3053,7 @@ export class ListaRentasActualesComponent implements OnInit {
           void Swal.fire({
             background: '#141a21', color: '#ffffff',
             icon: 'success', title: '¡Operación Exitosa!',
-            text: 'La renta quedó marcada como pagada y se registró en el histórico.',
+            html: 'La renta quedó marcada como pagada y se registró en el histórico.',
             confirmButtonText: 'Listo',
           });
         },
@@ -2977,7 +3083,7 @@ export class ListaRentasActualesComponent implements OnInit {
       background: '#141a21',
       color: '#ffffff',
       icon: 'question',
-      title: '¿Duplicar renta al mes siguiente?',
+      title: '¡Duplicar Renta Al Mes Siguiente!',
       html:
         `Se creará una copia idéntica de la renta de <strong>${row.arrendatarioLabel}</strong>` +
         ` (<strong>${row.contratoLabel}</strong>), avanzando el mes de ` +
@@ -3001,7 +3107,7 @@ export class ListaRentasActualesComponent implements OnInit {
             color: '#ffffff',
             icon: 'success',
             title: '¡Operación Exitosa!',
-            text: `Se duplicó la renta hacia ${periodoDestino}.`,
+            html: `Se duplicó la renta hacia <strong>${periodoDestino}</strong>.`,
             confirmButtonText: 'Listo',
           });
         },

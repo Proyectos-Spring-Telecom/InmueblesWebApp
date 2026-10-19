@@ -31,18 +31,9 @@
             <label for="idArrendador" class="form-label perm-label">Arrendador</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select id="idArrendador" class="form-select" formControlName="idArrendador"
-                  aria-label="Arrendador (cliente)">
-                  <option [ngValue]="null" disabled>Selecciona arrendador</option>
-                  <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
-                    {{ cliente.nombre }}
-                    <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
-                    <ng-container *ngIf="cliente.apellidoMaterno">{{ ' ' + cliente.apellidoMaterno }}</ng-container>
-                  </option>
-                </select>
-                <label for="idArrendador">Arrendador</label>
-              </div>
+              <app-campo-select inputId="idArrendador" formControlName="idArrendador" ariaLabel="Arrendador (cliente)"
+                label="Arrendador" placeholder="Selecciona arrendador" [items]="listaClientes" valueExpr="id"
+                [displayExpr]="etiquetaClienteSelect"></app-campo-select>
             </div>
           </div>
           <div class="col-12 col-md-4">
@@ -51,15 +42,9 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">person</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="tipoPersona" formControlName="tipoPersona"
-                  (change)="onTipoPersonaChange($event)">
-                  <option [ngValue]="null" disabled>Selecciona tipo de persona</option>
-                  <option [ngValue]="1">Física</option>
-                  <option [ngValue]="2">Moral</option>
-                </select>
-                <label for="tipoPersona">Selecciona Tipo De Persona</label>
-              </div>
+              <app-campo-select inputId="tipoPersona" formControlName="tipoPersona" label="Selecciona Tipo De Persona"
+                placeholder="Selecciona tipo de persona" [items]="opcionesTipoPersona" valueExpr="id" displayExpr="nombre"
+                [buscar]="false" (cambio)="onTipoPersonaChange($any($event))"></app-campo-select>
             </div>
           </div>
           <div class="col-12 col-md-4">
@@ -146,16 +131,9 @@
                         <label class="form-label perm-label" [attr.for]="'idInmuebleContrato' + i">Inmueble</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>home</mat-icon></span>
-                          <div class="form-floating flex-grow-1 perm-select-floating">
-                            <select [id]="'idInmuebleContrato' + i" class="form-select" formControlName="idInmueble"
-                              aria-label="Inmueble">
-                              <option [ngValue]="null">{{ placeholderInmuebleContrato() }}</option>
-                              <option *ngFor="let inm of listaInmuebles" [ngValue]="inm.id">
-                                {{ inm.etiqueta }}
-                              </option>
-                            </select>
-                            <label [attr.for]="'idInmuebleContrato' + i">Inmueble</label>
-                          </div>
+                          <app-campo-select [inputId]="'idInmuebleContrato' + i" formControlName="idInmueble"
+                            ariaLabel="Inmueble" label="Inmueble" [placeholder]="placeholderInmuebleContrato()"
+                            [items]="listaInmuebles" valueExpr="id" displayExpr="etiqueta" [limpiable]="true"></app-campo-select>
                         </div>
                         <p *ngIf="mostrarAvisoSeleccionarArrendadorInmueble()"
                           class="small mt-2 mb-0 arrend-contrato-aviso arrend-contrato-aviso--info" role="status">
@@ -234,9 +212,8 @@
                           Inicio</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'fechaInicioContrato' + i" type="date"
-                              class="form-control" formControlName="fechaInicioContrato" /><label
-                              [attr.for]="'fechaInicioContrato' + i">Inicio Contrato</label></div>
+                          <app-campo-fecha [inputId]="'fechaInicioContrato' + i" formControlName="fechaInicioContrato"
+                            label="Inicio Contrato"></app-campo-fecha>
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
@@ -244,9 +221,8 @@
                           Término</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
-                          <div class="form-floating flex-grow-1"><input [id]="'fechaTerminoContrato' + i" type="date"
-                              class="form-control" formControlName="fechaTerminoContrato" /><label
-                              [attr.for]="'fechaTerminoContrato' + i">Término Contrato</label></div>
+                          <app-campo-fecha [inputId]="'fechaTerminoContrato' + i" formControlName="fechaTerminoContrato"
+                            label="Término Contrato"></app-campo-fecha>
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
@@ -600,16 +576,10 @@
                         <label class="form-label perm-label">Tipo de servicio</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>fact_check</mat-icon></span>
-                          <div class="form-floating flex-grow-1 perm-select-floating">
-                            <select class="form-select" formControlName="idTipoServicio" aria-label="Tipo de servicio"
-                              [attr.title]="esServicioDefaultObligatorio(i) ? 'Servicio fijo del arrendatario' : null">
-                              <option [ngValue]="null" *ngIf="!esServicioDefaultObligatorio(i)"></option>
-                              <option *ngFor="let srv of opcionesTipoServicioSelect(i)" [ngValue]="srv.id">
-                                {{ etiquetaCatServicio(srv) }}
-                              </option>
-                            </select>
-                            <label>Tipo de servicio</label>
-                          </div>
+                          <app-campo-select formControlName="idTipoServicio" ariaLabel="Tipo de servicio"
+                            label="Tipo de servicio" placeholder="" [items]="opcionesTipoServicioSelect(i)" valueExpr="id"
+                            [displayExpr]="etiquetaCatServicioSelect" [limpiable]="!esServicioDefaultObligatorio(i)"
+                            [hint]="esServicioDefaultObligatorio(i) ? 'Servicio fijo del arrendatario' : ''"></app-campo-select>
                         </div>
                       </div>
 
@@ -629,10 +599,7 @@
                         <label class="form-label perm-label">Fecha de pago</label>
                         <div class="input-group input-group-lg perm-ig">
                           <span class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
-                          <div class="form-floating flex-grow-1">
-                            <input type="date" class="form-control" formControlName="servicioFechaPago" />
-                            <label>Fecha de pago</label>
-                          </div>
+                          <app-campo-fecha formControlName="servicioFechaPago" label="Fecha de pago"></app-campo-fecha>
                         </div>
                       </div>
 
@@ -640,10 +607,7 @@
                         <label class="form-label perm-label">Último día de pago</label>
                         <div class="input-group input-group-lg perm-ig">
                           <span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
-                          <div class="form-floating flex-grow-1">
-                            <input type="date" class="form-control" formControlName="servicioUltimoDiaPago" />
-                            <label>Último día de pago</label>
-                          </div>
+                          <app-campo-fecha formControlName="servicioUltimoDiaPago" label="Último día de pago"></app-campo-fecha>
                         </div>
                       </div>
 

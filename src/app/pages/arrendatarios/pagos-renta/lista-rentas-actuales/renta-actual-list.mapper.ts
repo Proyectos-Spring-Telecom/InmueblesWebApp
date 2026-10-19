@@ -37,6 +37,12 @@ export interface RentaActualGridRow {
   ocupoFormulaLabel: string;
   pagada: boolean;
   pagadaLabel: string;
+  /** Cobranza: estado calculado del cargo (`PENDIENTE` | `PARCIAL` | `PAGADO` | `CANCELADO`). */
+  estadoPago: string;
+  pagado: number | null;
+  pagadoFmt: string;
+  saldo: number | null;
+  saldoFmt: string;
   mesLabel: string;
   periodoVm: RentaActualPeriodoVm;
   /** Disponible para rentas pendientes, aunque tengan `fechaFin`. */
@@ -110,7 +116,20 @@ function etiquetaFormula(row: Record<string, unknown>): string {
   return id != null ? `Fórmula #${id}` : '—';
 }
 
+function estadoPagoDesdeApi(row: Record<string, unknown>): string {
+  return str(row['estadoPago']).toUpperCase();
+}
+
+const ETIQUETA_ESTADO_PAGO: Record<string, string> = {
+  PENDIENTE: 'Pendiente',
+  PARCIAL: 'Parcial',
+  PAGADO: 'Pagada',
+  CANCELADO: 'Cancelada',
+};
+
 function esPagada(row: Record<string, unknown>): boolean {
+  const estado = estadoPagoDesdeApi(row);
+  if (estado) return estado === 'PAGADO';
   if (typeof row['pagada'] === 'boolean') return row['pagada'];
   if (row['pagada'] === 1 || row['pagada'] === '1') return true;
   const est = str(row['estatus'] ?? row['estatusPago']).toLowerCase();
@@ -229,6 +248,9 @@ export function mapRentaActualApiToGridRow(item: unknown): RentaActualGridRow | 
   const ocupoFormula =
     ocupoRaw === true || ocupoRaw === 1 || ocupoRaw === '1' ? 1 : 0;
   const pagada = esPagada(row);
+  const estadoPago = estadoPagoDesdeApi(row) || (pagada ? 'PAGADO' : 'PENDIENTE');
+  const pagado = num(row['pagado']);
+  const saldo = num(row['saldo']);
 
   return {
     id: Math.floor(id),
@@ -249,7 +271,12 @@ export function mapRentaActualApiToGridRow(item: unknown): RentaActualGridRow | 
     ocupoFormula,
     ocupoFormulaLabel: ocupoFormula === 1 ? 'Sí' : 'No',
     pagada,
-    pagadaLabel: pagada ? 'Pagada' : 'Pendiente',
+    pagadaLabel: ETIQUETA_ESTADO_PAGO[estadoPago] ?? (pagada ? 'Pagada' : 'Pendiente'),
+    estadoPago,
+    pagado,
+    pagadoFmt: moneyFmt(pagado),
+    saldo,
+    saldoFmt: moneyFmt(saldo),
     mesLabel: etiquetaPeriodoMes(row),
     periodoVm: extraerPeriodoVm(row),
     puedeDuplicarMes: puedeDuplicarMesDesdeApi(row),

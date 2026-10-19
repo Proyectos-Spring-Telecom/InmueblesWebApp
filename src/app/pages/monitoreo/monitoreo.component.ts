@@ -805,6 +805,7 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
+        timeZone: 'UTC',
       });
     } catch {
       return d.toISOString().slice(0, 10);

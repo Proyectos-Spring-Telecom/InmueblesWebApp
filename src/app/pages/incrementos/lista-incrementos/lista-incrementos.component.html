@@ -8,14 +8,14 @@
         <div>
           <label class="form-label mb-1 inpc-filtro-fechas__label" for="inpcFechaInicio">Fecha inicio <span
               class="text-danger">*</span></label>
-          <input id="inpcFechaInicio" type="date" class="form-control form-control-sm inpc-filtro-fechas__input"
-            [(ngModel)]="fechaInicioFiltro" />
+          <app-campo-fecha inputId="inpcFechaInicio" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaInicioFiltro"></app-campo-fecha>
         </div>
         <div>
           <label class="form-label mb-1 inpc-filtro-fechas__label" for="inpcFechaFin">Fecha fin <span
               class="text-danger">*</span></label>
-          <input id="inpcFechaFin" type="date" class="form-control form-control-sm inpc-filtro-fechas__input"
-            [(ngModel)]="fechaFinFiltro" />
+          <app-campo-fecha inputId="inpcFechaFin" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaFinFiltro"></app-campo-fecha>
         </div>
         <div class="inpc-filtros-panel__accion">
           <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">

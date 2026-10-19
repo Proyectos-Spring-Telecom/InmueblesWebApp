@@ -78,4 +78,6 @@ export enum Permiso {
   ELIMINAR_PROSPECTO = 59,
 
   CONSULTAR_EMBUDOS = 60,
+
+  GENERAR_CONTRATO = 61,
 }

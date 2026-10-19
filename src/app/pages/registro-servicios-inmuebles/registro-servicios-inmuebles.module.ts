@@ -9,11 +9,15 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { RegistroServiciosInmueblesRoutingModule } from './registro-servicios-inmuebles-routing.module';
 import { ListaRegistroServiciosInmueblesComponent } from './lista-registro-servicios-inmuebles/lista-registro-servicios-inmuebles.component';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
 
 @NgModule({
   declarations: [ListaRegistroServiciosInmueblesComponent],
   imports: [
     ModuleHeroComponent,
+    CampoFechaComponent,
+    CampoSelectComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

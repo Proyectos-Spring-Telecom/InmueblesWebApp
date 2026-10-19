@@ -1,0 +1,185 @@
+<div class="contract-page-dim" (click)="cerrarSiLibre()" [@contractDimAnim]></div>
+<div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarSiLibre()">
+  <div class="docs-modal contract-docs-modal mono-pago-modal renta-alta-modal" role="dialog" aria-modal="true"
+    aria-labelledby="cob-registrar-pago-titulo" (click)="$event.stopPropagation()">
+    <div class="row docs-modal__header">
+      <div class="col-10 col-md-11">
+        <h3 class="docs-modal__title" id="cob-registrar-pago-titulo">Registrar pago</h3>
+        <p class="docs-modal__subtitle">
+          {{ tituloArrendatario }} · pago total o parcial: reparte el monto recibido por concepto; el sobrante queda a favor.
+        </p>
+      </div>
+      <div class="col-2 col-md-1 docs-modal__close-col">
+        <button type="button" class="docs-modal__close" (click)="cerrar.emit()" [disabled]="guardando"
+          aria-label="Cerrar modal de pago">
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="row docs-modal__body">
+      <div class="col-12">
+        @if (cargando) {
+        <div class="mono-pago-servicio-loading">
+          <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+          <span>Cargando cargos con saldo…</span>
+        </div>
+        } @else {
+        <div class="perm-form-nc">
+          <div class="perm-form-body mono-pago-form">
+            <div class="row g-3 align-items-start">
+              @if (elegirArrendatario) {
+              <div class="col-12 col-md-6">
+                <label for="cobPagoArrendatario" class="form-label perm-label">
+                  Arrendatario <span class="text-danger">*</span>
+                </label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">person</mat-icon></span>
+                  <app-campo-select inputId="cobPagoArrendatario" label="Arrendatario" placeholder="Seleccione arrendatario"
+                    [items]="arrendatarios" valueExpr="id" displayExpr="nombre"
+                    [(ngModel)]="idArrendatario" (ngModelChange)="onArrendatarioChange()"></app-campo-select>
+                </div>
+              </div>
+              }
+
+              <div class="col-12 col-md-6">
+                <label for="cobPagoMonto" class="form-label perm-label">
+                  Monto recibido <span class="text-danger">*</span>
+                </label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">payments</mat-icon></span>
+                  <div class="form-floating flex-grow-1">
+                    <input id="cobPagoMonto" type="number" inputmode="decimal" min="0" step="0.01" class="form-control"
+                      placeholder=" " [(ngModel)]="monto" />
+                    <label for="cobPagoMonto">Monto</label>
+                  </div>
+                </div>
+                <span class="cob-ayuda">Si es menor al saldo, el resto queda pendiente (pago parcial).</span>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label for="cobPagoFecha" class="form-label perm-label">
+                  Fecha de pago <span class="text-danger">*</span>
+                </label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">event</mat-icon></span>
+                  <app-campo-fecha inputId="cobPagoFecha" label="Fecha de pago" [limpiable]="false"
+                    [(ngModel)]="fechaPago"></app-campo-fecha>
+                </div>
+                <span class="cob-ayuda">Puede ser una fecha anterior (fecha real del depósito).</span>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label for="cobPagoMetodo" class="form-label perm-label">
+                  Método de pago <span class="text-danger">*</span>
+                </label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">credit_card</mat-icon></span>
+                  <app-campo-select inputId="cobPagoMetodo" label="Método de pago" placeholder="Seleccione método de pago"
+                    [items]="metodos" valueExpr="id" displayExpr="nombre" [(ngModel)]="idMetodoPago"></app-campo-select>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label for="cobPagoReferencia" class="form-label perm-label">Referencia</label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">tag</mat-icon></span>
+                  <div class="form-floating flex-grow-1">
+                    <input id="cobPagoReferencia" type="text" class="form-control" maxlength="100" placeholder=" "
+                      [(ngModel)]="referencia" />
+                    <label for="cobPagoReferencia">Ej.: SPEI 0045123</label>
+                  </div>
+                </div>
+              </div>
+
+              @if (hayRentas) {
+              <div class="col-12 col-md-6 col-lg-4">
+                <label for="cobPagoMarcarPagada" class="form-label perm-label">¿Marcar renta como pagada?</label>
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">task_alt</mat-icon></span>
+                  <app-campo-select inputId="cobPagoMarcarPagada" label="¿Marcar renta como pagada?"
+                    [items]="opcionesPagada" valueExpr="id" displayExpr="nombre" [limpiable]="false"
+                    [(ngModel)]="marcarPagada"></app-campo-select>
+                </div>
+                @if (liquidaRentas) {
+                <span class="cob-ayuda cob-ayuda--ok"><mat-icon aria-hidden="true">verified</mat-icon> Con este monto la renta queda liquidada y pasa a «Pagada» sola. No necesitas elegir «Sí».</span>
+                } @else {
+                <span class="cob-ayuda">Si eliges «Sí», la renta queda como pagada aunque el pago sea parcial.</span>
+                }
+              </div>
+              }
+
+              <div class="col-12">
+                <label class="form-label perm-label d-block mb-2">Comprobante de pago</label>
+                <div class="mono-pago-file" [class.mono-pago-file--filled]="!!comprobante" role="button" tabindex="0"
+                  (click)="comprobanteInput.click()" (keydown.enter)="comprobanteInput.click()"
+                  (keydown.space)="$event.preventDefault(); comprobanteInput.click()">
+                  <div class="mono-pago-file__icon" aria-hidden="true">
+                    <mat-icon>{{ comprobante ? 'description' : 'upload_file' }}</mat-icon>
+                  </div>
+                  <div class="mono-pago-file__text">
+                    <span class="mono-pago-file__title">{{ comprobante?.name || 'Adjunta el comprobante de pago' }}</span>
+                    <span class="mono-pago-file__hint">
+                      {{ comprobante ? 'Haz clic para reemplazar el archivo' : 'PDF, PNG o JPG · máx. 10 MB · opcional' }}
+                    </span>
+                  </div>
+                  <span class="mono-pago-file__action">{{ comprobante ? 'Cambiar' : 'Seleccionar' }}</span>
+                  <input #comprobanteInput type="file" accept="application/pdf,image/png,image/jpeg,image/jpg"
+                    class="mono-pago-file__input" (change)="onComprobante($event)" (click)="$event.stopPropagation()" />
+                </div>
+              </div>
+            </div>
+
+            <div class="contract-docs-card mt-3">
+              <h5 class="contract-docs-card__title">¿A qué se aplica el pago?</h5>
+              @if (!idArrendatario) {
+              <div class="hub-vista-simple__vacio">
+                <mat-icon aria-hidden="true">person_search</mat-icon>
+                <p>Selecciona el arrendatario para ver sus rentas y servicios con saldo.</p>
+              </div>
+              } @else if (cargandoConceptos) {
+              <div class="mono-pago-servicio-loading">
+                <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+                <span>Cargando cargos con saldo…</span>
+              </div>
+              } @else {
+              <app-aplicaciones-editor [conceptos]="conceptos" [limite]="monto || 0" [(montos)]="montos"></app-aplicaciones-editor>
+              }
+
+              <div class="hub-vista-simple__resumen cob-contador mb-0" aria-label="Resumen del pago">
+                <span class="hub-vista-simple__stat">Pago <strong>{{ fmtMoneda(monto || 0) }}</strong></span>
+                <span class="hub-vista-simple__stat hub-vista-simple__stat--pagado">
+                  Por aplicar <strong>{{ fmtMoneda(porAplicar) }}</strong>
+                </span>
+                @if (quedaraAFavor < 0) {
+                <span class="hub-vista-simple__stat cob-stat--error">
+                  Excede el pago <strong>{{ fmtMoneda(-quedaraAFavor) }}</strong>
+                </span>
+                } @else {
+                <span class="hub-vista-simple__stat hub-vista-simple__stat--pendiente">
+                  Quedará a favor <strong>{{ fmtMoneda(quedaraAFavor) }}</strong>
+                </span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="row docs-modal__footer">
+      <div class="col-12">
+        <div class="d-flex gap-2 w-100 mono-pago-actions mono-pago-actions--footer justify-content-lg-end">
+          <button type="button" class="button-danger mono-pago-form-btn" (click)="cerrar.emit()" [disabled]="guardando">
+            Cancelar
+          </button>
+          <button type="button" class="button-success mono-pago-form-btn" (click)="guardar()"
+            [disabled]="guardando || cargando">
+            {{ guardando ? 'Enviando…' : 'Registrar pago' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

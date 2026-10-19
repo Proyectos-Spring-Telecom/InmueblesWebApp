@@ -78,6 +78,7 @@ export class ListaArrendatariosComponent implements OnInit, OnDestroy {
 
   mostrarModalDashboard = false;
   dashboardTitulo = '';
+  dashboardTab: 'resumen' | 'contratos' | 'rentas' | 'pagos' = 'resumen';
   dashboardCargando = false;
   private dashboardArrendatarioId: number | null = null;
   dashboardFechaInicio = '';
@@ -161,7 +162,7 @@ export class ListaArrendatariosComponent implements OnInit, OnDestroy {
     this.menuAcciones = { row, left, top: arriba ? r.top - 8 : r.bottom + 8, arriba };
   }
 
-  ejecutarAccion(accion: 'alta' | 'editar' | 'eliminar' | 'mapa' | 'dashboard'): void {
+  ejecutarAccion(accion: 'alta' | 'editar' | 'eliminar' | 'mapa' | 'dashboard' | 'estadoCuenta'): void {
     const row = this.menuAcciones?.row;
     this.menuAcciones = null;
     if (!row) return;
@@ -180,6 +181,9 @@ export class ListaArrendatariosComponent implements OnInit, OnDestroy {
         break;
       case 'dashboard':
         this.verDashboardArrendatario(row);
+        break;
+      case 'estadoCuenta':
+        void this.router.navigate(['/arrendatarios/estado-cuenta', row.id]);
         break;
     }
   }
@@ -239,7 +243,7 @@ export class ListaArrendatariosComponent implements OnInit, OnDestroy {
     const nombreEsc = this.escapeHtmlSwal(nombre);
 
     void Swal.fire({
-      title: 'Dar de alta arrendatario',
+      title: '¡Dar de Alta Arrendatario!',
       icon: 'question',
       ...coloresSwalTema(),
       html: this.htmlModalDarAltaArrendatario(nombreEsc),
@@ -332,8 +336,8 @@ export class ListaArrendatariosComponent implements OnInit, OnDestroy {
         this.dandoAltaId = null;
         void Swal.fire({
           ...coloresSwalTema(),
-          title: 'Operación Exitosa',
-          text: 'Los cambios se guardaron correctamente.',
+          title: '¡Operación Exitosa!',
+          html: 'El arrendatario se dio de alta correctamente.',
           icon: 'success',
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Confirmar',
@@ -387,7 +391,7 @@ export class ListaArrendatariosComponent implements OnInit, OnDestroy {
         next: () => {
           void Swal.fire({
             ...coloresSwalTema(),
-            title: '¡Eliminado!',
+            title: '¡Operación Exitosa!',
             html: 'El arrendatario ha sido eliminado de forma exitosa.',
             icon: 'success',
             showCancelButton: false,
@@ -720,6 +724,7 @@ export class ListaArrendatariosComponent implements OnInit, OnDestroy {
     this.dashboardMensualidadData = [];
     this.dashboardRentaPeriodoData = [];
     this.mensualidadDesdeContratos = false;
+    this.dashboardTab = 'resumen';
     this.mostrarModalDashboard = true;
     this.cargarDashboardArrendatario();
   }
@@ -788,6 +793,28 @@ export class ListaArrendatariosComponent implements OnInit, OnDestroy {
   get dashboardResumen() { return this.dashboardData?.resumen ?? null; }
 
   get dashboardInfo() { return this.dashboardData?.arrendatario ?? null; }
+
+  /** Iniciales para el avatar de las fichas de persona (máx. 2 letras). */
+  claseChipEstatus(estatus: string | null | undefined): string {
+    const e = (estatus ?? '').toLowerCase();
+    if (e.includes('pagad') || e.includes('aplicad')) return 'dbx-chip--verde';
+    if (e.includes('pend') || e.includes('parcial')) return 'dbx-chip--ambar';
+    return 'dbx-chip--gris';
+  }
+
+  iniciales(nombre: string | null | undefined): string {
+    const partes = String(nombre ?? '').trim().split(/\s+/).filter(Boolean);
+    if (!partes.length) return '—';
+    return (partes[0][0] + (partes.length > 1 ? partes[1][0] : '')).toUpperCase();
+  }
+
+  /** Porcentaje 0–100 (seguro ante total 0) para barras y textos del dashboard. */
+  porcentaje(parte: number | null | undefined, total: number | null | undefined): number {
+    const p = Number(parte) || 0;
+    const t = Number(total) || 0;
+    if (t <= 0) return 0;
+    return Math.max(0, Math.min(100, (p / t) * 100));
+  }
 
   get dashboardContratos() { return this.dashboardData?.contratos ?? []; }
 

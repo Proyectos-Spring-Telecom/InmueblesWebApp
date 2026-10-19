@@ -18,56 +18,36 @@
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histMantFechaInicio"
             >Fecha inicio <span class="text-danger">*</span></label
           >
-          <input
-            id="histMantFechaInicio"
-            type="date"
-            class="form-control form-control-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="fechaInicioFiltro"
-          />
+          <app-campo-fecha inputId="histMantFechaInicio" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaInicioFiltro"></app-campo-fecha>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histMantFechaFin"
             >Fecha fin <span class="text-danger">*</span></label
           >
-          <input
-            id="histMantFechaFin"
-            type="date"
-            class="form-control form-control-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="fechaFinFiltro"
-          />
+          <app-campo-fecha inputId="histMantFechaFin" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaFinFiltro"></app-campo-fecha>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histMantArrendatario"
             >Arrendatario</label
           >
-          <select
-            id="histMantArrendatario"
-            class="form-select form-select-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="idArrendatarioFiltro"
-            (ngModelChange)="onArrendatarioFiltroChange()"
-            [disabled]="catalogosFiltroCargando"
-          >
-            <option [ngValue]="null">Todos</option>
-            <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
-          </select>
+          <app-campo-select inputId="histMantArrendatario" class="campo-dx--sm" placeholder="Todos" [limpiable]="true"
+            [items]="arrendatariosOpciones" valueExpr="id" displayExpr="label"
+            [(ngModel)]="idArrendatarioFiltro" (ngModelChange)="onArrendatarioFiltroChange()"
+            [disabled]="catalogosFiltroCargando"></app-campo-select>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="histMantContrato"
             >Contrato</label
           >
-          <select
-            id="histMantContrato"
-            class="form-select form-select-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="idContratoFiltro"
-            [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro"
-          >
-            <option [ngValue]="null">{{ textoPlaceholderContratoFiltro() }}</option>
-            <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
-          </select>
+          <app-campo-select inputId="histMantContrato" class="campo-dx--sm" [placeholder]="textoPlaceholderContratoFiltro()"
+            [limpiable]="true" [items]="contratosOpciones" valueExpr="id" displayExpr="label"
+            [(ngModel)]="idContratoFiltro" [disabled]="catalogosFiltroCargando || !idArrendatarioFiltro"></app-campo-select>
         </div>
         <div class="hist-renta-filtros-panel__accion">
           <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
-            <i class="fa fa-filter"></i> Filtrar
+            <i class="fa fa-search"></i> Buscar
           </button>
         </div>
       </div>

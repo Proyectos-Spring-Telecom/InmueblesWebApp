@@ -1,0 +1,366 @@
+/*
+ * Campos DevExtreme homologados (app-campo-fecha / app-campo-select).
+ * Replican el look de `.perm-ig` + `.form-floating` + `.form-control` / `.form-select`:
+ * misma altura (3.5rem + 2px), fondo, borde, radio 0 14px 14px 0 y etiqueta flotante.
+ */
+
+$campo-dx-alto: calc(3.5rem + 2px);
+
+/* Host: ocupa el lugar del antiguo `.form-floating.flex-grow-1` dentro del input-group */
+.campo-dx {
+  display: block;
+  position: relative;
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+}
+
+.campo-dx--solo,
+.campo-dx--sm {
+  width: 100%;
+}
+
+.campo-dx .perm-dx.dx-texteditor {
+  height: $campo-dx-alto;
+  min-height: $campo-dx-alto;
+  width: 100%;
+  margin: 0;
+  background: #1c252e !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-left: 0 !important;
+  border-radius: 0 14px 14px 0 !important;
+  box-shadow: none !important;
+  color: #fff;
+  font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  /* fluent "filled" dibuja una línea inferior: se quita */
+  &::before,
+  &::after {
+    display: none !important;
+  }
+
+  .dx-texteditor-container {
+    height: 100%;
+    background: transparent;
+  }
+
+  .dx-texteditor-input-container {
+    height: 100%;
+  }
+
+  .dx-texteditor-input {
+    height: 100%;
+    min-height: 0;
+    padding: 1.45rem 0.75rem 0.35rem 0.75rem;
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1.25;
+    background: transparent;
+  }
+
+  /* Texto de «Selecciona…» visible aunque haya etiqueta flotante (como la opción deshabilitada nativa) */
+  .dx-placeholder {
+    display: flex !important;
+    align-items: center;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    padding: 1.45rem 0.75rem 0.35rem;
+    color: rgba(212, 206, 208, 0.65);
+    font-size: 1rem;
+    line-height: 1.25;
+
+    &::before {
+      padding: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &:not(.dx-texteditor-empty) .dx-placeholder {
+    display: none !important;
+  }
+
+  /* Etiqueta flotante: arriba a la izquierda, como `.form-floating > label` */
+  .dx-texteditor-label {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    pointer-events: none;
+    font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
+
+    .dx-label-before,
+    .dx-label-after {
+      display: none;
+    }
+
+    .dx-label {
+      max-width: calc(100% - 3rem);
+      padding: 0 0 0 0.8rem;
+      border: 0 !important;
+      height: 100%;
+      display: flex;
+      align-items: flex-start;
+
+      span {
+        position: static;
+        transform: none !important;
+        margin-top: 0.45rem;
+        color: #d4ced0;
+        font-size: 0.85rem;
+        opacity: 0.8;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  /* Botones (flecha / calendario / limpiar) */
+  .dx-texteditor-buttons-container {
+    padding-right: 0.35rem;
+  }
+
+  .dx-dropdowneditor-button,
+  .dx-clear-button-area {
+    height: 100%;
+  }
+
+  .dx-dropdowneditor-icon,
+  .dx-icon-clear {
+    color: rgba(255, 255, 255, 0.7);
+    background: transparent;
+  }
+
+  &.dx-state-hover {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  &.dx-state-focused {
+    border-color: var(--mat-sys-primary, #6e8bff) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--mat-sys-primary, #6e8bff) 25%, transparent) !important;
+  }
+
+  &.dx-state-disabled,
+  &.dx-state-readonly {
+    opacity: 0.6;
+    cursor: not-allowed;
+
+    .dx-texteditor-input {
+      cursor: not-allowed;
+    }
+  }
+
+  &.dx-invalid {
+    border-color: #f87171 !important;
+  }
+}
+
+/*
+ * Selects y fechas: sin etiqueta flotante. El valor / «Selecciona…» / «dd/mm/aaaa» va centrado verticalmente
+ * en una sola línea, igual que el texto de los inputs normales (p. ej. RFC).
+ */
+.campo-dx--select .perm-dx.dx-texteditor,
+.campo-dx--fecha .perm-dx.dx-texteditor {
+  .dx-texteditor-label {
+    display: none;
+  }
+
+  .dx-texteditor-input {
+    padding: 0 0.75rem;
+  }
+
+  .dx-placeholder {
+    padding: 0 0.75rem;
+    color: rgba(212, 206, 208, 0.75);
+  }
+}
+
+/* Variante sin ícono a la izquierda (fuera de .perm-ig): bordes redondeados completos */
+.campo-dx--solo .perm-dx.dx-texteditor {
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+}
+
+/* Variante compacta: igual que .form-control-sm / .form-select-sm de los paneles de filtros */
+.campo-dx--sm .perm-dx.dx-texteditor {
+  height: calc(1.5em + 0.5rem + 2px);
+  min-height: calc(1.5em + 0.5rem + 2px);
+  font-size: 0.875rem;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  border-radius: 8px !important;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.35) !important;
+  color: #f1f5f9;
+
+  .dx-texteditor-input {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    color: #f1f5f9;
+  }
+
+  .dx-texteditor-label {
+    display: none;
+  }
+
+  .dx-placeholder {
+    padding: 0 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .dx-dropdowneditor-button .dx-button-content,
+  .dx-clear-button-area {
+    min-width: 28px;
+  }
+
+  &.dx-state-focused {
+    border-color: rgba(129, 140, 248, 0.55) !important;
+    box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.15) !important;
+  }
+}
+
+/* Variante plana: el contenedor pone borde/fondo (p. ej. `.rrv-control` de Rent Rol); el campo sólo pinta el texto */
+.campo-dx--plano {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+.campo-dx--plano .perm-dx.dx-texteditor {
+  height: 42px;
+  min-height: 42px;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: inherit;
+
+  .dx-texteditor-input {
+    padding: 0;
+    font-size: 0.88rem;
+    color: inherit;
+  }
+
+  .dx-texteditor-label {
+    display: none;
+  }
+
+  .dx-placeholder {
+    padding: 0;
+    font-size: 0.88rem;
+  }
+
+  &.dx-state-focused {
+    box-shadow: none !important;
+  }
+
+  &.dx-state-disabled {
+    opacity: 1;
+  }
+}
+
+/* Variante «en caja»: el host lleva la clase visual del módulo (borde/fondo/alto) y el campo va transparente con su padding */
+.campo-dx--en-caja {
+  display: flex !important;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.campo-dx--en-caja .perm-dx.dx-texteditor {
+  height: 36px;
+  min-height: 36px;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: inherit;
+
+  .dx-texteditor-input {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.875rem;
+    color: inherit;
+  }
+
+  .dx-texteditor-label {
+    display: none;
+  }
+
+  .dx-placeholder {
+    padding: 0 0.6rem;
+    font-size: 0.875rem;
+  }
+
+  &.dx-state-focused {
+    box-shadow: none !important;
+  }
+}
+
+/* Filtros de fecha en línea (dashboards): ancho fijo como el input nativo */
+.campo-dx--filtro-fecha {
+  flex: 0 0 auto;
+  width: 10.5rem !important;
+}
+
+/* Mismo fondo que `.form-control` en tema oscuro con data-theme (ver styles.scss) */
+:root[data-theme='dark'] .perm-form-nc .campo-dx .perm-dx.dx-texteditor {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Desplegable (calendario / lista): por encima de los modales del proyecto */
+.perm-dx-popup.dx-overlay-wrapper,
+.dx-overlay-wrapper.perm-dx-popup {
+  z-index: 100020 !important;
+}
+
+/* Opciones de la lista un poco más grandes y legibles */
+.perm-dx-popup .dx-list-item .dx-list-item-content {
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.perm-dx-popup .dx-list-item {
+  border-radius: 8px;
+}
+
+.perm-dx-popup .dx-list .dx-empty-message {
+  padding: 0.8rem 1rem;
+  font-size: 0.92rem;
+}
+
+/* ---------- Tema claro ---------- */
+html.light-theme {
+  .campo-dx .perm-dx.dx-texteditor {
+    background: var(--app-surface, #ffffff) !important;
+    border-color: var(--app-border-strong, rgba(15, 23, 42, 0.2)) !important;
+    color: var(--app-text, #1e293b);
+
+    .dx-texteditor-input {
+      color: var(--app-text, #1e293b);
+    }
+
+    .dx-placeholder {
+      color: var(--app-text-soft, #64748b);
+    }
+
+    .dx-texteditor-label .dx-label span {
+      color: var(--app-text-muted, #475569);
+    }
+
+    .dx-dropdowneditor-icon,
+    .dx-icon-clear {
+      color: var(--app-text-muted, #475569);
+    }
+  }
+
+  .campo-dx--solo .perm-dx.dx-texteditor,
+  .campo-dx--sm .perm-dx.dx-texteditor {
+    border-left-color: var(--app-border-strong, rgba(15, 23, 42, 0.2)) !important;
+  }
+}

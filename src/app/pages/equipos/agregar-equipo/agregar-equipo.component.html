@@ -11,15 +11,8 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">view_module</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select for="permNombres" class="form-control" formControlName="idCliente">
-                                    <option [ngValue]="null" selected disabled hidden></option>
-                                    <option *ngFor="let e of listaCliente" [ngValue]="e.id">
-                                        {{ e.nombre || ' ' }} {{e.apellidoPaternoCliente || ' '}}
-                                        {{e.apellidoMaternoCliente || ' '}}
-                                    </option>
-                                </select>
-                            </div>
+                            <app-campo-select formControlName="idCliente" placeholder="" [items]="listaCliente"
+                                valueExpr="id" [displayExpr]="etiquetaClienteSelect"></app-campo-select>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
@@ -28,14 +21,8 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">view_module</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select for="permNombres" class="form-control" formControlName="idModelo">
-                                    <option [ngValue]="null" selected disabled hidden></option>
-                                    <option *ngFor="let producto of listaModelos" [ngValue]="producto.id">
-                                        {{ producto.nombre }}
-                                    </option>
-                                </select>
-                            </div>
+                            <app-campo-select formControlName="idModelo" placeholder="" [items]="listaModelos"
+                                valueExpr="id" displayExpr="nombre"></app-campo-select>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">

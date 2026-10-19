@@ -46,11 +46,12 @@ export function calcularMontosRentRolCaptura(input: {
   let costoM2: number | null = null;
   if (subOk) {
     const subTotal = redondearMontoRentRol(subCapturado);
+    // Regla API: IVA = redondeo(subtotal × 0.16, 2) y total = subtotal + IVA (cuadra al centavo).
     const iva = redondearMontoRentRol(subTotal * RENT_ROL_IVA);
     renta = {
       subTotal,
       iva,
-      total: redondearMontoRentRol(subTotal * (1 + RENT_ROL_IVA)),
+      total: redondearMontoRentRol(subTotal + iva),
       listo: true,
     };
     if (metrosOk) {
@@ -63,11 +64,11 @@ export function calcularMontosRentRolCaptura(input: {
   if (renta.listo && input.incluyeMantenimiento && Number.isFinite(pct) && pct > 0) {
     const subMRaw = renta.subTotal * (pct / 100);
     const subTotal = redondearMontoRentRol(subMRaw);
-    const iva = redondearMontoRentRol(subMRaw * RENT_ROL_IVA);
+    const iva = redondearMontoRentRol(subTotal * RENT_ROL_IVA);
     mantenimiento = {
       subTotal,
       iva,
-      total: redondearMontoRentRol(subMRaw * (1 + RENT_ROL_IVA)),
+      total: redondearMontoRentRol(subTotal + iva),
       listo: true,
     };
   }

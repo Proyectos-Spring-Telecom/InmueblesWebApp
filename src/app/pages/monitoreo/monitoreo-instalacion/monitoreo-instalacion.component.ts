@@ -340,6 +340,15 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
   fechaFinFiltroPagos = '';
   estatusFiltroPagos: number | null = null;
   readonly opcionesEstatusPagoFiltro = OPCIONES_ESTATUS_PAGO_FILTRO_PANEL;
+  /** Estatus del modal de pago: mismos valores de texto que el select nativo. */
+  readonly opcionesEstatusPagoModal = [
+    { id: 'Pagado', nombre: 'Pagado' },
+    { id: 'Pendiente', nombre: 'Pendiente' },
+    { id: 'Cancelado', nombre: 'Cancelado' },
+  ];
+  /** Texto de cada método de pago en el select (misma regla que `etiquetaCatMetodoPago`). */
+  readonly etiquetaCatMetodoPagoSelect = (item: CatMetodoPagoItem | null): string =>
+    item ? this.etiquetaCatMetodoPago(item) : '';
   pagosCargando = false;
 
   numeroSerie: string = '';
@@ -1539,6 +1548,7 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
+      ...(v instanceof Date ? {} : { timeZone: 'UTC' }),
     });
   }
 

@@ -9,51 +9,31 @@
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvArrFechaInicio">
             Fecha inicio <span class="text-danger">*</span>
           </label>
-          <input
-            id="regSrvArrFechaInicio"
-            type="date"
-            class="form-control form-control-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="fechaInicioFiltro"
-          />
+          <app-campo-fecha inputId="regSrvArrFechaInicio" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaInicioFiltro"></app-campo-fecha>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvArrFechaFin">
             Fecha fin <span class="text-danger">*</span>
           </label>
-          <input
-            id="regSrvArrFechaFin"
-            type="date"
-            class="form-control form-control-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="fechaFinFiltro"
-          />
+          <app-campo-fecha inputId="regSrvArrFechaFin" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaFinFiltro"></app-campo-fecha>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvArrArrendatario">Arrendatario</label>
-          <select
-            id="regSrvArrArrendatario"
-            class="form-select form-select-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="idArrendatarioFiltro"
-            [disabled]="catalogosFiltroCargando"
-          >
-            <option [ngValue]="null">Todos</option>
-            <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
-          </select>
+          <app-campo-select inputId="regSrvArrArrendatario" class="campo-dx--sm" placeholder="Todos" [limpiable]="true"
+            [items]="arrendatariosOpciones" valueExpr="id" displayExpr="label"
+            [(ngModel)]="idArrendatarioFiltro" [disabled]="catalogosFiltroCargando"></app-campo-select>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvArrEstatus">Estatus</label>
-          <select
-            id="regSrvArrEstatus"
-            class="form-select form-select-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="estatusFiltroPagos"
-          >
-            <option *ngFor="let op of opcionesEstatusPagoFiltro" [ngValue]="op.value">
-              {{ op.label }}
-            </option>
-          </select>
+          <app-campo-select inputId="regSrvArrEstatus" class="campo-dx--sm" placeholder="Todos" [buscar]="false"
+            [items]="opcionesEstatusPagoFiltro" valueExpr="value" displayExpr="label"
+            [(ngModel)]="estatusFiltroPagos"></app-campo-select>
         </div>
         <div class="hist-renta-filtros-panel__accion">
           <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
-            <i class="fa fa-filter"></i> Buscar
+            <i class="fa fa-search"></i> Buscar
           </button>
         </div>
       </div>
@@ -296,19 +276,9 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">person</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="regSrvArrPagoArrendatario"
-                        class="form-select"
-                        formControlName="idArrendatario"
-                      >
-                        <option [ngValue]="null" disabled hidden>Seleccione arrendatario</option>
-                        <option *ngFor="let opt of arrendatariosOpciones" [ngValue]="opt.id">
-                          {{ opt.label }}
-                        </option>
-                      </select>
-                      <label for="regSrvArrPagoArrendatario">Arrendatario</label>
-                    </div>
+                    <app-campo-select inputId="regSrvArrPagoArrendatario" formControlName="idArrendatario" label="Arrendatario"
+                      placeholder="Seleccione arrendatario" [items]="arrendatariosOpciones" valueExpr="id"
+                      displayExpr="label"></app-campo-select>
                   </div>
                 </div>
 
@@ -324,26 +294,11 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">design_services</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="regSrvArrPagoServicio"
-                        class="form-select"
-                        formControlName="idServicioArrendatario"
-                        (change)="onPagoServicioChange()"
-                      >
-                        <option [ngValue]="null" disabled hidden>
-                          {{
-                            serviciosArrendatarioModalPago.length
-                              ? 'Seleccione tipo de servicio'
-                              : 'Seleccione arrendatario primero'
-                          }}
-                        </option>
-                        <option *ngFor="let srv of serviciosArrendatarioModalPago" [ngValue]="srv.id">
-                          {{ srv.etiquetaTipoServicio }}
-                        </option>
-                      </select>
-                      <label for="regSrvArrPagoServicio">Tipo de servicio</label>
-                    </div>
+                    <app-campo-select inputId="regSrvArrPagoServicio" formControlName="idServicioArrendatario"
+                      label="Tipo de servicio"
+                      [placeholder]="serviciosArrendatarioModalPago.length ? 'Seleccione tipo de servicio' : 'Seleccione arrendatario primero'"
+                      [items]="serviciosArrendatarioModalPago" valueExpr="id" displayExpr="etiquetaTipoServicio"
+                      (cambio)="onPagoServicioChange()"></app-campo-select>
                   </div>
                 </div>
 
@@ -374,10 +329,7 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">event</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="regSrvArrPagoFecha" type="date" class="form-control" formControlName="fechaPago" />
-                      <label for="regSrvArrPagoFecha">Fecha de pago</label>
-                    </div>
+                    <app-campo-fecha inputId="regSrvArrPagoFecha" formControlName="fechaPago" label="Fecha de pago"></app-campo-fecha>
                   </div>
                 </div>
 
@@ -414,22 +366,10 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">credit_card</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="regSrvArrPagoMetodo"
-                        class="form-select"
-                        formControlName="idMetodoPago"
-                        [disabled]="metodosPagoCargando"
-                      >
-                        <option [ngValue]="null" disabled hidden>
-                          {{ metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago' }}
-                        </option>
-                        <option *ngFor="let mp of listaCatMetodosPago" [ngValue]="mp.id">
-                          {{ etiquetaCatMetodoPago(mp) }}
-                        </option>
-                      </select>
-                      <label for="regSrvArrPagoMetodo">Método de pago</label>
-                    </div>
+                    <app-campo-select inputId="regSrvArrPagoMetodo" formControlName="idMetodoPago"
+                      [disabled]="metodosPagoCargando" label="Método de pago"
+                      [placeholder]="metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago'"
+                      [items]="listaCatMetodosPago" valueExpr="id" [displayExpr]="etiquetaCatMetodoPagoSelect"></app-campo-select>
                   </div>
                 </div>
 
@@ -439,14 +379,8 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">flag</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="regSrvArrPagoEstatus" class="form-select" formControlName="estatus">
-                        <option [ngValue]="'Pagado'">Pagado</option>
-                        <option [ngValue]="'Pendiente'">Pendiente</option>
-                        <option [ngValue]="'Cancelado'">Cancelado</option>
-                      </select>
-                      <label for="regSrvArrPagoEstatus">Estatus</label>
-                    </div>
+                    <app-campo-select inputId="regSrvArrPagoEstatus" formControlName="estatus" label="Estatus" placeholder=""
+                      [items]="opcionesEstatusPagoModal" valueExpr="id" displayExpr="nombre" [buscar]="false"></app-campo-select>
                   </div>
                 </div>
 

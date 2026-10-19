@@ -176,6 +176,11 @@ export class RentRolComponent implements OnInit, OnDestroy {
   guardandoCaptura = false;
   arrendadoresOpciones: RentRolSelectOpcion[] = [];
   inmueblesOpciones: RentRolSelectOpcion[] = [];
+  /** Tipo Persona: mismos valores que el select nativo (1 Física, 2 Moral). */
+  readonly opcionesTipoPersona = [
+    { id: 1, nombre: 'Física' },
+    { id: 2, nombre: 'Moral' },
+  ];
   localesOpciones: RentRolLocalOpcion[] = [];
   localesSeleccionados = new Set<number>();
   /** Misma semántica que agregar-arrendatario: UI «Sí» = sin capturar mantto (form 0). */
@@ -1024,7 +1029,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
 
   /** Tras OK/error del servicio: media segundo con spinner y luego muestra resultado. */
   private async cerrarCargaYMostrarResultado(
-    resultado: { ok: true; title: string; text: string } | { ok: false; text: string },
+    resultado: { ok: true; html: string } | { ok: false; html: string },
   ): Promise<void> {
     await this.esperarMs(500);
     Swal.close();
@@ -1032,8 +1037,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
       await Swal.fire({
         color: '#ffffff',
         background: '#141a21',
-        title: resultado.title,
-        text: resultado.text,
+        title: '¡Operación Exitosa!',
+        html: resultado.html,
         icon: 'success',
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'Confirmar',
@@ -1044,7 +1049,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
       color: '#ffffff',
       background: '#141a21',
       title: '¡Ops!',
-      text: resultado.text,
+      html: resultado.html,
       icon: 'error',
       confirmButtonColor: '#3085d6',
       confirmButtonText: 'Confirmar',
@@ -1126,8 +1131,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
       this.gridRentRol?.instance?.refresh();
       await this.cerrarCargaYMostrarResultado({
         ok: true,
-        title: '¡Operación Exitosa!',
-        text: 'Se registró el arrendatario con su contrato.',
+        html: 'Se registró el arrendatario con su contrato.',
       });
       void this.router.navigateByUrl('/arrendatarios');
     } catch (err: unknown) {
@@ -1139,7 +1143,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
       const e = err as { error?: { message?: string }; message?: string };
       await this.cerrarCargaYMostrarResultado({
         ok: false,
-        text: String(e?.error?.message ?? e?.message ?? 'No se pudo guardar el arrendatario.'),
+        html: String(e?.error?.message ?? e?.message ?? 'No se pudo guardar el arrendatario.'),
       });
     } finally {
       this.guardandoCaptura = false;
@@ -1498,6 +1502,12 @@ export class RentRolComponent implements OnInit, OnDestroy {
     if (fila) this.rentasMes?.abrirModalEdicion(fila);
   }
 
+  /** Cobranza: pago total o parcial con fecha real (mismo modal que Pagos del mes). */
+  registrarPagoRenta(line: RentRolGridLine): void {
+    const fila = this.filaRentaActual(line);
+    if (fila) this.rentasMes?.abrirRegistrarPago(fila);
+  }
+
   marcarRentaPagada(line: RentRolGridLine): void {
     const fila = this.filaRentaActual(line);
     if (fila) void this.rentasMes?.marcarRentaPagada(fila);
@@ -1575,7 +1585,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
     }
 
     const confirmado = await this.confirmarAccionCritica({
-      titulo: `Apertura de ${this.etiquetaMesClave(mes)}`,
+      titulo: `¡Apertura De Mes · ${this.etiquetaMesClave(mes)}!`,
       color: '#f5c542',
       pasos: [
         `<strong>${azules.length}</strong> ${azules.length === 1 ? 'renta pasará' : 'rentas pasarán'} de ` +
@@ -1609,7 +1619,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
     this.onPagoRentaCambio();
     void Swal.fire({
       background: '#141a21', color: '#ffffff', icon: 'success',
-      title: '¡Mes abierto!',
+      title: '¡Operación Exitosa!',
       html:
         `${azules.length} ${azules.length === 1 ? 'renta quedó' : 'rentas quedaron'} en <strong>Por pagar</strong>. ` +
         'Ya solo se pueden marcar como pagadas.',
@@ -1733,7 +1743,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
 
     const mesSig = this.etiquetaMesClave(siguiente);
     const confirmado = await this.confirmarAccionCritica({
-      titulo: `Cierre de ${this.etiquetaMesClave(mes)}`,
+      titulo: `¡Cierre De Mes · ${this.etiquetaMesClave(mes)}!`,
       color: '#22b07d',
       pasos: [
         `Se cerrará <strong>${this.etiquetaMesClave(mes)}</strong>: todas sus rentas ya están pagadas.`,
@@ -1786,7 +1796,9 @@ export class RentRolComponent implements OnInit, OnDestroy {
     const resultado = await Swal.fire({
       background: '#141a21', color: '#ffffff',
       icon: errores.length ? (creadas ? 'warning' : 'error') : 'success',
-      title: errores.length ? 'Cierre con observaciones' : '¡Mes cerrado!',
+      title: errores.length
+        ? '¡Cierre Con Observaciones!'
+        : '¡Operación Exitosa!',
       html:
         `Se generaron <strong>${creadas}</strong> ${creadas === 1 ? 'renta' : 'rentas'} para ` +
         `<strong>${this.etiquetaMesClave(siguiente)}</strong>.` +

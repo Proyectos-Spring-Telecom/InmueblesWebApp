@@ -15,20 +15,9 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">business</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="cliente" formControlName="idCliente">
-                                    <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
-                                        {{ cliente.nombre }}
-                                        <ng-container *ngIf="cliente.apellidoPaterno">
-                                            {{ ' ' + cliente.apellidoPaterno }}
-                                        </ng-container>
-                                        <ng-container *ngIf="cliente.apellidoMaterno">
-                                            {{ ' ' + cliente.apellidoMaterno }}
-                                        </ng-container>
-                                    </option>
-                                </select>
-                                <label for="cliente">Selecciona un arrendador</label>
-                            </div>
+                            <app-campo-select inputId="cliente" formControlName="idCliente" label="Selecciona un arrendador"
+                                placeholder="" [items]="listaClientes" valueExpr="id"
+                                [displayExpr]="etiquetaClienteSelect"></app-campo-select>
                         </div>
                     </div>
 
@@ -104,14 +93,8 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="permClave" formControlName="idRol" required>
-                                    <option *ngFor="let rol of listaRoles" [ngValue]="rol.id">
-                                        {{ rol.nombre }}
-                                    </option>
-                                </select>
-                                <label for="permClave">Selecciona un rol</label>
-                            </div>
+                            <app-campo-select inputId="permClave" formControlName="idRol" required label="Selecciona un rol"
+                                placeholder="" [items]="listaRoles" valueExpr="id" displayExpr="nombre"></app-campo-select>
                         </div>
                     </div>
 

@@ -16,6 +16,8 @@ import { PagosMantenimientoModule } from './pagos-mantenimiento/pagos-mantenimie
 import { PagosServiciosModule } from './pagos-servicios/pagos-servicios.module';
 import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/operacion-pagos-hub.module';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
 
 @NgModule({
   declarations: [
@@ -25,6 +27,8 @@ import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.comp
   ],
   imports: [
     ModuleHeroComponent,
+    CampoFechaComponent,
+    CampoSelectComponent,
     CommonModule,
     ArrendatariosRoutingModule,
     PagosRentaModule,

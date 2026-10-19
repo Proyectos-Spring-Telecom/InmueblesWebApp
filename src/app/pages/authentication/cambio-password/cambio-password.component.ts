@@ -259,7 +259,9 @@ export class CambioPasswordComponent implements OnInit {
           this.loading = false;
           this.isDisabled = false;
           const msg =
-            err?.error?.message || err?.message || 'Error al restablecer la contraseña.';
+            err?.status === 403
+              ? 'Sólo puedes cambiar tu propia contraseña.'
+              : err?.error?.message || err?.message || 'Error al restablecer la contraseña.';
           this.toastr.error(msg, '¡Ops!');
           return throwError(() => err);
         })

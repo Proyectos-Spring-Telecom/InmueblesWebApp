@@ -67,6 +67,11 @@ const routes: Routes = [
   { path: 'agregar-arrendatario/:id', component: AgregarArrendatarioComponent },
   { path: 'editar-arrendatario/:idArrendatario', component: AgregarArrendatarioComponent },
   {
+    path: 'estado-cuenta/:idArrendatario',
+    loadComponent: () =>
+      import('./cobranza/estado-cuenta/estado-cuenta.component').then((m) => m.EstadoCuentaComponent),
+  },
+  {
     path: 'rent-rol',
     loadChildren: () =>
       import('./rent-rol/rent-rol.module').then((m) => m.RentRolModule),

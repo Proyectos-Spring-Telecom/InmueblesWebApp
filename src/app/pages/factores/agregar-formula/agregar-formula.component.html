@@ -38,13 +38,9 @@
               <span class="input-group-text">
                 <mat-icon aria-hidden="true">category</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="forTipoResultado" formControlName="tipoResultado">
-                  <option value="PORCENTAJE">Porcentaje (%)</option>
-                  <option value="MONTO">Monto ($)</option>
-                </select>
-                <label for="forTipoResultado">¿El resultado es un monto o porcentaje?</label>
-              </div>
+              <app-campo-select inputId="forTipoResultado" formControlName="tipoResultado"
+                label="¿El resultado es un monto o porcentaje?" placeholder="" [items]="opcionesTipoResultado"
+                valueExpr="id" displayExpr="nombre" [buscar]="false"></app-campo-select>
             </div>
           </div>
 

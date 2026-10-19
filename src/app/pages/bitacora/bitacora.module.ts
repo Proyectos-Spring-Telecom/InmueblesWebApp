@@ -8,9 +8,14 @@ import { BitacoraRoutingModule } from './bitacora-routing.module';
 import { ListaBitacoraComponent } from './lista-bitacora/lista-bitacora.component';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
+
 @NgModule({
   declarations: [ListaBitacoraComponent],
   imports: [
+    CampoFechaComponent,
+    CampoSelectComponent,
     ModuleHeroComponent,
     CommonModule,
     BitacoraRoutingModule,

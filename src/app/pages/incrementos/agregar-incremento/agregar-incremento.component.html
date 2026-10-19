@@ -24,13 +24,8 @@
               <span class="input-group-text fw-bold">
                 <mat-icon aria-hidden="true">event</mat-icon>
               </span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select class="form-select" id="incMes" formControlName="mes" required>
-                  <option value="" disabled>Seleccione…</option>
-                  <option *ngFor="let m of mesesOpciones" [value]="m">{{ m }}</option>
-                </select>
-                <label for="incMes">Seleccione mes</label>
-              </div>
+              <app-campo-select inputId="incMes" formControlName="mes" required label="Seleccione mes"
+                placeholder="Seleccione…" [items]="mesesOpciones" valueExpr="this" displayExpr="this"></app-campo-select>
             </div>
           </div>
           <div class="col-12 col-md-4">

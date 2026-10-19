@@ -219,156 +219,176 @@
     </div>
 
     <div class="inm-lugar-backdrop docs-backdrop" *ngIf="mostrarModalLugar" (click)="cerrarModalLugar()">
-      <div class="docs-modal inm-lugar-modal" (click)="$event.stopPropagation()">
+      <div class="docs-modal inm-lugar-modal inm-dash-modal" (click)="$event.stopPropagation()">
 
         <div class="row docs-modal__header">
           <div class="col-10 col-md-11">
             <span class="docs-modal__eyebrow">Ocupación del inmueble</span>
-            <h3 class="docs-modal__title">{{ lugarTitulo || 'Lugar' }}</h3>
           </div>
           <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
-            <button type="button" class="docs-modal__close" (click)="cerrarModalLugar()">
+            <button type="button" class="docs-modal__close" (click)="cerrarModalLugar()" aria-label="Cerrar">
               <i class="fa fa-times"></i>
             </button>
           </div>
         </div>
 
-        <div class="row docs-modal__body inm-lugar-modal__body">
-          <div class="col-12 inm-lugar-modal__content">
+        <div class="row docs-modal__body inm-dash-modal__body">
+          <div class="col-12 inm-dash-modal__content">
 
-            <!-- Cargando -->
-            <div class="oc-empty" *ngIf="lugarCargando">
+            <div class="dbx-cargando" *ngIf="lugarCargando">
+              <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
               <span>Cargando ocupación…</span>
             </div>
 
-            <div class="oc-wrap" *ngIf="data && !lugarCargando">
+            <div class="dbx" *ngIf="data && !lugarCargando">
+              <!-- Héroe -->
+              <section class="dbx-hero">
+                <div>
+                  <div class="dbx-hero__identidad">
+                    <span class="dbx-hero__icono"><mat-icon>apartment</mat-icon></span>
+                    <div class="dbx-hero__textos">
+                      <span class="dbx-hero__kicker">Ocupación del inmueble</span>
+                      <h3 class="dbx-hero__titulo">{{ lugarTitulo || 'Inmueble' }}</h3>
+                    </div>
+                  </div>
+                  <div class="dbx-hero__datos">
+                    <div class="dbx-hero__dato"><span>Superficie total</span><strong>{{ totalM2.toLocaleString('es-MX') }} m²</strong></div>
+                    <div class="dbx-hero__dato"><span>Ocupado</span><strong>{{ m2Ocupados.toLocaleString('es-MX') }} m²</strong></div>
+                    <div class="dbx-hero__dato dbx-hero__dato--favor"><span>Disponible</span><strong>{{ m2Disponibles.toLocaleString('es-MX') }} m²</strong></div>
+                    <div class="dbx-hero__dato"><span>Zonas</span><strong>{{ zonasProcesadas.length }}</strong></div>
+                  </div>
+                </div>
+                <div class="dbx-anillo" [style.--p]="porcentajeOcupado" role="img"
+                  [attr.aria-label]="porcentajeOcupado.toFixed(0) + '% ocupado'">
+                  <div class="dbx-anillo__centro"><strong>{{ porcentajeOcupado.toFixed(0) }}%</strong><span>ocupado</span></div>
+                </div>
+              </section>
 
-              <!-- Tarjetas de resumen -->
-              <div class="oc-stats">
-                <div class="oc-stat oc-stat--total">
-                  <span class="oc-stat__label">Total inmueble</span>
-                  <div class="oc-stat__body">
-                    <span class="oc-stat__value">{{ totalM2.toLocaleString('es-MX') }} m²</span>
-                    <div class="oc-stat__meta">
-                      <span class="oc-stat__meta-value">100%</span>
-                      <span class="oc-stat__meta-label">del área total</span>
-                    </div>
+              <!-- Barra general -->
+              <section class="dbx-card">
+                <div class="dbx-card__body">
+                  <div class="dbx-apilada">
+                    <span class="dbx-apilada__parte dbx-apilada__parte--ocupado" [style.width.%]="porcentajeOcupado"></span>
+                    <span class="dbx-apilada__parte dbx-apilada__parte--disponible" [style.width.%]="porcentajeDisponible"></span>
+                  </div>
+                  <div class="dbx-leyenda">
+                    <span class="dbx-leyenda__item" style="--c:#3b82f6"><i></i> Ocupado <strong>{{ porcentajeOcupado.toFixed(1) }}%</strong></span>
+                    <span class="dbx-leyenda__item" style="--c:#22c55e"><i></i> Disponible <strong>{{ porcentajeDisponible.toFixed(1) }}%</strong></span>
                   </div>
                 </div>
-                <div class="oc-stat oc-stat--ocupado">
-                  <span class="oc-stat__label">Ocupado</span>
-                  <div class="oc-stat__body">
-                    <span class="oc-stat__value">{{ m2Ocupados.toLocaleString('es-MX') }} m²</span>
-                    <div class="oc-stat__meta">
-                      <span class="oc-stat__meta-value">{{ porcentajeOcupado.toFixed(1) }}%</span>
-                      <span class="oc-stat__meta-label">del área total</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="oc-stat oc-stat--disponible">
-                  <span class="oc-stat__label">Disponible</span>
-                  <div class="oc-stat__body">
-                    <span class="oc-stat__value">{{ m2Disponibles.toLocaleString('es-MX') }} m²</span>
-                    <div class="oc-stat__meta">
-                      <span class="oc-stat__meta-value">{{ porcentajeDisponible.toFixed(1) }}%</span>
-                      <span class="oc-stat__meta-label">del área total</span>
-                    </div>
-                  </div>
-                </div>
+              </section>
+
+              <!-- Pestañas -->
+              <div class="dbx-tabs" role="tablist">
+                <button type="button" role="tab" class="dbx-tab" [class.dbx-tab--activo]="ocupacionVista === 'plano'"
+                  (click)="ocupacionVista = 'plano'"><mat-icon>dashboard</mat-icon> Plano de locales</button>
+                <button type="button" role="tab" class="dbx-tab" [class.dbx-tab--activo]="ocupacionVista === 'grafica'"
+                  (click)="ocupacionVista = 'grafica'"><mat-icon>donut_large</mat-icon> Gráfica y detalle</button>
               </div>
 
-              <!-- Lista + gráfica -->
-              <div class="row oc-panel-row g-2">
-                <div class="col-6 oc-locales-col">
-                  <div class="oc-locales" *ngIf="zonasProcesadas.length || m2Disponibles > 0">
-                    <span class="oc-locales__title">Ocupación por zona</span>
-                    <div class="oc-locales__list">
-                      <section class="oc-zona" *ngFor="let zona of zonasProcesadas"
-                        [attr.aria-label]="zona.nombre || 'Zona ' + zona.numeroZona">
-                        <header class="oc-zona__header" *ngIf="zona.nombre">
-                          <span class="oc-zona__nombre">{{ zona.nombre }}</span>
-                          <span class="oc-zona__meta">
-                            {{ zona.superficieM2.toLocaleString('es-MX') }} m²
-                            <span *ngIf="zona.superficieDisponibleM2 > 0">
-                              · {{ zona.superficieDisponibleM2.toLocaleString('es-MX') }} m² disp.
-                            </span>
-                          </span>
-                        </header>
-                        <article class="oc-local" *ngFor="let local of zona.locales"
-                          [class.oc-local--activo]="localGraficaHover === local.nombre"
-                          [style.--oc-local-accent]="local.color" (mouseenter)="resaltarGraficaLocal(local.nombre)"
-                          (mouseleave)="resaltarGraficaLocal(null)">
-                          <span class="oc-local__dot" [style.background-color]="local.color" aria-hidden="true"></span>
-                          <div class="oc-local__main">
-                            <span class="oc-local__nombre">{{ local.nombre }}</span>
-                            <span class="oc-local__zona" *ngIf="zonasProcesadas.length === 1 && local.zona">
-                              {{ local.zona }}
-                            </span>
-                          </div>
-                          <div class="oc-local__medidas">
-                            <span>{{ local.area.toLocaleString('es-MX') }} m²</span>
-                            <span>{{ local.porcentaje.toFixed(1) }}%</span>
-                          </div>
-                          <div class="oc-local__ocupante">
-                            <span class="oc-local__ocupante-label">Arrendatario</span>
-                            <span class="oc-local__ocupante-nombre">{{ local.arrendatario }}</span>
-                          </div>
-                        </article>
-                      </section>
-                      <article class="oc-local oc-local--disponible" *ngIf="m2Disponibles > 0"
-                        [class.oc-local--activo]="localGraficaHover === 'Disponible'"
-                        (mouseenter)="resaltarGraficaLocal('Disponible')" (mouseleave)="resaltarGraficaLocal(null)">
-                        <span class="oc-local__dot oc-local__dot--disponible" aria-hidden="true"></span>
-                        <div class="oc-local__main">
-                          <span class="oc-local__nombre">Disponible</span>
-                          <span class="oc-local__zona">Sin contrato activo</span>
+              @if (ocupacionVista === 'plano') {
+              <section class="dbx-card">
+                <div class="dbx-card__body">
+                  <section class="dbx-zona p-0 mb-3" *ngFor="let zona of zonasProcesadas">
+                    <div class="dbx-zona__titulo-mosaico" *ngIf="zona.nombre">
+                      <span class="dbx-zona__nombre">{{ zona.nombre }}</span>
+                      <span class="dbx-zona__meta">
+                        {{ zona.superficieM2.toLocaleString('es-MX') }} m²
+                        <ng-container *ngIf="zona.superficieDisponibleM2 > 0"> · {{ zona.superficieDisponibleM2.toLocaleString('es-MX') }} m² libres</ng-container>
+                      </span>
+                    </div>
+                    <div class="dbx-mosaico">
+                      <article class="dbx-tile" *ngFor="let local of zona.locales" [style.--c]="local.color"
+                        [style.--peso]="local.area || 1" [class.dbx-tile--activo]="localGraficaHover === local.nombre"
+                        (mouseenter)="resaltarGraficaLocal(local.nombre)" (mouseleave)="resaltarGraficaLocal(null)"
+                        [attr.title]="local.nombre + ' · ' + local.arrendatario">
+                        <div>
+                          <div class="dbx-tile__nombre">{{ local.nombre }}</div>
+                          <div class="dbx-tile__ocupante">{{ local.arrendatario }}</div>
                         </div>
-                        <div class="oc-local__medidas">
-                          <span>{{ m2Disponibles.toLocaleString('es-MX') }} m²</span>
-                          <span>{{ porcentajeDisponible.toFixed(1) }}%</span>
-                        </div>
-                        <div class="oc-local__ocupante">
-                          <span class="oc-local__ocupante-label">Estado</span>
-                          <span class="oc-local__ocupante-nombre oc-local__ocupante-nombre--libre">Libre</span>
-                        </div>
+                        <div class="dbx-tile__pie"><strong>{{ local.area.toLocaleString('es-MX') }} m²</strong><span>{{ local.porcentaje.toFixed(1) }}%</span></div>
                       </article>
                     </div>
+                  </section>
+                  <div class="dbx-mosaico" *ngIf="m2Disponibles > 0">
+                    <article class="dbx-tile dbx-tile--libre" [style.--peso]="m2Disponibles"
+                      [class.dbx-tile--activo]="localGraficaHover === 'Disponible'"
+                      (mouseenter)="resaltarGraficaLocal('Disponible')" (mouseleave)="resaltarGraficaLocal(null)">
+                      <div>
+                        <div class="dbx-tile__nombre">Disponible</div>
+                        <div class="dbx-tile__ocupante">Sin contrato activo</div>
+                      </div>
+                      <div class="dbx-tile__pie"><strong>{{ m2Disponibles.toLocaleString('es-MX') }} m²</strong><span>{{ porcentajeDisponible.toFixed(1) }}%</span></div>
+                    </article>
+                  </div>
+                  <div class="dbx-vacio" *ngIf="!zonasProcesadas.length && m2Disponibles <= 0">
+                    <mat-icon>dashboard</mat-icon><span>Sin locales registrados</span>
                   </div>
                 </div>
-
-                <div class="col-6">
-                  <div class="oc-dona-wrap" *ngIf="donaData.length">
-                    <dx-pie-chart #pieOcupacion id="pieOcupacionInmueble" [dataSource]="donaData" [innerRadius]="0.62"
-                      [startAngle]="90" [resolveLabelOverlapping]="'shift'" [customizePoint]="customizarPuntoDona">
-                      <dxi-series argumentField="nombre" valueField="area">
-                        <dxo-label [visible]="true" [customizeText]="customizarLabelDona">
+              </section>
+              } @else {
+              <div class="dbx-grid">
+                <section class="dbx-card dbx-col-5">
+                  <header class="dbx-card__head"><h4 class="dbx-card__titulo"><mat-icon>donut_large</mat-icon> Distribución por local</h4></header>
+                  <div class="dbx-card__body">
+                    <div *ngIf="donaData.length">
+                      <dx-pie-chart #pieOcupacion id="pieOcupacionInmueble" [dataSource]="donaData" [innerRadius]="0.62"
+                        [startAngle]="90" [resolveLabelOverlapping]="'shift'" [customizePoint]="customizarPuntoDona">
+                        <dxi-series argumentField="nombre" valueField="area">
+                          <dxo-label [visible]="true" [customizeText]="customizarLabelDona">
+                            <dxo-font [color]="colorTextoGraficaOcupacion"></dxo-font>
+                            <dxo-connector [visible]="true" [width]="1"></dxo-connector>
+                          </dxo-label>
+                        </dxi-series>
+                        <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipDona"></dxo-tooltip>
+                        <dxo-legend verticalAlignment="bottom" horizontalAlignment="center" itemTextPosition="right" [rowCount]="2">
                           <dxo-font [color]="colorTextoGraficaOcupacion"></dxo-font>
-                          <dxo-connector [visible]="true" [width]="1"></dxo-connector>
-                        </dxo-label>
-                      </dxi-series>
-                      <dxo-tooltip [enabled]="true" [customizeTooltip]="customizarTooltipDona">
-                      </dxo-tooltip>
-                      <dxo-legend verticalAlignment="bottom" horizontalAlignment="center" itemTextPosition="right"
-                        [rowCount]="2">
-                        <dxo-font [color]="colorTextoGraficaOcupacion"></dxo-font>
-                      </dxo-legend>
-                      <dxo-size [height]="360"></dxo-size>
-                    </dx-pie-chart>
+                        </dxo-legend>
+                        <dxo-size [height]="340"></dxo-size>
+                      </dx-pie-chart>
+                    </div>
+                    <div class="dbx-vacio" *ngIf="!donaData.length"><mat-icon>donut_large</mat-icon><span>Sin locales registrados</span></div>
                   </div>
-
-                  <div class="oc-empty oc-empty--inline" *ngIf="!donaData.length">
-                    <span>Sin locales registrados</span>
+                </section>
+                <section class="dbx-card dbx-col-7">
+                  <header class="dbx-card__head">
+                    <h4 class="dbx-card__titulo"><mat-icon>list</mat-icon> Locales</h4>
+                    <span class="dbx-card__meta">{{ zonasProcesadas.length }} zona{{ zonasProcesadas.length === 1 ? '' : 's' }}</span>
+                  </header>
+                  <div class="dbx-card__body dbx-card__body--sin-padding dbx-card__body--scroll">
+                    <section class="dbx-zona" *ngFor="let zona of zonasProcesadas">
+                      <div class="dbx-zona__head" *ngIf="zona.nombre">
+                        <span class="dbx-zona__nombre">{{ zona.nombre }}</span>
+                        <span class="dbx-zona__meta">{{ zona.superficieM2.toLocaleString('es-MX') }} m²</span>
+                      </div>
+                      <div class="dbx-locales">
+                        <article class="dbx-local" *ngFor="let local of zona.locales" [class.dbx-local--activo]="localGraficaHover === local.nombre"
+                          (mouseenter)="resaltarGraficaLocal(local.nombre)" (mouseleave)="resaltarGraficaLocal(null)">
+                          <span class="dbx-local__punto" [style.--c]="local.color"></span>
+                          <div class="dbx-local__principal">
+                            <span class="dbx-local__nombre">{{ local.nombre }}</span>
+                            <span class="dbx-local__detalle">{{ local.arrendatario }}</span>
+                          </div>
+                          <div class="dbx-local__cifras">{{ local.area.toLocaleString('es-MX') }} m²<small>{{ local.porcentaje.toFixed(1) }}%</small></div>
+                          <span class="dbx-chip dbx-chip--azul">Ocupado</span>
+                        </article>
+                      </div>
+                    </section>
+                    <section class="dbx-zona" *ngIf="m2Disponibles > 0">
+                      <article class="dbx-local">
+                        <span class="dbx-local__punto" style="--c:#22c55e"></span>
+                        <div class="dbx-local__principal"><span class="dbx-local__nombre">Disponible</span><span class="dbx-local__detalle">Sin contrato activo</span></div>
+                        <div class="dbx-local__cifras">{{ m2Disponibles.toLocaleString('es-MX') }} m²<small>{{ porcentajeDisponible.toFixed(1) }}%</small></div>
+                        <span class="dbx-chip dbx-chip--verde">Libre</span>
+                      </article>
+                    </section>
                   </div>
-                </div>
+                </section>
               </div>
-
+              }
             </div>
 
-            <!-- Sin datos -->
-            <div class="oc-empty" *ngIf="!data && !lugarCargando">
-              <span>Sin información de ocupación</span>
-            </div>
-
+            <div class="dbx-vacio" *ngIf="!data && !lugarCargando"><mat-icon>info</mat-icon><span>Sin información de ocupación</span></div>
           </div>
         </div>
 
@@ -377,7 +397,6 @@
             <button type="button" class="docs-modal__btn" (click)="cerrarModalLugar()">Cerrar</button>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -387,30 +406,9 @@
         <div class="row docs-modal__header">
           <div class="col-10 col-md-11">
             <span class="docs-modal__eyebrow">Dashboard del inmueble</span>
-            <h3 class="docs-modal__title">{{ dashboardTitulo || 'Inmueble' }}</h3>
-            <div class="inm-dash-header-bar">
-              <p class="docs-modal__subtitle inm-dash-header-bar__dir" *ngIf="dashboardInmueble">
-                {{ dashboardInmueble.direccionFiscal }}
-                <span *ngIf="dashboardInmueble.totalM2"> · {{ dashboardInmueble.totalM2.toLocaleString('es-MX') }}
-                  m²</span>
-                <span *ngIf="dashboardInmueble.estado"> · {{ dashboardInmueble.estado }}</span>
-              </p>
-              <div class="inm-dash-filtros">
-                <label class="inm-dash-filtros__inline" for="dash-fecha-inicio">
-                  <span class="inm-dash-filtros__label">Desde</span>
-                  <input id="dash-fecha-inicio" type="date" class="inm-dash-filtros__input"
-                    [(ngModel)]="dashboardFechaInicio" (change)="aplicarFiltroDashboard()" />
-                </label>
-                <label class="inm-dash-filtros__inline" for="dash-fecha-fin">
-                  <span class="inm-dash-filtros__label">Hasta</span>
-                  <input id="dash-fecha-fin" type="date" class="inm-dash-filtros__input" [(ngModel)]="dashboardFechaFin"
-                    (change)="aplicarFiltroDashboard()" />
-                </label>
-              </div>
-            </div>
           </div>
           <div class="col-2 col-md-1 d-flex justify-content-end align-items-start">
-            <button type="button" class="docs-modal__close" (click)="cerrarModalDashboard()">
+            <button type="button" class="docs-modal__close" (click)="cerrarModalDashboard()" aria-label="Cerrar">
               <i class="fa fa-times"></i>
             </button>
           </div>
@@ -419,331 +417,254 @@
         <div class="row docs-modal__body inm-dash-modal__body">
           <div class="col-12 inm-dash-modal__content">
 
-            <div class="oc-empty" *ngIf="dashboardCargando">
+            <div class="dbx-cargando" *ngIf="dashboardCargando">
+              <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
               <span>Cargando dashboard…</span>
             </div>
 
-            <div class="dash-wrap" *ngIf="dashboard && !dashboardCargando">
-
-              <div class="dash-stats" *ngIf="dashboardResumen">
-                <div class="dash-stat dash-stat--total">
-                  <span class="dash-stat__label">Total locales</span>
-                  <span class="dash-stat__value">{{ dashboardResumen.totalLocales }}</span>
-                </div>
-                <div class="dash-stat dash-stat--ocupado">
-                  <span class="dash-stat__label">Ocupados</span>
-                  <span class="dash-stat__value">{{ dashboardResumen.localesOcupados }}</span>
-                </div>
-                <div class="dash-stat dash-stat--libre">
-                  <span class="dash-stat__label">Libres</span>
-                  <span class="dash-stat__value">{{ dashboardResumen.localesLibres }}</span>
-                </div>
-                <div class="dash-stat dash-stat--ingreso">
-                  <span class="dash-stat__label">Ingreso mensual est.</span>
-                  <span class="dash-stat__value">{{ formatearMoneda(dashboardResumen.ingresoMensualEstimado) }}</span>
-                </div>
-              </div>
-
-              <div class="row g-2 dash-charts-row">
-                <div class="col-12 col-lg-4" *ngIf="dashboardArrendador">
-                  <section class="dash-panel dash-panel--info" aria-label="Arrendador">
-                    <span class="dash-panel__title">Arrendador</span>
-                    <div class="dash-info">
-                      <span class="dash-info__nombre">{{ dashboardArrendador.nombre }}</span>
-                      <span class="dash-info__line" *ngIf="dashboardArrendador.telefono">
-                        <i class="fa fa-phone"></i> {{ dashboardArrendador.telefono }}
-                      </span>
-                      <span class="dash-info__line" *ngIf="dashboardArrendador.correo">
-                        <i class="fa fa-envelope-o"></i> {{ dashboardArrendador.correo }}
-                      </span>
-                      <div class="dash-info__sub" *ngIf="dashboardArrendador.encargado">
-                        <span class="dash-info__sub-label">Encargado</span>
-                        <span class="dash-info__line">{{ dashboardArrendador.encargado.nombre }}</span>
-                        <span class="dash-info__line" *ngIf="dashboardArrendador.encargado.telefono">
-                          <i class="fa fa-phone"></i> {{ dashboardArrendador.encargado.telefono }}
-                        </span>
-                        <span class="dash-info__line" *ngIf="dashboardArrendador.encargado.correo">
-                          <i class="fa fa-envelope-o"></i> {{ dashboardArrendador.encargado.correo }}
-                        </span>
+            <div class="dbx" *ngIf="dashboard && !dashboardCargando">
+              <!-- Héroe -->
+              <section class="dbx-hero">
+                <div>
+                  <div class="dbx-hero__identidad">
+                    <span class="dbx-hero__icono"><mat-icon>apartment</mat-icon></span>
+                    <div class="dbx-hero__textos">
+                      <span class="dbx-hero__kicker">Dashboard del inmueble</span>
+                      <h3 class="dbx-hero__titulo">{{ dashboardTitulo || 'Inmueble' }}</h3>
+                      <div class="dbx-meta" *ngIf="dashboardInmueble">
+                        <span class="dbx-meta__item" *ngIf="dashboardInmueble.direccionFiscal"><i class="fa fa-map-marker"></i> {{ dashboardInmueble.direccionFiscal }}</span>
+                        <span class="dbx-meta__item" *ngIf="dashboardInmueble.totalM2"><i class="fa fa-arrows-alt"></i> {{ dashboardInmueble.totalM2.toLocaleString('es-MX') }} m²</span>
+                        <span class="dbx-meta__item" *ngIf="dashboardInmueble.estado"><i class="fa fa-flag-o"></i> {{ dashboardInmueble.estado }}</span>
                       </div>
                     </div>
-                  </section>
+                  </div>
+                  <div class="dbx-hero__datos" *ngIf="dashboardResumen as res">
+                    <div class="dbx-hero__dato"><span>Locales</span><strong>{{ res.totalLocales }}</strong></div>
+                    <div class="dbx-hero__dato"><span>Ocupados</span><strong>{{ res.localesOcupados }}</strong></div>
+                    <div class="dbx-hero__dato dbx-hero__dato--favor"><span>Libres</span><strong>{{ res.localesLibres }}</strong></div>
+                    <div class="dbx-hero__dato"><span>Ingreso mensual estimado</span><strong>{{ formatearMoneda(res.ingresoMensualEstimado) }}</strong></div>
+                  </div>
                 </div>
-
-                <div class="col-12" [ngClass]="dashboardArrendador ? 'col-lg-4' : 'col-lg-6'">
-                  <section class="dash-panel" aria-label="Ocupación de locales">
-                    <div class="dash-panel__head">
-                      <span class="dash-panel__title">Ocupación de locales</span>
-                      <span class="dash-panel__meta" *ngIf="dashboardResumen">
-                        {{ dashboardResumen.localesOcupados }} de {{ dashboardResumen.totalLocales }} ocupados
-                      </span>
-                    </div>
-                    <div class="dash-chart-wrap dash-chart-wrap--ocupacion" *ngIf="dashboardOcupacionData.length">
-                      <div class="dash-chart-center" *ngIf="dashboardResumen" aria-hidden="true">
-                        <span class="dash-chart-center__value">
-                          {{ dashboardResumen.localesOcupados }}/{{ dashboardResumen.totalLocales }}
-                        </span>
-                        <span class="dash-chart-center__label">locales</span>
-                      </div>
-                      <dx-pie-chart #pieDashboardOcupacion id="pieDashboardOcupacion"
-                        [dataSource]="dashboardOcupacionData" [innerRadius]="0.58"
-                        [customizePoint]="customizarPuntoOcupacionDashboard">
-                        <dxi-series argumentField="categoria" valueField="cantidad">
-                          <dxo-label [visible]="true" [customizeText]="customizarLabelOcupacionDashboard">
-                          </dxo-label>
-                        </dxi-series>
-                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
-                          [customizeTooltip]="customizarTooltipOcupacionDashboard">
-                        </dxo-tooltip>
-                        <dxo-legend verticalAlignment="bottom" horizontalAlignment="center"
-                          [customizeText]="customizarLeyendaOcupacionDashboard">
-                        </dxo-legend>
-                        <dxo-size [height]="200"></dxo-size>
-                      </dx-pie-chart>
-                    </div>
-                    <div class="oc-empty oc-empty--inline" *ngIf="!dashboardOcupacionData.length">
-                      <span>Sin datos de ocupación</span>
-                    </div>
-                  </section>
-                </div>
-
-                <div class="col-12" [ngClass]="dashboardArrendador ? 'col-lg-4' : 'col-lg-6'">
-                  <section class="dash-panel" aria-label="Mensualidad base por local">
-                    <span class="dash-panel__title">Mensualidad base por local</span>
-                    <div class="dash-chart-wrap" *ngIf="dashboardMensualidadData.length">
-                      <dx-chart #chartDashboardMensualidad id="chartDashboardMensualidad"
-                        [dataSource]="dashboardMensualidadData" [customizePoint]="customizarPuntoMensualidadDashboard">
-                        <dxo-common-series-settings argumentField="local" type="bar"></dxo-common-series-settings>
-                        <dxi-series valueField="mensualidad" name="Mensualidad"></dxi-series>
-                        <dxo-legend [visible]="false"></dxo-legend>
-                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
-                          [customizeTooltip]="customizarTooltipMensualidadDashboard">
-                        </dxo-tooltip>
-                        <dxo-size [height]="200"></dxo-size>
-                      </dx-chart>
-                    </div>
-                    <div class="oc-empty oc-empty--inline" *ngIf="!dashboardMensualidadData.length">
-                      <span>Sin locales registrados</span>
-                    </div>
-                  </section>
-                </div>
-              </div>
-
-              <div class="row g-2">
-                <div class="col-12 col-lg-5">
-                  <section class="dash-panel" aria-label="Renta del mes por arrendatario">
-                    <span class="dash-panel__title">Renta del mes</span>
-                    <div class="dash-panel-scroll dash-panel-scroll--renta">
-                      <div class="dash-chart-wrap" *ngIf="dashboardRentaData.length">
-                        <dx-chart #chartDashboardRenta id="chartDashboardRenta" [dataSource]="dashboardRentaData">
-                          <dxo-common-series-settings argumentField="arrendatario"
-                            type="stackedBar"></dxo-common-series-settings>
-                          <dxi-series valueField="renta" name="Renta" color="#3b82f6"></dxi-series>
-                          <dxi-series valueField="mantenimiento" name="Mantenimiento" color="#06b6d4"></dxi-series>
-                          <dxo-legend [visible]="true" verticalAlignment="bottom"
-                            horizontalAlignment="center"></dxo-legend>
-                          <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
-                            [customizeTooltip]="customizarTooltipRentaDashboard">
-                          </dxo-tooltip>
-                          <dxo-size [height]="alturaGraficaRentaDashboard()"></dxo-size>
-                        </dx-chart>
-                      </div>
-                      <div class="oc-empty oc-empty--inline" *ngIf="!dashboardRentaData.length">
-                        <span>Sin rentas del mes</span>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-
-                <div class="col-12 col-lg-7">
-                  <section class="dash-panel" aria-label="Zonas y locales">
-                    <span class="dash-panel__title">Zonas y locales</span>
-                    <div class="dash-panel-scroll dash-panel-scroll--zonas"
-                      *ngIf="dashboardZonas.length; else sinZonasDash">
-                      <div class="dash-zonas">
-                        <article class="dash-zona" *ngFor="let zona of dashboardZonas">
-                          <header class="dash-zona__header">
-                            <span class="dash-zona__nombre">{{ zona.nombre }}</span>
-                            <span class="dash-zona__meta">
-                              {{ zona.superficieTotalM2.toLocaleString('es-MX') }} m²
-                              · {{ zona.superficieDisponibleM2.toLocaleString('es-MX') }} m² disp.
-                            </span>
-                          </header>
-                          <div class="dash-locales">
-                            <div class="dash-local" *ngFor="let local of zona.locales">
-                              <div class="dash-local__main">
-                                <span class="dash-local__nombre">{{ local.nombre }}</span>
-                                <span class="dash-local__giro">{{ local.giro }}</span>
-                              </div>
-                              <div class="dash-local__meta">
-                                <span>{{ local.areaM2.toLocaleString('es-MX') }} m²</span>
-                                <span>{{ formatearMoneda(local.mensualidadBase) }}</span>
-                              </div>
-                              <span [ngClass]="claseEstadoLocal(local.estado)">{{ local.estado }}</span>
-                            </div>
-                          </div>
-                        </article>
-                      </div>
-                    </div>
-                    <ng-template #sinZonasDash>
-                      <div class="oc-empty oc-empty--inline"><span>Sin zonas registradas</span></div>
-                    </ng-template>
-                  </section>
-                </div>
-              </div>
-
-              <section class="dash-panel dash-panel--arr" aria-label="Arrendatarios"
-                *ngIf="dashboardArrendatarios.length">
-                <div class="dash-panel__head dash-panel__head--arr">
-                  <span class="dash-panel__title">Arrendatarios</span>
-                  <span class="dash-panel__meta">{{ dashboardArrendatarios.length }} registrado{{
-                    dashboardArrendatarios.length === 1 ? '' : 's' }}</span>
-                </div>
-                <div class="dash-arr-grid">
-                  <article class="dash-arr" *ngFor="let arr of dashboardArrendatarios">
-                    <header class="dash-arr__header">
-                      <div class="dash-arr__titulo">
-                        <span class="dash-arr__nombre">{{ arr.nombre }}</span>
-                        <span class="dash-arr__rfc" *ngIf="arr.rfc">RFC {{ arr.rfc }}</span>
-                      </div>
-                      <div class="dash-arr__contacto">
-                        <span *ngIf="arr.rentaDelMes"
-                          [ngClass]="arr.rentaDelMes.pagada ? 'dash-badge dash-badge--pagado' : 'dash-badge dash-badge--pendiente'">
-                          {{ arr.rentaDelMes.pagada ? 'Pagada' : 'Pendiente' }}
-                        </span>
-                        <span class="dash-arr__contacto-line" *ngIf="arr.representanteLegal">
-                          <span class="dash-pair__label">Representante:</span>
-                          <span class="dash-pair__value">{{ arr.representanteLegal }}</span>
-                        </span>
-                        <span class="dash-arr__contacto-line" *ngIf="arr.telefono">
-                          <span class="dash-pair__label">Teléfono:</span>
-                          <span class="dash-pair__value"><i class="fa fa-phone"></i>{{ arr.telefono }}</span>
-                        </span>
-                        <span class="dash-arr__contacto-line" *ngIf="arr.correo">
-                          <span class="dash-pair__label">Correo:</span>
-                          <span class="dash-pair__value"><i class="fa fa-envelope-o"></i>{{ arr.correo }}</span>
-                        </span>
-                      </div>
-                    </header>
-
-                    <div class="row g-2 dash-arr__finanzas align-items-start"
-                      *ngIf="arr.contratoActivo || arr.localesAsignados.length">
-                      <div class="col-6 col-md-3" *ngIf="arr.localesAsignados.length">
-                        <span class="dash-pair dash-pair--block">
-                          <span class="dash-pair__label">Local:</span>
-                          <span class="dash-pair__value">{{ arr.localesAsignados.join(', ') }}</span>
-                        </span>
-                      </div>
-                      <div class="col-6 col-md-3" *ngIf="arr.contratoActivo">
-                        <span class="dash-pair dash-pair--block">
-                          <span class="dash-pair__label">Contrato:</span>
-                          <span class="dash-pair__value">
-                            {{ formatearFecha(arr.contratoActivo.fechaInicio) }} – {{
-                            formatearFecha(arr.contratoActivo.fechaFin) }}
-                          </span>
-                        </span>
-                      </div>
-                      <div class="col-6 col-md-3" *ngIf="arr.contratoActivo">
-                        <div class="dash-pair-stack">
-                          <span class="dash-pair dash-pair--block">
-                            <span class="dash-pair__label">Renta:</span>
-                            <span class="dash-pair__value">{{ formatearMoneda(arr.contratoActivo.rentaTotal) }}</span>
-                          </span>
-                          <span class="dash-pair dash-pair--block"
-                            *ngIf="arr.contratoActivo.mantenimientoTotal != null">
-                            <span class="dash-pair__label">Mantenimiento:</span>
-                            <span class="dash-pair__value">{{ formatearMoneda(arr.contratoActivo.mantenimientoTotal)
-                              }}</span>
-                          </span>
-                        </div>
-                      </div>
-                      <div class="col-6 col-md-3" *ngIf="arr.contratoActivo">
-                        <span class="dash-pair dash-pair--block">
-                          <span class="dash-pair__label">Depósito:</span>
-                          <span class="dash-pair__value">{{ formatearMoneda(arr.contratoActivo.montoDeposito) }}</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="dash-arr__pagos" *ngIf="arr.pagosRecientes.length">
-                      <span class="dash-arr__pagos-title">Pagos recientes</span>
-                      <div class="dash-pago-line" *ngFor="let pago of arr.pagosRecientes">
-                        <div class="row g-2 align-items-center">
-                          <div class="col-6 col-md-3">
-                            <span class="dash-pair">
-                              <span class="dash-pair__label">Concepto:</span>
-                              <span class="dash-pair__value">{{ pago.concepto }}</span>
-                            </span>
-                          </div>
-                          <div class="col-6 col-md-3">
-                            <span class="dash-pair">
-                              <span class="dash-pair__label">Monto:</span>
-                              <span class="dash-pair__value">{{ formatearMoneda(pago.monto) }}</span>
-                            </span>
-                          </div>
-                          <div class="col-6 col-md-3">
-                            <span class="dash-pair">
-                              <span class="dash-pair__label">Fecha:</span>
-                              <span class="dash-pair__value">{{ formatearFecha(pago.fecha) }}</span>
-                            </span>
-                          </div>
-                          <div class="col-6 col-md-3">
-                            <span class="dash-pair">
-                              <span class="dash-pair__label">Estatus:</span>
-                              <span class="dash-pair__value">
-                                <span [ngClass]="claseEstatusPago(pago.estatus)">{{ pago.estatus }}</span>
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                </div>
-              </section>
-
-              <section class="dash-panel" aria-label="Pagos del inmueble" *ngIf="dashboardPagosInmueble.length">
-                <span class="dash-panel__title">Pagos del inmueble</span>
-                <div class="dash-pagos-kv-list">
-                  <div class="dash-pago-line" *ngFor="let pago of dashboardPagosInmueble">
-                    <div class="row g-2 align-items-center">
-                      <div class="col-6 col-md-3">
-                        <span class="dash-pair">
-                          <span class="dash-pair__label">Concepto:</span>
-                          <span class="dash-pair__value">{{ pago.concepto }}</span>
-                        </span>
-                      </div>
-                      <div class="col-6 col-md-3">
-                        <span class="dash-pair">
-                          <span class="dash-pair__label">Monto:</span>
-                          <span class="dash-pair__value">{{ formatearMoneda(pago.monto) }}</span>
-                        </span>
-                      </div>
-                      <div class="col-6 col-md-3">
-                        <span class="dash-pair">
-                          <span class="dash-pair__label">Fecha:</span>
-                          <span class="dash-pair__value">{{ formatearFecha(pago.fecha) }}</span>
-                        </span>
-                      </div>
-                      <div class="col-6 col-md-3">
-                        <span class="dash-pair">
-                          <span class="dash-pair__label">Estatus:</span>
-                          <span class="dash-pair__value">
-                            <span [ngClass]="claseEstatusPago(pago.estatus)">{{ pago.estatus }}</span>
-                          </span>
-                        </span>
-                      </div>
-                    </div>
+                <div class="dbx-anillo" *ngIf="dashboardResumen as res"
+                  [style.--p]="porcentaje(res.localesOcupados, res.totalLocales)">
+                  <div class="dbx-anillo__centro">
+                    <strong>{{ porcentaje(res.localesOcupados, res.totalLocales).toFixed(0) }}%</strong><span>ocupación</span>
                   </div>
                 </div>
               </section>
 
+              <!-- Pestañas + filtros -->
+              <div class="dbx-tabs" role="tablist">
+                <button type="button" role="tab" class="dbx-tab" [class.dbx-tab--activo]="dashboardTab === 'resumen'"
+                  (click)="dashboardTab = 'resumen'"><mat-icon>insights</mat-icon> Resumen</button>
+                <button type="button" role="tab" class="dbx-tab" [class.dbx-tab--activo]="dashboardTab === 'locales'"
+                  (click)="dashboardTab = 'locales'"><mat-icon>dashboard</mat-icon> Locales <span class="dbx-tab__n">{{ dashboardResumen?.totalLocales ?? 0 }}</span></button>
+                <button type="button" role="tab" class="dbx-tab" [class.dbx-tab--activo]="dashboardTab === 'arrendatarios'"
+                  (click)="dashboardTab = 'arrendatarios'"><mat-icon>groups</mat-icon> Arrendatarios <span class="dbx-tab__n">{{ dashboardArrendatarios.length }}</span></button>
+                <button type="button" role="tab" class="dbx-tab" [class.dbx-tab--activo]="dashboardTab === 'pagos'"
+                  (click)="dashboardTab = 'pagos'"><mat-icon>receipt_long</mat-icon> Pagos <span class="dbx-tab__n">{{ dashboardPagosInmueble.length }}</span></button>
+              </div>
+              <div class="dbx-filtros mt-0">
+                <label class="dbx-filtros__campo" for="dash-fecha-inicio">Desde
+                  <app-campo-fecha inputId="dash-fecha-inicio" class="campo-dx--sm campo-dx--filtro-fecha"
+                    [(ngModel)]="dashboardFechaInicio" (cambio)="aplicarFiltroDashboard()"></app-campo-fecha>
+                </label>
+                <label class="dbx-filtros__campo" for="dash-fecha-fin">Hasta
+                  <app-campo-fecha inputId="dash-fecha-fin" class="campo-dx--sm campo-dx--filtro-fecha"
+                    [(ngModel)]="dashboardFechaFin" (cambio)="aplicarFiltroDashboard()"></app-campo-fecha>
+                </label>
+              </div>
+
+              @switch (dashboardTab) {
+              @case ('resumen') {
+              <div class="dbx-grid">
+                <section class="dbx-card dbx-col-4">
+                  <header class="dbx-card__head">
+                    <h4 class="dbx-card__titulo"><mat-icon>donut_large</mat-icon> Ocupación de locales</h4>
+                    <span class="dbx-card__meta" *ngIf="dashboardResumen">{{ dashboardResumen.localesOcupados }} de {{ dashboardResumen.totalLocales }}</span>
+                  </header>
+                  <div class="dbx-card__body">
+                    <div class="dbx-dona" *ngIf="dashboardOcupacionData.length">
+                      <div class="dbx-dona__centro" *ngIf="dashboardResumen" aria-hidden="true">
+                        <strong>{{ dashboardResumen.localesOcupados }}/{{ dashboardResumen.totalLocales }}</strong><span>locales</span>
+                      </div>
+                      <dx-pie-chart #pieDashboardOcupacion id="pieDashboardOcupacion" [dataSource]="dashboardOcupacionData"
+                        [innerRadius]="0.66" [customizePoint]="customizarPuntoOcupacionDashboard">
+                        <dxi-series argumentField="categoria" valueField="cantidad">
+                          <dxo-label [visible]="false" [customizeText]="customizarLabelOcupacionDashboard"></dxo-label>
+                        </dxi-series>
+                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
+                          [customizeTooltip]="customizarTooltipOcupacionDashboard"></dxo-tooltip>
+                        <dxo-legend verticalAlignment="bottom" horizontalAlignment="center"
+                          [customizeText]="customizarLeyendaOcupacionDashboard"></dxo-legend>
+                        <dxo-size [height]="250"></dxo-size>
+                      </dx-pie-chart>
+                    </div>
+                    <div class="dbx-vacio" *ngIf="!dashboardOcupacionData.length"><mat-icon>donut_large</mat-icon><span>Sin datos de ocupación</span></div>
+                  </div>
+                </section>
+
+                <section class="dbx-card dbx-col-8">
+                  <header class="dbx-card__head"><h4 class="dbx-card__titulo"><mat-icon>bar_chart</mat-icon> Mensualidad base por local</h4></header>
+                  <div class="dbx-card__body">
+                    <div *ngIf="dashboardMensualidadData.length">
+                      <dx-chart #chartDashboardMensualidad id="chartDashboardMensualidad" [dataSource]="dashboardMensualidadData"
+                        [customizePoint]="customizarPuntoMensualidadDashboard">
+                        <dxo-common-series-settings argumentField="local" type="bar" [cornerRadius]="6" [barPadding]="0.35"></dxo-common-series-settings>
+                        <dxi-series valueField="mensualidad" name="Mensualidad"></dxi-series>
+                        <dxo-legend [visible]="false"></dxo-legend>
+                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
+                          [customizeTooltip]="customizarTooltipMensualidadDashboard"></dxo-tooltip>
+                        <dxo-size [height]="250"></dxo-size>
+                      </dx-chart>
+                    </div>
+                    <div class="dbx-vacio" *ngIf="!dashboardMensualidadData.length"><mat-icon>bar_chart</mat-icon><span>Sin locales registrados</span></div>
+                  </div>
+                </section>
+
+                <section class="dbx-card" [ngClass]="dashboardArrendador ? 'dbx-col-8' : 'dbx-col-12'">
+                  <header class="dbx-card__head"><h4 class="dbx-card__titulo"><mat-icon>stacked_bar_chart</mat-icon> Renta del mes por arrendatario</h4></header>
+                  <div class="dbx-card__body dbx-card__body--scroll">
+                    <div *ngIf="dashboardRentaData.length">
+                      <dx-chart #chartDashboardRenta id="chartDashboardRenta" [dataSource]="dashboardRentaData" [rotated]="true">
+                        <dxo-common-series-settings argumentField="arrendatario" type="stackedBar" [cornerRadius]="4" [barPadding]="0.3"></dxo-common-series-settings>
+                        <dxi-series valueField="renta" name="Renta" color="#3b82f6"></dxi-series>
+                        <dxi-series valueField="mantenimiento" name="Mantenimiento" color="#06b6d4"></dxi-series>
+                        <dxo-legend [visible]="true" verticalAlignment="bottom" horizontalAlignment="center"></dxo-legend>
+                        <dxo-tooltip [enabled]="true" container="body" [zIndex]="zIndexTooltipDashboard"
+                          [customizeTooltip]="customizarTooltipRentaDashboard"></dxo-tooltip>
+                        <dxo-size [height]="alturaGraficaRentaDashboard()"></dxo-size>
+                      </dx-chart>
+                    </div>
+                    <div class="dbx-vacio" *ngIf="!dashboardRentaData.length"><mat-icon>stacked_bar_chart</mat-icon><span>Sin rentas del mes</span></div>
+                  </div>
+                </section>
+
+                <section class="dbx-card dbx-col-4" *ngIf="dashboardArrendador as arr">
+                  <header class="dbx-card__head"><h4 class="dbx-card__titulo"><mat-icon>badge</mat-icon> Arrendador</h4></header>
+                  <div class="dbx-card__body">
+                    <div class="dbx-persona">
+                      <span class="dbx-avatar">{{ iniciales(arr.nombre) }}</span>
+                      <div class="dbx-persona__info">
+                        <span class="dbx-persona__rol">Propietario</span>
+                        <span class="dbx-persona__nombre">{{ arr.nombre }}</span>
+                        <span class="dbx-linea" *ngIf="arr.telefono"><i class="fa fa-phone"></i>{{ arr.telefono }}</span>
+                        <span class="dbx-linea" *ngIf="arr.correo"><i class="fa fa-envelope-o"></i>{{ arr.correo }}</span>
+                      </div>
+                    </div>
+                    <div class="dbx-persona" *ngIf="arr.encargado">
+                      <span class="dbx-avatar dbx-avatar--azul">{{ iniciales(arr.encargado.nombre) }}</span>
+                      <div class="dbx-persona__info">
+                        <span class="dbx-persona__rol">Encargado</span>
+                        <span class="dbx-persona__nombre">{{ arr.encargado.nombre }}</span>
+                        <span class="dbx-linea" *ngIf="arr.encargado.telefono"><i class="fa fa-phone"></i>{{ arr.encargado.telefono }}</span>
+                        <span class="dbx-linea" *ngIf="arr.encargado.correo"><i class="fa fa-envelope-o"></i>{{ arr.encargado.correo }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+              }
+
+              @case ('locales') {
+              <section class="dbx-card">
+                <div class="dbx-card__body">
+                  <div class="dbx-leyenda mt-0 mb-3">
+                    <span class="dbx-leyenda__item" style="--c:#3b82f6"><i></i> Ocupado</span>
+                    <span class="dbx-leyenda__item" style="--c:#22c55e"><i></i> Libre</span>
+                    <span class="dbx-leyenda__item" style="--c:#94a3b8"><i></i> Otro estado</span>
+                    <span class="dbx-leyenda__item">El tamaño de cada cuadro es proporcional a sus m²</span>
+                  </div>
+                  <section class="mb-3" *ngFor="let zona of dashboardZonas">
+                    <div class="dbx-zona__titulo-mosaico">
+                      <span class="dbx-zona__nombre">{{ zona.nombre }}</span>
+                      <span class="dbx-zona__meta">{{ zona.superficieTotalM2.toLocaleString('es-MX') }} m² · {{ zona.superficieDisponibleM2.toLocaleString('es-MX') }} m² libres</span>
+                    </div>
+                    <div class="dbx-mosaico">
+                      <article class="dbx-tile" *ngFor="let local of zona.locales" [ngClass]="claseTileLocal(local.estado)"
+                        [style.--peso]="local.areaM2 || 1" [attr.title]="local.nombre + ' · ' + local.estado">
+                        <div>
+                          <div class="dbx-tile__nombre">{{ local.nombre }}</div>
+                          <div class="dbx-tile__ocupante">{{ local.giro || local.estado }}</div>
+                        </div>
+                        <div class="dbx-tile__pie"><strong>{{ formatearMoneda(local.mensualidadBase) }}</strong><span>{{ local.areaM2.toLocaleString('es-MX') }} m²</span></div>
+                      </article>
+                    </div>
+                  </section>
+                  <div class="dbx-vacio" *ngIf="!dashboardZonas.length"><mat-icon>dashboard</mat-icon><span>Sin zonas registradas</span></div>
+                </div>
+              </section>
+              }
+
+              @case ('arrendatarios') {
+              <div class="dbx-arrs" *ngIf="dashboardArrendatarios.length; else sinArrDash">
+                <article class="dbx-arr dbx-card" *ngFor="let arr of dashboardArrendatarios">
+                  <div class="dbx-arr__head">
+                    <div class="dbx-persona">
+                      <span class="dbx-avatar dbx-avatar--azul">{{ iniciales(arr.nombre) }}</span>
+                      <div class="dbx-persona__info">
+                        <span class="dbx-persona__nombre">{{ arr.nombre }}</span>
+                        <span class="dbx-sub" *ngIf="arr.rfc">RFC {{ arr.rfc }}</span>
+                      </div>
+                    </div>
+                    <span *ngIf="arr.rentaDelMes" class="dbx-chip" [ngClass]="arr.rentaDelMes.pagada ? 'dbx-chip--verde' : 'dbx-chip--ambar'">
+                      Renta {{ arr.rentaDelMes.pagada ? 'pagada' : 'pendiente' }}
+                    </span>
+                  </div>
+                  <div class="dbx-datos" *ngIf="arr.contratoActivo || arr.localesAsignados.length">
+                    <div class="dbx-dato" *ngIf="arr.localesAsignados.length"><span>Local</span><strong>{{ arr.localesAsignados.join(', ') }}</strong></div>
+                    <div class="dbx-dato dbx-dato--destacado" *ngIf="arr.contratoActivo"><span>Renta</span><strong>{{ formatearMoneda(arr.contratoActivo.rentaTotal) }}</strong></div>
+                    <div class="dbx-dato" *ngIf="arr.contratoActivo?.mantenimientoTotal != null"><span>Mantenimiento</span><strong>{{ formatearMoneda(arr.contratoActivo!.mantenimientoTotal) }}</strong></div>
+                    <div class="dbx-dato" *ngIf="arr.contratoActivo"><span>Depósito</span><strong>{{ formatearMoneda(arr.contratoActivo.montoDeposito) }}</strong></div>
+                    <div class="dbx-dato" *ngIf="arr.contratoActivo"><span>Vigencia</span><strong>{{ formatearFecha(arr.contratoActivo.fechaInicio) }} – {{ formatearFecha(arr.contratoActivo.fechaFin) }}</strong></div>
+                  </div>
+                  <div class="dbx-arr__contacto" *ngIf="arr.representanteLegal || arr.telefono || arr.correo">
+                    <span class="dbx-linea" *ngIf="arr.representanteLegal"><i class="fa fa-user-o"></i>{{ arr.representanteLegal }}</span>
+                    <span class="dbx-linea" *ngIf="arr.telefono"><i class="fa fa-phone"></i>{{ arr.telefono }}</span>
+                    <span class="dbx-linea" *ngIf="arr.correo"><i class="fa fa-envelope-o"></i>{{ arr.correo }}</span>
+                  </div>
+                  <div class="dbx-tabla-wrap" *ngIf="arr.pagosRecientes.length">
+                    <table class="dbx-tabla">
+                      <thead><tr><th>Pago reciente</th><th>Fecha</th><th class="num">Monto</th><th class="centro">Estatus</th></tr></thead>
+                      <tbody>
+                        <tr *ngFor="let pago of arr.pagosRecientes">
+                          <td data-label="Concepto">{{ pago.concepto }}</td>
+                          <td data-label="Fecha">{{ formatearFecha(pago.fecha) }}</td>
+                          <td data-label="Monto" class="num">{{ formatearMoneda(pago.monto) }}</td>
+                          <td data-label="Estatus" class="centro"><span class="dbx-chip" [ngClass]="claseChipEstatus(pago.estatus)">{{ pago.estatus }}</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </article>
+              </div>
+              <ng-template #sinArrDash><div class="dbx-vacio"><mat-icon>groups</mat-icon><span>Sin arrendatarios</span></div></ng-template>
+              }
+
+              @case ('pagos') {
+              <section class="dbx-card">
+                <div class="dbx-card__body dbx-card__body--sin-padding">
+                  <div class="dbx-tabla-wrap" *ngIf="dashboardPagosInmueble.length; else sinPagosDash">
+                    <table class="dbx-tabla">
+                      <thead><tr><th>Concepto</th><th>Fecha</th><th class="num">Monto</th><th class="centro">Estatus</th></tr></thead>
+                      <tbody>
+                        <tr *ngFor="let pago of dashboardPagosInmueble">
+                          <td data-label="Concepto">{{ pago.concepto }}</td>
+                          <td data-label="Fecha">{{ formatearFecha(pago.fecha) }}</td>
+                          <td data-label="Monto" class="num">{{ formatearMoneda(pago.monto) }}</td>
+                          <td data-label="Estatus" class="centro"><span class="dbx-chip" [ngClass]="claseChipEstatus(pago.estatus)">{{ pago.estatus }}</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <ng-template #sinPagosDash><div class="dbx-vacio"><mat-icon>receipt_long</mat-icon><span>Sin pagos del inmueble</span></div></ng-template>
+                </div>
+              </section>
+              }
+              }
             </div>
 
-            <div class="oc-empty" *ngIf="!dashboard && !dashboardCargando">
-              <span>No se pudo cargar el dashboard</span>
-            </div>
-
+            <div class="dbx-vacio" *ngIf="!dashboard && !dashboardCargando"><mat-icon>error_outline</mat-icon><span>No se pudo cargar el dashboard</span></div>
           </div>
         </div>
 
@@ -752,7 +673,6 @@
             <button type="button" class="docs-modal__btn" (click)="cerrarModalDashboard()">Cerrar</button>
           </div>
         </div>
-
       </div>
     </div>
   </div>

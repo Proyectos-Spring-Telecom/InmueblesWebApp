@@ -24,18 +24,9 @@
             <label for="idArrendador" class="form-label perm-label">Arrendador</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>person_outline</mat-icon></span>
-              <div class="form-floating flex-grow-1 perm-select-floating">
-                <select id="idArrendador" class="form-select" formControlName="idArrendador"
-                  aria-label="Arrendador (cliente)">
-                  <option [ngValue]="null" disabled>Selecciona arrendador</option>
-                  <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
-                    {{ cliente.nombre }}
-                    <ng-container *ngIf="cliente.apellidoPaterno">{{ ' ' + cliente.apellidoPaterno }}</ng-container>
-                    <ng-container *ngIf="cliente.apellidoMaterno">{{ ' ' + cliente.apellidoMaterno }}</ng-container>
-                  </option>
-                </select>
-                <label for="idArrendador">Arrendador</label>
-              </div>
+              <app-campo-select inputId="idArrendador" formControlName="idArrendador" ariaLabel="Arrendador (cliente)"
+                label="Arrendador" placeholder="Selecciona arrendador" [items]="listaClientes" valueExpr="id"
+                [displayExpr]="etiquetaClienteSelect"></app-campo-select>
             </div>
           </div>
           <div class="col-12 col-md-4"><label for="direccionInmueble" class="form-label perm-label">Dirección
@@ -51,29 +42,21 @@
               inmueble</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
-              <div class="form-floating flex-grow-1">
-                <select id="estatusInmueble" class="form-select" formControlName="estatusInmueble"
-                  aria-label="Estatus del inmueble">
-                  <option [ngValue]="null" disabled></option>
-                  <option value="RENTADO">Rentado</option>
-                  <option value="PROPIO">Propio</option>
-                </select>
-                <label for="estatusInmueble">Estatus del inmueble</label>
-              </div>
+              <app-campo-select inputId="estatusInmueble" formControlName="estatusInmueble" ariaLabel="Estatus del inmueble"
+                label="Estatus del inmueble" placeholder="" [items]="opcionesEstatusInmueble" valueExpr="id"
+                displayExpr="nombre" [buscar]="false"></app-campo-select>
             </div>
           </div>
           <div class="col-12 col-md-4"><label for="fechaInicio" class="form-label perm-label">Inicio de vigencia</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="fechaInicio" type="date" class="form-control"
-                  formControlName="fechaInicio" /><label for="fechaInicio">Inicio de vigencia</label></div>
+              <app-campo-fecha inputId="fechaInicio" formControlName="fechaInicio" label="Inicio de vigencia"></app-campo-fecha>
             </div>
           </div>
           <div class="col-12 col-md-4"><label for="fechaFin" class="form-label perm-label">Fin de vigencia</label>
             <div class="input-group input-group-lg perm-ig"><span
                 class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
-              <div class="form-floating flex-grow-1"><input id="fechaFin" type="date" class="form-control"
-                  formControlName="fechaFin" /><label for="fechaFin">Fin de vigencia</label></div>
+              <app-campo-fecha inputId="fechaFin" formControlName="fechaFin" label="Fin de vigencia"></app-campo-fecha>
             </div>
           </div>
           <div class="col-12 col-md-4"><label for="nombreRepresentanteLegal"
@@ -194,16 +177,9 @@
                         <label class="form-label perm-label">Tipo de servicio</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>fact_check</mat-icon></span>
-                          <div class="form-floating flex-grow-1 perm-select-floating">
-                            <select class="form-select" formControlName="idTipoServicio"
-                              aria-label="Tipo de servicio">
-                              <option [ngValue]="null"></option>
-                              <option *ngFor="let srv of listaCatServicios" [ngValue]="srv.id">
-                                {{ etiquetaCatServicio(srv) }}
-                              </option>
-                            </select>
-                            <label>Tipo de servicio</label>
-                          </div>
+                          <app-campo-select formControlName="idTipoServicio" ariaLabel="Tipo de servicio"
+                            label="Tipo de servicio" placeholder="" [limpiable]="true" [items]="listaCatServicios"
+                            valueExpr="id" [displayExpr]="etiquetaCatServicioSelect"></app-campo-select>
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
@@ -220,20 +196,14 @@
                         <label class="form-label perm-label">Fecha de pago</label>
                         <div class="input-group input-group-lg perm-ig"><span
                             class="input-group-text fw-bold"><mat-icon>event</mat-icon></span>
-                          <div class="form-floating flex-grow-1">
-                            <input type="date" class="form-control" formControlName="servicioFechaPago" />
-                            <label>Fecha de pago</label>
-                          </div>
+                          <app-campo-fecha formControlName="servicioFechaPago" label="Fecha de pago"></app-campo-fecha>
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
                         <label class="form-label perm-label">Último día de pago</label>
                         <div class="input-group input-group-lg perm-ig">
                           <span class="input-group-text fw-bold"><mat-icon>event_available</mat-icon></span>
-                          <div class="form-floating flex-grow-1">
-                            <input type="date" class="form-control" formControlName="servicioUltimoDiaPago" />
-                            <label>Último día de pago</label>
-                          </div>
+                          <app-campo-fecha formControlName="servicioUltimoDiaPago" label="Último día de pago"></app-campo-fecha>
                         </div>
                       </div>
                       <div class="col-12 col-md-4">
@@ -414,17 +384,9 @@
                                     local</label>
                                   <div class="input-group input-group-lg perm-ig"><span
                                       class="input-group-text fw-bold"><mat-icon>flag</mat-icon></span>
-                                    <div class="form-floating flex-grow-1 perm-select-floating">
-                                      <select class="form-select" formControlName="estatus"
-                                        [attr.aria-label]="'Estatus del local ' + (j + 1)">
-                                        <option [ngValue]="null" disabled></option>
-                                        <option [ngValue]="0">Fuera de servicio</option>
-                                        <option [ngValue]="1">Disponible para renta</option>
-                                        <option [ngValue]="2">Ocupado</option>
-                                        <option [ngValue]="3">Apartado</option>
-                                      </select>
-                                      <label>Estatus del local</label>
-                                    </div>
+                                    <app-campo-select formControlName="estatus" [ariaLabel]="'Estatus del local ' + (j + 1)"
+                                      label="Estatus del local" placeholder="" [items]="opcionesEstatusLocal" valueExpr="id"
+                                      displayExpr="nombre" [buscar]="false"></app-campo-select>
                                   </div>
                                 </div>
                                 <div class="col-12 col-md-4"><label class="form-label perm-label">Renta sin

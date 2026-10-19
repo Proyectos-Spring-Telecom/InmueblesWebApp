@@ -8,6 +8,7 @@ import { MarcaService } from 'src/app/services/moduleService/marcas.service';
 import { ModeloService } from 'src/app/services/moduleService/modelos.service';
 import { ProductoService } from 'src/app/services/moduleService/productos.service';
 import Swal from 'sweetalert2';
+import { etiquetaNombreApellidos } from 'src/app/shared/campos-dx/campos-dx.config';
 
 @Component({
   selector: 'app-agregar-equipo',
@@ -24,6 +25,8 @@ export class AgregarEquipoComponent implements OnInit {
   public idEquipo: number;
   public title = 'Agregar Equipo';
   public listaCliente: any;
+  /** Texto de cada cliente en el select: nombre + apellidos (igual que el `<option>` anterior). */
+  readonly etiquetaClienteSelect = etiquetaNombreApellidos('apellidoPaternoCliente', 'apellidoMaternoCliente');
   public listaModelos: any;
   selectedFileName: string = '';
   previewUrl: string | ArrayBuffer | null = null;

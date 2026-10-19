@@ -1,0 +1,125 @@
+<div class="contract-page-dim" (click)="cerrarSiLibre()" [@contractDimAnim]></div>
+<div class="docs-backdrop contract-docs-backdrop" [@contractModalAnim] (click)="cerrarSiLibre()">
+  <div class="docs-modal contract-docs-modal" role="dialog" aria-modal="true" aria-labelledby="cob-detalle-cargo-titulo"
+    (click)="$event.stopPropagation()">
+    <div class="row docs-modal__header">
+      <div class="col-10 col-md-11">
+        <span class="docs-modal__eyebrow">Cobranza</span>
+        <h3 class="docs-modal__title" id="cob-detalle-cargo-titulo">Detalle del cargo</h3>
+      </div>
+      <div class="col-2 col-md-1 docs-modal__close-col">
+        <button type="button" class="docs-modal__close" (click)="cerrar.emit()" [disabled]="procesando"
+          aria-label="Cerrar detalle del cargo">
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="row docs-modal__body">
+      <div class="col-12 contract-docs__scroll">
+        @if (cargando && !cargo) {
+        <div class="contract-docs__loading">
+          <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+          <p>Obteniendo datos del cargo…</p>
+        </div>
+        } @else if (cargo) {
+        <section class="contract-docs-shell">
+          <article class="contract-docs-card contract-docs-card--hero">
+            <div class="contract-docs-card__hero-row mb-0">
+              <div>
+                <span class="contract-docs-card__kicker">
+                  {{ etiquetaClase(cargo.clase) }} #{{ cargo.id }} · {{ fmtPeriodoCargo(cargo) }}
+                </span>
+                <h4 class="contract-docs-card__hero-title">{{ cargo.arrendatario }}</h4>
+              </div>
+              <span [class]="claseEstado(cargo.estadoPago)">{{ etiquetaEstado(cargo.estadoPago) }}</span>
+            </div>
+          </article>
+
+          <article class="contract-docs-card">
+            <h5 class="contract-docs-card__title">Resumen</h5>
+            <div class="contract-docs-grid">
+              <div class="contract-docs-field"><span>Total</span><p class="is-money">{{ fmtMoneda(cargo.total) }}</p></div>
+              <div class="contract-docs-field"><span>Pagado</span><p class="is-money">{{ fmtMoneda(cargo.pagado) }}</p></div>
+              <div class="contract-docs-field"><span>Saldo</span><p class="is-money">{{ fmtMoneda(cargo.saldo) }}</p></div>
+              <div class="contract-docs-field"><span>Inmueble</span><p>{{ cargo.inmueble || '—' }}</p></div>
+              <div class="contract-docs-field"><span>Contrato</span><p>{{ cargo.idContrato ? '#' + cargo.idContrato : '—' }}</p></div>
+              <div class="contract-docs-field"><span>Descripción</span><p>{{ cargo.descripcion || '—' }}</p></div>
+            </div>
+          </article>
+
+          <article class="contract-docs-card">
+            <h5 class="contract-docs-card__title">Conceptos</h5>
+            <div class="contract-docs-shell">
+              @for (c of cargo.conceptos; track c.id) {
+              <div>
+                <p class="mb-1 fw-semibold">
+                  {{ etiquetaConcepto(c) }}
+                  @if (c.desgloseEstimado) { <span class="cob-nota d-inline ms-1">· IVA calculado</span> }
+                </p>
+                <div class="contract-docs-grid">
+                  <div class="contract-docs-field"><span>Subtotal</span><p>{{ fmtMoneda(c.subtotal) }}</p></div>
+                  <div class="contract-docs-field"><span>IVA</span><p>{{ fmtMoneda(c.iva) }}</p></div>
+                  <div class="contract-docs-field"><span>Total</span><p class="is-money">{{ fmtMoneda(c.total) }}</p></div>
+                  <div class="contract-docs-field"><span>Pagado</span><p>{{ fmtMoneda(c.pagado) }}</p></div>
+                  <div class="contract-docs-field"><span>Saldo</span><p class="is-money">{{ fmtMoneda(c.saldo) }}</p></div>
+                </div>
+              </div>
+              }
+            </div>
+            @if (hayDesgloseEstimado) {
+            <span class="cob-nota">IVA calculado (total ÷ 1.16): el desglose definitivo será el de la factura.</span>
+            }
+          </article>
+
+          <article class="contract-docs-card">
+            <h5 class="contract-docs-card__title">Historial de pagos aplicados</h5>
+            @if (cargo.aplicaciones?.length) {
+            <ul class="hub-vista-simple__lista">
+              @for (a of cargo.aplicaciones; track a.id) {
+              <li class="hub-vista-simple__tarjeta" [class.cob-anulada]="!a.vigente">
+                <div class="hub-vista-simple__tarjeta-cabecera">
+                  <div>
+                    <span class="hub-vista-simple__tarjeta-arrendatario">{{ fmtMoneda(a.monto) }} · {{ etiquetaConceptoAplicacion(a) }}</span>
+                    <span class="hub-vista-simple__tarjeta-servicio">Pago del {{ fmtFecha(a.pago.fechaPago) }}</span>
+                  </div>
+                  <span [class]="a.vigente ? claseEstado('PAGADO') : claseEstado('CANCELADO')">
+                    {{ a.vigente ? 'Vigente' : 'Anulada' }}
+                  </span>
+                </div>
+                <div class="hub-vista-simple__tarjeta-datos">
+                  <span><mat-icon aria-hidden="true">credit_card</mat-icon> {{ a.pago.metodoPago || '—' }}</span>
+                  @if (a.pago.referencia) {
+                  <span><mat-icon aria-hidden="true">tag</mat-icon> {{ a.pago.referencia }}</span>
+                  }
+                  @if (!a.vigente) {
+                  <span><mat-icon aria-hidden="true">block</mat-icon> Anulada {{ fmtFechaHora(a.fhAnulacion || '') }}</span>
+                  }
+                </div>
+                <div class="hub-vista-simple__tarjeta-acciones">
+                  <button type="button" class="hub-vista-simple__accion" (click)="verPago.emit(a.pago.id)">
+                    <mat-icon aria-hidden="true">visibility</mat-icon> Ver pago
+                  </button>
+                </div>
+              </li>
+              }
+            </ul>
+            } @else {
+            <div class="hub-vista-simple__vacio">
+              <mat-icon aria-hidden="true">receipt_long</mat-icon>
+              <p>Sin pagos aplicados.</p>
+            </div>
+            }
+          </article>
+        </section>
+        }
+      </div>
+    </div>
+
+    <div class="row docs-modal__footer">
+      <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
+        <button type="button" class="docs-modal__btn" (click)="cerrar.emit()" [disabled]="procesando">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

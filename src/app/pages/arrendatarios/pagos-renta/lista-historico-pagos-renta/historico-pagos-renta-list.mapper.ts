@@ -17,6 +17,7 @@ export function mapHistoricoPagoRentaApiToGridRow(item: unknown): HistoricoPagoR
     ...row,
     pagada: true,
     pagadaLabel: 'Pagada',
+    estadoPago: 'PAGADO',
   };
 }
 

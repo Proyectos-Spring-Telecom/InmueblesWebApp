@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DxDataGridComponent } from 'devextreme-angular';
@@ -77,7 +77,7 @@ interface MantenimientoModalResumenVm {
   standalone: false,
   animations: [routeAnimation, contractDimAnim, contractModalAnim, rentaResumenRevealAnim, rentaHintMsgAnim],
 })
-export class ListaMantenimientoActualComponent implements OnInit {
+export class ListaMantenimientoActualComponent implements OnInit, OnDestroy {
   embebidoEnHub = false;
   listaMantenimientos!: InstanceType<typeof CustomStore>;
   showFilterRow = true;
@@ -116,6 +116,11 @@ export class ListaMantenimientoActualComponent implements OnInit {
   arrendatariosOpciones: SelectOpcion[] = [];
   contratosOpciones: SelectOpcion[] = [];
   formulasOpciones: SelectOpcion[] = [];
+  /** Usó fórmula: mismos valores que el select nativo (0 No, 1 Sí). */
+  readonly opcionesOcupoFormula = [
+    { id: 0, nombre: 'No' },
+    { id: 1, nombre: 'Sí' },
+  ];
   private arrendatariosCatalogo: Record<string, unknown>[] = [];
   catalogosModalCargando = false;
   resumenMantenimientoModal: MantenimientoModalResumenVm = this.resumenMantenimientoModalVacio();
@@ -155,6 +160,8 @@ export class ListaMantenimientoActualComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // El menú de acciones es fijo en pantalla: se cierra al desplazar cualquier contenedor.
+    document.addEventListener('scroll', this.cerrarMenuAccionesPorScroll, true);
     this.embebidoEnHub = this.leerEmbebidoEnHub();
     this.inicializarFormulario();
     this.cargarArrendadoresFiltro();
@@ -403,8 +410,58 @@ export class ListaMantenimientoActualComponent implements OnInit {
     this.filtroInmuebleAbierto = !this.filtroInmuebleAbierto;
   }
 
+  ngOnDestroy(): void {
+    document.removeEventListener('scroll', this.cerrarMenuAccionesPorScroll, true);
+  }
+
+  // ─── Menú "Acciones" de la columna Opciones (mismo patrón que Pagos de renta) ──────────
+
+  menuAcciones: { row: MantenimientoActualGridRow; top: number; left: number; arriba: boolean } | null = null;
+  private menuAbiertoEn = 0;
+  private static readonly ANCHO_MENU_ACCIONES = 250;
+  private static readonly ALTO_MENU_ACCIONES = 120;
+
+  abrirMenuAcciones(row: MantenimientoActualGridRow, ev: MouseEvent): void {
+    ev.stopPropagation();
+    if (this.menuAcciones?.row === row) {
+      this.menuAcciones = null;
+      return;
+    }
+    const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+    const ancho = ListaMantenimientoActualComponent.ANCHO_MENU_ACCIONES;
+    const alto = ListaMantenimientoActualComponent.ALTO_MENU_ACCIONES;
+    const arriba = r.bottom + alto > window.innerHeight && r.top > alto;
+    const left = Math.max(8, Math.min(r.left + r.width / 2 - ancho / 2, window.innerWidth - ancho - 8));
+    this.menuAcciones = { row, left, top: arriba ? r.top - 8 : r.bottom + 8, arriba };
+    this.menuAbiertoEn = Date.now();
+  }
+
+  /** Ejecuta las mismas funciones que tenían los botones de la columna. */
+  ejecutarAccionMantenimiento(accion: 'editar' | 'pagado'): void {
+    const row = this.menuAcciones?.row;
+    this.menuAcciones = null;
+    if (!row) return;
+    if (accion === 'editar') this.abrirModalEdicion(row);
+    else void this.marcarMantenimientoPagado(row);
+  }
+
+  @HostListener('window:resize')
+  cerrarMenuAcciones(): void {
+    if (this.menuAcciones) this.menuAcciones = null;
+  }
+
+  private readonly cerrarMenuAccionesPorScroll = (ev?: Event): void => {
+    if (!this.menuAcciones) return;
+    if (Date.now() - this.menuAbiertoEn < 400) return;
+    const t = ev?.target as HTMLElement | null;
+    if (t instanceof HTMLElement && t.closest('.inm-opciones-menu')) return;
+    this.menuAcciones = null;
+    this.cdr.markForCheck();
+  };
+
   @HostListener('document:click')
   cerrarFiltrosDropdown(): void {
+    this.cerrarMenuAcciones();
     if (!this.filtroInmuebleAbierto && !this.filtroArrendadorAbierto) return;
     this.filtroInmuebleAbierto = false;
     this.filtroArrendadorAbierto = false;
@@ -412,6 +469,7 @@ export class ListaMantenimientoActualComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   cerrarFiltrosDropdownTecla(): void {
+    this.cerrarMenuAcciones();
     if (!this.filtroInmuebleAbierto && !this.filtroArrendadorAbierto) return;
     this.filtroInmuebleAbierto = false;
     this.filtroArrendadorAbierto = false;
@@ -1055,7 +1113,7 @@ export class ListaMantenimientoActualComponent implements OnInit {
       color: '#ffffff',
       icon: 'success',
       title: '¡Operación Exitosa!',
-      text: texto,
+      html: texto,
       confirmButtonText: 'Listo',
     });
   }
@@ -1099,7 +1157,7 @@ export class ListaMantenimientoActualComponent implements OnInit {
             color: '#ffffff',
             icon: 'success',
             title: '¡Operación Exitosa!',
-            text: 'El mantenimiento quedó marcado como pagado y se registró en el histórico.',
+            html: 'El mantenimiento quedó marcado como pagado y se registró en el histórico.',
             confirmButtonText: 'Listo',
           });
         },

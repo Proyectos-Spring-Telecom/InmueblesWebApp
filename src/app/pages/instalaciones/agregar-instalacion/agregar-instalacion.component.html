@@ -12,16 +12,9 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">devices_other</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="idEquipo" formControlName="idEquipo">
-                                    <option [ngValue]="null" disabled>Selecciona un equipo
-                                    </option>
-                                    <option *ngFor="let d of listaEquipos" [ngValue]="d.id">
-                                        {{ d.numeroSerie }}
-                                    </option>
-                                </select>
-                                <label for="idEquipo">Selecciona un equipo</label>
-                            </div>
+                            <app-campo-select inputId="idEquipo" formControlName="idEquipo" label="Selecciona un equipo"
+                                placeholder="Selecciona un equipo" [items]="listaEquipos" valueExpr="id"
+                                displayExpr="numeroSerie"></app-campo-select>
                         </div>
                     </div>
 
@@ -31,18 +24,9 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">person</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="idCliente" formControlName="idCliente">
-                                    <option [ngValue]="null" disabled>Selecciona un arrendador
-                                    </option>
-                                    <option *ngFor="let cliente of listaClientes" [ngValue]="cliente.id">
-                                        {{ cliente.nombre }}
-                                        {{ cliente.apellidoPaterno }}
-                                        {{ cliente.apellidoMaterno }}
-                                    </option>
-                                </select>
-                                <label for="idCliente">Selecciona cuenta padre</label>
-                            </div>
+                            <app-campo-select inputId="idCliente" formControlName="idCliente" label="Selecciona cuenta padre"
+                                placeholder="Selecciona un arrendador" [items]="listaClientes" valueExpr="id"
+                                [displayExpr]="etiquetaClienteSelect"></app-campo-select>
                         </div>
                     </div>
 
@@ -52,17 +36,10 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">location_city</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="idSedeCentral" formControlName="idSedeCentral"
-                                    (change)="onSedeCentralChange()">
-                                    <option [ngValue]="null" disabled>Selecciona una instalación principal
-                                    </option>
-                                    <option *ngFor="let r of listaSedeCentrales" [ngValue]="r.id">
-                                        {{ r.nombre }}
-                                    </option>
-                                </select>
-                                <label for="idSedeCentral">Selecciona una instalación central</label>
-                            </div>
+                            <app-campo-select inputId="idSedeCentral" formControlName="idSedeCentral"
+                                label="Selecciona una instalación central" placeholder="Selecciona una instalación principal"
+                                [items]="listaSedeCentrales" valueExpr="id" displayExpr="nombre"
+                                (cambio)="onSedeCentralChange()"></app-campo-select>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
@@ -71,15 +48,10 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">layers</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="nroPiso" formControlName="nroPiso" [disabled]="!insEquipoForm.get('idSedeCentral')?.value">
-                                    <option [ngValue]="null" disabled>Selecciona un piso</option>
-                                    <option *ngFor="let piso of listaPisos" [ngValue]="piso.id">
-                                        {{ piso.nombre || piso.numero || `Piso ${piso.id}` }}
-                                    </option>
-                                </select>
-                                <label for="nroPiso">Selecciona un piso</label>
-                            </div>
+                            <app-campo-select inputId="nroPiso" formControlName="nroPiso"
+                                [disabled]="!insEquipoForm.get('idSedeCentral')?.value" label="Selecciona un piso"
+                                placeholder="Selecciona un piso" [items]="listaPisos" valueExpr="id"
+                                [displayExpr]="etiquetaPisoSelect"></app-campo-select>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
@@ -88,15 +60,9 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">business</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="idDepartamento" formControlName="idDepartamento">
-                                    <option [ngValue]="null">Selecciona un departamento</option>
-                                    <option *ngFor="let depto of listaDepartamentos" [ngValue]="depto.id">
-                                        {{ depto.nombre }}
-                                    </option>
-                                </select>
-                                <label for="idDepartamento">Selecciona un departamento</label>
-                            </div>
+                            <app-campo-select inputId="idDepartamento" formControlName="idDepartamento"
+                                label="Selecciona un departamento" placeholder="Selecciona un departamento" [limpiable]="true"
+                                [items]="listaDepartamentos" valueExpr="id" displayExpr="nombre"></app-campo-select>
                         </div>
                     </div>
                     <div class="col-12 mt-3">

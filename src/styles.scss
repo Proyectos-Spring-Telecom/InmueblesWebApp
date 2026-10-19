@@ -8,6 +8,10 @@
 @use './assets/scss/layouts/docs-modal';
 @use './assets/scss/layouts/operacion-hub-vista';
 @use './assets/scss/layouts/hist-renta-filtros-panel';
+@use './assets/scss/layouts/campos-dx';
+@use './assets/scss/layouts/inm-opciones-menu';
+@use './assets/scss/layouts/dashboard-modal';
+@use './assets/scss/layouts/dashboard-modal-v2';
 
 html,
 body {
@@ -825,6 +829,14 @@ app-module-hero ~ .surface {
   color: #fee2e2;
 }
 .estatus-inactivo::before { background: #f87171; }
+
+/* Cobranza: cargo con pagos pero con saldo */
+.estatus-parcial {
+  background: #5c3b06;
+  border-color: #3f2904;
+  color: #fef3c7;
+}
+.estatus-parcial::before { background: #f5b84b; }
 
 .estatus-disponible {
   background: #064e3b;

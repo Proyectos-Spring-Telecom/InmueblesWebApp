@@ -21,6 +21,7 @@ import {
   urlOCadenaDeArchivoApi,
 } from '../clientes-list.mapper';
 import Swal from 'sweetalert2';
+import { esRegistroNoEncontrado, mensajeErrorApi } from 'src/app/shared/http-errores';
 import { ClientesInmueblesService } from 'src/app/services/moduleService/clientes-inmuebles.service';
 
 /** Línea base de socios al abrir edición (detectar cambios y no enviar `socios` si no hubo toques). */
@@ -176,14 +177,11 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
           this.poblarFormularioDesdeDetalleApi(d);
         },
         error: (err: unknown) => {
-          const e = err as { error?: { message?: string }; message?: string };
-          const text =
-            e?.error?.message ??
-            e?.message ??
-            'No se pudo cargar el cliente. Intenta de nuevo.';
+          const noEncontrado = esRegistroNoEncontrado(err);
+          if (noEncontrado) void this.route.navigateByUrl('/clientes');
           void Swal.fire({
-            title: 'Error al cargar',
-            text: String(text),
+            title: noEncontrado ? 'Registro no encontrado' : 'Error al cargar',
+            text: mensajeErrorApi(err, 'No se pudo cargar el cliente. Intenta de nuevo.'),
             icon: 'error',
             confirmButtonColor: '#3085d6',
             background: '#141a21',
@@ -654,6 +652,14 @@ export class AgregarClienteComponent implements OnInit, OnDestroy {
     }
     return this.listaClientes.filter((c) => Number(c?.id) !== Number(idActual));
   }
+
+  /** Tipo Persona: mismos valores que el select nativo (1 Física, 2 Moral). */
+  readonly opcionesTipoPersona = [
+    { id: 1, nombre: 'Física' },
+    { id: 2, nombre: 'Moral' },
+  ];
+  /** Texto de cada arrendador en el select (misma regla que `etiquetaArrendadorOpcion`). */
+  readonly etiquetaArrendadorOpcionSelect = (c: any): string => (c ? this.etiquetaArrendadorOpcion(c) : '');
 
   etiquetaArrendadorOpcion(c: any): string {
     const nombre = String(c?.nombre ?? c?.Nombre ?? '').trim();

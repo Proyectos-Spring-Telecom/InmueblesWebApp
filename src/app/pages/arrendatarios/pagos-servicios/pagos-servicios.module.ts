@@ -10,9 +10,14 @@ import { OperacionPagosHubModule } from 'src/app/shared/operacion-pagos-hub/oper
 import { ListaPagosServiciosActualesComponent } from './lista-pagos-servicios-actuales/lista-pagos-servicios-actuales.component';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
+
 @NgModule({
   declarations: [ListaPagosServiciosActualesComponent],
   imports: [
+    CampoFechaComponent,
+    CampoSelectComponent,
     ModuleHeroComponent,
     CommonModule,
     RouterModule,

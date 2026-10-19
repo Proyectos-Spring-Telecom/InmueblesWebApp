@@ -806,15 +806,9 @@ export function formatearFecha(raw?: string): string {
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
+/** La API entrega hora local de México con sufijo `Z`: se muestra tal cual, sin convertir de zona. */
 export function formatearFechaHora(raw?: string): string {
-  if (!raw) return '';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return String(raw).slice(0, 16);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${dd}/${mm}/${d.getFullYear()} ${hh}:${min}`;
+  return formatearFechaHoraUtc(raw);
 }
 
 /**

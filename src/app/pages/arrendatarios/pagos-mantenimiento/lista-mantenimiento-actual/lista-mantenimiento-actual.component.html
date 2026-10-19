@@ -141,10 +141,10 @@
         <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
 
         <dxi-column
-          caption="Acciones"
+          caption="Opciones"
           cellTemplate="accionesMantenimientoTpl"
           alignment="center"
-          [width]="200"
+          [width]="160"
           [allowFiltering]="false"
           [allowSorting]="false"
         ></dxi-column>
@@ -168,31 +168,15 @@
           }
         </div>
 
-        <div *dxTemplate="let row of 'accionesMantenimientoTpl'" class="d-flex gap-3 justify-content-center">
-          <div>
-            <button
-              type="button"
-              id="actualizarButton"
-              class="btnAcciones"
-              title="Editar"
-              (click)="abrirModalEdicion(row.data); $event.stopPropagation()"
-            >
-              <i class="fa fa-edit"></i>
-            </button>
-          </div>
-          @if (!row.data.pagada) {
-            <div>
-              <button
-                type="button"
-                id="pinButton"
-                class="btnAcciones"
-                title="Registrar pago"
-                (click)="marcarMantenimientoPagado(row.data); $event.stopPropagation()"
-              >
-                <i class="fa fa-check"></i>
-              </button>
-            </div>
-          }
+        <!-- Opciones: un botón que despliega las acciones (igual que Lista Inmuebles y Pagos de renta) -->
+        <div *dxTemplate="let row of 'accionesMantenimientoTpl'" class="inm-opciones-celda">
+          <button type="button" class="inm-opciones-btn" [class.inm-opciones-btn--abierto]="menuAcciones?.row === row.data"
+            aria-haspopup="menu" [attr.aria-expanded]="menuAcciones?.row === row.data"
+            (click)="abrirMenuAcciones(row.data, $event)">
+            <i class="fa fa-sliders" aria-hidden="true"></i>
+            <span>Acciones</span>
+            <mat-icon aria-hidden="true" class="inm-opciones-btn__chevron">expand_more</mat-icon>
+          </button>
         </div>
       </dx-data-grid>
     </div>
@@ -247,19 +231,10 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">person</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="mantenimientoArrendatario" class="form-select" formControlName="idArrendatario">
-                        <option [ngValue]="null" disabled hidden>
-                          {{
-                            arrendatariosOpciones.length
-                              ? 'Seleccione arrendatario'
-                              : 'Sin arrendatarios'
-                          }}
-                        </option>
-                        <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}</option>
-                      </select>
-                      <label for="mantenimientoArrendatario">Seleccione arrendatario</label>
-                    </div>
+                    <app-campo-select inputId="mantenimientoArrendatario" formControlName="idArrendatario"
+                      label="Seleccione arrendatario"
+                      [placeholder]="arrendatariosOpciones.length ? 'Seleccione arrendatario' : 'Sin arrendatarios'"
+                      [items]="arrendatariosOpciones" valueExpr="id" displayExpr="label"></app-campo-select>
                   </div>
                 </div>
 
@@ -275,15 +250,9 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">description</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="mantenimientoContrato" class="form-select" formControlName="idContrato">
-                        <option [ngValue]="null" disabled hidden>
-                          {{ textoPlaceholderContrato() }}
-                        </option>
-                        <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
-                      </select>
-                      <label for="mantenimientoContrato">Seleccione contrato</label>
-                    </div>
+                    <app-campo-select inputId="mantenimientoContrato" formControlName="idContrato"
+                      label="Seleccione contrato" [placeholder]="textoPlaceholderContrato()"
+                      [items]="contratosOpciones" valueExpr="id" displayExpr="label"></app-campo-select>
                   </div>
                 </div>
 
@@ -299,15 +268,10 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">functions</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="mantenimientoFormulaAlta" class="form-select" formControlName="idFormula">
-                        <option [ngValue]="null" disabled hidden>
-                          {{ formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas' }}
-                        </option>
-                        <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
-                      </select>
-                      <label for="mantenimientoFormulaAlta">Seleccione fórmula</label>
-                    </div>
+                    <app-campo-select inputId="mantenimientoFormulaAlta" formControlName="idFormula"
+                      label="Seleccione fórmula"
+                      [placeholder]="formulasOpciones.length ? 'Seleccione fórmula' : 'Sin fórmulas'"
+                      [items]="formulasOpciones" valueExpr="id" displayExpr="label"></app-campo-select>
                   </div>
                 </div>
 
@@ -396,13 +360,9 @@
                       <span class="input-group-text fw-bold">
                         <mat-icon aria-hidden="true">functions</mat-icon>
                       </span>
-                      <div class="form-floating flex-grow-1">
-                        <select id="mantenimientoFormula" class="form-select" formControlName="idFormula">
-                          <option [ngValue]="null" disabled hidden>Seleccione fórmula</option>
-                          <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
-                        </select>
-                        <label for="mantenimientoFormula">Seleccione fórmula</label>
-                      </div>
+                      <app-campo-select inputId="mantenimientoFormula" formControlName="idFormula"
+                        label="Seleccione fórmula" placeholder="Seleccione fórmula"
+                        [items]="formulasOpciones" valueExpr="id" displayExpr="label"></app-campo-select>
                     </div>
                   </div>
 
@@ -412,13 +372,9 @@
                       <span class="input-group-text fw-bold">
                         <mat-icon aria-hidden="true">flag</mat-icon>
                       </span>
-                      <div class="form-floating flex-grow-1">
-                        <select id="mantenimientoOcupoFormula" class="form-select" formControlName="ocupoFormula">
-                          <option [ngValue]="0">No</option>
-                          <option [ngValue]="1">Sí</option>
-                        </select>
-                        <label for="mantenimientoOcupoFormula">Usó fórmula</label>
-                      </div>
+                      <app-campo-select inputId="mantenimientoOcupoFormula" formControlName="ocupoFormula"
+                        label="Usó fórmula" placeholder="" [items]="opcionesOcupoFormula" valueExpr="id" displayExpr="nombre"
+                        [buscar]="false"></app-campo-select>
                     </div>
                   </div>
                 </ng-container>
@@ -489,3 +445,20 @@
     </div>
   </div>
 </ng-container>
+
+<!-- Menú de acciones del mantenimiento (fijo en pantalla y fuera del grid para que no se recorte) -->
+@if (menuAcciones; as m) {
+<div appPortalBody class="inm-opciones-menu" role="menu" aria-label="Acciones del mantenimiento" [class.inm-opciones-menu--arriba]="m.arriba"
+  [style.top.px]="m.top" [style.left.px]="m.left" (click)="$event.stopPropagation()">
+  <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--editar"
+    (click)="ejecutarAccionMantenimiento('editar')">
+    <i class="fa fa-edit"></i><span>Editar</span>
+  </button>
+  @if (!m.row.pagada) {
+  <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--pagada"
+    (click)="ejecutarAccionMantenimiento('pagado')">
+    <i class="fa fa-check"></i><span>Registrar pago</span>
+  </button>
+  }
+</div>
+}

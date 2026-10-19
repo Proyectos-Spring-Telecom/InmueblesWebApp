@@ -128,10 +128,10 @@
                             </div>
                         </dxi-column>
                         <div *dxTemplate="let c of 'tplFechaActualizacion'">
-                            {{ c.data?.fechaActualizacion | date:'dd/MM/yyyy HH:mm' }}
+                            {{ c.data?.fechaActualizacion | date:'dd/MM/yyyy HH:mm':'UTC' }}
                         </div>
                         <div *dxTemplate="let c of 'tplFhRegistro'">
-                            {{ c.data?.fhRegistro | date:'dd/MM/yyyy HH:mm' }}
+                            {{ c.data?.fhRegistro | date:'dd/MM/yyyy HH:mm':'UTC' }}
                         </div>
                     </dx-data-grid>
                 </div>

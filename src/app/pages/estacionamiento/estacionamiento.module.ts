@@ -12,9 +12,14 @@ import { ListaEstacionamientoComponent } from './lista-estacionamiento/lista-est
 import { AgregarEstacionamientoComponent } from './agregar-estacionamiento/agregar-estacionamiento.component';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
+import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
+
 @NgModule({
   declarations: [ListaEstacionamientoComponent, AgregarEstacionamientoComponent],
   imports: [
+    CampoFechaComponent,
+    CampoSelectComponent,
     ModuleHeroComponent,
     CommonModule,
     EstacionamientoRoutingModule,

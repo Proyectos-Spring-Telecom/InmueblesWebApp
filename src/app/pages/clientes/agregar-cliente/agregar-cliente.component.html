@@ -17,15 +17,10 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">business</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="idCliente" formControlName="idCliente" required>
-                                    <option [ngValue]="null" disabled>Selecciona un arrendador</option>
-                                    <option *ngFor="let c of listaClientesParaPadre" [ngValue]="c.id">
-                                        {{ etiquetaArrendadorOpcion(c) }}
-                                    </option>
-                                </select>
-                                <label for="idCliente">Selecciona un arrendador</label>
-                            </div>
+                            <app-campo-select inputId="idCliente" formControlName="idCliente" required
+                                label="Selecciona un arrendador" placeholder="Selecciona un arrendador"
+                                [items]="listaClientesParaPadre" valueExpr="id"
+                                [displayExpr]="etiquetaArrendadorOpcionSelect"></app-campo-select>
                         </div>
                     </div>
 
@@ -50,15 +45,10 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">person</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select class="form-select" id="tipoPersona" formControlName="tipoPersona" required
-                                    (change)="onTipoPersonaChange($event)">
-                                    <option [ngValue]="null" disabled>Selecciona tipo de persona</option>
-                                    <option [ngValue]="1">Física</option>
-                                    <option [ngValue]="2">Moral</option>
-                                </select>
-                                <label for="tipoPersona">Selecciona tipo de persona</label>
-                            </div>
+                            <app-campo-select inputId="tipoPersona" formControlName="tipoPersona" required
+                                label="Selecciona tipo de persona" placeholder="Selecciona tipo de persona"
+                                [items]="opcionesTipoPersona" valueExpr="id" displayExpr="nombre" [buscar]="false"
+                                (cambio)="onTipoPersonaChange($any($event))"></app-campo-select>
                         </div>
                     </div>
 

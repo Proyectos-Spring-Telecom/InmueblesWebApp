@@ -95,9 +95,15 @@
     </div>
 
     <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar mt-5">
-      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-renta">
+      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-renta"
+        title="Genera la renta del mes (el cargo). Para cobrarla usa Registrar abono / pago parcial.">
         <i class="fa fa-plus" aria-hidden="true"></i>
         Registrar pago de renta
+      </button>
+      <button type="button" (click)="abrirAbonoGeneral()" mat-flat-button class="bg-primary"
+        title="Registra un pago total o parcial y elige a qué renta o mantenimiento se aplica">
+        <i class="fa fa-money" aria-hidden="true"></i>
+        Registrar abono / pago parcial
       </button>
       <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
         <i class="fa fa-eraser"></i> Limpiar
@@ -129,7 +135,8 @@
         <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
         <dxo-grouping [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
 
-        <dxi-column caption="Acciones" cellTemplate="accionesRentasTpl" alignment="center" [width]="200"
+        <!-- Orden: Opciones, Vigencia, Fecha de creación, Estatus, Arrendatario, Desglose, Monto final, Pagado, Saldo, Contrato -->
+        <dxi-column caption="Opciones" cellTemplate="accionesRentasTpl" alignment="center" [width]="160"
           [allowFiltering]="false" [allowSorting]="false"></dxi-column>
         <dxi-column
           dataField="mesLabel"
@@ -145,6 +152,8 @@
           alignment="center"
           cellTemplate="fhRegistroRentaTpl"
         ></dxi-column>
+        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" [width]="160"
+          cellTemplate="estatusRentaTpl"></dxi-column>
         <dxi-column
           dataField="arrendatarioLabel"
           caption="Arrendatario"
@@ -153,7 +162,6 @@
           [width]="220"
           cellTemplate="arrendatarioRentaTpl"
         ></dxi-column>
-        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="150"></dxi-column>
         <!-- <dxi-column dataField="totalFmt" caption="Total" alignment="center" [width]="120"></dxi-column> -->
         <dxi-column
           caption="Desglose"
@@ -167,14 +175,15 @@
         ></dxi-column>
         <dxi-column dataField="montoFinalFmt" caption="Monto final" alignment="center" [width]="180" [minWidth]="180"
           cellTemplate="montoFinalRentaTpl"></dxi-column>
+        <dxi-column dataField="pagadoFmt" caption="Pagado" alignment="center" [width]="140"></dxi-column>
+        <dxi-column dataField="saldoFmt" caption="Saldo" alignment="center" [width]="140"></dxi-column>
+        <dxi-column dataField="contratoLabel" caption="Contrato" alignment="center" [width]="150"></dxi-column>
         <dxi-column dataField="factorVariableFmt" caption="Factor" alignment="center"
           [visible]="!embebidoEnHub"></dxi-column>
         <dxi-column dataField="formulaLabel" caption="Fórmula" alignment="center"
           [visible]="!embebidoEnHub"></dxi-column>
         <dxi-column dataField="ocupoFormulaLabel" caption="Usó fórmula" alignment="center" [width]="100"
           [visible]="!embebidoEnHub"></dxi-column>
-        <dxi-column dataField="pagadaLabel" caption="Estatus" alignment="center" [width]="200"
-          cellTemplate="estatusRentaTpl"></dxi-column>
         <dxi-column dataField="id" caption="ID" alignment="center" [visible]="false"></dxi-column>
 
         <div *dxTemplate="let row of 'periodoRentaTpl'" class="renta-grid-periodo">
@@ -231,6 +240,8 @@
         <div *dxTemplate="let row of 'estatusRentaTpl'">
           @if (row.data.pagada) {
           <span class="estatus estatus-activo">{{ row.data.pagadaLabel }}</span>
+          } @else if (row.data.estadoPago === 'PARCIAL') {
+          <span class="estatus estatus-parcial">{{ row.data.pagadaLabel }}</span>
           } @else {
           <span class="estatus estatus-inactivo">{{ row.data.pagadaLabel }}</span>
           }
@@ -255,32 +266,19 @@
           }
         </div>
 
-        <div *dxTemplate="let row of 'accionesRentasTpl'"
-          class="d-flex gap-3 justify-content-center align-items-center">
+        <!-- Opciones: un botón que despliega las acciones de la renta (igual que Lista Inmuebles) -->
+        <div *dxTemplate="let row of 'accionesRentasTpl'" class="inm-opciones-celda">
           @if (!row.data.pagada) {
-          <div>
-            <button type="button" id="actualizarButton" class="btnAcciones" title="Editar"
-              (click)="abrirModalEdicion(row.data); $event.stopPropagation()">
-              <i class="fa fa-edit"></i>
-            </button>
-          </div>
-          <div>
-            <button type="button" id="pinButton" class="btnAcciones" title="Marcar como pagada"
-              (click)="marcarRentaPagada(row.data); $event.stopPropagation()">
-              <i class="fa fa-check"></i>
-            </button>
-          </div>
-          @if (row.data.puedeDuplicarMes) {
-          <div>
-            <button type="button" id="ubicacionButton" class="btnAcciones" title="Duplicar al mes siguiente"
-              (click)="duplicarRentaAlSiguienteMes(row.data); $event.stopPropagation()">
-              <i class="fa fa-calendar" aria-hidden="true"></i>
-            </button>
-          </div>
-          }
+          <button type="button" class="inm-opciones-btn" [class.inm-opciones-btn--abierto]="menuAcciones?.row === row.data"
+            aria-haspopup="menu" [attr.aria-expanded]="menuAcciones?.row === row.data"
+            (click)="abrirMenuAcciones(row.data, $event)">
+            <i class="fa fa-sliders" aria-hidden="true"></i>
+            <span>Acciones</span>
+            <mat-icon aria-hidden="true" class="inm-opciones-btn__chevron">expand_more</mat-icon>
+          </button>
           } @else {
-          <span class="renta-acciones-vacio" title="La renta ya fue pagada y no admite cambios">
-            Renta Pagada
+          <span class="inm-opciones-nota" title="La renta ya fue pagada y no admite cambios">
+            <i class="fa fa-check-circle" aria-hidden="true"></i> Renta Pagada
           </span>
           }
         </div>
@@ -349,19 +347,11 @@
                               <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">person</mat-icon>
                               </span>
-                              <div class="form-floating flex-grow-1">
-                                <select id="rentaArrendatario" class="form-select"
-                                  [class.renta-input-disabled]="rentaModalModo === 'edicion'"
-                                  formControlName="idArrendatario"
-                                  [attr.aria-invalid]="!arrendatariosOpciones.length">
-                                  <option [ngValue]="null" disabled [hidden]="arrendatariosOpciones.length > 0">
-                                    {{ textoPlaceholderArrendatario() }}
-                                  </option>
-                                  <option *ngFor="let a of arrendatariosOpciones" [ngValue]="a.id">{{ a.label }}
-                                  </option>
-                                </select>
-                                <label for="rentaArrendatario">{{ textoPlaceholderArrendatario() }}</label>
-                              </div>
+                              <app-campo-select inputId="rentaArrendatario" formControlName="idArrendatario"
+                                [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                                [attr.aria-invalid]="!arrendatariosOpciones.length"
+                                [label]="textoPlaceholderArrendatario()" [placeholder]="textoPlaceholderArrendatario()"
+                                [items]="arrendatariosOpciones" valueExpr="id" displayExpr="label"></app-campo-select>
                             </div>
                           </div>
                         </div>
@@ -389,18 +379,11 @@
                               <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">description</mat-icon>
                               </span>
-                              <div class="form-floating flex-grow-1">
-                                <select id="rentaContrato" class="form-select"
-                                  [class.renta-input-disabled]="rentaModalModo === 'edicion'"
-                                  formControlName="idContrato"
-                                  [attr.aria-invalid]="!!rentaForm.get('idArrendatario')?.value && !contratosOpciones.length">
-                                  <option [ngValue]="null" disabled [hidden]="contratosOpciones.length > 0">
-                                    {{ textoPlaceholderContrato() }}
-                                  </option>
-                                  <option *ngFor="let c of contratosOpciones" [ngValue]="c.id">{{ c.label }}</option>
-                                </select>
-                                <label for="rentaContrato">{{ textoPlaceholderContrato() }}</label>
-                              </div>
+                              <app-campo-select inputId="rentaContrato" formControlName="idContrato"
+                                [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                                [attr.aria-invalid]="!!rentaForm.get('idArrendatario')?.value && !contratosOpciones.length"
+                                [label]="textoPlaceholderContrato()" [placeholder]="textoPlaceholderContrato()"
+                                [items]="contratosOpciones" valueExpr="id" displayExpr="label"></app-campo-select>
                             </div>
                           </div>
                         </div>
@@ -618,20 +601,12 @@
                                       <span class="input-group-text fw-bold">
                                         <mat-icon aria-hidden="true">functions</mat-icon>
                                       </span>
-                                      <div class="form-floating flex-grow-1">
-                                        <select id="rentaFormulaAlta" class="form-select"
-                                          [class.renta-input-disabled]="rentaModalModo === 'edicion'"
-                                          [disabled]="rentaModalModo === 'edicion'"
-                                          formControlName="idFormula"
-                                          [attr.aria-invalid]="!formulasOpciones.length">
-                                          <option [ngValue]="null" disabled [hidden]="formulasOpciones.length > 0">
-                                            {{ textoPlaceholderFormula() }}
-                                          </option>
-                                          <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}
-                                          </option>
-                                        </select>
-                                        <label for="rentaFormulaAlta">{{ textoPlaceholderFormula() }}</label>
-                                      </div>
+                                      <app-campo-select inputId="rentaFormulaAlta" formControlName="idFormula"
+                                        [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                                        [disabled]="rentaModalModo === 'edicion'"
+                                        [attr.aria-invalid]="!formulasOpciones.length"
+                                        [label]="textoPlaceholderFormula()" [placeholder]="textoPlaceholderFormula()"
+                                        [items]="formulasOpciones" valueExpr="id" displayExpr="label"></app-campo-select>
                                     </div>
                                   </div>
                                 </div>
@@ -953,19 +928,12 @@
                             <span class="input-group-text fw-bold">
                               <mat-icon aria-hidden="true">functions</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1">
-                              <select id="rentaFormula" class="form-select"
-                                [class.renta-input-disabled]="rentaModalModo === 'edicion'"
-                                [disabled]="rentaModalModo === 'edicion'"
-                                formControlName="idFormula"
-                                [attr.aria-invalid]="!formulasOpciones.length">
-                                <option [ngValue]="null" disabled [hidden]="formulasOpciones.length > 0">
-                                  {{ textoPlaceholderFormula() }}
-                                </option>
-                                <option *ngFor="let f of formulasOpciones" [ngValue]="f.id">{{ f.label }}</option>
-                              </select>
-                              <label for="rentaFormula">{{ textoPlaceholderFormula() }}</label>
-                            </div>
+                            <app-campo-select inputId="rentaFormula" formControlName="idFormula"
+                              [class.renta-input-disabled]="rentaModalModo === 'edicion'"
+                              [disabled]="rentaModalModo === 'edicion'"
+                              [attr.aria-invalid]="!formulasOpciones.length"
+                              [label]="textoPlaceholderFormula()" [placeholder]="textoPlaceholderFormula()"
+                              [items]="formulasOpciones" valueExpr="id" displayExpr="label"></app-campo-select>
                           </div>
                         </div>
                       </div>
@@ -1061,14 +1029,14 @@
                   </article>
                 </div>
 
-                <!-- Solo desde Rent Rol: registrar y marcar como pagada en un paso -->
-                @if (modoSoloModal && rentaModalModo === 'alta') {
+                <!-- Igual en Rent Rol y en Pagos del mes: registrar y marcar como pagada en un paso -->
+                @if (rentaModalModo === 'alta') {
                 <div class="col-12">
                   <label class="renta-marcar-pagada">
                     <input type="checkbox" [(ngModel)]="marcarPagadaAlRegistrar" [ngModelOptions]="{ standalone: true }" />
                     <span class="renta-marcar-pagada__pista" aria-hidden="true"><i></i></span>
                     <span>El pago ya se recibió: <strong>marcar como pagada al registrar</strong>
-                      <small>(si no, queda como pendiente en Rent Rol)</small></span>
+                      <small>(si no, queda como pendiente)</small></span>
                   </label>
                 </div>
                 }
@@ -1094,3 +1062,36 @@
     </div>
   </div>
 </ng-container>
+<!-- Cobranza: registrar pago parcial o total de la renta (prellena el saldo del cargo) -->
+@if (rentaRegistrarPago; as r) {
+<app-registrar-pago-modal [idArrendatario]="r.idArrendatario!" [nombreArrendatario]="r.arrendatarioLabel"
+  [idCargoPreseleccionado]="r.id" (cerrar)="cerrarRegistrarPago()" (guardado)="onPagoRegistrado()"></app-registrar-pago-modal>
+}
+@if (abonoGeneralAbierto) {
+<app-registrar-pago-modal (cerrar)="abonoGeneralAbierto = false" (guardado)="onPagoRegistrado()"></app-registrar-pago-modal>
+}
+
+<!-- Menú de acciones de la renta (posición fija junto al botón para que no lo recorte el grid) -->
+@if (menuAcciones; as m) {
+<div appPortalBody class="inm-opciones-menu" role="menu" aria-label="Acciones de la renta" [class.inm-opciones-menu--arriba]="m.arriba"
+  [style.top.px]="m.top" [style.left.px]="m.left" (click)="$event.stopPropagation()">
+  <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--editar"
+    (click)="ejecutarAccionRenta('editar')">
+    <i class="fa fa-edit"></i><span>Editar</span>
+  </button>
+  <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--pago"
+    title="Pago total o parcial con fecha real, método y comprobante" (click)="ejecutarAccionRenta('pago')">
+    <i class="fa fa-money"></i><span>Registrar pago</span>
+  </button>
+  <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--pagada"
+    title="Pago con fecha de hoy por el saldo pendiente" (click)="ejecutarAccionRenta('pagada')">
+    <i class="fa fa-check"></i><span>Marcar como pagada</span>
+  </button>
+  @if (m.row.puedeDuplicarMes) {
+  <button type="button" role="menuitem" class="inm-opciones-item inm-opciones-item--duplicar"
+    (click)="ejecutarAccionRenta('duplicar')">
+    <i class="fa fa-calendar"></i><span>Duplicar al mes siguiente</span>
+  </button>
+  }
+</div>
+}

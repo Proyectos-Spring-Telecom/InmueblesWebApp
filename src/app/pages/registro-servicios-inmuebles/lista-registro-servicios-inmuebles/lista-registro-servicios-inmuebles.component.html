@@ -9,51 +9,31 @@
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvInmFechaInicio">
             Fecha inicio <span class="text-danger">*</span>
           </label>
-          <input
-            id="regSrvInmFechaInicio"
-            type="date"
-            class="form-control form-control-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="fechaInicioFiltro"
-          />
+          <app-campo-fecha inputId="regSrvInmFechaInicio" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaInicioFiltro"></app-campo-fecha>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvInmFechaFin">
             Fecha fin <span class="text-danger">*</span>
           </label>
-          <input
-            id="regSrvInmFechaFin"
-            type="date"
-            class="form-control form-control-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="fechaFinFiltro"
-          />
+          <app-campo-fecha inputId="regSrvInmFechaFin" class="campo-dx--sm" placeholder="dd/mm/aaaa"
+            [(ngModel)]="fechaFinFiltro"></app-campo-fecha>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvInmInmueble">Inmueble</label>
-          <select
-            id="regSrvInmInmueble"
-            class="form-select form-select-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="idInmuebleFiltro"
-            [disabled]="catalogosFiltroCargando"
-          >
-            <option [ngValue]="null">Todos</option>
-            <option *ngFor="let i of inmueblesOpciones" [ngValue]="i.id">{{ i.label }}</option>
-          </select>
+          <app-campo-select inputId="regSrvInmInmueble" class="campo-dx--sm" placeholder="Todos" [limpiable]="true"
+            [items]="inmueblesOpciones" valueExpr="id" displayExpr="label"
+            [(ngModel)]="idInmuebleFiltro" [disabled]="catalogosFiltroCargando"></app-campo-select>
         </div>
         <div>
           <label class="form-label mb-1 hist-renta-filtro-fechas__label" for="regSrvInmEstatus">Estatus</label>
-          <select
-            id="regSrvInmEstatus"
-            class="form-select form-select-sm hist-renta-filtro-fechas__input"
-            [(ngModel)]="estatusFiltroPagos"
-          >
-            <option *ngFor="let op of opcionesEstatusPagoFiltro" [ngValue]="op.value">
-              {{ op.label }}
-            </option>
-          </select>
+          <app-campo-select inputId="regSrvInmEstatus" class="campo-dx--sm" placeholder="Todos" [buscar]="false"
+            [items]="opcionesEstatusPagoFiltro" valueExpr="value" displayExpr="label"
+            [(ngModel)]="estatusFiltroPagos"></app-campo-select>
         </div>
         <div class="hist-renta-filtros-panel__accion">
           <button type="button" (click)="aplicarFiltros()" mat-flat-button class="bg-primary">
-            <i class="fa fa-filter"></i> Buscar
+            <i class="fa fa-search"></i> Buscar
           </button>
         </div>
       </div>
@@ -296,19 +276,9 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">apartment</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="regSrvInmPagoInmueble"
-                        class="form-select"
-                        formControlName="idInmueble"
-                      >
-                        <option [ngValue]="null" disabled hidden>Seleccione inmueble</option>
-                        <option *ngFor="let opt of inmueblesOpciones" [ngValue]="opt.id">
-                          {{ opt.label }}
-                        </option>
-                      </select>
-                      <label for="regSrvInmPagoInmueble">Inmueble</label>
-                    </div>
+                    <app-campo-select inputId="regSrvInmPagoInmueble" formControlName="idInmueble" label="Inmueble"
+                      placeholder="Seleccione inmueble" [items]="inmueblesOpciones" valueExpr="id"
+                      displayExpr="label"></app-campo-select>
                   </div>
                 </div>
 
@@ -322,26 +292,11 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">design_services</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="regSrvInmPagoServicio"
-                        class="form-select"
-                        formControlName="idServicioInmueble"
-                        (change)="onPagoServicioInmuebleChange()"
-                      >
-                        <option [ngValue]="null" disabled hidden>
-                          {{
-                            serviciosInmuebleModalPago.length
-                              ? 'Seleccione servicio'
-                              : 'Seleccione inmueble primero'
-                          }}
-                        </option>
-                        <option *ngFor="let srv of serviciosInmuebleModalPago" [ngValue]="srv.id">
-                          {{ srv.nombre }}
-                        </option>
-                      </select>
-                      <label for="regSrvInmPagoServicio">Servicio del inmueble</label>
-                    </div>
+                    <app-campo-select inputId="regSrvInmPagoServicio" formControlName="idServicioInmueble"
+                      label="Servicio del inmueble"
+                      [placeholder]="serviciosInmuebleModalPago.length ? 'Seleccione servicio' : 'Seleccione inmueble primero'"
+                      [items]="serviciosInmuebleModalPago" valueExpr="id" displayExpr="nombre"
+                      (cambio)="onPagoServicioInmuebleChange()"></app-campo-select>
                   </div>
                 </div>
 
@@ -372,10 +327,7 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">event</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <input id="regSrvInmPagoFecha" type="date" class="form-control" formControlName="fechaPago" />
-                      <label for="regSrvInmPagoFecha">Fecha de pago</label>
-                    </div>
+                    <app-campo-fecha inputId="regSrvInmPagoFecha" formControlName="fechaPago" label="Fecha de pago"></app-campo-fecha>
                   </div>
                 </div>
 
@@ -412,22 +364,10 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">credit_card</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select
-                        id="regSrvInmPagoMetodo"
-                        class="form-select"
-                        formControlName="idMetodoPago"
-                        [disabled]="metodosPagoCargando"
-                      >
-                        <option [ngValue]="null" disabled hidden>
-                          {{ metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago' }}
-                        </option>
-                        <option *ngFor="let mp of listaCatMetodosPago" [ngValue]="mp.id">
-                          {{ etiquetaCatMetodoPago(mp) }}
-                        </option>
-                      </select>
-                      <label for="regSrvInmPagoMetodo">Método de pago</label>
-                    </div>
+                    <app-campo-select inputId="regSrvInmPagoMetodo" formControlName="idMetodoPago"
+                      [disabled]="metodosPagoCargando" label="Método de pago"
+                      [placeholder]="metodosPagoCargando ? 'Cargando métodos…' : 'Seleccione método de pago'"
+                      [items]="listaCatMetodosPago" valueExpr="id" [displayExpr]="etiquetaCatMetodoPagoSelect"></app-campo-select>
                   </div>
                 </div>
 
@@ -437,14 +377,8 @@
                     <span class="input-group-text fw-bold">
                       <mat-icon aria-hidden="true">flag</mat-icon>
                     </span>
-                    <div class="form-floating flex-grow-1">
-                      <select id="regSrvInmPagoEstatus" class="form-select" formControlName="estatus">
-                        <option [ngValue]="'Pagado'">Pagado</option>
-                        <option [ngValue]="'Pendiente'">Pendiente</option>
-                        <option [ngValue]="'Cancelado'">Cancelado</option>
-                      </select>
-                      <label for="regSrvInmPagoEstatus">Estatus</label>
-                    </div>
+                    <app-campo-select inputId="regSrvInmPagoEstatus" formControlName="estatus" label="Estatus" placeholder=""
+                      [items]="opcionesEstatusPagoModal" valueExpr="id" displayExpr="nombre" [buscar]="false"></app-campo-select>
                   </div>
                 </div>
 

@@ -6,6 +6,7 @@ import { ClientesService } from 'src/app/services/moduleService/clientes.service
 import { InstalacionCentralSede } from 'src/app/services/moduleService/instalacion-central.service';
 import { ModulosService } from 'src/app/services/moduleService/modulos.service';
 import Swal from 'sweetalert2';
+import { etiquetaNombreApellidos } from 'src/app/shared/campos-dx/campos-dx.config';
 
 @Component({
   selector: 'app-agregar-instalacion-central',
@@ -21,6 +22,8 @@ export class AgregarInstalacionCentralComponent implements OnInit, AfterViewInit
   public idSedeCentral: number;
   public title = 'Agregar Instalación Central';
   public listaClientes: any[] = [];
+  /** Texto de cada arrendador en el select: nombre + apellidos (igual que el `<option>` anterior). */
+  readonly etiquetaClienteSelect = etiquetaNombreApellidos();
   selectedFileName: string = '';
   previewUrl: string | ArrayBuffer | null = null;
 

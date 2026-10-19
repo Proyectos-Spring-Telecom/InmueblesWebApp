@@ -19,6 +19,7 @@ import { ClientesService } from 'src/app/services/moduleService/clientes.service
 import { ContratosService } from 'src/app/services/moduleService/contratos.service';
 import { InstalacionService } from 'src/app/services/moduleService/instalaciones.service';
 import Swal from 'sweetalert2';
+import { etiquetaNombreApellidos } from 'src/app/shared/campos-dx/campos-dx.config';
 
 const IVA = 0.16;
 
@@ -67,6 +68,8 @@ export class AgregarContratoComponent implements OnInit, OnDestroy {
 
   /** Misma estructura que en agregar usuario (lista de arrendadores). */
   public listaClientes: any[] = [];
+  /** Texto de cada cliente en el select: nombre + apellidos (igual que el `<option>` anterior). */
+  readonly etiquetaClienteSelect = etiquetaNombreApellidos();
   public listaInmuebles: any[] = [];
 
   public pdfDragging = false;

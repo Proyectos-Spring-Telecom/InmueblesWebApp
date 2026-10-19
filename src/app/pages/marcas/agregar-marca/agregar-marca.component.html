@@ -11,14 +11,8 @@
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">view_module</mat-icon>
                             </span>
-                            <div class="form-floating flex-grow-1 perm-select-floating">
-                                <select for="permNombres" class="form-control" formControlName="idProducto">
-                                    <option [ngValue]="null" selected disabled hidden></option>
-                                    <option *ngFor="let producto of listaProductos" [ngValue]="producto.id">
-                                        {{ producto.nombre }}
-                                    </option>
-                                </select>
-                            </div>
+                            <app-campo-select formControlName="idProducto" placeholder="" [items]="listaProductos"
+                                valueExpr="id" displayExpr="nombre"></app-campo-select>
                         </div>
                     </div>
                     <div class="col-12 col-md-6">

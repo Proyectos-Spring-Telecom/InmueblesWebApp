@@ -196,6 +196,7 @@ export const navItems: NavItem[] = [
     displayName: 'Generar Contrato',
     iconName: 'file-text',
     route: '/generar-contrato',
+    permission: Permiso.GENERAR_CONTRATO,
   },
   {
     displayName: 'Roles',
