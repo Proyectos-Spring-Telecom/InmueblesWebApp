@@ -4,7 +4,7 @@ export interface BitacoraGridRow {
   fecha: string;
   usuario: string;
   modulo: string;
-  /** Etiqueta en español para mostrar (CREAR, ACTUALIZAR, …). */
+  /** Etiqueta en español para mostrar (Crear, Actualizar, …). */
   accion: string;
   /** Valor crudo de la API (CREATE, UPDATE, …) para filtrar/buscar. */
   accionRaw: string;
@@ -83,33 +83,33 @@ export function resolverAccionBitacora(raw: unknown): {
     case 'POST':
     case 'INSERT':
     case 'ADD':
-      return { label: 'CREAR', cssClass: 'bitacora-accion--post', raw: rawStr };
+      return { label: 'Crear', cssClass: 'bitacora-accion--post', raw: rawStr };
     case 'GET':
     case 'READ':
     case 'SELECT':
     case 'LIST':
     case 'CONSULT':
     case 'CONSULTAR':
-      return { label: 'CONSULTAR', cssClass: 'bitacora-accion--get', raw: rawStr };
+      return { label: 'Consultar', cssClass: 'bitacora-accion--get', raw: rawStr };
     case 'UPDATE':
     case 'PUT':
     case 'EDIT':
     case 'MODIFY':
-      return { label: 'ACTUALIZAR', cssClass: 'bitacora-accion--put', raw: rawStr };
+      return { label: 'Actualizar', cssClass: 'bitacora-accion--put', raw: rawStr };
     case 'PATCH':
-      return { label: 'PARCHE', cssClass: 'bitacora-accion--patch', raw: rawStr };
+      return { label: 'Parche', cssClass: 'bitacora-accion--patch', raw: rawStr };
     case 'DELETE':
     case 'REMOVE':
     case 'DESTROY':
-      return { label: 'ELIMINAR', cssClass: 'bitacora-accion--delete', raw: rawStr };
+      return { label: 'Eliminar', cssClass: 'bitacora-accion--delete', raw: rawStr };
     case 'EVALUATE':
     case 'EVAL':
     case 'CALC':
     case 'CALCULATE':
-      return { label: 'EVALUAR', cssClass: 'bitacora-accion--evaluate', raw: rawStr };
+      return { label: 'Evaluar', cssClass: 'bitacora-accion--evaluate', raw: rawStr };
     default:
       return {
-        label: rawStr ? rawStr.toUpperCase() : '—',
+        label: rawStr || '—',
         cssClass: 'bitacora-accion--default',
         raw: rawStr,
       };

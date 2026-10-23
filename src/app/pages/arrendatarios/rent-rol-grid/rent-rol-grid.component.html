@@ -1,0 +1,210 @@
+<div class="rrg-root" [@routeAnimation]>
+  <!-- Solo el primer header (portada) del Rent Rol -->
+  <header class="rrg-hero" role="region" aria-label="Rent Rol">
+    <div class="rrg-hero__info">
+      <span class="rrg-eyebrow"><mat-icon aria-hidden="true">table_view</mat-icon> Operación · Arrendatarios</span>
+      <h2 class="rrg-hero__titulo">Rent Rol</h2>
+      <div class="rrg-avance" [attr.aria-label]="'Avance de cobro ' + porcentajeCobrado + '%'">
+        <div class="rrg-avance__barra">
+          <span class="rrg-avance__relleno" [style.width.%]="porcentajeCobrado"></span>
+        </div>
+        <div class="rrg-avance__leyenda">
+          <span class="rrg-avance__item rrg-avance__item--pagada"><i></i> Pagadas <strong>{{ conteoPagadas }}</strong></span>
+          <span class="rrg-avance__item rrg-avance__item--pendiente"><i></i> Pendientes <strong>{{ conteoPendientes }}</strong></span>
+          <span class="rrg-avance__pct">{{ porcentajeCobrado }}% cobrado</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rrg-hero__acciones">
+      <button type="button" class="rrg-btn rrg-btn--primario" [routerLink]="['/arrendatarios/rent-rol']">
+        <mat-icon aria-hidden="true">add_card</mat-icon> Registrar pago de renta
+      </button>
+      <button type="button" class="rrg-btn rrg-btn--fantasma" [routerLink]="['/arrendatarios/rent-rol']">
+        <mat-icon aria-hidden="true">person_add</mat-icon> Agregar arrendatario
+      </button>
+    </div>
+  </header>
+
+  <dx-data-grid
+    id="gridRentRolVista"
+    class="inm-data-grid"
+    [columnHidingEnabled]="true"
+    [allowColumnReordering]="false"
+    [allowColumnResizing]="false"
+    [columnAutoWidth]="false"
+    [wordWrapEnabled]="true"
+    [hoverStateEnabled]="false"
+    [showBorders]="true"
+    [showColumnLines]="false"
+    [showRowLines]="true"
+    [rowAlternationEnabled]="false"
+    [dataSource]="registros"
+    [keyExpr]="'gridKey'"
+    [width]="'100%'"
+    [remoteOperations]="{ paging: true, filtering: true, sorting: true }"
+    [paging]="{ pageSize: filasPorPagina }"
+    noDataText="Sin registros"
+    [pager]="{
+      showPageSizeSelector: false,
+      showInfo: true,
+      infoText: 'Página {0} de {1}',
+      visible: true
+    }"
+  >
+    <dxo-scrolling
+      mode="standard"
+      columnRenderingMode="standard"
+      showScrollbar="vertical"
+      [useNative]="false"
+    ></dxo-scrolling>
+    <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+    <dxo-header-filter [visible]="false"></dxo-header-filter>
+
+    <dxi-column
+      dataField="acciones"
+      caption="Acciones"
+      [width]="118"
+      [allowHiding]="false"
+      [allowFiltering]="false"
+      [allowSorting]="false"
+      [allowHeaderFiltering]="false"
+      alignment="center"
+    ></dxi-column>
+    <dxi-column
+      dataField="nombre"
+      caption="Arrendatario"
+      [width]="190"
+      [allowHiding]="false"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="left"
+    ></dxi-column>
+    <dxi-column
+      dataField="inmueble"
+      caption="Inmueble"
+      [width]="120"
+      [allowHiding]="true"
+      [hidingPriority]="4"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="center"
+    ></dxi-column>
+    <dxi-column
+      dataField="modulo"
+      caption="Locales"
+      [width]="80"
+      [allowHiding]="true"
+      [hidingPriority]="3"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="center"
+    ></dxi-column>
+    <dxi-column
+      dataField="metrosRentados"
+      caption="Metros rentados"
+      [width]="100"
+      [allowHiding]="true"
+      [hidingPriority]="8"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      dataType="number"
+      alignment="right"
+    ></dxi-column>
+    <dxi-column
+      dataField="costoM2"
+      caption="Costo M²"
+      [width]="90"
+      [allowHiding]="true"
+      [hidingPriority]="7"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      dataType="number"
+      alignment="right"
+    ></dxi-column>
+    <dxi-column
+      dataField="tipoConcepto"
+      caption="Concepto"
+      [width]="90"
+      [allowHiding]="true"
+      [hidingPriority]="2"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="center"
+    ></dxi-column>
+    <dxi-column
+      dataField="subTotal"
+      caption="Sub-total"
+      [width]="100"
+      [allowHiding]="true"
+      [hidingPriority]="5"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      dataType="number"
+      alignment="right"
+    ></dxi-column>
+    <dxi-column
+      dataField="iva"
+      caption="IVA"
+      [width]="96"
+      [allowHiding]="true"
+      [hidingPriority]="6"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      dataType="number"
+      alignment="right"
+    ></dxi-column>
+    <dxi-column
+      dataField="montoFinal"
+      caption="Total"
+      [width]="100"
+      [allowHiding]="true"
+      [hidingPriority]="1"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      dataType="number"
+      alignment="right"
+    ></dxi-column>
+    <dxi-column
+      dataField="inicioContrato"
+      caption="Inicio Contrato"
+      [width]="100"
+      [allowHiding]="true"
+      [hidingPriority]="10"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="center"
+    ></dxi-column>
+    <dxi-column
+      dataField="finContrato"
+      caption="Termino Contrato"
+      [width]="100"
+      [allowHiding]="true"
+      [hidingPriority]="9"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="center"
+    ></dxi-column>
+    <dxi-column
+      dataField="pagadaLabel"
+      caption="Pagada"
+      [width]="80"
+      [allowHiding]="false"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="center"
+    ></dxi-column>
+  </dx-data-grid>
+</div>

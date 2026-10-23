@@ -18,16 +18,12 @@
     <span class="ac-fab__glow" aria-hidden="true"></span>
     <span class="ac-fab__icon" aria-hidden="true">
       @if (!open) {
-        <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M7.2 17.2 4 20l.9-4.1c-1.1-1.3-1.7-3-1.7-4.8C3.2 7.2 6.9 4 11.5 4S19.8 7.2 19.8 11.1 16.1 18.2 11.5 18.2c-1.5 0-2.9-.3-4.3-1Z"
-            stroke="currentColor"
-            stroke-width="1.7"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path d="M8 10.8h7M8 13.8h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-        </svg>
+        <img
+          class="ac-fab__img"
+          src="assets/images/logos/bot-search3.png"
+          alt=""
+          referrerpolicy="no-referrer"
+        />
       } @else {
         <svg viewBox="0 0 24 24" fill="none">
           <path
@@ -45,24 +41,23 @@
     <header class="ac-header">
       <div class="ac-headLeft">
         <div class="ac-avatar" aria-hidden="true">
-          <span class="ac-avatar__ring"></span>
           <span class="ac-avatar__inner">
             <img
               class="ac-avatar__img"
               alt=""
               referrerpolicy="no-referrer"
-              src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=96&h=96&q=80"
+              src="assets/images/logos/bot-cara.png"
             />
           </span>
         </div>
 
         <div class="ac-title">
-          <div class="ac-title__name">Claudia Robles</div>
+          <div class="ac-title__name">Agente Spring</div>
           <div class="ac-title__sub">
             @if (agentDown) {
-              Asistente no disponible
+              Agente no disponible
             } @else {
-              Consultas · en línea
+              En Linea
             }
           </div>
         </div>
@@ -72,18 +67,15 @@
         <button
           type="button"
           class="ac-iconBtn"
-          (click)="toggleHistory()"
-          aria-label="Historial"
-          title="Conversaciones anteriores"
-          [class.ac-iconBtn--on]="historyOpen"
+          [class.ac-iconBtn--activo]="vista === 'historial'"
+          (click)="vista === 'historial' ? volverAlChat() : verHistorial()"
+          [attr.aria-label]="vista === 'historial' ? 'Volver al chat' : 'Conversaciones anteriores'"
+          [title]="vista === 'historial' ? 'Volver al chat' : 'Conversaciones anteriores'"
         >
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M4.5 5.5h15M4.5 12h15M4.5 18.5h10"
-              stroke="currentColor"
-              stroke-width="1.7"
-              stroke-linecap="round"
-            />
+            <path d="M12 7.5v4.7l3 1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M4.4 12a7.6 7.6 0 1 0 2.2-5.4L4.4 8.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M4.4 4.6v4.2h4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
 
@@ -96,10 +88,17 @@
         >
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
-              d="M12 5.5v13M5.5 12h13"
+              d="M4.6 8.2A8 8 0 1 1 4 13.5"
               stroke="currentColor"
-              stroke-width="1.8"
+              stroke-width="1.7"
               stroke-linecap="round"
+            />
+            <path
+              d="M4 3.8v4.6h4.6"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             />
           </svg>
         </button>
@@ -117,59 +116,60 @@
       </div>
     </header>
 
-    <div class="ac-rail" aria-hidden="true">
-      <span class="ac-rail__label">textAgent</span>
-      <span class="ac-rail__dot"></span>
-      <span class="ac-rail__meta">Cobranza · Adeudos · Contratos · Ocupación</span>
-    </div>
-
     <div class="ac-main">
-      @if (historyOpen) {
-        <div class="ac-history" aria-label="Conversaciones anteriores">
-          <div class="ac-history__head">
-            <span>Historial</span>
-            <button type="button" class="ac-history__close" (click)="cerrarHistorial()">
-              Cerrar
-            </button>
+      @if (vista === 'historial') {
+        <!-- Conversaciones anteriores (GET /conversations) -->
+        <div class="ac-hist" aria-label="Conversaciones anteriores">
+          <div class="ac-hist__head">
+            <span class="ac-hist__titulo">Conversaciones anteriores</span>
+            <button type="button" class="ac-hist__nueva" (click)="nuevaConversacion()">+ Nueva</button>
           </div>
-          @if (historyLoading) {
-            <p class="ac-history__empty">Cargando…</p>
-          } @else if (!history.length) {
-            <p class="ac-history__empty">Sin conversaciones anteriores.</p>
-          } @else {
-            <ul class="ac-history__list">
-              @for (h of history; track h.id) {
-                <li>
-                  <button type="button" class="ac-history__item" (click)="abrirHistorial(h)" [disabled]="busy">
-                    <span class="ac-history__title">{{ h.title }}</span>
-                    <span class="ac-history__meta">
-                      {{ formatConvDate(h.updated_at) }} · {{ h.message_count }} msgs
-                    </span>
+
+          @if (historialError) {
+            <div class="ac-hist__error" role="alert">{{ historialError }}</div>
+          }
+
+          @for (c of historial; track c.id) {
+            <div class="ac-hist__item" [class.ac-hist__item--actual]="esConversacionActual(c.id)">
+              <button type="button" class="ac-hist__abrir" (click)="abrirDelHistorial(c)" [title]="c.title">
+                <span class="ac-hist__texto">{{ c.title || 'Conversación sin título' }}</span>
+                <span class="ac-hist__meta">
+                  {{ c.updated_at | date: 'dd/MM/yyyy HH:mm' }} · {{ c.message_count }}
+                  {{ c.message_count === 1 ? 'mensaje' : 'mensajes' }}
+                  @if (esConversacionActual(c.id)) { · <strong>actual</strong> }
+                </span>
+              </button>
+              @if (confirmarBorrarId === c.id) {
+                <span class="ac-hist__confirmar">
+                  <span>¿Borrar?</span>
+                  <button type="button" class="ac-hist__si" (click)="borrar(c.id)" [disabled]="borrandoId === c.id">
+                    {{ borrandoId === c.id ? '…' : 'Sí' }}
                   </button>
-                  <button
-                    type="button"
-                    class="ac-history__del"
-                    (click)="borrarHistorial(h, $event)"
-                    aria-label="Borrar conversación"
-                    title="Borrar"
-                  >
-                    ×
-                  </button>
-                </li>
+                  <button type="button" class="ac-hist__no" (click)="pedirBorrar(c.id)">No</button>
+                </span>
+              } @else {
+                <button type="button" class="ac-hist__borrar" (click)="pedirBorrar(c.id)" aria-label="Borrar conversación"
+                  title="Borrar conversación">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 7h14M10 11v6M14 11v6M6.5 7l.8 12h9.4l.8-12M9.5 7V4.5h5V7" stroke="currentColor"
+                      stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
               }
-            </ul>
+            </div>
+          } @empty {
+            @if (!historialCargando && !historialError) {
+              <div class="ac-hist__vacio">Aún no tienes conversaciones guardadas.</div>
+            }
+          }
+
+          @if (historialCargando) {
+            <div class="ac-hist__vacio">Cargando…</div>
+          } @else if (historialPagina < historialUltimaPagina) {
+            <button type="button" class="ac-hist__mas" (click)="cargarHistorial(historialPagina + 1)">Cargar más</button>
           }
         </div>
       } @else {
-        <div class="ac-quick" aria-label="Sugerencias">
-          @for (a of actions; track a.id) {
-            <button type="button" class="ac-chip" (click)="onQuickAction(a)" [disabled]="busy || cooldownSec > 0">
-              <span class="ac-chip__dot" aria-hidden="true"></span>
-              <span class="ac-chip__label">{{ a.label }}</span>
-            </button>
-          }
-        </div>
-
         <div #scrollViewport class="ac-messages" role="log" aria-label="Mensajes">
           @for (m of messages; track m.id) {
             <div
@@ -185,6 +185,30 @@
                 <article class="ac-card">
                   <div class="ac-md" [innerHTML]="m.html"></div>
                 </article>
+              }
+            </div>
+          }
+
+          <!-- Sugerencias al empezar (solo con la bienvenida en pantalla) -->
+          @if (mostrarSugerencias) {
+            <div class="ac-quick" aria-label="Sugerencias">
+              @for (s of sugerencias; track s) {
+                <button type="button" class="ac-chip" (click)="send(s)" [disabled]="cooldownSec > 0">
+                  <span class="ac-chip__dot" aria-hidden="true"></span>
+                  <span class="ac-chip__label">{{ s }}</span>
+                </button>
+              }
+            </div>
+          }
+
+          <!-- Respuestas rápidas a "¿Quisiste decir…?" / "¿Es alguna de estas?" (nunca se envían solas) -->
+          @if (opcionesActuales.length) {
+            <div class="ac-quick ac-quick--respuestas" aria-label="Respuestas rápidas">
+              @for (o of opcionesActuales; track o.valor) {
+                <button type="button" class="ac-chip" [class.ac-chip--no]="o.valor === 'no'" (click)="send(o.valor)" [title]="o.label">
+                  <span class="ac-chip__dot" aria-hidden="true"></span>
+                  <span class="ac-chip__label">{{ o.label }}</span>
+                </button>
               }
             </div>
           }

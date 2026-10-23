@@ -46,7 +46,7 @@ export interface RentRolRow {
   detalleApi?: Record<string, unknown>;
 }
 
-/** Fila del grid DevExtreme (2 por registro histórico: Renta + Mantto). */
+/** Una sola fila del grid por arrendatario (sin celdas dobles). */
 export interface RentRolGridLine {
   gridKey: string;
   parentId: number;
@@ -70,27 +70,18 @@ export interface RentRolGridLine {
   iva: number;
   montoFinal: number;
   esPendiente: boolean;
-  /** Esta línea (renta o mantenimiento) tiene incremento: se indica con un distintivo en la columna Concepto. */
   tieneIncremento: boolean;
+  /** Conceptos del registro: la vista los muestra con *ngIf solo si existen. */
+  renta: RentRolConceptoVm;
+  mantenimiento: RentRolConceptoVm;
+  tieneMantenimiento: boolean;
   /** Registro completo (para las acciones del grid). */
   registro: RentRolRow;
 }
 
-export const RENT_ROL_COLUMNAS_ROWSPAN: readonly string[] = [
-  'nombre',
-  'inmueble',
-  'modulo',
-  'metrosRentados',
-  'costoM2',
-  'inicioContrato',
-  'finContrato',
-  'pagadaLabel',
-  'acciones',
-];
-
 export const RENT_ROL_REGISTROS_POR_PAGINA = 20;
 
-export const RENT_ROL_FILAS_GRID_POR_PAGINA = RENT_ROL_REGISTROS_POR_PAGINA * 2;
+export const RENT_ROL_FILAS_GRID_POR_PAGINA = RENT_ROL_REGISTROS_POR_PAGINA;
 
 function num(v: unknown): number {
   const n = Number(v);
@@ -254,14 +245,15 @@ function extraerConceptoMantenimiento(
   return { subTotal, iva, total: montoFinal, montoFinal };
 }
 
-/** Azul = pendiente editable · Amarillo = mes abierto, solo pagar · Verde = pagada. */
+/** Solo 3 colores de fila: Azul = editable · Amarillo = por pagar · Verde = pagada.
+ *  El incremento ya no pinta la fila de rojo: se indica bajo el nombre del arrendatario. */
 function claseEstatusPendiente(row: RentRolRow): string {
   return row.abierta ? 'row-estatus--amarillo' : 'row-estatus--azul';
 }
 
 function claseEstatusRentaRow(row: RentRolRow): string {
   if (row.esPendiente) return claseEstatusPendiente(row);
-  // El incremento ya no pinta la fila: se indica con el distintivo de la columna Concepto.
+  // El incremento ya no pinta la fila: se indica en rojo bajo el nombre del arrendatario.
   if (row.pagada) return 'row-estatus--pagada';
   return 'row-estatus--neutral';
 }
@@ -274,7 +266,16 @@ function claseEstatusMantenimientoRow(row: RentRolRow): string {
 
 function baseGridLineDesdeRow(row: RentRolRow): Omit<
   RentRolGridLine,
-  'gridKey' | 'tipoConcepto' | 'esLineaRenta' | 'subTotal' | 'iva' | 'montoFinal' | 'tieneIncremento'
+  | 'gridKey'
+  | 'tipoConcepto'
+  | 'esLineaRenta'
+  | 'subTotal'
+  | 'iva'
+  | 'montoFinal'
+  | 'tieneIncremento'
+  | 'renta'
+  | 'mantenimiento'
+  | 'tieneMantenimiento'
 > {
   return {
     parentId: row.id,
@@ -297,36 +298,28 @@ function baseGridLineDesdeRow(row: RentRolRow): Omit<
   };
 }
 
-export function mapRentRolRowToGridLines(row: RentRolRow): RentRolGridLine[] {
+export function mapRentRolRowToGridLine(row: RentRolRow): RentRolGridLine {
   const base = baseGridLineDesdeRow(row);
   // Los ids de renta-actual e histórico pueden coincidir: prefijo para llaves únicas.
   const llave = row.esPendiente ? `p${row.id}` : String(row.id);
-  return [
-    {
-      ...base,
-      gridKey: `${llave}-renta`,
-      tipoConcepto: 'Renta',
-      esLineaRenta: true,
-      tieneIncremento: row.tieneIncrementoRenta,
-      subTotal: row.renta.subTotal,
-      iva: row.renta.iva,
-      montoFinal: row.renta.montoFinal,
-    },
-    {
-      ...base,
-      gridKey: `${llave}-mant`,
-      tipoConcepto: 'Mantto',
-      esLineaRenta: false,
-      tieneIncremento: row.tieneIncrementoMantenimiento,
-      subTotal: row.mantenimiento.subTotal,
-      iva: row.mantenimiento.iva,
-      montoFinal: row.mantenimiento.montoFinal,
-    },
-  ];
+  const mant = row.mantenimiento;
+  return {
+    ...base,
+    gridKey: llave,
+    tipoConcepto: 'Renta',
+    esLineaRenta: true,
+    tieneIncremento: row.tieneIncrementoRenta || row.tieneIncrementoMantenimiento,
+    subTotal: row.renta.subTotal,
+    iva: row.renta.iva,
+    montoFinal: row.renta.montoFinal,
+    renta: row.renta,
+    mantenimiento: row.mantenimiento,
+    tieneMantenimiento: mant.subTotal > 0 || mant.iva > 0 || mant.montoFinal > 0,
+  };
 }
 
 export function flattenRentRolRowsToGridLines(rows: RentRolRow[]): RentRolGridLine[] {
-  return rows.flatMap((row) => mapRentRolRowToGridLines(row));
+  return rows.map((row) => mapRentRolRowToGridLine(row));
 }
 
 function normalizarTextoBusqueda(valor: string): string {

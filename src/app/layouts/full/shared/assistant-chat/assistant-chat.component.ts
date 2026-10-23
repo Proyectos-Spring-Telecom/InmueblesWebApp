@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import {
+  ConversacionDetalle,
   ConversacionResumen,
   TextAgentError,
   TextAgentService,
@@ -24,17 +25,19 @@ interface ChatMessage {
   createdAt: number;
   text?: string;
   html?: string;
+  /** Respuestas rápidas cuando el agente pregunta "¿Quisiste decir…?" o "¿Es alguna de estas?". */
+  opciones?: OpcionRapida[];
 }
 
-/** Sugerencias UX (agente_consumo_front.md §9 + capacidades §8 / cobranza). */
-const QUICK_PROMPTS: { id: string; label: string; prompt: string }[] = [
-  { id: 'deuda', label: '¿Quién me debe?', prompt: '¿quién me debe?' },
-  { id: 'cobrado', label: 'Cobrado del mes', prompt: '¿cuánto me pagaron este mes?' },
-  { id: 'vencer', label: 'Contratos por vencer', prompt: '¿qué contratos vencen pronto?' },
-  { id: 'rentas', label: 'Rentas del mes', prompt: '¿cómo van las rentas de este mes?' },
-  { id: 'saldo', label: 'Saldo a favor', prompt: '¿quién tiene saldo a favor?' },
-  { id: 'ocupacion', label: 'Ocupación', prompt: '¿qué tan ocupadas están mis plazas?' },
-];
+interface OpcionRapida {
+  /** Texto del botón. */
+  label: string;
+  /** Lo que se envía al agente ("sí", "no", "1"…). */
+  valor: string;
+}
+
+/** Sugerencias al abrir el chat (agente_consumo_front.md §9). */
+const SUGERENCIAS = ['¿Quién me debe?', 'Cobrado este mes', 'Contratos por vencer', '¿Cómo van las rentas de este mes?'];
 
 @Component({
   selector: 'app-assistant-chat',
@@ -47,13 +50,8 @@ const QUICK_PROMPTS: { id: string; label: string; prompt: string }[] = [
 export class AssistantChatComponent implements OnDestroy {
   open = false;
   busy = false;
-  historyOpen = false;
-  historyLoading = false;
   agentDown = false;
   cooldownSec = 0;
-
-  readonly actions = QUICK_PROMPTS;
-  history: ConversacionResumen[] = [];
 
   readonly input = new FormControl<string>('', {
     nonNullable: true,
@@ -61,6 +59,20 @@ export class AssistantChatComponent implements OnDestroy {
   });
 
   messages: ChatMessage[] = [];
+  readonly sugerencias = SUGERENCIAS;
+
+  /** Vista del panel: el chat o la lista de conversaciones anteriores. */
+  vista: 'chat' | 'historial' = 'chat';
+  historial: ConversacionResumen[] = [];
+  historialPagina = 1;
+  historialUltimaPagina = 1;
+  historialCargando = false;
+  historialError = '';
+  /** Borrado en curso y borrado pendiente de confirmar (confirmación en línea). */
+  borrandoId: string | null = null;
+  confirmarBorrarId: string | null = null;
+  /** Al abrir el chat por primera vez se recupera la conversación en curso (sobrevive a recargar). */
+  private restaurada = false;
 
   @ViewChild('scrollViewport') private scrollViewport?: ElementRef<HTMLDivElement>;
 
@@ -83,11 +95,23 @@ export class AssistantChatComponent implements OnDestroy {
     return this.busy || this.cooldownSec > 0 || !this.input.value.trim();
   }
 
+  /** Solo la bienvenida en pantalla: se muestran las sugerencias. */
+  get mostrarSugerencias(): boolean {
+    return !this.busy && this.messages.length === 1 && this.vista === 'chat';
+  }
+
+  /** Respuestas rápidas del último mensaje del agente (desaparecen al seguir conversando). */
+  get opcionesActuales(): OpcionRapida[] {
+    if (this.busy || this.cooldownSec > 0) return [];
+    const ultimo = this.messages[this.messages.length - 1];
+    return ultimo?.role === 'assistant' ? ultimo.opciones ?? [] : [];
+  }
+
   toggle() {
     this.open = !this.open;
     if (this.open) {
-      this.historyOpen = false;
       this.checkHealth();
+      this.restaurarConversacion();
       queueMicrotask(() => this.scrollToBottom(true));
     }
     this.cdr.detectChanges();
@@ -95,108 +119,26 @@ export class AssistantChatComponent implements OnDestroy {
 
   close() {
     this.open = false;
-    this.historyOpen = false;
     this.cdr.detectChanges();
   }
 
-  /** Nueva conversación: limpia conversation_id y el hilo. */
+  /** Nueva conversación: limpia conversation_id y vuelve a la bienvenida. */
   nuevaConversacion() {
     this.clearAsk();
     this.busy = false;
+    this.vista = 'chat';
     this.agent.nuevaConversacion();
     this.input.setValue('');
     this.messages = [this.welcome()];
-    this.historyOpen = false;
     this.cdr.detectChanges();
     queueMicrotask(() => this.scrollToBottom(true));
-  }
-
-  toggleHistory() {
-    this.historyOpen = !this.historyOpen;
-    if (this.historyOpen) this.loadHistory();
-    this.cdr.detectChanges();
-  }
-
-  cerrarHistorial() {
-    this.historyOpen = false;
-    this.cdr.detectChanges();
-  }
-
-  loadHistory() {
-    this.historyLoading = true;
-    this.cdr.detectChanges();
-    this.agent.listarConversaciones(1, 20).subscribe({
-      next: (res) => {
-        this.history = res.data ?? [];
-        this.historyLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err: unknown) => {
-        this.historyLoading = false;
-        this.history = [];
-        this.pushSystemError(err);
-        this.cdr.detectChanges();
-      },
-    });
-  }
-
-  abrirHistorial(item: ConversacionResumen) {
-    this.busy = true;
-    this.historyOpen = false;
-    this.cdr.detectChanges();
-    this.agent.abrirConversacion(item.id).subscribe({
-      next: (conv) => {
-        this.messages = (conv.messages ?? []).map((m) => {
-          const role: ChatRole = m.role === 'assistant' ? 'assistant' : 'user';
-          if (role === 'assistant') {
-            return {
-              id: crypto.randomUUID(),
-              role,
-              createdAt: Date.parse(m.created_at) || Date.now(),
-              html: renderAgentMarkdown(m.content),
-            };
-          }
-          return {
-            id: crypto.randomUUID(),
-            role,
-            createdAt: Date.parse(m.created_at) || Date.now(),
-            text: m.content,
-          };
-        });
-        if (!this.messages.length) this.messages = [this.welcome()];
-        this.busy = false;
-        this.cdr.detectChanges();
-        queueMicrotask(() => this.scrollToBottom(true));
-      },
-      error: (err: unknown) => {
-        this.busy = false;
-        this.pushSystemError(err);
-        this.cdr.detectChanges();
-      },
-    });
-  }
-
-  borrarHistorial(item: ConversacionResumen, ev: Event) {
-    ev.stopPropagation();
-    this.agent.borrarConversacion(item.id).subscribe({
-      next: () => {
-        this.history = this.history.filter((h) => h.id !== item.id);
-        if (this.agent.conversationId == null && this.messages.length > 1) {
-          // Si borramos la conversación activa, empezamos de cero.
-          this.messages = [this.welcome()];
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err: unknown) => {
-        this.pushSystemError(err);
-        this.cdr.detectChanges();
-      },
-    });
   }
 
   send(text?: string) {
     const raw = (text ?? this.input.value).trim();
     if (!raw || this.busy || this.cooldownSec > 0) return;
+    // Si se escribe desde el historial, se regresa al chat para ver la respuesta.
+    this.vista = 'chat';
 
     this.messages = [
       ...this.messages,
@@ -217,6 +159,7 @@ export class AssistantChatComponent implements OnDestroy {
             role: 'assistant',
             createdAt: Date.now(),
             html: renderAgentMarkdown(res.response),
+            opciones: detectarOpciones(res.response),
           },
         ];
         this.busy = false;
@@ -233,23 +176,141 @@ export class AssistantChatComponent implements OnDestroy {
     });
   }
 
-  onQuickAction(a: { prompt: string }) {
-    this.send(a.prompt);
-  }
-
   onKeydownEnter(e: KeyboardEvent) {
     if (e.key !== 'Enter' || e.shiftKey) return;
     e.preventDefault();
     this.send();
   }
 
-  formatConvDate(iso: string): string {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleString('es-MX', {
-      dateStyle: 'short',
-      timeStyle: 'short',
+  // ─── Historial de conversaciones (GET / DELETE /conversations) ──────────────
+
+  verHistorial() {
+    this.vista = 'historial';
+    this.confirmarBorrarId = null;
+    this.cargarHistorial(1);
+  }
+
+  volverAlChat() {
+    this.vista = 'chat';
+    this.cdr.detectChanges();
+    queueMicrotask(() => this.scrollToBottom(true));
+  }
+
+  cargarHistorial(pagina: number) {
+    this.historialCargando = true;
+    this.historialError = '';
+    this.cdr.detectChanges();
+    this.agent.listarConversaciones(pagina, 20).subscribe({
+      next: (res) => {
+        const nuevas = res?.data ?? [];
+        this.historial = pagina === 1 ? nuevas : [...this.historial, ...nuevas];
+        this.historialPagina = res?.paginated?.page ?? pagina;
+        this.historialUltimaPagina = res?.paginated?.last_page ?? pagina;
+        this.historialCargando = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: unknown) => {
+        this.historialCargando = false;
+        this.historialError = err instanceof TextAgentError ? err.message : 'No se pudo cargar el historial.';
+        this.cdr.detectChanges();
+      },
     });
+  }
+
+  esConversacionActual(id: string): boolean {
+    return this.agent.conversationId === id;
+  }
+
+  abrirDelHistorial(c: ConversacionResumen) {
+    if (this.historialCargando) return;
+    this.historialCargando = true;
+    this.historialError = '';
+    this.cdr.detectChanges();
+    this.agent.abrirConversacion(c.id).subscribe({
+      next: (conv) => {
+        this.historialCargando = false;
+        this.mostrarConversacion(conv);
+        this.vista = 'chat';
+        this.cdr.detectChanges();
+        queueMicrotask(() => this.scrollToBottom(true));
+      },
+      error: (err: unknown) => {
+        this.historialCargando = false;
+        // 404: ya no existe (borrada o de otro usuario): se quita de la lista.
+        if (err instanceof TextAgentError && err.code === 'NO_ENCONTRADA') {
+          this.historial = this.historial.filter((h) => h.id !== c.id);
+          this.historialError = 'Esa conversación ya no está disponible.';
+        } else {
+          this.historialError = err instanceof TextAgentError ? err.message : 'No se pudo abrir la conversación.';
+        }
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  pedirBorrar(id: string) {
+    this.confirmarBorrarId = this.confirmarBorrarId === id ? null : id;
+    this.cdr.detectChanges();
+  }
+
+  borrar(id: string) {
+    if (this.borrandoId) return;
+    this.borrandoId = id;
+    this.cdr.detectChanges();
+    const eraActual = this.esConversacionActual(id);
+    this.agent.borrarConversacion(id).subscribe({
+      next: () => {
+        this.borrandoId = null;
+        this.confirmarBorrarId = null;
+        this.historial = this.historial.filter((h) => h.id !== id);
+        if (eraActual) this.messages = [this.welcome()];
+        this.cdr.detectChanges();
+      },
+      error: (err: unknown) => {
+        this.borrandoId = null;
+        this.historialError = err instanceof TextAgentError ? err.message : 'No se pudo borrar la conversación.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /** Recupera la conversación en curso (conversation_id en sessionStorage) tras recargar la página. */
+  private restaurarConversacion() {
+    if (this.restaurada) return;
+    this.restaurada = true;
+    const id = this.agent.conversationId;
+    if (!id || this.messages.length > 1) return;
+    this.busy = true;
+    this.agent.abrirConversacion(id).subscribe({
+      next: (conv) => {
+        this.busy = false;
+        this.mostrarConversacion(conv);
+        this.cdr.detectChanges();
+        queueMicrotask(() => this.scrollToBottom(true));
+      },
+      error: () => {
+        // Ya no existe o el agente no responde: se empieza de cero sin mostrar error.
+        this.busy = false;
+        this.agent.nuevaConversacion();
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private mostrarConversacion(conv: ConversacionDetalle) {
+    const mensajes: ChatMessage[] = (conv.messages ?? []).map((m) => {
+      const fecha = Date.parse(m.created_at);
+      const createdAt = Number.isFinite(fecha) ? fecha : Date.now();
+      return m.role === 'user'
+        ? { id: crypto.randomUUID(), role: 'user' as const, text: m.content, createdAt }
+        : { id: crypto.randomUUID(), role: 'assistant' as const, html: renderAgentMarkdown(m.content), createdAt };
+    });
+    // Solo el último mensaje del agente puede llevar respuestas rápidas.
+    const ultimo = mensajes[mensajes.length - 1];
+    if (ultimo?.role === 'assistant') {
+      ultimo.opciones = detectarOpciones(conv.messages[conv.messages.length - 1]?.content ?? '');
+    }
+    this.messages = [this.welcome(), ...mensajes];
   }
 
   private checkHealth() {
@@ -304,22 +365,64 @@ export class AssistantChatComponent implements OnDestroy {
     }
   }
 
+
   private welcome(): ChatMessage {
     return {
       id: crypto.randomUUID(),
       role: 'assistant',
       createdAt: Date.now(),
       html: renderAgentMarkdown(
-        'Hola, soy **Claudia**. Puedo consultar cobranza, adeudos, estado de cuenta, inmuebles, locales, arrendatarios y contratos.\n\n' +
-          'Soy de **sólo consulta**: para registrar o modificar algo, usa las pantallas de la aplicación.\n\n' +
-          'Prueba un atajo o pregunta en lenguaje natural (ej. *estado de cuenta de…*, *¿quién me debe?*).',
+        '👋 ¡Hola! Soy **Spring**, tu asistente virtual.\n\n' +
+        'Estoy aquí para ayudarte a consultar información sobre tus cuentas, adeudos, inmuebles, locales, arrendatarios y contratos de forma rápida y sencilla.\n\n' +
+        '💬 **¿Cómo puedo ayudarte hoy?**\n\n' +
+        'Puedes preguntarme con tus propias palabras, por ejemplo: *¿Tengo pagos pendientes?* o *¿Cuál es el estado de mi cuenta?*\n\n' +
+        '🔒 Recuerda que puedo ayudarte con consultas. Para registrar o modificar información, utiliza las opciones de la plataforma.',
       ),
     };
   }
+
 
   private scrollToBottom(instant = false) {
     const el = this.scrollViewport?.nativeElement;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: instant ? 'auto' : 'smooth' });
   }
+}
+
+/**
+ * Respuestas rápidas para las preguntas de aclaración del agente (agente_consumo_front.md §8 y §9):
+ *  - "¿Es alguna de estas? 1) … 2) …" → un botón por número + No.
+ *  - "¿Quisiste decir …?"            → Sí / No (o un botón por nombre si sugiere varios).
+ * Solo prepara los botones: nunca se contestan automáticamente.
+ */
+function detectarOpciones(md: string): OpcionRapida[] | undefined {
+  const texto = String(md ?? '');
+  const limpiar = (t: string) => t.replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim();
+  const corto = (t: string) => (t.length > 42 ? t.slice(0, 40) + '…' : t);
+
+  // Opciones numeradas "1) …" o "1. …", en líneas propias o seguidas en el mismo renglón.
+  const numeradas: { n: string; t: string }[] = [];
+  const re = /(?:^|\s)(\d{1,2})[).]\s+(.+?)(?=\s+\d{1,2}[).]\s|\n|$)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(texto)) !== null) {
+    const t = limpiar(m[2]);
+    if (t && !numeradas.some((o) => o.n === m![1])) numeradas.push({ n: m[1], t });
+  }
+
+  if (/¿\s*es alguna de estas/i.test(texto) && numeradas.length) {
+    return [...numeradas.map((o) => ({ label: `${o.n}) ${corto(o.t)}`, valor: o.n })), { label: 'No', valor: 'no' }];
+  }
+
+  if (/¿\s*quisiste decir/i.test(texto)) {
+    const vinetas = [...texto.matchAll(/^\s*[-*]\s+(.+)$/gm)].map((v) => limpiar(v[1])).filter(Boolean);
+    const nombres = numeradas.length > 1 ? numeradas.map((o) => o.t) : vinetas.length > 1 ? vinetas : [];
+    if (nombres.length) {
+      return [...nombres.slice(0, 6).map((n) => ({ label: corto(n), valor: n })), { label: 'No', valor: 'no' }];
+    }
+    return [
+      { label: 'Sí', valor: 'sí' },
+      { label: 'No', valor: 'no' },
+    ];
+  }
+  return undefined;
 }

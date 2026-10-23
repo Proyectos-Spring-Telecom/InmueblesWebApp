@@ -104,27 +104,27 @@
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="contratos">
-              <dx-accordion *ngIf="mostrarAccordionContratos" class="arrend-accordion-contratos" width="100%"
-                [collapsible]="true" [multiple]="true" [animationDuration]="260"
-                [selectedIndex]="$any(contratoAccordionIndicesAbiertos)" [focusStateEnabled]="false"
-                (selectedIndexChange)="onContratoAccordionIndicesChange($event)"
-                itemTitleTemplate="contratoAccordionTitle">
-                <div *dxTemplate="let data of 'contratoAccordionTitle'" class="arrend-accordion-title-bar">
-                  <span class="arrend-accordion-title-bar__label">{{ tituloContratoAccordionDesdeClave(data) }}</span>
-                  <button
-                    *ngIf="puedeEliminarContratoEnFormulario(indiceContratoDesdeClaveAccordion(data))"
-                    type="button"
-                    mat-flat-button
-                    class="bg-secondary arrend-item-eliminar-btn"
-                    aria-label="Eliminar contrato"
-                    (mousedown)="$event.stopPropagation()"
-                    (click)="eliminarContratoDesdeTituloAccordion($event, data)"
-                  >
-                    <mat-icon>delete</mat-icon> Eliminar Contrato
-                  </button>
+              <div *ngIf="mostrarAccordionContratos" class="arrend-accordion-contratos">
+                <div class="arrend-tabs" role="tablist" aria-label="Contratos del arrendatario">
+                  <div *ngFor="let contratoCtrl of contratosFormArray.controls; let i = index; trackBy: trackContratoPorIndice"
+                    class="arrend-tabs__tab" [class.arrend-tabs__tab--activa]="i === contratoTabActivo">
+                    <button type="button" role="tab" class="arrend-tabs__btn"
+                      [attr.aria-selected]="i === contratoTabActivo"
+                      (click)="onContratoAccordionIndicesChange(i)">{{ tituloContratoAccordion(i) }}</button>
+                    <button
+                      *ngIf="puedeEliminarContratoEnFormulario(i)"
+                      type="button"
+                      mat-flat-button
+                      class="bg-secondary arrend-item-eliminar-btn arrend-item-eliminar-btn--compact"
+                      aria-label="Eliminar contrato"
+                      (click)="eliminarContratoDesdeTituloAccordion($event, claveEstableContratoAccordion(i))"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
-                <dxi-item *ngFor="let contratoCtrl of contratosFormArray.controls; let i = index; trackBy: trackContratoPorIndice"
-                  [title]="claveEstableContratoAccordion(i)">
+                <section *ngFor="let contratoCtrl of contratosFormArray.controls; let i = index; trackBy: trackContratoPorIndice"
+                  class="arrend-tabs__panel" [class.arrend-tabs__panel--activa]="i === contratoTabActivo" role="tabpanel">
                   <div class="arrend-accordion-item-body arrend-accordion-inner pt-3 pb-2" [formGroup]="$any(contratoCtrl)">
                     <div class="row g-4 arrend-contrato-fila-campos">
                       <div class="col-12 col-md-4">
@@ -483,8 +483,8 @@
 
                     </div>
                   </div>
-                </dxi-item>
-              </dx-accordion>
+                </section>
+              </div>
             </div>
           </div>
           <ng-template #btnVerArchivo let-url="url" let-titulo="titulo">
@@ -548,28 +548,30 @@
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="servicios">
-              <dx-accordion *ngIf="mostrarAccordionServicios" class="arrend-accordion-servicios" width="100%"
-                [collapsible]="true" [multiple]="true" [animationDuration]="260"
-                [selectedIndex]="$any(servicioAccordionIndicesAbiertos)" [focusStateEnabled]="false"
-                (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
-                itemTitleTemplate="servicioAccordionTitle">
-                <div *dxTemplate="let data of 'servicioAccordionTitle'" class="arrend-accordion-title-bar">
-                  <span class="arrend-accordion-title-bar__label">{{ tituloServicioAccordionDesdeClave(data) }}</span>
-                  <button
-                    *ngIf="puedeEliminarServicioEnEdicion(indiceServicioDesdeClaveAccordion(data))"
-                    type="button"
-                    mat-flat-button
-                    class="bg-secondary arrend-item-eliminar-btn"
-                    aria-label="Eliminar servicio"
-                    (mousedown)="$event.stopPropagation()"
-                    (click)="eliminarServicioDesdeTituloAccordion($event, data)"
-                  >
-                    <mat-icon>delete</mat-icon> Eliminar Servicio
-                  </button>
+              <div *ngIf="mostrarAccordionServicios" class="arrend-accordion-servicios">
+                <div class="arrend-tabs" role="tablist" aria-label="Servicios del arrendatario">
+                  <ng-container *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice">
+                    <div *ngIf="mostrarFilaServicio(i)" class="arrend-tabs__tab"
+                      [class.arrend-tabs__tab--activa]="i === servicioTabActivo">
+                      <button type="button" role="tab" class="arrend-tabs__btn"
+                        [attr.aria-selected]="i === servicioTabActivo"
+                        (click)="onServicioAccordionIndicesChange(i)">{{ tituloServicioAccordion(i) }}</button>
+                      <button
+                        *ngIf="puedeEliminarServicioEnEdicion(i)"
+                        type="button"
+                        mat-flat-button
+                        class="bg-secondary arrend-item-eliminar-btn arrend-item-eliminar-btn--compact"
+                        aria-label="Eliminar servicio"
+                        (click)="eliminarServicioDesdeTituloAccordion($event, claveEstableServicioAccordion(i))"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </ng-container>
                 </div>
                 <ng-container *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice">
-                <dxi-item *ngIf="mostrarFilaServicio(i)"
-                  [title]="claveEstableServicioAccordion(i)">
+                <section *ngIf="mostrarFilaServicio(i)" class="arrend-tabs__panel"
+                  [class.arrend-tabs__panel--activa]="i === servicioTabActivo" role="tabpanel">
                   <div class="arrend-accordion-inner pt-3 pb-2" [formGroup]="$any(srvCtrl)">
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
@@ -678,9 +680,9 @@
                       </div>
                     </div>
                   </div>
-                </dxi-item>
+                </section>
                 </ng-container>
-              </dx-accordion>
+              </div>
             </div>
           </div>
 
@@ -1100,27 +1102,27 @@
                   </div>
                 </div>
                 <div class="arrend-fa-section__body" formArrayName="socios">
-                  <dx-accordion *ngIf="mostrarAccordionSocios" class="arrend-accordion-socios" width="100%"
-                    [collapsible]="true" [multiple]="true" [animationDuration]="260"
-                    [selectedIndex]="$any(socioAccordionIndicesAbiertos)" [focusStateEnabled]="false"
-                    (selectedIndexChange)="onSocioAccordionIndicesChange($event)"
-                    itemTitleTemplate="socioAccordionTitle">
-                    <div *dxTemplate="let data of 'socioAccordionTitle'" class="arrend-accordion-title-bar">
-                      <span class="arrend-accordion-title-bar__label">{{ tituloSocioAccordionDesdeClave(data) }}</span>
-                      <button
-                        *ngIf="puedeEliminarSocioEnEdicion(indiceSocioDesdeClaveAccordion(data))"
-                        type="button"
-                        mat-flat-button
-                        class="bg-secondary arrend-item-eliminar-btn"
-                        aria-label="Eliminar socio"
-                        (mousedown)="$event.stopPropagation()"
-                        (click)="eliminarSocioDesdeTituloAccordion($event, data)"
-                      >
-                        <mat-icon>delete</mat-icon> Eliminar Socio
-                      </button>
+                  <div *ngIf="mostrarAccordionSocios" class="arrend-accordion-socios">
+                    <div class="arrend-tabs" role="tablist" aria-label="Socios del arrendatario">
+                      <div *ngFor="let socioCtrl of sociosFormArray.controls; let i = index; trackBy: trackSocioPorIndice"
+                        class="arrend-tabs__tab" [class.arrend-tabs__tab--activa]="i === socioTabActivo">
+                        <button type="button" role="tab" class="arrend-tabs__btn"
+                          [attr.aria-selected]="i === socioTabActivo"
+                          (click)="onSocioAccordionIndicesChange(i)">{{ tituloSocioAccordion(i) }}</button>
+                        <button
+                          *ngIf="puedeEliminarSocioEnEdicion(i)"
+                          type="button"
+                          mat-flat-button
+                          class="bg-secondary arrend-item-eliminar-btn arrend-item-eliminar-btn--compact"
+                          aria-label="Eliminar socio"
+                          (click)="eliminarSocioDesdeTituloAccordion($event, claveEstableSocioAccordion(i))"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
                     </div>
-                    <dxi-item *ngFor="let socioCtrl of sociosFormArray.controls; let i = index; trackBy: trackSocioPorIndice"
-                      [title]="claveEstableSocioAccordion(i)">
+                    <section *ngFor="let socioCtrl of sociosFormArray.controls; let i = index; trackBy: trackSocioPorIndice"
+                      class="arrend-tabs__panel" [class.arrend-tabs__panel--activa]="i === socioTabActivo" role="tabpanel">
                       <div class="arrend-accordion-inner pt-3 pb-2" [formGroup]="$any(socioCtrl)">
                         <div class="row g-3 socios-identidad">
                           <div class="col-12 col-md-6">
@@ -1282,8 +1284,8 @@
                           </div>
                         </div>
                       </div>
-                    </dxi-item>
-                  </dx-accordion>
+                    </section>
+                  </div>
                 </div>
               </div>
             </div>

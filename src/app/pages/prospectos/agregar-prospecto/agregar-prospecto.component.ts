@@ -13,6 +13,7 @@ import {
   mapearConstanciaACliente,
 } from 'src/app/shared/constancia-fiscal-ocr.mapper';
 import { manejarErrorHttp413 } from 'src/app/shared/swal-archivos-pesados';
+import { ProspectoCreadoDatos } from '../crear-usuario-prospecto-modal/crear-usuario-prospecto-modal.component';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -41,6 +42,10 @@ export class AgregarProspectoComponent implements OnInit {
   public idCliente: number;
   public title = 'Agregar Prospecto';
   public listaClientes: any[] = [];
+  /** Paso obligatorio tras crear el prospecto: crear su usuario (modal sin cierre). */
+  mostrarModalUsuarioObligatorio = true;
+  idClienteCreado: number | null = null;
+  prospectoCreadoDatos: ProspectoCreadoDatos = {};
   /** Tipo Persona: mismos valores que el select nativo (1 Física, 2 Moral). */
   readonly opcionesTipoPersona = [
     { id: 1, nombre: 'Física' },
@@ -270,7 +275,6 @@ export class AgregarProspectoComponent implements OnInit {
 
     const fd = new FormData();
 
-    fd.append('esProspecto', 'true');
     this.appendSiTieneValor(fd, 'idPadre', v.idPadre != null ? Number(v.idPadre) : null);
     this.appendSiTieneValor(fd, 'rfc', v.rfc);
     this.appendSiTieneValor(fd, 'tipoPersona', tipo);
@@ -423,19 +427,15 @@ export class AgregarProspectoComponent implements OnInit {
     const formData = this.buildClienteFormData();
 
     this.clieService.agregarCliente(formData).subscribe(
-      () => {
+      (res: any) => {
         this.submitButton = 'Guardar';
         this.loading = false;
-        Swal.fire({
-          color: '#ffffff',
-          background: '#141a21',
-          title: '¡Operación Exitosa!',
-          text: 'Se agregó un nuevo prospecto de manera exitosa.',
-          icon: 'success',
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'Confirmar',
-        });
-        this.regresar();
+        const idCreado = this.extraerIdClienteCreado(res);
+        if (idCreado != null) {
+          this.iniciarCreacionUsuarioObligatoria(idCreado);
+          return;
+        }
+        this.buscarIdClienteCreadoPorRfc();
       },
       (error) => {
         this.submitButton = 'Guardar';
@@ -452,6 +452,127 @@ export class AgregarProspectoComponent implements OnInit {
         });
       }
     );
+  }
+
+  /** Id del prospecto/cliente recién creado, según la forma de la respuesta del servicio. */
+  private extraerIdClienteCreado(res: any): number | null {
+    const candidatos = [
+      res?.data?.id,
+      res?.data?.idCliente,
+      res?.data?.cliente?.id,
+      res?.data?.cliente?.idCliente,
+      res?.id,
+      res?.idCliente,
+      Array.isArray(res?.data) ? res?.data[0]?.id : null,
+      Array.isArray(res?.data) ? res?.data[0]?.idCliente : null,
+    ];
+    for (const candidato of candidatos) {
+      const n = Number(candidato);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return null;
+  }
+
+  /** Respaldo: si la respuesta no trae el id, se localiza por RFC (único) en el listado. */
+  private buscarIdClienteCreadoPorRfc(): void {
+    const rfc = String(this.clienteForm.get('rfc')?.value ?? '').toUpperCase();
+    this.clieService.obtenerClientes().subscribe({
+      next: (response: any) => {
+        const lista: any[] = response?.data ?? [];
+        const elegido = lista
+          .filter((c: any) => String(c?.rfc ?? '').toUpperCase() === rfc)
+          .reduce((max: any, c: any) => (Number(c?.id) > Number(max?.id ?? 0) ? c : max), null);
+        const id = Number(elegido?.id);
+        if (Number.isFinite(id) && id > 0) {
+          this.iniciarCreacionUsuarioObligatoria(id);
+          return;
+        }
+        
+void Swal.fire({
+  color: '#ffffff',
+  background: '#141a21',
+  title: '¡Prospecto creado!',
+  text: 'El prospecto se registró correctamente. Para completar el proceso, crea su usuario de acceso desde el módulo de Usuarios.',
+  icon: 'warning',
+  confirmButtonColor: '#3085d6',
+  confirmButtonText: 'Entendido',
+  allowOutsideClick: false,
+  allowEscapeKey: false,
+}).then(() => this.regresar());
+
+      },
+      
+error: () => {
+  void Swal.fire({
+    color: '#ffffff',
+    background: '#141a21',
+    title: '¡Prospecto creado!',
+    text: 'El prospecto se registró correctamente. Para completar el proceso, crea su usuario de acceso desde el módulo de Usuarios.',
+    icon: 'warning',
+    confirmButtonColor: '#3085d6',
+    confirmButtonText: 'Entendido',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  }).then(() => this.regresar());
+},
+
+    });
+  }
+
+  /**
+   * Alerta posterior al alta: avisa que crear el usuario es obligatorio
+   * y al confirmar abre el modal (que no se puede cerrar sin crearlo).
+   */
+  private iniciarCreacionUsuarioObligatoria(idClienteCreado: number): void {
+    const v = this.clienteForm.value;
+    this.idClienteCreado = idClienteCreado;
+    this.prospectoCreadoDatos = {
+      nombre: v.nombre ?? '',
+      apellidoPaterno: v.apellidoPaterno ?? '',
+      apellidoMaterno: v.apellidoMaterno ?? '',
+      correo: v.correo ?? '',
+      telefono: v.telefono ?? '',
+      nombreCompleto: [v.nombre, v.apellidoPaterno, v.apellidoMaterno]
+        .filter((x: any) => x != null && String(x).trim() !== '')
+        .join(' '),
+    };
+
+    
+void Swal.fire({
+  color: '#ffffff',
+  background: '#141a21',
+  title: '¡Prospecto creado!',
+  text: 'El prospecto se creó correctamente. Para completar el registro, es necesario crear su usuario de acceso.',
+  icon: 'success',
+  confirmButtonColor: '#3085d6',
+  confirmButtonText: 'Crear usuario ahora',
+  allowOutsideClick: false,
+  allowEscapeKey: false,
+}).then(() => {
+  this.mostrarModalUsuarioObligatorio = true;
+  this.cdr.detectChanges();
+});
+
+  }
+
+  /** Mientras el modal obligatorio está abierto, no se puede salir de esta pantalla. */
+  puedeSalirDeAltaProspecto(): boolean {
+    return !this.mostrarModalUsuarioObligatorio;
+  }
+
+  /** Único cierre del modal obligatorio: el usuario ya se creó. */
+  onUsuarioProspectoCreado(): void {
+    this.mostrarModalUsuarioObligatorio = false;
+    this.cdr.detectChanges();
+    void Swal.fire({
+      color: '#ffffff',
+      background: '#141a21',
+      title: '¡Alta completa!',
+      text: 'El prospecto y su usuario de acceso se crearon correctamente.',
+      icon: 'success',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Confirmar',
+    }).then(() => this.regresar());
   }
 
   actualizar() {

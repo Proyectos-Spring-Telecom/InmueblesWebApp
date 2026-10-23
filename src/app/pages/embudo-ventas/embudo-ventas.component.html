@@ -3,73 +3,19 @@
     <div class="surface">
         <!-- ===== Portada con indicadores ===== -->
         <section class="eh" aria-labelledby="ehTitulo">
-            <div class="eh__intro">
-                <span class="eh__eyebrow">
-                    <mat-icon aria-hidden="true">insights</mat-icon> Embudo de ventas
-                </span>
-                <h3 class="eh__titulo" id="ehTitulo">Seguimiento de prospectos</h3>
-                <p class="eh__texto">
-                    Da seguimiento a cada prospecto por etapa, programa sus próximos eventos y conviértelos en clientes.
-                </p>
-
-                <!-- Distribución por etapa -->
-                <div class="eh__pipeline" aria-label="Distribución por etapa">
-                    <div class="eh__barra">
-                        @for (col of columnas; track col.id) {
-                        <span class="eh__segmento eh__segmento--{{ col.id }}" [style.flex-grow]="col.cards.length || 0"
-                            [title]="col.titulo + ': ' + col.cards.length"></span>
-                        }
-                        @if (!totalEmbudos) { <span class="eh__segmento eh__segmento--vacio"></span> }
-                    </div>
-                    <div class="eh__leyenda">
-                        @for (col of columnas; track col.id) {
-                        <span class="eh__leyenda-item eh__leyenda-item--{{ col.id }}">
-                            <i></i> {{ col.titulo }} <strong>{{ col.cards.length }}</strong>
-                        </span>
-                        }
-                    </div>
+            <!-- Fila superior: título + próximo evento destacado -->
+            <div class="eh__top">
+                <div class="eh__intro">
+                    <span class="eh__eyebrow">
+                        <mat-icon aria-hidden="true">insights</mat-icon> Embudo de ventas
+                    </span>
+                    <h3 class="eh__titulo" id="ehTitulo">Seguimiento de prospectos</h3>
+                    <p class="eh__texto">
+                        Da seguimiento a cada prospecto por etapa, programa sus próximos eventos y conviértelos en clientes.
+                    </p>
                 </div>
-            </div>
 
-            <div class="eh__kpis">
-                <article class="kpi">
-                    <span class="kpi__icono"><mat-icon aria-hidden="true">groups</mat-icon></span>
-                    <div>
-                        <span class="kpi__label">Prospectos activos</span>
-                        <strong class="kpi__valor">{{ loading && !totalEmbudos ? '…' : totalEmbudos }}</strong>
-                    </div>
-                </article>
-                <article class="kpi kpi--pendiente">
-                    <span class="kpi__icono"><mat-icon aria-hidden="true">pending_actions</mat-icon></span>
-                    <div>
-                        <span class="kpi__label">Eventos pendientes</span>
-                        <strong class="kpi__valor">{{ totalEventosPendientes }}</strong>
-                    </div>
-                </article>
-                <article class="kpi kpi--alerta" [class.kpi--activo]="totalAtrasados > 0">
-                    <span class="kpi__icono"><mat-icon aria-hidden="true">alarm</mat-icon></span>
-                    <div>
-                        <span class="kpi__label">Atrasados</span>
-                        <strong class="kpi__valor">{{ totalAtrasados }}</strong>
-                    </div>
-                </article>
-                <article class="kpi kpi--anillo">
-                    <div class="kpi__anillo" role="progressbar" [attr.aria-valuenow]="porcentajeFinalizado"
-                        aria-valuemin="0" aria-valuemax="100" aria-label="Embudos finalizados">
-                        <svg viewBox="0 0 60 60" aria-hidden="true">
-                            <circle class="kpi__anillo-fondo" cx="30" cy="30" r="26"></circle>
-                            <circle class="kpi__anillo-valor" cx="30" cy="30" r="26"
-                                [attr.stroke-dasharray]="circunferenciaAnillo" [attr.stroke-dashoffset]="trazoAnillo">
-                            </circle>
-                        </svg>
-                        <span>{{ porcentajeFinalizado }}%</span>
-                    </div>
-                    <div>
-                        <span class="kpi__label">Finalizados</span>
-                        <strong class="kpi__valor kpi__valor--sm">{{ columnas[2].cards.length }} de {{ totalEmbudos }}</strong>
-                    </div>
-                </article>
-                <article class="kpi kpi--proximo">
+                <article class="kpi kpi--proximo" [class.kpi--proximo-vacio]="!proximoGlobal">
                     <span class="kpi__icono"><mat-icon aria-hidden="true">upcoming</mat-icon></span>
                     @if (proximoGlobal; as prox) {
                     <div class="kpi__proximo">
@@ -85,8 +31,71 @@
                     }
                 </article>
             </div>
+
+            <!-- Franja de indicadores -->
+            <div class="eh__kpis">
+                <article class="kpi">
+                    <div class="kpi__cabeza">
+                        <span class="kpi__icono"><mat-icon aria-hidden="true">groups</mat-icon></span>
+                        <span class="kpi__label">Prospectos activos</span>
+                    </div>
+                    <strong class="kpi__valor">{{ loading && !totalEmbudos ? '…' : totalEmbudos }}</strong>
+                </article>
+                <article class="kpi kpi--pendiente">
+                    <div class="kpi__cabeza">
+                        <span class="kpi__icono"><mat-icon aria-hidden="true">pending_actions</mat-icon></span>
+                        <span class="kpi__label">Eventos pendientes</span>
+                    </div>
+                    <strong class="kpi__valor">{{ totalEventosPendientes }}</strong>
+                </article>
+                <article class="kpi kpi--alerta" [class.kpi--activo]="totalAtrasados > 0">
+                    <div class="kpi__cabeza">
+                        <span class="kpi__icono"><mat-icon aria-hidden="true">alarm</mat-icon></span>
+                        <span class="kpi__label">Atrasados</span>
+                    </div>
+                    <strong class="kpi__valor">{{ totalAtrasados }}</strong>
+                </article>
+                <article class="kpi kpi--anillo">
+                    <div class="kpi__cabeza">
+                        <span class="kpi__icono"><mat-icon aria-hidden="true">task_alt</mat-icon></span>
+                        <span class="kpi__label">Finalizados</span>
+                    </div>
+                    <div class="kpi__fila">
+                        <strong class="kpi__valor">{{ columnas[2].cards.length }} <small>de {{ totalEmbudos }}</small></strong>
+                        <div class="kpi__anillo" role="progressbar" [attr.aria-valuenow]="porcentajeFinalizado"
+                            aria-valuemin="0" aria-valuemax="100" aria-label="Embudos finalizados">
+                            <svg viewBox="0 0 60 60" aria-hidden="true">
+                                <circle class="kpi__anillo-fondo" cx="30" cy="30" r="26"></circle>
+                                <circle class="kpi__anillo-valor" cx="30" cy="30" r="26"
+                                    [attr.stroke-dasharray]="circunferenciaAnillo" [attr.stroke-dashoffset]="trazoAnillo">
+                                </circle>
+                            </svg>
+                            <span>{{ porcentajeFinalizado }}%</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Pie: distribución por etapa -->
+            <div class="eh__pipeline" aria-label="Distribución por etapa">
+                <div class="eh__leyenda">
+                    @for (col of columnas; track col.id) {
+                    <span class="eh__leyenda-item eh__leyenda-item--{{ col.id }}">
+                        <i></i> {{ col.titulo }} <strong>{{ col.cards.length }}</strong>
+                    </span>
+                    }
+                </div>
+                <div class="eh__barra">
+                    @for (col of columnas; track col.id) {
+                    <span class="eh__segmento eh__segmento--{{ col.id }}" [style.flex-grow]="col.cards.length || 0"
+                        [title]="col.titulo + ': ' + col.cards.length"></span>
+                    }
+                    @if (!totalEmbudos) { <span class="eh__segmento eh__segmento--vacio"></span> }
+                </div>
+            </div>
         </section>
 
+        <section class="eb-panel" aria-label="Tablero del embudo">
         <!-- ===== Herramientas ===== -->
         <div class="et">
             <div class="et__buscar">
@@ -118,12 +127,6 @@
                 <span>Actualizar</span>
             </button>
         </div>
-
-        <p class="et__ayuda">
-            <mat-icon aria-hidden="true">swipe</mat-icon>
-            Arrastra una tarjeta entre <strong>Registro</strong>, <strong>Seguimiento</strong> y <strong>Finalizado</strong>
-            para cambiar su etapa.
-        </p>
 
         @if (loading && !hayEmbudos()) {
         <!-- Esqueleto de carga -->
@@ -189,13 +192,70 @@
                             }
                         </div>
 
-                        <div class="ec__contacto">
-                            <span [class.ec__vacio]="!card.telefono" [title]="textoTelefono(card)">
-                                <mat-icon aria-hidden="true">call</mat-icon>{{ textoTelefono(card) }}
-                            </span>
-                            <span [class.ec__vacio]="!card.correo" [title]="textoCorreo(card)">
-                                <mat-icon aria-hidden="true">mail</mat-icon>{{ textoCorreo(card) }}
-                            </span>
+                        <div class="ec__cuerpo">
+                            <div class="ec__contacto">
+                                <button type="button" class="ec__dato" [class.ec__dato--copiado]="datoCopiado === card.id + '-telefono'"
+                                    [disabled]="!card.telefono" (click)="copiarDato(card, 'telefono', $event)"
+                                    [title]="card.telefono ? 'Copiar teléfono de ' + card.nombreCliente : 'Sin teléfono registrado'">
+                                    <mat-icon class="ec__dato-icono" aria-hidden="true">call</mat-icon>
+                                    <span class="ec__dato-texto">
+                                        <small>Teléfono del prospecto</small>
+                                        <span [class.ec__vacio]="!card.telefono">{{ textoTelefono(card) }}</span>
+                                    </span>
+                                    @if (card.telefono) {
+                                    <span class="ec__dato-copiar" aria-hidden="true">
+                                        @if (datoCopiado === card.id + '-telefono') {
+                                        <mat-icon>check</mat-icon>Copiado
+                                        } @else {
+                                        <mat-icon>content_copy</mat-icon>
+                                        }
+                                    </span>
+                                    }
+                                </button>
+                                <button type="button" class="ec__dato" [class.ec__dato--copiado]="datoCopiado === card.id + '-correo'"
+                                    [disabled]="!card.correo" (click)="copiarDato(card, 'correo', $event)"
+                                    [title]="card.correo ? 'Copiar correo de ' + card.nombreCliente : 'Sin correo registrado'">
+                                    <mat-icon class="ec__dato-icono" aria-hidden="true">mail</mat-icon>
+                                    <span class="ec__dato-texto">
+                                        <small>Correo del prospecto</small>
+                                        <span [class.ec__vacio]="!card.correo">{{ textoCorreo(card) }}</span>
+                                    </span>
+                                    @if (card.correo) {
+                                    <span class="ec__dato-copiar" aria-hidden="true">
+                                        @if (datoCopiado === card.id + '-correo') {
+                                        <mat-icon>check</mat-icon>Copiado
+                                        } @else {
+                                        <mat-icon>content_copy</mat-icon>
+                                        }
+                                    </span>
+                                    }
+                                </button>
+                            </div>
+
+                            <div class="ec__lateral">
+                                <div class="ec__acciones">
+                                    <button type="button" class="ec__btn" (click)="verHistorial(card)"
+                                        title="Ver detalle e historial" aria-label="Ver detalle e historial">
+                                        <mat-icon>visibility</mat-icon>
+                                    </button>
+                                    <button type="button" class="ec__btn ec__btn--evento" (click)="abrirModalEvento(card)"
+                                        title="Programar evento" aria-label="Programar evento">
+                                        <mat-icon>event_available</mat-icon>
+                                    </button>
+                                    <button type="button" class="ec__btn ec__btn--cliente" (click)="convertirACliente(card)"
+                                        [disabled]="card.idCliente == null" title="Pasar a cliente" aria-label="Pasar a cliente">
+                                        <mat-icon>person_add</mat-icon>
+                                    </button>
+                                </div>
+                                <div class="ec__stats">
+                                    <span class="ec__stat ec__stat--pendiente" [title]="textoEventosPendientes(card)">
+                                        <mat-icon aria-hidden="true">pending_actions</mat-icon>{{ card.eventosPendientes }}
+                                    </span>
+                                    <span class="ec__stat ec__stat--realizado" [title]="textoEventosRealizados(card)">
+                                        <mat-icon aria-hidden="true">task_alt</mat-icon>{{ card.eventosRealizados }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Resumen mínimo para columnas muy angostas -->
@@ -207,31 +267,6 @@
                                 <mat-icon aria-hidden="true">pending_actions</mat-icon>{{ card.eventosPendientes }}
                             </span>
                         </div>
-
-                        <footer class="ec__pie">
-                            <div class="ec__stats">
-                                <span class="ec__stat ec__stat--pendiente" [title]="textoEventosPendientes(card)">
-                                    <mat-icon aria-hidden="true">pending_actions</mat-icon>{{ card.eventosPendientes }}
-                                </span>
-                                <span class="ec__stat ec__stat--realizado" [title]="textoEventosRealizados(card)">
-                                    <mat-icon aria-hidden="true">task_alt</mat-icon>{{ card.eventosRealizados }}
-                                </span>
-                            </div>
-                            <div class="ec__acciones">
-                                <button type="button" class="ec__btn" (click)="verHistorial(card)"
-                                    title="Ver detalle e historial" aria-label="Ver detalle e historial">
-                                    <mat-icon>visibility</mat-icon>
-                                </button>
-                                <button type="button" class="ec__btn ec__btn--evento" (click)="abrirModalEvento(card)"
-                                    title="Programar evento" aria-label="Programar evento">
-                                    <mat-icon>event_available</mat-icon>
-                                </button>
-                                <button type="button" class="ec__btn ec__btn--cliente" (click)="convertirACliente(card)"
-                                    [disabled]="card.idCliente == null" title="Pasar a cliente" aria-label="Pasar a cliente">
-                                    <mat-icon>person_add</mat-icon>
-                                </button>
-                            </div>
-                        </footer>
                     </article>
                     }
                     } @empty {
@@ -245,6 +280,7 @@
             }
         </div>
         }
+        </section>
     </div>
 </div>
 

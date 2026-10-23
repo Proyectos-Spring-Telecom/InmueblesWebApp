@@ -1,5 +1,16 @@
 @use '../../arrendatarios/lista-arrendatarios-detalle/lista-arrendatarios-detalle.component.scss';
 
+/* Clientes tiene 2 pestañas (la cadena importada define 4 columnas para Arrendatarios). */
+.inm-detalle__tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 520px) {
+  .inm-detalle__tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .arr-socios-list {
   display: flex;
   flex-direction: column;
@@ -37,7 +48,7 @@
   min-height: 2rem !important;
   height: 2rem !important;
   padding: 0 0.85rem !important;
-  border-radius: 999px !important;
+  border-radius: 10px !important;
   letter-spacing: 0.04em;
   font-size: 0.75rem !important;
   line-height: 1 !important;
@@ -48,14 +59,14 @@
 
 :host ::ng-deep .arr-socio-eliminar-btn.mat-mdc-unelevated-button {
   --mdc-filled-button-container-height: 2rem;
-  --mdc-filled-button-container-shape: 999px;
+  --mdc-filled-button-container-shape: 10px;
   --mdc-filled-button-container-color: rgba(104, 19, 48, 0.28) !important;
   --mat-button-filled-container-color: rgba(104, 19, 48, 0.28) !important;
   --mdc-filled-button-label-text-color: #ffffff !important;
   --mdc-filled-button-icon-color: #ffffff !important;
   background: rgba(104, 19, 48, 0.28) !important;
   border: 1px solid rgba(251, 165, 180, 0.74) !important;
-  border-radius: 999px !important;
+  border-radius: 10px !important;
   color: #ffffff !important;
 
   .mdc-button__label {

@@ -17,6 +17,7 @@ import { environment } from '../../environments/environment';
 import { User } from '../entities/User';
 import { Credentials } from '../entities/Credentials';
 import { BaseServicesService } from './base.service';
+import Swal from 'sweetalert2';
 
 interface LoginResponse {
   token?: string;
@@ -51,6 +52,7 @@ export class AuthenticationService extends BaseServicesService {
   private sessionCheck$: Observable<boolean> | null = null;
   /** Tras un refresh rechazado (401), no volver a llamar /login/refresh. */
   private refreshBlocked = false;
+  private sessionExpiredAlertOpen = false;
   private readonly baseUrl = environment.API_SECURITY;
   /** Cliente sin interceptores: refresh/logout no deben disparar otro refresh ni redirección. */
   private readonly rawHttp: HttpClient;
@@ -164,6 +166,59 @@ export class AuthenticationService extends BaseServicesService {
     if (!this.isAuthRoute()) {
       void this.router.navigate(['/login']);
     }
+  }
+
+  /**
+   * Sesión vencida (refresh rechazado o inexistente): limpia credenciales y muestra
+   * una alerta que solo se cierra con "Continuar", que lleva al login.
+   */
+  public expireSession(): void {
+    if (this.sessionExpiredAlertOpen) return;
+    this.clearSessionOnly();
+    if (this.isAuthRoute()) return;
+    this.sessionExpiredAlertOpen = true;
+    this.showSessionExpiredAlert();
+  }
+
+  private showSessionExpiredAlert(): void {
+    let confirmado = false;
+    void Swal.fire({
+      icon: 'warning',
+      title: '¡Tu sesión ha expirado!',
+      html: `
+        <p style="margin:0 0 12px;color:#ffffff;font-size:15px;">
+          Por seguridad, tu sesión terminó porque el tiempo de acceso venció
+          y no fue posible renovarlo.
+        </p>
+        <p style="margin:0;color:#ffffff;font-size:15px;">
+          Al presionar <strong>Continuar</strong> te llevaremos a la pantalla de
+          <strong>inicio de sesión</strong> para que vuelvas a ingresar.
+        </p>`,
+      background: '#141a21',
+      color: '#ffffff',
+      confirmButtonText: 'Continuar',
+      confirmButtonColor: '#3085d6',
+      showCancelButton: false,
+      showDenyButton: false,
+      showCloseButton: false,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      allowEnterKey: true,
+      preConfirm: () => {
+        confirmado = true;
+        return true;
+      },
+      // Otro Swal.fire o Swal.close() de cualquier pantalla destruiría el aviso: se vuelve a mostrar.
+      didDestroy: () => {
+        if (!confirmado) {
+          window.setTimeout(() => this.showSessionExpiredAlert(), 0);
+        }
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.sessionExpiredAlertOpen = false;
+      void this.router.navigate(['/login']);
+    });
   }
 
   public isRefreshBlocked(): boolean {

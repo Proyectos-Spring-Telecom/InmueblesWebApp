@@ -1705,6 +1705,31 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
     this.socioAccordionIndicesAbiertos = raw >= 0 ? [raw] : [];
   }
 
+  /* Tabs de arreglos: el activo es el último índice abierto que ya mantiene la
+     lógica del acordeón (agregar abre el nuevo, eliminar remapea, poblar abre el primero). */
+  private indiceTabActivo(indices: number[], total: number): number {
+    if (total <= 0) return 0;
+    const ultimo = indices.length ? indices[indices.length - 1] : 0;
+    return Math.min(Math.max(ultimo, 0), total - 1);
+  }
+
+  get contratoTabActivo(): number {
+    return this.indiceTabActivo(this.contratoAccordionIndicesAbiertos, this.contratosFormArray.length);
+  }
+
+  get servicioTabActivo(): number {
+    const visibles = this.serviciosFormArray.controls
+      .map((_, i) => i)
+      .filter((i) => this.mostrarFilaServicio(i));
+    if (visibles.length === 0) return 0;
+    const abiertos = this.servicioAccordionIndicesAbiertos.filter((i) => visibles.includes(i));
+    return abiertos.length ? abiertos[abiertos.length - 1] : visibles[0];
+  }
+
+  get socioTabActivo(): number {
+    return this.indiceTabActivo(this.socioAccordionIndicesAbiertos, this.sociosFormArray.length);
+  }
+
   tituloServicioAccordion(index: number): string {
     const idTipo = Number(
       (this.serviciosFormArray.at(index) as FormGroup)?.get('idTipoServicio')?.value,
@@ -1810,7 +1835,7 @@ export class AgregarArrendatarioComponent implements OnInit, OnDestroy {
   private scrollAlContratoArrendatario(index: number): void {
     const root = document.querySelector('.arrend-accordion-contratos');
     if (!root) return;
-    const items = root.querySelectorAll('.dx-accordion-item');
+    const items = root.querySelectorAll('.arrend-tabs__panel');
     const target = items.item(index);
     if (target instanceof HTMLElement) {
       target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

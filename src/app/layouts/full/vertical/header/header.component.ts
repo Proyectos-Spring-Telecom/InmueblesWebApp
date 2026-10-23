@@ -108,25 +108,54 @@ function buildPanelAccessItems(items: NavItem[]): NavItem[] {
   return out;
 }
 
-/** Mensajes / avisos (contratos, alertas generales) */
-interface AvisoNotificacion {
-  id: number;
+type NotifTone = 'success' | 'warning' | 'amber' | 'danger' | 'expired';
+
+type NotifTabId = 'contratos' | 'servicios' | 'arrendatarios';
+
+/** Fila del centro de notificaciones (las tres bandejas comparten forma). */
+interface NotifItem {
+  id: string;
+  tone: NotifTone;
   title: string;
   subtitle: string;
-  /** Semáforo: success / warning / amber / danger / expired (ya vencido). */
-  tone?: 'success' | 'warning' | 'amber' | 'danger' | 'expired';
-  /** Días restantes para vencer (negativo = vencido). */
-  daysLeft?: number;
+  subtitleIcon: string;
+  fechaLabel: string;
+  /** Texto de la franja del mini calendario según el estado (Venció / Hoy / Vence…). */
+  calHead: string;
+  fechaIso?: string | null;
+  fecha: string;
+  fechaDia: string;
+  fechaMes: string;
+  fechaAnio: string;
+  contrato?: string;
+  dias: number | null;
+  statusText: string;
 }
 
-/** Categorías de estado de recibos (inmuebles / predios) */
-interface ReciboEstadoItem {
-  id: string;
-  tone: 'danger' | 'warning' | 'amber' | 'success' | 'info' | 'expired';
-  icon: string;
+interface NotifTab {
+  id: NotifTabId;
   label: string;
-  detail?: string;
+  icon: string;
+  items: NotifItem[];
 }
+
+interface NotifResumen {
+  vencidos: number;
+  urgentes: number;
+  proximos: number;
+  alDia: number;
+  total: number;
+}
+
+const NOTIF_TONE_ORDER: Record<NotifTone, number> = {
+  expired: 0,
+  danger: 1,
+  amber: 2,
+  warning: 3,
+  success: 4,
+};
+
+const NOTIF_MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 interface profiledd {
   id: number;
@@ -267,9 +296,7 @@ export class HeaderComponent implements OnInit {
       next: (data) => {
         this.aplicarNotificacionesDesdeApi(data);
         if (avisarLoginSound) {
-          this.loginSuccessSound.notificacionesCargadas(
-            this.avisosCount + this.inmueblesNotifCount + this.prediosNotifCount > 0,
-          );
+          this.loginSuccessSound.notificacionesCargadas(this.totalNotificaciones > 0);
         }
       },
       error: (err) => {
@@ -291,72 +318,163 @@ export class HeaderComponent implements OnInit {
     const p = data.pagoServiciosInmuebles ?? [];
     const s = data.pagosSeguimiento ?? [];
 
-    this.avisosLista = v.map((item) => this.mapVencimientoAviso(item));
-    this.recibosInmuebles = p.map((item) => this.mapPagoServicioRecibo(item));
-    this.recibosPredios = s.map((item) => this.mapSeguimientoRecibo(item));
+    const tabs: NotifTab[] = [
+      {
+        id: 'contratos',
+        label: 'Contratos',
+        icon: 'file-description',
+        items: this.ordenarPorUrgencia(v.map((item) => this.mapVencimiento(item))),
+      },
+      {
+        id: 'servicios',
+        label: 'Servicios',
+        icon: 'receipt',
+        items: this.ordenarPorUrgencia(p.map((item) => this.mapPagoServicio(item))),
+      },
+      {
+        id: 'arrendatarios',
+        label: 'Arrendatarios',
+        icon: 'users',
+        items: this.ordenarPorUrgencia(s.map((item) => this.mapSeguimiento(item))),
+      },
+    ];
 
-    this.avisosCount = this.avisosLista.length;
-    this.inmueblesNotifCount = this.recibosInmuebles.length;
-    this.prediosNotifCount = this.recibosPredios.length;
+    this.notifTabs = tabs;
+    this.totalNotificaciones = tabs.reduce((acc, t) => acc + t.items.length, 0);
+    this.resumenPorTab = {
+      contratos: this.calcularResumen(tabs[0].items),
+      servicios: this.calcularResumen(tabs[1].items),
+      arrendatarios: this.calcularResumen(tabs[2].items),
+    };
+    this.tonoMasUrgente = this.calcularTonoMasUrgente(tabs.flatMap((t) => t.items));
   }
 
-  private mapVencimientoAviso(v: VencimientoRenovacionContratoDto): AvisoNotificacion {
-    const inmueble = String(v.inmueble ?? '').trim() || 'Inmueble';
-    const arrendatario = String(v.arrendatario ?? '').trim() || '—';
+  private mapVencimiento(v: VencimientoRenovacionContratoDto): NotifItem {
     const dias = this.diasFaltantesEfectivos(v.diasFaltantes, v.fechaTerminoContrato);
-    const termino = this.formatNotifyDate(v.fechaTerminoContrato);
-    const tone = this.toneDesdeColorApi(v.color, dias);
-    const diasTxt = this.textoDiasFaltantesNotificacion(dias);
-    const vencido = dias != null && dias < 0;
-    const venceHoy = dias === 0;
-
-    return {
-      id: v.id,
-      title: vencido
-        ? 'Contrato vencido'
-        : venceHoy
-          ? 'Contrato vence hoy'
-          : 'Vencimiento de contrato',
-      subtitle: `Inmueble: ${inmueble} — Arrendatario: ${arrendatario} — Término: ${termino} — ${diasTxt}`,
-      daysLeft: dias ?? undefined,
-      tone,
-    };
+    return this.construirItem({
+      id: `c-${v.id}`,
+      tone: this.toneDesdeColorApi(v.color, dias),
+      dias,
+      title: String(v.inmueble ?? '').trim() || 'Inmueble',
+      subtitle: String(v.arrendatario ?? '').trim() || 'Sin arrendatario',
+      subtitleIcon: 'user',
+      fechaLabel: 'Término',
+      fechaIso: v.fechaTerminoContrato,
+    });
   }
 
-  private mapPagoServicioRecibo(p: PagoServicioInmuebleDto): ReciboEstadoItem {
-    const inm = String(p.inmueble ?? '').trim() || '—';
-    const tipo = String(p.tipoServicio ?? '').trim() || 'Servicio';
-    const contrato = String(p.numeroContrato ?? '').trim() || '—';
+  private mapPagoServicio(p: PagoServicioInmuebleDto): NotifItem {
     const dias = this.diasFaltantesEfectivos(p.diasFaltantes, p.fechaPago);
-    const fechaPago = this.formatNotifyDate(p.fechaPago);
-    const tone = this.toneDesdeColorApi(p.color, dias);
-    const diasTxt = this.textoDiasFaltantesNotificacion(dias);
-
-    return {
-      id: String(p.id),
-      tone,
-      icon: this.iconForReciboTone(tone),
-      label: `${tipo} — ${inm}`,
-      detail: `Contrato: ${contrato} — Fecha de pago: ${fechaPago} — ${diasTxt}`,
-    };
+    return this.construirItem({
+      id: `s-${p.id}`,
+      tone: this.toneDesdeColorApi(p.color, dias),
+      dias,
+      title: String(p.tipoServicio ?? '').trim() || 'Servicio',
+      subtitle: String(p.inmueble ?? '').trim() || 'Sin inmueble',
+      subtitleIcon: 'building',
+      fechaLabel: 'Pago',
+      fechaIso: p.fechaPago,
+      contrato: String(p.numeroContrato ?? '').trim() || undefined,
+    });
   }
 
-  private mapSeguimientoRecibo(s: PagoSeguimientoDto): ReciboEstadoItem {
-    const nombre = String(s.arrendatario ?? '').trim() || 'Arrendatario';
-    const tipo = String(s.tipoServicio ?? '').trim() || 'Servicio';
-    const contrato = String(s.numeroContrato ?? '').trim() || '—';
+  private mapSeguimiento(s: PagoSeguimientoDto): NotifItem {
     const dias = this.diasFaltantesEfectivos(s.diasFaltantes, s.fechaPago);
-    const fechaPago = this.formatNotifyDate(s.fechaPago);
-    const tone = this.toneDesdeColorApi(s.color, dias);
-    const diasTxt = this.textoDiasFaltantesNotificacion(dias);
+    return this.construirItem({
+      id: `a-${s.id}`,
+      tone: this.toneDesdeColorApi(s.color, dias),
+      dias,
+      title: String(s.tipoServicio ?? '').trim() || 'Servicio',
+      subtitle: String(s.arrendatario ?? '').trim() || 'Arrendatario',
+      subtitleIcon: 'user',
+      fechaLabel: 'Pago',
+      fechaIso: s.fechaPago,
+      contrato: String(s.numeroContrato ?? '').trim() || undefined,
+    });
+  }
 
-    return {
-      id: String(s.id),
-      tone,
-      icon: this.iconForReciboTone(tone),
-      label: `${tipo} — ${nombre}`,
-      detail: `Contrato: ${contrato} — Fecha de pago: ${fechaPago} — ${diasTxt}`,
-    };
+  private construirItem(
+    base: Omit<NotifItem, 'fecha' | 'fechaDia' | 'fechaMes' | 'fechaAnio' | 'statusText' | 'calHead'>,
+  ): NotifItem {
+    const { dias } = base;
+    const esPago = base.fechaLabel === 'Pago';
+    let statusText = 'Sin fecha';
+    let calHead = base.fechaLabel;
+
+    if (dias != null && Number.isFinite(dias)) {
+      if (dias < 0) {
+        const n = Math.abs(dias);
+        statusText = n === 1 ? 'Vencido hace 1 día' : `Vencido hace ${n} días`;
+        calHead = esPago ? 'Vencido' : 'Venció';
+      } else if (dias === 0) {
+        statusText = 'Vence hoy';
+        calHead = 'Hoy';
+      } else {
+        statusText = dias === 1 ? 'Vence mañana' : `Faltan ${dias} días`;
+        calHead = esPago ? 'Pagar' : 'Vence';
+      }
+    }
+
+    const fecha = this.formatNotifyDate(base.fechaIso);
+    return { ...base, ...this.partesFecha(fecha), fecha, statusText, calHead };
+  }
+
+  /** Día, mes abreviado y año (desde `dd/mm/aaaa`) para el mini calendario de la tarjeta. */
+  private partesFecha(fecha: string): Pick<NotifItem, 'fechaDia' | 'fechaMes' | 'fechaAnio'> {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(fecha);
+    if (!m) return { fechaDia: '—', fechaMes: '', fechaAnio: '' };
+    return { fechaDia: m[1], fechaMes: NOTIF_MESES[Number(m[2]) - 1] ?? '', fechaAnio: m[3] };
+  }
+
+  private ordenarPorUrgencia(items: NotifItem[]): NotifItem[] {
+    return [...items].sort((a, b) => {
+      const byTone = NOTIF_TONE_ORDER[a.tone] - NOTIF_TONE_ORDER[b.tone];
+      if (byTone !== 0) return byTone;
+      return (a.dias ?? Number.MAX_SAFE_INTEGER) - (b.dias ?? Number.MAX_SAFE_INTEGER);
+    });
+  }
+
+  private calcularResumen(items: NotifItem[]): NotifResumen {
+    const r: NotifResumen = { vencidos: 0, urgentes: 0, proximos: 0, alDia: 0, total: items.length };
+    for (const it of items) {
+      if (it.tone === 'expired') r.vencidos++;
+      else if (it.tone === 'danger') r.urgentes++;
+      else if (it.tone === 'success') r.alDia++;
+      else r.proximos++;
+    }
+    return r;
+  }
+
+  private calcularTonoMasUrgente(items: NotifItem[]): NotifTone | null {
+    if (!items.length) return null;
+    return items.reduce<NotifTone>(
+      (peor, it) => (NOTIF_TONE_ORDER[it.tone] < NOTIF_TONE_ORDER[peor] ? it.tone : peor),
+      'success',
+    );
+  }
+
+  get tabActual(): NotifTab | undefined {
+    return this.notifTabs.find((t) => t.id === this.notifTabActiva);
+  }
+
+  get resumenActual(): NotifResumen {
+    return this.resumenPorTab[this.notifTabActiva];
+  }
+
+  seleccionarNotifTab(id: NotifTabId): void {
+    this.notifTabActiva = id;
+  }
+
+  /** Al abrir el panel, si la pestaña actual está vacía salta a la primera con avisos. */
+  onNotificacionesAbiertas(): void {
+    if (this.tabActual?.items.length) return;
+    const conItems = this.notifTabs.find((t) => t.items.length > 0);
+    if (conItems) this.notifTabActiva = conItems.id;
+  }
+
+  porcentajeResumen(valor: number): number {
+    const total = this.resumenActual.total;
+    return total ? (valor / total) * 100 : 0;
   }
 
   /**
@@ -371,16 +489,6 @@ export class HeaderComponent implements OnInit {
     if (calc != null) return calc;
     const d = Number(diasApi);
     return Number.isFinite(d) ? d : null;
-  }
-
-  private textoDiasFaltantesNotificacion(dias: number | null): string {
-    if (dias == null || !Number.isFinite(dias)) return 'Días: —';
-    if (dias < 0) {
-      const n = Math.abs(dias);
-      return n === 1 ? 'VENCIDO hace 1 día' : `VENCIDO hace ${n} días`;
-    }
-    if (dias === 0) return 'Vence hoy';
-    return dias === 1 ? 'Días: 1' : `Días: ${dias}`;
   }
 
   /**
@@ -430,23 +538,6 @@ export class HeaderComponent implements OnInit {
     return fmt || '—';
   }
 
-  private iconForReciboTone(tone: ReciboEstadoItem['tone']): string {
-    switch (tone) {
-      case 'expired':
-        return 'alert-triangle';
-      case 'danger':
-        return 'x';
-      case 'warning':
-        return 'alert-circle';
-      case 'amber':
-        return 'thumb-up';
-      case 'success':
-        return 'check';
-      default:
-        return 'receipt';
-    }
-  }
-
   openDialog() {
     const dialogRef = this.dialog.open(AppSearchDialogComponent);
 
@@ -485,11 +576,6 @@ export class HeaderComponent implements OnInit {
     this.users.logout().subscribe();
   }
 
-  /** Pagos de servicios y seguimiento de arrendatarios: no abren modal. */
-  onReciboContratoClick(_r: ReciboEstadoItem, event: Event): void {
-    event.stopPropagation();
-  }
-
   /** Pie del menú Contratos: lista completa de contratos. */
   verTodoAvisos(): void {
     void this.router.navigate(['/contratos']);
@@ -505,22 +591,16 @@ export class HeaderComponent implements OnInit {
     void this.router.navigate(['/arrendatarios']);
   }
 
-  /** Contador sobre el ícono (se llena desde GET /notificaciones). */
-  avisosCount = 0;
-  inmueblesNotifCount = 0;
-  prediosNotifCount = 0;
-
-  avisosLista: AvisoNotificacion[] = [];
-
-  /**
-   * Misma estructura visual (notify-hub-recibo):
-   * - Pagos de servicios (menuNotifInmuebles)
-   * - Arrendatarios / seguimiento (menuNotifPredios)
-   */
-  recibosInmuebles: ReciboEstadoItem[] = [];
-
-  /** Menu "predios" → pagos / seguimiento de arrendatarios */
-  recibosPredios: ReciboEstadoItem[] = [];
+  /** Centro de notificaciones (se llena desde GET /notificaciones). */
+  notifTabs: NotifTab[] = [];
+  notifTabActiva: NotifTabId = 'contratos';
+  totalNotificaciones = 0;
+  tonoMasUrgente: NotifTone | null = null;
+  resumenPorTab: Record<NotifTabId, NotifResumen> = {
+    contratos: { vencidos: 0, urgentes: 0, proximos: 0, alDia: 0, total: 0 },
+    servicios: { vencidos: 0, urgentes: 0, proximos: 0, alDia: 0, total: 0 },
+    arrendatarios: { vencidos: 0, urgentes: 0, proximos: 0, alDia: 0, total: 0 },
+  };
 
   profiledd: profiledd[] = [
     {

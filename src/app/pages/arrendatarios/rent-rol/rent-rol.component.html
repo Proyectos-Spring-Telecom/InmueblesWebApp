@@ -72,30 +72,43 @@
 
       </section>
 
-      <!-- ═════ Datos: filtros, búsqueda, exportación y tabla en una sola card ═════ -->
+      <!-- ═════ Datos: periodo, filtros, listado ═════ -->
       <section class="rrv-datos">
-        <section class="rrv-barra" role="search" aria-label="Filtros del periodo">
-          <div class="rrv-periodo-acciones" role="group" aria-label="Acciones del periodo">
-            <!-- Pasa las rentas azules del mes a amarillo (bloqueadas, solo se pagan) -->
+        <header class="rrv-periodo" role="group" aria-label="Acciones del periodo">
+          <div class="rrv-periodo__info">
+            <span class="rrv-periodo__icono"><mat-icon aria-hidden="true">calendar_month</mat-icon></span>
+            <div class="rrv-periodo__textos">
+              <span class="rrv-periodo__kicker">Periodo</span>
+              <h3 class="rrv-periodo__titulo">{{ mesFiltroLabel || 'Seleccione un mes' }}</h3>
+              <p class="rrv-periodo__hint">Apertura y cierre controlan el flujo de cobro del mes.</p>
+            </div>
+          </div>
+          <div class="rrv-leyenda" aria-label="Leyenda de estatus">
+            <span class="rrv-leyenda__item rrv-leyenda__item--pagada"><i><mat-icon aria-hidden="true">paid</mat-icon></i> Pagada <strong>{{ conteoPagadas }}</strong></span>
+            <span class="rrv-leyenda__item rrv-leyenda__item--azul" title="Generada; se puede editar"><i><mat-icon aria-hidden="true">edit_note</mat-icon></i> Editable <strong>{{ conteoEditables }}</strong></span>
+            <span class="rrv-leyenda__item rrv-leyenda__item--amarillo" title="Mes abierto; solo se puede marcar como pagada"><i><mat-icon aria-hidden="true">schedule</mat-icon></i> Por pagar <strong>{{ conteoPorPagar }}</strong></span>
+            <span class="rrv-leyenda__item rrv-leyenda__item--incremento"><i><mat-icon aria-hidden="true">trending_up</mat-icon></i> Incremento <strong>{{ conteoIncrementos }}</strong></span>
+          </div>
+          <div class="rrv-periodo-acciones">
             <span class="rrv-periodo-tip" [title]="motivoAperturaBloqueada">
-              <button type="button" mat-flat-button class="bg-warning rrv-periodo-btn"
+              <button type="button" class="rrv-btn rrv-btn--apertura"
                 (click)="aperturaDeMes()" [disabled]="!puedeAbrirMes || !mesFechaFiltro">
-                <i class="fa" [class.fa-calendar-plus-o]="!abriendoMes" [class.fa-spinner]="abriendoMes"
-                  [class.fa-spin]="abriendoMes" aria-hidden="true"></i>
-                {{ abriendoMes ? 'Abriendo…' : 'Apertura de Mes' }}
+                <mat-icon aria-hidden="true" [class.rrv-girando]="abriendoMes">{{ abriendoMes ? 'autorenew' : 'calendar_month' }}</mat-icon>
+                <span>{{ abriendoMes ? 'Abriendo…' : 'Apertura de mes' }}</span>
               </button>
             </span>
-            <!-- Solo se habilita cuando todas las rentas del mes están pagadas -->
             <span class="rrv-periodo-tip" [title]="motivoCierreBloqueado">
-              <button type="button" mat-flat-button class="bg-success rrv-periodo-btn"
+              <button type="button" class="rrv-btn rrv-btn--cierre"
                 (click)="cierreDeMes()" [disabled]="!puedeCerrarMes || !mesFechaFiltro">
-                <i class="fa" [class.fa-calendar-check-o]="!cerrandoMes" [class.fa-spinner]="cerrandoMes"
-                  [class.fa-spin]="cerrandoMes" aria-hidden="true"></i>
-                {{ cerrandoMes ? 'Cerrando…' : 'Cierre de Mes' }}
+                <mat-icon aria-hidden="true" [class.rrv-girando]="cerrandoMes">{{ cerrandoMes ? 'autorenew' : 'event_available' }}</mat-icon>
+                <span>{{ cerrandoMes ? 'Cerrando…' : 'Cierre de mes' }}</span>
               </button>
             </span>
           </div>
-          <div class="rrv-filtros">
+        </header>
+
+        <div class="rrv-fila2">
+          <div class="rrv-filtros" role="search" aria-label="Filtros del periodo">
             <div class="rrv-campo">
               <label class="rrv-label" for="rrMesFiltro">Mes <span class="rrv-req">*</span></label>
               <dx-date-box
@@ -142,96 +155,182 @@
             </div>
           </div>
 
-        </section>
-
-      <div class="rr-body">
-
-        <!-- Búsqueda, estatus y exportación de la tabla -->
         <div class="rrv-tabla-barra">
           <div class="rrv-busqueda">
             <mat-icon aria-hidden="true">search</mat-icon>
             <input id="rentRolSearchInput" type="search" [value]="busquedaTexto" (input)="onBusquedaInput($event)"
-              placeholder="Buscar arrendatario, inmueble, local, montos, fechas, estatus…" autocomplete="off"
+              placeholder="Buscar arrendatario, inmueble, local…" autocomplete="off"
               spellcheck="false" aria-label="Buscar en toda la tabla" />
             <button type="button" class="rrv-busqueda__limpiar" *ngIf="busquedaTexto.trim().length > 0"
               (click)="limpiarBusqueda()" aria-label="Limpiar búsqueda">
               <mat-icon aria-hidden="true">close</mat-icon>
             </button>
           </div>
-          <div class="rrv-leyenda" aria-label="Leyenda de estatus">
-            <span class="rrv-leyenda__item rrv-leyenda__item--pagada"><i></i> Pagada <strong>{{ conteoPagadas }}</strong></span>
-            <span class="rrv-leyenda__item rrv-leyenda__item--azul" title="Generada; se puede editar"><i></i> Editable <strong>{{ conteoEditables }}</strong></span>
-            <span class="rrv-leyenda__item rrv-leyenda__item--amarillo" title="Mes abierto; solo se puede marcar como pagada"><i></i> Por pagar <strong>{{ conteoPorPagar }}</strong></span>
-            <span class="rrv-leyenda__item rrv-leyenda__item--inc-badge"
-              title="Se indica en la columna Concepto de la línea que tiene incremento">
-              <span class="concepto-inc concepto-inc--leyenda"><mat-icon aria-hidden="true">trending_up</mat-icon>Incremento</span>
-            </span>
-          </div>
-          <div class="rr-export-wrap rrv-export" [class.rr-export-wrap--open]="exportMenuAbierto">
-            <button type="button" class="rrv-btn rrv-btn--fantasma" [disabled]="!registrosVisibles.length"
-              [attr.aria-expanded]="exportMenuAbierto" aria-haspopup="menu" (click)="toggleExportMenu()">
-              <mat-icon aria-hidden="true">file_download</mat-icon> Exportar
-              <mat-icon aria-hidden="true" class="rr-export-chevron">expand_more</mat-icon>
-            </button>
-            <div class="rr-export-menu" role="menu" aria-label="Opciones de exportación" *ngIf="exportMenuAbierto">
-              <button type="button" class="rr-export-option rr-export-option--excel" role="menuitem"
-                (click)="exportarExcel()">
-                <i class="fa fa-file-excel-o"></i>
-                <span>Exportar grid a Excel</span>
+          <div class="rrv-tabla-barra__meta">
+            <div class="rr-export-wrap rrv-export" [class.rr-export-wrap--open]="exportMenuAbierto">
+              <button type="button" class="rrv-btn rrv-btn--fantasma" [disabled]="!registrosVisibles.length"
+                [attr.aria-expanded]="exportMenuAbierto" aria-haspopup="menu" (click)="toggleExportMenu()">
+                <mat-icon aria-hidden="true">file_download</mat-icon> Exportar
+                <mat-icon aria-hidden="true" class="rr-export-chevron">expand_more</mat-icon>
               </button>
-              <button type="button" class="rr-export-option rr-export-option--pdf" role="menuitem"
-                (click)="exportarPdf()">
-                <i class="fa fa-print"></i>
-                <span>Exportar PDF</span>
-              </button>
+              <div class="rr-export-menu" role="menu" aria-label="Opciones de exportación" *ngIf="exportMenuAbierto">
+                <button type="button" class="rr-export-option rr-export-option--excel" role="menuitem"
+                  (click)="exportarExcel()">
+                  <i class="fa fa-file-excel-o"></i>
+                  <span>Exportar grid a Excel</span>
+                </button>
+                <button type="button" class="rr-export-option rr-export-option--pdf" role="menuitem"
+                  (click)="exportarPdf()">
+                  <i class="fa fa-print"></i>
+                  <span>Exportar PDF</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
+        </div>
+
+      <div class="rr-body">
+
+        <!-- Móvil / tablet: tarjetas (sin scroll horizontal) -->
+        <div class="rr-cards" *ngIf="registrosVisibles.length; else rrCardsEmpty" aria-label="Listado Rent Rol">
+          <article class="rr-card" *ngFor="let row of registrosVisibles" [ngClass]="claseEstatusCard(row)">
+            <header class="rr-card__head">
+              <div class="rr-card__titulares">
+                <h4 class="rr-card__nombre">{{ row.nombre }}</h4>
+                <span class="empresa-nota--incremento" *ngIf="tieneIncrementoRow(row)">Incremento</span>
+                <p class="rr-card__meta" *ngIf="row.representanteLegal || row.telefonoRepresentante">
+                  <span *ngIf="row.representanteLegal">{{ row.representanteLegal }}</span>
+                  <span *ngIf="row.representanteLegal && row.telefonoRepresentante"> · </span>
+                  <span *ngIf="row.telefonoRepresentante">{{ row.telefonoRepresentante }}</span>
+                </p>
+              </div>
+              <span class="rr-tag"
+                [class.rr-tag--pagada]="row.pagada"
+                [class.rr-tag--azul]="row.esPendiente && !row.abierta"
+                [class.rr-tag--amarillo]="row.esPendiente && row.abierta"
+                [class.rr-tag--pendiente]="!row.pagada && !row.esPendiente">
+                {{ row.pagadaLabel }}
+              </span>
+            </header>
+
+            <div class="rr-card__lugar">
+              <span class="rr-card__inmueble">{{ row.inmueble }}</span>
+              <span class="rr-card__zona" *ngIf="row.zona">{{ row.zona }}</span>
+              <span class="rr-card__local">{{ row.modulo }}</span>
+            </div>
+
+            <dl class="rr-card__montos">
+              <div>
+                <dt><span class="concepto-pill concepto-pill--renta">Renta</span></dt>
+                <dd>{{ row.renta.montoFinal | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt><span class="concepto-pill concepto-pill--mant">Mantto</span></dt>
+                <dd>{{ row.mantenimiento.montoFinal | currency:'MXN':'symbol-narrow':'1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Metros</dt>
+                <dd>{{ row.metrosRentados | number:'1.2-2' }} M²</dd>
+              </div>
+              <div>
+                <dt>Contrato</dt>
+                <dd>{{ row.inicioContrato }} → {{ row.finContrato }}</dd>
+              </div>
+            </dl>
+
+            <footer class="rr-card__acciones">
+              @if (row.esPendiente && row.idRentaActual != null) {
+                @if (!row.abierta) {
+                  @if (row.puedeDuplicarMes) {
+                  <button type="button" class="rrv-btn rrv-btn--secundario" (click)="editarRentaDesdeCard(row)">
+                    <mat-icon aria-hidden="true">edit</mat-icon> Editar
+                  </button>
+                  }
+                } @else {
+                <button type="button" class="rrv-btn rrv-btn--cierre" (click)="marcarRentaPagadaDesdeCard(row)">
+                  <mat-icon aria-hidden="true">check</mat-icon> Marcar pagada
+                </button>
+                }
+              } @else if (row.pagada) {
+              <span class="estatus estatus-activo">Renta Pagada</span>
+              }
+            </footer>
+          </article>
+        </div>
+        <ng-template #rrCardsEmpty>
+          <div class="rr-cards rr-cards--empty" aria-live="polite">
+            {{ modoBusquedaActivo ? 'Sin coincidencias para la búsqueda.' : 'Sin registros en el periodo seleccionado.' }}
+          </div>
+        </ng-template>
 
         <div class="rr-table-wrap rr-grid-wrap">
 
-          <dx-data-grid #gridRentRol id="gridRentRol" class="inm-data-grid rr-data-grid" [columnHidingEnabled]="false"
-            [allowColumnReordering]="false" [allowColumnResizing]="true" [columnAutoWidth]="false"
+          <dx-data-grid #gridRentRol id="gridRentRol" class="inm-data-grid rr-data-grid" [columnHidingEnabled]="true"
+            [allowColumnReordering]="false" [allowColumnResizing]="false" [columnAutoWidth]="false"
             [wordWrapEnabled]="true" [hoverStateEnabled]="false" [showBorders]="true" [showColumnLines]="false"
             [showRowLines]="true" [rowAlternationEnabled]="false" [dataSource]="listaRentRol" [keyExpr]="'gridKey'"
-            [width]="'100%'" [remoteOperations]="{ paging: true }" [paging]="{ pageSize: FILAS_GRID_POR_PAGINA }"
+            [width]="'100%'" [remoteOperations]="{ paging: true, filtering: true, sorting: true }"
+            [paging]="{ pageSize: FILAS_GRID_POR_PAGINA }"
             [noDataText]="modoBusquedaActivo ? 'Sin coincidencias para la búsqueda.' : 'Sin registros en el periodo seleccionado.'"
             [pager]="{
                 showPageSizeSelector: false,
                 showInfo: true,
                 infoText: 'Página {0} de {1}',
                 visible: true
-              }" (onRowPrepared)="onRowPrepared($event)" (onCellPrepared)="onCellPrepared($event)">
-            <dxo-scrolling mode="standard" columnRenderingMode="standard" showScrollbar="always"
-              [useNative]="true"></dxo-scrolling>
-            <dxi-column dataField="nombre" caption="Arrendatario" cellTemplate="empresaTpl" [minWidth]="220"
-              [allowHiding]="false" alignment="left"></dxi-column>
-            <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" [minWidth]="120"
-              [allowHiding]="false" alignment="center"></dxi-column>
-            <dxi-column dataField="modulo" caption="Locales" [minWidth]="72" [allowHiding]="false"
-              alignment="center"></dxi-column>
-            <dxi-column dataField="metrosRentados" caption="Metros rentados" cellTemplate="metrosTpl" [minWidth]="88"
-              [allowHiding]="false" alignment="right"></dxi-column>
-            <dxi-column dataField="costoM2" caption="Costo M²" cellTemplate="costoM2Tpl" [minWidth]="88"
-              [allowHiding]="false" alignment="right"></dxi-column>
-            <dxi-column dataField="tipoConcepto" caption="Concepto" cellTemplate="conceptoTpl" [minWidth]="88"
-              [allowHiding]="false" alignment="center" [allowSorting]="false"></dxi-column>
-            <dxi-column dataField="subTotal" caption="Sub-total" cellTemplate="monedaTpl" [minWidth]="96"
-              [allowHiding]="false" alignment="right"></dxi-column>
-            <dxi-column dataField="iva" caption="IVA" cellTemplate="monedaTpl" [minWidth]="96" [allowHiding]="false"
-              alignment="right"></dxi-column>
-            <dxi-column dataField="montoFinal" caption="Total" cellTemplate="totalTpl" [minWidth]="96"
-              [allowHiding]="false" alignment="right"></dxi-column>
-            <dxi-column dataField="inicioContrato" caption="Fecha Inicio Contrato" cssClass="cell-fecha"
-              [minWidth]="108" [allowHiding]="false" alignment="center"></dxi-column>
-            <dxi-column dataField="finContrato" caption="Fecha Termino Contrato" cssClass="cell-fecha" [minWidth]="108"
-              [allowHiding]="false" alignment="center"></dxi-column>
-            <dxi-column dataField="pagadaLabel" caption="Pagada" cellTemplate="pagadaTpl" [minWidth]="88"
-              [allowHiding]="false" alignment="center"></dxi-column>
-            <dxi-column dataField="acciones" caption="Acciones" cellTemplate="accionesTpl" [minWidth]="150"
-              [allowHiding]="false" [allowSorting]="false" alignment="center"></dxi-column>
+              }" (onRowPrepared)="onRowPrepared($event)">
+            <dxo-scrolling mode="standard" columnRenderingMode="standard" showScrollbar="vertical"
+              [useNative]="false"></dxo-scrolling>
+            <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
+            <dxo-header-filter [visible]="false"></dxo-header-filter>
+            <dxi-column dataField="acciones" caption="Acciones" cellTemplate="accionesTpl" [width]="118"
+              [allowHiding]="false" [allowFiltering]="false" [allowSorting]="false" [allowHeaderFiltering]="false"
+              alignment="center" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="nombre" caption="Arrendatario" cellTemplate="empresaTpl" [width]="190"
+              [allowHiding]="false" [allowFiltering]="true" [allowHeaderFiltering]="false" [allowSorting]="false"
+              alignment="left" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="inmueble" caption="Inmueble" cellTemplate="inmuebleTpl" [width]="120"
+              [allowHiding]="true" [hidingPriority]="4" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" alignment="center" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="modulo" caption="Locales" [width]="80"
+              [allowHiding]="true" [hidingPriority]="3" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" alignment="center" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="metrosRentados" caption="Metros rentados" cellTemplate="metrosTpl" [width]="100"
+              [allowHiding]="true" [hidingPriority]="8" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" dataType="number" alignment="right" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="costoM2" caption="Costo M²" cellTemplate="costoM2Tpl" [width]="90"
+              [allowHiding]="true" [hidingPriority]="7" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" dataType="number" alignment="right" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="tipoConcepto" caption="Concepto" cellTemplate="conceptoTpl" [width]="90"
+              [allowHiding]="true" [hidingPriority]="2" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" alignment="center" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="subTotal" caption="Sub-total" cellTemplate="subTotalTpl" [width]="100"
+              [allowHiding]="true" [hidingPriority]="5" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" dataType="number" alignment="right" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="iva" caption="IVA" cellTemplate="ivaTpl" [width]="96"
+              [allowHiding]="true" [hidingPriority]="6" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" dataType="number" alignment="right" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="montoFinal" caption="Total" cellTemplate="totalTpl" [width]="100"
+              [allowHiding]="true" [hidingPriority]="1" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" dataType="number" alignment="right" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="inicioContrato" caption="Inicio Contrato" [width]="100"
+              [allowHiding]="true" [hidingPriority]="10" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" alignment="center" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="finContrato" caption="Termino Contrato" [width]="100"
+              [allowHiding]="true" [hidingPriority]="9" [allowFiltering]="true" [allowHeaderFiltering]="false"
+              [allowSorting]="false" alignment="center" headerCellTemplate="rrHeaderTpl"></dxi-column>
+            <dxi-column dataField="pagadaLabel" caption="Pagada" cellTemplate="pagadaTpl" [width]="80"
+              [allowHiding]="false" [allowFiltering]="true" [allowHeaderFiltering]="false" [allowSorting]="false"
+              alignment="center" headerCellTemplate="rrHeaderTpl" cssClass="rr-col-pagada"></dxi-column>
+            <div *dxTemplate="let col of 'rrHeaderTpl'" class="rr-header-caption">
+              {{ col.column.caption }}
+            </div>
             <div *dxTemplate="let cell of 'empresaTpl'">
               <div class="empresa-nombre">{{ cell.data.nombre }}</div>
+              <div class="empresa-nota--incremento"
+                *ngIf="cell.data.registro?.tieneIncrementoRenta || cell.data.registro?.tieneIncrementoMantenimiento">
+                Incremento
+              </div>
               <div class="empresa-nota" *ngIf="cell.data.representanteLegal || cell.data.telefonoRepresentante">
                 <span *ngIf="cell.data.representanteLegal">{{ cell.data.representanteLegal }}</span>
                 <span *ngIf="cell.data.representanteLegal && cell.data.telefonoRepresentante"> · </span>
@@ -249,28 +348,29 @@
               {{ cell.data.costoM2 | currency:'MXN':'symbol-narrow':'1.2-2' }}
             </div>
             <div *dxTemplate="let cell of 'conceptoTpl'" class="cell-center concepto-celda">
-              <span class="concepto-pill" [class.concepto-pill--renta]="cell.data.tipoConcepto === 'Renta'"
-                [class.concepto-pill--mant]="cell.data.tipoConcepto === 'Mantto'">
-                {{ cell.data.tipoConcepto === 'Renta' ? 'Renta' : 'Mantto' }}
-              </span>
-              @if (cell.data.tieneIncremento) {
-              <span class="concepto-inc"
-                [attr.title]="(cell.data.tipoConcepto === 'Renta' ? 'La renta' : 'El mantenimiento') + ' tiene incremento'">
-                <mat-icon aria-hidden="true">trending_up</mat-icon>Incremento
-              </span>
-              }
+              <span class="concepto-pill concepto-pill--renta">Renta</span>
+              <span class="rr-divisor" *ngIf="cell.data.tieneMantenimiento"></span>
+              <span class="concepto-pill concepto-pill--mant" *ngIf="cell.data.tieneMantenimiento">Mantto</span>
             </div>
-            <div *dxTemplate="let cell of 'monedaTpl'" class="cell-right cell-num">
-              {{ cell.value | currency:'MXN':'symbol-narrow':'1.2-2' }}
+            <div *dxTemplate="let cell of 'subTotalTpl'" class="cell-right cell-num rr-montos">
+              <span>{{ cell.data.renta.subTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+              <span class="rr-divisor" *ngIf="cell.data.tieneMantenimiento"></span>
+              <span *ngIf="cell.data.tieneMantenimiento">{{ cell.data.mantenimiento.subTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
             </div>
-            <div *dxTemplate="let cell of 'totalTpl'" class="cell-right cell-num cell-total">
-              {{ cell.value | currency:'MXN':'symbol-narrow':'1.2-2' }}
+            <div *dxTemplate="let cell of 'ivaTpl'" class="cell-right cell-num rr-montos">
+              <span>{{ cell.data.renta.iva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+              <span class="rr-divisor" *ngIf="cell.data.tieneMantenimiento"></span>
+              <span *ngIf="cell.data.tieneMantenimiento">{{ cell.data.mantenimiento.iva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+            </div>
+            <div *dxTemplate="let cell of 'totalTpl'" class="cell-right cell-num cell-total rr-montos">
+              <span>{{ cell.data.renta.montoFinal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+              <span class="rr-divisor" *ngIf="cell.data.tieneMantenimiento"></span>
+              <span *ngIf="cell.data.tieneMantenimiento">{{ cell.data.mantenimiento.montoFinal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
             </div>
             <div *dxTemplate="let cell of 'pagadaTpl'" class="cell-center">
-              <span class="rr-tag" [class.rr-tag--pagada]="cell.data.pagada"
-                [class.rr-tag--azul]="cell.data.esPendiente && !cell.data.registro.abierta"
-                [class.rr-tag--amarillo]="cell.data.esPendiente && cell.data.registro.abierta"
-                [class.rr-tag--pendiente]="!cell.data.pagada && !cell.data.esPendiente">
+              <span class="estatus" [class.estatus-activo]="cell.data.pagada"
+                [class.estatus-instalado]="cell.data.esPendiente && !cell.data.registro.abierta"
+                [class.estatus-parcial]="cell.data.esPendiente && cell.data.registro.abierta">
                 {{ cell.data.pagadaLabel }}
               </span>
             </div>
@@ -299,7 +399,7 @@
               </button>
               }
               } @else if (cell.data.pagada) {
-              <span class="rr-acciones__pagada" title="La renta ya fue pagada y no admite cambios">Renta Pagada</span>
+              <span class="estatus estatus-activo" title="La renta ya fue pagada y no admite cambios">Renta Pagada</span>
               } @else {
               <span class="rr-acciones__vacio">—</span>
               }

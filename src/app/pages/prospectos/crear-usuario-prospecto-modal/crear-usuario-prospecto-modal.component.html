@@ -1,0 +1,313 @@
+<div class="docs-backdrop pu-backdrop">
+  <div
+    class="docs-modal pu-modal perm-wrapper"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="pu-titulo"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="row docs-modal__header pu-header">
+      <div class="col-12">
+        <h3 class="docs-modal__title" id="pu-titulo">Crear usuario del prospecto</h3>
+        <p class="docs-modal__subtitle">El prospecto ya quedó registrado. Crea su usuario para terminar el alta.</p>
+      </div>
+    </div>
+
+    <form [formGroup]="usuarioForm" class="perm-form-nc perm-form-body pu-form" autocomplete="off" novalidate (ngSubmit)="crearUsuario()">
+      <div class="docs-modal__body pu-body">
+        <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+          style="position:absolute;left:-10000px;opacity:0;width:1px;height:1px;">
+        <input type="password" autocomplete="new-password" tabindex="-1" aria-hidden="true"
+          style="position:absolute;left:-10000px;opacity:0;width:1px;height:1px;">
+
+        @if (camposInvalidos.length) {
+          <div class="pu-alert pu-alert--error" role="alert">
+            <p class="pu-alert__title">Revisa los siguientes campos:</p>
+            <ul class="pu-alert__list">
+              @for (campo of camposInvalidos; track campo) {
+                <li>{{ campo }}</li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (errorEnvio) {
+          <div class="pu-alert pu-alert--error" role="alert">
+            <p class="pu-alert__title">{{ errorEnvio }}</p>
+          </div>
+        }
+
+        <div class="row g-4">
+          <div class="col-12 col-md-4">
+            <label for="puCliente" class="form-label perm-label">Cliente</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">business</mat-icon>
+              </span>
+              <app-campo-select inputId="puCliente" formControlName="idCliente" label="Cliente vinculado"
+                placeholder="" [items]="listaClienteVinculado" valueExpr="id"
+                displayExpr="etiqueta" [disabled]="true"></app-campo-select>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="puNombre" class="form-label perm-label">Nombre</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">person</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" formControlName="nombre" class="form-control" id="puNombre"
+                  placeholder="Ej.: Juan" required>
+                <label for="puNombre">Ej.: Juan</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="puApellidoPaterno" class="form-label perm-label">Apellido Paterno</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">badge</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" formControlName="apellidoPaterno" class="form-control" id="puApellidoPaterno"
+                  placeholder="Ej.: Pérez" required>
+                <label for="puApellidoPaterno">Ej.: Pérez</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="puApellidoMaterno" class="form-label perm-label">Apellido Materno</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">badge</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" formControlName="apellidoMaterno" class="form-control" id="puApellidoMaterno"
+                  placeholder="Ej.: García">
+                <label for="puApellidoMaterno">Ej.: García</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="puCorreo" class="form-label perm-label">Correo Electrónico</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">mail</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" formControlName="userName" class="form-control" id="puCorreo"
+                  placeholder="Ej.: juan.perez@empresa.com" required>
+                <label for="puCorreo">Ej.: juan.perez&#64;empresa.com</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="puTelefono" class="form-label perm-label">Teléfono</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">phone</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1">
+                <input type="text" maxlength="10" (keypress)="allowOnlyNumbers($event)"
+                  formControlName="telefono" class="form-control" id="puTelefono"
+                  placeholder="Ej.: 55 1234 5678" required>
+                <label for="puTelefono">Ej.: 55 1234 5678</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="puRol" class="form-label perm-label">Rol</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
+              </span>
+              <app-campo-select inputId="puRol" formControlName="idRol" required label="Selecciona un rol"
+                placeholder="" [items]="listaRoles" valueExpr="id" displayExpr="nombre"></app-campo-select>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="puClave" class="form-label perm-label">Contraseña</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">lock</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 position-relative">
+                <input [type]="hidePass ? 'password' : 'text'" formControlName="passwordHash"
+                  class="form-control pr-5" id="puClave" placeholder="Mín. 8 caracteres" required
+                  autocomplete="new-password" name="new-password" autocapitalize="off"
+                  autocorrect="off" spellcheck="false" (focus)="onPwdFocus()" (blur)="onPwdBlur()"
+                  (input)="onPwdInput($event)" />
+                <label for="puClave">Ej.: ********</label>
+                <button type="button" class="btn btn-link p-0 password-eye"
+                  (mousedown)="$event.preventDefault()" (click)="hidePass = !hidePass"
+                  [attr.aria-label]="hidePass ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+                  <i class="fa" [ngClass]="hidePass ? 'fa-eye' : 'fa-eye-slash'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mt-3 password-requirements" *ngIf="showPwdHints">
+              <ng-container [ngSwitch]="currentRuleKey">
+                <p *ngSwitchCase="'case'" class="pwd-hint text-danger" [@fadeIn]>
+                  <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                  <span class="ms-2">Al menos una mayúscula y minúsculas.</span>
+                </p>
+                <p *ngSwitchCase="'special'" class="pwd-hint text-danger" [@fadeIn]>
+                  <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                  <span class="ms-2">Un caracter no alfanumérico (ejemplo: #?!&).</span>
+                </p>
+                <p *ngSwitchCase="'number'" class="pwd-hint text-danger" [@fadeIn]>
+                  <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                  <span class="ms-2">Un número.</span>
+                </p>
+                <p *ngSwitchCase="'length'" class="pwd-hint text-danger" [@fadeIn]>
+                  <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                  <span class="ms-2">La contraseña debe tener más de 6 caracteres y menos de 16.</span>
+                </p>
+                <p *ngSwitchCase="'ok'" class="pwd-hint text-success" [@fadeIn]>
+                  <i class="fa fa-check-circle" aria-hidden="true"></i>
+                  <span class="ms-2">Contraseña válida y segura.</span>
+                </p>
+              </ng-container>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label for="puConfirm" class="form-label perm-label">Confirmar Contraseña</label>
+            <div class="input-group input-group-lg perm-ig">
+              <span class="input-group-text fw-bold">
+                <mat-icon aria-hidden="true">lock_reset</mat-icon>
+              </span>
+              <div class="form-floating flex-grow-1 position-relative">
+                <input [type]="hideConfirm ? 'password' : 'text'" class="form-control pr-5"
+                  id="puConfirm" placeholder="Confirmar Contraseña"
+                  formControlName="confirmPassword" [attr.name]="confirmName"
+                  autocomplete="new-password" autocapitalize="off" spellcheck="false"
+                  (input)="onConfirmInput($event)" (blur)="onConfirmBlur()" />
+                <label for="puConfirm">Confirmar Contraseña</label>
+                <button type="button" class="btn btn-link p-0 password-eye"
+                  (mousedown)="$event.preventDefault()" (click)="hideConfirm = !hideConfirm"
+                  [attr.aria-label]="hideConfirm ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+                  <i class="fa" [ngClass]="hideConfirm ? 'fa-eye' : 'fa-eye-slash'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mt-2" *ngIf="confirmHintVisible">
+              <p class="pwd-hint" [ngClass]="confirmMatch ? 'text-success' : 'text-danger'" [@fadeIn]>
+                <i class="fa" [ngClass]="confirmMatch ? 'fa-check-circle' : 'fa-exclamation-circle'"></i>
+                <span class="ms-2">{{ confirmMatch ? 'Las contraseñas son iguales.' : 'Las contraseñas no coinciden.' }}</span>
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="row g-4 mt-0">
+          <div class="col-12">
+            <label class="form-label perm-label d-block mb-2">Imagen Perfil</label>
+            <div class="mono-pago-file" [class.mono-pago-file--filled]="!!logoFileName"
+              [class.mono-pago-file--dragging]="logoDragging" role="button" tabindex="0"
+              (click)="puLogoFileInput.click()" (keydown.enter)="puLogoFileInput.click()"
+              (keydown.space)="$event.preventDefault(); puLogoFileInput.click()"
+              (dragover)="onLogoDragOver($event)" (dragleave)="onLogoDragLeave($event)" (drop)="onLogoDrop($event)">
+              <div class="mono-pago-file__icon" aria-hidden="true">
+                <mat-icon>{{ logoFileName ? 'image' : 'upload_file' }}</mat-icon>
+              </div>
+              <div class="mono-pago-file__text">
+                <span class="mono-pago-file__title">{{ logoFileName || 'Adjunta la imagen de perfil' }}</span>
+                <span class="mono-pago-file__hint">
+                  {{ logoFileName ? 'Haz clic para reemplazar la imagen' : 'PNG, JPG o WEBP · un solo archivo · máx. 3 MB' }}
+                </span>
+              </div>
+              <span class="mono-pago-file__action">{{ logoFileName ? 'Cambiar' : 'Seleccionar' }}</span>
+              <input #puLogoFileInput type="file" accept="image/png,image/jpeg,image/webp"
+                class="mono-pago-file__input" (change)="onLogoFileSelected($event)" (click)="$event.stopPropagation()" />
+            </div>
+            @if (logoFileName) {
+              <button type="button" class="pu-quitar-foto" (click)="clearLogoImage($event)">Quitar imagen</button>
+            }
+          </div>
+        </div>
+
+          <div class="perm-perms-section mt-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <div>
+                <h3 class="perm-perms-title mb-1">Permisos</h3>
+                <p class="perm-perms-subtitle mb-0">
+                  Revisa los módulos y los permisos disponibles para este usuario.
+                </p>
+              </div>
+              <span class="badge rounded-pill perm-perms-badge">
+                {{ listaModulos.length || 0 }} módulos
+              </span>
+            </div>
+
+            <div class="perm-modules-scroll">
+              <div class="row g-3">
+                <div class="col-12 col-lg-6" *ngFor="let modulo of listaModulos; trackBy: trackByModuloId">
+                  <section class="perm-module-card h-100">
+                    <header class="perm-module-card__head">
+                      <div class="perm-module-card__icon">
+                        <mat-icon aria-hidden="true">folder_shared</mat-icon>
+                      </div>
+                      <div class="perm-module-card__text">
+                        <h4 class="perm-module-card__title mb-0">{{ modulo.nombre }}</h4>
+                        <p class="perm-module-card__desc mb-0">{{ modulo.descripcion || 'Sin descripción' }}</p>
+                      </div>
+                      <div class="perm-module-card__bulk">
+                        <span class="perm-module-card__bulk-label">Todos</span>
+                        <label class="perm-module-card__bulk-toggle">
+                          <input type="checkbox" [checked]="isModuleFullyAssigned(modulo)"
+                            (change)="onModuleToggle(modulo, $event)" />
+                          <span class="perm-switch perm-switch--sm"></span>
+                        </label>
+                      </div>
+                    </header>
+
+                    <div class="perm-module-card__body">
+                      <div class="perm-pill" *ngFor="let permiso of modulo.permisos; trackBy: trackByPermisoId"
+                        [class.perm-pill--active]="permiso.asignado"
+                        (click)="togglePermiso(modulo, permiso)"
+                        role="button" tabindex="0"
+                        (keydown.enter)="togglePermiso(modulo, permiso)"
+                        (keydown.space)="$event.preventDefault(); togglePermiso(modulo, permiso)">
+                        <div class="perm-pill__icon">
+                          <mat-icon aria-hidden="true">verified_user</mat-icon>
+                        </div>
+                        <div class="perm-pill__content">
+                          <span class="perm-pill__name">{{ permiso.nombre }}</span>
+                          <span class="perm-pill__desc">{{ permiso.descripcion || 'Sin descripción' }}</span>
+                        </div>
+                        <label class="perm-pill__toggle" (click)="$event.stopPropagation()">
+                          <input type="checkbox" [checked]="permiso.asignado"
+                            (change)="onPermChange(modulo, permiso, $event)" />
+                          <span class="perm-switch"></span>
+                        </label>
+                      </div>
+
+                      <div class="perm-module-card__empty text-muted" *ngIf="!modulo.permisos || modulo.permisos.length === 0">
+                        Sin permisos configurados para este módulo.
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <div class="docs-modal__footer pu-footer">
+        <p class="pu-footer__nota">Este paso es obligatorio para terminar el alta.</p>
+        <button type="submit" class="button-success pu-submit" [disabled]="loading">
+          <i class="fa fa-check"></i>&nbsp;&nbsp;{{ submitButton }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

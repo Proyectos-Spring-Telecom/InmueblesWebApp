@@ -10,7 +10,7 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, finalize, switchMap, take } from 'rxjs/operators';
 import { manejarErrorHttp413 } from '../shared/swal-archivos-pesados';
 import { AuthenticationService } from './auth.service';
-import { AUTH_RETRIED_AFTER_REFRESH } from './auth-http.context';
+import { AUTH_403_ES_PERMISO, AUTH_RETRIED_AFTER_REFRESH } from './auth-http.context';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -38,7 +38,7 @@ export class AuthInterceptor implements HttpInterceptor {
           return this.handle401Error(req, next, error);
         }
         if (this.shouldForceLogin(error, hadAuth, req)) {
-          this.authService.clearSessionAndRedirect();
+          this.authService.expireSession();
         }
         return throwError(() => error);
       })
@@ -53,6 +53,7 @@ export class AuthInterceptor implements HttpInterceptor {
     const status = error.status;
     if (status !== 401 && status !== 403) return false;
     if (status === 403 && !hadAuth) return false;
+    if (status === 403 && req.context.get(AUTH_403_ES_PERMISO)) return false;
     if (req.context.get(AUTH_RETRIED_AFTER_REFRESH)) return false;
     if (req.url.includes('/login/refresh') || req.url.includes('/login/logout')) {
       return false;
@@ -70,6 +71,7 @@ export class AuthInterceptor implements HttpInterceptor {
     const status = error.status;
     if (status !== 401 && status !== 403) return false;
     if (!hadAuth) return false;
+    if (status === 403 && req.context.get(AUTH_403_ES_PERMISO)) return false;
     if (req.context.get(AUTH_RETRIED_AFTER_REFRESH)) return true;
     if (this.authService.isRefreshBlocked()) return true;
     if (!this.authService.getRefreshToken()) return true;
@@ -83,7 +85,7 @@ export class AuthInterceptor implements HttpInterceptor {
     originalError: HttpErrorResponse
   ): Observable<HttpEvent<any>> {
     if (!this.authService.getRefreshToken()) {
-      this.authService.clearSessionAndRedirect();
+      this.authService.expireSession();
       return throwError(() => originalError);
     }
 
@@ -96,7 +98,7 @@ export class AuthInterceptor implements HttpInterceptor {
           const newToken = this.authService.getToken();
           if (!newToken) {
             this.refreshTokenSubject.next('');
-            this.authService.clearSessionAndRedirect();
+            this.authService.expireSession();
             return throwError(() => originalError);
           }
           this.refreshTokenSubject.next(newToken);
@@ -105,7 +107,7 @@ export class AuthInterceptor implements HttpInterceptor {
         catchError((refreshErr: HttpErrorResponse) => {
           this.refreshTokenSubject.next('');
           if (refreshErr?.status === 401 || refreshErr?.status === 403) {
-            this.authService.clearSessionAndRedirect();
+            this.authService.expireSession();
           }
           return throwError(() => refreshErr);
         }),
@@ -120,7 +122,7 @@ export class AuthInterceptor implements HttpInterceptor {
       take(1),
       switchMap((token) => {
         if (!token) {
-          this.authService.clearSessionAndRedirect();
+          this.authService.expireSession();
           return throwError(() => originalError);
         }
         return this.retryWithToken(req, next, token);

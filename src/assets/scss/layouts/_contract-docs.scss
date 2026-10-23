@@ -194,7 +194,7 @@
   max-width: 100%;
   box-sizing: border-box;
   padding: 0.28rem 0.65rem;
-  border-radius: 999px;
+  border-radius: var(--label-radius, 8px);
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   /* text-transform: uppercase; */
@@ -203,21 +203,21 @@
 }
 
 .mono-pago-estatus--pagado {
-  color: #ffffff;
-  background: rgba(16, 185, 129, 0.22);
-  border-color: rgba(52, 211, 153, 0.55);
+  color: var(--label-green-text, #d1fae5);
+  background: var(--label-green-bg, #11492a);
+  border-color: var(--label-green-border, #0b2e1b);
 }
 
 .mono-pago-estatus--pendiente {
-  color: #ffffff;
-  background: rgba(245, 158, 11, 0.2);
-  border-color: rgba(251, 191, 36, 0.45);
+  color: var(--label-amber-text, #ffedd5);
+  background: var(--label-amber-bg, #6b3a08);
+  border-color: var(--label-amber-border, #4a2805);
 }
 
 .mono-pago-estatus--cancelado {
-  color: #ffffff;
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(248, 113, 113, 0.5);
+  color: var(--label-red-text, #fee2e2);
+  background: var(--label-red-bg, #8b1313);
+  border-color: var(--label-red-border, #6b0f0f);
 }
 
 /* Cobranza: cargo sin pagos aplicados (gris) y con pago parcial (ámbar intenso). */

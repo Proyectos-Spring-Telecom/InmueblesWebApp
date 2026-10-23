@@ -35,20 +35,8 @@ html.light-theme {
       color: #ffffff !important;
     }
 
-    /* Cápsulas de notificación: cristal blanco sobre vino (antes azul marino, desentonaba) */
-    .notify-cap__fill {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.32);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
-    }
-
-    .notify-cap__btn:hover .notify-cap__fill {
-      border-color: rgba(255, 255, 255, 0.55);
-      background: rgba(255, 255, 255, 0.18);
-    }
-
-    .notify-cap__badge {
-      border-color: rgba(255, 255, 255, 0.75);
+    .notif-bell__count {
+      border-color: #681330;
     }
   }
 
@@ -98,257 +86,39 @@ html.light-theme {
     background: #141a21 !important;
   }
 
-  .mat-mdc-menu-panel.notify-hub-panel {
-    --notify-surface: #ffffff;
-    --notify-surface-glass: #ffffff;
-    --notify-border: #cbd5e1;
-    --notify-text: #0f172a;
-    --notify-muted: #475569;
-    --hub-accent: #0284c7;
-    --mat-menu-container-color: #ffffff;
-    --mdc-menu-container-color: #ffffff;
-    --mat-menu-item-label-text-color: #0f172a;
+  /* Panel de notificaciones: superficie clara, cabecera vino */
+  .mat-mdc-menu-panel.notif-panel {
+    --np-bg: #ffffff;
+    --np-surface: #f8fafc;
+    --np-surface-2: #eef2f6;
+    --np-border: #e2e8f0;
+    --np-text: #0f172a;
+    --np-muted: #475569;
+    --np-soft: #94a3b8;
+    --np-accent: #9f1239;
     --mat-menu-container-elevation-shadow:
-      0 16px 40px rgba(15, 23, 42, 0.14),
+      0 24px 50px rgba(15, 23, 42, 0.18),
       0 0 0 1px rgba(15, 23, 42, 0.06);
-
-    background: #ffffff !important;
-    border-color: #cbd5e1 !important;
-    color: #0f172a !important;
   }
 
-  .mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--inmuebles {
-    --hub-accent: #d97706;
+  .notif-tabs {
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
   }
 
-  .mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--predios {
-    --hub-accent: #9333ea;
+  .notif-card:hover {
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
   }
 
-  .mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-content {
-    background: #ffffff !important;
-    color: #0f172a !important;
+  .notif-card__status {
+    color: color-mix(in srgb, var(--tone) 75%, #000);
   }
 
-  .notify-hub-frame {
-    background: #ffffff !important;
+  .notif-card[data-tone="amber"] .notif-card__status {
+    color: #854d0e;
   }
 
-  .notify-hub-frame__hero {
-    background: #f1f5f9 !important;
-    border-bottom-color: #e2e8f0 !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-item {
-    color: #0f172a !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-item .mdc-list-item__primary-text {
-    color: #0f172a !important;
-  }
-
-  .notify-hub-panel--avisos .notify-hub-frame__hero {
-    background: #e0f2fe !important;
-  }
-
-  .notify-hub-panel--inmuebles .notify-hub-frame__hero {
-    background: #fff7ed !important;
-  }
-
-  .notify-hub-panel--predios .notify-hub-frame__hero {
-    background: #faf5ff !important;
-  }
-
-  .notify-hub-frame__hero-badge {
-    background: #ffffff !important;
-    border-color: #cbd5e1 !important;
-    box-shadow: none !important;
-  }
-
-  .notify-hub-frame__hero-ico {
-    color: #0f172a !important;
-  }
-
-  .notify-hub-frame__kicker {
-    color: #64748b !important;
-  }
-
-  .notify-hub-frame__lede {
-    color: #0f172a !important;
-  }
-
-  .notify-hub-frame__metric {
-    background: #ffffff !important;
-    border-color: #cbd5e1 !important;
-  }
-
-  .notify-hub-frame__metric-value {
-    color: #0f172a !important;
-  }
-
-  .notify-hub-frame__metric-label {
-    color: #64748b !important;
-  }
-
-  .notify-hub-frame__stream {
-    background: #ffffff !important;
-  }
-
-  .notify-hub-frame__stream::before {
-    background: linear-gradient(180deg, #94a3b8, #e2e8f0) !important;
-  }
-
-  .notify-hub-frame__stream--scroll::-webkit-scrollbar-thumb {
-    background: #94a3b8 !important;
-  }
-
-  .notify-hub-frame__foot {
-    background: #f8fafc !important;
-    border-top-color: #e2e8f0 !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .notify-hub-frame__cta.mat-mdc-unelevated-button {
-    background: #0284c7 !important;
-    border-color: #7dd3fc !important;
-    color: #ffffff !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--inmuebles
-    .notify-hub-frame__cta.mat-mdc-unelevated-button {
-    background: #d97706 !important;
-    border-color: #fcd34d !important;
-    color: #ffffff !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel.notify-hub-panel--predios
-    .notify-hub-frame__cta.mat-mdc-unelevated-button {
-    background: #9333ea !important;
-    border-color: #d8b4fe !important;
-    color: #ffffff !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .notify-hub-aviso {
-    background: #f8fafc !important;
-    border-color: #e2e8f0 !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
-    color: #0f172a !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .notify-hub-aviso:hover {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .notify-hub-aviso.notify-hub-aviso--tone-expired {
-    background: linear-gradient(120deg, #fee2e2 0%, #fecaca 55%, #fff1f2 100%) !important;
-    border-color: #ef4444 !important;
-    box-shadow:
-      0 0 0 1px rgba(239, 68, 68, 0.35),
-      0 8px 20px rgba(185, 28, 28, 0.18) !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .notify-hub-aviso.notify-hub-aviso--tone-expired:hover {
-    background: linear-gradient(120deg, #fecaca 0%, #fca5a5 55%, #fee2e2 100%) !important;
-    border-color: #dc2626 !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .notify-hub-aviso.notify-hub-aviso--tone-expired
-    .notify-hub-aviso__title {
-    color: #991b1b !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .notify-hub-aviso.notify-hub-aviso--tone-expired
-    .notify-hub-aviso__sub {
-    color: #b91c1c !important;
-  }
-
-  .notify-hub-aviso__badge {
-    color: #fff !important;
-    background: #dc2626 !important;
-    border-color: #f87171 !important;
-  }
-
-  .notify-hub-aviso__title {
-    color: #0f172a !important;
-  }
-
-  .notify-hub-aviso__sub {
-    color: #475569 !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-item.notify-hub-recibo {
-    background: #f8fafc !important;
-    border-color: #e2e8f0 !important;
-    color: #0f172a !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-item.notify-hub-recibo:hover {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-  }
-
-  .notify-hub-recibo__label {
-    color: #0f172a !important;
-  }
-
-  .notify-hub-recibo__detail {
-    color: #475569 !important;
-  }
-
-  .notify-hub-recibo__chev {
-    color: #64748b !important;
-  }
-
-  .mat-mdc-menu-panel.notify-hub-panel .mat-mdc-menu-item.notify-hub-recibo:hover .notify-hub-recibo__chev {
-    color: #0f172a !important;
-  }
-
-  .notify-hub-recibo__tile {
-    background: #e2e8f0 !important;
-    border-color: #cbd5e1 !important;
-    color: #0f172a !important;
-  }
-
-  .notify-hub-recibo__tile--danger {
-    background: #fee2e2 !important;
-    border-color: #fca5a5 !important;
-    color: #991b1b !important;
-  }
-
-  .notify-hub-recibo__tile--expired {
-    background: linear-gradient(145deg, #ef4444, #b91c1c) !important;
-    border-color: #f87171 !important;
-    color: #ffffff !important;
-  }
-
-  .notify-hub-recibo__tile--warning {
-    background: #ffedd5 !important;
-    border-color: #fdba74 !important;
-    color: #9a3412 !important;
-  }
-
-  .notify-hub-recibo__tile--amber {
-    background: #fef3c7 !important;
-    border-color: #fcd34d !important;
-    color: #92400e !important;
-  }
-
-  .notify-hub-recibo__tile--success {
-    background: #dcfce7 !important;
-    border-color: #86efac !important;
-    color: #166534 !important;
-  }
-
-  .notify-hub-recibo__tile--info {
-    background: #e0f2fe !important;
-    border-color: #7dd3fc !important;
-    color: #075985 !important;
-  }
-
-  .notify-hub-empty,
-  .notify-hub-frame__empty,
-  .mat-mdc-menu-panel.notify-hub-panel .notify-hub-empty {
-    color: #475569 !important;
+  .notif-card__cal {
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
   }
 
   /* ---------- CONTENIDO: cards Bootstrap ---------- */
@@ -851,11 +621,37 @@ html.light-theme {
     color: var(--app-text) !important;
   }
 
-  /* ---------- Estatus / chips (mantienen contraste propio) ---------- */
+  /* ---------- Estatus / chips (misma tonalidad sólida en ambos temas) ---------- */
   .estatus {
-    border-color: var(--app-border-strong);
-    color: var(--app-text);
-    background: var(--app-surface-2);
+    border-color: var(--label-slate-border, #1e293b);
+    color: var(--label-slate-text, #e2e8f0);
+    background: var(--label-slate-bg, #2a3548);
+  }
+
+  .estatus-activo,
+  .estatus-disponible {
+    background: var(--label-green-bg, #11492a) !important;
+    border-color: var(--label-green-border, #0b2e1b) !important;
+    color: var(--label-green-text, #d1fae5) !important;
+  }
+
+  .estatus-inactivo,
+  .estatus-descompuesto {
+    background: var(--label-red-bg, #8b1313) !important;
+    border-color: var(--label-red-border, #6b0f0f) !important;
+    color: var(--label-red-text, #fee2e2) !important;
+  }
+
+  .estatus-instalado {
+    background: var(--label-blue-bg, #123d66) !important;
+    border-color: var(--label-blue-border, #0a2844) !important;
+    color: var(--label-blue-text, #dbeafe) !important;
+  }
+
+  .estatus-reparacion {
+    background: var(--label-amber-bg, #6b3a08) !important;
+    border-color: var(--label-amber-border, #4a2805) !important;
+    color: var(--label-amber-text, #ffedd5) !important;
   }
 
   /* ---------- Auth placeholders ---------- */
@@ -2287,28 +2083,29 @@ html.light-theme {
     filter: none !important;
   }
 
+  /* Etiquetas de estatus: misma tonalidad sólida que Activo / Inactivo */
   .inm-estatus-chip--disponible {
-    color: #166534 !important;
-    background: #dcfce7 !important;
-    border-color: #86efac !important;
+    color: var(--label-green-text, #d1fae5) !important;
+    background: var(--label-green-bg, #11492a) !important;
+    border-color: var(--label-green-border, #0b2e1b) !important;
   }
 
   .inm-estatus-chip--ocupado {
-    color: #991b1b !important;
-    background: #fee2e2 !important;
-    border-color: #fca5a5 !important;
+    color: var(--label-red-text, #fee2e2) !important;
+    background: var(--label-red-bg, #8b1313) !important;
+    border-color: var(--label-red-border, #6b0f0f) !important;
   }
 
   .inm-estatus-chip--apartado {
-    color: #92400e !important;
-    background: #fef3c7 !important;
-    border-color: #fcd34d !important;
+    color: var(--label-amber-text, #ffedd5) !important;
+    background: var(--label-amber-bg, #6b3a08) !important;
+    border-color: var(--label-amber-border, #4a2805) !important;
   }
 
   .inm-estatus-chip--baja {
-    color: #6b21a8 !important;
-    background: #f3e8ff !important;
-    border-color: #d8b4fe !important;
+    color: var(--label-purple-text, #f3e8ff) !important;
+    background: var(--label-purple-bg, #4a1570) !important;
+    border-color: var(--label-purple-border, #32104d) !important;
   }
 
   .inm-local-fachada-btn {
@@ -2777,16 +2574,16 @@ html.light-theme {
 
   .dash-badge--ocupado,
   .dash-badge--pendiente {
-    color: #92400e !important;
-    background: #fef3c7 !important;
-    border-color: #fcd34d !important;
+    color: var(--label-amber-text, #ffedd5) !important;
+    background: var(--label-amber-bg, #6b3a08) !important;
+    border-color: var(--label-amber-border, #4a2805) !important;
   }
 
   .dash-badge--libre,
   .dash-badge--pagado {
-    color: #166534 !important;
-    background: #dcfce7 !important;
-    border-color: #86efac !important;
+    color: var(--label-green-text, #d1fae5) !important;
+    background: var(--label-green-bg, #11492a) !important;
+    border-color: var(--label-green-border, #0b2e1b) !important;
   }
 
   .dash-renta-card,
@@ -3291,9 +3088,21 @@ html.light-theme {
   }
 
   .surface .inmueble-estatus-pill {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-    color: var(--app-text) !important;
+    background: var(--label-slate-bg, #2a3548) !important;
+    border-color: var(--label-slate-border, #1e293b) !important;
+    color: var(--label-slate-text, #e2e8f0) !important;
+  }
+
+  .surface .inmueble-estatus-pill--activo {
+    color: var(--label-green-text, #d1fae5) !important;
+    background: var(--label-green-bg, #11492a) !important;
+    border-color: var(--label-green-border, #0b2e1b) !important;
+  }
+
+  .surface .inmueble-estatus-pill--inactivo {
+    color: var(--label-red-text, #fee2e2) !important;
+    background: var(--label-red-bg, #8b1313) !important;
+    border-color: var(--label-red-border, #6b0f0f) !important;
   }
 
   .surface .inmueble-line mat-icon {
@@ -3528,9 +3337,48 @@ html.light-theme {
 
   .iw-chip,
   .iw-card .iw-chip {
-    background: #ecfdf5 !important;
-    border-color: #6ee7b7 !important;
-    color: #065f46 !important;
+    background: var(--label-slate-bg, #2a3548) !important;
+    border-color: var(--label-slate-border, #1e293b) !important;
+    color: var(--label-slate-text, #e2e8f0) !important;
+  }
+
+  .iw-chip--activo,
+  .iw-chip--libre,
+  .iw-card .iw-chip--activo,
+  .iw-card .iw-chip--libre {
+    color: var(--label-green-text, #d1fae5) !important;
+    background: var(--label-green-bg, #11492a) !important;
+    border-color: var(--label-green-border, #0b2e1b) !important;
+  }
+
+  .iw-chip--inactivo,
+  .iw-chip--ocupado,
+  .iw-card .iw-chip--inactivo,
+  .iw-card .iw-chip--ocupado {
+    color: var(--label-red-text, #fee2e2) !important;
+    background: var(--label-red-bg, #8b1313) !important;
+    border-color: var(--label-red-border, #6b0f0f) !important;
+  }
+
+  .iw-chip--tipo,
+  .iw-card .iw-chip--tipo {
+    color: var(--label-blue-text, #dbeafe) !important;
+    background: var(--label-blue-bg, #123d66) !important;
+    border-color: var(--label-blue-border, #0a2844) !important;
+  }
+
+  .iw-chip--reservado,
+  .iw-card .iw-chip--reservado {
+    color: var(--label-amber-text, #ffedd5) !important;
+    background: var(--label-amber-bg, #6b3a08) !important;
+    border-color: var(--label-amber-border, #4a2805) !important;
+  }
+
+  .iw-chip--fuera,
+  .iw-card .iw-chip--fuera {
+    color: var(--label-purple-text, #f3e8ff) !important;
+    background: var(--label-purple-bg, #4a1570) !important;
+    border-color: var(--label-purple-border, #32104d) !important;
   }
 
   .iw-close,

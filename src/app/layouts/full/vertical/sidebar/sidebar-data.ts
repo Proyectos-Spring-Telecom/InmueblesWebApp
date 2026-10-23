@@ -287,8 +287,8 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    displayName: 'Rent Rol',
-    iconName: 'user',
+    displayName: 'Operación',
+    iconName: 'report-money',
     route: '/arrendatarios/rent-rol',
     permission: [
       Permiso.PERMISO_RESERVADO_RENT_ROL,

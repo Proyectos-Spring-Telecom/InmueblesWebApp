@@ -82,23 +82,27 @@
           </div>
         </div>
         <div class="pagos-mes-filtro-acciones">
-          <button type="button" mat-flat-button class="bg-success pagos-mes-filtros-limpiar"
+          <button type="button" mat-flat-button class="bg-warning pagos-mes-filtros-limpiar"
             (click)="limpiarFiltrosPagosMes()" [disabled]="!hayFiltrosPagosMesActivos"
-            aria-label="Limpiar filtros de arrendador e inmueble">
-            <i class="fa fa-eraser" aria-hidden="true"></i> Limpiar
+            aria-label="Limpiar filtros de arrendador e inmueble" title="Limpiar filtros">
+            <i class="fa fa-refresh" aria-hidden="true"></i>
           </button>
         </div>
       </div>
-    </div>
 
-    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
-      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-servicio">
-        <i class="fa fa-plus" aria-hidden="true"></i>
-        Registrar pago servicio
-      </button>
-      <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
-        <i class="fa fa-eraser"></i> Limpiar
-      </button>
+      <div class="d-flex flex-wrap gap-10 inm-lista__toolbar clientes-flow-head__acciones pagos-mes-acciones">
+        <div class="pagos-mes-acciones__grupo pagos-mes-acciones__grupo--principales">
+          <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-servicio">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            Registrar pago servicio
+          </button>
+        </div>
+        <div class="pagos-mes-acciones__grupo pagos-mes-acciones__grupo--utilidades">
+          <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
+            <i class="fa fa-eraser"></i> Limpiar
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="hub-vista-simple__resumen" aria-label="Resumen de pagos">

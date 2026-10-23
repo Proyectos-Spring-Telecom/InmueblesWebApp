@@ -1338,12 +1338,11 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!t || t === '—') return '';
     const tone = this.getEstadoChipClassLista(local).replace('local-status--', '');
     const variant =
-      tone === 'libre' ||
-      tone === 'ocupado' ||
-      tone === 'reservado' ||
-      tone === 'inactivo'
+      tone === 'libre' || tone === 'ocupado' || tone === 'reservado'
         ? tone
-        : 'estado';
+        : tone === 'inactivo'
+          ? 'fuera'
+          : 'estado';
     return `<span class="iw-chip iw-chip--${variant}">${this.escapeHtml(t)}</span>`;
   }
 
@@ -3861,54 +3860,46 @@ export class MonitoreoComponent implements OnInit, AfterViewInit, OnDestroy {
       .iw-chip {
         display: inline-block;
         padding: 4px 10px;
-        border-radius: 999px;
+        border-radius: 8px;
         font-size: 10px;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         line-height: 1.2;
-        color: #e8edf6;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        background: rgba(255, 255, 255, 0.06);
+        color: #e2e8f0;
+        border: 1px solid #1e293b;
+        background: #2a3548;
       }
-      .iw-chip--activo {
-        color: #bbf7d0;
-        border-color: rgba(74, 222, 128, 0.4);
-        background: rgba(20, 83, 45, 0.35);
+      .iw-chip--activo,
+      .iw-chip--libre {
+        color: #d1fae5;
+        border-color: #0b2e1b;
+        background: #11492a;
       }
-      .iw-chip--inactivo {
-        color: #fecaca;
-        border-color: rgba(248, 113, 113, 0.45);
-        background: rgba(127, 29, 29, 0.35);
+      .iw-chip--inactivo,
+      .iw-chip--ocupado {
+        color: #fee2e2;
+        border-color: #6b0f0f;
+        background: #8b1313;
       }
       .iw-chip--tipo {
-        color: #c8d2f0;
-        border-color: rgba(130, 160, 255, 0.35);
-        background: rgba(89, 109, 255, 0.16);
+        color: #dbeafe;
+        border-color: #0a2844;
+        background: #123d66;
       }
       .iw-chip--estado {
-        color: #e8edff;
-        border-color: rgba(130, 160, 255, 0.28);
-        background: rgba(14, 20, 32, 0.88);
-      }
-      .iw-chip--libre {
-        color: #ecfdf5;
-        border-color: rgba(134, 239, 172, 0.45);
-        background: rgba(22, 163, 74, 0.92);
-      }
-      .iw-chip--ocupado {
-        color: #fff1f2;
-        border-color: rgba(248, 113, 113, 0.45);
-        background: rgba(220, 38, 38, 0.88);
+        color: #e2e8f0;
+        border-color: #1e293b;
+        background: #2a3548;
       }
       .iw-chip--reservado {
-        color: #fffbeb;
-        border-color: rgba(253, 224, 71, 0.4);
-        background: rgba(217, 119, 6, 0.92);
+        color: #ffedd5;
+        border-color: #4a2805;
+        background: #6b3a08;
       }
-      .iw-chip--inactivo {
-        color: #f5f3ff;
-        border-color: rgba(216, 180, 254, 0.5);
-        background: rgba(109, 40, 217, 0.88);
+      .iw-chip--fuera {
+        color: #f3e8ff;
+        border-color: #32104d;
+        background: #4a1570;
       }
       .iw-card__hero {
         display: flex;

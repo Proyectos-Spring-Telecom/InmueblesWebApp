@@ -46,101 +46,57 @@
   }
 }
 
-/* Etiquetas de acción estilo Swagger */
+/* Etiquetas de acción — misma tonalidad sólida que Activo / Inactivo */
 .bitacora-accion {
   display: inline-block;
   min-width: 5.5rem;
   padding: 0.2rem 0.55rem;
-  border-radius: 4px;
+  border-radius: var(--label-radius, 8px);
   border: 1px solid transparent;
   letter-spacing: 0.04em;
   text-align: center;
-  text-transform: uppercase;
   font-size: 0.72rem;
   line-height: 1.35;
-  color: #fff;
 }
 
 .bitacora-accion--post {
-  background: rgba(73, 204, 144, 0.22);
-  border-color: #49cc90;
-  color: #ffffff;
+  background: var(--label-green-bg, #11492a);
+  border-color: var(--label-green-border, #0b2e1b);
+  color: var(--label-green-text, #d1fae5);
 }
 
 .bitacora-accion--get {
-  background: rgba(97, 175, 254, 0.22);
-  border-color: #61affe;
-  color: #ffffff;
+  background: var(--label-blue-bg, #123d66);
+  border-color: var(--label-blue-border, #0a2844);
+  color: var(--label-blue-text, #dbeafe);
 }
 
 .bitacora-accion--put {
-  background: rgba(252, 161, 48, 0.22);
-  border-color: #fca130;
-  color: #ffffff;
+  background: var(--label-amber-bg, #6b3a08);
+  border-color: var(--label-amber-border, #4a2805);
+  color: var(--label-amber-text, #ffedd5);
 }
 
 .bitacora-accion--patch {
-  background: rgba(144, 18, 254, 0.22);
-  border-color: #9012fe;
-  color: #ffffff;
+  background: var(--label-purple-bg, #4a1570);
+  border-color: var(--label-purple-border, #32104d);
+  color: var(--label-purple-text, #f3e8ff);
 }
 
 .bitacora-accion--delete {
-  background: rgba(249, 62, 62, 0.22);
-  border-color: #f93e3e;
-  color: #ffffff;
+  background: var(--label-red-bg, #8b1313);
+  border-color: var(--label-red-border, #6b0f0f);
+  color: var(--label-red-text, #fee2e2);
 }
 
 .bitacora-accion--evaluate {
-  background: rgba(19, 194, 194, 0.22);
-  border-color: #13c2c2;
-  color: #ffffff;
+  background: var(--label-teal-bg, #0d4f4f);
+  border-color: var(--label-teal-border, #093838);
+  color: var(--label-teal-text, #ccfbf1);
 }
 
 .bitacora-accion--default {
-  background: rgba(148, 163, 184, 0.18);
-  border-color: #94a3b8;
-  color: #ffffff;
-}
-
-/* Tema claro: texto oscuro (el fondo claro deja el blanco ilegible) */
-:host-context(html.light-theme) {
-  .bitacora-accion,
-  .bitacora-accion--post,
-  .bitacora-accion--get,
-  .bitacora-accion--put,
-  .bitacora-accion--patch,
-  .bitacora-accion--delete,
-  .bitacora-accion--evaluate,
-  .bitacora-accion--default {
-    color: #0f172a !important;
-  }
-
-  .bitacora-accion--post {
-    background: rgba(73, 204, 144, 0.2) !important;
-  }
-
-  .bitacora-accion--get {
-    background: rgba(97, 175, 254, 0.2) !important;
-  }
-
-  .bitacora-accion--put {
-    background: rgba(252, 161, 48, 0.2) !important;
-  }
-
-  .bitacora-accion--patch {
-    background: rgba(144, 18, 254, 0.16) !important;
-  }
-
-  .bitacora-accion--delete {
-    background: rgba(249, 62, 62, 0.16) !important;
-  }
-
-  .bitacora-accion--evaluate {
-    background: rgba(19, 194, 194, 0.18) !important;
-  }
-
-  .bitacora-accion--default {
-    background: rgba(148, 163, 184, 0.22) !important;
-  }
+  background: var(--label-slate-bg, #2a3548);
+  border-color: var(--label-slate-border, #1e293b);
+  color: var(--label-slate-text, #e2e8f0);
 }

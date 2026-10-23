@@ -8,6 +8,7 @@ import { HasPermissionDirective } from 'src/app/core/haspermission.directive';
 import { ProspectosRoutingModule } from './prospectos-routing.module';
 import { ListaProspectosComponent } from './lista-prospectos/lista-prospectos.component';
 import { AgregarProspectoComponent } from './agregar-prospecto/agregar-prospecto.component';
+import { CrearUsuarioProspectoModalComponent } from './crear-usuario-prospecto-modal/crear-usuario-prospecto-modal.component';
 import { ModuleHeroComponent } from 'src/app/shared/module-hero/module-hero.component';
 
 import { CampoFechaComponent } from 'src/app/shared/campos-dx/campo-fecha.component';
@@ -17,6 +18,7 @@ import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.comp
   declarations: [
     ListaProspectosComponent,
     AgregarProspectoComponent,
+    CrearUsuarioProspectoModalComponent,
   ],
   imports: [
     CampoFechaComponent,

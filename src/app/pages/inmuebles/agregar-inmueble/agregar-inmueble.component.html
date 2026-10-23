@@ -151,26 +151,27 @@
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="servicios">
-              <dx-accordion *ngIf="mostrarAccordionServicios" class="arrend-accordion-servicios" width="100%" [collapsible]="true" [multiple]="true"
-                [animationDuration]="260" [selectedIndex]="$any(servicioAccordionIndicesAbiertos)"
-                [focusStateEnabled]="false" (selectedIndexChange)="onServicioAccordionIndicesChange($event)"
-                itemTitleTemplate="servicioAccordionTitle">
-                <div *dxTemplate="let data of 'servicioAccordionTitle'" class="arrend-accordion-title-bar">
-                  <span class="arrend-accordion-title-bar__label">{{ tituloServicioAccordionDesdeClave(data) }}</span>
-                  <button
-                    *ngIf="puedeEliminarServicioEnEdicion(indiceServicioDesdeClaveAccordion(data))"
-                    type="button"
-                    mat-flat-button
-                    class="bg-secondary arrend-item-eliminar-btn"
-                    aria-label="Eliminar servicio"
-                    (mousedown)="$event.stopPropagation()"
-                    (click)="eliminarServicioDesdeTituloAccordion($event, data)"
-                  >
-                    <mat-icon>delete</mat-icon> Eliminar Servicio
-                  </button>
+              <div *ngIf="mostrarAccordionServicios" class="arrend-accordion-servicios">
+                <div class="arrend-tabs" role="tablist" aria-label="Servicios del inmueble">
+                  <div *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice"
+                    class="arrend-tabs__tab" [class.arrend-tabs__tab--activa]="i === servicioTabActivo">
+                    <button type="button" role="tab" class="arrend-tabs__btn"
+                      [attr.aria-selected]="i === servicioTabActivo"
+                      (click)="onServicioAccordionIndicesChange(i)">{{ tituloServicioAccordion(i) }}</button>
+                    <button
+                      *ngIf="puedeEliminarServicioEnEdicion(i)"
+                      type="button"
+                      mat-flat-button
+                      class="bg-secondary arrend-item-eliminar-btn arrend-item-eliminar-btn--compact"
+                      aria-label="Eliminar servicio"
+                      (click)="eliminarServicioDesdeTituloAccordion($event, claveEstableServicioAccordion(i))"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
-                <dxi-item *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice"
-                  [title]="claveEstableServicioAccordion(i)">
+                <section *ngFor="let srvCtrl of serviciosFormArray.controls; let i = index; trackBy: trackServicioPorIndice"
+                  class="arrend-tabs__panel" [class.arrend-tabs__panel--activa]="i === servicioTabActivo" role="tabpanel">
                   <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                     <div class="row g-3">
                       <div class="col-12 col-md-4">
@@ -273,8 +274,8 @@
                       </div>
                     </div>
                   </div>
-                </dxi-item>
-              </dx-accordion>
+                </section>
+              </div>
             </div>
           </div>
 
@@ -292,26 +293,27 @@
               </div>
             </div>
             <div class="arrend-fa-section__body" formArrayName="zonas">
-              <dx-accordion *ngIf="mostrarAccordionZonas" class="arrend-accordion-zonas" width="100%" [collapsible]="true" [multiple]="true"
-                [animationDuration]="260" [selectedIndex]="$any(zonaAccordionIndicesAbiertos)"
-                [focusStateEnabled]="false" (selectedIndexChange)="onZonaAccordionIndicesChange($event)"
-                itemTitleTemplate="zonaAccordionTitle">
-                <div *dxTemplate="let data of 'zonaAccordionTitle'" class="arrend-accordion-title-bar">
-                  <span class="arrend-accordion-title-bar__label">{{ tituloZonaAccordionDesdeClave(data) }}</span>
-                  <button
-                    *ngIf="puedeEliminarZonaEnEdicion(indiceZonaDesdeClaveAccordion(data))"
-                    type="button"
-                    mat-flat-button
-                    class="bg-secondary arrend-item-eliminar-btn"
-                    aria-label="Eliminar zona"
-                    (mousedown)="$event.stopPropagation()"
-                    (click)="eliminarZonaDesdeTituloAccordion($event, data)"
-                  >
-                    <mat-icon>delete</mat-icon> Eliminar Zona
-                  </button>
+              <div *ngIf="mostrarAccordionZonas" class="arrend-accordion-zonas">
+                <div class="arrend-tabs" role="tablist" aria-label="Zonas del inmueble">
+                  <div *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index; trackBy: trackZonaPorIndice"
+                    class="arrend-tabs__tab" [class.arrend-tabs__tab--activa]="i === zonaTabActivo">
+                    <button type="button" role="tab" class="arrend-tabs__btn"
+                      [attr.aria-selected]="i === zonaTabActivo"
+                      (click)="onZonaAccordionIndicesChange(i)">{{ tituloZonaAccordion(i) }}</button>
+                    <button
+                      *ngIf="puedeEliminarZonaEnEdicion(i)"
+                      type="button"
+                      mat-flat-button
+                      class="bg-secondary arrend-item-eliminar-btn arrend-item-eliminar-btn--compact"
+                      aria-label="Eliminar zona"
+                      (click)="eliminarZonaDesdeTituloAccordion($event, claveEstableZonaAccordion(i))"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
-                <dxi-item *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index; trackBy: trackZonaPorIndice"
-                  [title]="claveEstableZonaAccordion(i)">
+                <section *ngFor="let zonaCtrl of zonasFormArray.controls; let i = index; trackBy: trackZonaPorIndice"
+                  class="arrend-tabs__panel" [class.arrend-tabs__panel--activa]="i === zonaTabActivo" role="tabpanel">
                   <div class="arrend-accordion-item-body arrend-accordion-inner pt-3 pb-2" [formGroupName]="i">
                     <div class="row g-4 arrend-contrato-fila-campos">
                       <div class="col-12 col-md-4"><label class="form-label perm-label">Zona principal</label>
@@ -351,17 +353,17 @@
                           (click)="agregarLocalZona(i)"><mat-icon>add</mat-icon> Agregar Local</button>
                       </div>
                       <div class="locales-builder__list">
-                        <dx-accordion class="arrend-accordion-locales" width="100%" [collapsible]="true"
-                          [multiple]="true" [animationDuration]="260"
-                          [selectedIndex]="$any(localAccordionIndicesAbiertosDeZona(i))"
-                          [focusStateEnabled]="false"
-                          (selectedIndexChange)="onLocalAccordionIndicesChange(i, $event)"
-                          itemTitleTemplate="localAccordionTitle">
-                          <div *dxTemplate="let data of 'localAccordionTitle'" class="arrend-accordion-title-bar">
-                            <span class="arrend-accordion-title-bar__label">{{ tituloLocalAccordionDesdeClave(data) }}</span>
+                        <div class="arrend-accordion-locales">
+                          <div class="arrend-tabs arrend-tabs--locales" role="tablist" [attr.aria-label]="'Locales de la zona ' + (i + 1)">
+                            <div *ngFor="let localCtrl of localesZonaFormArray(i).controls; let j = index; trackBy: trackLocalPorIndice"
+                              class="arrend-tabs__tab" [class.arrend-tabs__tab--activa]="j === localTabActivoDeZona(i)">
+                              <button type="button" role="tab" class="arrend-tabs__btn"
+                                [attr.aria-selected]="j === localTabActivoDeZona(i)"
+                                (click)="onLocalAccordionIndicesChange(i, j)">{{ etiquetaLocalTab(i, j) }}</button>
+                            </div>
                           </div>
-                          <dxi-item *ngFor="let localCtrl of localesZonaFormArray(i).controls; let j = index; trackBy: trackLocalPorIndice"
-                            [title]="claveEstableLocalAccordion(i, j)">
+                          <section *ngFor="let localCtrl of localesZonaFormArray(i).controls; let j = index; trackBy: trackLocalPorIndice"
+                            class="arrend-tabs__panel" [class.arrend-tabs__panel--activa]="j === localTabActivoDeZona(i)" role="tabpanel">
                             <div class="arrend-accordion-inner pt-3 pb-2" [formGroupName]="j">
                               <div class="row g-3 locales-local-campos">
                                 <div class="col-12 col-md-4"><label class="form-label perm-label">Nombre del local</label>
@@ -525,13 +527,13 @@
                                 </div>
                               </div>
                             </div>
-                          </dxi-item>
-                        </dx-accordion>
+                          </section>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </dxi-item>
-              </dx-accordion>
+                </section>
+              </div>
             </div>
           </div>
 

@@ -405,6 +405,47 @@ export class EmbudoVentasComponent implements OnInit {
     return card.correo || 'Sin correo registrado';
   }
 
+  /** Clave (`id-campo`) del dato recién copiado, para mostrar la confirmación en la card. */
+  datoCopiado: string | null = null;
+  private datoCopiadoTimer?: ReturnType<typeof setTimeout>;
+
+  copiarDato(card: EmbudoCard, campo: 'telefono' | 'correo', event: Event): void {
+    event.stopPropagation();
+    const valor = String(card[campo] ?? '').trim();
+    if (!valor) return;
+    const clave = `${card.id}-${campo}`;
+    const marcar = () => {
+      this.datoCopiado = clave;
+      clearTimeout(this.datoCopiadoTimer);
+      this.datoCopiadoTimer = setTimeout(() => {
+        if (this.datoCopiado === clave) this.datoCopiado = null;
+      }, 1800);
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(valor).then(marcar, () => this.copiarDatoFallback(valor) && marcar());
+    } else if (this.copiarDatoFallback(valor)) {
+      marcar();
+    }
+  }
+
+  private copiarDatoFallback(valor: string): boolean {
+    const area = document.createElement('textarea');
+    area.value = valor;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch {
+      ok = false;
+    }
+    document.body.removeChild(area);
+    return ok;
+  }
+
   textoRfc(card: EmbudoCard): string {
     return card.rfc || 'Sin RFC registrado';
   }

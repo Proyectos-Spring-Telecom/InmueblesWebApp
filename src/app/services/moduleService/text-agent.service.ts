@@ -164,13 +164,14 @@ export class TextAgentService {
       .pipe(
         timeout(CHAT_TIMEOUT_MS),
         map((res) => {
-          if (res.status !== 204 && res.status !== 404) {
+          if (res.status >= 300 && res.status !== 404) {
             throw new TextAgentError('AGENTE_NO_DISPONIBLE', 'No se pudo borrar la conversación.');
           }
           if (this.conversationId === id) this.nuevaConversacion();
         }),
         catchError((err: unknown) => {
-          if (err instanceof HttpErrorResponse && (err.status === 204 || err.status === 404)) {
+          const status = estadoHttp(err)?.status;
+          if (status === 204 || status === 404) {
             if (this.conversationId === id) this.nuevaConversacion();
             return of(void 0);
           }
@@ -202,8 +203,9 @@ export class TextAgentService {
   ): Observable<RespuestaAgente> {
     if (err instanceof TextAgentError) return throwError(() => err);
 
-    if (err instanceof HttpErrorResponse) {
-      if (err.status === 404 && this.conversationId && !retried404) {
+    const http = estadoHttp(err);
+    if (http) {
+      if (http.status === 404 && this.conversationId && !retried404) {
         this.nuevaConversacion();
         return this.preguntar(mensaje, true);
       }
@@ -221,7 +223,9 @@ export class TextAgentService {
   }
 
   private mapHttpError(err: unknown): TextAgentError {
-    if (!(err instanceof HttpErrorResponse)) {
+    if (err instanceof TextAgentError) return err;
+    const http = estadoHttp(err);
+    if (!http) {
       return new TextAgentError(
         'AGENTE_NO_DISPONIBLE',
         'El asistente no está disponible. Intenta más tarde.',
@@ -229,11 +233,11 @@ export class TextAgentService {
     }
 
     const retry =
-      numHeader(err.headers.get('retry-after-usuario')) ??
-      numHeader(err.headers.get('retry-after-ip')) ??
-      numHeader(err.headers.get('Retry-After'));
+      numHeader(http.header('retry-after-usuario')) ??
+      numHeader(http.header('retry-after-ip')) ??
+      numHeader(http.header('Retry-After'));
 
-    switch (err.status) {
+    switch (http.status) {
       case 400:
         return new TextAgentError('VALIDACION', 'Revisa el mensaje e intenta de nuevo.');
       case 401:
@@ -264,4 +268,20 @@ function numHeader(v: string | null): number | undefined {
   if (v == null || v === '') return undefined;
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? Math.ceil(n) : undefined;
+}
+
+/**
+ * Estado y encabezados de un error HTTP. El ErrorInterceptor global convierte los
+ * HttpErrorResponse en objetos { status, message, error, headers }, así que se aceptan ambos.
+ * Devuelve null si no es un error HTTP (timeout, red caída, etc.).
+ */
+function estadoHttp(err: unknown): { status: number; header: (nombre: string) => string | null } | null {
+  if (err instanceof HttpErrorResponse) {
+    return { status: err.status, header: (n) => err.headers?.get(n) ?? null };
+  }
+  const e = err as { status?: unknown; headers?: { get?: (n: string) => string | null } } | null;
+  if (e && typeof e === 'object' && typeof e.status === 'number' && e.status > 0) {
+    return { status: e.status, header: (n) => (typeof e.headers?.get === 'function' ? e.headers.get(n) : null) };
+  }
+  return null;
 }

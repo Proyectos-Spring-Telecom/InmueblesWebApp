@@ -76,6 +76,11 @@ const routes: Routes = [
     loadChildren: () =>
       import('./rent-rol/rent-rol.module').then((m) => m.RentRolModule),
   },
+  {
+    path: 'rent-rol-grid',
+    loadComponent: () =>
+      import('./rent-rol-grid/rent-rol-grid.component').then((m) => m.RentRolGridComponent),
+  },
 ];
 
 @NgModule({

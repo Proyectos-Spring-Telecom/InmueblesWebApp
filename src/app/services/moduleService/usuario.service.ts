@@ -50,6 +50,22 @@ export class UsuariosService {
     return this.http.put(`${environment.API_SECURITY}/usuarios/actualizar/contrasena/` + idUsuario, data);
   }
 
+  /**
+   * POST /usuarios/cambiar/accesso — cambiar contraseña sin contraseña actual
+   * (admin / roles autorizados). Body: idUsuario, passwordNueva, passwordConfirmacion.
+   */
+  cambiarAccesoUsuario(body: {
+    idUsuario: number;
+    passwordNueva: string;
+    passwordConfirmacion: string;
+  }): Observable<string> {
+    return this.http.post(
+      `${environment.API_SECURITY}/usuarios/cambiar/accesso`,
+      body,
+      { responseType: 'text' },
+    );
+  }
+
   private apiUrl = `${environment.API_SECURITY}/usuarios`;
   updateEstatus(id: number, estatus: number): Observable<string> {
     const url = `${this.apiUrl}/estatus/${id}`;

@@ -3,7 +3,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
-import { CellPreparedEvent, RowPreparedEvent } from 'devextreme/ui/data_grid';
+import query from 'devextreme/data/query';
+import { RowPreparedEvent } from 'devextreme/ui/data_grid';
+import type { LoadOptions } from 'devextreme/data';
 import { lastValueFrom, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
@@ -43,7 +45,7 @@ import {
   flattenRentRolRowsToGridLines,
   mapHistoricoPagoRentaToRentRolRow,
   mapRentaActualPendienteToRentRolRow,
-  RENT_ROL_COLUMNAS_ROWSPAN,
+  mapRentRolRowToGridLine,
   RENT_ROL_FILAS_GRID_POR_PAGINA,
   RENT_ROL_REGISTROS_POR_PAGINA,
   RentRolGridLine,
@@ -126,6 +128,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
   private readonly PIN_URL = 'assets/images/logos/marker_spring.webp';
 
   listaRentRol!: InstanceType<typeof CustomStore>;
+  showFilterRow = true;
+  showHeaderFilter = false;
   cargando = false;
   cargandoBusqueda = false;
   paginaActual = 1;
@@ -495,34 +499,8 @@ export class RentRolComponent implements OnInit, OnDestroy {
     const rowEl = e.rowElement as HTMLElement | undefined;
     if (!rowEl) return;
 
-    rowEl.classList.add(line.esLineaRenta ? 'row-renta' : 'row-mant');
-    rowEl.classList.add(
-      line.esLineaRenta ? line.claseEstatusRenta : line.claseEstatusMantenimiento,
-    );
-  }
-
-  onCellPrepared(e: CellPreparedEvent): void {
-    if (e.rowType !== 'data' || e.data == null) return;
-
-    const cell = e.cellElement as HTMLElement | undefined;
-    if (!cell) return;
-
-    if (e.column?.type === 'adaptive') {
-      cell.style.display = 'none';
-      return;
-    }
-
-    const field = e.column?.dataField ? String(e.column.dataField) : '';
-    if (!field || !RENT_ROL_COLUMNAS_ROWSPAN.includes(field)) return;
-
-    const line = e.data as RentRolGridLine;
-    if (line.esLineaRenta) {
-      cell.setAttribute('rowspan', '2');
-      cell.classList.add('rr-grid-cell--span');
-      return;
-    }
-
-    cell.style.display = 'none';
+    rowEl.classList.add('row-renta');
+    rowEl.classList.add(line.claseEstatusRenta);
   }
 
   // ── Captura ────────────────────────────────────────────────────
@@ -1444,7 +1422,7 @@ export class RentRolComponent implements OnInit, OnDestroy {
   private setupDataSource(): void {
     this.listaRentRol = new CustomStore({
       key: 'gridKey',
-      load: async (loadOptions: { take?: number; skip?: number }) => {
+      load: async (loadOptions: LoadOptions) => {
         const take = Number(loadOptions?.take) || this.FILAS_GRID_POR_PAGINA;
         const skip = Number(loadOptions?.skip) || 0;
         const textoBusqueda = this.busquedaTexto.trim();
@@ -1453,8 +1431,33 @@ export class RentRolComponent implements OnInit, OnDestroy {
         try {
           const todos = await this.cargarTodosLosRegistros();
           const filtrados = textoBusqueda ? filtrarRegistrosRentRol(todos, textoBusqueda) : todos;
-          const dataCompleta = flattenRentRolRowsToGridLines(filtrados);
+          let dataCompleta = flattenRentRolRowsToGridLines(filtrados);
+
+          let q = query(dataCompleta);
+          if (loadOptions.filter) {
+            q = q.filter(loadOptions.filter);
+          }
+          const sortOpts = loadOptions.sort;
+          if (Array.isArray(sortOpts) && sortOpts.length) {
+            for (const s of sortOpts) {
+              const selector =
+                typeof s === 'string'
+                  ? s
+                  : typeof s === 'object' && s && 'selector' in s
+                    ? String((s as { selector: string }).selector)
+                    : '';
+              if (!selector) continue;
+              const desc =
+                typeof s === 'object' && s && 'desc' in s
+                  ? Boolean((s as { desc?: boolean }).desc)
+                  : false;
+              q = q.sortBy(selector, desc);
+            }
+          }
+          dataCompleta = q.toArray();
+
           const pagina = Math.floor(skip / take) + 1;
+          const registrosGrid = dataCompleta.length;
 
           this.cargando = false;
           this.registrosParaKpi = filtrados;
@@ -1462,9 +1465,13 @@ export class RentRolComponent implements OnInit, OnDestroy {
             (pagina - 1) * this.REGISTROS_POR_PAGINA,
             pagina * this.REGISTROS_POR_PAGINA,
           );
-          this.totalRegistrosFiltrados = textoBusqueda ? filtrados.length : 0;
+          this.totalRegistrosFiltrados =
+            textoBusqueda || loadOptions.filter ? registrosGrid : 0;
           this.totalRegistros = todos.length;
-          this.totalPaginasApi = Math.max(1, Math.ceil(filtrados.length / this.REGISTROS_POR_PAGINA));
+          this.totalPaginasApi = Math.max(
+            1,
+            Math.ceil(registrosGrid / this.REGISTROS_POR_PAGINA),
+          );
           this.paginaActual = pagina;
           this.cdr.markForCheck();
 
@@ -1513,6 +1520,31 @@ export class RentRolComponent implements OnInit, OnDestroy {
     if (fila) void this.rentasMes?.marcarRentaPagada(fila);
   }
 
+  /** Vista móvil (cards): misma acción sobre la fila del registro. */
+  private lineaRentaDesdeRow(row: RentRolRow): RentRolGridLine | null {
+    return mapRentRolRowToGridLine(row);
+  }
+
+  editarRentaDesdeCard(row: RentRolRow): void {
+    const line = this.lineaRentaDesdeRow(row);
+    if (line) this.editarRenta(line);
+  }
+
+  marcarRentaPagadaDesdeCard(row: RentRolRow): void {
+    const line = this.lineaRentaDesdeRow(row);
+    if (line) this.marcarRentaPagada(line);
+  }
+
+  tieneIncrementoRow(row: RentRolRow): boolean {
+    return !!(row.tieneIncrementoRenta || row.tieneIncrementoMantenimiento);
+  }
+
+  claseEstatusCard(row: RentRolRow): string {
+    if (row.esPendiente) return row.abierta ? 'rr-card--amarillo' : 'rr-card--azul';
+    if (row.pagada) return 'rr-card--pagada';
+    return 'rr-card--neutral';
+  }
+
   /** Tras registrar / editar / pagar / duplicar: vuelve a consultar conservando la página. */
   onPagoRentaCambio(): void {
     this.cacheRegistrosKey = '';
@@ -1531,6 +1563,12 @@ export class RentRolComponent implements OnInit, OnDestroy {
   /** Pendientes amarillas: mes abierto, solo se pueden marcar como pagadas. */
   get conteoPorPagar(): number {
     return this.filasPendientesBase().filter((r) => r.abierta).length;
+  }
+
+  /** Registros del periodo con incremento en renta o mantenimiento. */
+  get conteoIncrementos(): number {
+    const base = this.registrosParaKpi.length > 0 ? this.registrosParaKpi : this.registrosVisibles;
+    return base.filter((r) => this.tieneIncrementoRow(r)).length;
   }
 
   private filasPendientesBase(): RentRolRow[] {

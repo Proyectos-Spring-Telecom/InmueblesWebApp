@@ -1843,7 +1843,7 @@
   max-width: 100%;
   box-sizing: border-box;
   padding: 0.28rem 0.65rem;
-  border-radius: 999px;
+  border-radius: var(--label-radius, 8px);
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   /* text-transform: uppercase; */
@@ -1852,21 +1852,21 @@
 }
 
 .mono-pago-estatus--pagado {
-  color: #ffffff;
-  background: rgba(16, 185, 129, 0.22);
-  border-color: rgba(52, 211, 153, 0.55);
+  color: var(--label-green-text, #d1fae5);
+  background: var(--label-green-bg, #11492a);
+  border-color: var(--label-green-border, #0b2e1b);
 }
 
 .mono-pago-estatus--pendiente {
-  color: #ffffff;
-  background: rgba(245, 158, 11, 0.2);
-  border-color: rgba(251, 191, 36, 0.45);
+  color: var(--label-amber-text, #ffedd5);
+  background: var(--label-amber-bg, #6b3a08);
+  border-color: var(--label-amber-border, #4a2805);
 }
 
 .mono-pago-estatus--cancelado {
-  color: #ffffff;
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(248, 113, 113, 0.5);
+  color: var(--label-red-text, #fee2e2);
+  background: var(--label-red-bg, #8b1313);
+  border-color: var(--label-red-border, #6b0f0f);
 }
 
 .mono-zonas-total {
@@ -1976,7 +1976,7 @@
 .mono-local-estatus {
   display: inline-block;
   padding: 0.2rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--label-radius, 8px);
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   /* text-transform: uppercase; */
@@ -1985,27 +1985,27 @@
 }
 
 .mono-local-estatus--baja {
-  color: #fecaca;
-  border-color: rgba(248, 113, 113, 0.45);
-  background: rgba(127, 29, 29, 0.28);
+  color: var(--label-red-text, #fee2e2);
+  border-color: var(--label-red-border, #6b0f0f);
+  background: var(--label-red-bg, #8b1313);
 }
 
 .mono-local-estatus--disponible {
-  color: #bbf7d0;
-  border-color: rgba(74, 222, 128, 0.4);
-  background: rgba(20, 83, 45, 0.28);
+  color: var(--label-green-text, #d1fae5);
+  border-color: var(--label-green-border, #0b2e1b);
+  background: var(--label-green-bg, #11492a);
 }
 
 .mono-local-estatus--ocupado {
-  color: #bfdbfe;
-  border-color: rgba(96, 165, 250, 0.45);
-  background: rgba(30, 58, 138, 0.32);
+  color: var(--label-blue-text, #dbeafe);
+  border-color: var(--label-blue-border, #0a2844);
+  background: var(--label-blue-bg, #123d66);
 }
 
 .mono-local-estatus--apartado {
-  color: #fde68a;
-  border-color: rgba(251, 191, 36, 0.45);
-  background: rgba(120, 53, 15, 0.3);
+  color: var(--label-amber-text, #ffedd5);
+  border-color: var(--label-amber-border, #4a2805);
+  background: var(--label-amber-bg, #6b3a08);
 }
 
 .mono-table {
@@ -4217,27 +4217,27 @@ $darkText: #0f172a;
   }
 
   .mono-local-estatus--disponible {
-    color: #166534 !important;
-    background: #dcfce7 !important;
-    border-color: #86efac !important;
+    color: var(--label-green-text, #d1fae5) !important;
+    background: var(--label-green-bg, #11492a) !important;
+    border-color: var(--label-green-border, #0b2e1b) !important;
   }
 
   .mono-local-estatus--ocupado {
-    color: #1e40af !important;
-    background: #dbeafe !important;
-    border-color: #93c5fd !important;
+    color: var(--label-blue-text, #dbeafe) !important;
+    background: var(--label-blue-bg, #123d66) !important;
+    border-color: var(--label-blue-border, #0a2844) !important;
   }
 
   .mono-local-estatus--apartado {
-    color: #92400e !important;
-    background: #fef3c7 !important;
-    border-color: #fcd34d !important;
+    color: var(--label-amber-text, #ffedd5) !important;
+    background: var(--label-amber-bg, #6b3a08) !important;
+    border-color: var(--label-amber-border, #4a2805) !important;
   }
 
   .mono-local-estatus--baja {
-    color: #991b1b !important;
-    background: #fee2e2 !important;
-    border-color: #fca5a5 !important;
+    color: var(--label-red-text, #fee2e2) !important;
+    background: var(--label-red-bg, #8b1313) !important;
+    border-color: var(--label-red-border, #6b0f0f) !important;
   }
 
   /* Botones de acción en grids: sólidos y visibles */

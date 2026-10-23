@@ -85,37 +85,41 @@
           </div>
         </div>
         <div class="pagos-mes-filtro-acciones">
-          <button type="button" mat-flat-button class="bg-success pagos-mes-filtros-limpiar"
+          <button type="button" mat-flat-button class="bg-warning pagos-mes-filtros-limpiar"
             (click)="limpiarFiltrosPagosMes()" [disabled]="!hayFiltrosPagosMesActivos"
-            aria-label="Limpiar filtros de arrendador e inmueble">
-            <i class="fa fa-eraser" aria-hidden="true"></i> Limpiar
+            aria-label="Limpiar filtros de arrendador e inmueble" title="Limpiar filtros">
+            <i class="fa fa-refresh" aria-hidden="true"></i>
           </button>
         </div>
       </div>
-    </div>
 
-    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar mt-5">
-      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-renta"
-        title="Genera la renta del mes (el cargo). Para cobrarla usa Registrar abono / pago parcial.">
-        <i class="fa fa-plus" aria-hidden="true"></i>
-        Registrar pago de renta
-      </button>
-      <button type="button" (click)="abrirAbonoGeneral()" mat-flat-button class="bg-primary"
-        title="Registra un pago total o parcial y elige a qué renta o mantenimiento se aplica">
-        <i class="fa fa-money" aria-hidden="true"></i>
-        Registrar abono / pago parcial
-      </button>
-      <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
-        <i class="fa fa-eraser"></i> Limpiar
-      </button>
-      <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
-        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
-        {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
-      </button>
-      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info"
-        [disabled]="!puedeExportarExcel()">
-        <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
-      </button>
+      <div class="d-flex flex-wrap gap-10 inm-lista__toolbar clientes-flow-head__acciones pagos-mes-acciones">
+        <div class="pagos-mes-acciones__grupo pagos-mes-acciones__grupo--principales">
+          <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-renta"
+            title="Genera la renta del mes (el cargo). Para cobrarla usa Registrar abono / pago parcial.">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            Registrar pago de renta
+          </button>
+          <button type="button" (click)="abrirAbonoGeneral()" mat-flat-button class="bg-primary"
+            title="Registra un pago total o parcial y elige a qué renta o mantenimiento se aplica">
+            <i class="fa fa-money" aria-hidden="true"></i>
+            Registrar abono / pago parcial
+          </button>
+        </div>
+        <div class="pagos-mes-acciones__grupo pagos-mes-acciones__grupo--utilidades">
+          <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
+            <i class="fa fa-eraser"></i> Limpiar
+          </button>
+          <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+            <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+            {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
+          </button>
+          <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info"
+            [disabled]="!puedeExportarExcel()">
+            <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="mt-3">
@@ -217,9 +221,9 @@
         <div *dxTemplate="let row of 'arrendatarioRentaTpl'" class="renta-grid-celda-destacada">
           @if (row.data.arrendatarioLabel && row.data.arrendatarioLabel !== '—') {
           <div class="inm-row-card inm-row-card--nombre renta-grid-arrendatario">
-            <div class="inm-row-card__icon" aria-hidden="true">
+            <!-- <div class="inm-row-card__icon" aria-hidden="true">
               <mat-icon>storefront</mat-icon>
-            </div>
+            </div> -->
             <span class="inm-row-card__title">{{ row.data.arrendatarioLabel }}</span>
           </div>
           } @else {
@@ -277,9 +281,7 @@
             <mat-icon aria-hidden="true" class="inm-opciones-btn__chevron">expand_more</mat-icon>
           </button>
           } @else {
-          <span class="inm-opciones-nota" title="La renta ya fue pagada y no admite cambios">
-            <i class="fa fa-check-circle" aria-hidden="true"></i> Renta Pagada
-          </span>
+          <span class="estatus estatus-activo" title="La renta ya fue pagada y no admite cambios">Renta Pagada</span>
           }
         </div>
       </dx-data-grid>

@@ -29,7 +29,7 @@
                 <dxo-filter-row [visible]="showFilterRow"></dxo-filter-row>
                 <dxo-header-filter [visible]="showHeaderFilter"></dxo-header-filter>
                 <dxo-grouping #expand [autoExpandAll]="autoExpandAllGroups"></dxo-grouping>
-                <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" *appHasPermission="['7', '8']" [width]="150"></dxi-column>
+                <dxi-column caption="Acciones" cellTemplate="acciones" alignment="center" *appHasPermission="['7', '8']" [width]="180"></dxi-column>
                 <dxi-column dataField="FotoPerfil" caption="Imagen" cellTemplate="imagen" [width]="200"
                     alignment="center">
                     <dxo-header-filter [allowSearch]="true"></dxo-header-filter>
@@ -70,6 +70,12 @@
                             <i class="fa fa-edit"></i>
                         </button>
                     </div>
+                    <div>
+                        <button type="button" id="cambiarPasswordButton" class="btnAcciones" title="Cambiar Contraseña"
+                            (click)="abrirModalCambiarContrasena(row.data)">
+                            <i class="fa fa-key"></i>
+                        </button>
+                    </div>
                     <div *appHasPermission="'8'">
                         @if (row.data.estatus === 0) {
                         <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">
@@ -85,4 +91,235 @@
             </dx-data-grid>
         </div>
     </div>
+</div>
+
+<!-- Modal: Cambiar Contraseña (admin, tras autorización PIN) -->
+<div
+  class="neo-modal lista-usuarios-password-overlay"
+  [class.is-open]="showPasswordModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="listaUsuariosModalPasswordTitle"
+>
+  <div class="neo-modal__panel perm-wrapper lista-usuarios-password-modal">
+    <div class="neo-modal__bg"></div>
+    <header class="perm-head perm-head--left lista-usuarios-password-modal__head" role="region"
+      aria-label="Cambiar Contraseña">
+      <div class="perm-head__icon" aria-hidden="true">
+        <mat-icon>key</mat-icon>
+      </div>
+      <div class="perm-head__text">
+        <span class="eyebrow">Seguridad</span>
+        <h2 id="listaUsuariosModalPasswordTitle">Cambiar Contraseña</h2>
+        <p class="lista-usuarios-password-modal__user" *ngIf="usuarioPasswordSeleccionado as u">
+          Usuario: <strong>{{ u.NombreCompleto || u.UserName }}</strong>
+        </p>
+      </div>
+    </header>
+    <div class="neo-modal__body">
+      <section class="perm-form-nc container-fluid px-0 py-2">
+      <div class="row g-4">
+        <div class="col-12">
+          <label for="listaUsuariosPwdNueva" class="form-label perm-label">Nueva Contraseña</label>
+          <div class="input-group input-group-lg perm-ig">
+            <span class="input-group-text">
+              <mat-icon aria-hidden="true">lock</mat-icon>
+            </span>
+            <div class="form-floating flex-grow-1 position-relative">
+              <input [type]="hidePass ? 'password' : 'text'" class="form-control pr-5" id="listaUsuariosPwdNueva"
+                placeholder="Nueva Contraseña" [(ngModel)]="passwordNueva" (input)="onPasswordNuevaInput()"
+                autocomplete="new-password" name="lista-usuarios-new-password" autocapitalize="off" autocorrect="off"
+                spellcheck="false" />
+              <label for="listaUsuariosPwdNueva">Nueva Contraseña</label>
+              <button type="button" class="btn btn-link p-0 password-eye" (mousedown)="$event.preventDefault()"
+                (click)="hidePass = !hidePass"
+                [attr.aria-label]="hidePass ? 'Mostrar Contraseña' : 'Ocultar Contraseña'">
+                <i class="fa" [ngClass]="hidePass ? 'fa-eye' : 'fa-eye-slash'"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <label for="listaUsuariosPwdConfirm" class="form-label perm-label">Confirmar Contraseña</label>
+          <div class="input-group input-group-lg perm-ig">
+            <span class="input-group-text">
+              <mat-icon aria-hidden="true">lock_reset</mat-icon>
+            </span>
+            <div class="form-floating flex-grow-1 position-relative">
+              <input [type]="hideConfirm ? 'password' : 'text'" class="form-control pr-5" id="listaUsuariosPwdConfirm"
+                placeholder="Confirmar Contraseña" [(ngModel)]="passwordConfirmar"
+                (focus)="onConfirmFocus()" (input)="onConfirmPasswordInput()" (blur)="onConfirmPasswordBlur()"
+                autocomplete="new-password" name="lista-usuarios-confirm-password" autocapitalize="off"
+                spellcheck="false" />
+              <label for="listaUsuariosPwdConfirm">Confirmar Contraseña</label>
+              <button type="button" class="btn btn-link p-0 password-eye" (mousedown)="$event.preventDefault()"
+                (click)="hideConfirm = !hideConfirm"
+                [attr.aria-label]="hideConfirm ? 'Mostrar Contraseña' : 'Ocultar Contraseña'">
+                <i class="fa" [ngClass]="hideConfirm ? 'fa-eye' : 'fa-eye-slash'"></i>
+              </button>
+            </div>
+          </div>
+          @if (mostrarCardConfirm) {
+          <div class="cambio-password-requirements" @pwdCard
+            [class.cambio-password-requirements--mismatch]="!confirmMatch"
+            [class.cambio-password-requirements--ok]="confirmMatch"
+            role="alert"
+            [attr.aria-live]="!confirmMatch ? 'assertive' : 'polite'">
+            <p class="cambio-password-requirement mb-0">
+              <mat-icon class="cambio-password-requirement__icon"
+                [class.checked]="confirmMatch"
+                [class.error]="!confirmMatch">
+                {{ confirmMatch ? 'check_circle' : 'error' }}
+              </mat-icon>
+              {{ confirmMatch ? 'Las Contraseñas Son Iguales.' : 'Las Contraseñas No Coinciden.' }}
+            </p>
+          </div>
+          }
+        </div>
+        <div class="col-12">
+          <div class="d-flex flex-wrap gap-3 justify-content-start">
+            <button type="button" class="button-success" (click)="confirmChangePassword()"
+              [disabled]="loadingPassword || !canSubmitPasswordChange">
+              <i class="fa fa-check"></i>&nbsp;&nbsp;{{ loadingPassword ? 'Guardando…' : 'Guardar' }}
+            </button>
+            <button type="button" class="button-danger" (click)="cancelarCambioContrasena()"
+              [disabled]="loadingPassword">
+              <i class="fa fa-times">&nbsp;&nbsp;</i>Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Autorización requerida (OTP 4 dígitos) -->
+<div
+  class="neo-modal lista-usuarios-auth-overlay"
+  [class.is-open]="showAuthPinModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="listaUsuariosAuthPinTitle"
+  (click)="$event.stopPropagation()"
+>
+  <div
+    class="neo-modal__panel lista-usuarios-auth-modal"
+    [class.lista-usuarios-auth-modal--error]="pinAuthError"
+    [@pinShake]="pinShakeState"
+    (@pinShake.done)="pinShakeState = 'idle'"
+  >
+    <div class="neo-modal__bg lista-usuarios-auth-modal__bg"></div>
+
+    <header class="lista-usuarios-auth-modal__head">
+      <div class="lista-usuarios-auth-modal__title-row">
+        <div class="lista-usuarios-auth-modal__icon" aria-hidden="true">
+          <mat-icon>verified_user</mat-icon>
+        </div>
+        <div class="lista-usuarios-auth-modal__titles">
+          <h2 id="listaUsuariosAuthPinTitle" class="lista-usuarios-auth-modal__eyebrow">
+            Autorización Requerida
+          </h2>
+          <p class="lista-usuarios-auth-modal__lead">
+            Ingresa el código de autorización para confirmar el cambio de acceso de:
+            <ng-container *ngIf="usuarioPasswordSeleccionado as u">
+              <strong class="lista-usuarios-auth-modal__user-name">{{ u.NombreCompleto || u.UserName }}</strong>
+            </ng-container>
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <div class="neo-modal__body lista-usuarios-auth-modal__body">
+      <div
+        class="lista-usuarios-auth-stage"
+        [class.is-success]="authSuccessView"
+      >
+        <div
+          class="lista-usuarios-auth-stage__otp"
+          [attr.aria-hidden]="authSuccessView"
+        >
+          <label class="lista-usuarios-auth-otp__label" id="listaUsuariosAuthOtpLabel">
+            Código De Autorización
+          </label>
+
+          <div
+            class="lista-usuarios-auth-otp"
+            role="group"
+            aria-labelledby="listaUsuariosAuthOtpLabel"
+            [class.is-invalid]="pinAuthError"
+          >
+            <input
+              *ngFor="let i of authDigitIndexes"
+              class="lista-usuarios-auth-otp__cell"
+              [id]="'listaUsuariosAuthDigit_' + i"
+              type="text"
+              inputmode="numeric"
+              maxlength="1"
+              autocomplete="one-time-code"
+              [attr.aria-label]="'Dígito ' + (i + 1)"
+              [value]="authDigits[i]"
+              (input)="onAuthDigitInput(i, $event)"
+              (keydown)="onAuthDigitKeydown(i, $event)"
+              (paste)="onAuthDigitPaste($event)"
+              [disabled]="loadingPassword || authSuccessView"
+            />
+          </div>
+
+          <div
+            class="lista-usuarios-auth-alert"
+            *ngIf="pinAuthError"
+            role="alert"
+          >
+            <mat-icon>gpp_bad</mat-icon>
+            <span>Código Inválido. Intenta de nuevo.</span>
+          </div>
+
+          <div class="lista-usuarios-auth-actions">
+            <button
+              type="button"
+              class="button-success lista-usuarios-auth-btn-primary"
+              (click)="confirmarAuthPinsYCambiar()"
+              [disabled]="loadingPassword || authSuccessView || !canClickAuthorize"
+            >
+              <i class="fa fa-lock"></i>&nbsp;&nbsp;Autorizar Cambio
+            </button>
+            <button
+              type="button"
+              class="button-danger"
+              (click)="cancelarAuthPins()"
+              [disabled]="loadingPassword || authSuccessView"
+            >
+              <i class="fa fa-times"></i>&nbsp;&nbsp;Cancelar
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="lista-usuarios-auth-stage__result"
+          [attr.aria-hidden]="!authSuccessView"
+        >
+          <ul class="lista-usuarios-auth-revealed is-success" role="list">
+            <li
+              class="lista-usuarios-auth-revealed__item"
+              *ngFor="let pin of authPinsRevelados; let i = index"
+            >
+              <div class="lista-usuarios-auth-card__avatar" [attr.data-tone]="i">
+                {{ pin.iniciales }}
+              </div>
+              <div class="lista-usuarios-auth-card__meta">
+                <div class="lista-usuarios-auth-card__name">{{ pin.nombre }}</div>
+                <div class="lista-usuarios-auth-card__role">{{ pin.cargo }}</div>
+              </div>
+              <mat-icon class="lista-usuarios-auth-revealed__check">check_circle</mat-icon>
+            </li>
+          </ul>
+
+          <p class="lista-usuarios-auth-success-hint">
+            Autorización confirmada. Continuando al cambio de contraseña…
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

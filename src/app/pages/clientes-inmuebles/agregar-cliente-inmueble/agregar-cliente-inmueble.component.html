@@ -7,12 +7,12 @@
                 <div class="row g-4">
 
                     <div class="col-12 col-md-4">
-                        <label for="cuentaPadre" class="form-label perm-label">Cuenta Padre</label>
+                        <label for="cuentaPadre" class="form-label perm-label">Cliente</label>
                         <div class="input-group input-group-lg perm-ig">
                             <span class="input-group-text fw-bold">
                                 <mat-icon aria-hidden="true">account_tree</mat-icon>
                             </span>
-                            <app-campo-select inputId="cuentaPadre" formControlName="idPadre" label="Selecciona cuenta padre"
+                            <app-campo-select inputId="cuentaPadre" formControlName="idPadre" label="Selecciona un cliente"
                                 placeholder="" [items]="listaClientes" valueExpr="id"
                                 [displayExpr]="etiquetaClienteSelect"></app-campo-select>
                         </div>

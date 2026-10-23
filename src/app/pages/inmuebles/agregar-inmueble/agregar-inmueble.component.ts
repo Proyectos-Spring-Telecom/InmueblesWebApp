@@ -681,6 +681,29 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     return this.localAccordionIndicesAbiertos[zonaIndex];
   }
 
+  /* Tabs de arreglos: el activo es el último índice abierto que ya mantiene la
+     lógica del acordeón (agregar abre el nuevo, eliminar reinicia, poblar abre el primero). */
+  private indiceTabActivo(indices: number[], total: number): number {
+    if (total <= 0) return 0;
+    const ultimo = indices.length ? indices[indices.length - 1] : 0;
+    return Math.min(Math.max(ultimo, 0), total - 1);
+  }
+
+  get servicioTabActivo(): number {
+    return this.indiceTabActivo(this.servicioAccordionIndicesAbiertos, this.serviciosFormArray.length);
+  }
+
+  get zonaTabActivo(): number {
+    return this.indiceTabActivo(this.zonaAccordionIndicesAbiertos, this.zonasFormArray.length);
+  }
+
+  localTabActivoDeZona(zonaIndex: number): number {
+    return this.indiceTabActivo(
+      this.localAccordionIndicesAbiertosDeZona(zonaIndex),
+      this.localesZonaFormArray(zonaIndex).length,
+    );
+  }
+
   tituloAccordionCaption(data: unknown): string {
     if (typeof data === 'string') return data;
     if (data != null && typeof data === 'object' && 'title' in data) {
@@ -736,6 +759,13 @@ export class AgregarInmuebleComponent implements OnInit, OnDestroy {
     const partes = [`Local ${localIndex + 1}`];
     if (nombre) partes.push(nombre);
     return partes.join(' | ');
+  }
+
+  /** Etiqueta del tab de local: solo el nombre, sin el conteo «Local N». */
+  etiquetaLocalTab(zonaIndex: number, localIndex: number): string {
+    const grupo = this.localesZonaFormArray(zonaIndex).at(localIndex) as FormGroup;
+    const nombre = String(grupo?.get('nombre')?.value ?? '').trim();
+    return nombre || 'Local';
   }
 
   /** Clave estable para el acordeón; evita recrear el ítem al escribir el nombre del local. */

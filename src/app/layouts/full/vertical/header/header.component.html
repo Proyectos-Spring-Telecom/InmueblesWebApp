@@ -137,54 +137,45 @@
    Beneficiario: toma decisiones de la empresa.
    Controlador: es fisica o moral que lleva los bienes -->
   <!-- --------------------------------------------------------------- -->
-  <div
-    class="notify-cap flex-shrink-0 ms-0 mx-0 px-0 px-sm-1"
-    role="navigation"
-    aria-label="Centro de notificaciones"
+  <button
+    type="button"
+    class="rent-rol-cap__btn flex-shrink-0"
+    [routerLink]="['/arrendatarios/rent-rol-grid']"
+    routerLinkActive="rent-rol-cap__btn--active"
+    aria-label="Ir a Rent Rol"
+    title="Rent Rol"
   >
-    <button
-      type="button"
-      class="notify-cap__btn notify-cap__btn--a"
-      [class.notify-cap__btn--live]="avisosCount > 0"
-      [matMenuTriggerFor]="menuAvisos"
-      aria-label="Contratos"
-    >
-      <span class="notify-cap__fill" aria-hidden="true"></span>
-      <span class="notify-cap__shine" aria-hidden="true"></span>
-      <i-tabler name="file-description" class="notify-cap__ico d-flex"></i-tabler>
-      @if (avisosCount > 0) {
-      <span class="notify-cap__badge" aria-hidden="true">{{ avisosCount }}</span>
-      }
-    </button>
-    <button
-      type="button"
-      class="notify-cap__btn notify-cap__btn--b"
-      [class.notify-cap__btn--live]="inmueblesNotifCount > 0"
-      [matMenuTriggerFor]="menuNotifInmuebles"
-      aria-label="Pagos de servicios"
-    >
-      <span class="notify-cap__fill" aria-hidden="true"></span>
-      <span class="notify-cap__shine" aria-hidden="true"></span>
-      <i-tabler name="receipt" class="notify-cap__ico d-flex"></i-tabler>
-      @if (inmueblesNotifCount > 0) {
-      <span class="notify-cap__badge" aria-hidden="true">{{ inmueblesNotifCount }}</span>
-      }
-    </button>
-    <button
-      type="button"
-      class="notify-cap__btn notify-cap__btn--c"
-      [class.notify-cap__btn--live]="prediosNotifCount > 0"
-      [matMenuTriggerFor]="menuNotifPredios"
-      aria-label="Pagos de arrendatarios"
-    >
-      <span class="notify-cap__fill" aria-hidden="true"></span>
-      <span class="notify-cap__shine" aria-hidden="true"></span>
-      <i-tabler name="users" class="notify-cap__ico d-flex"></i-tabler>
-      @if (prediosNotifCount > 0) {
-      <span class="notify-cap__badge" aria-hidden="true">{{ prediosNotifCount }}</span>
-      }
-    </button>
-  </div>
+    <span class="rent-rol-cap__tile" aria-hidden="true">
+      <i-tabler name="table" class="d-flex"></i-tabler>
+    </span>
+    <span class="rent-rol-cap__text">
+      <span class="rent-rol-cap__label">Rent Rol</span>
+      <span class="rent-rol-cap__hint">Arrendatarios</span>
+    </span>
+    <i-tabler name="arrow-up-right" class="rent-rol-cap__arrow d-flex" aria-hidden="true"></i-tabler>
+  </button>
+
+  <button
+    type="button"
+    class="notif-bell flex-shrink-0"
+    [class.notif-bell--live]="totalNotificaciones > 0"
+    [attr.data-tone]="tonoMasUrgente"
+    [matMenuTriggerFor]="menuNotificaciones"
+    (menuOpened)="onNotificacionesAbiertas()"
+    [attr.aria-label]="'Notificaciones: ' + totalNotificaciones + ' pendientes'"
+    title="Notificaciones"
+  >
+    <span class="notif-bell__halo" aria-hidden="true"></span>
+    <i-tabler
+      [name]="totalNotificaciones > 0 ? 'bell-ringing' : 'bell'"
+      class="notif-bell__ico d-flex"
+    ></i-tabler>
+    @if (totalNotificaciones > 0) {
+    <span class="notif-bell__count" aria-hidden="true">{{
+      totalNotificaciones > 99 ? '99+' : totalNotificaciones
+    }}</span>
+    }
+  </button>
 
   <!-- --------------------------------------------------------------- -->
   <!-- langugage Dropdown -->
@@ -262,184 +253,108 @@
     />
   </button>
   <mat-menu
-    #menuAvisos="matMenu"
-    class="notify-hub-panel notify-hub-panel--avisos dd-notifications"
+    #menuNotificaciones="matMenu"
+    class="notif-panel"
     xPosition="before"
   >
-    <div class="notify-hub-frame">
-      <header class="notify-hub-frame__hero notify-hub-frame__hero--contracts">
-        <div class="notify-hub-frame__hero-badge" aria-hidden="true">
-          <i-tabler name="file-description" class="notify-hub-frame__hero-ico d-flex"></i-tabler>
+    <section class="notif-sheet" (click)="$event.stopPropagation()">
+      <header class="notif-sheet__head">
+        <div class="notif-sheet__title-wrap">
+          <span class="notif-sheet__eyebrow">Centro de avisos</span>
+          <h3 class="notif-sheet__title">Notificaciones</h3>
         </div>
-        <div class="notify-hub-frame__hero-main">
-          <span class="notify-hub-frame__kicker">Contratos</span>
-          <p class="notify-hub-frame__lede m-0">Vencimientos y Renovaciones</p>
-        </div>
-        <div class="notify-hub-frame__metric" aria-label="Avisos en lista">
-          <span class="notify-hub-frame__metric-value">{{ avisosCount }}</span>
-          <span class="notify-hub-frame__metric-label">pendientes</span>
-        </div>
-      </header>
-
-      <div class="notify-hub-frame__stream notify-hub-frame__stream--scroll">
-        @for (a of avisosLista; track a.id) {
-        <div
-          class="notify-hub-aviso"
-          [class.notify-hub-aviso--tone-success]="a.tone === 'success'"
-          [class.notify-hub-aviso--tone-warning]="a.tone === 'warning'"
-          [class.notify-hub-aviso--tone-amber]="a.tone === 'amber'"
-          [class.notify-hub-aviso--tone-danger]="a.tone === 'danger'"
-          [class.notify-hub-aviso--tone-expired]="a.tone === 'expired'"
-          (click)="$event.stopPropagation()"
-        >
-          <div class="notify-hub-aviso__strip">
-            <span class="notify-hub-aviso__glyph" aria-hidden="true"></span>
-            <div class="notify-hub-aviso__body">
-              <div class="notify-hub-aviso__title-row">
-                <span class="notify-hub-aviso__title">{{ titleCase(a.title) }}</span>
-                @if (a.tone === 'expired') {
-                  <span class="notify-hub-aviso__badge">Vencido</span>
-                }
-              </div>
-              <span class="notify-hub-aviso__sub">{{ a.subtitle }}</span>
-            </div>
+        @for (key of [notifTabActiva]; track key) {
+        <div class="notif-stat">
+          <span class="notif-stat__num">{{ resumenActual.total }}</span>
+          <div class="notif-stat__body">
+            <span class="notif-stat__lbl">pendientes</span>
+            <span class="notif-stat__of">de {{ totalNotificaciones }} en total</span>
+          </div>
+          <span class="notif-stat__ico" aria-hidden="true">
+            <i-tabler [name]="tabActual?.icon ?? 'bell'" class="d-flex"></i-tabler>
+          </span>
+          <div class="notif-stat__track" aria-hidden="true">
+            <span [style.width.%]="totalNotificaciones ? (resumenActual.total / totalNotificaciones) * 100 : 0"></span>
           </div>
         </div>
         }
-      </div>
-
-      <!-- <footer class="notify-hub-frame__foot">
-        <button
-          type="button"
-          mat-flat-button
-          class="bg-secondary w-100 notify-hub-frame__cta"
-          (click)="verTodoAvisos()"
-        >
-          Ver todo
-          <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
-        </button> 
-      </footer>-->
-    </div>
-  </mat-menu>
-
-  <mat-menu
-    #menuNotifInmuebles="matMenu"
-    class="notify-hub-panel notify-hub-panel--inmuebles dd-notifications"
-    xPosition="before"
-  >
-    <div class="notify-hub-frame">
-      <header class="notify-hub-frame__hero notify-hub-frame__hero--services">
-        <div class="notify-hub-frame__hero-badge" aria-hidden="true">
-          <i-tabler name="receipt" class="notify-hub-frame__hero-ico d-flex"></i-tabler>
-        </div>
-        <div class="notify-hub-frame__hero-main">
-          <span class="notify-hub-frame__kicker">Inmuebles</span>
-          <p class="notify-hub-frame__lede m-0">Pagos de Servicios</p>
-        </div>
-        <div class="notify-hub-frame__metric" aria-label="Recibos listados">
-          <span class="notify-hub-frame__metric-value">{{ inmueblesNotifCount }}</span>
-          <span class="notify-hub-frame__metric-label">recibos</span>
-        </div>
       </header>
 
-      <div class="notify-hub-frame__stream">
-        @for (r of recibosInmuebles; track r.id) {
+      <nav class="notif-tabs" role="tablist" aria-label="Categorías de notificaciones">
+        @for (tab of notifTabs; track tab.id) {
         <button
           type="button"
-          mat-menu-item
-          class="notify-hub-recibo d-flex align-items-center text-start w-100 flex-row"
-          (click)="onReciboContratoClick(r, $event)"
+          role="tab"
+          class="notif-tabs__btn"
+          [class.notif-tabs__btn--active]="tab.id === notifTabActiva"
+          [attr.aria-selected]="tab.id === notifTabActiva"
+          (click)="seleccionarNotifTab(tab.id)"
         >
-          <span class="notify-hub-recibo__tile flex-shrink-0 notify-hub-recibo__tile--{{ r.tone }}">
-            <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
-          </span>
-          <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
-            <span class="notify-hub-recibo__label d-block text-start">{{ titleCase(r.label) }}</span>
-            @if (r.detail) {
-            <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
-            }
-          </span>
-          <span class="notify-hub-recibo__chev flex-shrink-0" aria-hidden="true">
-            <i-tabler name="chevron-right" class="d-flex notify-hub-recibo__chev-ico"></i-tabler>
-          </span>
+          <i-tabler [name]="tab.icon" class="notif-tabs__ico d-flex"></i-tabler>
+          <span class="notif-tabs__lbl">{{ tab.label }}</span>
         </button>
         }
+      </nav>
+
+      @if (resumenActual.total > 0) {
+      <div class="notif-summary">
+        <div class="notif-summary__bar" aria-hidden="true">
+          <span class="notif-summary__seg notif-summary__seg--expired" [style.width.%]="porcentajeResumen(resumenActual.vencidos)"></span>
+          <span class="notif-summary__seg notif-summary__seg--danger" [style.width.%]="porcentajeResumen(resumenActual.urgentes)"></span>
+          <span class="notif-summary__seg notif-summary__seg--amber" [style.width.%]="porcentajeResumen(resumenActual.proximos)"></span>
+          <span class="notif-summary__seg notif-summary__seg--success" [style.width.%]="porcentajeResumen(resumenActual.alDia)"></span>
+        </div>
+        <ul class="notif-summary__legend">
+          <li class="notif-summary__chip notif-summary__chip--expired"><span></span>{{ resumenActual.vencidos }} vencidos</li>
+          <li class="notif-summary__chip notif-summary__chip--danger"><span></span>{{ resumenActual.urgentes }} urgentes</li>
+          <li class="notif-summary__chip notif-summary__chip--amber"><span></span>{{ resumenActual.proximos }} próximos</li>
+          <li class="notif-summary__chip notif-summary__chip--success"><span></span>{{ resumenActual.alDia }} al día</li>
+        </ul>
       </div>
+      }
 
-      <!-- <footer class="notify-hub-frame__foot">
-        Ver todo: inmuebles / pagos de servicios 
-        <button
-          type="button"
-          mat-flat-button
-          class="bg-secondary w-100 notify-hub-frame__cta"
-          (click)="verTodoInmueblesNotif()"
+      <div class="notif-list" role="tabpanel">
+        @for (it of tabActual?.items ?? []; track it.id; let i = $index) {
+        <article
+          class="notif-card"
+          [attr.data-tone]="it.tone"
+          [style.--notif-i]="i < 12 ? i : 12"
         >
-          Ver todo
-          <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
-        </button>
-      </footer>-->
-    </div>
-  </mat-menu>
+          <div class="notif-card__cal" [attr.title]="it.fechaLabel + ': ' + it.fecha">
+            <span class="notif-card__cal-head">{{ it.calHead }}</span>
+            <span class="notif-card__cal-day">{{ it.fechaDia }}</span>
+            <span class="notif-card__cal-month">{{ it.fechaMes }} {{ it.fechaAnio }}</span>
+          </div>
 
-  <mat-menu
-    #menuNotifPredios="matMenu"
-    class="notify-hub-panel notify-hub-panel--predios dd-notifications"
-    xPosition="before"
-  >
-    <div class="notify-hub-frame">
-      <header class="notify-hub-frame__hero notify-hub-frame__hero--tenants">
-        <div class="notify-hub-frame__hero-badge" aria-hidden="true">
-          <i-tabler name="users" class="notify-hub-frame__hero-ico d-flex"></i-tabler>
+          <div class="notif-card__body">
+            <div class="notif-card__top">
+              <h4 class="notif-card__title" [attr.title]="titleCase(it.title)">{{ titleCase(it.title) }}</h4>
+              <span class="notif-card__status">{{ it.statusText }}</span>
+            </div>
+            <div class="notif-card__sub">
+              <i-tabler [name]="it.subtitleIcon" class="notif-card__sub-ico d-flex"></i-tabler>
+              <span class="notif-card__sub-txt" [attr.title]="titleCase(it.subtitle)">{{ titleCase(it.subtitle) }}</span>
+              @if (it.contrato) {
+              <span class="notif-card__tag">
+                <i-tabler name="hash" class="d-flex"></i-tabler>
+                {{ it.contrato }}
+              </span>
+              }
+            </div>
+          </div>
+        </article>
+        } @empty {
+        <div class="notif-empty">
+          <div class="notif-empty__badge">
+            <i-tabler name="circle-check" class="d-flex"></i-tabler>
+          </div>
+          <p class="notif-empty__title">Todo en orden</p>
+          <p class="notif-empty__text">No hay avisos pendientes en {{ tabActual?.label?.toLowerCase() ?? 'esta categoría' }}.</p>
         </div>
-        <div class="notify-hub-frame__hero-main">
-          <span class="notify-hub-frame__kicker">Arrendatarios</span>
-          <p class="notify-hub-frame__lede m-0">Pagos y Seguimiento</p>
-        </div>
-        <div class="notify-hub-frame__metric" aria-label="Casos listados">
-          <span class="notify-hub-frame__metric-value">{{ prediosNotifCount }}</span>
-          <span class="notify-hub-frame__metric-label">casos</span>
-        </div>
-      </header>
-
-      <div class="notify-hub-frame__stream">
-        @for (r of recibosPredios; track r.id) {
-        <button
-          type="button"
-          mat-menu-item
-          class="notify-hub-recibo d-flex align-items-center text-start w-100 flex-row"
-          (click)="onReciboContratoClick(r, $event)"
-        >
-          <span class="notify-hub-recibo__tile flex-shrink-0 notify-hub-recibo__tile--{{ r.tone }}">
-            <i-tabler [name]="r.icon" class="d-flex"></i-tabler>
-          </span>
-          <span class="notify-hub-recibo__text flex-grow-1 min-w-0">
-            <span class="notify-hub-recibo__label d-block text-start">{{ titleCase(r.label) }}</span>
-            @if (r.detail) {
-            <span class="notify-hub-recibo__detail d-block text-start">{{ r.detail }}</span>
-            }
-          </span>
-          <span class="notify-hub-recibo__chev flex-shrink-0" aria-hidden="true">
-            <i-tabler name="chevron-right" class="d-flex notify-hub-recibo__chev-ico"></i-tabler>
-          </span>
-        </button>
         }
       </div>
-
-      <!-- <footer class="notify-hub-frame__foot">
-        Ver todo: arrendatarios / seguimiento 
-        <button
-          type="button"
-          mat-flat-button
-          class="bg-secondary w-100 notify-hub-frame__cta"
-          (click)="verTodoArrendatariosNotif()"
-        >
-          Ver todo
-          <i-tabler name="chevron-right" class="icon-16 d-flex"></i-tabler>
-        </button> 
-      </footer>-->
-    </div>
+    </section>
   </mat-menu>
-
   <!-- --------------------------------------------------------------- -->
   <!-- profile Dropdown -->
   <!-- --------------------------------------------------------------- -->

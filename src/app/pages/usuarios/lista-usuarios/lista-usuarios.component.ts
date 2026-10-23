@@ -1,21 +1,84 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { animate, style, transition, trigger } from '@angular/animations';
 import { Router } from '@angular/router';
 import { DxDataGridComponent } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
+import { ToastrService } from 'ngx-toastr';
 import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
 import { UsuariosService } from 'src/app/services/moduleService/usuario.service';
 import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 import Swal from 'sweetalert2';
 
+const DEFAULT_NUEVA_CONTRASENA = 'Dem0o.';
+
+interface AuthPinSlot {
+  id: 'director' | 'monitoreo' | 'tercer';
+  nombre: string;
+  cargo: string;
+  iniciales: string;
+  expected: string;
+  matched: boolean;
+}
+
 @Component({
   selector: 'app-lista-usuarios',
   templateUrl: './lista-usuarios.component.html',
   styleUrl: './lista-usuarios.component.scss',
   standalone: false,
-  animations: [routeAnimation],
+  animations: [
+    routeAnimation,
+    trigger('pwdCard', [
+      transition(':enter', [
+        style({
+          opacity: 0,
+          transform: 'translateY(-6px)',
+          height: 0,
+          marginTop: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
+          overflow: 'hidden',
+        }),
+        animate(
+          '220ms ease-out',
+          style({
+            opacity: 1,
+            transform: 'translateY(0)',
+            height: '*',
+            marginTop: '*',
+            paddingTop: '*',
+            paddingBottom: '*',
+            overflow: 'hidden',
+          }),
+        ),
+      ]),
+      transition(':leave', [
+        style({ overflow: 'hidden' }),
+        animate(
+          '180ms ease-in',
+          style({
+            opacity: 0,
+            transform: 'translateY(-4px)',
+            height: 0,
+            marginTop: 0,
+            paddingTop: 0,
+            paddingBottom: 0,
+          }),
+        ),
+      ]),
+    ]),
+    trigger('pinShake', [
+      transition('idle => error', [
+        animate('60ms', style({ transform: 'translateX(-8px)' })),
+        animate('60ms', style({ transform: 'translateX(8px)' })),
+        animate('60ms', style({ transform: 'translateX(-6px)' })),
+        animate('60ms', style({ transform: 'translateX(6px)' })),
+        animate('60ms', style({ transform: 'translateX(0)' })),
+      ]),
+    ]),
+  ],
 })
-export class ListaUsuariosComponent implements OnInit {
+export class ListaUsuariosComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
   listaUsuarios: any;
   public grid: boolean = false;
@@ -38,13 +101,48 @@ export class ListaUsuariosComponent implements OnInit {
   public totalPaginas: number = 0;
   public registros: any[] = [];
 
-  constructor(private usuService: UsuariosService, private route: Router) {
+  // --- Cambio de contraseña (admin): autorización PIN + nueva contraseña ---
+  showPasswordModal = false;
+  showAuthPinModal = false;
+  passwordChangeAuthorized = false;
+  authSuccessView = false;
+  loadingPassword = false;
+  pinAuthError = false;
+  pinShakeState: 'idle' | 'error' = 'idle';
+  authDigits: string[] = ['', '', '', ''];
+  readonly authDigitIndexes = [0, 1, 2, 3];
+  private authSuccessTimer: ReturnType<typeof setTimeout> | null = null;
+  private authHandoffTimer: ReturnType<typeof setTimeout> | null = null;
+  usuarioPasswordSeleccionado: any = null;
+  passwordNueva = DEFAULT_NUEVA_CONTRASENA;
+  passwordConfirmar = '';
+  hidePass = true;
+  hideConfirm = true;
+  confirmFocused = false;
+  confirmMatch = false;
+
+  readonly authPins: AuthPinSlot[] = [
+    { id: 'director', nombre: 'Israel Negrete Lepe', cargo: 'Director', iniciales: 'IN', expected: '0000', matched: false },
+    { id: 'monitoreo', nombre: 'Crystal Olivares Loeza', cargo: 'Jefe De Monitoreo', iniciales: 'CO', expected: '1111', matched: false },
+    { id: 'tercer', nombre: 'Andrea Daniela Barajas Cruz', cargo: 'Autorización', iniciales: 'AB', expected: '2222', matched: false },
+  ];
+
+  constructor(
+    private usuService: UsuariosService,
+    private route: Router,
+    private toastr: ToastrService,
+  ) {
     this.showFilterRow = true;
     this.showHeaderFilter = true;
   }
 
   ngOnInit(): void {
     this.setupDataSource();
+  }
+
+  ngOnDestroy(): void {
+    this.clearAuthSuccessTimer();
+    this.clearAuthHandoffTimer();
   }
 
   agregarUsuario() {
@@ -378,4 +476,397 @@ export class ListaUsuariosComponent implements OnInit {
   // hasPermission(permission: string): boolean {
   //   return this.permissionsService.getPermission(permission) !== undefined;
   // }1
+
+  // ---------------------------------------------------------------------------
+  // Cambio de contraseña desde el listado (modal PIN + modal contraseña)
+  // ---------------------------------------------------------------------------
+
+  abrirModalCambiarContrasena(row: any) {
+    this.usuarioPasswordSeleccionado = row;
+    this.passwordNueva = DEFAULT_NUEVA_CONTRASENA;
+    this.passwordConfirmar = '';
+    this.hidePass = true;
+    this.hideConfirm = true;
+    this.confirmFocused = false;
+    this.confirmMatch = false;
+    this.passwordChangeAuthorized = false;
+    this.showPasswordModal = false;
+    this.resetAuthPinFields();
+    this.showAuthPinModal = true;
+    setTimeout(() => this.focusAuthDigit(0), 80);
+  }
+
+  /** Se oculta solo cuando ya coinciden y el usuario ya no está escribiendo en Confirmar. */
+  get mostrarCardConfirm(): boolean {
+    if (this.confirmMatch && !this.confirmFocused) {
+      return false;
+    }
+    return this.confirmFocused || (this.passwordConfirmar ?? '').length > 0;
+  }
+
+  get canSubmitPasswordChange(): boolean {
+    return this.confirmMatch && this.passwordChangeAuthorized;
+  }
+
+  get authPinCode(): string {
+    return this.authDigits.join('');
+  }
+
+  get canClickAuthorize(): boolean {
+    return this.authPinCode.length === 4 && !this.loadingPassword;
+  }
+
+  get authPinsRevelados(): AuthPinSlot[] {
+    return this.authPins.filter((p) => p.matched);
+  }
+
+  onPasswordNuevaInput() {
+    this.validateConfirmMatch();
+  }
+
+  onConfirmFocus() {
+    this.confirmFocused = true;
+  }
+
+  onConfirmPasswordInput() {
+    this.validateConfirmMatch();
+  }
+
+  onConfirmPasswordBlur() {
+    this.confirmFocused = false;
+    this.validateConfirmMatch();
+  }
+
+  private validateConfirmMatch() {
+    const nueva = this.passwordNueva ?? '';
+    const confirmar = this.passwordConfirmar ?? '';
+    this.confirmMatch =
+      nueva.length > 0 && confirmar.length > 0 && nueva === confirmar;
+  }
+
+  cancelarCambioContrasena() {
+    if (this.loadingPassword) {
+      return;
+    }
+    this.resetPasswordFormFields();
+    this.showPasswordModal = false;
+  }
+
+  onAuthDigitInput(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const raw = (input.value ?? '').replace(/\D/g, '');
+    const digit = raw.slice(-1);
+    this.authDigits[index] = digit;
+    input.value = digit;
+    this.pinAuthError = false;
+    this.pinShakeState = 'idle';
+    if (digit && index < 3) {
+      this.focusAuthDigit(index + 1);
+    }
+  }
+
+  onAuthDigitKeydown(index: number, event: KeyboardEvent): void {
+    const key = event.key;
+    if (key === 'Backspace') {
+      if (this.authDigits[index]) {
+        this.authDigits[index] = '';
+        return;
+      }
+      if (index > 0) {
+        event.preventDefault();
+        this.authDigits[index - 1] = '';
+        this.focusAuthDigit(index - 1);
+      }
+      return;
+    }
+    if (key === 'ArrowLeft' && index > 0) {
+      event.preventDefault();
+      this.focusAuthDigit(index - 1);
+      return;
+    }
+    if (key === 'ArrowRight' && index < 3) {
+      event.preventDefault();
+      this.focusAuthDigit(index + 1);
+      return;
+    }
+    if (key === 'Enter' && this.canClickAuthorize) {
+      event.preventDefault();
+      this.confirmarAuthPinsYCambiar();
+    }
+  }
+
+  onAuthDigitPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const text = (event.clipboardData?.getData('text') ?? '')
+      .replace(/\D/g, '')
+      .slice(0, 4);
+    if (!text) {
+      return;
+    }
+    this.authDigits = ['', '', '', ''];
+    for (let i = 0; i < text.length; i++) {
+      this.authDigits[i] = text[i];
+    }
+    this.pinAuthError = false;
+    this.focusAuthDigit(Math.min(text.length, 3));
+  }
+
+  private focusAuthDigit(index: number): void {
+    const el = document.getElementById(
+      `listaUsuariosAuthDigit_${index}`,
+    ) as HTMLInputElement | null;
+    el?.focus();
+    el?.select();
+  }
+
+  cancelarAuthPins(): void {
+    if (this.loadingPassword || this.authSuccessView) {
+      return;
+    }
+    this.clearAuthSuccessTimer();
+    this.clearAuthHandoffTimer();
+    this.resetAuthPinFields();
+    this.showAuthPinModal = false;
+    this.usuarioPasswordSeleccionado = null;
+    this.passwordChangeAuthorized = false;
+  }
+
+  confirmarAuthPinsYCambiar(): void {
+    if (this.loadingPassword || this.authSuccessView) {
+      return;
+    }
+
+    const code = this.authPinCode;
+    if (code.length !== 4) {
+      this.toastr.warning(
+        'Ingresa el código de autorización completo.',
+        'Requerido',
+      );
+      return;
+    }
+
+    const match = this.authPins.find((p) => p.expected === code);
+    if (!match) {
+      this.pinAuthError = true;
+      this.pinShakeState = 'idle';
+      requestAnimationFrame(() => {
+        this.pinShakeState = 'error';
+      });
+      this.authDigits = ['', '', '', ''];
+      this.focusAuthDigit(0);
+      this.toastr.error(
+        'Código de autorización inválido.',
+        'No autorizado',
+      );
+      return;
+    }
+
+    this.authPins.forEach((p) => {
+      p.matched = p.id === match.id;
+    });
+    this.pinAuthError = false;
+    this.authSuccessView = true;
+    this.passwordChangeAuthorized = true;
+    // Limpia dígitos después de iniciar el fade, para no vaciar los cuadros a la vista.
+    setTimeout(() => {
+      this.authDigits = ['', '', '', ''];
+    }, 300);
+    this.clearAuthSuccessTimer();
+    this.authSuccessTimer = setTimeout(() => {
+      this.pasarACambioContrasena();
+    }, 3000);
+  }
+
+  private pasarACambioContrasena(): void {
+    this.clearAuthSuccessTimer();
+    this.clearAuthHandoffTimer();
+    // Cierra autorización con animación CSS y luego abre el de contraseña.
+    this.showAuthPinModal = false;
+    this.authHandoffTimer = setTimeout(() => {
+      this.authSuccessView = false;
+      this.showPasswordModal = true;
+      this.authHandoffTimer = null;
+    }, 320);
+  }
+
+  private clearAuthSuccessTimer(): void {
+    if (this.authSuccessTimer != null) {
+      clearTimeout(this.authSuccessTimer);
+      this.authSuccessTimer = null;
+    }
+  }
+
+  private clearAuthHandoffTimer(): void {
+    if (this.authHandoffTimer != null) {
+      clearTimeout(this.authHandoffTimer);
+      this.authHandoffTimer = null;
+    }
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(event: KeyboardEvent) {
+    if (!this.showPasswordModal && !this.showAuthPinModal) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  private resetAuthPinFields(): void {
+    this.clearAuthSuccessTimer();
+    this.clearAuthHandoffTimer();
+    this.authPins.forEach((p) => {
+      p.matched = false;
+    });
+    this.authDigits = ['', '', '', ''];
+    this.pinAuthError = false;
+    this.pinShakeState = 'idle';
+    this.authSuccessView = false;
+  }
+
+  private resetPasswordFormFields(): void {
+    this.usuarioPasswordSeleccionado = null;
+    this.passwordNueva = DEFAULT_NUEVA_CONTRASENA;
+    this.passwordConfirmar = '';
+    this.hidePass = true;
+    this.hideConfirm = true;
+    this.confirmFocused = false;
+    this.confirmMatch = false;
+    this.loadingPassword = false;
+    this.passwordChangeAuthorized = false;
+    this.showAuthPinModal = false;
+    this.resetAuthPinFields();
+  }
+
+  confirmChangePassword() {
+    if (!this.passwordChangeAuthorized) {
+      this.toastr.error(
+        'Se requiere autorización previa para cambiar la contraseña.',
+        'No autorizado',
+      );
+      return;
+    }
+    if (!this.canSubmitPasswordChange) {
+      this.validateConfirmMatch();
+      this.toastr.warning('Las contraseñas no coinciden.', 'Requerido');
+      return;
+    }
+
+    const id = Number(
+      this.usuarioPasswordSeleccionado?.id ??
+        this.usuarioPasswordSeleccionado?.Id,
+    );
+    if (!Number.isFinite(id) || id <= 0) {
+      this.toastr.error('No se pudo identificar al usuario.', '¡Ops!');
+      return;
+    }
+
+    this.ejecutarCambioContrasena();
+  }
+
+  /** Solo se llama después de validar autorización y contraseñas. */
+  private ejecutarCambioContrasena(): void {
+    if (!this.passwordChangeAuthorized) {
+      this.toastr.error(
+        'Se requiere autorización previa para cambiar la contraseña.',
+        'No autorizado',
+      );
+      return;
+    }
+
+    const nueva = this.passwordNueva ?? '';
+    const confirmar = this.passwordConfirmar ?? '';
+
+    const id = Number(
+      this.usuarioPasswordSeleccionado?.id ??
+        this.usuarioPasswordSeleccionado?.Id,
+    );
+    if (!Number.isFinite(id) || id <= 0) {
+      this.toastr.error('No se pudo identificar al usuario.', '¡Ops!');
+      return;
+    }
+
+    this.loadingPassword = true;
+    this.usuService
+      .cambiarAccesoUsuario({
+        idUsuario: id,
+        passwordNueva: nueva,
+        passwordConfirmacion: confirmar,
+      })
+      .subscribe({
+        next: () => {
+          this.loadingPassword = false;
+          this.resetPasswordFormFields();
+          this.showPasswordModal = false;
+          this.mostrarAlertaExitoCambioContrasena();
+        },
+        error: (err) => {
+          this.loadingPassword = false;
+          const raw = err?.error;
+          if (this.esExitoCambioContrasena(raw, err)) {
+            this.resetPasswordFormFields();
+            this.showPasswordModal = false;
+            this.mostrarAlertaExitoCambioContrasena();
+            return;
+          }
+          const msg = this.mensajeErrorCambioContrasena(err);
+          this.toastr.error(msg, '¡Ops!');
+        },
+      });
+  }
+
+  private mostrarAlertaExitoCambioContrasena(): void {
+    void Swal.fire({
+      color: '#ffffff',
+      background: '#141a21',
+      title: '¡Operación Exitosa!',
+      text: 'La contraseña del usuario ha sido actualizada correctamente.',
+      icon: 'success',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Confirmar',
+      footer:
+        'Por su seguridad, el usuario debe cambiar esta contraseña para su seguridad.',
+    });
+  }
+
+  private esExitoCambioContrasena(raw: unknown, err: unknown): boolean {
+    const status = Number((err as { status?: number })?.status);
+    if (status >= 200 && status < 300) {
+      return true;
+    }
+    const texto =
+      typeof raw === 'string'
+        ? raw
+        : raw && typeof raw === 'object'
+          ? JSON.stringify(raw)
+          : '';
+    return /actualizada exitosamente|correctamente|success/i.test(texto);
+  }
+
+  private mensajeErrorCambioContrasena(err: unknown): string {
+    const raw = (err as { error?: unknown; message?: string })?.error;
+    if (typeof raw === 'string' && raw.trim()) {
+      const t = raw.trim();
+      try {
+        const parsed = JSON.parse(t) as Record<string, unknown>;
+        const fromJson =
+          parsed?.['message'] ?? parsed?.['error'] ?? parsed?.['title'];
+        if (typeof fromJson === 'string' && fromJson.trim()) {
+          return fromJson.trim();
+        }
+      } catch {
+        return t;
+      }
+      return t;
+    }
+    if (raw && typeof raw === 'object') {
+      const obj = raw as Record<string, unknown>;
+      const msg = obj['message'] ?? obj['error'] ?? obj['title'];
+      if (typeof msg === 'string' && msg.trim()) {
+        return msg.trim();
+      }
+    }
+    const fallback = (err as { message?: string })?.message;
+    return fallback?.trim() || 'Error al actualizar la contraseña.';
+  }
 }

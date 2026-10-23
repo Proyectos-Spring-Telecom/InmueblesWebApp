@@ -19,6 +19,8 @@ export class ErrorInterceptor implements HttpInterceptor {
           status: err.status,
           message: backendMessage,
           error: err.error,
+          // Encabezados de la respuesta (ej. retry-after-usuario del asistente en un 429).
+          headers: err.headers,
         }));
       })
     );

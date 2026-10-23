@@ -195,7 +195,7 @@ $arr-det-gutter: clamp(0.5rem, 2.5vw, 2rem);
 
 .arr-socio-doc__btn.mat-mdc-unelevated-button {
   --mdc-filled-button-container-height: var(--arr-socio-doc-action-h);
-  border-radius: 999px !important;
+  border-radius: 10px !important;
   min-height: var(--arr-socio-doc-action-h) !important;
   height: var(--arr-socio-doc-action-h) !important;
   padding: 0 0.65rem !important;
@@ -412,18 +412,18 @@ button.arr-socio-doc__link {
 
 .arr-ctr-chip {
   padding: 0.2rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--label-radius, 8px);
   font-size: 0.7rem;
   letter-spacing: 0.03em;
-  color: #c8d2f0;
-  border: 1px solid rgba(130, 160, 255, 0.3);
-  background: rgba(14, 20, 32, 0.75);
+  color: var(--label-blue-text, #dbeafe);
+  border: 1px solid var(--label-blue-border, #0a2844);
+  background: var(--label-blue-bg, #123d66);
 }
 
 .arr-ctr-chip--baja {
-  color: #fecaca;
-  border-color: rgba(248, 113, 113, 0.45);
-  background: rgba(127, 29, 29, 0.35);
+  color: var(--label-red-text, #fee2e2);
+  border-color: var(--label-red-border, #6b0f0f);
+  background: var(--label-red-bg, #8b1313);
 }
 
 .arr-ctr-panel__renta {
@@ -461,7 +461,7 @@ button.arr-socio-doc__link {
 .arr-ctr-head-cancel {
   flex-shrink: 0;
   color: #fff;
-  border-radius: 999px !important;
+  border-radius: 10px !important;
   animation: arr-ctr-cancel-pulse 2.4s ease-in-out infinite;
   border: 1px solid rgba(252, 165, 165, 0.55) !important;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -882,34 +882,34 @@ button.arr-socio-doc__link {
 .inm-estatus-chip {
   display: inline-block;
   padding: 0.2rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--label-radius, 8px);
   font-size: 0.72rem;
   letter-spacing: 0.03em;
   border: 1px solid transparent;
 }
 
 .inm-estatus-chip--baja {
-  color: #e9d5ff;
-  border-color: rgba(192, 132, 252, 0.55);
-  background: rgba(88, 28, 135, 0.45);
+  color: var(--label-purple-text, #f3e8ff);
+  border-color: var(--label-purple-border, #32104d);
+  background: var(--label-purple-bg, #4a1570);
 }
 
 .inm-estatus-chip--disponible {
-  color: #86efac;
-  border-color: rgba(74, 222, 128, 0.45);
-  background: rgba(22, 101, 52, 0.28);
+  color: var(--label-green-text, #d1fae5);
+  border-color: var(--label-green-border, #0b2e1b);
+  background: var(--label-green-bg, #11492a);
 }
 
 .inm-estatus-chip--ocupado {
-  color: #fca5a5;
-  border-color: rgba(248, 113, 113, 0.45);
-  background: rgba(127, 29, 29, 0.28);
+  color: var(--label-red-text, #fee2e2);
+  border-color: var(--label-red-border, #6b0f0f);
+  background: var(--label-red-bg, #8b1313);
 }
 
 .inm-estatus-chip--apartado {
-  color: #fcd34d;
-  border-color: rgba(251, 191, 36, 0.45);
-  background: rgba(120, 83, 9, 0.28);
+  color: var(--label-amber-text, #ffedd5);
+  border-color: var(--label-amber-border, #4a2805);
+  background: var(--label-amber-bg, #6b3a08);
 }
 
 @media (max-width: 767.98px) {

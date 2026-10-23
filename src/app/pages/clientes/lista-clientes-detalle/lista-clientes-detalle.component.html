@@ -1,12 +1,20 @@
 <div class="inm-detalle" *ngIf="row">
-  <nav class="inm-detalle__tabs" aria-label="Documentación del arrendador">
-    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
-      (click)="detalleTab = 0">
-      Documentos ({{ archivos.length }})
+  <nav class="inm-detalle__tabs" role="tablist" aria-label="Documentación del arrendador">
+    <button type="button" role="tab" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 0"
+      [attr.aria-selected]="detalleTab === 0" (click)="detalleTab = 0">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>folder_open</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Documentos</span>
+        <span class="inm-detalle__tab-sub">{{ archivos.length }} {{ archivos.length === 1 ? 'archivo' : 'archivos' }}</span>
+      </span>
     </button>
-    <button type="button" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 1"
-      (click)="detalleTab = 1">
-      Socios Arrendadores ({{ socios.length }})
+    <button type="button" role="tab" class="inm-detalle__tab" [class.inm-detalle__tab--active]="detalleTab === 1"
+      [attr.aria-selected]="detalleTab === 1" (click)="detalleTab = 1">
+      <span class="inm-detalle__tab-icono" aria-hidden="true"><mat-icon>groups</mat-icon></span>
+      <span class="inm-detalle__tab-texto">
+        <span class="inm-detalle__tab-label">Socios Arrendadores</span>
+        <span class="inm-detalle__tab-sub">{{ socios.length }} {{ socios.length === 1 ? 'registrado' : 'registrados' }}</span>
+      </span>
     </button>
   </nav>
 

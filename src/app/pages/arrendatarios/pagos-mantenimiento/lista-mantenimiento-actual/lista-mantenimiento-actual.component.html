@@ -82,30 +82,34 @@
           </div>
         </div>
         <div class="pagos-mes-filtro-acciones">
-          <button type="button" mat-flat-button class="bg-success pagos-mes-filtros-limpiar"
+          <button type="button" mat-flat-button class="bg-warning pagos-mes-filtros-limpiar"
             (click)="limpiarFiltrosPagosMes()" [disabled]="!hayFiltrosPagosMesActivos"
-            aria-label="Limpiar filtros de arrendador e inmueble">
-            <i class="fa fa-eraser" aria-hidden="true"></i> Limpiar
+            aria-label="Limpiar filtros de arrendador e inmueble" title="Limpiar filtros">
+            <i class="fa fa-refresh" aria-hidden="true"></i>
           </button>
         </div>
       </div>
-    </div>
 
-    <div class="d-flex flex-wrap gap-10 justify-content-end w-100 inm-lista__toolbar">
-      <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-mantenimiento">
-        <i class="fa fa-plus" aria-hidden="true"></i>
-        Registrar pago mantenimiento
-      </button>
-      <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
-        <i class="fa fa-eraser"></i> Limpiar
-      </button>
-      <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
-        <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
-        {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
-      </button>
-      <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
-        <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
-      </button>
+      <div class="d-flex flex-wrap gap-10 inm-lista__toolbar clientes-flow-head__acciones pagos-mes-acciones">
+        <div class="pagos-mes-acciones__grupo pagos-mes-acciones__grupo--principales">
+          <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-mantenimiento">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            Registrar pago mantenimiento
+          </button>
+        </div>
+        <div class="pagos-mes-acciones__grupo pagos-mes-acciones__grupo--utilidades">
+          <button type="button" (click)="limpiarVista()" mat-flat-button class="bg-success">
+            <i class="fa fa-eraser"></i> Limpiar
+          </button>
+          <button type="button" (click)="toggleExpandGroups()" mat-flat-button class="bg-warn">
+            <i [class]="autoExpandAllGroups ? 'fa fa-expand' : 'fa fa-compress'" aria-hidden="true"></i>
+            {{ autoExpandAllGroups ? ' Contraer grupos' : ' Expandir grupos' }}
+          </button>
+          <button type="button" (click)="exportarExcel()" mat-flat-button class="bg-info" [disabled]="!puedeExportarExcel()">
+            <i class="fa fa-file-excel-o" aria-hidden="true"></i> Exportar
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="mt-3">

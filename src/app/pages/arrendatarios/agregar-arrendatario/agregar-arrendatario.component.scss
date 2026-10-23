@@ -266,7 +266,7 @@
   min-height: 2rem !important;
   height: 2rem !important;
   padding: 0 0.85rem !important;
-  border-radius: 999px !important;
+  border-radius: 10px !important;
   letter-spacing: 0.04em;
   font-size: 0.75rem !important;
   line-height: 1 !important;
@@ -309,14 +309,14 @@
 :host ::ng-deep .arrend-accordion-title-bar .arrend-item-eliminar-btn.mat-mdc-unelevated-button,
 :host ::ng-deep .arrend-item-eliminar-btn.mat-mdc-unelevated-button {
   --mdc-filled-button-container-height: 2rem;
-  --mdc-filled-button-container-shape: 999px;
+  --mdc-filled-button-container-shape: 10px;
   --mdc-filled-button-container-color: rgba(104, 19, 48, 0.28) !important;
   --mat-button-filled-container-color: rgba(104, 19, 48, 0.28) !important;
   --mdc-filled-button-label-text-color: #ffffff !important;
   --mdc-filled-button-icon-color: #ffffff !important;
   background: rgba(104, 19, 48, 0.28) !important;
   border: 1px solid rgba(251, 165, 180, 0.74) !important;
-  border-radius: 999px !important;
+  border-radius: 10px !important;
   color: #ffffff !important;
   box-shadow: none !important;
 
@@ -342,7 +342,7 @@
   min-height: 0 !important;
   height: auto !important;
   padding: 0.5rem !important;
-  border-radius: 999px !important;
+  border-radius: 10px !important;
 
   .mdc-button__label {
     gap: 0;
@@ -360,6 +360,181 @@
     height: 1.15rem !important;
     margin: 0 !important;
   }
+}
+
+/* Tabs de arreglos dinámicos (antes dx-accordion): barra segmentada como la del detalle.
+   La barra se estira al ancho del hero de la sección (el cuerpo trae sangría de 0.70rem). */
+.arrend-fa-section__body > .arrend-accordion-contratos > .arrend-tabs,
+.arrend-fa-section__body > .arrend-accordion-servicios > .arrend-tabs,
+.arrend-fa-section__body > .arrend-accordion-socios > .arrend-tabs {
+  margin-inline: -0.70rem;
+}
+
+.arrend-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.arrend-tabs__tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1 1 190px;
+  max-width: 340px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 4px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 8px;
+  color: #c3cede;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.55));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover:not(.arrend-tabs__tab--activa) {
+    transform: translateY(-1px);
+    color: #e8ecf6;
+    border-color: rgba(147, 197, 253, 0.38);
+    background: rgba(147, 197, 253, 0.08);
+    box-shadow: 0 10px 20px -12px rgba(96, 165, 250, 0.45);
+  }
+}
+
+.arrend-tabs__tab--activa {
+  color: #ffffff;
+  border-color: rgba(147, 197, 253, 0.75);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.36), rgba(124, 92, 255, 0.28));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 10px 20px -12px rgba(59, 95, 196, 0.55);
+}
+
+.arrend-tabs__btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.3rem 0.35rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 0.55rem;
+    border-radius: 50%;
+    vertical-align: 0.14em;
+    background: #64748b;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+  }
+
+  .arrend-tabs__tab--activa &::before {
+    background: #bfdbfe;
+    box-shadow:
+      0 0 0 3px rgba(191, 219, 254, 0.22),
+      0 0 10px rgba(147, 197, 253, 0.9);
+  }
+}
+
+.arrend-tabs__panel {
+  display: none;
+  min-width: 0;
+}
+
+.arrend-tabs__panel--activa {
+  display: block;
+}
+
+/* Botones dentro de los arreglos: colores no sólidos y esquinas apenas redondeadas */
+:host .mono-pago-file__action {
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(2, 132, 199, 0.55), rgba(2, 132, 199, 0.38));
+  border-color: rgba(125, 211, 252, 0.6);
+}
+
+:host .mono-pago-file--filled .mono-pago-file__action {
+  background: linear-gradient(180deg, rgba(5, 150, 105, 0.55), rgba(5, 150, 105, 0.38));
+  border-color: rgba(110, 231, 183, 0.6);
+}
+
+:host ::ng-deep .arrend-tabs__tab .arrend-item-eliminar-btn.mat-mdc-unelevated-button {
+  --mdc-filled-button-container-shape: 10px;
+  border-radius: 8px !important;
+  min-width: 1.75rem !important;
+  width: 1.75rem !important;
+  min-height: 1.75rem !important;
+  height: 1.75rem !important;
+  padding: 0 !important;
+
+  mat-icon {
+    font-size: 0.95rem !important;
+    width: 0.95rem !important;
+    height: 0.95rem !important;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .arrend-tabs {
+    flex-direction: column;
+  }
+
+  .arrend-tabs__tab {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: none;
+  }
+}
+
+:host-context(html.light-theme) {
+  .arrend-tabs {
+    border: 0;
+    background: transparent;
+  }
+
+  .arrend-tabs__tab {
+    color: #475569;
+    background: rgba(255, 255, 255, 0.7);
+    border-color: #cbd5e1;
+
+    &:hover:not(.arrend-tabs__tab--activa) {
+      color: #0f172a;
+      background: rgba(255, 255, 255, 0.65);
+    }
+  }
+
+  .arrend-tabs__tab--activa {
+    color: #1e3a8a;
+    background: #ffffff;
+    border-color: #c7d2fe;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  }
+
+  .arrend-tabs__tab--activa .arrend-tabs__btn::before {
+    background: #2563eb;
+    box-shadow:
+      0 0 0 3px rgba(37, 99, 235, 0.18),
+      0 0 10px rgba(37, 99, 235, 0.45);
+  }
+
 }
 
 .arrend-accordion-inner {
@@ -1272,6 +1447,19 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
+}
+
+:host ::ng-deep .arrend-fa-add-btn.mat-mdc-unelevated-button {
+  --mdc-filled-button-container-shape: 10px;
+  --mdc-filled-button-container-color: transparent !important;
+  --mat-button-filled-container-color: transparent !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.48), rgba(124, 92, 255, 0.36)) !important;
+  border: 1px solid rgba(147, 197, 253, 0.7) !important;
+  color: #ffffff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 18px -10px rgba(37, 99, 235, 0.55) !important;
 }
 
 .arrend-fa-title-wrap {

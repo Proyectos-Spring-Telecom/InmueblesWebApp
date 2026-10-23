@@ -14,6 +14,10 @@ const routes: Routes = [
     path: 'agregar-prospecto',
     component: AgregarProspectoComponent,
     canActivate: [AuthGuard],
+    // Con el modal obligatorio abierto (usuario pendiente), no se puede abandonar el alta.
+    canDeactivate: [
+      (component: AgregarProspectoComponent) => component.puedeSalirDeAltaProspecto(),
+    ],
   },
   {
     path: 'editar-prospecto/:idCliente',

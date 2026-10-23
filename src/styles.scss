@@ -714,6 +714,46 @@ app-module-hero ~ .surface {
 
 
 
+/* ========== Scrollbars de toda la app ========== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(150, 22, 65, 0.85) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  background-color: rgba(150, 22, 65, 0.8);
+  background-image: linear-gradient(180deg, rgba(172, 42, 84, 0.95), rgba(104, 19, 48, 0.95));
+  background-origin: border-box;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(178, 52, 96, 0.95);
+  background-image: linear-gradient(180deg, rgba(196, 66, 110, 0.98), rgba(128, 26, 60, 0.98));
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(93, 135, 255, 0.9);
+  background-image: linear-gradient(180deg, rgba(93, 135, 255, 0.95), rgba(64, 96, 196, 0.95));
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .btnAcciones {
   --size: 36px;
   width: var(--size);
@@ -721,7 +761,7 @@ app-module-hero ~ .surface {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid rgba(226, 232, 240, 0.55);
   background: rgba(100, 116, 139, 0.22);
   color: #ffffff;
@@ -794,87 +834,101 @@ app-module-hero ~ .surface {
   filter: brightness(1.08);
 }
 
+#cambiarPasswordButton {
+  background: rgba(234, 179, 8, 0.24);
+  border: 1px solid rgba(253, 224, 71, 0.62);
+  color: #ffffff;
+}
+#cambiarPasswordButton:hover {
+  filter: brightness(1.08);
+}
+
+/* Paleta de etiquetas (misma tonalidad sólida que Activo / Inactivo) */
+:root {
+  --label-radius: 8px;
+  --label-green-bg: #11492a;
+  --label-green-border: #0b2e1b;
+  --label-green-text: #d1fae5;
+  --label-red-bg: #8b1313;
+  --label-red-border: #6b0f0f;
+  --label-red-text: #fee2e2;
+  --label-blue-bg: #123d66;
+  --label-blue-border: #0a2844;
+  --label-blue-text: #dbeafe;
+  --label-amber-bg: #6b3a08;
+  --label-amber-border: #4a2805;
+  --label-amber-text: #ffedd5;
+  --label-purple-bg: #4a1570;
+  --label-purple-border: #32104d;
+  --label-purple-text: #f3e8ff;
+  --label-teal-bg: #0d4f4f;
+  --label-teal-border: #093838;
+  --label-teal-text: #ccfbf1;
+  --label-slate-bg: #2a3548;
+  --label-slate-border: #1e293b;
+  --label-slate-text: #e2e8f0;
+}
+
+/* Todas las etiquetas del proyecto: radio 8px */
+.estatus,
+.rr-tag,
+.concepto-pill,
+.empresa-nota,
+.empresa-nota--incremento,
+.concepto-inc,
+.inm-label,
+.rrv-leyenda__item,
+.badge-estatus,
+.label-estatus {
+  border-radius: var(--label-radius, 8px) !important;
+}
+
 .estatus {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: var(--label-radius, 8px);
   font-size: 12px;
   letter-spacing: .04em;
   line-height: 1;
   font-family: var(--mat-list-list-item-label-text-font, var(--mat-sys-body-large-font));
-  border: 1px solid #1f2937;
-  color: #e5e7eb;
-  background: #0e1525;
+  border: 1px solid var(--label-slate-border);
+  color: var(--label-slate-text);
+  background: var(--label-slate-bg);
   transition: background .15s ease, border-color .15s ease;
 }
+
 .estatus::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  content: none;
+  display: none;
 }
 
-.estatus-activo {
-  background: #11492a;
-  border-color: #0b2e1b;
-  color: #d1fae5;
-}
-.estatus-activo::before { background: #34d399; }
-
-.estatus-inactivo {
-  background: #8b1313;
-  border-color: #6b0f0f;
-  color: #fee2e2;
-}
-.estatus-inactivo::before { background: #f87171; }
-
-/* Cobranza: cargo con pagos pero con saldo */
-.estatus-parcial {
-  background: #5c3b06;
-  border-color: #3f2904;
-  color: #fef3c7;
-}
-.estatus-parcial::before { background: #f5b84b; }
-
+.estatus-activo,
 .estatus-disponible {
-  background: #064e3b;
-  border-color: #022c22;
-  color: #bbf7d0;
-}
-.estatus-disponible::before {
-  background: #22c55e;
+  background: var(--label-green-bg);
+  border-color: var(--label-green-border);
+  color: var(--label-green-text);
 }
 
-/* Instalado (azul) */
-.estatus-instalado {
-  background: #0f2942;
-  border-color: #0b1b2d;
-  color: #dbeafe;
-}
-.estatus-instalado::before {
-  background: #60a5fa;
-}
-
-/* En reparación (ámbar) */
-.estatus-reparacion {
-  background: #451a03;
-  border-color: #2c1202;
-  color: #ffedd5;
-}
-.estatus-reparacion::before {
-  background: #fb923c;
-}
-
-/* Descompuesto (rojo vino) */
+.estatus-inactivo,
 .estatus-descompuesto {
-  background: #4c0519;
-  border-color: #2b0410;
-  color: #fee2e2;
+  background: var(--label-red-bg);
+  border-color: var(--label-red-border);
+  color: var(--label-red-text);
 }
-.estatus-descompuesto::before {
-  background: #f97373;
+
+.estatus-instalado {
+  background: var(--label-blue-bg);
+  border-color: var(--label-blue-border);
+  color: var(--label-blue-text);
+}
+
+.estatus-reparacion,
+.estatus-parcial {
+  background: var(--label-amber-bg);
+  border-color: var(--label-amber-border);
+  color: var(--label-amber-text);
 }
 
 .uploader__filename--link {
@@ -978,4 +1032,21 @@ app-module-hero ~ .surface {
 .ul-root .ul-card .mdc-text-field__input::-moz-placeholder {
   color: rgba(255, 255, 255, 0.28) !important;
   opacity: 1 !important;
+}
+
+/* Homologación de botones: todos con el mismo border-radius del proyecto (10px) */
+button,
+input[type='button'],
+input[type='submit'],
+input[type='reset'],
+.btn,
+.dx-button,
+.mat-mdc-button-base {
+  --mdc-filled-button-container-shape: 10px !important;
+  --mdc-outlined-button-container-shape: 10px !important;
+  --mdc-protected-button-container-shape: 10px !important;
+  --mdc-text-button-container-shape: 10px !important;
+  --mdc-fab-container-shape: 10px !important;
+  --mdc-extended-fab-container-shape: 10px !important;
+  border-radius: 10px !important;
 }
