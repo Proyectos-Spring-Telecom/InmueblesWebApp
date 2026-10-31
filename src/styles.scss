@@ -1050,3 +1050,19 @@ input[type='reset'],
   --mdc-extended-fab-container-shape: 10px !important;
   border-radius: 10px !important;
 }
+/* =============================================================================
+ * Encabezados de módulo: sin mayúsculas forzadas ni negritas (ambos temas).
+ * Aplica al encabezado común (app-module-hero) y a los propios de Rent Rol,
+ * Generar Contrato y Embudo de ventas. Los íconos se excluyen porque algunas
+ * fuentes de íconos dependen del peso para dibujarse.
+ * ============================================================================= */
+app-module-hero,
+.rrv-hero,
+.gc-hero,
+.eh {
+  &,
+  *:not(mat-icon):not(.mat-icon):not(.fa):not([class^='fa-']):not([class*=' fa-']):not(i-tabler) {
+    text-transform: none !important;
+    font-weight: 400 !important;
+  }
+}

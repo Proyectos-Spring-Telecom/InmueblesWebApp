@@ -1,0 +1,331 @@
+/* =============================================================================
+ * Tema claro — superficies suaves
+ *
+ * Se carga DESPUÉS de light-content-overrides. Objetivos:
+ *  1) Que nada del contenido se quede con colores del tema oscuro.
+ *  2) Fondos menos sólidos: fondo con degradado sutil, tarjetas translúcidas
+ *     ("vidrio"), bordes y sombras suaves.
+ *
+ * Alcance: SOLO el área de contenido (.layout-content-scroll).
+ * NO se tocan: header (.topbar), sidebar (.sidebarNav), footer (.layout-app-footer)
+ * ni los encabezados de cada módulo (app-module-hero, .perm-head, .rrv-panel,
+ * .gc-hero, .eh), que conservan sus colores sólidos.
+ * El tema oscuro no se ve afectado: todo cuelga de html.light-theme.
+ * ============================================================================= */
+
+/* ---------- 1. Paleta de etiquetas (estatus, chips, pills) en versión suave ---------- */
+/* En oscuro siguen los tonos sólidos de styles.scss; en claro, tintes pastel legibles. */
+html.light-theme {
+  --label-green-bg: #e6f6ed;
+  --label-green-border: #b4e2c6;
+  --label-green-text: #146c43;
+  --label-red-bg: #fdecec;
+  --label-red-border: #f5c2c2;
+  --label-red-text: #b42318;
+  --label-blue-bg: #e8f0fe;
+  --label-blue-border: #bcd3fb;
+  --label-blue-text: #1d4ed8;
+  --label-amber-bg: #fff4e0;
+  --label-amber-border: #f6d6a0;
+  --label-amber-text: #9a5408;
+  --label-purple-bg: #f3ecfd;
+  --label-purple-border: #dac8f7;
+  --label-purple-text: #6b21a8;
+  --label-teal-bg: #e2f6f4;
+  --label-teal-border: #afe3de;
+  --label-teal-text: #0f766e;
+  --label-slate-bg: #eef2f7;
+  --label-slate-border: #d4dbe6;
+  --label-slate-text: #334155;
+}
+
+/* ---------- 2. Fondo y tokens translúcidos del área de contenido ---------- */
+html.light-theme .layout-content-scroll {
+  --app-surface: rgba(255, 255, 255, 0.68);
+  --app-surface-2: rgba(244, 247, 252, 0.66);
+  --app-surface-3: rgba(226, 232, 240, 0.58);
+  --app-border: rgba(15, 23, 42, 0.08);
+  --app-border-strong: rgba(15, 23, 42, 0.14);
+  --app-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 12px 32px rgba(30, 41, 80, 0.07);
+
+  background:
+    radial-gradient(1100px 560px at 100% 0%, rgba(93, 135, 255, 0.1), transparent 62%),
+    radial-gradient(900px 520px at 0% 100%, rgba(104, 19, 48, 0.055), transparent 62%),
+    linear-gradient(180deg, #f6f8fc 0%, #eef2f8 100%);
+}
+
+/* Lo que debe seguir sólido aunque esté dentro del contenido:
+ * encabezados de módulo, modales y menús/listas desplegables (legibilidad). */
+html.light-theme .layout-content-scroll {
+  app-module-hero,
+  .perm-head,
+  .rrv-panel,
+  .gc-hero,
+  .eh,
+  .docs-backdrop,
+  .docs-modal,
+  [role='menu'],
+  [role='listbox'],
+  .dropdown-menu,
+  .rr-export-menu {
+    --app-surface: #ffffff;
+    --app-surface-2: #f1f5f9;
+    --app-surface-3: #e2e8f0;
+    --app-border: rgba(15, 23, 42, 0.12);
+    --app-border-strong: rgba(15, 23, 42, 0.2);
+    --app-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+  }
+}
+
+/* ---------- 3. Tarjetas de cada módulo: vidrio en lugar de blanco sólido ---------- */
+html.light-theme .layout-content-scroll .perm-wrapper.card--panel {
+  --panel-bg: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.05),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 18px 40px rgba(30, 41, 80, 0.07) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* ---------- 4. Grids: bordes suaves y encabezado/filtros translúcidos ---------- */
+html.light-theme .layout-content-scroll {
+  .dx-datagrid {
+    --dx-color-border: rgba(15, 23, 42, 0.1);
+    --dx-datagrid-border-color: rgba(15, 23, 42, 0.1);
+    --dx-datagrid-base-background-color: transparent;
+    --dx-datagrid-headers-background-color: rgba(241, 245, 249, 0.7);
+  }
+
+  .dx-datagrid.dx-datagrid-borders,
+  .dx-datagrid-borders > .dx-datagrid-headers,
+  .dx-datagrid-borders > .dx-datagrid-rowsview,
+  .dx-datagrid-borders > .dx-datagrid-total-footer,
+  .dx-datagrid-borders > .dx-datagrid-headers + .dx-datagrid-rowsview,
+  .dx-datagrid-borders > .dx-datagrid-filter-panel,
+  .dx-datagrid-borders > .dx-datagrid-pager,
+  .dx-datagrid-headers,
+  .dx-datagrid-headers .dx-header-row > td,
+  .dx-datagrid-headers .dx-row > td,
+  .dx-datagrid-rowsview .dx-row,
+  .dx-datagrid-rowsview .dx-data-row > td,
+  .dx-datagrid-rowsview .dx-row > td {
+    border-color: rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .dx-datagrid.dx-datagrid-borders > .dx-datagrid-headers,
+  .dx-datagrid.dx-datagrid-borders > .dx-datagrid-rowsview,
+  .dx-datagrid.dx-datagrid-borders > .dx-datagrid-total-footer,
+  .dx-datagrid.dx-datagrid-borders > .dx-datagrid-pager {
+    border-color: rgba(15, 23, 42, 0.08) !important;
+  }
+
+  /* Fila de filtros: el <tr> heredaba el gris oscuro del tema DevExtreme */
+  .dx-datagrid-filter-row,
+  .dx-datagrid-filter-row > td {
+    background-color: rgba(248, 250, 252, 0.6) !important;
+  }
+
+  .dx-datagrid-filter-row .dx-editor-cell .dx-texteditor,
+  .dx-datagrid .dx-texteditor,
+  .dx-datagrid-search-panel.dx-texteditor {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(15, 23, 42, 0.12) !important;
+  }
+
+  /* Filas alternadas y agrupación: tinte suave en lugar de gris sólido */
+  .dx-datagrid-rowsview .dx-row-alt > td,
+  .dx-datagrid-rowsview .dx-row-alt > .dx-command-expand {
+    background-color: rgba(241, 245, 249, 0.55) !important;
+  }
+
+  .dx-datagrid-group-panel,
+  .dx-datagrid-header-panel {
+    background: transparent !important;
+  }
+
+  .dx-group-row > td {
+    background-color: rgba(232, 240, 254, 0.55) !important;
+  }
+
+  /* Paginador: la página seleccionada usaba el vino sólido */
+  .dx-pager .dx-page-size.dx-selection,
+  .dx-pager .dx-page.dx-selection {
+    background-color: #e8f0fe !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bcd3fb !important;
+  }
+}
+
+/* ---------- 5. Barras de filtros y buscadores comunes ---------- */
+html.light-theme .layout-content-scroll {
+  .pagos-mes-filtros-head,
+  .clientes-flow-head {
+    background: rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .clientes-search-field {
+    background: rgba(255, 255, 255, 0.82) !important;
+    border-color: rgba(15, 23, 42, 0.12) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  }
+}
+
+/* ---------- 6. Elementos que se quedaban con colores del tema oscuro ---------- */
+html.light-theme .layout-content-scroll {
+  /* Botones "Observar" (Clientes / Prospectos): los tres salían en gris pizarra */
+  .btn.btn-sm.bg-primary {
+    background: #e8f0fe !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bcd3fb !important;
+  }
+
+  .btn.btn-sm.bg-success {
+    background: #e6f6ed !important;
+    color: #146c43 !important;
+    border: 1px solid #b4e2c6 !important;
+  }
+
+  .btn.btn-sm.bg-warning {
+    background: #fff4e0 !important;
+    color: #9a5408 !important;
+    border: 1px solid #f6d6a0 !important;
+  }
+
+  .btn.btn-sm.bg-primary *,
+  .btn.btn-sm.bg-success *,
+  .btn.btn-sm.bg-warning * {
+    color: inherit !important;
+  }
+
+  /* Logo por defecto de Arrendadores (fondo casi negro) */
+  .inm-lista-logo__img--placeholder {
+    background: rgba(241, 245, 249, 0.9) !important;
+    border-color: rgba(15, 23, 42, 0.1) !important;
+  }
+
+  /* Etiqueta de acción "—" de Bitácora */
+  .bitacora-accion--default {
+    background: var(--label-slate-bg) !important;
+    border-color: var(--label-slate-border) !important;
+    color: var(--label-slate-text) !important;
+  }
+}
+
+/* ---------- 7. Botones tonales (en lugar de color pleno con texto blanco) ----------
+ * Fondo con un tinte medio del color, texto e icono del mismo color en tono oscuro y
+ * borde suave. Se conserva el color de cada acción, pero sin el peso del sólido.
+ * Solo en el área de contenido; los encabezados de módulo no usan estas clases. */
+@mixin rr-boton-tonal($texto, $fondo, $borde) {
+  --mdc-filled-button-container-color: #{$fondo} !important;
+  --mat-button-filled-container-color: #{$fondo} !important;
+  --mdc-filled-button-label-text-color: #{$texto} !important;
+  --mat-button-filled-label-text-color: #{$texto} !important;
+  --mdc-filled-button-icon-color: #{$texto} !important;
+  --mat-button-protected-label-text-color: #{$texto} !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0)), #{$fondo} !important;
+  border: 1px solid #{$borde} !important;
+  color: #{$texto} !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+
+  .mdc-button__label,
+  mat-icon,
+  .mat-icon,
+  i-tabler,
+  i,
+  svg {
+    color: #{$texto} !important;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: color-mix(in srgb, #{$texto} 45%, #{$borde}) !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, #{$texto} 16%, transparent) !important;
+    transform: translateY(-1px);
+  }
+}
+
+html.light-theme .layout-content-scroll {
+  /* Barras de herramientas (Agregar, Limpiar, Contraer grupos, Exportar…) */
+  .bg-primary,
+  .bg-warn,
+  .mat-mdc-unelevated-button.bg-primary,
+  .mat-mdc-raised-button.bg-primary,
+  .mat-mdc-unelevated-button.bg-warn,
+  .mat-mdc-raised-button.bg-warn {
+    @include rr-boton-tonal(#1e40af, #d3e2fd, #9dbcf7);
+  }
+
+  .bg-secondary,
+  .mat-mdc-unelevated-button.bg-secondary,
+  .mat-mdc-raised-button.bg-secondary {
+    @include rr-boton-tonal(#6d1131, #f3d3df, #e0a3b8);
+  }
+
+  .bg-success,
+  .mat-mdc-unelevated-button.bg-success,
+  .mat-mdc-raised-button.bg-success {
+    @include rr-boton-tonal(#19662a, #cdecd4, #93cfa0);
+  }
+
+  .bg-info,
+  .mat-mdc-unelevated-button.bg-info,
+  .mat-mdc-raised-button.bg-info {
+    @include rr-boton-tonal(#0d6560, #c8ece8, #8fd3cc);
+  }
+
+  .bg-warning,
+  .mat-mdc-unelevated-button.bg-warning,
+  .mat-mdc-raised-button.bg-warning {
+    @include rr-boton-tonal(#8a4a06, #fde6bd, #f0c47a);
+  }
+
+  .bg-error,
+  .mat-mdc-unelevated-button.bg-error,
+  .mat-mdc-raised-button.bg-error {
+    @include rr-boton-tonal(#a11f16, #f9d4d4, #eda5a5);
+  }
+
+  /* Botones de acción de las tablas (Editar, Eliminar, Pagar, Ubicación…) */
+  .btnAcciones {
+    @include rr-boton-tonal(#273449, #dfe5ee, #b9c3d2);
+  }
+
+  #actualizarButton {
+    @include rr-boton-tonal(#1e40af, #d3e2fd, #9dbcf7);
+  }
+
+  #detalleIns {
+    @include rr-boton-tonal(#6d1131, #f3d3df, #e0a3b8);
+  }
+
+  #pinButton,
+  #activarRegistroButton,
+  #ubicacionMapaButton {
+    @include rr-boton-tonal(#19662a, #cdecd4, #93cfa0);
+  }
+
+  #ubicacionButton {
+    @include rr-boton-tonal(#0d6560, #c8ece8, #8fd3cc);
+  }
+
+  #deleteButton {
+    @include rr-boton-tonal(#a11f16, #f9d4d4, #eda5a5);
+  }
+
+  #dashboardButton {
+    @include rr-boton-tonal(#3730a3, #dcdffd, #aab2f6);
+  }
+
+  /* Botones de formularios y modales (Registrar / Cancelar…) */
+  .button-success {
+    @include rr-boton-tonal(#19662a, #cdecd4, #93cfa0);
+  }
+
+  .button-danger {
+    @include rr-boton-tonal(#a11f16, #f9d4d4, #eda5a5);
+  }
+}

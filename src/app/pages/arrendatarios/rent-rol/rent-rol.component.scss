@@ -4774,3 +4774,15 @@ $rr-amarillo: #f5c542;
     color: #ffc2c4;
   }
 }
+
+/* Tema claro: el botón Buscar usaba un degradado gris oscuro */
+:host-context(html.light-theme) .rrv-btn--secundario {
+  color: #1e3a8a;
+  background: linear-gradient(135deg, #eef3ff, #e3ebfb);
+  border-color: #bcd3fb;
+
+  &:not(:disabled):hover {
+    border-color: #5d87ff;
+    background: linear-gradient(135deg, #e6eeff, #d9e4fb);
+  }
+}

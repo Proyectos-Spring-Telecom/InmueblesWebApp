@@ -70,12 +70,14 @@
                             <i class="fa fa-edit"></i>
                         </button>
                     </div>
+                    @if (puedeCambiarContrasenaOtroUsuario) {
                     <div>
                         <button type="button" id="cambiarPasswordButton" class="btnAcciones" title="Cambiar Contraseña"
                             (click)="abrirModalCambiarContrasena(row.data)">
                             <i class="fa fa-key"></i>
                         </button>
                     </div>
+                    }
                     <div *appHasPermission="'8'">
                         @if (row.data.estatus === 0) {
                         <button id="pinButton" class="btnAcciones" (click)="activar(row.data)">

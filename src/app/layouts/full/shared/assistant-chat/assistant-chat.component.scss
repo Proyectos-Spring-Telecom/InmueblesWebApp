@@ -44,31 +44,62 @@ $muted: rgba(255, 255, 255, 0.62);
     visibility 0s linear 0s;
 }
 
-.ac-fab {
-  pointer-events: auto;
+/* Ancla fija: el glow vive FUERA del botón para poder hacer overflow:hidden en .ac-fab */
+.ac-fab-anchor {
+  pointer-events: none;
   position: fixed;
   right: 20px;
   bottom: 60px;
   width: 76px;
   height: 76px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  z-index: 2;
+}
+
+.ac-root--open .ac-fab-anchor {
+  z-index: 1;
+}
+
+.ac-fab {
+  /* Reset botón nativo */
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+
+  pointer-events: auto;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  /* Squircle tipo icono iOS (~32% del lado), NO círculo */
+  border-radius: 24px !important;
+  border: 1.5px solid transparent;
   color: $text;
-  background: linear-gradient(135deg, rgba($wine, 0.92), rgba($blue, 0.92));
+  /* Relleno + borde degradado rosa → azul (como la referencia) */
+  background:
+    linear-gradient(145deg, rgba($wine, 0.96) 0%, rgba($blue, 0.96) 100%) padding-box,
+    linear-gradient(145deg, #e889a8 0%, #7a3d6a 42%, #2a4a9e 100%) border-box;
+  background-clip: padding-box, border-box;
   backdrop-filter: blur(14px);
   box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    0 16px 36px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 180, 200, 0.12) inset,
+    0 1px 0 rgba(255, 255, 255, 0.14) inset;
+  overflow: hidden !important;
   cursor: pointer;
   transition:
     transform 320ms cubic-bezier(0.34, 1.45, 0.64, 1),
     box-shadow 380ms ease,
-    border-color 320ms ease,
     filter 320ms ease;
-  z-index: 2;
+  z-index: 1;
 }
 
-.ac-fab::after {
+.ac-fab-anchor::after {
   content: '';
   position: absolute;
   inset: -6px;
@@ -82,10 +113,7 @@ $muted: rgba(255, 255, 255, 0.62);
     border-color 320ms ease,
     box-shadow 380ms ease;
   pointer-events: none;
-}
-
-.ac-root--open .ac-fab {
-  z-index: 1;
+  z-index: 0;
 }
 
 .ac-fab * {
@@ -95,13 +123,15 @@ $muted: rgba(255, 255, 255, 0.62);
 .ac-fab__glow {
   position: absolute;
   inset: -24px;
-  border-radius: 28px;
+  border-radius: 36px;
   background:
     radial-gradient(circle at 50% 45%, rgba($wine, 0.26), rgba($wine, 0) 62%),
     radial-gradient(circle at 65% 70%, rgba($blue, 0.2), rgba($blue, 0) 64%);
   filter: blur(12px);
   opacity: 0.95;
   animation: acGlowPulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .ac-fab__icon {
@@ -148,23 +178,32 @@ $muted: rgba(255, 255, 255, 0.62);
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
 }
 
-.ac-fab:hover,
-.ac-fab:focus-visible {
+.ac-fab-anchor:hover,
+.ac-fab-anchor:focus-within {
   transform: translateY(-5px) scale(1.05);
-  border-color: rgba(255, 255, 255, 0.38);
+  transition:
+    transform 320ms cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+.ac-fab-anchor:hover .ac-fab,
+.ac-fab-anchor:focus-within .ac-fab {
   filter: brightness(1.08) saturate(1.12);
+  background:
+    linear-gradient(145deg, rgba($wine, 0.98) 0%, rgba($blue, 0.98) 100%) padding-box,
+    linear-gradient(145deg, #ffb0c8 0%, #9a4d7a 42%, #3d6ad4 100%) border-box;
+  background-clip: padding-box, border-box;
   box-shadow:
     0 28px 58px rgba(0, 0, 0, 0.62),
     0 14px 30px rgba($wine, 0.28),
     0 0 46px rgba($wine, 0.34),
     0 0 72px rgba($blue, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    0 0 0 1px rgba(255, 200, 220, 0.16) inset;
   outline: none;
   animation: acFabColorShadow 2.8s ease-in-out infinite;
 }
 
-.ac-fab:hover::after,
-.ac-fab:focus-visible::after {
+.ac-fab-anchor:hover::after,
+.ac-fab-anchor:focus-within::after {
   opacity: 1;
   transform: scale(1.05);
   border-color: rgba(255, 205, 220, 0.38);
@@ -174,24 +213,24 @@ $muted: rgba(255, 255, 255, 0.62);
   animation: acFabRingColor 2.8s ease-in-out infinite;
 }
 
-.ac-fab:hover .ac-fab__glow,
-.ac-fab:focus-visible .ac-fab__glow {
+.ac-fab-anchor:hover .ac-fab__glow,
+.ac-fab-anchor:focus-within .ac-fab__glow {
   opacity: 1;
   animation-duration: 1.15s;
 }
 
-.ac-fab:hover .ac-fab__icon::after,
-.ac-fab:focus-visible .ac-fab__icon::after {
+.ac-fab-anchor:hover .ac-fab__icon::after,
+.ac-fab-anchor:focus-within .ac-fab__icon::after {
   transform: translateX(130%) skewX(-8deg);
 }
 
-.ac-fab:hover .ac-fab__icon svg,
-.ac-fab:focus-visible .ac-fab__icon svg {
+.ac-fab-anchor:hover .ac-fab__icon svg,
+.ac-fab-anchor:focus-within .ac-fab__icon svg {
   transform: scale(1.1) rotate(90deg);
 }
 
-.ac-fab:hover .ac-fab__img,
-.ac-fab:focus-visible .ac-fab__img {
+.ac-fab-anchor:hover .ac-fab__img,
+.ac-fab-anchor:focus-within .ac-fab__img {
   transform: translateY(-3px) scale(1.14) rotate(-4deg);
   filter:
     drop-shadow(0 10px 16px rgba(0, 0, 0, 0.42))
@@ -278,19 +317,20 @@ $muted: rgba(255, 255, 255, 0.62);
   }
 }
 
-.ac-fab:active {
+.ac-fab-anchor:active {
   transform: translateY(-1px) scale(0.96);
   transition-duration: 120ms;
 }
 
-.ac-fab:active .ac-fab__img {
+.ac-fab-anchor:active .ac-fab__img {
   transform: scale(0.94);
   transition-duration: 120ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ac-fab-anchor,
   .ac-fab,
-  .ac-fab::after,
+  .ac-fab-anchor::after,
   .ac-fab__img,
   .ac-fab__icon svg,
   .ac-fab__icon::after {
@@ -298,19 +338,21 @@ $muted: rgba(255, 255, 255, 0.62);
   }
 
   .ac-fab__glow,
-  .ac-fab:hover,
-  .ac-fab:focus-visible,
-  .ac-fab:hover::after,
-  .ac-fab:focus-visible::after,
-  .ac-fab:hover .ac-fab__img,
-  .ac-fab:focus-visible .ac-fab__img {
+  .ac-fab-anchor:hover,
+  .ac-fab-anchor:focus-within,
+  .ac-fab-anchor:hover::after,
+  .ac-fab-anchor:focus-within::after,
+  .ac-fab-anchor:hover .ac-fab,
+  .ac-fab-anchor:focus-within .ac-fab,
+  .ac-fab-anchor:hover .ac-fab__img,
+  .ac-fab-anchor:focus-within .ac-fab__img {
     animation: none;
   }
 
-  .ac-fab:hover,
-  .ac-fab:focus-visible,
-  .ac-fab:hover .ac-fab__img,
-  .ac-fab:focus-visible .ac-fab__img {
+  .ac-fab-anchor:hover,
+  .ac-fab-anchor:focus-within,
+  .ac-fab-anchor:hover .ac-fab__img,
+  .ac-fab-anchor:focus-within .ac-fab__img {
     transform: none;
   }
 }
@@ -1257,13 +1299,16 @@ $muted: rgba(255, 255, 255, 0.62);
 
 @media (max-width: 520px) {
   .ac-root,
-  .ac-fab,
+  .ac-fab-anchor,
   .ac-panel {
     right: 14px;
   }
 
-  .ac-root,
-  .ac-fab {
+  .ac-root {
+    bottom: 14px;
+  }
+
+  .ac-fab-anchor {
     bottom: 14px;
   }
 

@@ -6,11 +6,14 @@ import CustomStore from 'devextreme/data/custom_store';
 import { ToastrService } from 'ngx-toastr';
 import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
+import { AuthenticationService } from 'src/app/services/auth.service';
 import { UsuariosService } from 'src/app/services/moduleService/usuario.service';
 import { exportarDxDataGridExcel, gridTieneDatosParaExportar } from 'src/app/shared/grid-excel-export';
 import Swal from 'sweetalert2';
 
 const DEFAULT_NUEVA_CONTRASENA = 'Dem0o.';
+/** Roles que pueden cambiar la contraseña de otro usuario (`POST /usuarios/cambiar/accesso`). */
+const ROLES_CAMBIO_CONTRASENA_ADMIN = new Set([1, 2]);
 
 interface AuthPinSlot {
   id: 'director' | 'monitoreo' | 'tercer';
@@ -123,17 +126,32 @@ export class ListaUsuariosComponent implements OnInit, OnDestroy {
 
   readonly authPins: AuthPinSlot[] = [
     { id: 'director', nombre: 'Israel Negrete Lepe', cargo: 'Director', iniciales: 'IN', expected: '0000', matched: false },
-    { id: 'monitoreo', nombre: 'Crystal Olivares Loeza', cargo: 'Jefe De Monitoreo', iniciales: 'CO', expected: '1111', matched: false },
-    { id: 'tercer', nombre: 'Andrea Daniela Barajas Cruz', cargo: 'Autorización', iniciales: 'AB', expected: '2222', matched: false },
+    /* { id: 'monitoreo', nombre: 'Crystal Olivares Loeza', cargo: 'Jefe De Monitoreo', iniciales: 'CO', expected: '1111', matched: false }, */
+    { id: 'tercer', nombre: 'Andrea Daniela Barajas Cruz', cargo: 'Gerente', iniciales: 'AB', expected: '2222', matched: false },
   ];
 
   constructor(
     private usuService: UsuariosService,
     private route: Router,
     private toastr: ToastrService,
+    private authService: AuthenticationService,
   ) {
     this.showFilterRow = true;
     this.showHeaderFilter = true;
+  }
+
+  /** Solo SA (1) y Administrador (2) pueden cambiar la contraseña de otro usuario. */
+  get puedeCambiarContrasenaOtroUsuario(): boolean {
+    const user = this.authService.getUser() as Record<string, unknown> | null;
+    if (user == null) return false;
+    const rolRaw = user['rol'] ?? user['idRol'];
+    if (rolRaw != null && typeof rolRaw === 'object' && !Array.isArray(rolRaw)) {
+      const o = rolRaw as Record<string, unknown>;
+      const id = Number(o['id'] ?? o['idRol'] ?? o['rol']);
+      return Number.isFinite(id) && ROLES_CAMBIO_CONTRASENA_ADMIN.has(id);
+    }
+    const n = Number(rolRaw);
+    return Number.isFinite(n) && ROLES_CAMBIO_CONTRASENA_ADMIN.has(n);
   }
 
   ngOnInit(): void {

@@ -7,7 +7,36 @@ export interface RentRolConceptoVm {
   iva: number;
   total: number;
   montoFinal: number;
+  /** `true` si el desglose se estimó al 16 % (mostrar "IVA calculado"). */
+  estimado?: boolean;
 }
+
+/** Resumen de `GET /contratos/costos-actuales/paginated` (suma de todos los filtros, no solo la página). */
+export interface CostosActualesResumen {
+  cantidadRelaciones: number;
+  totalRenta: number;
+  ivaRenta: number;
+  totalRentaConIva: number;
+  totalMantenimiento: number;
+  ivaMantenimiento: number;
+  totalMantenimientoConIva: number;
+  subTotalCombinado: number;
+  ivaCombinado: number;
+  granTotal: number;
+}
+
+export const COSTOS_ACTUALES_RESUMEN_VACIO: CostosActualesResumen = {
+  cantidadRelaciones: 0,
+  totalRenta: 0,
+  ivaRenta: 0,
+  totalRentaConIva: 0,
+  totalMantenimiento: 0,
+  ivaMantenimiento: 0,
+  totalMantenimientoConIva: 0,
+  subTotalCombinado: 0,
+  ivaCombinado: 0,
+  granTotal: 0,
+};
 
 export interface RentRolRow {
   id: number;
@@ -479,5 +508,119 @@ export function mapRentaActualPendienteToRentRolRow(item: unknown, abierta = fal
     puedeDuplicarMes: !(mes && fechaFin),
     periodoLabel: fin && fin !== inicio ? `${inicio} → ${fin}` : inicio,
     detalleRentaActual: row,
+  };
+}
+
+function fechaCortaSinZona(raw: unknown): string {
+  const texto = str(raw);
+  if (!texto) return '—';
+  // Fechas solo-día (`2026-01-01`) o ISO con Z: usar la parte de fecha sin convertir zona.
+  const dia = texto.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dia)) {
+    const [y, m, d] = dia.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  return formatearFechaCorta(texto);
+}
+
+function etiquetaLocalesCostos(locales: unknown): string {
+  if (!Array.isArray(locales) || locales.length === 0) return '—';
+  const nombres = locales
+    .map((item) => {
+      if (item == null || typeof item !== 'object') return '';
+      return str((item as Record<string, unknown>)['nombre']);
+    })
+    .filter(Boolean);
+  return nombres.length ? nombres.join(', ') : '—';
+}
+
+function conceptoDesdeDesglose(
+  bloque: unknown,
+  keysTotal: string[],
+): RentRolConceptoVm {
+  if (bloque == null || typeof bloque !== 'object' || Array.isArray(bloque)) {
+    return { subTotal: 0, iva: 0, total: 0, montoFinal: 0, estimado: false };
+  }
+  const b = bloque as Record<string, unknown>;
+  let montoFinal = 0;
+  for (const k of keysTotal) {
+    if (b[k] != null) {
+      montoFinal = num(b[k]);
+      break;
+    }
+  }
+  return {
+    subTotal: num(b['subTotal'] ?? b['subtotal']),
+    iva: num(b['iva']),
+    total: montoFinal,
+    montoFinal,
+    estimado: b['estimado'] === true,
+  };
+}
+
+/**
+ * Fila de `GET /contratos/costos-actuales/paginated` → forma del grid Rent Rol.
+ * No trae estado de pago; `pagadaLabel` indica costo vigente del contrato.
+ */
+export function mapCostosActualesApiToRentRolRow(item: unknown): RentRolRow | null {
+  if (item == null || typeof item !== 'object' || Array.isArray(item)) return null;
+  const row = item as Record<string, unknown>;
+  const idContrato = num(row['idContrato']);
+  if (idContrato <= 0) return null;
+
+  const desglose =
+    row['desglose'] != null && typeof row['desglose'] === 'object' && !Array.isArray(row['desglose'])
+      ? (row['desglose'] as Record<string, unknown>)
+      : {};
+  const renta = conceptoDesdeDesglose(desglose['renta'], ['montoFinal', 'monto_final']);
+  const mantenimiento = conceptoDesdeDesglose(desglose['mantenimiento'], [
+    'montoFinalMantenimiento',
+    'monto_final_mantenimiento',
+    'montoFinal',
+  ]);
+  const costoM2Raw = row['costoM2'];
+  const costoM2 = costoM2Raw == null || costoM2Raw === '' ? 0 : num(costoM2Raw);
+
+  return {
+    id: Math.floor(idContrato),
+    nombre: str(row['arrendatario']) || '—',
+    representanteLegal: str(row['representanteLegal']),
+    telefonoRepresentante: str(row['telefonoRepresentante']),
+    inmueble: str(row['inmueble']) || '—',
+    zona: str(row['zona']),
+    modulo: etiquetaLocalesCostos(row['locales']),
+    metrosRentados: num(row['metrosRentados']),
+    costoM2,
+    inicioContrato: fechaCortaSinZona(row['fechaInicioContrato']),
+    finContrato: fechaCortaSinZona(row['fechaTerminoContrato']),
+    pagada: false,
+    pagadaLabel: 'Vigente',
+    tieneIncrementoRenta: false,
+    tieneIncrementoMantenimiento: false,
+    renta,
+    mantenimiento,
+    detalleApi: row,
+  };
+}
+
+export function extraerResumenCostosActuales(resp: unknown): CostosActualesResumen {
+  if (resp == null || typeof resp !== 'object') return { ...COSTOS_ACTUALES_RESUMEN_VACIO };
+  const r = resp as Record<string, unknown>;
+  const resumen =
+    r['resumen'] != null && typeof r['resumen'] === 'object' && !Array.isArray(r['resumen'])
+      ? (r['resumen'] as Record<string, unknown>)
+      : null;
+  if (!resumen) return { ...COSTOS_ACTUALES_RESUMEN_VACIO };
+  return {
+    cantidadRelaciones: num(resumen['cantidadRelaciones']),
+    totalRenta: num(resumen['totalRenta']),
+    ivaRenta: num(resumen['ivaRenta']),
+    totalRentaConIva: num(resumen['totalRentaConIva']),
+    totalMantenimiento: num(resumen['totalMantenimiento']),
+    ivaMantenimiento: num(resumen['ivaMantenimiento']),
+    totalMantenimientoConIva: num(resumen['totalMantenimientoConIva']),
+    subTotalCombinado: num(resumen['subTotalCombinado']),
+    ivaCombinado: num(resumen['ivaCombinado']),
+    granTotal: num(resumen['granTotal']),
   };
 }

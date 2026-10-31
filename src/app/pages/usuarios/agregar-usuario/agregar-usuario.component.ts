@@ -8,6 +8,11 @@ import { ClientesService } from 'src/app/services/moduleService/clientes.service
 import { ModulosService } from 'src/app/services/moduleService/modulos.service';
 import { RolesService } from 'src/app/services/moduleService/roles.service';
 import { UsuariosService } from 'src/app/services/moduleService/usuario.service';
+import {
+  esRegistroNoEncontrado,
+  MENSAJE_REGISTRO_NO_ENCONTRADO,
+  mensajeErrorApi,
+} from 'src/app/shared/http-errores';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -342,52 +347,67 @@ export class AgregarUsuarioComponent implements OnInit {
   obtenerUsuarioID() {
     this.usuaService
       .obtenerUsuario(this.idUsuario)
-      .subscribe((response: any) => {
-        const data = response?.data ?? {};
+      .subscribe({
+        next: (response: any) => {
+          const data = response?.data ?? {};
 
-        const usuarios = Array.isArray(data?.usuario)
-          ? data.usuario
-          : Array.isArray(data?.usuarios)
-          ? data.usuarios
-          : data?.usuario
-          ? [data.usuario]
-          : [];
+          const usuarios = Array.isArray(data?.usuario)
+            ? data.usuario
+            : Array.isArray(data?.usuarios)
+            ? data.usuarios
+            : data?.usuario
+            ? [data.usuario]
+            : [];
 
-        const u = usuarios[0] ?? {};
+          const u = usuarios[0] ?? {};
 
-        const perms = Array.isArray(data?.permiso)
-  ? data.permiso
-  : Array.isArray(data?.permisos)
-  ? data.permisos
-  : [];
+          const perms = Array.isArray(data?.permiso)
+            ? data.permiso
+            : Array.isArray(data?.permisos)
+            ? data.permisos
+            : [];
 
-const permisosAsignadosIds: number[] = Array.from(
-  new Set<number>(
-    (perms || [])
-      .filter((p: any) => Number(p?.estatus) === 1)
-      .map((p: any) => this.getPermisoId(p))
-      .filter((n: any): n is number => typeof n === 'number' && Number.isFinite(n))
-  )
-);
+          const permisosAsignadosIds: number[] = Array.from(
+            new Set<number>(
+              (perms || [])
+                .filter((p: any) => Number(p?.estatus) === 1)
+                .map((p: any) => this.getPermisoId(p))
+                .filter((n: any): n is number => typeof n === 'number' && Number.isFinite(n)),
+            ),
+          );
 
+          this.permisosSeleccionadosIds = permisosAsignadosIds;
+          this.usuarioForm.patchValue({ permisosIds: permisosAsignadosIds });
+          this.applyAssignedPermsToModules();
 
-        this.permisosSeleccionadosIds = permisosAsignadosIds;
-        this.usuarioForm.patchValue({ permisosIds: permisosAsignadosIds });
-        this.applyAssignedPermsToModules();
-
-        this.usuarioForm.patchValue({
-          userName: u?.userName ?? '',
-          telefono: u?.telefono ?? '',
-          nombre: u?.nombre ?? '',
-          apellidoPaterno: u?.apellidoPaterno ?? '',
-          apellidoMaterno: u?.apellidoMaterno ?? '',
-          fotoPerfil:
-            u?.fotoPerfil ?? this.usuarioForm.get('fotoPerfil')?.value,
-          emailConfirmado: Number(u?.emailConfirmado ?? 0),
-          estatus: Number(u?.estatus ?? 1),
-          idRol: u?.idRol != null ? Number(u.idRol) : null,
-          idCliente: u?.idCliente != null ? Number(u.idCliente) : null,
-        });
+          this.usuarioForm.patchValue({
+            userName: u?.userName ?? '',
+            telefono: u?.telefono ?? '',
+            nombre: u?.nombre ?? '',
+            apellidoPaterno: u?.apellidoPaterno ?? '',
+            apellidoMaterno: u?.apellidoMaterno ?? '',
+            fotoPerfil:
+              u?.fotoPerfil ?? this.usuarioForm.get('fotoPerfil')?.value,
+            emailConfirmado: Number(u?.emailConfirmado ?? 0),
+            estatus: Number(u?.estatus ?? 1),
+            idRol: u?.idRol != null ? Number(u.idRol) : null,
+            idCliente: u?.idCliente != null ? Number(u.idCliente) : null,
+          });
+        },
+        error: (err: unknown) => {
+          const noEncontrado = esRegistroNoEncontrado(err);
+          if (noEncontrado) void this.route.navigateByUrl('/usuarios');
+          void Swal.fire({
+            title: noEncontrado ? 'Registro no encontrado' : 'Error al cargar',
+            text: noEncontrado
+              ? MENSAJE_REGISTRO_NO_ENCONTRADO
+              : mensajeErrorApi(err, 'No se pudo cargar el usuario. Intenta de nuevo.'),
+            icon: 'error',
+            confirmButtonColor: '#3085d6',
+            background: '#141a21',
+            color: '#ffffff',
+          });
+        },
       });
   }
 

@@ -20,8 +20,18 @@ import { ContratosService } from 'src/app/services/moduleService/contratos.servi
 import { InstalacionService } from 'src/app/services/moduleService/instalaciones.service';
 import Swal from 'sweetalert2';
 import { etiquetaNombreApellidos } from 'src/app/shared/campos-dx/campos-dx.config';
+import {
+  esRegistroNoEncontrado,
+  MENSAJE_REGISTRO_NO_ENCONTRADO,
+  mensajeErrorApi,
+} from 'src/app/shared/http-errores';
 
 const IVA = 0.16;
+
+/** IVA y totales a 2 decimales (subtotal + IVA = total al centavo). */
+function redondear2(n: number): number {
+  return Math.round((Number(n) || 0) * 100) / 100;
+}
 
 function inmueblesRequeridos(
   control: AbstractControl,
@@ -214,14 +224,23 @@ export class AgregarContratoComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Valor para input type="date" (yyyy-MM-dd). */
+  /**
+   * Valor para input type="date" (yyyy-MM-dd).
+   * La API guarda hora local de México con sufijo Z: no convertir de zona
+   * (`slice(0, 10)` / getUTC*), para no correr fechas a medianoche.
+   */
   private toDateInputValue(v: unknown): string | null {
     if (v == null || v === '') return null;
+    if (typeof v === 'string') {
+      const texto = v.trim();
+      const dia = texto.slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dia)) return dia;
+    }
     const d = v instanceof Date ? v : new Date(String(v));
     if (isNaN(d.getTime())) return null;
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
 
@@ -293,6 +312,20 @@ export class AgregarContratoComponent implements OnInit, OnDestroy {
         this.recalcularMontos();
         this.contratoForm.markAsPristine();
       },
+      error: (err: unknown) => {
+        const noEncontrado = esRegistroNoEncontrado(err);
+        if (noEncontrado) void this.router.navigateByUrl('/contratos');
+        void Swal.fire({
+          title: noEncontrado ? 'Registro no encontrado' : 'Error al cargar',
+          text: noEncontrado
+            ? MENSAJE_REGISTRO_NO_ENCONTRADO
+            : mensajeErrorApi(err, 'No se pudo cargar el contrato. Intenta de nuevo.'),
+          icon: 'error',
+          confirmButtonColor: '#3085d6',
+          background: '#141a21',
+          color: '#ffffff',
+        });
+      },
     });
   }
 
@@ -300,20 +333,21 @@ export class AgregarContratoComponent implements OnInit, OnDestroy {
     const m = Number(this.contratoForm.get('metrosRentados')?.value) || 0;
     const c = Number(this.contratoForm.get('costoPorM2')?.value) || 0;
     const p = Number(this.contratoForm.get('pctMantenimiento')?.value) || 0;
-    const subR = m * c;
-    const ivaR = subR * IVA;
-    const totR = subR + ivaR;
-    const subM = subR * (p / 100);
-    const ivaM = subM * IVA;
-    const totM = subM + ivaM;
+    // IVA = redondeo(subtotal × 0.16, 2); total = subtotal + IVA (no al revés).
+    const subR = redondear2(m * c);
+    const ivaR = redondear2(subR * IVA);
+    const totR = redondear2(subR + ivaR);
+    const subM = redondear2(subR * (p / 100));
+    const ivaM = redondear2(subM * IVA);
+    const totM = redondear2(subM + ivaM);
     this.contratoForm.patchValue(
       {
-        subtotalRenta: Math.round(subR * 1e6) / 1e6,
-        ivaRenta: Math.round(ivaR * 1e6) / 1e6,
-        rentaTotal: Math.round(totR * 1e6) / 1e6,
-        subtotalMantenimiento: Math.round(subM * 1e6) / 1e6,
-        ivaMantenimiento: Math.round(ivaM * 1e6) / 1e6,
-        mantenimientoTotal: Math.round(totM * 1e6) / 1e6,
+        subtotalRenta: subR,
+        ivaRenta: ivaR,
+        rentaTotal: totR,
+        subtotalMantenimiento: subM,
+        ivaMantenimiento: ivaM,
+        mantenimientoTotal: totM,
       },
       { emitEvent: false },
     );

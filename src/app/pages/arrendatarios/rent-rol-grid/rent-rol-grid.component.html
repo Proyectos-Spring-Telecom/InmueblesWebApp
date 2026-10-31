@@ -1,30 +1,68 @@
 <div class="rrg-root" [@routeAnimation]>
-  <!-- Solo el primer header (portada) del Rent Rol -->
   <header class="rrg-hero" role="region" aria-label="Rent Rol">
     <div class="rrg-hero__info">
       <span class="rrg-eyebrow"><mat-icon aria-hidden="true">table_view</mat-icon> Operación · Arrendatarios</span>
       <h2 class="rrg-hero__titulo">Rent Rol</h2>
-      <div class="rrg-avance" [attr.aria-label]="'Avance de cobro ' + porcentajeCobrado + '%'">
-        <div class="rrg-avance__barra">
-          <span class="rrg-avance__relleno" [style.width.%]="porcentajeCobrado"></span>
-        </div>
-        <div class="rrg-avance__leyenda">
-          <span class="rrg-avance__item rrg-avance__item--pagada"><i></i> Pagadas <strong>{{ conteoPagadas }}</strong></span>
-          <span class="rrg-avance__item rrg-avance__item--pendiente"><i></i> Pendientes <strong>{{ conteoPendientes }}</strong></span>
-          <span class="rrg-avance__pct">{{ porcentajeCobrado }}% cobrado</span>
-        </div>
+      <p class="rrg-hero__sub">
+        Costos vigentes por contrato activo
+        @if (cantidadRelaciones > 0) {
+          · <strong>{{ cantidadRelaciones }}</strong>
+          {{ cantidadRelaciones === 1 ? 'relación' : 'relaciones' }}
+        }
+      </p>
+      <div class="rrg-kpis" role="group" aria-label="Totales de costos vigentes">
+        <article class="rrg-kpi">
+          <span class="rrg-kpi__label">Renta</span>
+          <span class="rrg-kpi__valor">{{ resumen.totalRentaConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+          <span class="rrg-kpi__hint">Sub {{ resumen.totalRenta | currency:'MXN':'symbol-narrow':'1.2-2' }} · IVA {{ resumen.ivaRenta | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+        </article>
+        <article class="rrg-kpi">
+          <span class="rrg-kpi__label">Mantenimiento</span>
+          <span class="rrg-kpi__valor">{{ resumen.totalMantenimientoConIva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+          <span class="rrg-kpi__hint">Sub {{ resumen.totalMantenimiento | currency:'MXN':'symbol-narrow':'1.2-2' }} · IVA {{ resumen.ivaMantenimiento | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+        </article>
+        <article class="rrg-kpi rrg-kpi--total">
+          <span class="rrg-kpi__label">Gran total</span>
+          <span class="rrg-kpi__valor">{{ resumen.granTotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+          <span class="rrg-kpi__hint">Sub {{ resumen.subTotalCombinado | currency:'MXN':'symbol-narrow':'1.2-2' }} · IVA {{ resumen.ivaCombinado | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+        </article>
       </div>
     </div>
 
     <div class="rrg-hero__acciones">
       <button type="button" class="rrg-btn rrg-btn--primario" [routerLink]="['/arrendatarios/rent-rol']">
-        <mat-icon aria-hidden="true">add_card</mat-icon> Registrar pago de renta
+        <mat-icon aria-hidden="true">add_card</mat-icon> Cobro del mes
       </button>
       <button type="button" class="rrg-btn rrg-btn--fantasma" [routerLink]="['/arrendatarios/rent-rol']">
         <mat-icon aria-hidden="true">person_add</mat-icon> Agregar arrendatario
       </button>
     </div>
   </header>
+
+  @if (errorCarga) {
+    <p class="rrg-error" role="alert">{{ errorCarga }}</p>
+  }
+
+  <div class="rrg-toolbar" role="search">
+    <label class="rrg-toolbar__label" for="rrgBusqueda">Buscar</label>
+    <input
+      id="rrgBusqueda"
+      class="rrg-toolbar__input"
+      type="search"
+      maxlength="100"
+      placeholder="Arrendatario, inmueble, zona o local…"
+      [(ngModel)]="busqueda"
+      (keydown.enter)="aplicarBusqueda()"
+    />
+    <button type="button" class="rrg-btn rrg-btn--fantasma rrg-btn--compacto" (click)="aplicarBusqueda()">
+      Buscar
+    </button>
+    @if (busqueda || busquedaAplicada) {
+      <button type="button" class="rrg-btn rrg-btn--fantasma rrg-btn--compacto" (click)="limpiarBusqueda()">
+        Limpiar
+      </button>
+    }
+  </div>
 
   <dx-data-grid
     id="gridRentRolVista"
@@ -39,16 +77,15 @@
     [showColumnLines]="false"
     [showRowLines]="true"
     [rowAlternationEnabled]="false"
-    [dataSource]="registros"
-    [keyExpr]="'gridKey'"
+    [dataSource]="listaCostos"
     [width]="'100%'"
-    [remoteOperations]="{ paging: true, filtering: true, sorting: true }"
+    [remoteOperations]="{ paging: true, filtering: false, sorting: false }"
     [paging]="{ pageSize: filasPorPagina }"
-    noDataText="Sin registros"
+    [noDataText]="cargando ? 'Cargando…' : 'Sin contratos vigentes'"
     [pager]="{
       showPageSizeSelector: false,
       showInfo: true,
-      infoText: 'Página {0} de {1}',
+      infoText: 'Página {0} de {1} ({2} registros)',
       visible: true
     }"
   >
@@ -62,29 +99,20 @@
     <dxo-header-filter [visible]="false"></dxo-header-filter>
 
     <dxi-column
-      dataField="acciones"
-      caption="Acciones"
-      [width]="118"
-      [allowHiding]="false"
-      [allowFiltering]="false"
-      [allowSorting]="false"
-      [allowHeaderFiltering]="false"
-      alignment="center"
-    ></dxi-column>
-    <dxi-column
       dataField="nombre"
       caption="Arrendatario"
-      [width]="190"
+      [width]="200"
       [allowHiding]="false"
       [allowFiltering]="true"
       [allowHeaderFiltering]="false"
       [allowSorting]="false"
       alignment="left"
+      cellTemplate="arrendatarioTpl"
     ></dxi-column>
     <dxi-column
       dataField="inmueble"
       caption="Inmueble"
-      [width]="120"
+      [width]="130"
       [allowHiding]="true"
       [hidingPriority]="4"
       [allowFiltering]="true"
@@ -93,9 +121,20 @@
       alignment="center"
     ></dxi-column>
     <dxi-column
+      dataField="zona"
+      caption="Zona"
+      [width]="100"
+      [allowHiding]="true"
+      [hidingPriority]="11"
+      [allowFiltering]="true"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="center"
+    ></dxi-column>
+    <dxi-column
       dataField="modulo"
       caption="Locales"
-      [width]="80"
+      [width]="100"
       [allowHiding]="true"
       [hidingPriority]="3"
       [allowFiltering]="true"
@@ -105,78 +144,83 @@
     ></dxi-column>
     <dxi-column
       dataField="metrosRentados"
-      caption="Metros rentados"
-      [width]="100"
+      caption="m²"
+      [width]="80"
       [allowHiding]="true"
       [hidingPriority]="8"
       [allowFiltering]="true"
       [allowHeaderFiltering]="false"
       [allowSorting]="false"
       dataType="number"
+      [format]="{ type: 'fixedPoint', precision: 2 }"
       alignment="right"
     ></dxi-column>
     <dxi-column
       dataField="costoM2"
-      caption="Costo M²"
-      [width]="90"
+      caption="Costo m²"
+      [width]="100"
       [allowHiding]="true"
       [hidingPriority]="7"
       [allowFiltering]="true"
       [allowHeaderFiltering]="false"
       [allowSorting]="false"
       dataType="number"
+      [format]="{ type: 'currency', currency: 'MXN', precision: 2 }"
       alignment="right"
     ></dxi-column>
     <dxi-column
-      dataField="tipoConcepto"
-      caption="Concepto"
-      [width]="90"
-      [allowHiding]="true"
-      [hidingPriority]="2"
-      [allowFiltering]="true"
-      [allowHeaderFiltering]="false"
-      [allowSorting]="false"
-      alignment="center"
-    ></dxi-column>
-    <dxi-column
       dataField="subTotal"
-      caption="Sub-total"
-      [width]="100"
+      caption="Sub-total renta"
+      [width]="120"
       [allowHiding]="true"
       [hidingPriority]="5"
-      [allowFiltering]="true"
+      [allowFiltering]="false"
       [allowHeaderFiltering]="false"
       [allowSorting]="false"
       dataType="number"
+      [format]="{ type: 'currency', currency: 'MXN', precision: 2 }"
       alignment="right"
     ></dxi-column>
     <dxi-column
       dataField="iva"
-      caption="IVA"
-      [width]="96"
+      caption="IVA renta"
+      [width]="110"
       [allowHiding]="true"
       [hidingPriority]="6"
-      [allowFiltering]="true"
+      [allowFiltering]="false"
       [allowHeaderFiltering]="false"
       [allowSorting]="false"
       dataType="number"
+      [format]="{ type: 'currency', currency: 'MXN', precision: 2 }"
       alignment="right"
+      cellTemplate="ivaTpl"
     ></dxi-column>
     <dxi-column
       dataField="montoFinal"
-      caption="Total"
-      [width]="100"
+      caption="Total renta"
+      [width]="120"
       [allowHiding]="true"
       [hidingPriority]="1"
-      [allowFiltering]="true"
+      [allowFiltering]="false"
       [allowHeaderFiltering]="false"
       [allowSorting]="false"
       dataType="number"
+      [format]="{ type: 'currency', currency: 'MXN', precision: 2 }"
       alignment="right"
     ></dxi-column>
     <dxi-column
+      caption="Mantto"
+      [width]="120"
+      [allowHiding]="true"
+      [hidingPriority]="2"
+      [allowFiltering]="false"
+      [allowSorting]="false"
+      alignment="right"
+      cellTemplate="manttoTpl"
+    ></dxi-column>
+    <dxi-column
       dataField="inicioContrato"
-      caption="Inicio Contrato"
+      caption="Inicio"
       [width]="100"
       [allowHiding]="true"
       [hidingPriority]="10"
@@ -187,7 +231,7 @@
     ></dxi-column>
     <dxi-column
       dataField="finContrato"
-      caption="Termino Contrato"
+      caption="Término"
       [width]="100"
       [allowHiding]="true"
       [hidingPriority]="9"
@@ -196,15 +240,30 @@
       [allowSorting]="false"
       alignment="center"
     ></dxi-column>
-    <dxi-column
-      dataField="pagadaLabel"
-      caption="Pagada"
-      [width]="80"
-      [allowHiding]="false"
-      [allowFiltering]="true"
-      [allowHeaderFiltering]="false"
-      [allowSorting]="false"
-      alignment="center"
-    ></dxi-column>
+
+    <div *dxTemplate="let row of 'arrendatarioTpl'">
+      <div class="rrg-arrendatario">
+        <span class="rrg-arrendatario__nombre">{{ row.data.nombre }}</span>
+        @if (row.data.representanteLegal) {
+          <span class="rrg-arrendatario__rep">{{ row.data.representanteLegal }}</span>
+        }
+      </div>
+    </div>
+    <div *dxTemplate="let row of 'ivaTpl'">
+      <span>{{ row.data.iva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+      @if (row.data.renta?.estimado) {
+        <span class="rrg-nota" title="Desglose estimado al 16 %; el definitivo será el de la factura">IVA calculado</span>
+      }
+    </div>
+    <div *dxTemplate="let row of 'manttoTpl'">
+      @if (row.data.tieneMantenimiento) {
+        <span>{{ row.data.mantenimiento.montoFinal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+        @if (row.data.mantenimiento?.estimado) {
+          <span class="rrg-nota">IVA calculado</span>
+        }
+      } @else {
+        <span class="rrg-vacio">—</span>
+      }
+    </div>
   </dx-data-grid>
 </div>

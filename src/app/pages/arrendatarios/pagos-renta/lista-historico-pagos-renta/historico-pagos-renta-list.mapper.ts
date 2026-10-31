@@ -13,11 +13,13 @@ export function extraerFilasHistoricoPagosRentaApi(resp: unknown): unknown[] {
 export function mapHistoricoPagoRentaApiToGridRow(item: unknown): HistoricoPagoRentaGridRow | null {
   const row = mapRentaActualApiToGridRow(item);
   if (!row) return null;
+  // Histórico = cargos pagados por completo; respetar `estadoPago`/`saldo`/`pagado` de la API.
+  const estado = String(row.estadoPago ?? '').toUpperCase() || 'PAGADO';
   return {
     ...row,
     pagada: true,
-    pagadaLabel: 'Pagada',
-    estadoPago: 'PAGADO',
+    pagadaLabel: estado === 'PAGADO' ? 'Pagada' : row.pagadaLabel,
+    estadoPago: estado,
   };
 }
 

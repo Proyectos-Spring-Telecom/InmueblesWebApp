@@ -187,6 +187,132 @@
   }
 }
 
+.rrg-hero__sub {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  color: var(--app-text-muted, #a6b0c8);
+
+  strong {
+    color: var(--app-text, #e8ecf6);
+  }
+}
+
+.rrg-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 720px;
+}
+
+.rrg-kpi {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--app-border, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, var(--app-surface-3, #1b2430) 80%, transparent);
+
+  &__label {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--app-text-muted, #a6b0c8);
+  }
+
+  &__valor {
+    font-size: 1.05rem;
+    color: var(--app-text, #e8ecf6);
+  }
+
+  &__hint {
+    font-size: 0.72rem;
+    color: var(--app-text-muted, #a6b0c8);
+  }
+
+  &--total {
+    border-color: rgba(93, 135, 255, 0.35);
+    background: rgba(93, 135, 255, 0.1);
+  }
+}
+
+.rrg-error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 80, 80, 0.35);
+  background: rgba(220, 80, 80, 0.12);
+  color: #f0b4b4;
+  font-size: 0.88rem;
+}
+
+.rrg-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+
+  &__label {
+    font-size: 0.8rem;
+    color: var(--app-text-muted, #a6b0c8);
+  }
+
+  &__input {
+    flex: 1 1 220px;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--app-border-strong, rgba(255, 255, 255, 0.16));
+    background: var(--app-surface-3, #1b2430);
+    color: var(--app-text, #e8ecf6);
+    outline: none;
+
+    &:focus {
+      border-color: #5d87ff;
+    }
+  }
+}
+
+.rrg-btn--compacto {
+  min-height: 40px;
+  min-width: 0;
+  width: auto;
+  padding: 0 14px;
+}
+
+.rrg-arrendatario {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+
+  &__nombre {
+    color: var(--app-text, #e8ecf6);
+  }
+
+  &__rep {
+    font-size: 0.75rem;
+    color: var(--app-text-muted, #a6b0c8);
+  }
+}
+
+.rrg-nota {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: #c9a227;
+}
+
+.rrg-vacio {
+  color: var(--app-text-muted, #a6b0c8);
+}
+
+@media (max-width: 900px) {
+  .rrg-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
   .rrg-hero {
     grid-template-columns: minmax(0, 1fr);

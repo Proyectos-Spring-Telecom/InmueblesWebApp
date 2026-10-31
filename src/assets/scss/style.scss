@@ -14,6 +14,8 @@
 @use "./theme-variables/light-theme-variables";
 @use "./theme-variables/dark-theme-variables";
 @use "./theme-variables/light-content-overrides";
+// Tema claro con superficies suaves (fondo degradado, tarjetas translúcidas); va después de los overrides.
+@use "./theme-variables/light-suave";
 
 //container layout
 @use "layouts/transitions";
