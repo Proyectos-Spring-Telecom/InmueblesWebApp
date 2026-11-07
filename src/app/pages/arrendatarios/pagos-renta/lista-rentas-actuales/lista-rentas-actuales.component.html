@@ -96,14 +96,9 @@
       <div class="d-flex flex-wrap gap-10 inm-lista__toolbar clientes-flow-head__acciones pagos-mes-acciones">
         <div class="pagos-mes-acciones__grupo pagos-mes-acciones__grupo--principales">
           <button type="button" (click)="abrirModalAlta()" mat-flat-button class="btn-renta"
-            title="Genera la renta del mes (el cargo). Para cobrarla usa Registrar abono / pago parcial.">
+            title="Genera la renta del mes (el cargo). Para cobrarla usa Acciones → Registrar pago.">
             <i class="fa fa-plus" aria-hidden="true"></i>
             Registrar pago de renta
-          </button>
-          <button type="button" (click)="abrirAbonoGeneral()" mat-flat-button class="bg-primary"
-            title="Registra un pago total o parcial y elige a qué renta o mantenimiento se aplica">
-            <i class="fa fa-money" aria-hidden="true"></i>
-            Registrar abono / pago parcial
           </button>
         </div>
         <div class="pagos-mes-acciones__grupo pagos-mes-acciones__grupo--utilidades">
@@ -1068,9 +1063,6 @@
 @if (rentaRegistrarPago; as r) {
 <app-registrar-pago-modal [idArrendatario]="r.idArrendatario!" [nombreArrendatario]="r.arrendatarioLabel"
   [idCargoPreseleccionado]="r.id" (cerrar)="cerrarRegistrarPago()" (guardado)="onPagoRegistrado()"></app-registrar-pago-modal>
-}
-@if (abonoGeneralAbierto) {
-<app-registrar-pago-modal (cerrar)="abonoGeneralAbierto = false" (guardado)="onPagoRegistrado()"></app-registrar-pago-modal>
 }
 
 <!-- Menú de acciones de la renta (posición fija junto al botón para que no lo recorte el grid) -->

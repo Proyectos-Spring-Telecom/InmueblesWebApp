@@ -144,12 +144,12 @@ export function validarAplicaciones(
     const v = Number(montos[c.idCargoConcepto] ?? 0);
     if (!Number.isFinite(v) || v < 0) errores.push(`Monto inválido en ${c.concepto} (${c.periodo}).`);
     else if (centavos(v) > centavos(c.saldo)) {
-      errores.push(`${c.concepto} (${c.periodo}): ${fmtMoneda(v)} excede su saldo de ${fmtMoneda(c.saldo)}.`);
+      errores.push(`${c.concepto} (${c.periodo}): el monto a aplicar (${fmtMoneda(v)}) es mayor que su saldo (${fmtMoneda(c.saldo)}).`);
     }
   }
   const suma = sumaAplicaciones(montos);
   if (suma > centavos(limite)) {
-    errores.push(`Las aplicaciones (${fmtMoneda(suma)}) exceden ${etiquetaLimite} (${fmtMoneda(limite)}).`);
+    errores.push(`El monto aplicado (${fmtMoneda(suma)}) es mayor que ${etiquetaLimite} (${fmtMoneda(limite)}).`);
   }
   return errores;
 }
@@ -186,16 +186,31 @@ const SWAL_BASE = {
   confirmButtonColor: '#3085d6',
 };
 
+/** Diseño nuevo (estilos en `swal-cobranza.scss`): sólo "Faltan datos" y "Cancelar pago". */
+const SWAL_NUEVO = {
+  buttonsStyling: false,
+  customClass: {
+    popup: 'cob-swal',
+    confirmButton: 'cob-swal__btn',
+    cancelButton: 'cob-swal__btn cob-swal__btn--gris',
+    input: 'cob-swal__textarea',
+    inputLabel: 'cob-swal__label',
+  },
+};
+
 export function alertaError(titulo: string, err: unknown, fallback: string): void {
   void Swal.fire({ ...SWAL_BASE, icon: 'error', title: titulo, text: mensajeErrorCobranza(err, fallback) });
 }
 
 export function alertaValidacion(errores: string[]): void {
+  const items = errores.map((e) => `<li class="cob-swal__item">${escaparHtml(e)}</li>`).join('');
   void Swal.fire({
-    ...SWAL_BASE,
+    ...SWAL_NUEVO,
     icon: 'warning',
-    title: 'Revisa la captura',
-    html: errores.map((e) => `<div style="text-align:left">• ${escaparHtml(e)}</div>`).join(''),
+    iconColor: '#f59e0b',
+    title: errores.length === 1 ? 'Falta un dato' : 'Faltan algunos datos',
+    html: `<p class="cob-swal__intro">Corrige lo siguiente para continuar:</p><ul class="cob-swal__lista">${items}</ul>`,
+    confirmButtonText: 'Entendido',
   });
 }
 
@@ -229,6 +244,26 @@ export async function pedirMotivo(titulo: string, html: string, confirmar: strin
   return r.isConfirmed ? String(r.value).trim() : null;
 }
 
+/** "Cancelar pago" con el diseño nuevo. Devuelve el motivo o `null` si se regresó. */
+export async function pedirMotivoCancelarPago(html: string): Promise<string | null> {
+  const r = await Swal.fire({
+    ...SWAL_NUEVO,
+    icon: 'warning',
+    iconColor: '#ef4444',
+    title: 'Cancelar pago',
+    html,
+    input: 'textarea',
+    inputLabel: 'Motivo',
+    inputPlaceholder: 'Ej.: lo registré por error',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, cancelar pago',
+    cancelButtonText: 'Regresar',
+    customClass: { ...SWAL_NUEVO.customClass, confirmButton: 'cob-swal__btn cob-swal__btn--rojo' },
+    inputValidator: (v) => (String(v ?? '').trim() ? null : 'Escribe el motivo para continuar.'),
+  });
+  return r.isConfirmed ? String(r.value).trim() : null;
+}
+
 export async function confirmar(titulo: string, html: string, boton: string): Promise<boolean> {
   const r = await Swal.fire({
     ...SWAL_BASE,
@@ -240,6 +275,23 @@ export async function confirmar(titulo: string, html: string, boton: string): Pr
     cancelButtonText: 'Regresar',
   });
   return r.isConfirmed;
+}
+
+/** Texto de la alerta "Cancelar pago": qué pasa y qué cargos vuelven a deber. */
+export function htmlCancelarPago(monto: unknown, fecha: unknown, cargos: { texto: string; monto: unknown }[]): string {
+  const lista = cargos
+    .map(
+      (c) =>
+        `<li class="cob-swal__item cob-swal__item--rojo"><span>${escaparHtml(c.texto)}</span><strong>${fmtMoneda(c.monto)}</strong></li>`,
+    )
+    .join('');
+  return (
+    `<p class="cob-swal__texto">Se cancelará el pago de <strong>${fmtMoneda(monto)}</strong> del ${fmtFecha(fecha)}. ` +
+    'No se borra: se queda en la lista como <strong>Cancelado</strong>.</p>' +
+    (lista
+      ? `<p class="cob-swal__subtitulo">Estos cargos vuelven a deber:</p><ul class="cob-swal__lista">${lista}</ul>`
+      : '<p class="cob-swal__subtitulo">Este pago no estaba aplicado a ningún cargo.</p>')
+  );
 }
 
 export function escaparHtml(texto: string): string {

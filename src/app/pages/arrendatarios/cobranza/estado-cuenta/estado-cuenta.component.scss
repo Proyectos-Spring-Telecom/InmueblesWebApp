@@ -1031,3 +1031,103 @@
     background: color-mix(in srgb, var(--b) 10%, #ffffff);
   }
 }
+
+/* =============================================================================
+ * Botón Regresar (arriba a la derecha) y tarjeta "Debe en total".
+ * ========================================================================== */
+/* 5 tarjetas: la de "Debe en total" un poco más ancha */
+.ec-kpis {
+  grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr));
+}
+
+.ec-kpi--total {
+  --k: #ef4444;
+
+  .ec-kpi__txt {
+    flex: 1 1 auto;
+  }
+
+  .ec-kpi__valor {
+    color: #ff8a8d;
+  }
+
+  &.ec-kpi--al-corriente {
+    --k: #22c55e;
+
+    .ec-kpi__valor {
+      color: #4ade80;
+    }
+  }
+}
+
+.ec-kpi__barra {
+  display: block;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.25);
+
+  i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #1fa971, #22c08a);
+    transition: width 0.5s ease;
+  }
+}
+
+:host-context(html.light-theme) {
+  .ec-kpi--total .ec-kpi__valor { color: #c0392b; }
+  .ec-kpi--total.ec-kpi--al-corriente .ec-kpi__valor { color: #15803d; }
+}
+
+@media (max-width: 1199.98px) {
+  .ec-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ec-kpi--total {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .ec-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Botón Regresar arriba del encabezado, a la derecha */
+.ec-barra-regresar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 18px 20px 0;
+}
+
+/* Sin doble espacio entre el botón y el encabezado */
+.ec-barra-regresar + app-module-hero {
+  padding-top: 10px;
+}
+
+/* Acciones como primera columna: botones en una sola línea, alineados a la izquierda */
+.ec-tabla td[data-label="Acciones"] {
+  width: 1%;
+  white-space: nowrap;
+
+  .ec-acciones {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .ec-tabla td[data-label="Acciones"] {
+    width: auto;
+
+    .ec-acciones {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+  }
+}

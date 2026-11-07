@@ -22,7 +22,8 @@ import {
   fmtFecha,
   fmtMes,
   fmtMoneda,
-  pedirMotivo,
+  htmlCancelarPago,
+  pedirMotivoCancelarPago,
 } from '../cobranza-ui';
 import { formatearFechaHoraUtc } from '../../../inmuebles/inmuebles-list.mapper';
 
@@ -133,16 +134,12 @@ export class DetallePagoModalComponent implements OnInit {
 
   async cancelarPago(): Promise<void> {
     if (!this.pago) return;
-    const reabiertos = this.aplicacionesVigentes
-      .map((a) => `<li>${escaparHtml(this.etiquetaAplicacion(a))} · ${fmtMes(a.cargo?.mes)} · ${fmtMoneda(a.monto)}</li>`)
-      .join('');
-    const html =
-      `Se cancelará el pago de <strong>${fmtMoneda(this.pago.monto)}</strong> del ${fmtFecha(this.pago.fechaPago)}. ` +
-      'El pago no se borra: queda como CANCELADO.' +
-      (reabiertos
-        ? `<div style="text-align:left;margin-top:.6rem">Estos cargos recuperan su saldo:<ul>${reabiertos}</ul></div>`
-        : '');
-    const motivo = await pedirMotivo('¡Cancelar Pago!', html, 'Sí, cancelar pago');
+    const reabiertos = this.aplicacionesVigentes.map((a) => ({
+      texto: `${this.etiquetaAplicacion(a)} · ${fmtMes(a.cargo?.mes)}`,
+      monto: a.monto,
+    }));
+    const html = htmlCancelarPago(this.pago.monto, this.pago.fechaPago, reabiertos);
+    const motivo = await pedirMotivoCancelarPago(html);
     if (!motivo) return;
     this.procesando = true;
     this.cobranza

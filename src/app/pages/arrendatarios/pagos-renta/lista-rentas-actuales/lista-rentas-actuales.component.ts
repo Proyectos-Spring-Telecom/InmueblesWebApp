@@ -3008,16 +3008,8 @@ export class ListaRentasActualesComponent implements OnInit, OnDestroy {
     this.rentaRegistrarPago = null;
   }
 
-  /** Modal de pago abierto desde la barra (el usuario elige el arrendatario). */
-  abonoGeneralAbierto = false;
-
-  abrirAbonoGeneral(): void {
-    this.abonoGeneralAbierto = true;
-  }
-
   onPagoRegistrado(): void {
     this.rentaRegistrarPago = null;
-    this.abonoGeneralAbierto = false;
     this.dataGrid?.instance?.refresh();
     this.rentaCambio.emit();
   }

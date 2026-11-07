@@ -1,0 +1,289 @@
+/*
+ * Alerta de validación de Cobranza ("Faltan datos"): tarjeta compacta, ícono pequeño,
+ * lista de pendientes ordenada y botón con el estilo de la app. Global porque SweetAlert
+ * se pinta fuera de los componentes.
+ */
+.swal2-popup.cob-swal {
+  width: min(440px, calc(100vw - 32px));
+  padding: 1.5rem 1.5rem 1.25rem;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: #141a21;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+
+  .swal2-icon {
+    width: 3rem;
+    height: 3rem;
+    margin: 0.25rem auto 0.75rem;
+    border-width: 0.18em;
+
+    .swal2-icon-content {
+      font-size: 2rem;
+    }
+  }
+
+  .swal2-title {
+    padding: 0;
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: #f1f5f9;
+  }
+
+  .swal2-html-container {
+    margin: 0.5rem 0 0;
+    padding: 0;
+    text-align: left;
+  }
+
+  .swal2-actions {
+    margin: 1.25rem 0 0;
+    width: 100%;
+  }
+}
+
+.cob-swal__intro {
+  margin: 0 0 0.75rem;
+  text-align: center;
+  font-size: 0.86rem;
+  color: #94a3b8;
+}
+
+.cob-swal__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.cob-swal__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.08);
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: #e2e8f0;
+
+  &::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    margin-top: 0.45rem;
+    border-radius: 50%;
+    background: #f59e0b;
+  }
+}
+
+.cob-swal__btn {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.6);
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.18);
+  color: #dbeafe;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 160ms ease;
+
+  &:hover {
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+}
+
+/* Tema claro */
+html.light-theme {
+  .swal2-popup.cob-swal {
+    background: #ffffff !important;
+    border-color: #e2e8f0;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+
+    .swal2-title {
+      color: #0f172a !important;
+    }
+  }
+
+  .cob-swal__intro {
+    color: #64748b;
+  }
+
+  .cob-swal__item {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #334155;
+  }
+
+  .cob-swal__btn {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
+
+    &:hover {
+      background: #dbeafe;
+    }
+  }
+}
+
+/* ---------- Texto, motivo y botones (confirmaciones y errores) ---------- */
+.swal2-popup.cob-swal {
+  .swal2-html-container {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+  }
+
+  .swal2-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.6rem;
+
+    .cob-swal__btn {
+      flex: 1 1 0;
+      width: auto;
+      margin: 0;
+    }
+  }
+
+  .swal2-validation-message {
+    margin: 0.6rem 0 0;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.12);
+    color: #fecaca;
+    font-size: 0.82rem;
+  }
+}
+
+.cob-swal__label {
+  display: block;
+  margin: 1rem 0 0.35rem;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  text-align: left;
+}
+
+.swal2-popup.cob-swal .cob-swal__textarea {
+  width: 100%;
+  min-height: 84px;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(2, 6, 23, 0.35);
+  color: #f1f5f9;
+  font-size: 0.88rem;
+  box-shadow: none;
+  resize: vertical;
+
+  &:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  &::placeholder {
+    color: #64748b;
+  }
+}
+
+.swal2-popup.cob-swal .swal2-input-label {
+  justify-content: flex-start;
+}
+
+.cob-swal__btn--rojo {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.18);
+  color: #fecaca;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.3);
+  }
+}
+
+.cob-swal__btn--gris {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+
+  &:hover {
+    background: rgba(148, 163, 184, 0.22);
+  }
+}
+
+/* Resumen dentro de la alerta (ej. "Cancelar pago") */
+.cob-swal__texto {
+  margin: 0 0 0.75rem;
+  text-align: center;
+}
+
+.cob-swal__subtitulo {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-align: left;
+}
+
+.cob-swal__item--rojo {
+  border-color: rgba(239, 68, 68, 0.28);
+  background: rgba(239, 68, 68, 0.08);
+  justify-content: space-between;
+
+  &::before {
+    background: #ef4444;
+  }
+
+  span:first-of-type {
+    flex: 1 1 auto;
+  }
+}
+
+html.light-theme {
+  .swal2-popup.cob-swal .swal2-html-container {
+    color: #334155 !important;
+  }
+
+  .cob-swal__label,
+  .cob-swal__subtitulo {
+    color: #64748b;
+  }
+
+  .swal2-popup.cob-swal .cob-swal__textarea {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+
+  .cob-swal__btn--rojo {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #b91c1c;
+
+    &:hover { background: #fee2e2; }
+  }
+
+  .cob-swal__btn--gris {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+
+    &:hover { background: #f1f5f9; }
+  }
+
+  .cob-swal__item--rojo {
+    border-color: #fecaca;
+    background: #fef2f2;
+  }
+
+  .swal2-popup.cob-swal .swal2-validation-message {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+}

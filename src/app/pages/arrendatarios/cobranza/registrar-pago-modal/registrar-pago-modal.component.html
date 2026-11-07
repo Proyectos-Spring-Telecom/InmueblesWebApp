@@ -6,7 +6,7 @@
       <div class="col-10 col-md-11">
         <h3 class="docs-modal__title" id="cob-registrar-pago-titulo">Registrar pago</h3>
         <p class="docs-modal__subtitle">
-          {{ tituloArrendatario }} · pago total o parcial: reparte el monto recibido por concepto; el sobrante queda a favor.
+          {{ tituloArrendatario }} · registra el monto recibido y a qué cargos se aplica.
         </p>
       </div>
       <div class="col-2 col-md-1 docs-modal__close-col">
@@ -28,8 +28,9 @@
         <div class="perm-form-nc">
           <div class="perm-form-body mono-pago-form">
             <div class="row g-3 align-items-start">
+              <!-- Campos: de tres en tres; el comprobante va al final, junto a Referencia -->
               @if (elegirArrendatario) {
-              <div class="col-12 col-md-6">
+              <div class="col-12 col-md-4">
                 <label for="cobPagoArrendatario" class="form-label perm-label">
                   Arrendatario <span class="text-danger">*</span>
                 </label>
@@ -42,7 +43,7 @@
               </div>
               }
 
-              <div class="col-12 col-md-6">
+              <div class="col-12 col-md-4">
                 <label for="cobPagoMonto" class="form-label perm-label">
                   Monto recibido <span class="text-danger">*</span>
                 </label>
@@ -54,7 +55,6 @@
                     <label for="cobPagoMonto">Monto</label>
                   </div>
                 </div>
-                <span class="cob-ayuda">Si es menor al saldo, el resto queda pendiente (pago parcial).</span>
               </div>
 
               <div class="col-12 col-md-4">
@@ -66,7 +66,6 @@
                   <app-campo-fecha inputId="cobPagoFecha" label="Fecha de pago" [limpiable]="false"
                     [(ngModel)]="fechaPago"></app-campo-fecha>
                 </div>
-                <span class="cob-ayuda">Puede ser una fecha anterior (fecha real del depósito).</span>
               </div>
 
               <div class="col-12 col-md-4">
@@ -93,25 +92,33 @@
               </div>
 
               @if (hayRentas) {
-              <div class="col-12 col-md-6 col-lg-4">
+              <div class="col-12 col-md-4">
                 <label for="cobPagoMarcarPagada" class="form-label perm-label">¿Marcar renta como pagada?</label>
+                @if (liquidaRentas) {
+                <!-- El monto cubre todo el saldo: queda pagada sola, no hay nada que elegir -->
+                <div class="input-group input-group-lg perm-ig">
+                  <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">task_alt</mat-icon></span>
+                  <div class="form-floating flex-grow-1">
+                    <input id="cobPagoMarcarPagada" type="text" class="form-control" readonly
+                      value="Sí, queda pagada con este monto" />
+                    <label for="cobPagoMarcarPagada">Automático</label>
+                  </div>
+                </div>
+                } @else {
                 <div class="input-group input-group-lg perm-ig">
                   <span class="input-group-text fw-bold"><mat-icon aria-hidden="true">task_alt</mat-icon></span>
                   <app-campo-select inputId="cobPagoMarcarPagada" label="¿Marcar renta como pagada?"
                     [items]="opcionesPagada" valueExpr="id" displayExpr="nombre" [limpiable]="false"
                     [(ngModel)]="marcarPagada"></app-campo-select>
                 </div>
-                @if (liquidaRentas) {
-                <span class="cob-ayuda cob-ayuda--ok"><mat-icon aria-hidden="true">verified</mat-icon> Con este monto la renta queda liquidada y pasa a «Pagada» sola. No necesitas elegir «Sí».</span>
-                } @else {
-                <span class="cob-ayuda">Si eliges «Sí», la renta queda como pagada aunque el pago sea parcial.</span>
+                <span class="cob-ayuda">«Sí» la marca pagada aunque falte dinero.</span>
                 }
               </div>
               }
-
-              <div class="col-12">
-                <label class="form-label perm-label d-block mb-2">Comprobante de pago</label>
-                <div class="mono-pago-file" [class.mono-pago-file--filled]="!!comprobante" role="button" tabindex="0"
+              <!-- Comprobante: en la misma fila que Referencia -->
+              <div class="col-12" [class.col-md-8]="!hayRentas" [class.col-md-4]="hayRentas">
+                <label class="form-label perm-label">Comprobante de pago</label>
+                <div class="mono-pago-file cob-file-compacto" [class.mono-pago-file--filled]="!!comprobante" role="button" tabindex="0"
                   (click)="comprobanteInput.click()" (keydown.enter)="comprobanteInput.click()"
                   (keydown.space)="$event.preventDefault(); comprobanteInput.click()">
                   <div class="mono-pago-file__icon" aria-hidden="true">
@@ -130,34 +137,36 @@
               </div>
             </div>
 
+            <!-- ¿Qué está pagando? -->
             <div class="contract-docs-card mt-3">
-              <h5 class="contract-docs-card__title">¿A qué se aplica el pago?</h5>
+              <h5 class="contract-docs-card__title">¿Qué está pagando?</h5>
+              <p class="cob-ayuda mt-0 mb-2">Escribe el monto que se aplica a cada cargo.</p>
               @if (!idArrendatario) {
               <div class="hub-vista-simple__vacio">
                 <mat-icon aria-hidden="true">person_search</mat-icon>
-                <p>Selecciona el arrendatario para ver sus rentas y servicios con saldo.</p>
+                <p>Primero elige el arrendatario.</p>
               </div>
               } @else if (cargandoConceptos) {
               <div class="mono-pago-servicio-loading">
                 <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-                <span>Cargando cargos con saldo…</span>
+                <span>Cargando lo que debe…</span>
               </div>
               } @else {
               <app-aplicaciones-editor [conceptos]="conceptos" [limite]="monto || 0" [(montos)]="montos"></app-aplicaciones-editor>
               }
 
               <div class="hub-vista-simple__resumen cob-contador mb-0" aria-label="Resumen del pago">
-                <span class="hub-vista-simple__stat">Pago <strong>{{ fmtMoneda(monto || 0) }}</strong></span>
+                <span class="hub-vista-simple__stat">Monto recibido <strong>{{ fmtMoneda(monto || 0) }}</strong></span>
                 <span class="hub-vista-simple__stat hub-vista-simple__stat--pagado">
-                  Por aplicar <strong>{{ fmtMoneda(porAplicar) }}</strong>
+                  Monto aplicado <strong>{{ fmtMoneda(porAplicar) }}</strong>
                 </span>
                 @if (quedaraAFavor < 0) {
                 <span class="hub-vista-simple__stat cob-stat--error">
-                  Excede el pago <strong>{{ fmtMoneda(-quedaraAFavor) }}</strong>
+                  Excede lo recibido por <strong>{{ fmtMoneda(-quedaraAFavor) }}</strong>
                 </span>
                 } @else {
                 <span class="hub-vista-simple__stat hub-vista-simple__stat--pendiente">
-                  Quedará a favor <strong>{{ fmtMoneda(quedaraAFavor) }}</strong>
+                  Saldo a favor <strong>{{ fmtMoneda(quedaraAFavor) }}</strong>
                 </span>
                 }
               </div>

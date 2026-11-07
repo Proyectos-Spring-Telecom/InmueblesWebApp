@@ -23,6 +23,8 @@ import {
   fmtMes,
   alertaExito,
   pedirMotivo,
+  htmlCancelarPago,
+  pedirMotivoCancelarPago,
   claseEstado,
   etiquetaClase,
   etiquetaConcepto,
@@ -249,18 +251,9 @@ export class EstadoCuentaComponent implements OnInit {
         const concepto = a.concepto
           ? etiquetaConcepto({ tipo: a.concepto.tipo, tipoServicio: null, descripcion: a.concepto.descripcion })
           : 'Cargo';
-        return `<li>${escaparHtml(concepto)} · ${fmtMes(a.cargo?.mes)} · ${fmtMoneda(a.monto)}</li>`;
-      })
-      .join('');
-    const motivo = await pedirMotivo(
-      '¡Cancelar Pago!',
-      `Se cancelará el pago de <strong>${fmtMoneda(pago.monto)}</strong> del ${fmtFecha(pago.fechaPago)}. ` +
-        'El pago no se borra: queda como CANCELADO.' +
-        (reabiertos
-          ? `<div style="text-align:left;margin-top:.6rem">Estos cargos vuelven a deber:<ul>${reabiertos}</ul></div>`
-          : '<br>No estaba aplicado a ningún cargo.'),
-      'Sí, cancelar pago',
-    );
+        return { texto: `${concepto} · ${fmtMes(a.cargo?.mes)}`, monto: a.monto };
+      });
+    const motivo = await pedirMotivoCancelarPago(htmlCancelarPago(pago.monto, pago.fechaPago, reabiertos));
     if (!motivo) return;
     this.procesando = true;
     this.cobranza

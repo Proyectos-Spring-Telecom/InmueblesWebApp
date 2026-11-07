@@ -59,11 +59,12 @@ function formatearFecha(raw: unknown): string {
   const s = String(raw).trim();
   const d = new Date(s);
   if (!Number.isNaN(d.getTime())) {
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mi = String(d.getMinutes()).padStart(2, '0');
+    // El API manda hora de México con sufijo Z: se lee en UTC (sin convertir de zona).
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const yyyy = d.getUTCFullYear();
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const mi = String(d.getUTCMinutes()).padStart(2, '0');
     return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
   }
   return s;

@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "inmuebles-dev", "runtimeExecutable": "npx", "runtimeArgs": ["ng", "serve", "--port", "4201"], "port": 4201 }
+  ]
+}

@@ -75,7 +75,7 @@ export class RegistrarPagoModalComponent implements OnInit {
   /** Si no se indica, el usuario elige el arrendatario en el modal (abierto desde la barra). */
   @Input() idArrendatario: number | null = null;
   @Input() nombreArrendatario = '';
-  /** Si se indica, muestra primero los conceptos de ese cargo (sin llenar montos). */
+  /** Si se indica, sólo muestra los conceptos de ese cargo (sin llenar montos). */
   @Input() idCargoPreseleccionado: number | null = null;
   @Output() cerrar = new EventEmitter<void>();
   @Output() guardado = new EventEmitter<Pago>();
@@ -164,11 +164,14 @@ export class RegistrarPagoModalComponent implements OnInit {
       });
   }
 
-  /** Pone primero los conceptos del cargo elegido. No llena montos: el usuario decide cuánto pagó (o usa "Saldar"). */
+  /**
+   * Se abrió con "Pagar" de un cargo: sólo se muestran los conceptos de ese cargo
+   * (los demás no aparecen). No llena montos: el usuario decide cuánto pagó.
+   */
   private prellenarCargo(idCargo: number): void {
     const delCargo = this.conceptos.filter((c) => c.idCargo === idCargo);
     if (!delCargo.length) return;
-    this.conceptos = [...delCargo, ...this.conceptos.filter((c) => c.idCargo !== idCargo)];
+    this.conceptos = delCargo;
   }
 
   get porAplicar(): number {
@@ -198,16 +201,16 @@ export class RegistrarPagoModalComponent implements OnInit {
   guardar(): void {
     const monto = centavos(Number(this.monto) || 0);
     const errores: string[] = [];
-    if (!this.idArrendatario) errores.push('Selecciona el arrendatario.');
-    if (monto <= 0) errores.push('Captura un monto mayor a 0.');
-    if (!this.fechaPago) errores.push('Captura la fecha de pago.');
-    if (!this.idMetodoPago) errores.push('Selecciona el método de pago.');
-    errores.push(...validarAplicaciones(this.conceptos, this.montos, monto, 'el monto del pago'));
+    if (!this.idArrendatario) errores.push('Elige el arrendatario.');
+    if (monto <= 0) errores.push('Escribe el monto recibido.');
+    if (!this.fechaPago) errores.push('Elige la fecha de pago.');
+    if (!this.idMetodoPago) errores.push('Elige el método de pago.');
+    errores.push(...validarAplicaciones(this.conceptos, this.montos, monto, 'el monto recibido'));
     const quiereMarcar = this.hayRentas && this.marcarPagada;
     const rentasElegidas = quiereMarcar ? this.rentasConMonto() : [];
     const rentasAMarcar = this.rentasQueQuedanConSaldo(rentasElegidas);
     if (quiereMarcar && !rentasElegidas.length) {
-      errores.push('Elegiste marcar la renta como pagada, pero no escribiste monto en «Aplicar» de la renta. Escribe el monto o cambia la opción a «No».');
+      errores.push('Elegiste marcar la renta como pagada, pero no escribiste el «Monto a aplicar» de la renta. Escribe el monto o cambia la opción a «No».');
     }
     if (errores.length) {
       alertaValidacion(errores);

@@ -1603,19 +1603,19 @@ export class MonitoreoInstalacionComponent implements OnInit, OnDestroy {
     ivaMantenimiento: number;
     mantenimientoTotal: number;
   } {
-    const subR = metros * costoM2;
-    const ivaR = subR * IVA_CONTRATO;
-    const totR = subR + ivaR;
-    const subM = subR * (pctMant / 100);
-    const ivaM = subM * IVA_CONTRATO;
-    const totM = subM + ivaM;
+    // Regla API: IVA = redondeo(subtotal × 0.16, 2) y total = subtotal + IVA (cuadra al centavo).
+    const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+    const subR = r2(metros * costoM2);
+    const ivaR = r2(subR * IVA_CONTRATO);
+    const subM = r2(subR * (pctMant / 100));
+    const ivaM = r2(subM * IVA_CONTRATO);
     return {
-      subtotalRenta: Math.round(subR * 1e6) / 1e6,
-      ivaRenta: Math.round(ivaR * 1e6) / 1e6,
-      rentaTotal: Math.round(totR * 1e6) / 1e6,
-      subtotalMantenimiento: Math.round(subM * 1e6) / 1e6,
-      ivaMantenimiento: Math.round(ivaM * 1e6) / 1e6,
-      mantenimientoTotal: Math.round(totM * 1e6) / 1e6,
+      subtotalRenta: subR,
+      ivaRenta: ivaR,
+      rentaTotal: r2(subR + ivaR),
+      subtotalMantenimiento: subM,
+      ivaMantenimiento: ivaM,
+      mantenimientoTotal: r2(subM + ivaM),
     };
   }
 

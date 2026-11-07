@@ -211,3 +211,154 @@
 :host-context(html.light-theme) .cob-ayuda--ok {
   color: #15803d;
 }
+
+
+/* =============================================================================
+ * "¿Qué está pagando?": misma tabla que Estado de cuenta (ec-tabla).
+ * ========================================================================== */
+.cob-tabla-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.cob-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+
+  th,
+  td {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  }
+
+  th {
+    font-size: 0.74rem;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    background: rgba(2, 6, 23, 0.35);
+    white-space: nowrap;
+  }
+
+  tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .centro { text-align: center; }
+  strong { color: #ffffff; }
+}
+
+.cob-tabla__concepto { display: block; color: #f1f5f9; }
+.cob-tabla__sub { display: block; margin-top: 0.1rem; font-size: 0.76rem; color: #94a3b8; }
+
+
+
+/* Comprobante en la misma fila que Referencia: misma altura que los inputs */
+.cob-file-compacto.mono-pago-file {
+  height: 58px;
+  box-sizing: border-box;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+
+@media (max-width: 767.98px) {
+  .cob-tabla {
+    thead { display: none; }
+
+    tbody tr {
+      display: block;
+      padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.3rem 0;
+      border: 0;
+      text-align: right !important;
+
+      &[data-label]::before {
+        content: attr(data-label);
+        font-size: 0.74rem;
+        color: #94a3b8;
+        text-align: left;
+      }
+    }
+  }
+}
+
+:host-context(html.light-theme) {
+  .cob-tabla-wrap { border-color: rgba(148, 163, 184, 0.35); }
+  .cob-tabla th { background: #f8fafc; color: #64748b; }
+  .cob-tabla strong,
+  .cob-tabla__concepto { color: #0f172a; }
+  .cob-tabla__sub { color: #64748b; }
+}
+
+/* Campo "Monto aplicado" de la tabla: caja simple con $ adentro */
+.cob-monto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 160px;
+  height: 38px;
+  margin: 0;
+  padding: 0 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(2, 6, 23, 0.35);
+  cursor: text;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+
+  &:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.cob-monto__signo {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.cob-monto__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f1f5f9;
+  text-align: right;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  &::placeholder {
+    color: #64748b;
+  }
+}
+
+.cob-tabla__fila--excede .cob-monto {
+  border-color: rgba(248, 113, 113, 0.8);
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.18);
+}
+
+:host-context(html.light-theme) {
+  .cob-monto { background: #ffffff; border-color: #cbd5e1; }
+  .cob-monto__input { color: #0f172a; }
+  .cob-monto__signo { color: #64748b; }
+}

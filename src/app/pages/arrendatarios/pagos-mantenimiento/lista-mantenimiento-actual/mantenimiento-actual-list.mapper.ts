@@ -119,8 +119,9 @@ function etiquetaPeriodoMes(row: Record<string, unknown>): string {
   const texto = String(raw).trim();
   const fecha = new Date(texto);
   if (!Number.isNaN(fecha.getTime())) {
-    const nombreMes = MESES_PERIODO_ES[fecha.getMonth()] ?? '';
-    const anio = fecha.getFullYear();
+    // El API manda hora de México con sufijo Z: se lee en UTC para no recorrer al mes anterior.
+    const nombreMes = MESES_PERIODO_ES[fecha.getUTCMonth()] ?? '';
+    const anio = fecha.getUTCFullYear();
     return nombreMes ? `${nombreMes} ${anio}` : '—';
   }
 
