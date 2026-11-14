@@ -7,7 +7,8 @@ import { DxDataGridComponent, DxDataGridModule } from 'devextreme-angular';
 import CustomStore from 'devextreme/data/custom_store';
 import { lastValueFrom } from 'rxjs';
 import { routeAnimation } from 'src/app/pipe/module-open.animation';
-import { ContratosService } from 'src/app/services/moduleService/contratos.service';
+import { ContratosService, VigenciaContrato } from 'src/app/services/moduleService/contratos.service';
+import { CampoSelectComponent } from 'src/app/shared/campos-dx/campo-select.component';
 import {
   COSTOS_ACTUALES_RESUMEN_VACIO,
   CostosActualesResumen,
@@ -27,7 +28,7 @@ import {
 @Component({
   selector: 'app-rent-rol-grid',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatIconModule, DxDataGridModule],
+  imports: [CommonModule, FormsModule, RouterModule, MatIconModule, DxDataGridModule, CampoSelectComponent],
   templateUrl: './rent-rol-grid.component.html',
   styleUrl: './rent-rol-grid.component.scss',
   animations: [routeAnimation],
@@ -46,6 +47,15 @@ export class RentRolGridComponent implements OnInit {
   busqueda = '';
   busquedaAplicada = '';
 
+  /** Filtro de vigencia. Sin valor: todos los contratos activos. */
+  vigenciaFiltro: VigenciaContrato | null = null;
+  readonly opcionesVigencia: { id: VigenciaContrato; nombre: string }[] = [
+    { id: 'VIGENTE', nombre: 'Vigente' },
+    { id: 'VENCIDO', nombre: 'Vencido' },
+    { id: 'POR_INICIAR', nombre: 'Por iniciar' },
+    { id: 'SIN_FECHAS', nombre: 'Sin fechas' },
+  ];
+
   constructor(private contratosService: ContratosService) {}
 
   ngOnInit(): void {
@@ -54,6 +64,36 @@ export class RentRolGridComponent implements OnInit {
 
   get cantidadRelaciones(): number {
     return this.resumen.cantidadRelaciones;
+  }
+
+  onVigenciaChange(): void {
+    void this.dataGrid?.instance?.refresh();
+  }
+
+  etiquetaVigencia(vigencia: string | undefined): string {
+    return this.opcionesVigencia.find((o) => o.id === vigencia)?.nombre ?? '—';
+  }
+
+  claseVigencia(vigencia: string | undefined): string {
+    switch (vigencia) {
+      case 'VIGENTE':
+        return 'mono-pago-estatus mono-pago-estatus--pagado';
+      case 'VENCIDO':
+        return 'mono-pago-estatus mono-pago-estatus--cancelado';
+      case 'POR_INICIAR':
+        return 'mono-pago-estatus mono-pago-estatus--pendiente';
+      default:
+        return 'mono-pago-estatus mono-pago-estatus--sin-pago';
+    }
+  }
+
+  /** "Venció hace 65 días", "Vence hoy", "Vence en 54 días". Vacío si no hay fecha de término. */
+  textoDiasVigencia(dias: number | null | undefined): string {
+    if (dias == null) return '';
+    if (dias === 0) return 'Vence hoy';
+    const n = Math.abs(dias);
+    const unidad = n === 1 ? 'día' : 'días';
+    return dias < 0 ? `Venció hace ${n} ${unidad}` : `Vence en ${n} ${unidad}`;
   }
 
   aplicarBusqueda(): void {
@@ -84,6 +124,7 @@ export class RentRolGridComponent implements OnInit {
               page,
               limit: take,
               busqueda: this.busquedaAplicada || null,
+              vigencia: this.vigenciaFiltro,
             }),
           );
           this.resumen = extraerResumenCostosActuales(resp);

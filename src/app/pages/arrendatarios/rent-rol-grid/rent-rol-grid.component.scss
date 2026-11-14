@@ -273,6 +273,11 @@
   }
 }
 
+.rrg-toolbar__vigencia {
+  flex: 0 1 190px;
+  min-width: 160px;
+}
+
 .rrg-btn--compacto {
   min-height: 40px;
   min-width: 0;
@@ -304,6 +309,23 @@
 }
 
 .rrg-vacio {
+  color: var(--app-text-muted, #a6b0c8);
+}
+
+.rrg-vacios {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.7rem;
+  line-height: 1.25;
+  color: #c9a227;
+  cursor: help;
+  white-space: normal;
+}
+
+.rrg-dias {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.7rem;
   color: var(--app-text-muted, #a6b0c8);
 }
 

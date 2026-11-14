@@ -73,6 +73,14 @@ export interface RentRolRow {
   detalleRentaActual?: Record<string, unknown>;
   /** Registro original del API (histórico o renta-actual); lo usa el cierre de mes. */
   detalleApi?: Record<string, unknown>;
+  /** Solo costos actuales: VIGENTE, VENCIDO, POR_INICIAR o SIN_FECHAS. */
+  vigencia?: string;
+  /** Solo costos actuales: días a la fecha de término (negativo si venció, null sin término). */
+  diasParaVencer?: number | null;
+  /** Solo costos actuales: nombres de los locales vacíos del inmueble. */
+  localesVacios?: string[];
+  /** Solo costos actuales: renta + mantenimiento del contrato. */
+  totalGeneral?: number;
 }
 
 /** Una sola fila del grid por arrendatario (sin celdas dobles). */
@@ -534,6 +542,13 @@ function etiquetaLocalesCostos(locales: unknown): string {
   return nombres.length ? nombres.join(', ') : '—';
 }
 
+function nombresLocales(locales: unknown): string[] {
+  if (!Array.isArray(locales)) return [];
+  return locales
+    .map((item) => (item != null && typeof item === 'object' ? str((item as Record<string, unknown>)['nombre']) : ''))
+    .filter(Boolean);
+}
+
 function conceptoDesdeDesglose(
   bloque: unknown,
   keysTotal: string[],
@@ -573,11 +588,12 @@ export function mapCostosActualesApiToRentRolRow(item: unknown): RentRolRow | nu
       ? (row['desglose'] as Record<string, unknown>)
       : {};
   const renta = conceptoDesdeDesglose(desglose['renta'], ['montoFinal', 'monto_final']);
-  const mantenimiento = conceptoDesdeDesglose(desglose['mantenimiento'], [
-    'montoFinalMantenimiento',
-    'monto_final_mantenimiento',
-    'montoFinal',
-  ]);
+  // Si el contrato no incluye mantenimiento, el concepto Mantto no se muestra.
+  const incluyeMantenimiento = row['incluyeMantenimiento'] !== false && row['incluyeMantenimiento'] !== 0;
+  const mantenimiento = conceptoDesdeDesglose(
+    incluyeMantenimiento ? desglose['mantenimiento'] : null,
+    ['montoFinalMantenimiento', 'monto_final_mantenimiento', 'montoFinal'],
+  );
   const costoM2Raw = row['costoM2'];
   const costoM2 = costoM2Raw == null || costoM2Raw === '' ? 0 : num(costoM2Raw);
 
@@ -600,6 +616,10 @@ export function mapCostosActualesApiToRentRolRow(item: unknown): RentRolRow | nu
     renta,
     mantenimiento,
     detalleApi: row,
+    vigencia: str(row['vigencia']).toUpperCase(),
+    diasParaVencer: row['diasParaVencer'] == null ? null : num(row['diasParaVencer']),
+    localesVacios: nombresLocales(row['localesVacios']),
+    totalGeneral: row['totalGeneral'] == null ? renta.montoFinal + mantenimiento.montoFinal : num(row['totalGeneral']),
   };
 }
 

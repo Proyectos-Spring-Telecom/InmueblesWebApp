@@ -3,6 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+/** Vigencia de un contrato según la fecha de hoy (la calcula la API). */
+export type VigenciaContrato = 'VIGENTE' | 'VENCIDO' | 'POR_INICIAR' | 'SIN_FECHAS';
+
 /** Filtros de `GET /contratos/costos-actuales/paginated` (Rent Rol). */
 export interface CostosActualesParams {
   page: number;
@@ -11,6 +14,8 @@ export interface CostosActualesParams {
   idArrendatario?: number | null;
   idContrato?: number | null;
   busqueda?: string | null;
+  /** Sin valor: todos los contratos activos. */
+  vigencia?: VigenciaContrato | null;
 }
 
 @Injectable({
@@ -48,6 +53,9 @@ export class ContratosService {
     const busqueda = String(params.busqueda ?? '').trim().slice(0, 100);
     if (busqueda) {
       httpParams = httpParams.set('busqueda', busqueda);
+    }
+    if (params.vigencia) {
+      httpParams = httpParams.set('vigencia', params.vigencia);
     }
     return this.http.get(`${this.base}/costos-actuales/paginated`, { params: httpParams });
   }

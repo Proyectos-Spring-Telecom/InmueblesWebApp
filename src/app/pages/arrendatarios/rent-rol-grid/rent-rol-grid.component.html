@@ -54,6 +54,11 @@
       [(ngModel)]="busqueda"
       (keydown.enter)="aplicarBusqueda()"
     />
+    <div class="rrg-toolbar__vigencia">
+      <app-campo-select inputId="rrgVigencia" class="campo-dx--sm" placeholder="Toda la vigencia" [limpiable]="true"
+        [items]="opcionesVigencia" valueExpr="id" displayExpr="nombre"
+        [(ngModel)]="vigenciaFiltro" (ngModelChange)="onVigenciaChange()"></app-campo-select>
+    </div>
     <button type="button" class="rrg-btn rrg-btn--fantasma rrg-btn--compacto" (click)="aplicarBusqueda()">
       Buscar
     </button>
@@ -134,13 +139,14 @@
     <dxi-column
       dataField="modulo"
       caption="Locales"
-      [width]="100"
+      [width]="130"
       [allowHiding]="true"
       [hidingPriority]="3"
       [allowFiltering]="true"
       [allowHeaderFiltering]="false"
       [allowSorting]="false"
       alignment="center"
+      cellTemplate="localesTpl"
     ></dxi-column>
     <dxi-column
       dataField="metrosRentados"
@@ -219,6 +225,19 @@
       cellTemplate="manttoTpl"
     ></dxi-column>
     <dxi-column
+      dataField="registro.totalGeneral"
+      caption="Total general"
+      [width]="130"
+      [allowHiding]="true"
+      [hidingPriority]="13"
+      [allowFiltering]="false"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      dataType="number"
+      [format]="{ type: 'currency', currency: 'MXN', precision: 2 }"
+      alignment="right"
+    ></dxi-column>
+    <dxi-column
       dataField="inicioContrato"
       caption="Inicio"
       [width]="100"
@@ -240,6 +259,17 @@
       [allowSorting]="false"
       alignment="center"
     ></dxi-column>
+    <dxi-column
+      caption="Vigencia"
+      [width]="130"
+      [allowHiding]="true"
+      [hidingPriority]="12"
+      [allowFiltering]="false"
+      [allowHeaderFiltering]="false"
+      [allowSorting]="false"
+      alignment="center"
+      cellTemplate="vigenciaTpl"
+    ></dxi-column>
 
     <div *dxTemplate="let row of 'arrendatarioTpl'">
       <div class="rrg-arrendatario">
@@ -247,7 +277,24 @@
         @if (row.data.representanteLegal) {
           <span class="rrg-arrendatario__rep">{{ row.data.representanteLegal }}</span>
         }
+        @if (row.data.telefonoRepresentante) {
+          <span class="rrg-arrendatario__rep">{{ row.data.telefonoRepresentante }}</span>
+        }
       </div>
+    </div>
+    <div *dxTemplate="let row of 'localesTpl'">
+      <span>{{ row.data.modulo }}</span>
+      @if (row.data.registro.localesVacios?.length; as vacios) {
+        <span class="rrg-vacios" [title]="'Vacíos en este inmueble: ' + row.data.registro.localesVacios.join(', ')">
+          {{ vacios }} {{ vacios === 1 ? 'local vacío' : 'locales vacíos' }} en el inmueble
+        </span>
+      }
+    </div>
+    <div *dxTemplate="let row of 'vigenciaTpl'">
+      <span [class]="claseVigencia(row.data.registro.vigencia)">{{ etiquetaVigencia(row.data.registro.vigencia) }}</span>
+      @if (textoDiasVigencia(row.data.registro.diasParaVencer); as dias) {
+        <span class="rrg-dias">{{ dias }}</span>
+      }
     </div>
     <div *dxTemplate="let row of 'ivaTpl'">
       <span>{{ row.data.iva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
